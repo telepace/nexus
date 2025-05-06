@@ -104,6 +104,7 @@ class Settings(BaseSettings):
 
             # URL encode the password to handle special characters
             import urllib.parse
+
             password = urllib.parse.quote_plus(self.SUPABASE_DB_PASSWORD or "")
 
             return MultiHostUrl.build(
@@ -118,6 +119,7 @@ class Settings(BaseSettings):
             # Use standard PostgreSQL connection
             # URL encode the password to handle special characters
             import urllib.parse
+
             password = urllib.parse.quote_plus(self.POSTGRES_PASSWORD)
 
             return MultiHostUrl.build(
