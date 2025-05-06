@@ -90,6 +90,13 @@ class Settings(BaseSettings):
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
         # Return different connection URI based on database type
+        """Returns the SQLAlchemy database URI based on the configured database type.
+        
+        This property checks the `DATABASE_TYPE` to determine whether to use a Supabase
+        PostgreSQL connection or a standard PostgreSQL connection. It constructs the
+        connection URI using the appropriate credentials and settings, including
+        handling password URL encoding for special characters.
+        """
         if self.DATABASE_TYPE == "supabase" and self.SUPABASE_DB_HOST:
             # Use Supabase's PostgreSQL connection (direct connection)
             # Choose port based on connection pool mode
