@@ -1,4 +1,4 @@
-# Quick Forge AI - Development
+# nexus - Development
 
 ## Docker Compose
 

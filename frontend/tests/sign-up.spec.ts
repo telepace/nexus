@@ -70,8 +70,8 @@ test("Sign up with invalid email", async ({ page }) => {
     page,
     "Playwright Test",
     "invalid-email",
-    "quickforgeai",
-    "quickforgeai",
+    "nexus",
+    "nexus",
   )
   await page.getByRole("button", { name: "Sign Up" }).click()
 

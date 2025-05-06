@@ -1,6 +1,6 @@
 # Deploying to Fly.io
 
-This guide explains how to deploy the Quick Forge AI project to [Fly.io](https://fly.io).
+This guide explains how to deploy the nexus project to [Fly.io](https://fly.io).
 
 ## Prerequisites
 
@@ -12,7 +12,7 @@ This guide explains how to deploy the Quick Forge AI project to [Fly.io](https:/
 1. Create a PostgreSQL database on Fly:
 
 ```bash
-fly postgres create --name quick-forge-ai-db --region iad
+fly postgres create --name nexus-db --region iad
 ```
 
 2. Take note of the connection details provided after creation.
@@ -43,7 +43,7 @@ fly secrets set SECRET_KEY="your-secure-secret-key" \
 4. Attach the Postgres database:
 
 ```bash
-fly postgres attach quick-forge-ai-db
+fly postgres attach nexus-db
 ```
 
 5. Deploy the backend:
@@ -108,13 +108,13 @@ fly status
 
 ```bash
 # For backend
-fly certs add api.your-domain.com -a quick-forge-ai-backend
+fly certs add api.your-domain.com -a nexus-backend
 
 # For frontend 
-fly certs add dashboard.your-domain.com -a quick-forge-ai-frontend
+fly certs add dashboard.your-domain.com -a nexus-frontend
 
 # For website
-fly certs add your-domain.com -a quick-forge-ai-website
+fly certs add your-domain.com -a nexus-website
 ```
 
 2. Update your DNS settings to point to the Fly.io apps. Fly will provide you with the correct values.

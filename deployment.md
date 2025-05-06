@@ -1,4 +1,4 @@
-# Quick Forge AI - Deployment
+# nexus - Deployment
 
 You can deploy the project using Docker Compose to a remote server.
 
@@ -60,7 +60,7 @@ export USERNAME=admin
 * Create an environment variable with the password for HTTP Basic Auth, e.g.:
 
 ```bash
-export PASSWORD=quickforgeai
+export PASSWORD=nexus
 ```
 
 * Use openssl to generate the "hashed" version of the password for HTTP Basic Auth and store it in an environment variable:
@@ -103,9 +103,9 @@ Now with the environment variables set and the `docker-compose.traefik.yml` in p
 docker compose -f docker-compose.traefik.yml up -d
 ```
 
-## Deploy the Quick Forge AI
+## Deploy the nexus
 
-Now that you have Traefik in place you can deploy your Quick Forge AI with Docker Compose.
+Now that you have Traefik in place you can deploy your nexus with Docker Compose.
 
 **Note**: You might want to jump ahead to the section about Continuous Deployment with GitHub Actions.
 
@@ -130,7 +130,7 @@ You can set several variables, like:
 * `PROJECT_NAME`: The name of the project, used in the API for the docs and emails.
 * `STACK_NAME`: The name of the stack used for Docker Compose labels and project name, this should be different for `staging`, `production`, etc. You could use the same domain replacing dots with dashes, e.g. `fastapi-project-example-com` and `staging-fastapi-project-example-com`.
 * `BACKEND_CORS_ORIGINS`: A list of allowed CORS origins separated by commas.
-* `SECRET_KEY`: The secret key for the Quick Forge AI, used to sign tokens.
+* `SECRET_KEY`: The secret key for the nexus, used to sign tokens.
 * `FIRST_SUPERUSER`: The email of the first superuser, this superuser will be the one that can create new users.
 * `FIRST_SUPERUSER_PASSWORD`: The password of the first superuser.
 * `SMTP_HOST`: The SMTP server host to send emails, this would come from your email provider (E.g. Mailgun, Sparkpost, Sendgrid, etc).
@@ -153,7 +153,7 @@ There are some environment variables only used by GitHub Actions that you can co
 
 ### Generate secret keys
 
-Some environment variables in the `.env` file have a default value of `quickforgeai`.
+Some environment variables in the `.env` file have a default value of `nexus`.
 
 You have to change them with a secret key, to generate secret keys you can run the following command:
 

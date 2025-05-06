@@ -32,7 +32,7 @@ jobs:
           # z.B.: uses: dopplerhq/cli-action@v2
           echo "Setting up Doppler for Production"
           # Passe --project und --config an deine Produktionskonfiguration an
-          doppler setup --silent --project quick-forge-ai --config prd # Beispiel: prd für Produktion
+          doppler setup --silent --project nexus --config prd # Beispiel: prd für Produktion
           echo "Downloading production secrets to .env"
           doppler secrets download --no-file --format env > .env
           # Hole den Stack-Namen aus Doppler (oder verwende ein Secret, falls bevorzugt)

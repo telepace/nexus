@@ -58,7 +58,7 @@ class Settings(BaseSettings):
             self.FRONTEND_HOST
         ]
 
-    PROJECT_NAME: str = "Quick Forge AI"
+    PROJECT_NAME: str = "nexus"
     SENTRY_DSN: HttpUrl | None = None
 
     # Database configuration
@@ -102,20 +102,28 @@ class Settings(BaseSettings):
                 f"Using {self.SUPABASE_DB_POOL_MODE} mode to connect to Supabase, port: {port}"
             )
 
+            # URL encode the password to handle special characters
+            import urllib.parse
+            password = urllib.parse.quote_plus(self.SUPABASE_DB_PASSWORD or "")
+
             return MultiHostUrl.build(
                 scheme="postgresql+psycopg",
                 username=self.SUPABASE_DB_USER or "",
-                password=self.SUPABASE_DB_PASSWORD or "",
+                password=password,
                 host=self.SUPABASE_DB_HOST,
                 port=port,
                 path=self.SUPABASE_DB_NAME or "",
             )
         else:
             # Use standard PostgreSQL connection
+            # URL encode the password to handle special characters
+            import urllib.parse
+            password = urllib.parse.quote_plus(self.POSTGRES_PASSWORD)
+
             return MultiHostUrl.build(
                 scheme="postgresql+psycopg",
                 username=self.POSTGRES_USER,
-                password=self.POSTGRES_PASSWORD,
+                password=password,
                 host=self.POSTGRES_SERVER,
                 port=self.POSTGRES_PORT,
                 path=self.POSTGRES_DB,
@@ -158,9 +166,9 @@ class Settings(BaseSettings):
         return bool(self.POSTHOG_API_KEY and self.ENVIRONMENT != "local")
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
-        if value == "quickforgeai":
+        if value == "nexus":
             message = (
-                f'The value of {var_name} is "quickforgeai", '
+                f'The value of {var_name} is "nexus", '
                 "for security, please change it, at least for deployments."
             )
             if self.ENVIRONMENT == "local":

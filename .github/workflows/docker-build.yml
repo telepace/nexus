@@ -72,9 +72,9 @@ jobs:
         uses: docker/metadata-action@v5.7.0
         with:
           images: |
-            docker.io/${{ github.repository_owner }}/quick-forge-ai-backend${{ steps.env-suffix.outputs.ENV_SUFFIX }}
-            registry.cn-hangzhou.aliyuncs.com/${{ github.repository_owner }}/quick-forge-ai-backend${{ steps.env-suffix.outputs.ENV_SUFFIX }}
-            ghcr.io/${{ github.repository_owner }}/quick-forge-ai-backend${{ steps.env-suffix.outputs.ENV_SUFFIX }}
+            docker.io/${{ github.repository_owner }}/nexus-backend${{ steps.env-suffix.outputs.ENV_SUFFIX }}
+            registry.cn-hangzhou.aliyuncs.com/${{ github.repository_owner }}/nexus-backend${{ steps.env-suffix.outputs.ENV_SUFFIX }}
+            ghcr.io/${{ github.repository_owner }}/nexus-backend${{ steps.env-suffix.outputs.ENV_SUFFIX }}
           tags: |
             type=ref,event=tag
             type=schedule
@@ -146,9 +146,9 @@ jobs:
         uses: docker/metadata-action@v5.7.0
         with:
           images: |
-            docker.io/${{ github.repository_owner }}/quick-forge-ai-frontend${{ steps.set-env.outputs.ENV_SUFFIX }}
-            registry.cn-hangzhou.aliyuncs.com/${{ github.repository_owner }}/quick-forge-ai-frontend${{ steps.set-env.outputs.ENV_SUFFIX }}
-            ghcr.io/${{ github.repository_owner }}/quick-forge-ai-frontend${{ steps.set-env.outputs.ENV_SUFFIX }}
+            docker.io/${{ github.repository_owner }}/nexus-frontend${{ steps.set-env.outputs.ENV_SUFFIX }}
+            registry.cn-hangzhou.aliyuncs.com/${{ github.repository_owner }}/nexus-frontend${{ steps.set-env.outputs.ENV_SUFFIX }}
+            ghcr.io/${{ github.repository_owner }}/nexus-frontend${{ steps.set-env.outputs.ENV_SUFFIX }}
           tags: |
             type=ref,event=tag
             type=schedule
@@ -223,9 +223,9 @@ jobs:
         uses: docker/metadata-action@v5.7.0
         with:
           images: |
-            docker.io/${{ github.repository_owner }}/quick-forge-ai-playwright${{ steps.set-env-playwright.outputs.ENV_SUFFIX }}
-            registry.cn-hangzhou.aliyuncs.com/${{ github.repository_owner }}/quick-forge-ai-playwright${{ steps.set-env-playwright.outputs.ENV_SUFFIX }}
-            ghcr.io/${{ github.repository_owner }}/quick-forge-ai-playwright${{ steps.set-env-playwright.outputs.ENV_SUFFIX }}
+            docker.io/${{ github.repository_owner }}/nexus-playwright${{ steps.set-env-playwright.outputs.ENV_SUFFIX }}
+            registry.cn-hangzhou.aliyuncs.com/${{ github.repository_owner }}/nexus-playwright${{ steps.set-env-playwright.outputs.ENV_SUFFIX }}
+            ghcr.io/${{ github.repository_owner }}/nexus-playwright${{ steps.set-env-playwright.outputs.ENV_SUFFIX }}
           tags: |
             type=ref,event=tag
             type=schedule
@@ -290,9 +290,9 @@ jobs:
         uses: docker/metadata-action@v5.7.0
         with:
           images: |
-            docker.io/${{ github.repository_owner }}/quick-forge-ai-docs${{ steps.set-env-docs.outputs.ENV_SUFFIX }}
-            registry.cn-hangzhou.aliyuncs.com/${{ github.repository_owner }}/quick-forge-ai-docs${{ steps.set-env-docs.outputs.ENV_SUFFIX }}
-            ghcr.io/${{ github.repository_owner }}/quick-forge-ai-docs${{ steps.set-env-docs.outputs.ENV_SUFFIX }}
+            docker.io/${{ github.repository_owner }}/nexus-docs${{ steps.set-env-docs.outputs.ENV_SUFFIX }}
+            registry.cn-hangzhou.aliyuncs.com/${{ github.repository_owner }}/nexus-docs${{ steps.set-env-docs.outputs.ENV_SUFFIX }}
+            ghcr.io/${{ github.repository_owner }}/nexus-docs${{ steps.set-env-docs.outputs.ENV_SUFFIX }}
           tags: |
             type=ref,event=tag
             type=schedule

@@ -29,7 +29,7 @@ jobs:
 
       - name: Setup Doppler project & download secrets to .env
         run: |
-          doppler setup --silent --project quick-forge-ai --config stg
+          doppler setup --silent --project nexus --config stg
           doppler secrets download --no-file --format env > .env
 
         env:

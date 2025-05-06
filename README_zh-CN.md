@@ -304,8 +304,8 @@ graph TD
 
 ```bash
 # 克隆仓库
-git clone https://github.com/telepace/quick-forge-ai.git
-cd quick-forge-ai
+git clone https://github.com/telepace/nexus.git
+cd nexus
 
 # 使用自动脚本设置
 ./setup.sh
@@ -367,7 +367,7 @@ pnpm test
 ## 📦 项目结构
 
 ```
-quick-forge-ai/
+nexus/
 ├── .github/                # GitHub工作流和模板
 ├── backend/                # FastAPI应用
 │   ├── app/                # API代码
@@ -487,7 +487,7 @@ QuickForge AI使集成各种AI服务变得简单：
 
 ```bash
 # 添加模板作为远程
-git remote add template https://github.com/telepace/quick-forge-ai.git
+git remote add template https://github.com/telepace/nexus.git
 
 # 拉取更改（不自动合并）
 git pull --no-commit template main

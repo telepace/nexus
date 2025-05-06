@@ -1,4 +1,4 @@
-# Quick Forge AI - Backend
+# nexus - Backend
 
 ## Requirements
 

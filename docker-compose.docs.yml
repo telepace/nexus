@@ -5,8 +5,8 @@ services:
     build:
       context: ./website
       dockerfile: Dockerfile
-    image: ${DOCKER_USERNAME:-user}/quick-forge-ai-docs:latest
-    container_name: quick-forge-ai-docs
+    image: ${DOCKER_USERNAME:-user}/nexus-docs:latest
+    container_name: nexus-docs
     ports:
       - "3000:3000"
     restart: unless-stopped

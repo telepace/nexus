@@ -1,4 +1,4 @@
-app = "quick-forge-ai-backend"
+app = "nexus-backend"
 primary_region = "iad" # Change to your preferred region
 kill_signal = "SIGINT"
 kill_timeout = "5s"

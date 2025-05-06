@@ -1,4 +1,4 @@
-# Copyright 2023 Quick Forge AI. All rights reserved.
+# Copyright 2023 nexus. All rights reserved.
 # Use of this source code is governed by a MIT style
 # license that can be found in the LICENSE file.
 
@@ -37,9 +37,9 @@ GIT_COMMIT := $(shell git rev-parse HEAD 2>/dev/null || echo "unknown")
 
 # ==============================================================================
 # Docker images 
-BACKEND_IMG ?= quick-forge-ai/backend:$(VERSION)
-FRONTEND_IMG ?= quick-forge-ai/frontend:$(VERSION)
-WEBSITE_IMG ?= quick-forge-ai/website:$(VERSION)
+BACKEND_IMG ?= nexus/backend:$(VERSION)
+FRONTEND_IMG ?= nexus/frontend:$(VERSION)
+WEBSITE_IMG ?= nexus/website:$(VERSION)
 
 # ==============================================================================
 # Python settings
@@ -224,19 +224,19 @@ docker-push: docker-build
 .PHONY: helm-install
 helm-install:
 	@echo "===========> Installing Helm chart"
-	@helm install quick-forge-ai $(ROOT_DIR)/helm-charts/quick-forge-ai
+	@helm install nexus $(ROOT_DIR)/helm-charts/nexus
 
 ## helm-upgrade: Upgrade Helm chart
 .PHONY: helm-upgrade
 helm-upgrade:
 	@echo "===========> Upgrading Helm chart"
-	@helm upgrade quick-forge-ai $(ROOT_DIR)/helm-charts/quick-forge-ai
+	@helm upgrade nexus $(ROOT_DIR)/helm-charts/nexus
 
 ## helm-uninstall: Uninstall Helm chart
 .PHONY: helm-uninstall
 helm-uninstall:
 	@echo "===========> Uninstalling Helm chart"
-	@helm uninstall quick-forge-ai
+	@helm uninstall nexus
 
 ## lint: Run linters on all components
 .PHONY: lint

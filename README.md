@@ -71,8 +71,8 @@ A production-ready fullstack template combining FastAPI (Python) and TypeScript 
 
 ```bash
 # Clone the repository
-git clone https://github.com/telepace/quick-forge-ai.git
-cd quick-forge-ai
+git clone https://github.com/telepace/nexus.git
+cd nexus
 
 # Setup using the automatic script
 ./setup.sh
@@ -134,7 +134,7 @@ pnpm test
 ## 📦 Project Structure
 
 ```
-quick-forge-ai/
+nexus/
 ├── .github/                # GitHub workflows and templates
 ├── backend/                # FastAPI application
 │   ├── app/                # API code
@@ -276,7 +276,7 @@ If you want to get updates from the template in the future:
 
 ```bash
 # Add the template as a remote
-git remote add template https://github.com/telepace/quick-forge-ai.git
+git remote add template https://github.com/telepace/nexus.git
 
 # Pull changes (without auto-merge)
 git pull --no-commit template main
@@ -306,7 +306,7 @@ See the [development guide](development.md) for instructions on setting up the d
 
 ## Database Configuration Options
 
-Quick Forge AI supports two database deployment options:
+nexus supports two database deployment options:
 
 1. **Direct PostgreSQL Deployment (Default)**: A PostgreSQL database is deployed alongside your application.
 2. **Supabase Cloud Service**: Connect to a Supabase PostgreSQL database instance.

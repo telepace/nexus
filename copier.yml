@@ -1,7 +1,7 @@
 project_name:
   type: str
   help: The name of the project, shown to API users (in .env)
-  default: Quick Forge AI
+  default: nexus
 
 stack_name:
   type: str
@@ -14,7 +14,7 @@ secret_key:
     'The secret key for the project, used for security,
     stored in .env, you can generate one with:
     python -c "import secrets; print(secrets.token_urlsafe(32))"'
-  default: quickforgeai
+  default: nexus
 
 first_superuser:
   type: str
@@ -24,7 +24,7 @@ first_superuser:
 first_superuser_password:
   type: str
   help: The password of the first superuser (in .env)
-  default: quickforgeai
+  default: nexus
 
 smtp_host:
   type: str
@@ -52,7 +52,7 @@ postgres_password:
     'The password for the PostgreSQL database, stored in .env,
     you can generate one with:
     python -c "import secrets; print(secrets.token_urlsafe(32))"'
-  default: quickforgeai
+  default: nexus
 
 sentry_dsn:
   type: str

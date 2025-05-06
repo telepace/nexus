@@ -14,7 +14,7 @@ docker compose watch
 
 1. 当镜像不存在时：
    - 如果环境变量`DOCKER_IMAGE_BACKEND`或`DOCKER_IMAGE_FRONTEND`已设置，Docker会尝试拉取这些变量指定的镜像
-   - 如果变量未设置，则使用默认值（`telepace/quick-forge-ai-backend`或`telepace/quick-forge-ai-frontend`）拉取镜像
+   - 如果变量未设置，则使用默认值（`telepace/nexus-backend`或`telepace/nexus-frontend`）拉取镜像
    - 如果拉取失败，则使用`build`指令从本地构建
 
 2. 强制构建场景：
@@ -25,7 +25,7 @@ docker compose watch
 3. 使用已有本地镜像：
    - 如果本地已有指定的镜像（包括标签匹配），Docker会直接使用，不会拉取或构建
 
-配置中的`${DOCKER_IMAGE_BACKEND:-telepace/quick-forge-ai-backend}`格式表示变量替换与默认值。
+配置中的`${DOCKER_IMAGE_BACKEND:-telepace/nexus-backend}`格式表示变量替换与默认值。
 
 * 现在你可以打开浏览器并与这些URL交互：
 
