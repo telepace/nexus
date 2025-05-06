@@ -105,6 +105,7 @@ def test_reset_password(client: TestClient, db: Session) -> None:
 def test_reset_password_invalid_token(
     client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:
+    """Test invalid password reset token."""
     data = {"new_password": "nexus", "token": "invalid"}
     r = client.post(
         f"{settings.API_V1_STR}/reset-password/",
