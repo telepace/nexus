@@ -4,6 +4,9 @@ export const config: PlasmoCSConfig = {
   matches: ["https://*/*"]
 }
 
+/**
+ * Renders a fixed-width sidebar with navigation links and a button.
+ */
 const Sidebar = () => {
   return (
     <div
