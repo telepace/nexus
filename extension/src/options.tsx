@@ -8,6 +8,9 @@ interface Settings {
   notifications: boolean
 }
 
+/**
+ * Renders a settings page for the Nexus Extension, allowing users to configure API key, theme, and notifications.
+ */
 function OptionsPage() {
   const [settings, setSettings] = useState<Settings>({
     apiKey: "",
@@ -17,6 +20,9 @@ function OptionsPage() {
 
   useEffect(() => {
     // 加载设置
+    /**
+     * Loads settings from storage and updates them if available.
+     */
     const loadSettings = async () => {
       const storedSettings = await Storage.get<Settings>("settings")
       if (storedSettings) {
@@ -27,6 +33,9 @@ function OptionsPage() {
     loadSettings()
   }, [])
 
+  /**
+   * Saves the current settings to storage and shows an alert.
+   */
   const saveSettings = async () => {
     await Storage.set("settings", settings)
     alert("设置已保存")
