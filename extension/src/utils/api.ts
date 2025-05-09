@@ -1,8 +1,7 @@
 import { Storage } from "./storage"
 
 /**
- * 获取 API 基础 URL
- * 优先级: 环境变量 > 存储设置 > 默认值
+ * Returns the base URL for API requests, using an environment variable if available, otherwise defaults to localhost.
  */
 const getBaseUrl = (): string => {
   // 如果 Plasmo 提供了环境变量，优先使用环境变量中的 API URL
@@ -27,7 +26,7 @@ export class ApiClient {
   }
 
   /**
-   * 从存储中加载 API 密钥
+   * Loads the API key from storage and assigns it to the instance variable.
    */
   private async loadApiKey() {
     try {
@@ -39,21 +38,21 @@ export class ApiClient {
   }
 
   /**
-   * 设置 API 密钥
+   * Sets the API key to be used for authentication.
    */
   public setApiKey(apiKey: string) {
     this.apiKey = apiKey
   }
 
   /**
-   * 设置基础 URL
+   * Sets the base URL for the service.
    */
   public setBaseUrl(url: string) {
     this.baseUrl = url
   }
 
   /**
-   * 构建请求头
+   * Builds HTTP request headers with optional authorization header if API key is present.
    */
   private buildHeaders(): HeadersInit {
     const headers: HeadersInit = {
@@ -68,7 +67,7 @@ export class ApiClient {
   }
 
   /**
-   * 发送 GET 请求
+   * 发送 GET 请求并返回解析后的 JSON 数据。
    */
   public async get<T>(endpoint: string): Promise<T> {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -84,7 +83,7 @@ export class ApiClient {
   }
 
   /**
-   * 发送 POST 请求
+   * Sends a POST request to the specified endpoint with JSON data.
    */
   public async post<T>(endpoint: string, data: any): Promise<T> {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -101,7 +100,7 @@ export class ApiClient {
   }
 
   /**
-   * 发送 PUT 请求
+   * 发送 PUT 请求到指定端点，并返回解析后的 JSON 响应。
    */
   public async put<T>(endpoint: string, data: any): Promise<T> {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -118,7 +117,7 @@ export class ApiClient {
   }
 
   /**
-   * 发送 DELETE 请求
+   * Sends a DELETE request to the specified endpoint and returns the parsed JSON response.
    */
   public async delete<T>(endpoint: string): Promise<T> {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
