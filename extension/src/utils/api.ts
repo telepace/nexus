@@ -1,7 +1,8 @@
 import { Storage } from "./storage"
 
 /**
- * Returns the base URL for API requests, using an environment variable if available, otherwise defaults to localhost.
+ * Returns the base URL for API requests, using an environment variable if available.
+ * Defaults to "http://localhost:8000/api" if no environment variable is set.
  */
 const getBaseUrl = (): string => {
   // 如果 Plasmo 提供了环境变量，优先使用环境变量中的 API URL
