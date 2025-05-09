@@ -6,6 +6,9 @@ export const config: PlasmoCSConfig = {
   all_frames: true
 }
 
+/**
+ * Content script component that logs a message when loaded.
+ */
 const ContentScript = () => {
   useEffect(() => {
     console.log("Nexus Extension 内容脚本已加载!")
