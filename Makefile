@@ -380,4 +380,19 @@ backend-shell: backend-install
 backend-db-shell:
 	@echo "===========> Connecting to database"
 	@docker-compose exec db psql -U postgres -d app || \
-	 psql "$(shell cd $(BACKEND_DIR) && python -c "from app.core.config import settings; print(settings.SQLALCHEMY_DATABASE_URI)")" 
+	 psql "$(shell cd $(BACKEND_DIR) && python -c "from app.core.config import settings; print(settings.SQLALCHEMY_DATABASE_URI)")"
+
+###################################=> extension commands <=#############################################
+.PHONY: extension-dev extension-build extension-package
+
+## Extension: Run the browser extension in development mode
+extension-dev:
+	cd extension && npm run dev
+
+## Extension: Build the browser extension for production
+extension-build:
+	cd extension && npm run build
+
+## Extension: Package the browser extension for distribution
+extension-package:
+	cd extension && npm run package 

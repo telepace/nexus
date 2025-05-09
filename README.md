@@ -28,6 +28,7 @@ A production-ready fullstack template combining FastAPI (Python) and TypeScript 
 - **Email Integration**: Password recovery and notification system
 - **Dark Mode Support**: Modern UI with light/dark theme switching
 - **Database Migrations**: Automatic schema management with Alembic
+- **Browser Extension**: Plasmo-powered browser extension for quick access and enhanced functionality
 
 ## 📋 Tech Stack
 
@@ -49,6 +50,12 @@ A production-ready fullstack template combining FastAPI (Python) and TypeScript 
 - Jest and React Testing Library for testing
 - Playwright for End-to-End testing
 - pnpm for package management
+
+### Browser Extension
+- Plasmo framework for browser extension development
+- React with TypeScript for UI components
+- Chrome storage API for data persistence
+- Content scripts for webpage integration
 
 ### DevOps & Tools
 - GitHub Actions for CI/CD
@@ -92,6 +99,43 @@ pnpm install
 
 # Start development servers
 docker-compose up  # Starts everything
+```
+
+### Browser Extension Development
+
+To work on the browser extension:
+
+```bash
+# Setup extension dependencies
+cd extension
+npm install
+
+# Start extension development server
+npm run dev
+# Or using make command from project root
+make extension-dev
+```
+
+The development server will package the extension and provide instructions for loading it into your browser.
+
+To build the extension for production:
+
+```bash
+# Build extension
+cd extension
+npm run build
+# Or using make command from project root
+make extension-build
+```
+
+For packaging the extension for distribution:
+
+```bash
+# Package extension as zip file
+cd extension
+npm run package
+# Or using make command from project root
+make extension-package
 ```
 
 ### Configuration
@@ -158,6 +202,14 @@ nexus/
 │   ├── tests/              # Frontend tests
 │   ├── package.json        # npm package config
 │   └── vite.config.ts      # Vite configuration
+├── extension/              # Browser extension (Plasmo)
+│   ├── src/                # Extension source code
+│   │   ├── components/     # Reusable components
+│   │   ├── pages/          # Extension pages
+│   │   └── utils/          # Utility functions
+│   ├── assets/             # Extension assets
+│   ├── package.json        # Extension dependencies
+│   └── tsconfig.json       # TypeScript configuration
 ├── e2e/                    # End-to-end tests with Playwright
 ├── docker/                 # Docker configuration
 │   ├── backend/            # Backend Dockerfile

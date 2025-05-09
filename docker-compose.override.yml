@@ -55,6 +55,11 @@ services:
     ports:
       - "${ADMINER_PORT:-8080}:8080"
 
+  pgadmin:
+    restart: "no"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+
   backend:
     restart: "no"
     ports:

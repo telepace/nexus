@@ -1,0 +1,46 @@
+{
+  "name": "nexus-extension",
+  "version": "0.0.1",
+  "description": "A browser extension for the Nexus platform using Plasmo framework",
+  "main": "index.js",
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "package": "plasmo package"
+  },
+  "keywords": [
+    "message",
+    "chatgpt",
+    "llm",
+    "extension",
+    "browser-extension",
+    "plasmo"
+  ],
+  "author": "cubxxw",
+  "license": "ISC",
+  "dependencies": {
+    "@plasmohq/messaging": "^0.7.1",
+    "plasmo": "^0.90.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.260",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.47",
+    "@types/react-dom": "^18.2.18",
+    "typescript": "^5.3.3"
+  },
+  "manifest": {
+    "name": "Nexus 助手",
+    "description": "Nexus 平台的浏览器扩展，提供快速访问和增强功能",
+    "host_permissions": [
+      "https://*/*"
+    ],
+    "permissions": [
+      "storage",
+      "tabs",
+      "activeTab"
+    ]
+  }
+}

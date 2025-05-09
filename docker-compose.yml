@@ -42,6 +42,34 @@ services:
       - traefik.http.routers.${STACK_NAME:-nexus}-adminer-https.tls.certresolver=le
       - traefik.http.services.${STACK_NAME:-nexus}-adminer.loadbalancer.server.port=${ADMINER_CONTAINER_PORT:-8080}
 
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    networks:
+      - traefik-public
+      - default
+    depends_on:
+      - db
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL:-admin@telepace.com}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD:-telepace}
+      - PGADMIN_CONFIG_SERVER_MODE=True
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.constraint-label=traefik-public
+      - traefik.http.routers.${STACK_NAME:-nexus}-pgadmin-http.rule=Host(`pgadmin.${DOMAIN:-localhost.nip.io}`)
+      - traefik.http.routers.${STACK_NAME:-nexus}-pgadmin-http.entrypoints=http
+      - traefik.http.routers.${STACK_NAME:-nexus}-pgadmin-http.middlewares=https-redirect
+      - traefik.http.routers.${STACK_NAME:-nexus}-pgadmin-https.rule=Host(`pgadmin.${DOMAIN:-localhost.nip.io}`)
+      - traefik.http.routers.${STACK_NAME:-nexus}-pgadmin-https.entrypoints=https
+      - traefik.http.routers.${STACK_NAME:-nexus}-pgadmin-https.tls=true
+      - traefik.http.routers.${STACK_NAME:-nexus}-pgadmin-https.tls.certresolver=le
+      - traefik.http.services.${STACK_NAME:-nexus}-pgadmin.loadbalancer.server.port=80
+
   prestart:
     image: '${DOCKER_IMAGE_BACKEND:-telepace/nexus-backend}:${TAG:-latest}'
     build:
@@ -168,6 +196,7 @@ services:
       - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.middlewares=https-redirect
 volumes:
   app-db-data:
+  pgadmin-data:
 
 networks:
   traefik-public:

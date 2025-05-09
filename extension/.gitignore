@@ -1,0 +1,38 @@
+# 依赖
+node_modules/
+.pnp/
+.pnp.js
+
+# 测试
+coverage/
+
+# 构建
+build/
+.plasmo/
+dist/
+out/
+
+# 其他
+*.log
+*.local
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 编辑器
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 打包文件
+*.crx
+*.pem
+*.zip 
