@@ -8,6 +8,9 @@ interface ButtonProps {
   style?: React.CSSProperties
 }
 
+/**
+ * A functional React component that renders a styled button with optional primary styling and disabled state.
+ */
 const Button: React.FC<ButtonProps> = ({
   children,
   onClick,
