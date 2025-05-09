@@ -1,5 +1,8 @@
 import { useState } from "react"
 
+/**
+ * A functional component that renders a simple popup with a count button.
+ */
 function IndexPopup() {
   const [count, setCount] = useState(0)
 
