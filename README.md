@@ -1,7 +1,7 @@
 # QuickForge AI
 
 <div align="center">
-  
+
 ![QuickForge AI](https://images.shields.io/badge/QuickForge-AI-blue)
 ![FastAPI](https://images.shields.io/badge/FastAPI-0.104.0-green)
 ![TypeScript](https://images.shields.io/badge/TypeScript-5.2.2-blue)

@@ -91,17 +91,17 @@ class Settings(BaseSettings):
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
         # Return different connection URI based on database type
         """Returns the SQLAlchemy database URI based on the configured database type.
-        
+
         This method constructs a connection URI using either Supabase's PostgreSQL
         configuration or standard PostgreSQL settings. It handles URL encoding for
         passwords to ensure compatibility with special characters and logs the port
         used for Supabase connections. The connection URI is built using the
         `MultiHostUrl` class, specifying the scheme, username, password, host, port,
         and database name.
-        
+
         Args:
             self: An instance of the class containing the configuration attributes.
-        
+
         Returns:
             A PostgresDsn object representing the constructed database URI.
         """
