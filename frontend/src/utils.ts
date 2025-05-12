@@ -46,10 +46,36 @@ export const confirmPasswordRules = (
 
 export const handleError = (err: ApiError) => {
   const { showErrorToast } = useCustomToast()
-  const errDetail = (err.body as any)?.detail
-  let errorMessage = errDetail || "Something went wrong."
-  if (Array.isArray(errDetail) && errDetail.length > 0) {
-    errorMessage = errDetail[0].msg
+  
+  // 优先使用errorMessage属性
+  if (err.errorMessage) {
+    showErrorToast(err.errorMessage)
+    return
   }
-  showErrorToast(errorMessage)
+  
+  // 处理新的API响应格式
+  if (typeof err.body === 'object' && err.body !== null) {
+    const responseBody = err.body as any
+    
+    // 检查是否是新的API响应格式
+    if (responseBody.error) {
+      // 直接使用error字段的内容作为错误消息
+      showErrorToast(responseBody.error)
+      return
+    }
+    
+    // 兼容旧格式
+    if (responseBody.detail) {
+      const errDetail = responseBody.detail
+      let errorMessage = errDetail
+      if (Array.isArray(errDetail) && errDetail.length > 0) {
+        errorMessage = errDetail[0].msg
+      }
+      showErrorToast(errorMessage)
+      return
+    }
+  }
+  
+  // 默认错误处理
+  showErrorToast("发生未知错误，请稍后重试")
 }

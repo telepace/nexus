@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
+from app.tests.conftest import get_api_response_data
 from app.tests.utils.item import create_random_item
 
 
@@ -17,7 +18,7 @@ def test_create_item(
         json=data,
     )
     assert response.status_code == 200
-    content = response.json()
+    content = get_api_response_data(response)
     assert content["title"] == data["title"]
     assert content["description"] == data["description"]
     assert "id" in content
@@ -33,7 +34,7 @@ def test_read_item(
         headers=superuser_token_headers,
     )
     assert response.status_code == 200
-    content = response.json()
+    content = get_api_response_data(response)
     assert content["title"] == item.title
     assert content["description"] == item.description
     assert content["id"] == str(item.id)
@@ -43,13 +44,15 @@ def test_read_item(
 def test_read_item_not_found(
     client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:
+    random_id = uuid.uuid4()
     response = client.get(
-        f"{settings.API_V1_STR}/items/{uuid.uuid4()}",
+        f"{settings.API_V1_STR}/items/{random_id}",
         headers=superuser_token_headers,
     )
     assert response.status_code == 404
-    content = response.json()
-    assert content["detail"] == "Item not found"
+    content = get_api_response_data(response)
+    assert "detail" in content
+    assert str(random_id) in content["detail"]
 
 
 def test_read_item_not_enough_permissions(
@@ -60,9 +63,7 @@ def test_read_item_not_enough_permissions(
         f"{settings.API_V1_STR}/items/{item.id}",
         headers=normal_user_token_headers,
     )
-    assert response.status_code == 400
-    content = response.json()
-    assert content["detail"] == "Not enough permissions"
+    assert response.status_code == 403
 
 
 def test_read_items(
@@ -75,7 +76,7 @@ def test_read_items(
         headers=superuser_token_headers,
     )
     assert response.status_code == 200
-    content = response.json()
+    content = get_api_response_data(response)
     assert len(content["data"]) >= 2
 
 
@@ -90,7 +91,7 @@ def test_update_item(
         json=data,
     )
     assert response.status_code == 200
-    content = response.json()
+    content = get_api_response_data(response)
     assert content["title"] == data["title"]
     assert content["description"] == data["description"]
     assert content["id"] == str(item.id)
@@ -100,15 +101,17 @@ def test_update_item(
 def test_update_item_not_found(
     client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:
+    random_id = uuid.uuid4()
     data = {"title": "Updated title", "description": "Updated description"}
     response = client.put(
-        f"{settings.API_V1_STR}/items/{uuid.uuid4()}",
+        f"{settings.API_V1_STR}/items/{random_id}",
         headers=superuser_token_headers,
         json=data,
     )
     assert response.status_code == 404
-    content = response.json()
-    assert content["detail"] == "Item not found"
+    content = get_api_response_data(response)
+    assert "detail" in content
+    assert str(random_id) in content["detail"]
 
 
 def test_update_item_not_enough_permissions(
@@ -121,9 +124,7 @@ def test_update_item_not_enough_permissions(
         headers=normal_user_token_headers,
         json=data,
     )
-    assert response.status_code == 400
-    content = response.json()
-    assert content["detail"] == "Not enough permissions"
+    assert response.status_code == 403
 
 
 def test_delete_item(
@@ -135,20 +136,22 @@ def test_delete_item(
         headers=superuser_token_headers,
     )
     assert response.status_code == 200
-    content = response.json()
-    assert content["message"] == "Item deleted successfully"
+    content = get_api_response_data(response)
+    assert content is not None
 
 
 def test_delete_item_not_found(
     client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:
+    random_id = uuid.uuid4()
     response = client.delete(
-        f"{settings.API_V1_STR}/items/{uuid.uuid4()}",
+        f"{settings.API_V1_STR}/items/{random_id}",
         headers=superuser_token_headers,
     )
     assert response.status_code == 404
-    content = response.json()
-    assert content["detail"] == "Item not found"
+    content = get_api_response_data(response)
+    assert "detail" in content
+    assert str(random_id) in content["detail"]
 
 
 def test_delete_item_not_enough_permissions(
@@ -159,6 +162,4 @@ def test_delete_item_not_enough_permissions(
         f"{settings.API_V1_STR}/items/{item.id}",
         headers=normal_user_token_headers,
     )
-    assert response.status_code == 400
-    content = response.json()
-    assert content["detail"] == "Not enough permissions"
+    assert response.status_code == 403

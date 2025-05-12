@@ -1,9 +1,17 @@
 import uuid
+from typing import Any, Generic, TypeVar
 
 from pydantic import EmailStr
 from sqlalchemy import String
 from sqlmodel import Column, Field, Relationship, SQLModel
 
+T = TypeVar('T')
+
+# API Response model
+class ApiResponse(SQLModel, Generic[T]):
+    data: T | None = None
+    meta: dict[str, Any] | None = None
+    error: str | None = None
 
 # Shared properties
 class UserBase(SQLModel):
