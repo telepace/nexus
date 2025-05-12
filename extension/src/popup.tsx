@@ -1,11 +1,11 @@
 import { useState } from "react"
+import { AuthProvider } from "./utils/authContext"
+import Auth from "./components/Auth"
 
 /**
  * A functional component that renders a simple popup with a count button.
  */
 function IndexPopup() {
-  const [count, setCount] = useState(0)
-
   return (
     <div
       style={{
@@ -14,13 +14,11 @@ function IndexPopup() {
         padding: 16,
         width: 320
       }}>
-      <h1>Nexus Extension</h1>
-      <p>这是 Nexus 平台的浏览器插件</p>
-      <button
-        onClick={() => setCount(count + 1)}
-        style={{ marginTop: 16 }}>
-        计数: {count}
-      </button>
+      <h1 style={{ textAlign: "center", marginBottom: "1rem" }}>Nexus 插件</h1>
+      
+      <AuthProvider>
+        <Auth />
+      </AuthProvider>
     </div>
   )
 }

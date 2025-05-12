@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
+    "build-simple": "esbuild src/popup.tsx src/content.tsx src/background.ts src/options.tsx --bundle --outdir=dist --target=es2020 --loader:.tsx=tsx --loader:.ts=ts --format=esm",
+    "generate-extension": "node scripts/generate-extension.js",
+    "build-extension": "npm run build-simple && npm run generate-extension",
+    "build-complete": "node scripts/build-with-assets.js",
     "package": "plasmo package"
   },
   "keywords": [
@@ -20,16 +24,22 @@
   "license": "ISC",
   "dependencies": {
     "@plasmohq/messaging": "^0.7.1",
+    "cross-env": "^7.0.3",
     "plasmo": "^0.90.3",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "sharp": "0.31.3"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.260",
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.47",
     "@types/react-dom": "^18.2.18",
+    "esbuild": "^0.20.0",
     "typescript": "^5.3.3"
+  },
+  "overrides": {
+    "sharp": "0.31.3"
   },
   "manifest": {
     "name": "Nexus 助手",
@@ -41,6 +51,9 @@
       "storage",
       "tabs",
       "activeTab"
-    ]
+    ],
+    "icons": {
+      "skipIconParsing": true
+    }
   }
 }
