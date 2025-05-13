@@ -43,3 +43,4 @@ docs/generated/
 
 # If needed, you can un-ignore certain important files
 !important.config.js
+!.env.example
