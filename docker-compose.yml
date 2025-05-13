@@ -11,6 +11,7 @@ services:
       timeout: 10s
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
+      - ./litellm/init-litellm-db.sql:/docker-entrypoint-initdb.d/init-litellm-db.sql
     env_file:
       - .env
     environment:
@@ -194,9 +195,90 @@ services:
 
       # Enable redirection for HTTP and HTTPS
       - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.middlewares=https-redirect
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    networks:
+      - traefik-public
+      - default
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-stable
+    restart: always
+    networks:
+      - traefik-public
+      - default
+    volumes:
+      - ./litellm/config.yaml:${LITELLM_CONFIG_PATH:-/app/config.yaml}
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:telepace@db/litellm}
+      - STORE_MODEL_IN_DB=${LITELLM_STORE_MODEL_IN_DB:-True}
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health/liveliness || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.constraint-label=traefik-public
+      - traefik.http.services.${STACK_NAME:-nexus}-litellm.loadbalancer.server.port=4000
+      - traefik.http.routers.${STACK_NAME:-nexus}-litellm-http.rule=Host(`llm.${DOMAIN:-localhost.nip.io}`)
+      - traefik.http.routers.${STACK_NAME:-nexus}-litellm-http.entrypoints=http
+      - traefik.http.routers.${STACK_NAME:-nexus}-litellm-http.middlewares=https-redirect
+      - traefik.http.routers.${STACK_NAME:-nexus}-litellm-https.rule=Host(`llm.${DOMAIN:-localhost.nip.io}`)
+      - traefik.http.routers.${STACK_NAME:-nexus}-litellm-https.entrypoints=https
+      - traefik.http.routers.${STACK_NAME:-nexus}-litellm-https.tls=true
+      - traefik.http.routers.${STACK_NAME:-nexus}-litellm-https.tls.certresolver=le
+
+  prometheus:
+    image: prom/prometheus
+    restart: always
+    networks:
+      - traefik-public
+      - default
+    volumes:
+      - prometheus-data:/prometheus
+      - ./litellm/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.constraint-label=traefik-public
+      - traefik.http.services.${STACK_NAME:-nexus}-prometheus.loadbalancer.server.port=9090
+      - traefik.http.routers.${STACK_NAME:-nexus}-prometheus-http.rule=Host(`prometheus.${DOMAIN:-localhost.nip.io}`)
+      - traefik.http.routers.${STACK_NAME:-nexus}-prometheus-http.entrypoints=http
+      - traefik.http.routers.${STACK_NAME:-nexus}-prometheus-http.middlewares=https-redirect,admin-auth
+      - traefik.http.routers.${STACK_NAME:-nexus}-prometheus-https.rule=Host(`prometheus.${DOMAIN:-localhost.nip.io}`)
+      - traefik.http.routers.${STACK_NAME:-nexus}-prometheus-https.entrypoints=https
+      - traefik.http.routers.${STACK_NAME:-nexus}-prometheus-https.tls=true
+      - traefik.http.routers.${STACK_NAME:-nexus}-prometheus-https.tls.certresolver=le
+      - traefik.http.routers.${STACK_NAME:-nexus}-prometheus-https.middlewares=admin-auth
+
 volumes:
   app-db-data:
   pgadmin-data:
+  prometheus-data:
+  redis-data:
 
 networks:
   traefik-public:

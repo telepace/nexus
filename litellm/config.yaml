@@ -1,0 +1,36 @@
+# LiteLLM Configuration File
+general_settings:
+  completion_model: gpt-3.5-turbo
+  database_url: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-telepace}@db:5432/${LITELLM_DB_NAME:-litellm}
+  drop_params: false
+  environment_variables:
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+model_list:
+  - model_name: gpt-3.5-turbo
+    litellm_params:
+      model: gpt-3.5-turbo
+      api_key: ${OPENAI_API_KEY}
+  
+  - model_name: gpt-4
+    litellm_params:
+      model: gpt-4
+      api_key: ${OPENAI_API_KEY}
+  
+  - model_name: claude-3-opus
+    litellm_params:
+      model: claude-3-opus-20240229
+      api_key: ${ANTHROPIC_API_KEY}
+
+litellm_settings:
+  success_callback: ["prometheus"]
+  cache: true
+  cache_params:
+    type: "redis"
+    host: "redis"
+    port: 6379
+  allowed_methods: ["POST", "GET"]
+
+prometheus:
+  collection_interval_seconds: 15 

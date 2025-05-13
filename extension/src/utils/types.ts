@@ -41,4 +41,61 @@ export interface AuthState {
   token: string | null;
   loading: boolean;
   error: string | null;
+}
+
+/**
+ * LiteLLM 类型定义
+ */
+
+// LiteLLM 模型信息
+export interface LiteLLMModel {
+  id: string;
+  object: string;
+  created: number;
+  owned_by: string;
+}
+
+// LiteLLM 消息
+export interface LiteLLMMessage {
+  role: "system" | "user" | "assistant" | "function";
+  content: string;
+  name?: string;
+}
+
+// LiteLLM 聊天请求
+export interface LiteLLMChatRequest {
+  model: string;
+  messages: LiteLLMMessage[];
+  temperature?: number;
+  top_p?: number;
+  n?: number;
+  stream?: boolean;
+  max_tokens?: number;
+  presence_penalty?: number;
+  frequency_penalty?: number;
+  user?: string;
+}
+
+// LiteLLM 聊天响应中的选择
+export interface LiteLLMChoice {
+  index: number;
+  message: LiteLLMMessage;
+  finish_reason: string;
+}
+
+// LiteLLM 使用情况
+export interface LiteLLMUsage {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+}
+
+// LiteLLM 聊天响应
+export interface LiteLLMChatResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: LiteLLMChoice[];
+  usage: LiteLLMUsage;
 } 

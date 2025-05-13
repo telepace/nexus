@@ -134,6 +134,24 @@ services:
     ports:
       - ${PLAYWRIGHT_PORT:-9323}:9323
 
+  redis:
+    restart: "no"
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+
+  litellm:
+    restart: "no"
+    ports:
+      - "${LITELLM_PORT:-4000}:4000"
+    volumes:
+      - ./litellm/config.yaml:${LITELLM_CONFIG_PATH:-/app/config.yaml}
+      - ./litellm/startup.sh:/startup.sh
+
+  prometheus:
+    restart: "no"
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+
 networks:
   traefik-public:
     # For local dev, don't expect an external Traefik network

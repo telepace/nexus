@@ -1,5 +1,5 @@
 import { Storage } from "./storage"
-import { ApiError, LoginRequest, LoginResponse, RegisterRequest, User } from "./types"
+import { ApiError, LoginRequest, LoginResponse, RegisterRequest, User, LiteLLMModel, LiteLLMChatRequest, LiteLLMChatResponse } from "./types"
 
 // 存储令牌的键名
 const TOKEN_STORAGE_KEY = "auth_token"
@@ -17,14 +17,24 @@ const getBaseUrl = (): string => {
 }
 
 /**
+ * Returns the base URL for LiteLLM API requests
+ */
+const getLiteLLMBaseUrl = (): string => {
+  // 默认使用 localhost
+  return "http://localhost:4000"
+}
+
+/**
  * API 工具类，用于与 Nexus 后端通信
  */
 export class ApiClient {
   private baseUrl: string
+  private litellmBaseUrl: string
   private token: string | null = null
 
-  constructor(baseUrl = getBaseUrl()) {
+  constructor(baseUrl = getBaseUrl(), litellmBaseUrl = getLiteLLMBaseUrl()) {
     this.baseUrl = baseUrl
+    this.litellmBaseUrl = litellmBaseUrl
     this.loadToken()
   }
 
@@ -79,6 +89,13 @@ export class ApiClient {
   }
 
   /**
+   * Sets the base URL for the LiteLLM service.
+   */
+  public setLiteLLMBaseUrl(url: string) {
+    this.litellmBaseUrl = url
+  }
+
+  /**
    * Builds HTTP request headers with optional authorization header if API key is present.
    */
   private buildHeaders(): HeadersInit {
@@ -95,21 +112,6 @@ export class ApiClient {
 
   /**
    * 处理 API 错误
-   */
-  private async handleResponseError(response: Response): Promise<never> {
-    try {
-      const errorData = await response.json() as ApiError
-      throw new Error(errorData.detail || `API 请求失败: ${response.status}`)
-    } catch (e) {
-      if (e instanceof Error) {
-        throw e
-      }
-      throw new Error(`API 请求失败: ${response.status} ${response.statusText}`)
-    }
-  }
-
-  /**
-   * 处理 API 错
    */
   private async handleResponseError(response: Response): Promise<never> {
     try {
@@ -237,6 +239,68 @@ export class ApiClient {
    */
   public logout(): void {
     this.clearToken()
+  }
+
+  /**
+   * LiteLLM API 方法
+   */
+
+  /**
+   * 获取所有可用的 LLM 模型
+   */
+  public async getModels(): Promise<LiteLLMModel[]> {
+    const response = await fetch(`${this.litellmBaseUrl}/models`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": this.token ? `Bearer ${this.token}` : ""
+      }
+    })
+
+    if (!response.ok) {
+      await this.handleResponseError(response)
+    }
+
+    const data = await response.json()
+    return data.data as LiteLLMModel[]
+  }
+
+  /**
+   * 发送聊天请求到 LiteLLM API
+   */
+  public async chatCompletion(request: LiteLLMChatRequest): Promise<LiteLLMChatResponse> {
+    const response = await fetch(`${this.litellmBaseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": this.token ? `Bearer ${this.token}` : ""
+      },
+      body: JSON.stringify(request)
+    })
+
+    if (!response.ok) {
+      await this.handleResponseError(response)
+    }
+
+    return response.json() as Promise<LiteLLMChatResponse>
+  }
+
+  /**
+   * 获取 LiteLLM 健康状态
+   */
+  public async getLiteLLMHealth(): Promise<{ status: string }> {
+    const response = await fetch(`${this.litellmBaseUrl}/health`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+
+    if (!response.ok) {
+      await this.handleResponseError(response)
+    }
+
+    return response.json() as Promise<{ status: string }>
   }
 }
 
