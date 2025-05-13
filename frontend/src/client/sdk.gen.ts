@@ -53,7 +53,7 @@ export class ItemsService {
    * @param data The data for the request.
    * @param data.skip
    * @param data.limit
-   * @returns ItemsPublic Successful Response
+   * @returns ApiResponse_ItemsPublic_ Successful Response
    * @throws ApiError
    */
   public static readItems(
@@ -77,7 +77,7 @@ export class ItemsService {
    * Create new item.
    * @param data The data for the request.
    * @param data.requestBody
-   * @returns ItemPublic Successful Response
+   * @returns ApiResponse_ItemPublic_ Successful Response
    * @throws ApiError
    */
   public static createItem(
@@ -99,7 +99,7 @@ export class ItemsService {
    * Get item by ID.
    * @param data The data for the request.
    * @param data.id
-   * @returns ItemPublic Successful Response
+   * @returns ApiResponse_ItemPublic_ Successful Response
    * @throws ApiError
    */
   public static readItem(
@@ -123,7 +123,7 @@ export class ItemsService {
    * @param data The data for the request.
    * @param data.id
    * @param data.requestBody
-   * @returns ItemPublic Successful Response
+   * @returns ApiResponse_ItemPublic_ Successful Response
    * @throws ApiError
    */
   public static updateItem(
@@ -148,7 +148,7 @@ export class ItemsService {
    * Delete an item.
    * @param data The data for the request.
    * @param data.id
-   * @returns Message Successful Response
+   * @returns ApiResponse_NoneType_ Successful Response
    * @throws ApiError
    */
   public static deleteItem(

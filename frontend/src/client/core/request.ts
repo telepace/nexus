@@ -244,18 +244,9 @@ export const getResponseHeader = (
 
 export const getResponseBody = (response: AxiosResponse<unknown>): unknown => {
   if (response.status !== 204) {
-    const responseData = response.data;
-    
-    if (responseData && 
-        typeof responseData === 'object' && 
-        'data' in responseData && 
-        (('meta' in responseData) || ('error' in responseData))) {
-      return (responseData as any).data;
-    }
-    
-    return response.data;
+    return response.data
   }
-  return undefined;
+  return undefined
 }
 
 export const catchErrorCodes = (
@@ -308,15 +299,7 @@ export const catchErrorCodes = (
 
   const error = errors[result.status]
   if (error) {
-    // 判断是否已经是API响应格式
-    const body = result.body;
-    if (body && typeof body === 'object' && 'error' in body) {
-      // 已经是API响应格式，直接抛出错误
-      throw new ApiError(options, result, (body as any).error || error);
-    } else {
-      // 不是API响应格式，使用标准错误消息
-      throw new ApiError(options, result, error);
-    }
+    throw new ApiError(options, result, error)
   }
 
   if (!result.ok) {
@@ -330,20 +313,11 @@ export const catchErrorCodes = (
       }
     })()
 
-    // 检查是否有API格式的错误消息
-    if (result.body && typeof result.body === 'object' && 'error' in result.body) {
-      throw new ApiError(
-        options,
-        result,
-        (result.body as any).error || `Generic Error: status: ${errorStatus}; status text: ${errorStatusText}`
-      );
-    } else {
-      throw new ApiError(
-        options,
-        result,
-        `Generic Error: status: ${errorStatus}; status text: ${errorStatusText}; body: ${errorBody}`,
-      );
-    }
+    throw new ApiError(
+      options,
+      result,
+      `Generic Error: status: ${errorStatus}; status text: ${errorStatusText}; body: ${errorBody}`,
+    )
   }
 }
 

@@ -2,12 +2,5 @@
 export { ApiError } from "./core/ApiError"
 export { CancelablePromise, CancelError } from "./core/CancelablePromise"
 export { OpenAPI, type OpenAPIConfig } from "./core/OpenAPI"
-export {
-  type ApiResponseType,
-  isApiResponse,
-  extractApiResponseData,
-  extractApiResponseError,
-  createApiResponse
-} from "./core/ApiResponseTypes"
 export * from "./sdk.gen"
 export * from "./types.gen"
