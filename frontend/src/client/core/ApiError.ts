@@ -7,6 +7,7 @@ export class ApiError extends Error {
   public readonly statusText: string
   public readonly body: unknown
   public readonly request: ApiRequestOptions
+  public readonly errorMessage: string
 
   constructor(
     request: ApiRequestOptions,
@@ -21,5 +22,6 @@ export class ApiError extends Error {
     this.statusText = response.statusText
     this.body = response.body
     this.request = request
+    this.errorMessage = message
   }
 }

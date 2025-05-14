@@ -4,3 +4,30 @@ export { CancelablePromise, CancelError } from "./core/CancelablePromise"
 export { OpenAPI, type OpenAPIConfig } from "./core/OpenAPI"
 export * from "./sdk.gen"
 export * from "./types.gen"
+
+// Define missing types that are used in the codebase
+export interface ItemPublic {
+  id: string
+  title: string
+  description?: string | null
+}
+
+export interface ItemsPublic {
+  data: ItemPublic[]
+  count: number
+}
+
+// Utility functions
+export function isApiResponse(obj: any): boolean {
+  return obj && typeof obj === 'object' && (obj.data !== undefined || obj.error !== undefined || obj.meta !== undefined)
+}
+
+export function extractApiResponseError(response: any): string | null {
+  if (!isApiResponse(response)) return null
+  
+  if (typeof response.error === 'string') {
+    return response.error
+  }
+  
+  return null
+}

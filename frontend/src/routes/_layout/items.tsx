@@ -11,7 +11,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { FiSearch } from "react-icons/fi"
 import { z } from "zod"
 
-import { ItemPublic, ItemsPublic, ItemsService } from "@/client"
+import { ItemPublic, ItemsService } from "@/client"
 import { ItemActionsMenu } from "@/components/Common/ItemActionsMenu"
 import AddItem from "@/components/Items/AddItem"
 import PendingItems from "@/components/Pending/PendingItems"
@@ -45,7 +45,7 @@ function ItemsTable() {
   const navigate = useNavigate({ from: Route.fullPath })
   const { page } = Route.useSearch()
 
-  const { data, isLoading, isPlaceholderData } = useQuery({
+  const { data: apiResponse, isLoading, isPlaceholderData } = useQuery({
     ...getItemsQueryOptions({ page }),
     placeholderData: (prevData) => prevData,
   })
@@ -55,46 +55,18 @@ function ItemsTable() {
       search: (prev: { [key: string]: string }) => ({ ...prev, page }),
     })
 
-  // 处理API响应数据结构
-  let itemsData: ItemsPublic;
+  // 安全地处理API响应
+  const apiData = apiResponse?.data || {} as any
   
-  if (data) {
-    // 检查data是否直接就是ItemsPublic类型
-    if ('data' in data && 'count' in data && Array.isArray(data.data)) {
-      // data直接是ItemsPublic类型
-      itemsData = data as ItemsPublic;
-    } 
-    // 检查data是否是新的API响应格式
-    else if (data && typeof data === 'object' && 'data' in data) {
-      // data.data是否已经是ItemsPublic类型
-      if (data.data && typeof data.data === 'object' && 'data' in data.data && 'count' in data.data) {
-        // data.data已经是ItemsPublic对象
-        itemsData = data.data as ItemsPublic;
-      } 
-      // data.data可能是ItemPublic[]数组
-      else if (Array.isArray(data.data)) {
-        // 将ItemPublic[]数组包装为ItemsPublic对象
-        itemsData = {
-          data: data.data as ItemPublic[],
-          count: data.data.length
-        };
-      }
-      else {
-        // 兜底情况
-        itemsData = { data: [], count: 0 };
-      }
-    } 
-    else {
-      // 兜底情况
-      itemsData = { data: [], count: 0 };
-    }
-  } else {
-    // 没有数据的情况
-    itemsData = { data: [], count: 0 };
-  }
-    
-  const items = itemsData.data.slice(0, PER_PAGE) ?? [];
-  const count = itemsData.count ?? 0;
+  // 使用类型断言处理响应数据
+  const items: ItemPublic[] = Array.isArray(apiData.data) 
+    ? apiData.data 
+    : (Array.isArray(apiData) ? apiData : [])
+  
+  // 使用类型断言处理计数
+  const count = typeof apiData.count === 'number' 
+    ? apiData.count 
+    : items.length
 
   if (isLoading) {
     return <PendingItems />
@@ -108,9 +80,9 @@ function ItemsTable() {
             <FiSearch />
           </EmptyState.Indicator>
           <VStack textAlign="center">
-            <EmptyState.Title>You don't have any items yet</EmptyState.Title>
+            <EmptyState.Title>您还没有任何项目</EmptyState.Title>
             <EmptyState.Description>
-              Add a new item to get started
+              添加一个新项目以开始使用
             </EmptyState.Description>
           </VStack>
         </EmptyState.Content>
@@ -124,13 +96,13 @@ function ItemsTable() {
         <Table.Header>
           <Table.Row>
             <Table.ColumnHeader w="sm">ID</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">Title</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">Description</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">Actions</Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">标题</Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">描述</Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">操作</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {items?.map((item: ItemPublic) => (
+          {items.map((item: ItemPublic) => (
             <Table.Row key={item.id} opacity={isPlaceholderData ? 0.5 : 1}>
               <Table.Cell truncate maxW="sm">
                 {item.id}
@@ -173,7 +145,7 @@ function Items() {
   return (
     <Container maxW="full">
       <Heading size="lg" pt={12}>
-        Items Management
+        项目管理
       </Heading>
       <AddItem />
       <ItemsTable />
