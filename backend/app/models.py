@@ -1,5 +1,6 @@
 import uuid
 from typing import Any, Generic, TypeVar
+from datetime import datetime
 
 from pydantic import EmailStr
 from sqlalchemy import String
@@ -76,6 +77,15 @@ class UsersPublic(SQLModel):
     count: int
 
 
+# Token Blacklist model for storing invalidated tokens
+class TokenBlacklist(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    token: str = Field(index=True)
+    user_id: uuid.UUID = Field(index=True)
+    expires_at: datetime
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 # Shared properties
 class ItemBase(SQLModel):
     title: str = Field(min_length=1, max_length=255)
@@ -131,6 +141,7 @@ class Token(SQLModel):
 # Contents of JWT token
 class TokenPayload(SQLModel):
     sub: str | None = None
+    exp: float | None = None
 
 
 class NewPassword(SQLModel):

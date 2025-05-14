@@ -1,10 +1,11 @@
 import uuid
 from typing import Any
+from datetime import datetime
 
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate
+from app.models import Item, ItemCreate, TokenBlacklist, User, UserCreate, UserUpdate
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -52,3 +53,42 @@ def create_item(*, session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -
     session.commit()
     session.refresh(db_item)
     return db_item
+
+
+def add_token_to_blacklist(
+    *, session: Session, token: str, user_id: uuid.UUID, expires_at: datetime
+) -> TokenBlacklist:
+    """
+    Add a token to the blacklist.
+    """
+    blacklist_token = TokenBlacklist(
+        token=token, user_id=user_id, expires_at=expires_at
+    )
+    session.add(blacklist_token)
+    session.commit()
+    session.refresh(blacklist_token)
+    return blacklist_token
+
+
+def is_token_blacklisted(*, session: Session, token: str) -> bool:
+    """
+    Check if a token is in the blacklist.
+    """
+    statement = select(TokenBlacklist).where(TokenBlacklist.token == token)
+    blacklisted = session.exec(statement).first()
+    return blacklisted is not None
+
+
+def clean_expired_tokens(*, session: Session) -> int:
+    """
+    Remove expired tokens from the blacklist.
+    Returns the number of tokens removed.
+    """
+    now = datetime.utcnow()
+    statement = select(TokenBlacklist).where(TokenBlacklist.expires_at < now)
+    expired_tokens = session.exec(statement).all()
+    count = len(expired_tokens)
+    for token in expired_tokens:
+        session.delete(token)
+    session.commit()
+    return count

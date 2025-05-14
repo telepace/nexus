@@ -9,11 +9,21 @@ import {
   type UserPublic,
   type UserRegister,
   UsersService,
+  OpenAPI
 } from "@/client"
 import { handleError } from "@/utils"
+import { request } from "@/client/core/request"
 
 const isLoggedIn = () => {
   return localStorage.getItem("access_token") !== null
+}
+
+// 自定义logout API调用
+const callLogoutAPI = async (): Promise<void> => {
+  return request(OpenAPI, {
+    method: "POST",
+    url: "/api/v1/logout",
+  })
 }
 
 const useAuth = () => {
@@ -58,9 +68,18 @@ const useAuth = () => {
     },
   })
 
-  const logout = () => {
-    localStorage.removeItem("access_token")
-    navigate({ to: "/login" })
+  const logout = async () => {
+    try {
+      // 尝试调用后端的logout接口
+      await callLogoutAPI()
+    } catch (error) {
+      console.error('登出API调用失败:', error)
+    } finally {
+      // 不管API调用成功或失败，都清除本地token并跳转
+      localStorage.removeItem("access_token")
+      queryClient.clear() // 清除所有缓存的查询数据
+      navigate({ to: "/login" })
+    }
   }
 
   return {
