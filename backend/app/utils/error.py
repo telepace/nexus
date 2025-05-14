@@ -1,10 +1,10 @@
-from typing import Any, Dict, Optional, Tuple, Type, Union
+from typing import Any, Dict, Optional, Tuple, Type, Union, Generic, TypeVar
 
 from fastapi import HTTPException, status
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 
-from app.models import ApiResponse
+from app.models import ApiResponse, T
 
 
 class AppError(Exception):
@@ -58,7 +58,7 @@ class AuthenticationError(AppError):
 def create_error_response(
     error: Union[AppError, HTTPException, Exception, ValidationError, RequestValidationError],
     include_details: bool = True
-) -> Tuple[ApiResponse, int]:
+) -> Tuple[ApiResponse[None], int]:
     """
     从各种类型的错误创建统一的API错误响应
     
@@ -134,7 +134,7 @@ def create_error_response(
     else:
         message = str(error) or "服务器内部错误"
         
-    return ApiResponse(
+    return ApiResponse[None](
         data=None,
         meta=meta,
         error=message

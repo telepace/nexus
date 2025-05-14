@@ -1,4 +1,5 @@
 from importlib import util
+from types import ModuleType
 
 try:
     from app.utils import email
@@ -15,7 +16,7 @@ except ImportError:
         def capture(*args, **kwargs):
             pass
 
-    posthog_tracker = PosthogStub()
+    posthog_tracker: ModuleType = PosthogStub()  # type: ignore[assignment]
     has_posthog = False
 
 # 导入错误处理模块

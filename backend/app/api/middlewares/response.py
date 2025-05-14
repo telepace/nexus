@@ -1,4 +1,4 @@
-from typing import Awaitable, Callable, Dict, Optional, Union
+from typing import Awaitable, Callable, Dict, Optional, Union, Any
 
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
@@ -44,7 +44,7 @@ class ApiResponseMiddleware(BaseHTTPMiddleware):
 
         # 根据状态码，重新格式化响应
         status_code = response.status_code
-        formatted_response = {}
+        formatted_response: dict[str, Any] = {}
 
         if 200 <= status_code < 400:
             # 成功响应

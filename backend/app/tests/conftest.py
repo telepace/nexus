@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from typing import Any, Dict
 
 import pytest
 from fastapi.testclient import TestClient
@@ -42,7 +43,7 @@ def normal_user_token_headers(client: TestClient, db: Session) -> dict[str, str]
     )
 
 
-def get_api_response_data(response):
+def get_api_response_data(response: Any) -> Dict[str, Any]:
     """
     从API响应中提取数据，兼容新的API响应格式
     如果响应包含 data/meta/error 格式，则返回 data 字段
@@ -52,6 +53,7 @@ def get_api_response_data(response):
     
     # 检查是否是新的API响应格式
     if isinstance(content, dict):
+        result: Dict[str, Any] = {}
         if "error" in content and content["error"]:
             # 为错误响应创建兼容旧格式的结构
             # 优先使用detail键作为错误信息，这与FastAPI默认错误格式一致
@@ -70,18 +72,16 @@ def get_api_response_data(response):
         # 如果是标准成功响应格式
         if "data" in content and "meta" in content:
             if content["data"] is not None:
-                result = content["data"]
+                result = content["data"] if isinstance(content["data"], dict) else {"data": content["data"]}
                 # 处理meta中可能的附加字段
                 if isinstance(content["meta"], dict):
                     # 对于某些endpoints需要从meta中复制消息字段
                     if "message" in content["meta"]:
-                        result = result if isinstance(result, dict) else {}
                         result["message"] = content["meta"]["message"]
                     if "msg" in content["meta"]:
-                        result = result if isinstance(result, dict) else {}
                         result["msg"] = content["meta"]["msg"]
                 
                 return result
     
     # 返回原始响应内容
-    return content
+    return content if isinstance(content, dict) else {"data": content}
