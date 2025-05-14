@@ -1,21 +1,15 @@
-import random
-import uuid
-from typing import Dict
-from datetime import timedelta
 
-import pytest
 from unittest.mock import patch
+
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
-from app.core.security import verify_password, create_access_token, get_password_hash
-from app.crud import create_user
-from app.models import UserCreate, User
-from app.tests.utils.user import user_authentication_headers
+from app.core.security import get_password_hash
+from app.models import User
+from app.tests.conftest import get_api_response_data
 from app.tests.utils.utils import random_email, random_lower_string
 from app.utils import generate_password_reset_token
-from app.tests.conftest import get_api_response_data
 
 
 def test_get_access_token(client: TestClient) -> None:
@@ -137,7 +131,7 @@ def test_reset_password(client: TestClient, db: Session) -> None:
         f"{settings.API_V1_STR}/reset-password/",
         json=data,
     )
-    
+
     # Check response
     assert r.status_code == 200
     content = get_api_response_data(r)

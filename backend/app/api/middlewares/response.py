@@ -1,11 +1,9 @@
-from typing import Awaitable, Callable, Dict, Optional, Union, Any
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.types import ASGIApp
-
-from app.models import ApiResponse
 
 
 class ApiResponseMiddleware(BaseHTTPMiddleware):
@@ -66,4 +64,4 @@ class ApiResponseMiddleware(BaseHTTPMiddleware):
             content=formatted_response,
             status_code=status_code,
             headers=dict(response.headers),
-        ) 
+        )

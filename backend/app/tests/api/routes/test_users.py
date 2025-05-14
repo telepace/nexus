@@ -8,10 +8,8 @@ from app import crud
 from app.core.config import settings
 from app.core.security import verify_password
 from app.models import (
-    UpdatePassword,
     User,
     UserCreate,
-    UserUpdate,
 )
 from app.tests.conftest import get_api_response_data
 from app.tests.utils.utils import random_email, random_lower_string
@@ -117,7 +115,7 @@ def test_get_existing_user_permissions_error(
     )
     assert r.status_code == 403
     content = get_api_response_data(r)
-    assert ("权限" in content["detail"] or "特权" in content["detail"] or 
+    assert ("权限" in content["detail"] or "特权" in content["detail"] or
             "privileges" in content["detail"].lower())
 
 
@@ -235,8 +233,8 @@ def test_update_password_me_incorrect_password(
     )
     assert r.status_code == 400
     updated_user = get_api_response_data(r)
-    assert ("密码" in updated_user["detail"] or 
-            "password" in updated_user["detail"].lower() or 
+    assert ("密码" in updated_user["detail"] or
+            "password" in updated_user["detail"].lower() or
             "incorrect" in updated_user["detail"].lower())
 
 
@@ -256,7 +254,7 @@ def test_update_user_me_email_exists(
     )
     assert r.status_code == 409
     content = get_api_response_data(r)
-    assert ("已存在" in content["detail"] or 
+    assert ("已存在" in content["detail"] or
             "exist" in content["detail"].lower())
 
 
@@ -313,7 +311,7 @@ def test_register_user_already_exists_error(client: TestClient) -> None:
     )
     assert r.status_code == 400
     content = get_api_response_data(r)
-    assert ("已存在" in content["detail"] or 
+    assert ("已存在" in content["detail"] or
             "exist" in content["detail"].lower())
 
 
@@ -348,7 +346,7 @@ def test_update_user_not_exists(
     )
     assert r.status_code == 404
     content = get_api_response_data(r)
-    assert ("不存在" in content["detail"] or 
+    assert ("不存在" in content["detail"] or
             "not exist" in content["detail"].lower())
 
 
@@ -373,7 +371,7 @@ def test_update_user_email_exists(
     )
     assert r.status_code == 409
     content = get_api_response_data(r)
-    assert ("已存在" in content["detail"] or 
+    assert ("已存在" in content["detail"] or
             "exist" in content["detail"].lower())
 
 
@@ -398,7 +396,7 @@ def test_delete_user_me_as_superuser(
     )
     assert r.status_code == 403
     response = get_api_response_data(r)
-    assert ("超级用户" in response["detail"] or 
+    assert ("超级用户" in response["detail"] or
             "super" in response["detail"].lower())
 
 
@@ -428,8 +426,8 @@ def test_delete_user_not_found(
     )
     assert r.status_code == 404
     content = get_api_response_data(r)
-    assert ("不存在" in content["detail"] or 
-            "未找到" in content["detail"] or 
+    assert ("不存在" in content["detail"] or
+            "未找到" in content["detail"] or
             "not found" in content["detail"].lower())
 
 
@@ -446,7 +444,7 @@ def test_delete_user_current_super_user_error(
     )
     assert r.status_code == 403
     content = get_api_response_data(r)
-    assert ("超级用户" in content["detail"] or 
+    assert ("超级用户" in content["detail"] or
             "super" in content["detail"].lower())
 
 

@@ -17,9 +17,9 @@ except ImportError:
     SENTRY_AVAILABLE = False
 
 from fastapi import FastAPI, Request
-from fastapi.routing import APIRoute
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.routing import APIRoute
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
 

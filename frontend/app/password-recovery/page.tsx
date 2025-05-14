@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, Suspense, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -17,12 +17,22 @@ import { useActionState } from "react";
 import { SubmitButton } from "@/components/ui/submitButton";
 import { FormError } from "@/components/ui/FormError";
 
-export default function Page() {
+// SearchParams component to handle useSearchParams hook with Suspense
+function SearchParamsHandler({ setEmail }: { setEmail: (email: string) => void }) {
   const searchParams = useSearchParams();
   const emailFromQuery = searchParams.get('email') || '';
   
+  // Set email in parent component
+  useEffect(() => {
+    setEmail(emailFromQuery);
+  }, [emailFromQuery, setEmail]);
+  
+  return null;
+}
+
+export default function Page() {
+  const [email, setEmail] = useState('');
   const [state, dispatch] = useActionState(passwordReset, undefined);
-  const [email, setEmail] = useState(emailFromQuery);
   
   // Maintain form values when there's an error
   const handleSubmit = (formData: FormData) => {
@@ -33,6 +43,11 @@ export default function Page() {
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 p-4 relative overflow-hidden">
+      {/* Wrap useSearchParams in Suspense */}
+      <Suspense fallback={null}>
+        <SearchParamsHandler setEmail={setEmail} />
+      </Suspense>
+      
       {/* Tech-inspired background elements */}
       <div className="absolute w-full h-full pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-0 w-1/3 h-1/3 bg-blue-50 dark:bg-blue-900/10 rounded-full blur-3xl opacity-30 -translate-x-1/2 -translate-y-1/2"></div>

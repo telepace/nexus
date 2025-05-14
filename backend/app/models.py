@@ -1,6 +1,6 @@
 import uuid
-from typing import Any, Generic, TypeVar
 from datetime import datetime
+from typing import Any, Generic, TypeVar
 
 from pydantic import EmailStr
 from sqlalchemy import String

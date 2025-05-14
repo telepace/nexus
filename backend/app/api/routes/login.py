@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated, Any
 
+import jwt
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
-import jwt
 
 from app import crud
 from app.api.deps import CurrentUser, SessionDep, TokenDep, get_current_active_superuser
@@ -66,18 +66,18 @@ def logout(current_user: CurrentUser, token: TokenDep, session: SessionDep) -> M
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
         expires_at = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
-        
+
         # Add token to blacklist
         crud.add_token_to_blacklist(
-            session=session, 
-            token=token, 
-            user_id=current_user.id, 
+            session=session,
+            token=token,
+            user_id=current_user.id,
             expires_at=expires_at
         )
-        
+
         # Optionally, clean up expired tokens from the blacklist
         crud.clean_expired_tokens(session=session)
-        
+
         return Message(message="Successfully logged out")
     except Exception as e:
         raise HTTPException(

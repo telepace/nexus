@@ -64,9 +64,10 @@ UV_EXISTS := $(shell command -v uv 2> /dev/null)
 # PRIMARY TARGETS
 # ==============================================================================
 
-## all: Build all components
+## all: Run all tests, linting, formatting and build all components
 .PHONY: all
-all: backend frontend website admin
+all: format lint test backend frontend admin
+	@echo "===========> All checks and builds completed successfully"
 
 ## dev: Start development environment
 .PHONY: dev
