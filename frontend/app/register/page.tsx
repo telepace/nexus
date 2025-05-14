@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import {
   Card,
   CardContent,
@@ -18,7 +18,7 @@ import { useActionState } from "react";
 import { SubmitButton } from "@/components/ui/submitButton";
 import { FieldError, FormError } from "@/components/ui/FormError";
 
-export default function Page() {
+function RegisterForm() {
   const searchParams = useSearchParams();
   const emailFromQuery = searchParams.get('email') || '';
   
@@ -179,5 +179,17 @@ export default function Page() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen w-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-300 border-t-blue-600"></div>
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   );
 }

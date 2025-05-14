@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { readUserMe } from "@/app/clientService";
+import { client } from "@/app/openapi-client/sdk.gen";
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get("accessToken");
@@ -9,20 +9,24 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const options = {
-    headers: {
-      Authorization: `Bearer ${token.value}`,
-    },
-  };
+  try {
+    const response = await fetch("/api/v1/users/me", {
+      headers: {
+        Authorization: `Bearer ${token.value}`,
+      },
+    });
 
-  const { error } = await readUserMe(options);
-
-  if (error) {
+    if (!response.ok) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+    
+    return NextResponse.next();
+  } catch (error) {
+    console.error("Authentication error:", error);
     return NextResponse.redirect(new URL("/login", request.url));
   }
-  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/dashboa/:path*"],
+  matcher: ["/dashboard/:path*"],
 };

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import {
   Card,
   CardContent,
@@ -18,7 +18,7 @@ import { SubmitButton } from "@/components/ui/submitButton";
 import { FieldError, FormError } from "@/components/ui/FormError";
 import { Separator } from "@/components/ui/separator";
 
-export default function Page() {
+function LoginForm() {
   const searchParams = useSearchParams();
   const emailFromQuery = searchParams.get('email') || '';
   
@@ -163,5 +163,17 @@ export default function Page() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen w-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-300 border-t-blue-600"></div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
