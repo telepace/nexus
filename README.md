@@ -6,6 +6,7 @@
 ![FastAPI](https://images.shields.io/badge/FastAPI-0.104.0-green)
 ![TypeScript](https://images.shields.io/badge/TypeScript-5.2.2-blue)
 ![License](https://images.shields.io/badge/license-MIT-brightgreen)
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/telepace/nexus?utm_source=oss&utm_medium=github&utm_campaign=telepace%2Fnexus&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
 </div>
 
