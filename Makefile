@@ -42,11 +42,9 @@ ADMIN_IMG ?= nexus/admin:$(VERSION)
 
 # Tool settings
 PYTHON := python
-PIP := pip
+UV := uv
 PYTEST := pytest
 PYTEST_ARGS := -v
-NPM := npm
-YARN := yarn
 PNPM := pnpm
 NPM_REGISTRY := https://registry.npmjs.org/
 
@@ -57,6 +55,10 @@ WEBSITE_DIR := $(ROOT_DIR)/website
 ADMIN_DIR := $(ROOT_DIR)/admin
 DOCS_DIR := $(ROOT_DIR)/docs
 EXTENSION_DIR := $(ROOT_DIR)/extension
+
+# Check if tools are installed
+PNPM_EXISTS := $(shell command -v pnpm 2> /dev/null)
+UV_EXISTS := $(shell command -v uv 2> /dev/null)
 
 # ==============================================================================
 # PRIMARY TARGETS
@@ -89,13 +91,31 @@ format: backend-format frontend-format admin-format
 clean:
 	@echo "===========> Cleaning build artifacts"
 	@rm -rf $(OUTPUT_DIR)
-	@cd $(FRONTEND_DIR) && $(NPM) run clean || true
-	@cd $(WEBSITE_DIR) && $(NPM) run clean || true
-	@cd $(ADMIN_DIR) && $(NPM) run clean || true
+	@cd $(FRONTEND_DIR) && $(PNPM) run clean || true
+	@cd $(WEBSITE_DIR) && $(PNPM) run clean || true
+	@cd $(ADMIN_DIR) && $(PNPM) run clean || true
 	@find . -name "*.pyc" -delete
 	@find . -name "__pycache__" -delete
 	@find . -name ".pytest_cache" -delete
 	@find . -name ".coverage" -delete
+
+# ==============================================================================
+# CHECK AND INSTALL TOOLS
+# ==============================================================================
+
+.PHONY: check-pnpm
+check-pnpm:
+ifndef PNPM_EXISTS
+	@echo "===========> Installing pnpm"
+	@npm install -g pnpm
+endif
+
+.PHONY: check-uv
+check-uv:
+ifndef UV_EXISTS
+	@echo "===========> Installing uv"
+	@curl -sSf https://astral.sh/uv/install.sh | sh
+endif
 
 # ==============================================================================
 # HELP INFORMATION
@@ -144,16 +164,16 @@ help: Makefile
 
 ## backend: Build backend
 .PHONY: backend
-backend: backend-install
+backend: check-uv backend-install
 	@echo "===========> Building backend"
 	@source backend/.venv/bin/activate && \
 	cd $(BACKEND_DIR) && fastapi dev app/main.py
 
 ## backend-install: Install backend dependencies
 .PHONY: backend-install
-backend-install:
+backend-install: check-uv
 	@echo "===========> Installing backend dependencies"
-	@cd $(BACKEND_DIR) && uv sync
+	@cd $(BACKEND_DIR) && $(UV) sync
 
 ## backend-test: Run backend tests with coverage
 .PHONY: backend-test
@@ -211,39 +231,63 @@ backend-db-shell:
 
 ## frontend: Build frontend
 .PHONY: frontend
-frontend: frontend-install
+frontend: check-pnpm frontend-install
 	@echo "===========> Building frontend"
-	@cd $(FRONTEND_DIR) && $(NPM) run build
+	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
+		cd $(FRONTEND_DIR) && $(PNPM) run build; \
+	else \
+		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
+	fi
 
 ## frontend-install: Install frontend dependencies
 .PHONY: frontend-install
-frontend-install:
+frontend-install: check-pnpm
 	@echo "===========> Installing frontend dependencies"
-	@cd $(FRONTEND_DIR) && $(NPM) install
+	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
+		cd $(FRONTEND_DIR) && $(PNPM) install; \
+	else \
+		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
+	fi
 
 ## frontend-dev: Run frontend development server
 .PHONY: frontend-dev
 frontend-dev: frontend-install
 	@echo "===========> Running frontend development server"
-	@cd $(FRONTEND_DIR) && $(NPM) run dev
+	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
+		cd $(FRONTEND_DIR) && $(PNPM) run dev; \
+	else \
+		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
+	fi
 
 ## frontend-test: Run frontend tests
 .PHONY: frontend-test
 frontend-test: frontend-install
 	@echo "===========> Running frontend tests"
-	@cd $(FRONTEND_DIR) && $(NPM) test
+	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
+		cd $(FRONTEND_DIR) && $(PNPM) test; \
+	else \
+		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
+	fi
 
 ## frontend-lint: Run frontend linters
 .PHONY: frontend-lint
 frontend-lint: frontend-install
 	@echo "===========> Running frontend linters"
-	@cd $(FRONTEND_DIR) && $(NPM) run lint
+	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
+		cd $(FRONTEND_DIR) && $(PNPM) run lint; \
+	else \
+		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
+	fi
 
 ## frontend-format: Format frontend code
 .PHONY: frontend-format
 frontend-format: frontend-install
 	@echo "===========> Formatting frontend code"
-	@cd $(FRONTEND_DIR) && $(NPM) run format || true
+	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
+		cd $(FRONTEND_DIR) && $(PNPM) run format || true; \
+	else \
+		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
+	fi
 
 # ==============================================================================
 # ADMIN TARGETS
@@ -251,39 +295,45 @@ frontend-format: frontend-install
 
 ## admin: Build admin panel
 .PHONY: admin
-admin: admin-install
+admin: check-pnpm admin-install
 	@echo "===========> Building admin panel"
-	@cd $(ADMIN_DIR) && $(NPM) run build
+	@cd $(ADMIN_DIR) && $(PNPM) exec vite build
 
 ## admin-install: Install admin dependencies
 .PHONY: admin-install
-admin-install:
+admin-install: check-pnpm
 	@echo "===========> Installing admin dependencies"
-	@cd $(ADMIN_DIR) && $(NPM) install
+	@cd $(ADMIN_DIR) && $(PNPM) install
 
 ## admin-dev: Run admin development server
 .PHONY: admin-dev
 admin-dev: admin-install
 	@echo "===========> Running admin development server"
-	@cd $(ADMIN_DIR) && $(NPM) run dev
+	@cd $(ADMIN_DIR) && $(PNPM) run dev
+
+## admin-preview: Preview production build
+.PHONY: admin-preview
+admin-preview: admin
+	@echo "===========> Previewing admin production build"
+	@cd $(ADMIN_DIR) && $(PNPM) exec vite preview
 
 ## admin-test: Run admin tests
 .PHONY: admin-test
 admin-test: admin-install
 	@echo "===========> Running admin tests"
-	@cd $(ADMIN_DIR) && $(NPM) test || true
+	@cd $(ADMIN_DIR) && $(PNPM) run test || true
 
 ## admin-lint: Run admin linters
 .PHONY: admin-lint
 admin-lint: admin-install
 	@echo "===========> Running admin linters"
-	@cd $(ADMIN_DIR) && $(NPM) run lint || true
+	@cd $(ADMIN_DIR) && $(PNPM) run lint || true
 
 ## admin-format: Format admin code
 .PHONY: admin-format
 admin-format: admin-install
 	@echo "===========> Formatting admin code"
-	@cd $(ADMIN_DIR) && $(NPM) run format || true
+	@cd $(ADMIN_DIR) && $(PNPM) run format || true
 
 # ==============================================================================
 # WEBSITE TARGETS
@@ -291,27 +341,27 @@ admin-format: admin-install
 
 ## website: Build website
 .PHONY: website
-website: website-install
+website: check-pnpm website-install
 	@echo "===========> Building website"
-	@cd $(WEBSITE_DIR) && $(NPM) run build
+	@cd $(WEBSITE_DIR) && $(PNPM) run build
 
 ## website-install: Install website dependencies
 .PHONY: website-install
-website-install:
+website-install: check-pnpm
 	@echo "===========> Installing website dependencies"
-	@cd $(WEBSITE_DIR) && $(NPM) install
+	@cd $(WEBSITE_DIR) && $(PNPM) install
 
 ## website-dev: Run website development server
 .PHONY: website-dev
 website-dev: website-install
 	@echo "===========> Running website development server"
-	@cd $(WEBSITE_DIR) && $(NPM) run dev
+	@cd $(WEBSITE_DIR) && $(PNPM) run dev
 
 ## website-test: Run website tests
 .PHONY: website-test
 website-test: website-install
 	@echo "===========> Running website tests"
-	@cd $(WEBSITE_DIR) && $(NPM) test || true
+	@cd $(WEBSITE_DIR) && $(PNPM) test || true
 
 ## docs: Build documentation
 .PHONY: docs
@@ -358,21 +408,21 @@ docker-deploy:
 
 ## extension: Build browser extension for production
 .PHONY: extension
-extension: 
+extension: check-pnpm
 	@echo "===========> Building browser extension for production"
-	@cd $(EXTENSION_DIR) && npm run build
+	@cd $(EXTENSION_DIR) && $(PNPM) run build
 
 ## extension-dev: Run browser extension in development mode
 .PHONY: extension-dev
-extension-dev:
+extension-dev: check-pnpm
 	@echo "===========> Running browser extension in development mode"
-	@cd $(EXTENSION_DIR) && npm run dev
+	@cd $(EXTENSION_DIR) && $(PNPM) run dev
 
 ## extension-package: Package browser extension for distribution
 .PHONY: extension-package
-extension-package:
+extension-package: check-pnpm
 	@echo "===========> Packaging browser extension for distribution"
-	@cd $(EXTENSION_DIR) && npm run package
+	@cd $(EXTENSION_DIR) && $(PNPM) run package
 
 # ==============================================================================
 # DEPLOYMENT TARGETS
@@ -404,15 +454,15 @@ install-tools: install-python-tools install-js-tools
 
 ## install-python-tools: Install Python development tools
 .PHONY: install-python-tools
-install-python-tools:
+install-python-tools: check-uv
 	@echo "===========> Installing Python development tools"
-	@$(PIP) install ruff mypy pytest pytest-cov black isort
+	@$(UV) pip install ruff mypy pytest pytest-cov black isort
 
 ## install-js-tools: Install JavaScript development tools
 .PHONY: install-js-tools
-install-js-tools:
+install-js-tools: check-pnpm
 	@echo "===========> Installing JavaScript development tools"
-	@$(NPM) install -g prettier eslint typescript
+	@$(PNPM) install -g prettier eslint typescript
 
 ## setup-git-hooks: Set up Git hooks
 .PHONY: setup-git-hooks
