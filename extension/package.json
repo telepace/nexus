@@ -1,12 +1,13 @@
 {
-  "name": "surfsense_browser_extension",
-  "displayName": "Surfsense Browser Extension",
-  "version": "0.0.6",
-  "description": "Extension to collect Browsing History for SurfSense.",
-  "author": "https://github.com/MODSetter",
+  "name": "nexus_browser_extension",
+  "displayName": "Nexus Browser Extension",
+  "version": "0.1.0",
+  "description": "AI-powered reading assistant that helps you understand, save, and interact with web content.",
+  "author": "Nexus Team",
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
+    "build-complete": "plasmo build",
     "package": "plasmo package"
   },
   "dependencies": {
@@ -49,14 +50,15 @@
     "host_permissions": [
       "<all_urls>"
     ],
-    "name": "SurfSense",
-    "description": "Extension to collect Browsing History for SurfSense.",
-    "version": "0.0.3"
+    "name": "Nexus",
+    "description": "AI-powered reading assistant that helps you understand, save, and interact with web content.",
+    "version": "0.1.0"
   },
   "permissions": [
     "storage",
     "scripting",
     "unlimitedStorage",
-    "activeTab"
+    "activeTab",
+    "contextMenus"
   ]
 }
