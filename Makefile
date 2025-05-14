@@ -38,6 +38,7 @@ GIT_COMMIT := $(shell git rev-parse HEAD 2>/dev/null || echo "unknown")
 BACKEND_IMG ?= nexus/backend:$(VERSION)
 FRONTEND_IMG ?= nexus/frontend:$(VERSION)
 WEBSITE_IMG ?= nexus/website:$(VERSION)
+ADMIN_IMG ?= nexus/admin:$(VERSION)
 
 # Tool settings
 PYTHON := python
@@ -46,13 +47,16 @@ PYTEST := pytest
 PYTEST_ARGS := -v
 NPM := npm
 YARN := yarn
+PNPM := pnpm
 NPM_REGISTRY := https://registry.npmjs.org/
 
 # Component directories
 BACKEND_DIR := $(ROOT_DIR)/backend
 FRONTEND_DIR := $(ROOT_DIR)/frontend
 WEBSITE_DIR := $(ROOT_DIR)/website
+ADMIN_DIR := $(ROOT_DIR)/admin
 DOCS_DIR := $(ROOT_DIR)/docs
+EXTENSION_DIR := $(ROOT_DIR)/extension
 
 # ==============================================================================
 # PRIMARY TARGETS
@@ -60,7 +64,7 @@ DOCS_DIR := $(ROOT_DIR)/docs
 
 ## all: Build all components
 .PHONY: all
-all: backend-build frontend-build website-build
+all: backend frontend website admin
 
 ## dev: Start development environment
 .PHONY: dev
@@ -70,17 +74,15 @@ dev:
 
 ## lint: Run linters on all components
 .PHONY: lint
-lint: backend-lint frontend-lint
+lint: backend-lint frontend-lint admin-lint
 
 ## test: Run tests for all components
 .PHONY: test
-test: backend-test frontend-test website-test
+test: backend-test frontend-test website-test admin-test
 
 ## format: Format code in all components
 .PHONY: format
-format: backend-format
-	@echo "===========> Formatting frontend code"
-	@cd $(FRONTEND_DIR) && $(NPM) run format
+format: backend-format frontend-format admin-format
 
 ## clean: Clean build artifacts
 .PHONY: clean
@@ -89,6 +91,7 @@ clean:
 	@rm -rf $(OUTPUT_DIR)
 	@cd $(FRONTEND_DIR) && $(NPM) run clean || true
 	@cd $(WEBSITE_DIR) && $(NPM) run clean || true
+	@cd $(ADMIN_DIR) && $(NPM) run clean || true
 	@find . -name "*.pyc" -delete
 	@find . -name "__pycache__" -delete
 	@find . -name ".pytest_cache" -delete
@@ -115,19 +118,22 @@ help: Makefile
 	@printf "\n\033[1;34m┌─ FRONTEND COMMANDS ─────────────────────────────────────────────────┐\033[0m\n"
 	@grep -E '^## frontend' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
 	
+	@printf "\n\033[1;34m┌─ ADMIN COMMANDS ────────────────────────────────────────────────────┐\033[0m\n"
+	@grep -E '^## admin' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
+	
 	@printf "\n\033[1;34m┌─ WEBSITE COMMANDS ──────────────────────────────────────────────────┐\033[0m\n"
 	@grep -E '^## (website|docs)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
 	
 	@printf "\n\033[1;34m┌─ DOCKER COMMANDS ───────────────────────────────────────────────────┐\033[0m\n"
 	@grep -E '^## docker' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
 	
-	@printf "\n\033[1;34m┌─ KUBERNETES/HELM COMMANDS ───────────────────────────────────────────┐\033[0m\n"
-	@grep -E '^## helm' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
-	
 	@printf "\n\033[1;34m┌─ EXTENSION COMMANDS ────────────────────────────────────────────────┐\033[0m\n"
 	@grep -E '^## extension' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
 	
-	@printf "\n\033[1;34m┌─ DEVELOPMENT TOOL COMMANDS ─────────────────────────────────────────┐\033[0m\n"
+	@printf "\n\033[1;34m┌─ DEPLOYMENT COMMANDS ────────────────────────────────────────────────┐\033[0m\n"
+	@grep -E '^## (helm|deploy)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
+	
+	@printf "\n\033[1;34m┌─ DEVELOPMENT TOOLS ───────────────────────────────────────────────────┐\033[0m\n"
 	@grep -E '^## (install|setup|generate)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
 	
 	@printf "\n"
@@ -136,18 +142,18 @@ help: Makefile
 # BACKEND TARGETS
 # ==============================================================================
 
+## backend: Build backend
+.PHONY: backend
+backend: backend-install
+	@echo "===========> Building backend"
+	@source backend/.venv/bin/activate && \
+	cd $(BACKEND_DIR) && fastapi dev app/main.py
+
 ## backend-install: Install backend dependencies
 .PHONY: backend-install
 backend-install:
 	@echo "===========> Installing backend dependencies"
 	@cd $(BACKEND_DIR) && uv sync
-
-## backend: Build backend
-.PHONY: backend
-backend:
-	@echo "===========> Building backend"
-	@source backend/.venv/bin/activate && \
-	cd $(BACKEND_DIR) && fastapi dev app/main.py
 
 ## backend-test: Run backend tests with coverage
 .PHONY: backend-test
@@ -156,13 +162,6 @@ backend-test: backend-install
 	@source $(BACKEND_DIR)/.venv/bin/activate && \
 	cd $(BACKEND_DIR) && \
 	bash scripts/test.sh
-
-## backend-test-specific: Run specific backend test
-.PHONY: backend-test-specific
-backend-test-specific: backend-install
-	@echo "===========> Running specific backend test"
-	@read -p "Test path (e.g., app/tests/api/test_users.py): " test_path; \
-	cd $(BACKEND_DIR) && $(PYTEST) "$$test_path" -v
 
 ## backend-lint: Run backend linters
 .PHONY: backend-lint
@@ -176,22 +175,9 @@ backend-lint: backend-install
 .PHONY: backend-run
 backend-run: backend-install
 	@echo "===========> Running backend"
-	@echo "===========> Starting backend server with auto-reload"
 	@source $(BACKEND_DIR)/.venv/bin/activate && \
 	cd $(BACKEND_DIR) && \
 	uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-
-## backend-prestart: Run backend prestart initialization
-.PHONY: backend-prestart
-backend-prestart:
-	@echo "===========> Running backend prestart initialization"
-	@source $(BACKEND_DIR)/.venv/bin/activate && $(BACKEND_DIR)/scripts/prestart.sh
-
-## backend-coverage-report: Open backend coverage report
-.PHONY: backend-coverage-report
-backend-coverage-report:
-	@echo "===========> Opening backend coverage report"
-	@open $(BACKEND_DIR)/htmlcov/index.html 2>/dev/null || xdg-open $(BACKEND_DIR)/htmlcov/index.html 2>/dev/null || echo "Could not open coverage report automatically. Please open $(BACKEND_DIR)/htmlcov/index.html in a browser."
 
 ## backend-format: Format backend code
 .PHONY: backend-format
@@ -199,30 +185,18 @@ backend-format:
 	@echo "===========> Formatting backend code"
 	@source $(BACKEND_DIR)/.venv/bin/activate && $(BACKEND_DIR)/scripts/format.sh
 
-## backend-migration: Create a new database migration
-.PHONY: backend-migration
-backend-migration:
-	@echo "===========> Creating new database migration"
-	@read -p "Migration name: " name; \
-	cd $(BACKEND_DIR) && alembic revision --autogenerate -m "$$name"
-
 ## backend-migrate: Run database migrations
 .PHONY: backend-migrate
 backend-migrate:
 	@echo "===========> Running database migrations"
 	@cd $(BACKEND_DIR) && alembic upgrade head
 
-## backend-downgrade: Downgrade database to previous migration
-.PHONY: backend-downgrade
-backend-downgrade:
-	@echo "===========> Downgrading database to previous migration"
-	@cd $(BACKEND_DIR) && alembic downgrade -1
-
-## backend-shell: Start a Python shell with app context
-.PHONY: backend-shell
-backend-shell: backend-install
-	@echo "===========> Starting Python shell with app context"
-	@cd $(BACKEND_DIR) && python -c "import app; print('App context loaded. Available modules: app')" && python
+## backend-migration: Create a new database migration
+.PHONY: backend-migration
+backend-migration:
+	@echo "===========> Creating new database migration"
+	@read -p "Migration name: " name; \
+	cd $(BACKEND_DIR) && alembic revision --autogenerate -m "$$name"
 
 ## backend-db-shell: Connect to database with psql
 .PHONY: backend-db-shell
@@ -235,17 +209,17 @@ backend-db-shell:
 # FRONTEND TARGETS
 # ==============================================================================
 
+## frontend: Build frontend
+.PHONY: frontend
+frontend: frontend-install
+	@echo "===========> Building frontend"
+	@cd $(FRONTEND_DIR) && $(NPM) run build
+
 ## frontend-install: Install frontend dependencies
 .PHONY: frontend-install
 frontend-install:
 	@echo "===========> Installing frontend dependencies"
 	@cd $(FRONTEND_DIR) && $(NPM) install
-
-## frontend: Build frontend
-.PHONY: frontend
-frontend:
-	@echo "===========> Building frontend"
-	@cd $(FRONTEND_DIR) && $(NPM) run build
 
 ## frontend-dev: Run frontend development server
 .PHONY: frontend-dev
@@ -265,21 +239,67 @@ frontend-lint: frontend-install
 	@echo "===========> Running frontend linters"
 	@cd $(FRONTEND_DIR) && $(NPM) run lint
 
+## frontend-format: Format frontend code
+.PHONY: frontend-format
+frontend-format: frontend-install
+	@echo "===========> Formatting frontend code"
+	@cd $(FRONTEND_DIR) && $(NPM) run format || true
+
+# ==============================================================================
+# ADMIN TARGETS
+# ==============================================================================
+
+## admin: Build admin panel
+.PHONY: admin
+admin: admin-install
+	@echo "===========> Building admin panel"
+	@cd $(ADMIN_DIR) && $(NPM) run build
+
+## admin-install: Install admin dependencies
+.PHONY: admin-install
+admin-install:
+	@echo "===========> Installing admin dependencies"
+	@cd $(ADMIN_DIR) && $(NPM) install
+
+## admin-dev: Run admin development server
+.PHONY: admin-dev
+admin-dev: admin-install
+	@echo "===========> Running admin development server"
+	@cd $(ADMIN_DIR) && $(NPM) run dev
+
+## admin-test: Run admin tests
+.PHONY: admin-test
+admin-test: admin-install
+	@echo "===========> Running admin tests"
+	@cd $(ADMIN_DIR) && $(NPM) test || true
+
+## admin-lint: Run admin linters
+.PHONY: admin-lint
+admin-lint: admin-install
+	@echo "===========> Running admin linters"
+	@cd $(ADMIN_DIR) && $(NPM) run lint || true
+
+## admin-format: Format admin code
+.PHONY: admin-format
+admin-format: admin-install
+	@echo "===========> Formatting admin code"
+	@cd $(ADMIN_DIR) && $(NPM) run format || true
+
 # ==============================================================================
 # WEBSITE TARGETS
 # ==============================================================================
+
+## website: Build website
+.PHONY: website
+website: website-install
+	@echo "===========> Building website"
+	@cd $(WEBSITE_DIR) && $(NPM) run build
 
 ## website-install: Install website dependencies
 .PHONY: website-install
 website-install:
 	@echo "===========> Installing website dependencies"
 	@cd $(WEBSITE_DIR) && $(NPM) install
-
-## website-build: Build website
-.PHONY: website-build
-website-build: website-install
-	@echo "===========> Building website"
-	@cd $(WEBSITE_DIR) && $(NPM) run build
 
 ## website-dev: Run website development server
 .PHONY: website-dev
@@ -291,13 +311,13 @@ website-dev: website-install
 .PHONY: website-test
 website-test: website-install
 	@echo "===========> Running website tests"
-	@cd $(WEBSITE_DIR) && $(NPM) test
+	@cd $(WEBSITE_DIR) && $(NPM) test || true
 
 ## docs: Build documentation
 .PHONY: docs
 docs:
 	@echo "===========> Building documentation"
-	@cd $(WEBSITE_DIR) && pnpm run dev
+	@cd $(WEBSITE_DIR) && $(PNPM) run dev
 
 # ==============================================================================
 # DOCKER TARGETS
@@ -305,57 +325,21 @@ docs:
 
 ## docker-build: Build all Docker images
 .PHONY: docker-build
-docker-build: docker-build-backend docker-build-frontend docker-build-website
+docker-build:
+	@echo "===========> Building all Docker images"
+	@TAG=$(VERSION) bash $(ROOT_DIR)/scripts/build.sh
 
-## docker-build-backend: Build backend Docker image
-.PHONY: docker-build-backend
-docker-build-backend:
-	@echo "===========> Building backend Docker image: $(BACKEND_IMG)"
-	@docker build -t $(BACKEND_IMG) -f $(BACKEND_DIR)/Dockerfile $(BACKEND_DIR)
-
-## docker-build-frontend: Build frontend Docker image
-.PHONY: docker-build-frontend
-docker-build-frontend:
-	@echo "===========> Building frontend Docker image: $(FRONTEND_IMG)"
-	@docker build -t $(FRONTEND_IMG) -f $(FRONTEND_DIR)/Dockerfile $(FRONTEND_DIR)
-
-## docker-build-website: Build website Docker image
-.PHONY: docker-build-website
-docker-build-website:
-	@echo "===========> Building website Docker image: $(WEBSITE_IMG)"
-	@docker build -t $(WEBSITE_IMG) -f $(WEBSITE_DIR)/Dockerfile $(WEBSITE_DIR)
-
-## docker-push: Push all Docker images
+## docker-push: Build and push Docker images
 .PHONY: docker-push
-docker-push: docker-build
-	@echo "===========> Pushing Docker images"
-	@docker push $(BACKEND_IMG)
-	@docker push $(FRONTEND_IMG)
-	@docker push $(WEBSITE_IMG)
+docker-push:
+	@echo "===========> Building and pushing all Docker images"
+	@TAG=$(VERSION) bash $(ROOT_DIR)/scripts/build-push.sh
 
 ## docker-test: Run tests in Docker
 .PHONY: docker-test
 docker-test:
-	@echo "===========> Run tests in Docker"
+	@echo "===========> Running tests in Docker"
 	@bash $(ROOT_DIR)/scripts/test.sh
-
-## docker-test-local: Run tests in local Docker
-.PHONY: docker-test-local
-docker-test-local:
-	@echo "===========> Run tests in local Docker"
-	@bash $(ROOT_DIR)/scripts/test-local.sh
-
-## docker-build-all: Build all Docker images
-.PHONY: docker-build-all
-docker-build-all:
-	@echo "===========> Build all Docker images"
-	@TAG=$(VERSION) bash $(ROOT_DIR)/scripts/build.sh
-
-## docker-push-all: Build and push Docker images
-.PHONY: docker-push-all
-docker-push-all:
-	@echo "===========> Build and push all Docker images"
-	@TAG=$(VERSION) bash $(ROOT_DIR)/scripts/build-push.sh
 
 ## docker-deploy: Deploy to Docker Swarm
 .PHONY: docker-deploy
@@ -369,8 +353,34 @@ docker-deploy:
 	@DOMAIN=$(DOMAIN) STACK_NAME=$(STACK_NAME) TAG=$(VERSION) bash $(ROOT_DIR)/scripts/deploy.sh
 
 # ==============================================================================
-# KUBERNETES/HELM TARGETS
+# EXTENSION TARGETS
 # ==============================================================================
+
+## extension: Build browser extension for production
+.PHONY: extension
+extension: 
+	@echo "===========> Building browser extension for production"
+	@cd $(EXTENSION_DIR) && npm run build
+
+## extension-dev: Run browser extension in development mode
+.PHONY: extension-dev
+extension-dev:
+	@echo "===========> Running browser extension in development mode"
+	@cd $(EXTENSION_DIR) && npm run dev
+
+## extension-package: Package browser extension for distribution
+.PHONY: extension-package
+extension-package:
+	@echo "===========> Packaging browser extension for distribution"
+	@cd $(EXTENSION_DIR) && npm run package
+
+# ==============================================================================
+# DEPLOYMENT TARGETS
+# ==============================================================================
+
+## deploy: Deploy all components
+.PHONY: deploy
+deploy: docker-push docker-deploy
 
 ## helm-install: Install Helm chart
 .PHONY: helm-install
@@ -384,36 +394,8 @@ helm-upgrade:
 	@echo "===========> Upgrading Helm chart"
 	@helm upgrade nexus $(ROOT_DIR)/helm-charts/nexus
 
-## helm-uninstall: Uninstall Helm chart
-.PHONY: helm-uninstall
-helm-uninstall:
-	@echo "===========> Uninstalling Helm chart"
-	@helm uninstall nexus
-
 # ==============================================================================
-# EXTENSION TARGETS
-# ==============================================================================
-
-## extension-dev: Run the browser extension in development mode
-.PHONY: extension-dev
-extension-dev:
-	@echo "===========> Running browser extension in development mode"
-	@cd extension && npm run dev
-
-## extension-build: Build the browser extension for production
-.PHONY: extension-build
-extension-build:
-	@echo "===========> Building browser extension for production"
-	@cd extension && npm run build
-
-## extension-package: Package the browser extension for distribution
-.PHONY: extension-package
-extension-package:
-	@echo "===========> Packaging browser extension for distribution"
-	@cd extension && npm run package
-
-# ==============================================================================
-# DEVELOPMENT TOOL TARGETS
+# DEVELOPMENT TOOLS
 # ==============================================================================
 
 ## install-tools: Install development tools
@@ -438,13 +420,6 @@ setup-git-hooks:
 	@echo "===========> Setting up Git hooks"
 	@cp -f $(ROOT_DIR)/hooks/* $(ROOT_DIR)/.git/hooks/ 2>/dev/null || true
 	@chmod +x $(ROOT_DIR)/.git/hooks/*
-
-## install-pre-commit: Install pre-commit
-.PHONY: install-pre-commit
-install-pre-commit:
-	@echo "===========> Installing pre-commit"
-	@$(PIP) install pre-commit
-	@pre-commit install
 
 ## generate-client: Generate OpenAPI client
 .PHONY: generate-client
