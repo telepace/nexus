@@ -64,7 +64,7 @@ const useAuth = (isAdmin = false) => {
 
   const login = async (data: AccessToken) => {
     const loginEndpoint = isAdmin ? 
-      () => LoginService.loginAccessToken({ formData: data, path: "/api/v1/admin/login" }) : 
+      () => LoginService.loginAccessToken({ formData: data }) : 
       () => LoginService.loginAccessToken({ formData: data });
       
     const response = await loginEndpoint();

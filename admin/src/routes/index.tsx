@@ -17,7 +17,7 @@ function AdminHome() {
       <Heading mb={6}>Admin Dashboard</Heading>
       <Text mb={6}>Welcome back, {user?.full_name || "Admin"}!</Text>
 
-      <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6}>
+      <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={6}>
         <Card
           title="Users"
           icon={<FiUsers size={24} />}

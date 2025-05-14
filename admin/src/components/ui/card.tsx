@@ -1,4 +1,4 @@
-import { Box, Flex, Heading, Text, useColorModeValue } from "@chakra-ui/react"
+import { Box, Flex, Heading, Text } from "@chakra-ui/react"
 import { ReactNode } from "react"
 
 interface CardProps {
@@ -9,8 +9,9 @@ interface CardProps {
 }
 
 export const Card = ({ title, value, icon, onClick }: CardProps) => {
-  const bgColor = useColorModeValue("white", "gray.800")
-  const borderColor = useColorModeValue("gray.200", "gray.700")
+  // 使用固定颜色而不是依赖于颜色模式
+  const bgColor = "white"
+  const borderColor = "gray.200"
 
   return (
     <Box
@@ -40,8 +41,8 @@ export const Card = ({ title, value, icon, onClick }: CardProps) => {
         <Box
           p={3}
           borderRadius="full"
-          bg={useColorModeValue("blue.50", "blue.900")}
-          color={useColorModeValue("blue.500", "blue.200")}
+          bg="blue.50"
+          color="blue.500"
         >
           {icon}
         </Box>

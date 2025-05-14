@@ -6,24 +6,10 @@ import { addItem } from "@/components/actions/items-action";
 import { useActionState } from "react";
 import { SubmitButton } from "@/components/ui/submitButton";
 
-interface AddItemState {
-  message?: string;
-  errors?: {
-    title?: string[];
-    description?: string[];
-  };
-}
-
-const initialState: AddItemState = { 
-  message: "",
-  errors: {
-    title: [],
-    description: []
-  }
-};
+const initialState = { message: "" };
 
 export default function CreateItemPage() {
-  const [state, dispatch] = useActionState<AddItemState, FormData>(addItem, initialState);
+  const [state, dispatch] = useActionState(addItem, initialState);
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">

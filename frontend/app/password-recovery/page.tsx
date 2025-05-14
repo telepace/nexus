@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, Suspense } from "react";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -17,19 +17,11 @@ import { useActionState } from "react";
 import { SubmitButton } from "@/components/ui/submitButton";
 import { FormError } from "@/components/ui/FormError";
 
-// 定义状态类型
-interface PasswordResetState {
-  message?: string;
-  errors?: {
-    email?: string[];
-  };
-}
-
-function PasswordRecoveryForm() {
+export default function Page() {
   const searchParams = useSearchParams();
   const emailFromQuery = searchParams.get('email') || '';
   
-  const [state, dispatch] = useActionState<PasswordResetState, FormData>(passwordReset, undefined);
+  const [state, dispatch] = useActionState(passwordReset, undefined);
   const [email, setEmail] = useState(emailFromQuery);
   
   // Maintain form values when there's an error
@@ -120,17 +112,5 @@ function PasswordRecoveryForm() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function Page() {
-  return (
-    <Suspense fallback={
-      <div className="flex min-h-screen w-full items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-300 border-t-blue-600"></div>
-      </div>
-    }>
-      <PasswordRecoveryForm />
-    </Suspense>
   );
 }
