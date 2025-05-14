@@ -16,21 +16,10 @@ import {
 } from "../ui/drawer"
 import SidebarItems from "./SidebarItems"
 
-interface SidebarProps {
-  isAdmin?: boolean;
-}
-
-interface DrawerChangeEvent {
-  open: boolean;
-}
-
-const Sidebar = ({ isAdmin = false }: SidebarProps) => {
+const Sidebar = () => {
   const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserPublic>([
-    "currentUser", 
-    isAdmin ? "admin" : "user"
-  ])
-  const { logout } = useAuth(isAdmin)
+  const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
+  const { logout } = useAuth()
   const [open, setOpen] = useState(false)
 
   return (
@@ -39,7 +28,7 @@ const Sidebar = ({ isAdmin = false }: SidebarProps) => {
       <DrawerRoot
         placement="start"
         open={open}
-        onOpenChange={(e: DrawerChangeEvent) => setOpen(e.open)}
+        onOpenChange={(e) => setOpen(e.open)}
       >
         <DrawerBackdrop />
         <DrawerTrigger asChild>
@@ -55,12 +44,12 @@ const Sidebar = ({ isAdmin = false }: SidebarProps) => {
             <FaBars />
           </IconButton>
         </DrawerTrigger>
-        <DrawerContent>
+        <DrawerContent maxW="xs">
           <DrawerCloseTrigger />
           <DrawerBody>
             <Flex flexDir="column" justify="space-between">
               <Box>
-                <SidebarItems isAdmin={isAdmin} onClose={() => setOpen(false)} />
+                <SidebarItems onClose={() => setOpen(false)} />
                 <Flex
                   as="button"
                   onClick={() => {
@@ -77,7 +66,7 @@ const Sidebar = ({ isAdmin = false }: SidebarProps) => {
               </Box>
               {currentUser?.email && (
                 <Text fontSize="sm" p={2} truncate maxW="sm">
-                  Logged in as: {currentUser.email} {isAdmin && "(Admin)"}
+                  Logged in as: {currentUser.email}
                 </Text>
               )}
             </Flex>
@@ -91,14 +80,14 @@ const Sidebar = ({ isAdmin = false }: SidebarProps) => {
       <Box
         display={{ base: "none", md: "flex" }}
         position="sticky"
-        bg={isAdmin ? "purple.900" : "bg.subtle"}
+        bg="bg.subtle"
         top={0}
         minW="xs"
         h="100vh"
         p={4}
       >
         <Box w="100%">
-          <SidebarItems isAdmin={isAdmin} />
+          <SidebarItems />
         </Box>
       </Box>
     </>

@@ -12,23 +12,23 @@ import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { InputGroup } from "@/components/ui/input-group"
 import { PasswordInput } from "@/components/ui/password-input"
-import useAuth, { isAdminLoggedIn } from "@/hooks/useAuth"
+import useAuth, { isLoggedIn } from "@/hooks/useAuth"
 import Logo from "/assets/images/fastapi-logo.svg"
 import { emailPattern, passwordRules } from "../utils"
 
 export const Route = createFileRoute("/login")({
-  component: AdminLogin,
+  component: Login,
   beforeLoad: async () => {
-    if (isAdminLoggedIn()) {
+    if (isLoggedIn()) {
       throw redirect({
-        to: "/admin",
+        to: "/",
       })
     }
   },
 })
 
-function AdminLogin() {
-  const { loginMutation, error, resetError } = useAuth(true) // true indicates admin mode
+function Login() {
+  const { loginMutation, error, resetError } = useAuth()
   const {
     register,
     handleSubmit,
@@ -74,9 +74,6 @@ function AdminLogin() {
           alignSelf="center"
           mb={4}
         />
-        <Text fontSize="2xl" fontWeight="bold" textAlign="center" mb={4}>
-          Admin Panel
-        </Text>
         <Field
           invalid={!!errors.username}
           errorText={errors.username?.message || !!error}
@@ -85,10 +82,10 @@ function AdminLogin() {
             <Input
               id="username"
               {...register("username", {
-                required: "Admin username is required",
+                required: "Username is required",
                 pattern: emailPattern,
               })}
-              placeholder="Admin Email"
+              placeholder="Email"
               type="email"
             />
           </InputGroup>
@@ -97,19 +94,19 @@ function AdminLogin() {
           type="password"
           startElement={<FiLock />}
           {...register("password", passwordRules())}
-          placeholder="Admin Password"
+          placeholder="Password"
           errors={errors}
         />
-        <RouterLink to="/admin/recover-password" className="main-link">
+        <RouterLink to="/recover-password" className="main-link">
           Forgot Password?
         </RouterLink>
         <Button variant="solid" type="submit" loading={isSubmitting} size="md">
-          Admin Login
+          Log In
         </Button>
         <Text>
-          Back to user login?{" "}
-          <RouterLink to="/login" className="main-link">
-            User Login
+          Don't have an account?{" "}
+          <RouterLink to="/signup" className="main-link">
+            Sign Up
           </RouterLink>
         </Text>
       </Container>

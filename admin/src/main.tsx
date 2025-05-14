@@ -13,25 +13,24 @@ import { routeTree } from "./routeTree.gen"
 import { ApiError, OpenAPI } from "./client"
 import { CustomProvider } from "./components/ui/provider"
 
-// Set base URL for admin panel API
-OpenAPI.BASE = import.meta.env.VITE_ADMIN_API_URL || import.meta.env.VITE_API_URL
+OpenAPI.BASE = import.meta.env.VITE_API_URL
 OpenAPI.TOKEN = async () => {
-  return localStorage.getItem("admin_access_token") || ""
+  return localStorage.getItem("access_token") || ""
 }
 
-// Add axios response interceptor to handle new API response format
+// 添加axios响应拦截器，处理新的API响应格式
 axios.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
     if (error.response && error.response.data) {
-      // Handle errors in the new API response format
+      // 处理新的API响应格式中的错误
       const responseData = error.response.data;
       
-      // Check if it contains an error field
+      // 检查是否包含error字段
       if (responseData.error) {
-        // Use the content of the error field as the error message
+        // 使用error字段的内容作为错误消息
         error.message = responseData.error;
       }
     }
@@ -41,11 +40,10 @@ axios.interceptors.response.use(
 
 const handleApiError = (error: Error) => {
   if (error instanceof ApiError && [401, 403].includes(error.status)) {
-    localStorage.removeItem("admin_access_token")
-    window.location.href = "/admin/login"
+    localStorage.removeItem("access_token")
+    window.location.href = "/login"
   }
 }
-
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: handleApiError,
@@ -62,7 +60,6 @@ declare module "@tanstack/react-router" {
   }
 }
 
-// Admin panel root element
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <CustomProvider>

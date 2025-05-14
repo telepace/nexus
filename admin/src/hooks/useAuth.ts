@@ -18,33 +18,22 @@ const isLoggedIn = () => {
   return localStorage.getItem("access_token") !== null
 }
 
-const isAdminLoggedIn = () => {
-  return localStorage.getItem("admin_access_token") !== null
-}
-
-// Custom logout API call
-const callLogoutAPI = async (isAdmin = false): Promise<void> => {
+// 自定义logout API调用
+const callLogoutAPI = async (): Promise<void> => {
   return request(OpenAPI, {
     method: "POST",
-    url: isAdmin ? "/api/v1/admin/logout" : "/api/v1/logout",
+    url: "/api/v1/logout",
   })
 }
 
-const useAuth = (isAdmin = false) => {
+const useAuth = () => {
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  
-  const tokenKey = isAdmin ? "admin_access_token" : "access_token"
-  const loginRedirect = isAdmin ? "/admin" : "/"
-  const logoutRedirect = isAdmin ? "/admin/login" : "/login"
-  
   const { data: user } = useQuery<UserPublic | null, Error>({
-    queryKey: ["currentUser", isAdmin ? "admin" : "user"],
-    queryFn: isAdmin ? 
-      () => UsersService.readUserMe() : 
-      UsersService.readUserMe,
-    enabled: isAdmin ? isAdminLoggedIn() : isLoggedIn(),
+    queryKey: ["currentUser"],
+    queryFn: UsersService.readUserMe,
+    enabled: isLoggedIn(),
   })
 
   const signUpMutation = useMutation({
@@ -52,7 +41,7 @@ const useAuth = (isAdmin = false) => {
       UsersService.registerUser({ requestBody: data }),
 
     onSuccess: () => {
-      navigate({ to: logoutRedirect })
+      navigate({ to: "/login" })
     },
     onError: (err: ApiError) => {
       handleError(err)
@@ -63,18 +52,16 @@ const useAuth = (isAdmin = false) => {
   })
 
   const login = async (data: AccessToken) => {
-    const loginEndpoint = isAdmin ? 
-      () => LoginService.loginAccessToken({ formData: data }) : 
-      () => LoginService.loginAccessToken({ formData: data });
-      
-    const response = await loginEndpoint();
-    localStorage.setItem(tokenKey, response.access_token)
+    const response = await LoginService.loginAccessToken({
+      formData: data,
+    })
+    localStorage.setItem("access_token", response.access_token)
   }
 
   const loginMutation = useMutation({
     mutationFn: login,
     onSuccess: () => {
-      navigate({ to: loginRedirect })
+      navigate({ to: "/" })
     },
     onError: (err: ApiError) => {
       handleError(err)
@@ -83,15 +70,15 @@ const useAuth = (isAdmin = false) => {
 
   const logout = async () => {
     try {
-      // Try to call the backend logout API
-      await callLogoutAPI(isAdmin)
+      // 尝试调用后端的logout接口
+      await callLogoutAPI()
     } catch (error) {
-      console.error('Logout API call failed:', error)
+      console.error('登出API调用失败:', error)
     } finally {
-      // Clear local token and redirect regardless of API call success or failure
-      localStorage.removeItem(tokenKey)
-      queryClient.clear() // Clear all cached query data
-      navigate({ to: logoutRedirect })
+      // 不管API调用成功或失败，都清除本地token并跳转
+      localStorage.removeItem("access_token")
+      queryClient.clear() // 清除所有缓存的查询数据
+      navigate({ to: "/login" })
     }
   }
 
@@ -105,5 +92,5 @@ const useAuth = (isAdmin = false) => {
   }
 }
 
-export { isLoggedIn, isAdminLoggedIn }
+export { isLoggedIn }
 export default useAuth

@@ -3,25 +3,25 @@ import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
 
 import Navbar from "@/components/Common/Navbar"
 import Sidebar from "@/components/Common/Sidebar"
-import { isAdminLoggedIn } from "@/hooks/useAuth"
+import { isLoggedIn } from "@/hooks/useAuth"
 
 export const Route = createFileRoute("/_layout")({
-  component: AdminLayout,
+  component: Layout,
   beforeLoad: async () => {
-    if (!isAdminLoggedIn()) {
+    if (!isLoggedIn()) {
       throw redirect({
-        to: "/admin/login",
+        to: "/login",
       })
     }
   },
 })
 
-function AdminLayout() {
+function Layout() {
   return (
     <Flex direction="column" h="100vh">
-      <Navbar isAdmin={true} />
+      <Navbar />
       <Flex flex="1" overflow="hidden">
-        <Sidebar isAdmin={true} />
+        <Sidebar />
         <Flex flex="1" direction="column" p={4} overflowY="auto">
           <Outlet />
         </Flex>
@@ -30,4 +30,4 @@ function AdminLayout() {
   )
 }
 
-export default AdminLayout
+export default Layout
