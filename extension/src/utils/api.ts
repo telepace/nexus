@@ -17,7 +17,7 @@ const getBaseUrl = (): string => {
 }
 
 /**
- * Returns the base URL for LiteLLM API requests
+ * Returns the base URL for LiteLLM, defaulting to localhost.
  */
 const getLiteLLMBaseUrl = (): string => {
   // 默认使用 localhost
@@ -89,7 +89,7 @@ export class ApiClient {
   }
 
   /**
-   * Sets the base URL for the LiteLLM service.
+   * Sets the base URL for Lite LLM.
    */
   public setLiteLLMBaseUrl(url: string) {
     this.litellmBaseUrl = url
@@ -246,7 +246,7 @@ export class ApiClient {
    */
 
   /**
-   * 获取所有可用的 LLM 模型
+   * Fetches a list of models from the LiteLLM API.
    */
   public async getModels(): Promise<LiteLLMModel[]> {
     const response = await fetch(`${this.litellmBaseUrl}/models`, {
@@ -266,7 +266,7 @@ export class ApiClient {
   }
 
   /**
-   * 发送聊天请求到 LiteLLM API
+   * Sends a chat completion request to the LiteLLM API and returns the response.
    */
   public async chatCompletion(request: LiteLLMChatRequest): Promise<LiteLLMChatResponse> {
     const response = await fetch(`${this.litellmBaseUrl}/chat/completions`, {
@@ -286,7 +286,7 @@ export class ApiClient {
   }
 
   /**
-   * 获取 LiteLLM 健康状态
+   * Fetches health status from LiteLLM service.
    */
   public async getLiteLLMHealth(): Promise<{ status: string }> {
     const response = await fetch(`${this.litellmBaseUrl}/health`, {
