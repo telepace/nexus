@@ -249,7 +249,7 @@ You can build and run the documentation website locally using Docker:
 docker-compose -f docker-compose.docs.yml up --build
 ```
 
-The documentation will be available at http://localhost:3000.
+The documentation will be available at http://localhost:8000.
 
 ### Documentation Deployment
 
@@ -299,8 +299,8 @@ QuickForge AI makes it simple to integrate various AI services:
 
 ## 📚 Documentation
 
-- [Backend API documentation](http://localhost:3000/docs) - Available when the backend is running
-- [Frontend component documentation](http://localhost:3000/docs) - Available when the frontend is running
+- [Backend API documentation](http://localhost:8000/docs) - Available when the backend is running
+- [Frontend component documentation](http://localhost:8000/docs) - Available when the frontend is running
 - [Project architecture](./docs/architecture.md)
 - [Development guides](./docs/development.md)
 

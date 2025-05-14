@@ -100,7 +100,7 @@ services:
   frontend:
     restart: "no"
     ports:
-      - "${FRONTEND_PORT:-5173}:80"
+      - "${FRONTEND_PORT:-8000}:80"
     build:
       context: ./frontend
       args:
@@ -108,6 +108,20 @@ services:
         - NODE_ENV=development
     environment:
       - VITE_API_URL=${BACKEND_API_URL:-http://localhost:8000}
+
+  admin:
+    restart: "no"
+    ports:
+      - "${ADMIN_PORT:-3000}:80"
+    build:
+      context: ./admin
+      args:
+        - VITE_API_URL=${BACKEND_API_URL:-http://localhost:8000}
+        - VITE_ADMIN_API_URL=${BACKEND_API_URL:-http://localhost:8000}
+        - NODE_ENV=development
+    environment:
+      - VITE_API_URL=${BACKEND_API_URL:-http://localhost:8000}
+      - VITE_ADMIN_API_URL=${BACKEND_API_URL:-http://localhost:8000}
 
   playwright:
     build:

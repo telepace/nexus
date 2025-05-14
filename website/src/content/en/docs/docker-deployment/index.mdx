@@ -1,15 +1,15 @@
 ---
 title: Docker and Deployment
-description: Learn how to containerize and deploy your Quick Forge AI application to various environments.
+description: Learn how to containerize and deploy your nexus application to various environments.
 ---
 
 # Docker and Deployment
 
-This guide will help you understand how to containerize your Quick Forge AI application and deploy it to various environments.
+This guide will help you understand how to containerize your nexus application and deploy it to various environments.
 
 ## Docker Setup
 
-Quick Forge AI comes with pre-configured Docker support to make containerization easy and consistent across environments.
+nexus comes with pre-configured Docker support to make containerization easy and consistent across environments.
 
 ### Docker Compose Configuration
 
@@ -65,7 +65,7 @@ POSTGRES_DB=quick_forge_prod
 
 ### Deployment Options
 
-Quick Forge AI can be deployed to various platforms:
+nexus can be deployed to various platforms:
 
 #### Kubernetes with Helm
 
@@ -74,7 +74,7 @@ The project includes Helm charts in the `helm-charts` directory for Kubernetes d
 ```bash
 # From the project root
 cd helm-charts
-helm install quick-forge-ai ./quick-forge-ai --values ./your-values.yaml
+helm install nexus ./nexus --values ./your-values.yaml
 ```
 
 #### Fly.io Deployment
@@ -101,7 +101,7 @@ For Docker Swarm deployment:
 docker swarm init
 
 # Deploy the stack
-docker stack deploy -c docker-compose.yml -c docker-compose.prod.yml quick-forge-ai
+docker stack deploy -c docker-compose.yml -c docker-compose.prod.yml nexus
 ```
 
 ## Continuous Integration/Continuous Deployment

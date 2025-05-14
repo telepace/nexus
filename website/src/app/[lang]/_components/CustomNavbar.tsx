@@ -5,7 +5,7 @@ import LocaleToggle from '@/widgets/locale-toggle'
 import ThemeToggle from '@/widgets/theme-toggle'
 import { Navbar } from 'nextra-theme-docs'
 
-const repo = 'https://github.com/telepace/quick-forge-ai'
+const repo = 'https://github.com/telepace/nexus'
 
 /**
  * Represents a custom navigation bar component that utilizes localization and theme toggles.

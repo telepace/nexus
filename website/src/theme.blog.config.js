@@ -2,7 +2,7 @@ const themeConfig = {
   footer: (
     <div className="mt-8 border-t border-gray-200 pt-8 dark:border-gray-800">
       <p className="text-center text-sm">
-        © {new Date().getFullYear()} Quick Forge AI. All rights reserved.
+        © {new Date().getFullYear()} nexus. All rights reserved.
       </p>
     </div>
   ),
@@ -20,7 +20,7 @@ const themeConfig = {
         {meta.description && (
           <meta property="og:description" content={meta.description} />
         )}
-        <meta property="og:site_name" content="Quick Forge AI" />
+        <meta property="og:site_name" content="nexus" />
       </>
     )
   },

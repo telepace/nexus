@@ -1,12 +1,12 @@
 ---
 title: Supabase Integration Case Study
-description: A real-world example of migrating from direct PostgreSQL to Supabase in Quick Forge AI
+description: A real-world example of migrating from direct PostgreSQL to Supabase in nexus
 category: Examples
 ---
 
 # Supabase Integration Case Study
 
-This case study describes how a team migrated their Quick Forge AI application from direct PostgreSQL deployment to Supabase for enhanced scalability and reduced operational overhead.
+This case study describes how a team migrated their nexus application from direct PostgreSQL deployment to Supabase for enhanced scalability and reduced operational overhead.
 
 ## Project Background
 
@@ -15,7 +15,7 @@ This case study describes how a team migrated their Quick Forge AI application f
 **Team Size**: 3 developers  
 **Development Timeline**: 8 weeks  
 
-The team built a customer support dashboard using Quick Forge AI to help their customer service representatives track and resolve support tickets. Initially, they deployed with the default PostgreSQL option for simplicity during development.
+The team built a customer support dashboard using nexus to help their customer service representatives track and resolve support tickets. Initially, they deployed with the default PostgreSQL option for simplicity during development.
 
 ## Challenges with Direct PostgreSQL
 
@@ -73,7 +73,7 @@ They reviewed their schema and made some adjustments to optimize for Supabase:
 psql "postgresql://postgres:password@db.abcdefghijkl.supabase.co:5432/postgres" < database_backup.sql
 ```
 
-### Step 5: Configuring Quick Forge AI for Supabase
+### Step 5: Configuring nexus for Supabase
 
 They simply updated their `.env` file to include the Supabase connection URL:
 
@@ -148,10 +148,10 @@ PGCONNECT_TIMEOUT=15
 
 ## Switching Back if Needed
 
-One advantage of Quick Forge AI's new automatic database detection is that they could easily switch back to PostgreSQL if needed by simply removing the `SUPABASE_URL` environment variable and ensuring their PostgreSQL settings were configured.
+One advantage of nexus's new automatic database detection is that they could easily switch back to PostgreSQL if needed by simply removing the `SUPABASE_URL` environment variable and ensuring their PostgreSQL settings were configured.
 
 ## Conclusion
 
 Migrating from direct PostgreSQL to Supabase allowed the team to focus more on their application's features and less on database management. The built-in scalability, security features, and reduced operational overhead made it an excellent choice for their growing application.
 
-Quick Forge AI's automatic database detection made this migration straightforward, allowing the team to switch between database options without any changes to their application code. 
+nexus's automatic database detection made this migration straightforward, allowing the team to switch between database options without any changes to their application code. 

@@ -1,15 +1,15 @@
 ---
 title: 'FastAPI开发流程'
-description: 'Quick Forge AI中FastAPI的开发流程和最佳实践'
+description: 'nexus中FastAPI的开发流程和最佳实践'
 ---
 
 # FastAPI开发流程
 
-本文档介绍了在Quick Forge AI项目中使用FastAPI进行后端开发的完整流程、环境设置和最佳实践。
+本文档介绍了在nexus项目中使用FastAPI进行后端开发的完整流程、环境设置和最佳实践。
 
 ## 开发环境架构
 
-下图展示了Quick Forge AI后端开发环境的整体架构：
+下图展示了nexus后端开发环境的整体架构：
 
 ```mermaid
 graph TD
@@ -45,7 +45,7 @@ graph TD
 
 ### 本地开发环境
 
-在开始开发Quick Forge AI后端之前，您需要设置本地开发环境：
+在开始开发nexus后端之前，您需要设置本地开发环境：
 
 1. **安装必要工具**：
    - Python 3.9+
@@ -55,8 +55,8 @@ graph TD
 
 2. **克隆代码库**：
    ```bash
-   git clone https://github.com/your-username/quick-forge-ai.git
-   cd quick-forge-ai
+   git clone https://github.com/your-username/nexus.git
+   cd nexus
    ```
 
 3. **设置Python虚拟环境**：
@@ -72,7 +72,7 @@ graph TD
 
 ### Docker开发环境
 
-Quick Forge AI提供了完整的Docker配置，实现一致的开发环境：
+nexus提供了完整的Docker配置，实现一致的开发环境：
 
 1. **使用Docker Compose启动服务**：
    ```bash
@@ -92,7 +92,7 @@ Quick Forge AI提供了完整的Docker配置，实现一致的开发环境：
 
 ### 1. 理解项目结构
 
-Quick Forge AI后端遵循模块化结构：
+nexus后端遵循模块化结构：
 
 ```
 backend/
@@ -225,7 +225,7 @@ alembic downgrade -1
 
 ## Docker开发环境
 
-Quick Forge AI使用Docker Compose管理开发环境，包括FastAPI后端和PostgreSQL数据库。
+nexus使用Docker Compose管理开发环境，包括FastAPI后端和PostgreSQL数据库。
 
 ### Docker Compose配置
 
@@ -283,7 +283,7 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 ### 测试类型
 
-Quick Forge AI实施了全面的测试策略：
+nexus实施了全面的测试策略：
 
 1. **单元测试**：
    - 测试独立组件和函数
@@ -312,7 +312,7 @@ pytest --cov=app tests/
 
 ## 生产部署
 
-Quick Forge AI使用Docker进行生产部署，遵循以下最佳实践：
+nexus使用Docker进行生产部署，遵循以下最佳实践：
 
 1. **环境变量**：
    - 所有配置通过环境变量传入

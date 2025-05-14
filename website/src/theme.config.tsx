@@ -9,11 +9,11 @@ const config = {
     a: NextraLink
   },
   // Configure project information
-  docsRepositoryBase: 'https://github.com/telepace/quick-forge-ai',
+  docsRepositoryBase: 'https://github.com/telepace/nexus',
   // Handle metadata in the Head tag
   useNextSeoProps() {
     return {
-      titleTemplate: '%s – Quick Forge AI'
+      titleTemplate: '%s – nexus'
     }
   },
   // Preferred icon
@@ -25,7 +25,7 @@ const config = {
     
     return (
       <span className="font-bold text-xl">
-        Quick Forge AI
+        nexus
       </span>
     )
   },
@@ -35,7 +35,7 @@ const config = {
   },
   // Footer configuration
   footer: {
-    text: `© ${new Date().getFullYear()} Quick Forge AI - Built with Nextra`
+    text: `© ${new Date().getFullYear()} nexus - Built with Nextra`
   }
 }
 

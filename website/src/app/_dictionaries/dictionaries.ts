@@ -30,7 +30,7 @@ interface Dictionary {
 const en: Dictionary = {
   metadata: {
     home: {
-      title: 'Quick Forge AI - Create Web Apps Faster',
+      title: 'nexus - Create Web Apps Faster',
       description: 'Build full-stack applications with AI assistance and ready-made templates',
     },
   },
@@ -69,7 +69,7 @@ const en: Dictionary = {
 const zh: Dictionary = {
   metadata: {
     home: {
-      title: 'Quick Forge AI - 更快创建Web应用',
+      title: 'nexus - 更快创建Web应用',
       description: '借助AI辅助和现成模板构建全栈应用',
     },
   },

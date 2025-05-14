@@ -6,18 +6,18 @@ import { useConfig } from 'nextra-theme-docs'
 
 const logo = (
   <span className="font-bold">
-    Quick Forge AI 文档
+    nexus 文档
   </span>
 )
 
 const config = {
   project: {
-    link: 'https://github.com/telepace/quick-forge-ai',
+    link: 'https://github.com/telepace/nexus',
   },
-  docsRepositoryBase: 'https://github.com/telepace/quick-forge-ai',
+  docsRepositoryBase: 'https://github.com/telepace/nexus',
   useNextSeoProps() {
     return {
-      titleTemplate: '%s – Quick Forge AI'
+      titleTemplate: '%s – nexus'
     }
   },
   logo,
@@ -25,7 +25,7 @@ const config = {
     const config = useConfig()
     const { asPath } = useRouter()
     const { frontMatter } = config
-    const title = frontMatter?.title || 'Quick Forge AI'
+    const title = frontMatter?.title || 'nexus'
     
     const socialCard = asPath === '/' || !title
       ? 'https://nextra.site/og.jpeg'
@@ -37,15 +37,15 @@ const config = {
         <meta name="theme-color" content="#fff" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta httpEquiv="Content-Language" content="en" />
-        <meta name="description" content="Quick Forge AI documentation" />
-        <meta name="og:description" content="Quick Forge AI documentation" />
+        <meta name="description" content="nexus documentation" />
+        <meta name="og:description" content="nexus documentation" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:image" content={socialCard} />
         <meta name="twitter:site:domain" content="quickforgeai.com" />
         <meta name="twitter:url" content="https://quickforgeai.com" />
-        <meta name="og:title" content={title ? title + ' – Quick Forge AI' : 'Quick Forge AI'} />
+        <meta name="og:title" content={title ? title + ' – nexus' : 'nexus'} />
         <meta name="og:image" content={socialCard} />
-        <meta name="apple-mobile-web-app-title" content="Quick Forge AI" />
+        <meta name="apple-mobile-web-app-title" content="nexus" />
         <link rel="icon" href="/favicon.ico" type="image/svg+xml" />
       </>
     )
@@ -60,7 +60,7 @@ const config = {
     text: (
       <div className="flex w-full flex-col items-center sm:items-start">
         <p className="mt-6 text-xs">
-          © {new Date().getFullYear()} Quick Forge AI. All rights reserved.
+          © {new Date().getFullYear()} nexus. All rights reserved.
         </p>
       </div>
     )

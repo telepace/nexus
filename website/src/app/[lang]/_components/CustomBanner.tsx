@@ -4,7 +4,7 @@ import type { I18nLangAsyncProps } from '@/i18n'
 import { useLocale } from '@/hooks'
 import { Banner } from 'nextra/components'
 
-const repo = 'https://github.com/telepace/quick-forge-ai'
+const repo = 'https://github.com/telepace/nexus'
 
 /**
  * Renders a custom banner component with localized text and an external link.

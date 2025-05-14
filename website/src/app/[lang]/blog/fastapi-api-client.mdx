@@ -1,12 +1,12 @@
 ---
 title: 使用FastAPI构建API客户端
-description: 学习如何在Quick Forge AI项目中使用FastAPI构建强大的API客户端
+description: 学习如何在nexus项目中使用FastAPI构建强大的API客户端
 date: 2023-06-18
 ---
 
 # 使用FastAPI构建API客户端
 
-在快速开发现代Web应用时，构建高效、可靠的API客户端是至关重要的一步。本文将介绍如何在Quick Forge AI项目中结合FastAPI模板创建强大的API客户端。
+在快速开发现代Web应用时，构建高效、可靠的API客户端是至关重要的一步。本文将介绍如何在nexus项目中结合FastAPI模板创建强大的API客户端。
 
 ## 为什么需要API客户端？
 
@@ -19,7 +19,7 @@ API客户端在全栈应用中扮演着重要角色：
 
 ## 项目架构
 
-下面是Quick Forge AI项目与API客户端的架构图：
+下面是nexus项目与API客户端的架构图：
 
 ```mermaid
 graph TD
@@ -46,7 +46,7 @@ graph TD
 
 ### 1. 自动生成API客户端
 
-在Quick Forge AI项目中，我们可以使用OpenAPI规范自动生成API客户端。首先确保FastAPI后端正确配置：
+在nexus项目中，我们可以使用OpenAPI规范自动生成API客户端。首先确保FastAPI后端正确配置：
 
 ```typescript
 // 配置API客户端生成
@@ -90,9 +90,9 @@ export class ApiService {
 export const apiService = ApiService.getInstance();
 ```
 
-## 在Quick Forge AI中集成
+## 在nexus中集成
 
-将API客户端集成到Quick Forge AI项目中非常简单：
+将API客户端集成到nexus项目中非常简单：
 
 1. 在构建过程中自动生成客户端代码
 2. 使用统一的API服务类访问后端功能
@@ -129,7 +129,7 @@ export function UserList() {
 
 ## 最佳实践
 
-在Quick Forge AI项目中使用API客户端时，请遵循以下最佳实践：
+在nexus项目中使用API客户端时，请遵循以下最佳实践：
 
 1. **保持模型同步** - 确保前端和后端模型保持同步
 2. **错误处理** - 实现全局错误处理机制
@@ -139,6 +139,6 @@ export function UserList() {
 
 ## 结论
 
-使用FastAPI构建API客户端可以大大提高Quick Forge AI项目的开发效率和代码质量。通过自动生成的类型安全客户端，您可以专注于构建业务逻辑，而不必担心API调用的正确性和兼容性问题。
+使用FastAPI构建API客户端可以大大提高nexus项目的开发效率和代码质量。通过自动生成的类型安全客户端，您可以专注于构建业务逻辑，而不必担心API调用的正确性和兼容性问题。
 
-下一步，我们将探讨如何在Quick Forge AI项目中实现更高级的API功能，如实时通信和文件上传。敬请期待！ 
+下一步，我们将探讨如何在nexus项目中实现更高级的API功能，如实时通信和文件上传。敬请期待！ 

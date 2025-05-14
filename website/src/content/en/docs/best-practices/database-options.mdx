@@ -1,12 +1,12 @@
 ---
 title: Database Configuration Options
-description: Learn how to configure and switch between PostgreSQL and Supabase database options in Quick Forge AI
+description: Learn how to configure and switch between PostgreSQL and Supabase database options in nexus
 category: Best Practices
 ---
 
 # Database Configuration Options
 
-Quick Forge AI supports two database deployment options, giving you flexibility in your development and production environments:
+nexus supports two database deployment options, giving you flexibility in your development and production environments:
 
 1. **Direct PostgreSQL Deployment (Default)**: A PostgreSQL database deployed alongside your application using Docker
 2. **Supabase Cloud Service**: Connect to a managed PostgreSQL database in Supabase cloud
@@ -17,13 +17,13 @@ This guide will walk you through both options, including detailed steps for conf
 
 Before you begin, make sure you have:
 
-- Quick Forge AI installed and set up
+- nexus installed and set up
 - Docker and Docker Compose (required for PostgreSQL direct deployment)
 - A Supabase account (required for Supabase option) - [Sign up here](https://supabase.com)
 
 ## Automatic Database Detection
 
-Quick Forge AI now automatically detects which database to use based on your environment variables:
+nexus now automatically detects which database to use based on your environment variables:
 
 - If `SUPABASE_URL` is set in your environment variables, the system will use Supabase
 - If `SUPABASE_URL` is not set, the system will use direct PostgreSQL deployment
@@ -137,7 +137,7 @@ psql "postgresql://postgres:your-password@db.abcdefghijkl.supabase.co:5432/postg
 
 ## Database Migrations with Alembic
 
-Quick Forge AI uses Alembic for database migrations, which works with both PostgreSQL direct deployment and Supabase.
+nexus uses Alembic for database migrations, which works with both PostgreSQL direct deployment and Supabase.
 
 ### Creating a Migration
 
@@ -158,7 +158,7 @@ The system will automatically run these migrations against your configured datab
 
 ## How It Works
 
-Quick Forge AI implements this feature through:
+nexus implements this feature through:
 
 1. Automatic database detection in `backend/app/core/config.py`
 2. Docker Compose service profiles in `docker-compose.yml`
@@ -191,4 +191,4 @@ Quick Forge AI implements this feature through:
 - **Production**: Choose based on your scaling needs and management preferences
 - **CI/CD**: For CI, the direct PostgreSQL option can be more reliable
 
-By supporting both options, Quick Forge AI gives you the flexibility to choose the right database approach for your specific needs and project phase. 
+By supporting both options, nexus gives you the flexibility to choose the right database approach for your specific needs and project phase. 

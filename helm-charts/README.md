@@ -1,6 +1,6 @@
-# Quick Forge AI Helm Charts
+# nexus Helm Charts
 
-这个目录包含为 Quick Forge AI 应用程序设计的 Helm charts。它支持将应用程序的所有组件部署到 Kubernetes 集群中。
+这个目录包含为 nexus 应用程序设计的 Helm charts。它支持将应用程序的所有组件部署到 Kubernetes 集群中。
 
 ## 组件
 
@@ -33,8 +33,8 @@ helm repo update
 
 ```bash
 cd helm-charts
-helm dependency update quick-forge-ai
-helm install qforge-dev ./quick-forge-ai -f quick-forge-ai/values.local.yaml
+helm dependency update nexus
+helm install qforge-dev ./nexus -f nexus/values.local.yaml
 ```
 
 #### 生产环境
@@ -43,8 +43,8 @@ helm install qforge-dev ./quick-forge-ai -f quick-forge-ai/values.local.yaml
 
 ```bash
 cd helm-charts
-helm dependency update quick-forge-ai
-helm install qforge ./quick-forge-ai -f quick-forge-ai/values.prod.yaml
+helm dependency update nexus
+helm install qforge ./nexus -f nexus/values.prod.yaml
 ```
 
 ## 配置
@@ -71,7 +71,7 @@ helm install qforge ./quick-forge-ai -f quick-forge-ai/values.prod.yaml
 ### 升级
 
 ```bash
-helm upgrade qforge ./quick-forge-ai -f quick-forge-ai/values.prod.yaml
+helm upgrade qforge ./nexus -f nexus/values.prod.yaml
 ```
 
 ### 卸载
@@ -87,7 +87,7 @@ helm uninstall qforge
 如果您修改了 Chart 依赖，请运行：
 
 ```bash
-helm dependency update quick-forge-ai
+helm dependency update nexus
 ```
 
 ### 测试模板渲染
@@ -95,11 +95,11 @@ helm dependency update quick-forge-ai
 您可以测试模板渲染而不实际安装 chart：
 
 ```bash
-helm template qforge ./quick-forge-ai -f quick-forge-ai/values.local.yaml
+helm template qforge ./nexus -f nexus/values.local.yaml
 ```
 
 ### Linting
 
 ```bash
-helm lint ./quick-forge-ai -f quick-forge-ai/values.local.yaml
+helm lint ./nexus -f nexus/values.local.yaml
 ``` 

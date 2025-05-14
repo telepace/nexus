@@ -19,7 +19,7 @@ export default {
     allPosts: 'View all posts',
     search: 'Search articles',
     categories: 'Categories',
-    welcomeMessage: 'Welcome to the Quick Forge AI blog where we share the latest articles, tutorials and updates.',
+    welcomeMessage: 'Welcome to the nexus blog where we share the latest articles, tutorials and updates.',
   },
 
   themeSwitcher: {

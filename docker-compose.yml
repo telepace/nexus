@@ -196,6 +196,39 @@ services:
       # Enable redirection for HTTP and HTTPS
       - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.middlewares=https-redirect
 
+  admin:
+    image: '${DOCKER_IMAGE_ADMIN:-telepace/nexus-admin}:${TAG:-latest}'
+    restart: always
+    networks:
+      - traefik-public
+      - default
+    build:
+      context: ./admin
+      args:
+        - VITE_API_URL=https://api.${DOMAIN:-localhost.nip.io}
+        - VITE_ADMIN_API_URL=https://api.${DOMAIN:-localhost.nip.io}
+        - NODE_ENV=${NODE_ENV:-production}
+    environment:
+      - VITE_API_URL=${PRODUCTION_API_URL:-https://api.${DOMAIN:-localhost.nip.io}}
+      - VITE_ADMIN_API_URL=${PRODUCTION_API_URL:-https://api.${DOMAIN:-localhost.nip.io}}
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.constraint-label=traefik-public
+
+      - traefik.http.services.${STACK_NAME:-nexus}-admin.loadbalancer.server.port=${ADMIN_CONTAINER_PORT:-80}
+
+      - traefik.http.routers.${STACK_NAME:-nexus}-admin-http.rule=Host(`admin.${DOMAIN:-localhost.nip.io}`)
+      - traefik.http.routers.${STACK_NAME:-nexus}-admin-http.entrypoints=http
+
+      - traefik.http.routers.${STACK_NAME:-nexus}-admin-https.rule=Host(`admin.${DOMAIN:-localhost.nip.io}`)
+      - traefik.http.routers.${STACK_NAME:-nexus}-admin-https.entrypoints=https
+      - traefik.http.routers.${STACK_NAME:-nexus}-admin-https.tls=true
+      - traefik.http.routers.${STACK_NAME:-nexus}-admin-https.tls.certresolver=le
+
+      # Enable redirection for HTTP and HTTPS
+      - traefik.http.routers.${STACK_NAME:-nexus}-admin-http.middlewares=https-redirect
+
   redis:
     image: redis:7-alpine
     restart: always

@@ -1,15 +1,15 @@
 ---
 title: Docker 和部署
-description: 学习如何容器化并将您的 Quick Forge AI 应用程序部署到各种环境中。
+description: 学习如何容器化并将您的 nexus 应用程序部署到各种环境中。
 ---
 
 # Docker 和部署
 
-本指南将帮助您了解如何将 Quick Forge AI 应用程序容器化并部署到各种环境中。
+本指南将帮助您了解如何将 nexus 应用程序容器化并部署到各种环境中。
 
 ## Docker 设置
 
-Quick Forge AI 附带预配置的 Docker 支持，使容器化在各种环境中变得简单和一致。
+nexus 附带预配置的 Docker 支持，使容器化在各种环境中变得简单和一致。
 
 ### Docker Compose 配置
 
@@ -65,7 +65,7 @@ POSTGRES_DB=quick_forge_prod
 
 ### 部署选项
 
-Quick Forge AI 可以部署到各种平台：
+nexus 可以部署到各种平台：
 
 #### 使用 Helm 部署到 Kubernetes
 
@@ -74,7 +74,7 @@ Quick Forge AI 可以部署到各种平台：
 ```bash
 # 从项目根目录
 cd helm-charts
-helm install quick-forge-ai ./quick-forge-ai --values ./your-values.yaml
+helm install nexus ./nexus --values ./your-values.yaml
 ```
 
 #### Fly.io 部署
@@ -101,7 +101,7 @@ fly launch
 docker swarm init
 
 # 部署堆栈
-docker stack deploy -c docker-compose.yml -c docker-compose.prod.yml quick-forge-ai
+docker stack deploy -c docker-compose.yml -c docker-compose.prod.yml nexus
 ```
 
 ## 持续集成/持续部署

@@ -1,12 +1,12 @@
 ---
 title: 数据库配置选项
-description: 学习如何在 Quick Forge AI 中配置和切换 PostgreSQL 和 Supabase 数据库选项
+description: 学习如何在 nexus 中配置和切换 PostgreSQL 和 Supabase 数据库选项
 category: 最佳实践
 ---
 
 # 数据库配置选项
 
-Quick Forge AI 支持两种数据库部署选项，为您的开发和生产环境提供灵活性：
+nexus 支持两种数据库部署选项，为您的开发和生产环境提供灵活性：
 
 1. **直接 PostgreSQL 部署（默认）**：使用 Docker 在应用程序旁边部署的 PostgreSQL 数据库
 2. **Supabase 云服务**：连接到 Supabase 云中的托管 PostgreSQL 数据库
@@ -17,13 +17,13 @@ Quick Forge AI 支持两种数据库部署选项，为您的开发和生产环�
 
 在开始之前，请确保您有：
 
-- 已安装和设置 Quick Forge AI
+- 已安装和设置 nexus
 - Docker 和 Docker Compose（直接 PostgreSQL 部署需要）
 - Supabase 账户（Supabase 选项需要）- [在此注册](https://supabase.com)
 
 ## 自动数据库检测
 
-Quick Forge AI 现在会根据您的环境变量自动检测要使用的数据库：
+nexus 现在会根据您的环境变量自动检测要使用的数据库：
 
 - 如果在环境变量中设置了 `SUPABASE_URL`，系统将使用 Supabase
 - 如果未设置 `SUPABASE_URL`，系统将使用直接 PostgreSQL 部署
@@ -137,7 +137,7 @@ psql "postgresql://postgres:your-password@db.abcdefghijkl.supabase.co:5432/postg
 
 ## 使用 Alembic 进行数据库迁移
 
-Quick Forge AI 使用 Alembic 进行数据库迁移，它适用于直接 PostgreSQL 部署和 Supabase。
+nexus 使用 Alembic 进行数据库迁移，它适用于直接 PostgreSQL 部署和 Supabase。
 
 ### 创建迁移
 
@@ -158,7 +158,7 @@ alembic upgrade head
 
 ## 工作原理
 
-Quick Forge AI 通过以下方式实现此功能：
+nexus 通过以下方式实现此功能：
 
 1. `backend/app/core/config.py` 中的自动数据库检测
 2. `docker-compose.yml` 中的 Docker Compose 服务配置文件
@@ -191,4 +191,4 @@ Quick Forge AI 通过以下方式实现此功能：
 - **生产**：根据您的扩展需求和管理偏好选择
 - **CI/CD**：对于 CI，直接 PostgreSQL 选项可能更可靠
 
-通过支持这两个选项，Quick Forge AI 让您可以灵活选择适合您特定需求和项目阶段的正确数据库方法。 
+通过支持这两个选项，nexus 让您可以灵活选择适合您特定需求和项目阶段的正确数据库方法。 

@@ -7,8 +7,8 @@ export default {
     title: "使用FastAPI构建API客户端",
     type: "page",
   },
-  'getting-started-with-quick-forge-ai': {
-    title: "Quick Forge AI 入门指南",
+  'getting-started-with-nexus': {
+    title: "nexus 入门指南",
     type: "page",
   },
 } 

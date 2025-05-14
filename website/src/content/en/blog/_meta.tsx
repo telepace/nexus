@@ -5,7 +5,7 @@ export default {
   'fastapi-api-client': {
     title: 'Using FastAPI to Build API Client',
   },
-  'getting-started-with-quick-forge-ai': {
-    title: 'Getting Started with Quick Forge AI',
+  'getting-started-with-nexus': {
+    title: 'Getting Started with nexus',
   },
 }

@@ -5,13 +5,13 @@
   "description": "Next.js Nextra (v4) Tailwind CSS (v4) docs starter",
   "author": "Wisdom <pdsu.wwz@foxmail.com>",
   "license": "MIT",
-  "homepage": "https://github.com/telepace/quick-forge-ai#readme",
+  "homepage": "https://github.com/telepace/nexus#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/telepace/quick-forge-ai.git"
+    "url": "git+https://github.com/telepace/nexus.git"
   },
   "bugs": {
-    "url": "https://github.com/telepace/quick-forge-ai/issues"
+    "url": "https://github.com/telepace/nexus/issues"
   },
   "engines": {
     "node": ">=20.x",

@@ -1,7 +1,7 @@
 export default {
   systemTitle: '🚀 Nextra 启动模板',
   banner: {
-    title: '👋 嘿，欢迎来到 Quick Forge AI!',
+    title: '👋 嘿，欢迎来到 nexus!',
     more: '了解详情',
   },
 
@@ -19,7 +19,7 @@ export default {
     allPosts: '查看全部文章',
     search: '搜索文章',
     categories: '分类',
-    welcomeMessage: '欢迎访问 Quick Forge AI 的博客，这里有最新的技术文章、教程和更新。',
+    welcomeMessage: '欢迎访问 nexus 的博客，这里有最新的技术文章、教程和更新。',
   },
 
   themeSwitcher: {

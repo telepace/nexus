@@ -1,19 +1,19 @@
 ---
 title: 'FastAPI组件和布局'
-description: 'Quick Forge AI项目中FastAPI全栈模板的组件结构和代码组织'
+description: 'nexus项目中FastAPI全栈模板的组件结构和代码组织'
 ---
 
 # FastAPI组件和布局
 
-本文档详细介绍Quick Forge AI项目中FastAPI全栈模板的项目结构、关键组件及其组织方式。通过了解这种架构，您可以更好地导航代码库并进行有效的开发。
+本文档详细介绍nexus项目中FastAPI全栈模板的项目结构、关键组件及其组织方式。通过了解这种架构，您可以更好地导航代码库并进行有效的开发。
 
 ## 项目结构概览
 
-Quick Forge AI的后端基于FastAPI构建，采用模块化和分层的架构，便于维护和扩展。完整的项目结构如下：
+nexus的后端基于FastAPI构建，采用模块化和分层的架构，便于维护和扩展。完整的项目结构如下：
 
 ```mermaid
 flowchart TD
-    A[Quick Forge AI Backend] --> B[API层]
+    A[nexus Backend] --> B[API层]
     A --> C[核心功能]
     A --> D[数据访问层]
     A --> E[服务层]
@@ -114,7 +114,7 @@ API路由器在主应用中注册：
 from fastapi import FastAPI
 from app.api.routes import users, auth, items
 
-app = FastAPI(title="Quick Forge AI")
+app = FastAPI(title="nexus")
 
 # 包含各种路由器
 app.include_router(auth.router, prefix="/api/v1")
@@ -329,7 +329,7 @@ sequenceDiagram
 
 ## 最佳实践与设计原则
 
-Quick Forge AI的后端架构遵循以下设计原则：
+nexus的后端架构遵循以下设计原则：
 
 1. **关注点分离**：API端点、业务逻辑和数据访问分层，便于维护
 2. **依赖注入**：使用FastAPI的依赖系统实现松耦合
@@ -357,4 +357,4 @@ Quick Forge AI的后端架构遵循以下设计原则：
 
 ## 结论
 
-Quick Forge AI的FastAPI组件和布局采用现代化、类型安全且可扩展的架构，使开发团队能够快速构建高质量的API。通过遵循这些结构和模式，您可以保持代码库的组织性和一致性，同时支持项目随时间的增长和演变。 
+nexus的FastAPI组件和布局采用现代化、类型安全且可扩展的架构，使开发团队能够快速构建高质量的API。通过遵循这些结构和模式，您可以保持代码库的组织性和一致性，同时支持项目随时间的增长和演变。 

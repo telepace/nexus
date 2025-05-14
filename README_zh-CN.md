@@ -448,7 +448,7 @@ QuickForge AI使集成各种AI服务变得简单：
 ## 📚 文档
 
 - [后端API文档](http://localhost:8000/docs) - 后端运行时可用
-- [前端组件文档](http://localhost:3000/docs) - 前端运行时可用
+- [前端组件文档](http://localhost:8000/docs) - 前端运行时可用
 - [项目架构](./docs/architecture.md)
 - [开发指南](./docs/development.md)
 

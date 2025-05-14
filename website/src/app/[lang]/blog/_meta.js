@@ -7,8 +7,8 @@ export default {
     title: "Using FastAPI to Build API Clients",
     type: "page",
   },
-  'getting-started-with-quick-forge-ai': {
-    title: "Getting Started with Quick Forge AI",
+  'getting-started-with-nexus': {
+    title: "Getting Started with nexus",
     type: "page",
   },
 } 

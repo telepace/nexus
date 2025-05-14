@@ -1,15 +1,15 @@
 ---
 title: 'FastAPI路由和导航'
-description: 'Quick Forge AI项目中FastAPI全栈模板的路由系统和导航结构'
+description: 'nexus项目中FastAPI全栈模板的路由系统和导航结构'
 ---
 
 # FastAPI路由和导航
 
-本文档详细介绍Quick Forge AI项目中FastAPI全栈模板的路由系统架构、导航结构以及如何高效组织和管理API端点。通过理解这些关键概念，您可以更有效地构建和扩展您的Web API。
+本文档详细介绍nexus项目中FastAPI全栈模板的路由系统架构、导航结构以及如何高效组织和管理API端点。通过理解这些关键概念，您可以更有效地构建和扩展您的Web API。
 
 ## 路由系统概述
 
-在Quick Forge AI项目中，FastAPI的路由系统被组织成模块化、分层的结构，以确保代码的可维护性和可扩展性。
+在nexus项目中，FastAPI的路由系统被组织成模块化、分层的结构，以确保代码的可维护性和可扩展性。
 
 ```mermaid
 flowchart TD
@@ -32,7 +32,7 @@ flowchart TD
 
 ## 路由组织结构
 
-Quick Forge AI项目中的路由按照功能模块进行组织，每个模块都有自己的路由文件：
+nexus项目中的路由按照功能模块进行组织，每个模块都有自己的路由文件：
 
 ```
 app/
@@ -181,7 +181,7 @@ def list_items(
 
 ### 分页模式实现
 
-Quick Forge AI使用统一的分页模式：
+nexus使用统一的分页模式：
 
 ```python
 # app/schemas/common.py
@@ -280,7 +280,7 @@ def create_item(
 
 ## 路由标签和文档分组
 
-Quick Forge AI使用标签组织API文档：
+nexus使用标签组织API文档：
 
 ```python
 # 定义带标签的路由器
@@ -350,7 +350,7 @@ def admin_panel():
 
 ### 分层权限系统
 
-Quick Forge AI使用分层权限系统控制API访问：
+nexus使用分层权限系统控制API访问：
 
 ```python
 # app/api/dependencies/auth.py
@@ -397,7 +397,7 @@ main_app.mount("/admin", admin_app)
 
 ### 2. 自定义路由类
 
-Quick Forge AI实现了自定义路由类处理通用CRUD操作：
+nexus实现了自定义路由类处理通用CRUD操作：
 
 ```python
 # app/api/routes/base.py
@@ -526,7 +526,7 @@ router = CRUDRouter(
 
 ## API版本控制策略
 
-Quick Forge AI采用URL路径前缀方法进行API版本控制：
+nexus采用URL路径前缀方法进行API版本控制：
 
 ```mermaid
 flowchart TD
@@ -555,7 +555,7 @@ app.include_router(router_v2, prefix="/api/v2")
 
 ## 导航与路由最佳实践
 
-基于Quick Forge AI项目的经验，我们推荐以下路由和导航最佳实践：
+基于nexus项目的经验，我们推荐以下路由和导航最佳实践：
 
 1. **采用一致的命名约定**：
    - 使用复数名词命名资源端点 (`/users`, `/items`)
@@ -597,6 +597,6 @@ app.include_router(router_v2, prefix="/api/v2")
 
 ## 结论
 
-Quick Forge AI中的FastAPI路由系统设计注重模块化、易用性和可扩展性。通过将路由组织为功能模块，使用版本控制策略，实现通用CRUD操作，以及采用适当的权限验证机制，我们构建了一个健壮且易于维护的API架构。
+nexus中的FastAPI路由系统设计注重模块化、易用性和可扩展性。通过将路由组织为功能模块，使用版本控制策略，实现通用CRUD操作，以及采用适当的权限验证机制，我们构建了一个健壮且易于维护的API架构。
 
-这种设计支持项目随着业务需求的增长而轻松扩展，同时保持代码的一致性和可读性。掌握这些路由和导航概念将帮助您更有效地构建和扩展Quick Forge AI项目中的API端点。 
+这种设计支持项目随着业务需求的增长而轻松扩展，同时保持代码的一致性和可读性。掌握这些路由和导航概念将帮助您更有效地构建和扩展nexus项目中的API端点。 
