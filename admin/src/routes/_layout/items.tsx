@@ -11,7 +11,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { FiSearch } from "react-icons/fi"
 import { z } from "zod"
 
-import { type ItemPublic, type ItemsResponse, ItemsService } from "@/client"
+import { type ItemPublic, ItemsService } from "@/client"
 import { ItemActionsMenu } from "@/components/Common/ItemActionsMenu"
 import AddItem from "@/components/Items/AddItem"
 import PendingItems from "@/components/Pending/PendingItems"
@@ -60,8 +60,15 @@ function ItemsTable() {
     })
 
   // 安全地处理API响应
-  const items: ItemPublic[] = apiResponse?.data?.data?.data || [];
-  const count = apiResponse?.data?.data?.count || 0;
+  const responseData = apiResponse?.data || {} as any
+  
+  // 使用类型断言处理响应数据
+  const items: ItemPublic[] = Array.isArray(responseData.data) 
+    ? responseData.data 
+    : []
+  
+  // 使用类型断言处理计数
+  const count = typeof responseData.count === "number" ? responseData.count : items.length
 
   if (isLoading) {
     return <PendingItems />

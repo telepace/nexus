@@ -6,7 +6,6 @@ from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import (
     AnyUrl,
-    BaseModel,
     BeforeValidator,
     EmailStr,
     HttpUrl,
@@ -123,14 +122,18 @@ class Settings(BaseSettings):
 
             password = urllib.parse.quote_plus(self.SUPABASE_DB_PASSWORD or "")
 
-            return PostgresDsn(str(URL.build(
-                scheme="postgresql+psycopg",
-                user=self.SUPABASE_DB_USER or "",
-                password=password,
-                host=self.SUPABASE_DB_HOST,
-                port=port,
-                path=f"/{self.SUPABASE_DB_NAME or ''}",
-            )))
+            return PostgresDsn(
+                str(
+                    URL.build(
+                        scheme="postgresql+psycopg",
+                        user=self.SUPABASE_DB_USER or "",
+                        password=password,
+                        host=self.SUPABASE_DB_HOST,
+                        port=port,
+                        path=f"/{self.SUPABASE_DB_NAME or ''}",
+                    )
+                )
+            )
         else:
             # Use standard PostgreSQL connection
             # URL encode the password to handle special characters
@@ -138,14 +141,18 @@ class Settings(BaseSettings):
 
             password = urllib.parse.quote_plus(self.POSTGRES_PASSWORD)
 
-            return PostgresDsn(str(URL.build(
-                scheme="postgresql+psycopg",
-                user=self.POSTGRES_USER,
-                password=password,
-                host=self.POSTGRES_SERVER,
-                port=self.POSTGRES_PORT,
-                path=f"/{self.POSTGRES_DB}",
-            )))
+            return PostgresDsn(
+                str(
+                    URL.build(
+                        scheme="postgresql+psycopg",
+                        user=self.POSTGRES_USER,
+                        password=password,
+                        host=self.POSTGRES_SERVER,
+                        port=self.POSTGRES_PORT,
+                        path=f"/{self.POSTGRES_DB}",
+                    )
+                )
+            )
 
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False
