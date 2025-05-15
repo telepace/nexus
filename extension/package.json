@@ -60,5 +60,11 @@
     "unlimitedStorage",
     "activeTab",
     "contextMenus"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["content-scripts/oauth-receiver.ts"]
+    }
   ]
 }

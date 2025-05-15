@@ -116,7 +116,7 @@ We recommend the following approach to implementation:
 
 ## Migration Strategy
 
-Since the current extension was originally designed for a different purpose (SurfSense), we recommend:
+Since the current extension was originally designed for a different purpose (nexus), we recommend:
 
 1. **Incremental Refactoring**:
    - Start with configuration and branding changes

@@ -63,7 +63,6 @@ Several new documentation files have been created to provide a solid foundation 
 ### Branding Updates
 
 1. **Project Naming**
-   - Updated all references from "SurfSense" to "Nexus"
    - Consistent naming across all files and metadata
 
 2. **Icon Design**

@@ -45,13 +45,30 @@ const HomePage = () => {
   const [value, setValue] = React.useState<string>("")
   const [searchspaces, setSearchSpaces] = useState([])
   const [isSaving, setIsSaving] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const checkSearchSpaces = async () => {
-      const storage = new Storage({ area: "local" })
-      const token = await storage.get('token');
+    const checkAuthAndLoadData = async () => {
       try {
-        const response = await fetch(
+        // Check authentication status
+        const authResponse = await sendToBackground({
+          name: "check-auth"
+        });
+        
+        if (!authResponse.isAuthenticated) {
+          // User is not authenticated, redirect to login
+          navigation("/login");
+          return;
+        }
+        
+        // Store user info
+        setUser(authResponse.user);
+        
+        // Fetch search spaces
+        const storage = new Storage({ area: "local" });
+        const token = await storage.get('token');
+        
+        const searchSpacesResponse = await fetch(
           `${process.env.PLASMO_PUBLIC_BACKEND_URL}/api/v1/searchspaces/`,
           {
             headers: {
@@ -60,24 +77,25 @@ const HomePage = () => {
           }
         );
 
-        if (!response.ok) {
-          throw new Error("Token verification failed");
-        } else {
-          const res = await response.json()
-          console.log(res)
-          setSearchSpaces(res)
+        if (!searchSpacesResponse.ok) {
+          throw new Error("Failed to fetch search spaces");
         }
+        
+        const searchSpacesData = await searchSpacesResponse.json();
+        setSearchSpaces(searchSpacesData);
       } catch (error) {
+        console.error("Error checking auth or loading data:", error);
+        const storage = new Storage({ area: "local" });
         await storage.remove('token');
         await storage.remove('showShadowDom');
-        navigation("/login")
+        navigation("/login");
+      } finally {
+        setLoading(false);
       }
     };
 
-    checkSearchSpaces();
-    setLoading(false);
+    checkAuthAndLoadData();
   }, []);
-
 
   useEffect(() => {
     async function onLoad() {
@@ -274,7 +292,7 @@ const HomePage = () => {
     setIsSaving(true);
     toast({
       title: "Save job running",
-      description: "Saving captured content to SurfSense",
+      description: "Saving captured content to nexus",
     })
 
     try {
@@ -298,10 +316,43 @@ const HomePage = () => {
   }
 
   async function logOut(): Promise<void> {
-    const storage = new Storage({ area: "local" })
-    await storage.remove('token');
-    await storage.remove('showShadowDom');
-    navigation("/login")
+    try {
+      // Optional: call a logout endpoint to invalidate the token on the server
+      const storage = new Storage({ area: "local" });
+      const token = await storage.get('token');
+      
+      try {
+        // Optional: send logout request to backend
+        await fetch(`${process.env.PLASMO_PUBLIC_BACKEND_URL}/api/v1/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (error) {
+        // Continue with local logout even if server logout fails
+        console.error("Server logout failed:", error);
+      }
+      
+      // Remove local storage items
+      await storage.remove('token');
+      await storage.remove('showShadowDom');
+      
+      // Show success toast
+      toast({
+        title: "Logged out successfully"
+      });
+      
+      // Redirect to login
+      navigation("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: "Logout failed",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
   }
 
   if (loading) {
@@ -313,9 +364,9 @@ const HomePage = () => {
           <div className="w-full max-w-md space-y-8">
             <div className="flex flex-col items-center space-y-2 text-center">
               <div className="rounded-full bg-gray-800 p-3 shadow-lg ring-2 ring-gray-700">
-                <img className="h-12 w-12" src={icon} alt="SurfSense" />
+                <img className="h-12 w-12" src={icon} alt="nexus" />
               </div>
-              <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white">SurfSense</h1>
+              <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white">nexus</h1>
               <div className="mt-4 rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-4 text-yellow-300">
                 <p className="text-sm">Please create a Search Space to continue</p>
               </div>
@@ -340,9 +391,9 @@ const HomePage = () => {
           <div className="flex items-center justify-between border-b border-gray-700 pb-4">
             <div className="flex items-center space-x-3">
               <div className="rounded-full bg-gray-800 p-2 shadow-md ring-1 ring-gray-700">
-                <img className="h-6 w-6" src={icon} alt="SurfSense" />
+                <img className="h-6 w-6" src={icon} alt="nexus" />
               </div>
-              <h1 className="text-xl font-semibold text-white">SurfSense</h1>
+              <h1 className="text-xl font-semibold text-white">nexus</h1>
             </div>
             <Button
               variant="ghost"
@@ -456,12 +507,12 @@ const HomePage = () => {
                 {isSaving ? (
                   <>
                     <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
-                    <span>Saving to SurfSense...</span>
+                    <span>Saving to nexus...</span>
                   </>
                 ) : (
                   <>
                     <UploadIcon className="h-4 w-4 transition-transform group-hover:scale-110" />
-                    <span>Save to SurfSense</span>
+                    <span>Save to nexus</span>
                   </>
                 )}
               </Button>
