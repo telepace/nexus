@@ -1,6 +1,9 @@
 "use server";
 
-import { resetForgotPassword as recoverPassword, resetResetPassword as resetPassword } from "@/app/clientService";
+import {
+  resetForgotPassword as recoverPassword,
+  resetResetPassword as resetPassword,
+} from "@/app/clientService";
 import { redirect } from "next/navigation";
 import { passwordResetConfirmSchema } from "@/lib/definitions";
 import { getErrorMessage } from "@/lib/utils";

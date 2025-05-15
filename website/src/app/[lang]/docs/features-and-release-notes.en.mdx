@@ -52,9 +52,9 @@ nexus combines a FastAPI backend with a React frontend to provide a complete sol
 | Docker Compose | Container orchestration for all services | `docker-compose.yml` |
 | Traefik | Reverse proxy for routing and SSL termination | `traefik/` |
 | GitHub Actions CI/CD | Automated testing and deployment | `.github/workflows/` |
-| E2E Testing | End-to-end tests with Playwright | `frontend/playwright/` |
-| Multi-Environment | Support for test and production environments | `docker-compose.*yml` |
-| Adminer | Database management interface | `docker-compose.yml` |
+| E2E Testing | Playwright-based end-to-end tests | `frontend/playwright/` |
+| Multi-Environment | Support for staging and production | `docker-compose.*yml` |
+| pgAdmin | Database management interface | `docker-compose.yml` |
 | MailCatcher | Local email testing tool | `docker-compose.yml` |
 | Health Checks | Container health monitoring | `docker-compose.yml` |
 | Automatic OpenAPI | Client generation in CI pipeline | `.github/workflows/` |
@@ -190,7 +190,7 @@ Foundational changes in version 0.6.0:
 * TanStack Query/Router integration
 * CI/CD with GitHub Actions
 * Test coverage improvement to over 90%
-* Migration from pgAdmin to Adminer
+* Migration from Adminer to pgAdmin
 
 ## Development Workflow
 

@@ -8,7 +8,7 @@ export async function logout() {
   const token = cookieStore.get("accessToken")?.value;
 
   if (!token) {
-    redirect('/login');
+    redirect("/login");
     return;
   }
 
@@ -18,12 +18,12 @@ export async function logout() {
     const response = await fetch(`${apiUrl}/api/v1/logout`, {
       method: "POST",
       headers: {
-        "accept": "application/json",
-        "Authorization": `Bearer ${token}`,
+        accept: "application/json",
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
     });
- 
+
     if (!response.ok) {
       console.error("Logout failed:", await response.text());
     } else {
@@ -38,7 +38,7 @@ export async function logout() {
 
   // Remove the access token cookie regardless of API response
   cookieStore.delete("accessToken");
-  
+
   // Redirect to login page
-  redirect('/login');
+  redirect("/login");
 }

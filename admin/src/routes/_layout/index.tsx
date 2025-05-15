@@ -51,11 +51,6 @@ function Dashboard() {
       description: "Backend API server",
     },
     {
-      name: "Adminer",
-      subdomain: "adminer",
-      description: "Database management",
-    },
-    {
       name: "PG Admin",
       subdomain: "pgadmin",
       description: "PostgreSQL administration",

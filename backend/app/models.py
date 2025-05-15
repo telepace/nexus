@@ -58,7 +58,10 @@ class UpdatePassword(SQLModel):
 # Database model, database table inferred from class name
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    hashed_password: str
+    hashed_password: str | None = Field(default=None)  # Make nullable for OAuth users
+    google_id: str | None = Field(
+        default=None, sa_column=Column(String(255), unique=True, index=True)
+    )
     items: list["Item"] = Relationship(
         back_populates="owner",
         sa_relationship_kwargs={

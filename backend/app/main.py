@@ -16,6 +16,9 @@ except ImportError:
     print("Warning: sentry_sdk not found, Sentry integration will be disabled")
     SENTRY_AVAILABLE = False
 
+import logging
+import traceback
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -29,8 +32,15 @@ from app.api.middlewares.response import ApiResponseMiddleware
 from app.core.config import settings
 from app.utils.error import AppError, create_error_response
 
+# 设置日志
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("app")
+
 
 def custom_generate_unique_id(route: APIRoute) -> str:
+    # 修复：如果没有 tags，使用路径作为唯一 ID
+    if not route.tags:
+        return f"path-{route.path}"
     return f"{route.tags[0]}-{route.name}"
 
 
@@ -48,6 +58,23 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id,
 )
+
+
+# 添加健康检查路由 - 根级别健康检查，兼容前端
+@app.get("/health", tags=["health"])
+async def get_health_root():
+    """兼容前端的根级别健康检查路由"""
+    logger.info("收到根级别健康检查请求")
+    return {"status": "ok"}
+
+
+# 添加健康检查路由
+@app.get("/api/v1/health", tags=["health"])
+async def get_health_api():
+    """兼容前端的API级别健康检查路由"""
+    logger.info("收到API级别健康检查请求")
+    return {"status": "ok"}
+
 
 # Set all CORS enabled origins
 if settings.all_cors_origins:
@@ -73,6 +100,7 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 @app.exception_handler(AppError)
 async def app_error_handler(_request: Request, exc: AppError):
     """处理应用自定义错误"""
+    logger.error(f"AppError: {exc.message}", exc_info=True)
     response, status_code = create_error_response(exc)
     return JSONResponse(
         status_code=status_code, content=response.model_dump(exclude_none=True)
@@ -82,6 +110,7 @@ async def app_error_handler(_request: Request, exc: AppError):
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(_request: Request, exc: StarletteHTTPException):
     """处理HTTP异常"""
+    logger.error(f"HTTPException: {exc.detail}", exc_info=True)
     response, status_code = create_error_response(exc)
     return JSONResponse(
         status_code=status_code, content=response.model_dump(exclude_none=True)
@@ -91,6 +120,7 @@ async def http_exception_handler(_request: Request, exc: StarletteHTTPException)
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(_request: Request, exc: RequestValidationError):
     """处理请求验证错误"""
+    logger.error(f"ValidationError: {exc}", exc_info=True)
     response, status_code = create_error_response(exc)
     return JSONResponse(
         status_code=status_code, content=response.model_dump(exclude_none=True)
@@ -100,7 +130,23 @@ async def validation_exception_handler(_request: Request, exc: RequestValidation
 @app.exception_handler(Exception)
 async def general_exception_handler(_request: Request, exc: Exception):
     """处理所有其他异常"""
+    logger.error(f"Unhandled exception: {str(exc)}")
+    logger.error(traceback.format_exc())
     response, status_code = create_error_response(exc)
     return JSONResponse(
         status_code=status_code, content=response.model_dump(exclude_none=True)
     )
+
+
+# 添加这个 SQLAlchemy 初始化确认
+if settings.DATABASE_TYPE == "postgres":
+    try:
+        from sqlalchemy import create_engine, text
+
+        db_url = str(settings.SQLALCHEMY_DATABASE_URI)
+        engine = create_engine(db_url)
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT 1"))
+            logger.info(f"数据库连接成功: {result.fetchone()}")
+    except Exception as e:
+        logger.error(f"数据库连接失败: {e}")

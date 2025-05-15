@@ -48,5 +48,9 @@ export const updatePasswordSchema = z.object({
 
 export const itemSchema = z.object({
   title: z.string().min(1, "Title is required").max(255, "Title too long"),
-  description: z.string().max(255, "Description too long").optional().nullable(),
+  description: z
+    .string()
+    .max(255, "Description too long")
+    .optional()
+    .nullable(),
 });

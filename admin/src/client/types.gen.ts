@@ -33,6 +33,13 @@ export type Body_login_login_access_token = {
     client_secret?: (string | null);
 };
 
+export type GoogleCallbackRequest = {
+    token: string;
+    user_info: {
+        [key: string]: unknown;
+    };
+};
+
 export type HTTPValidationError = {
     detail?: Array<ValidationError>;
 };
@@ -118,6 +125,26 @@ export type ValidationError = {
     msg: string;
     type: string;
 };
+
+export type GoogleOauthGoogleCallbackApiData = {
+    requestBody: GoogleCallbackRequest;
+};
+
+export type GoogleOauthGoogleCallbackApiResponse = (unknown);
+
+export type GoogleOauthGoogleLoginResponse = (unknown);
+
+export type GoogleOauthGoogleCallbackData = {
+    code?: (string | null);
+    error?: (string | null);
+    state?: (string | null);
+};
+
+export type GoogleOauthGoogleCallbackResponse = (unknown);
+
+export type HealthGetHealthRootResponse = (unknown);
+
+export type HealthGetHealthApiResponse = (unknown);
 
 export type ItemsReadItemsData = {
     limit?: number;

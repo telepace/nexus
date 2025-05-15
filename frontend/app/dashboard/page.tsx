@@ -28,16 +28,16 @@ interface Item {
 
 export default async function DashboardPage() {
   const itemsResponse = await fetchItems();
-  
+
   // 处理错误或空结果
   let itemsList: Item[] = [];
   let errorMessage: string | null = null;
-  
+
   if (Array.isArray(itemsResponse)) {
     itemsList = itemsResponse;
     console.log("Dashboard received items:", itemsList.length);
-  } else if (itemsResponse && typeof itemsResponse === 'object') {
-    if ('message' in itemsResponse) {
+  } else if (itemsResponse && typeof itemsResponse === "object") {
+    if ("message" in itemsResponse) {
       errorMessage = itemsResponse.message as string;
       console.error("Dashboard received error:", errorMessage);
     }

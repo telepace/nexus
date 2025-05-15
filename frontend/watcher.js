@@ -2,7 +2,7 @@ const chokidar = require("chokidar");
 const { exec } = require("child_process");
 const { config } = require("dotenv");
 
-config({ path: ".env.local" });
+config({ path: ".env" });
 
 const openapiFile = process.env.OPENAPI_OUTPUT_FILE;
 // Watch the specific file for changes

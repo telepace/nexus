@@ -1,11 +1,19 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { readItems, readItem, deleteItem, createItem } from "@/app/clientService";
+import {
+  readItems,
+  readItem,
+  deleteItem,
+  createItem,
+} from "@/app/clientService";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { itemSchema } from "@/lib/definitions";
-import type { ApiResponse_ItemPublic_, ApiResponse_ItemsPublic_ } from "@/app/openapi-client/types.gen";
+import type {
+  ApiResponse_ItemPublic_,
+  ApiResponse_ItemsPublic_,
+} from "@/app/openapi-client/types.gen";
 
 interface ItemData {
   id: string;
@@ -35,18 +43,17 @@ export async function fetchItems() {
 
   if (!token) {
     console.error("No access token found in cookies");
-    redirect('/login');
+    redirect("/login");
   }
 
   try {
     console.log("Fetching items with token", token.substring(0, 5) + "...");
-    
+
     const { data, error } = await readItems({
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-
 
     if (error) {
       console.error("API error:", error);
@@ -55,10 +62,20 @@ export async function fetchItems() {
 
     // 处理三层嵌套的数据结构
     const responseData = data as ApiResponse<ItemData[]>;
-    
-    if (responseData && responseData.data && typeof responseData.data === 'object' && 'data' in responseData.data && Array.isArray(responseData.data.data)) {
+
+    if (
+      responseData &&
+      responseData.data &&
+      typeof responseData.data === "object" &&
+      "data" in responseData.data &&
+      Array.isArray(responseData.data.data)
+    ) {
       return responseData.data.data;
-    } else if (responseData && responseData.data && Array.isArray(responseData.data)) {
+    } else if (
+      responseData &&
+      responseData.data &&
+      Array.isArray(responseData.data)
+    ) {
       return responseData.data;
     } else if (Array.isArray(responseData)) {
       return responseData;
@@ -77,7 +94,7 @@ export async function fetchItem(id: string) {
   const token = cookieStore.get("accessToken")?.value;
 
   if (!token) {
-    redirect('/login');
+    redirect("/login");
   }
 
   const { data, error } = await readItem({
@@ -101,7 +118,7 @@ export async function removeItem(id: string) {
   const token = cookieStore.get("accessToken")?.value;
 
   if (!token) {
-    redirect('/login');
+    redirect("/login");
   }
 
   try {
@@ -120,21 +137,34 @@ export async function removeItem(id: string) {
     }
 
     console.log("Delete response:", data);
-    
+
     revalidatePath("/dashboard");
-    
+
     // 处理嵌套结构
     const responseData = data as DataResponse;
-    
-    if (responseData && responseData.meta && typeof responseData.meta === 'object' && 'message' in responseData.meta) {
+
+    if (
+      responseData &&
+      responseData.meta &&
+      typeof responseData.meta === "object" &&
+      "message" in responseData.meta
+    ) {
       return responseData.meta.message;
-    } else if (responseData && responseData.data && typeof responseData.data === 'object') {
+    } else if (
+      responseData &&
+      responseData.data &&
+      typeof responseData.data === "object"
+    ) {
       const nestedData = responseData.data as DataResponse;
-      if (nestedData.meta && typeof nestedData.meta === 'object' && 'message' in nestedData.meta) {
+      if (
+        nestedData.meta &&
+        typeof nestedData.meta === "object" &&
+        "message" in nestedData.meta
+      ) {
         return nestedData.meta.message;
       }
     }
-    
+
     return "Item deleted successfully";
   } catch (error) {
     console.error("Error deleting item:", error);
@@ -147,7 +177,7 @@ export async function addItem(prevState: {}, formData: FormData) {
   const token = cookieStore.get("accessToken")?.value;
 
   if (!token) {
-    redirect('/login');
+    redirect("/login");
   }
 
   const validatedFields = itemSchema.safeParse({
@@ -170,17 +200,19 @@ export async function addItem(prevState: {}, formData: FormData) {
       description,
     },
   };
-  
+
   const { data, error } = await createItem(input);
-  
+
   if (error) {
-    return { message: typeof error === 'string' ? error : JSON.stringify(error) };
+    return {
+      message: typeof error === "string" ? error : JSON.stringify(error),
+    };
   }
-  
+
   // 检查有没有响应中的错误信息
   if (data?.error) {
     return { message: data.error };
   }
-  
+
   redirect(`/dashboard`);
 }

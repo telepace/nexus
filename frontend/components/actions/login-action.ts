@@ -36,36 +36,36 @@ export async function login(prevState: unknown, formData: FormData) {
 
   try {
     const { data, error } = await loginAccessToken(input);
-    
+
     // Handle API specific errors
     if (error) {
       console.error("Login API error:", error);
-      
+
       // Check for specific validation errors
       if (error.detail) {
         // Process validation errors here
-        return { 
+        return {
           server_validation_error: "Validation failed",
-          message: "Login failed. Please check your input and try again."
+          message: "Login failed. Please check your input and try again.",
         };
       }
-      
+
       // For any other error types
-      return { 
+      return {
         server_validation_error: getErrorMessage(error),
-        message: "Login failed. Please check your credentials and try again."
+        message: "Login failed. Please check your credentials and try again.",
       };
     }
-    
+
     // Check if data exists and has access_token
     if (!data || !data.access_token) {
       console.error("Login API returned invalid response:", data);
       return {
         server_error: "The server returned an invalid response.",
-        message: "Login failed. Please try again later."
+        message: "Login failed. Please try again later.",
       };
     }
-    
+
     // Set the access token in a cookie with appropriate security settings
     const cookieStore = await cookies();
     cookieStore.set("accessToken", data.access_token, {
@@ -78,10 +78,10 @@ export async function login(prevState: unknown, formData: FormData) {
     console.error("Login error:", err);
     return {
       server_error: "An unexpected error occurred. Please try again later.",
-      message: "Server error occurred. Please try again later."
+      message: "Server error occurred. Please try again later.",
     };
   }
-  
+
   // Redirect to dashboard on successful login
   redirect("/dashboard");
 }
@@ -115,13 +115,13 @@ export async function handleGoogleLogin() {
       path: "/",
     });
     */
-    
+
     return { success: true };
   } catch (error) {
-    console.error('Google login error:', error);
+    console.error("Google login error:", error);
     return {
       success: false,
-      error: 'Google authentication failed. Please try again.',
+      error: "Google authentication failed. Please try again.",
     };
   }
 }

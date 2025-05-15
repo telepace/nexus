@@ -53,9 +53,9 @@ nexus 结合了 FastAPI 后端和 React 前端，为构建现代 Web 应用程�
 | Traefik | 用于路由和 SSL 终止的反向代理 | `traefik/` |
 | GitHub Actions CI/CD | 自动化测试和部署 | `.github/workflows/` |
 | E2E 测试 | 基于 Playwright 的端到端测试 | `frontend/playwright/` |
-| 多环境 | 支持测试和生产环境 | `docker-compose.*yml` |
-| Adminer | 数据库管理界面 | `docker-compose.yml` |
-| MailCatcher | 本地电子邮件测试工具 | `docker-compose.yml` |
+| Multi-Environment | 支持预演和生产环境 | `docker-compose.*yml` |
+| pgAdmin | 数据库管理界面 | `docker-compose.yml` |
+| MailCatcher | 本地邮件测试工具 | `docker-compose.yml` |
 | 健康检查 | 容器健康监控 | `docker-compose.yml` |
 | 自动 OpenAPI | CI 流程中的客户端生成 | `.github/workflows/` |
 | 测试覆盖率报告 | 使用 Smokeshow 的代码覆盖率 | `.github/workflows/` |
@@ -190,7 +190,7 @@ Item（项目）
 * TanStack Query/Router 集成
 * 使用 GitHub Actions 实现 CI/CD
 * 测试覆盖率提高到 90% 以上
-* 从 pgAdmin 迁移到 Adminer
+* 从 Adminer 迁移到 pgAdmin
 
 ## 开发工作流程
 

@@ -6,7 +6,7 @@ jest.mock("next/navigation", () => ({
   redirect: jest.fn(),
 }));
 
-jest.mock("../app/openapi-client/sdk.gen", () => ({
+jest.mock("@/app/clientService", () => ({
   resetResetPassword: jest.fn(),
 }));
 
@@ -32,7 +32,7 @@ describe("passwordReset action", () => {
     await passwordResetConfirm({}, formData);
 
     expect(resetResetPassword).toHaveBeenCalledWith({
-      body: { token: "token", password: "P12345678#" },
+      body: { token: "token", new_password: "P12345678#" },
     });
     expect(redirect).toHaveBeenCalled();
   });
@@ -52,7 +52,7 @@ describe("passwordReset action", () => {
 
     expect(result).toEqual({ server_validation_error: "Invalid token" });
     expect(resetResetPassword).toHaveBeenCalledWith({
-      body: { token: "invalid_token", password: "P12345678#" },
+      body: { token: "invalid_token", new_password: "P12345678#" },
     });
   });
 
@@ -70,7 +70,7 @@ describe("passwordReset action", () => {
         passwordConfirm: ["Passwords must match."],
       },
     });
-    expect(resetResetPassword).not.toHaveBeenCalledWith();
+    expect(resetResetPassword).not.toHaveBeenCalled();
   });
 
   it("should handle unexpected errors and return server error message", async () => {

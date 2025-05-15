@@ -1,13 +1,13 @@
 import { register } from "@/components/actions/register-action";
 import { redirect } from "next/navigation";
-import { registerRegister } from "@/app/clientService";
+import { registerUser } from "@/app/clientService";
 
 jest.mock("next/navigation", () => ({
   redirect: jest.fn(),
 }));
 
 jest.mock("../app/clientService", () => ({
-  registerRegister: jest.fn(),
+  registerUser: jest.fn(),
 }));
 
 describe("register action", () => {
@@ -17,11 +17,11 @@ describe("register action", () => {
     formData.set("password", "Q12341414#");
 
     // Mock a successful register
-    (registerRegister as jest.Mock).mockResolvedValue({});
+    (registerUser as jest.Mock).mockResolvedValue({});
 
     await register({}, formData);
 
-    expect(registerRegister).toHaveBeenCalledWith({
+    expect(registerUser).toHaveBeenCalledWith({
       body: {
         email: "a@a.com",
         password: "Q12341414#",
@@ -36,7 +36,7 @@ describe("register action", () => {
     formData.set("password", "Q12341414#");
 
     // Mock a failed register
-    (registerRegister as jest.Mock).mockResolvedValue({
+    (registerUser as jest.Mock).mockResolvedValue({
       error: {
         detail: "REGISTER_USER_ALREADY_EXISTS",
       },
@@ -44,7 +44,7 @@ describe("register action", () => {
 
     const result = await register({}, formData);
 
-    expect(registerRegister).toHaveBeenCalledWith({
+    expect(registerUser).toHaveBeenCalledWith({
       body: {
         email: "a@a.com",
         password: "Q12341414#",
@@ -71,13 +71,13 @@ describe("register action", () => {
         ],
       },
     });
-    expect(registerRegister).not.toHaveBeenCalledWith();
+    expect(registerUser).not.toHaveBeenCalledWith();
   });
 
   it("should handle unexpected errors and return server error message", async () => {
-    // Mock the registerRegister to throw an error
+    // Mock the registerUser to throw an error
     const mockError = new Error("Network error");
-    (registerRegister as jest.Mock).mockRejectedValue(mockError);
+    (registerUser as jest.Mock).mockRejectedValue(mockError);
 
     const formData = new FormData();
     formData.append("email", "testuser@example.com");

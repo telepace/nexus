@@ -75,10 +75,25 @@ echo "✅ Dependencies check passed"
 
 # 生成OpenAPI JSON
 echo "📝 Generating OpenAPI JSON..."
-python -c "import app.main; import json; print(json.dumps(app.main.app.openapi()))" > "$PROJECT_ROOT/openapi.json" || {
+python -c "import app.main; import json; print(json.dumps(app.main.app.openapi()))" > "$PROJECT_ROOT/openapi.json" 2> generate-client.log || {
   echo "❌ Failed to generate OpenAPI specification"
+  cat generate-client.log
   exit 1
 }
+
+# 确保JSON文件内容有效 - 验证第一个字符是 '{'
+if [[ $(head -c 1 "$PROJECT_ROOT/openapi.json") != "{" ]]; then
+  echo "❌ Generated OpenAPI specification is not valid JSON"
+  echo "🔍 Attempting to fix the JSON file..."
+  # 查找并保留从第一个 '{' 开始的内容
+  sed -i.bak -e '/{/,$!d' "$PROJECT_ROOT/openapi.json"
+  # 如果修复后文件不存在或为空，则退出
+  if [[ ! -s "$PROJECT_ROOT/openapi.json" ]]; then
+    echo "❌ Failed to fix the OpenAPI JSON file"
+    exit 1
+  fi
+  echo "✅ JSON file fixed"
+fi
 
 # Move to the frontend directory and generate the client
 if [ -f "$PROJECT_ROOT/openapi.json" ]; then

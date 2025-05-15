@@ -200,7 +200,7 @@ frontend-all: frontend-format frontend-lint frontend-test
 frontend: check-pnpm frontend-install
 	@echo "===========> Starting frontend development server"
 	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
-		cd $(FRONTEND_DIR) && $(PNPM) run dev; \
+		cd $(FRONTEND_DIR) && unset http_proxy https_proxy && $(PNPM) run dev; \
 	else \
 		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
 	fi

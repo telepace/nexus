@@ -3,7 +3,97 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthRootResponse, HealthGetHealthApiResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+
+export class GoogleOauthService {
+    /**
+     * Google Callback Api
+     * Handle Google OAuth callback from frontend
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static googleCallbackApi(data: GoogleOauthGoogleCallbackApiData): CancelablePromise<GoogleOauthGoogleCallbackApiResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/auth/google-callback',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Google Login
+     * Initiate Google OAuth2 authentication flow
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static googleLogin(): CancelablePromise<GoogleOauthGoogleLoginResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/login/google'
+        });
+    }
+    
+    /**
+     * Google Callback
+     * Handle the callback from Google OAuth
+     * @param data The data for the request.
+     * @param data.code
+     * @param data.state
+     * @param data.error
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static googleCallback(data: GoogleOauthGoogleCallbackData = {}): CancelablePromise<GoogleOauthGoogleCallbackResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/login/google/callback',
+            query: {
+                code: data.code,
+                state: data.state,
+                error: data.error
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+}
+
+export class HealthService {
+    /**
+     * Get Health Root
+     * 兼容前端的根级别健康检查路由
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getHealthRoot(): CancelablePromise<HealthGetHealthRootResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/health'
+        });
+    }
+    
+    /**
+     * Get Health Api
+     * 兼容前端的API级别健康检查路由
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getHealthApi(): CancelablePromise<HealthGetHealthApiResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/health'
+        });
+    }
+    
+}
 
 export class ItemsService {
     /**

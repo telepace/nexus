@@ -210,6 +210,7 @@ def test_update_password_me(
     user_query = select(User).where(User.email == settings.FIRST_SUPERUSER)
     user_db = db.exec(user_query).first()
     assert user_db
+    assert user_db.hashed_password is not None
     assert verify_password(new_password, user_db.hashed_password)
 
     data = {
@@ -222,6 +223,13 @@ def test_update_password_me(
         json=data,
     )
     assert r.status_code == 200
+
+    # 再次验证密码是否更新成功
+    user_query = select(User).where(User.email == settings.FIRST_SUPERUSER)
+    user_db = db.exec(user_query).first()
+    assert user_db
+    assert user_db.hashed_password is not None
+    assert verify_password(settings.FIRST_SUPERUSER_PASSWORD, user_db.hashed_password)
 
 
 def test_update_password_me_incorrect_password(
@@ -298,6 +306,7 @@ def test_register_user(client: TestClient, db: Session) -> None:
     assert user_db
     assert user_db.email == username
     assert user_db.full_name == full_name
+    assert user_db.hashed_password is not None
     assert verify_password(password, user_db.hashed_password)
 
 

@@ -7,6 +7,10 @@ import {
   urlSearchParamsBodySerializer,
 } from "@hey-api/client-axios";
 import type {
+  HealthGetHealthRootError,
+  HealthGetHealthRootResponse,
+  HealthGetHealthApiError,
+  HealthGetHealthApiResponse,
   LoginLoginAccessTokenData,
   LoginLoginAccessTokenError,
   LoginLoginAccessTokenResponse,
@@ -71,12 +75,54 @@ import type {
   ItemsDeleteItemData,
   ItemsDeleteItemError,
   ItemsDeleteItemResponse,
+  GoogleOauthGoogleCallbackApiData,
+  GoogleOauthGoogleCallbackApiError,
+  GoogleOauthGoogleCallbackApiResponse,
+  GoogleOauthGoogleLoginError,
+  GoogleOauthGoogleLoginResponse,
+  GoogleOauthGoogleCallbackData,
+  GoogleOauthGoogleCallbackError,
+  GoogleOauthGoogleCallbackResponse,
   PrivateCreateUserData,
   PrivateCreateUserError,
   PrivateCreateUserResponse,
 } from "./types.gen";
 
 export const client = createClient(createConfig());
+
+/**
+ * Get Health Root
+ * 兼容前端的根级别健康检查路由
+ */
+export const healthGetHealthRoot = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    HealthGetHealthRootResponse,
+    HealthGetHealthRootError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/health",
+  });
+};
+
+/**
+ * Get Health Api
+ * 兼容前端的API级别健康检查路由
+ */
+export const healthGetHealthApi = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    HealthGetHealthApiResponse,
+    HealthGetHealthApiError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/health",
+  });
+};
 
 /**
  * Login Access Token
@@ -478,6 +524,59 @@ export const itemsDeleteItem = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/api/v1/items/{id}",
+  });
+};
+
+/**
+ * Google Callback Api
+ * Handle Google OAuth callback from frontend
+ */
+export const googleOauthGoogleCallbackApi = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<GoogleOauthGoogleCallbackApiData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    GoogleOauthGoogleCallbackApiResponse,
+    GoogleOauthGoogleCallbackApiError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/auth/google-callback",
+  });
+};
+
+/**
+ * Google Login
+ * Initiate Google OAuth2 authentication flow
+ */
+export const googleOauthGoogleLogin = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GoogleOauthGoogleLoginResponse,
+    GoogleOauthGoogleLoginError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/login/google",
+  });
+};
+
+/**
+ * Google Callback
+ * Handle the callback from Google OAuth
+ */
+export const googleOauthGoogleCallback = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<GoogleOauthGoogleCallbackData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GoogleOauthGoogleCallbackResponse,
+    GoogleOauthGoogleCallbackError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/login/google/callback",
   });
 };
 

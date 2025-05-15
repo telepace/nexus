@@ -15,7 +15,8 @@ interface FormErrorProps {
 export function FormError({ state, className = "" }: FormErrorProps) {
   if (!state) return null;
 
-  const error = state.message || state.server_validation_error || state.server_error;
+  const error =
+    state.message || state.server_validation_error || state.server_error;
   if (!error) return null;
 
   return <p className={`text-sm text-red-500 ${className}`}>{error}</p>;

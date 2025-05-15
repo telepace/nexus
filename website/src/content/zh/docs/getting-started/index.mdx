@@ -5,105 +5,121 @@ description: 学习如何设置和开始使用 nexus 模板进行项目开发。
 
 # nexus 入门指南
 
-本指南将帮助您设置并开始使用 nexus。按照以下步骤创建您的开发环境并了解基本项目结构。
+本指南将帮助你设置和运行项目，无论是用于开发还是部署。
 
-## 前提条件
+## 快速开始使用 Docker Compose
 
-在开始之前，请确保您的系统上已安装以下内容：
+最简单的开始方式是使用 Docker Compose，它将为你设置所有必要的服务。
 
-- **Python 3.10+**
-- **Node.js 18+**
-- **Docker 和 Docker Compose**（可选但推荐）
-- **Git**
+### 要求
 
-## 安装
+- 已安装 [Docker](https://docs.docker.com/get-docker/)
+- 已安装 [Docker Compose](https://docs.docker.com/compose/install/)
+- Git
 
-### 步骤 1：克隆仓库
+### 安装步骤
 
-首先，将 nexus 仓库克隆到您的本地机器：
+1. 克隆仓库：
 
 ```bash
 git clone https://github.com/telepace/nexus.git
 cd nexus
 ```
 
-### 步骤 2：设置环境
-
-您可以使用自动脚本设置开发环境：
+2. 设置环境变量（用于开发）：
 
 ```bash
-./setup.sh
+cp .env.example .env
 ```
 
-或者，您可以手动设置：
+3. 使用 Docker Compose 启动服务：
 
-#### 后端设置
+```bash
+docker compose watch
+```
+
+4. 系统启动后，在浏览器中访问：
+
+- 前端 (React)：[http://localhost:3000](http://localhost:3000) 
+- 后端 API (FastAPI)：[http://localhost:8000](http://localhost:8000)
+- API 文档 (Swagger UI)：[http://localhost:8000/docs](http://localhost:8000/docs)
+- API 替代文档 (ReDoc)：[http://localhost:8000/redoc](http://localhost:8000/redoc)
+- pgAdmin：[http://localhost:5050](http://localhost:5050)
+
+## 后端开发设置
+
+如果你想单独运行后端，可以按照以下步骤进行：
+
+### 要求
+
+- Python 3.10 或更高版本
+- [uv](https://github.com/astral-sh/uv) (Python 包管理器，类似于 pip，但速度更快)
+
+### 安装步骤
+
+1. 安装 uv：
+
+```bash
+pip install uv
+```
+
+2. 切换到后端目录并创建虚拟环境：
 
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate  # 在 Windows 上: venv\Scripts\activate
-pip install poetry
-poetry install
+uv venv .venv
+source .venv/bin/activate  # 在 Windows 上使用 .venv\Scripts\activate
 ```
 
-#### 前端设置
+3. 安装依赖项：
 
 ```bash
-cd ../frontend
+uv pip install -e .
+```
+
+4. 运行开发服务器：
+
+```bash
+uvicorn app.main:app --reload
+```
+
+## 前端开发设置
+
+如果你想单独运行前端，可以按照以下步骤进行：
+
+### 要求
+
+- Node.js 18 或更高版本
+- [pnpm](https://pnpm.io/installation) (推荐) 或 npm
+
+### 安装步骤
+
+1. 切换到前端目录并安装依赖项：
+
+```bash
+cd frontend
 pnpm install
 ```
 
-### 步骤 3：配置
-
-根据提供的 `.env.example` 在根目录中创建一个 `.env` 文件。需要更新的重要值：
-
-```
-# 使用以下命令生成安全密钥：
-# python -c "import secrets; print(secrets.token_urlsafe(32))"
-
-# 必需的安全设置
-SECRET_KEY=您生成的密钥
-FIRST_SUPERUSER=admin@example.com
-FIRST_SUPERUSER_PASSWORD=您的安全密码
-POSTGRES_PASSWORD=您的数据库密码
-
-# 可选的电子邮件设置
-SMTP_HOST=
-SMTP_USER=
-SMTP_PASSWORD=
-EMAILS_FROM_EMAIL=info@example.com
-```
-
-### 步骤 4：启动开发服务器
-
-使用 Docker Compose 启动所有服务：
+2. 运行开发服务器：
 
 ```bash
-docker-compose up
+pnpm dev
 ```
 
-这将启动：
-- PostgreSQL 数据库
-- 后端 FastAPI 服务
-- 前端开发服务器
-- Traefik 用于路由（如果已配置）
+3. 前端将在 [http://localhost:3000](http://localhost:3000) 上可用。
 
-## 验证设置
+## 登录
 
-服务运行后，您可以通过访问以下内容验证设置：
+使用以下默认超级用户登录：
 
-- 后端 API：[http://localhost:8000](http://localhost:8000)
-- API 文档：[http://localhost:8000/docs](http://localhost:8000/docs)
-- 前端应用程序：[http://localhost:3000](http://localhost:3000)
-- Adminer：[http://localhost:8080](http://localhost:8080)
+- **电子邮件**：admin@telepace.com
+- **密码**：telepace
 
-## 下一步
+你可以在 `.env` 文件中通过修改 `FIRST_SUPERUSER` 和 `FIRST_SUPERUSER_PASSWORD` 值来更改这些凭据。
 
-现在您已经启动并运行 nexus，您可以：
+## 后续步骤
 
-1. 探索[项目结构](/zh/docs/getting-started/project-structure)以了解代码库的组织方式
-2. 学习如何使用[认证系统](/zh/docs/backend/authentication)
-3. 开始构建您自己的[API端点](/zh/docs/backend/api-endpoints)
-4. 创建新的[前端组件](/zh/docs/frontend/components)
-5. 在您的应用程序中实现[AI功能](/zh/docs/ai-integration/overview) 
+- 查看 [API 文档](/docs/api-documentation) 以了解可用的端点
+- 阅读 [架构概述](/docs/architecture) 以了解项目结构
+- 参考 [部署指南](/docs/deployment) 了解如何部署到生产环境 

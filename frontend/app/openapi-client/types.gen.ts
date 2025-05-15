@@ -33,6 +33,13 @@ export type Body_login_login_access_token = {
   client_secret?: string | null;
 };
 
+export type GoogleCallbackRequest = {
+  token: string;
+  user_info: {
+    [key: string]: unknown;
+  };
+};
+
 export type HTTPValidationError = {
   detail?: Array<ValidationError>;
 };
@@ -118,6 +125,14 @@ export type ValidationError = {
   msg: string;
   type: string;
 };
+
+export type HealthGetHealthRootResponse = unknown;
+
+export type HealthGetHealthRootError = unknown;
+
+export type HealthGetHealthApiResponse = unknown;
+
+export type HealthGetHealthApiError = unknown;
 
 export type LoginLoginAccessTokenData = {
   body: Body_login_login_access_token;
@@ -308,6 +323,30 @@ export type ItemsDeleteItemData = {
 export type ItemsDeleteItemResponse = ApiResponse_NoneType_;
 
 export type ItemsDeleteItemError = HTTPValidationError;
+
+export type GoogleOauthGoogleCallbackApiData = {
+  body: GoogleCallbackRequest;
+};
+
+export type GoogleOauthGoogleCallbackApiResponse = unknown;
+
+export type GoogleOauthGoogleCallbackApiError = HTTPValidationError;
+
+export type GoogleOauthGoogleLoginResponse = unknown;
+
+export type GoogleOauthGoogleLoginError = unknown;
+
+export type GoogleOauthGoogleCallbackData = {
+  query?: {
+    code?: string | null;
+    error?: string | null;
+    state?: string | null;
+  };
+};
+
+export type GoogleOauthGoogleCallbackResponse = unknown;
+
+export type GoogleOauthGoogleCallbackError = HTTPValidationError;
 
 export type PrivateCreateUserData = {
   body: PrivateUserCreate;

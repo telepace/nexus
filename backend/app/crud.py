@@ -42,6 +42,8 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
     db_user = get_user_by_email(session=session, email=email)
     if not db_user:
         return None
+    if not db_user.hashed_password:
+        return None
     if not verify_password(password, db_user.hashed_password):
         return None
     return db_user
@@ -92,3 +94,22 @@ def clean_expired_tokens(*, session: Session) -> int:
         session.delete(token)
     session.commit()
     return count
+
+
+def create_user_oauth(*, session: Session, obj_in: User) -> User:
+    """
+    Create a new user for OAuth authentication (without password)
+    """
+    session.add(obj_in)
+    session.commit()
+    session.refresh(obj_in)
+    return obj_in
+
+
+def get_user_by_google_id(*, session: Session, google_id: str) -> User | None:
+    """
+    Get a user by Google ID
+    """
+    statement = select(User).where(User.google_id == google_id)
+    session_user = session.exec(statement).first()
+    return session_user

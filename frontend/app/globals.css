@@ -70,12 +70,19 @@
 
 @layer utilities {
   .bg-grid-slate-200\/50 {
-    background-image: linear-gradient(to right, rgba(226, 232, 240, 0.5) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(226, 232, 240, 0.5) 1px, transparent 1px);
+    background-image: linear-gradient(
+        to right,
+        rgba(226, 232, 240, 0.5) 1px,
+        transparent 1px
+      ),
+      linear-gradient(to bottom, rgba(226, 232, 240, 0.5) 1px, transparent 1px);
   }
-  
+
   .bg-grid-slate-700\/20 {
-    background-image: linear-gradient(to right, rgba(51, 65, 85, 0.2) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(51, 65, 85, 0.2) 1px, transparent 1px);
+    background-image: linear-gradient(
+        to right,
+        rgba(51, 65, 85, 0.2) 1px,
+        transparent 1px
+      ), linear-gradient(to bottom, rgba(51, 65, 85, 0.2) 1px, transparent 1px);
   }
 }

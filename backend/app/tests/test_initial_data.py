@@ -1,12 +1,9 @@
-import importlib
-import logging
 import os
 import subprocess
 import sys
 from unittest import mock
 
 import pytest
-from sqlmodel import Session
 
 from app.initial_data import init, main
 
@@ -48,13 +45,13 @@ def test_init(mock_init_db):
         # Mock session context manager
         mock_session_instance = mock.MagicMock()
         mock_session_cls.return_value.__enter__.return_value = mock_session_instance
-        
+
         # Call the init function
         init()
-        
+
         # Assert Session was instantiated
         mock_session_cls.assert_called_once()
-        
+
         # Assert init_db was called with the session instance
         mock_init_db.assert_called_once_with(mock_session_instance)
 
@@ -63,12 +60,12 @@ def test_main(mock_init_function, mock_logger):
     """Test the main function"""
     # Call the main function
     main()
-    
+
     # Assert that logging info messages were called
     assert mock_logger.info.call_count == 2
     mock_logger.info.assert_any_call("Creating initial data")
     mock_logger.info.assert_any_call("Initial data created")
-    
+
     # Assert that init was called
     mock_init_function.assert_called_once()
 
@@ -76,9 +73,9 @@ def test_main(mock_init_function, mock_logger):
 def test_script_entry_point():
     """Test that the script has a main entry point that gets called when run as __main__"""
     # Check if the file has the entry point pattern
-    with open("app/initial_data.py", "r") as f:
+    with open("app/initial_data.py") as f:
         content = f.read()
-    
+
     assert 'if __name__ == "__main__":' in content
     assert "main()" in content
 
@@ -87,15 +84,15 @@ def test_main_if_name_main():
     """Test the if __name__ == '__main__' condition execution directly."""
     # Simple test that executes the code that would run if __name__ == '__main__'
     # This directly executes the main() function, which is what would happen
-    with mock.patch('app.initial_data.main') as mock_main:
+    with mock.patch("app.initial_data.main") as mock_main:
         # The line we want to test is "if __name__ == '__main__': main()"
         # So we're directly executing as if that condition was True
         import app.initial_data
-        
+
         # This simulates what happens in the if block
         if True:  # equivalent to: if __name__ == '__main__':
             app.initial_data.main()
-        
+
         # Verify the main function was called
         mock_main.assert_called_once()
 
@@ -124,18 +121,15 @@ print("Success: Module executed")
         # Write the temporary script
         with open(temp_file, "w") as f:
             f.write(temp_script)
-        
+
         # Run the script as an external process
         result = subprocess.run(
-            [sys.executable, temp_file],
-            check=True,
-            capture_output=True,
-            text=True
+            [sys.executable, temp_file], check=True, capture_output=True, text=True
         )
-        
+
         # Verify execution was successful
         assert "Success: Module executed" in result.stdout
     finally:
         # Clean up
         if os.path.exists(temp_file):
-            os.remove(temp_file) 
+            os.remove(temp_file)

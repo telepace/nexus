@@ -16,7 +16,7 @@ Backend, JSON based web API based on OpenAPI: http://localhost:8000
 
 Automatic interactive documentation with Swagger UI (from the OpenAPI backend): http://localhost:8000/docs
 
-Adminer, database web administration: http://localhost:8080
+pgAdmin, database web administration: http://localhost:5050
 
 Traefik UI, to see how the routes are being handled by the proxy: http://localhost:8090
 
@@ -70,7 +70,7 @@ fastapi dev app/main.py
 
 ## Docker Compose in `localhost.nip.io`
 
-When you start the Docker Compose stack, it uses `localhost` by default, with different ports for each service (backend, frontend, adminer, etc).
+When you start the Docker Compose stack, it uses `localhost` by default, with different ports for each service (backend, frontend, pgAdmin, etc).
 
 When you deploy it to production (or staging), it will deploy each service in a different subdomain, like `api.example.com` for the backend and `dashboard.example.com` for the frontend.
 
@@ -182,7 +182,7 @@ Automatic Interactive Docs (Swagger UI): http://localhost:8000/docs
 
 Automatic Alternative Docs (ReDoc): http://localhost:8000/redoc
 
-Adminer: http://localhost:8080
+pgAdmin: http://localhost:5050
 
 Traefik UI: http://localhost:8090
 
@@ -200,7 +200,7 @@ Automatic Interactive Docs (Swagger UI): http://api.localhost.nip.io/docs
 
 Automatic Alternative Docs (ReDoc): http://api.localhost.nip.io/redoc
 
-Adminer: http://localhost.nip.io:8080
+pgAdmin: http://pgadmin.localhost.nip.io
 
 Traefik UI: http://localhost.nip.io:8090
 

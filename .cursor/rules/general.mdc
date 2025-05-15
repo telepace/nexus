@@ -8,7 +8,8 @@ globs:
 alwaysApply: true
 
 - Prefer using 'uv' for Python-related operations and 'pnpm' for Node.js tasks in terminal commands.
-- For any installation commands, prepend with:
-  export `https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890`
+- For commands that strongly rely on the external network, prepend with:
+  `export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890;`
 - All code comments, prompts, and code completions should be in English.
 - All Chat replies should be in Chinese.
+- use `docker compose` not `docker-compose`

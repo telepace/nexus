@@ -292,27 +292,33 @@ postgresql:
   metrics:
     enabled: false
   
-# 启用和配置 Adminer (可选)
-adminer:
+# 启用和配置 pgAdmin (可选)
+pgadmin:
   enabled: false
   image:
-    repository: adminer
+    repository: dpage/pgadmin4
     tag: latest
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
-    port: 8080
+    port: 80
   ingress:
     enabled: true
     annotations:
       kubernetes.io/ingress.class: nginx
       cert-manager.io/cluster-issuer: letsencrypt-prod
     hosts:
-      - host: adminer.example.com
+      - host: pgadmin.example.com
         paths:
           - path: /
             pathType: Prefix
     tls:
-      - secretName: adminer-tls
+      - secretName: pgadmin-tls
         hosts:
-          - adminer.example.com
+          - pgadmin.example.com
+  config:
+    serverMode: true
+    masterPasswordRequired: false
+  env:
+    email: postgres
+    password: ""

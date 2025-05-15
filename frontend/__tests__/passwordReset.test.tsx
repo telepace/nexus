@@ -1,7 +1,7 @@
 import { passwordReset } from "@/components/actions/password-reset-action";
 import { resetForgotPassword } from "@/app/clientService";
 
-jest.mock("../app/openapi-client/sdk.gen", () => ({
+jest.mock("@/app/clientService", () => ({
   resetForgotPassword: jest.fn(),
 }));
 
@@ -25,7 +25,7 @@ describe("passwordReset action", () => {
     const result = await passwordReset({}, formData);
 
     expect(resetForgotPassword).toHaveBeenCalledWith({
-      body: { email: "testuser@example.com" },
+      path: { email: "testuser@example.com" },
     });
     expect(result).toEqual({
       message: "Password reset instructions sent to your email.",
@@ -45,7 +45,7 @@ describe("passwordReset action", () => {
 
     expect(result).toEqual({ server_validation_error: "User not found" });
     expect(resetForgotPassword).toHaveBeenCalledWith({
-      body: { email: "testuser@example.com" },
+      path: { email: "testuser@example.com" },
     });
   });
 
