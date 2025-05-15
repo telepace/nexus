@@ -47,9 +47,9 @@ export const confirmPasswordRules = (
 export const handleError = (err: ApiError) => {
   const { showErrorToast } = useCustomToast()
 
-  // 优先使用errorMessage属性
-  if (err.errorMessage) {
-    showErrorToast(err.errorMessage)
+  // 优先使用message属性
+  if (err.message) {
+    showErrorToast(err.message)
     return
   }
 

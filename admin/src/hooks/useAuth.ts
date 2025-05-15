@@ -29,7 +29,7 @@ const callLogoutAPI = async (): Promise<void> => {
     method: "POST",
     url: "/api/v1/logout",
     headers: {
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     },
   })
 }
