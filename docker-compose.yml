@@ -207,10 +207,16 @@ services:
       args:
         - VITE_API_URL=https://api.${DOMAIN:-localhost.nip.io}
         - VITE_ADMIN_API_URL=https://api.${DOMAIN:-localhost.nip.io}
+        - VITE_DOMAIN=${DOMAIN:-localhost.nip.io}
+        - VITE_PROJECT_NAME=${PROJECT_NAME:-nexus}
+        - VITE_ENVIRONMENT=${ENVIRONMENT:-local}
         - NODE_ENV=${NODE_ENV:-production}
     environment:
       - VITE_API_URL=${PRODUCTION_API_URL:-https://api.${DOMAIN:-localhost.nip.io}}
       - VITE_ADMIN_API_URL=${PRODUCTION_API_URL:-https://api.${DOMAIN:-localhost.nip.io}}
+      - VITE_DOMAIN=${DOMAIN:-localhost.nip.io}
+      - VITE_PROJECT_NAME=${PROJECT_NAME:-nexus}
+      - VITE_ENVIRONMENT=${ENVIRONMENT:-local}
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
