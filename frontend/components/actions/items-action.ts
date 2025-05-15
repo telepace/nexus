@@ -5,7 +5,7 @@ import { readItems, readItem, deleteItem, createItem } from "@/app/clientService
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { itemSchema } from "@/lib/definitions";
-import type { ApiResponse } from "@/app/openapi-client/types.gen";
+import type { ApiResponse_ItemPublic_, ApiResponse_ItemsPublic_ } from "@/app/openapi-client/types.gen";
 
 interface ItemData {
   id: string;
@@ -13,6 +13,15 @@ interface ItemData {
   description?: string;
   [key: string]: unknown;
 }
+
+// 创建一个通用的ApiResponse类型
+type ApiResponse<T> = {
+  data?: T | null;
+  meta?: {
+    [key: string]: unknown;
+  } | null;
+  error?: string | null;
+};
 
 type DataResponse = {
   data?: ItemData[] | { data?: ItemData[] } | unknown;

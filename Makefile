@@ -66,7 +66,7 @@ UV_EXISTS := $(shell command -v uv 2> /dev/null)
 
 ## all: Run all tests, linting, formatting and build all components
 .PHONY: all
-all: format lint test backend frontend admin
+all: format lint test backend-build frontend-build admin-build
 	@echo "===========> All checks and builds completed successfully"
 
 ## dev: Start development environment
@@ -101,74 +101,42 @@ clean:
 	@find . -name ".coverage" -delete
 
 # ==============================================================================
-# CHECK AND INSTALL TOOLS
-# ==============================================================================
-
-.PHONY: check-pnpm
-check-pnpm:
-ifndef PNPM_EXISTS
-	@echo "===========> Installing pnpm"
-	@npm install -g pnpm
-endif
-
-.PHONY: check-uv
-check-uv:
-ifndef UV_EXISTS
-	@echo "===========> Installing uv"
-	@curl -sSf https://astral.sh/uv/install.sh | sh
-endif
-
-# ==============================================================================
-# HELP INFORMATION
-# ==============================================================================
-
-## help: Show this help information
-.PHONY: help
-help: Makefile
-	@printf "\n\033[1;36m┌─────────────────────────────────────────────────────────────────────┐\033[0m\n"
-	@printf "\033[1;36m│ \033[1;37mNEXUS MAKEFILE COMMANDS                                              \033[1;36m│\033[0m\n"
-	@printf "\033[1;36m└─────────────────────────────────────────────────────────────────────┘\033[0m\n\n"
-	@printf "\033[1mUsage: \033[0mmake \033[1;37m<TARGETS>\033[0m\n\n"
-	
-	@printf "\033[1;34m┌─ PRIMARY COMMANDS ───────────────────────────────────────────────────┐\033[0m\n"
-	@grep -E '^## (all:|dev:|lint:|test:|format:|clean:)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
-	
-	@printf "\n\033[1;34m┌─ BACKEND COMMANDS ──────────────────────────────────────────────────┐\033[0m\n"
-	@grep -E '^## backend' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
-	
-	@printf "\n\033[1;34m┌─ FRONTEND COMMANDS ─────────────────────────────────────────────────┐\033[0m\n"
-	@grep -E '^## frontend' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
-	
-	@printf "\n\033[1;34m┌─ ADMIN COMMANDS ────────────────────────────────────────────────────┐\033[0m\n"
-	@grep -E '^## admin' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
-	
-	@printf "\n\033[1;34m┌─ WEBSITE COMMANDS ──────────────────────────────────────────────────┐\033[0m\n"
-	@grep -E '^## (website|docs)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
-	
-	@printf "\n\033[1;34m┌─ DOCKER COMMANDS ───────────────────────────────────────────────────┐\033[0m\n"
-	@grep -E '^## docker' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
-	
-	@printf "\n\033[1;34m┌─ EXTENSION COMMANDS ────────────────────────────────────────────────┐\033[0m\n"
-	@grep -E '^## extension' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
-	
-	@printf "\n\033[1;34m┌─ DEPLOYMENT COMMANDS ────────────────────────────────────────────────┐\033[0m\n"
-	@grep -E '^## (helm|deploy)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
-	
-	@printf "\n\033[1;34m┌─ DEVELOPMENT TOOLS ───────────────────────────────────────────────────┐\033[0m\n"
-	@grep -E '^## (install|setup|generate)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
-	
-	@printf "\n"
-
-# ==============================================================================
 # BACKEND TARGETS
 # ==============================================================================
 
-## backend: Build backend
+## backend-all: Run all backend checks (lint, test, format) without starting services
+.PHONY: backend-all
+backend-all: backend-format backend-lint backend-test
+	@echo "===========> Backend all checks completed successfully"
+
+## backend: Start backend development server
 .PHONY: backend
 backend: check-uv backend-install
-	@echo "===========> Building backend"
+	@echo "===========> Starting backend development server"
 	@source backend/.venv/bin/activate && \
 	cd $(BACKEND_DIR) && fastapi dev app/main.py
+
+## backend-build: Build backend
+.PHONY: backend-build
+backend-build: check-uv backend-install
+	@echo "===========> Building backend"
+	@cd $(BACKEND_DIR) && $(UV) pip install -e .
+
+## backend-start: Start backend in background
+.PHONY: backend-start
+backend-start: backend-install
+	@echo "===========> Starting backend in background"
+	@source $(BACKEND_DIR)/.venv/bin/activate && \
+	cd $(BACKEND_DIR) && \
+	nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > $(TMP_DIR)/backend.log 2>&1 &
+	@echo "Backend started in background, logs at $(TMP_DIR)/backend.log"
+
+## backend-restart: Restart backend in background
+.PHONY: backend-restart
+backend-restart:
+	@echo "===========> Restarting backend"
+	@pkill -f "uvicorn app.main:app" || true
+	@$(MAKE) backend-start
 
 ## backend-install: Install backend dependencies
 .PHONY: backend-install
@@ -191,14 +159,6 @@ backend-lint: backend-install
 	@source $(BACKEND_DIR)/.venv/bin/activate && \
 	cd $(BACKEND_DIR) && \
 	bash scripts/lint.sh
-
-## backend-run: Run backend locally
-.PHONY: backend-run
-backend-run: backend-install
-	@echo "===========> Running backend"
-	@source $(BACKEND_DIR)/.venv/bin/activate && \
-	cd $(BACKEND_DIR) && \
-	uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 ## backend-format: Format backend code
 .PHONY: backend-format
@@ -230,15 +190,49 @@ backend-db-shell:
 # FRONTEND TARGETS
 # ==============================================================================
 
-## frontend: Build frontend
+## frontend-all: Run all frontend checks (lint, test, format) without starting services
+.PHONY: frontend-all
+frontend-all: frontend-format frontend-lint frontend-test
+	@echo "===========> Frontend all checks completed successfully"
+
+## frontend: Start frontend development server
 .PHONY: frontend
 frontend: check-pnpm frontend-install
-	@echo "===========> Building frontend"
+	@echo "===========> Starting frontend development server"
+	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
+		cd $(FRONTEND_DIR) && $(PNPM) run dev; \
+	else \
+		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
+	fi
+
+## frontend-build: Build frontend for production
+.PHONY: frontend-build
+frontend-build: check-pnpm frontend-install
+	@echo "===========> Building frontend for production"
 	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
 		cd $(FRONTEND_DIR) && $(PNPM) run build; \
 	else \
 		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
 	fi
+
+## frontend-start: Start frontend in background
+.PHONY: frontend-start
+frontend-start: frontend-install
+	@echo "===========> Starting frontend in background"
+	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
+		cd $(FRONTEND_DIR) && \
+		nohup $(PNPM) run start > $(TMP_DIR)/frontend.log 2>&1 & \
+		echo "Frontend started in background, logs at $(TMP_DIR)/frontend.log"; \
+	else \
+		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
+	fi
+
+## frontend-restart: Restart frontend in background
+.PHONY: frontend-restart
+frontend-restart:
+	@echo "===========> Restarting frontend"
+	@pkill -f "next start" || true
+	@$(MAKE) frontend-start
 
 ## frontend-install: Install frontend dependencies
 .PHONY: frontend-install
@@ -246,16 +240,6 @@ frontend-install: check-pnpm
 	@echo "===========> Installing frontend dependencies"
 	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
 		cd $(FRONTEND_DIR) && $(PNPM) install; \
-	else \
-		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
-	fi
-
-## frontend-dev: Run frontend development server
-.PHONY: frontend-dev
-frontend-dev: frontend-install
-	@echo "===========> Running frontend development server"
-	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
-		cd $(FRONTEND_DIR) && $(PNPM) run dev; \
 	else \
 		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
 	fi
@@ -294,11 +278,37 @@ frontend-format: frontend-install
 # ADMIN TARGETS
 # ==============================================================================
 
-## admin: Build admin panel
+## admin-all: Run all admin checks (lint, test, format) without starting services
+.PHONY: admin-all
+admin-all: admin-format admin-lint admin-test
+	@echo "===========> Admin all checks completed successfully"
+
+## admin: Start admin development server
 .PHONY: admin
 admin: check-pnpm admin-install
-	@echo "===========> Building admin panel"
+	@echo "===========> Starting admin development server"
+	@cd $(ADMIN_DIR) && $(PNPM) run dev
+
+## admin-build: Build admin panel for production
+.PHONY: admin-build
+admin-build: check-pnpm admin-install
+	@echo "===========> Building admin panel for production"
 	@cd $(ADMIN_DIR) && $(PNPM) exec vite build
+
+## admin-start: Start admin in background
+.PHONY: admin-start
+admin-start: admin-build
+	@echo "===========> Starting admin in background"
+	@cd $(ADMIN_DIR) && \
+	nohup $(PNPM) exec vite preview --host --port 3001 > $(TMP_DIR)/admin.log 2>&1 &
+	@echo "Admin started in background, logs at $(TMP_DIR)/admin.log"
+
+## admin-restart: Restart admin in background
+.PHONY: admin-restart
+admin-restart:
+	@echo "===========> Restarting admin"
+	@pkill -f "vite preview" || true
+	@$(MAKE) admin-start
 
 ## admin-install: Install admin dependencies
 .PHONY: admin-install
@@ -306,15 +316,9 @@ admin-install: check-pnpm
 	@echo "===========> Installing admin dependencies"
 	@cd $(ADMIN_DIR) && $(PNPM) install
 
-## admin-dev: Run admin development server
-.PHONY: admin-dev
-admin-dev: admin-install
-	@echo "===========> Running admin development server"
-	@cd $(ADMIN_DIR) && $(PNPM) run dev
-
 ## admin-preview: Preview production build
 .PHONY: admin-preview
-admin-preview: admin
+admin-preview: admin-build
 	@echo "===========> Previewing admin production build"
 	@cd $(ADMIN_DIR) && $(PNPM) exec vite preview
 
@@ -340,11 +344,37 @@ admin-format: admin-install
 # WEBSITE TARGETS
 # ==============================================================================
 
-## website: Build website
+## website-all: Run all website checks (lint, test, format) without starting services
+.PHONY: website-all
+website-all: website-test
+	@echo "===========> Website all checks completed successfully"
+
+## website: Start website development server
 .PHONY: website
 website: check-pnpm website-install
-	@echo "===========> Building website"
+	@echo "===========> Starting website development server"
+	@cd $(WEBSITE_DIR) && $(PNPM) run dev
+
+## website-build: Build website for production
+.PHONY: website-build
+website-build: check-pnpm website-install
+	@echo "===========> Building website for production"
 	@cd $(WEBSITE_DIR) && $(PNPM) run build
+
+## website-start: Start website in background
+.PHONY: website-start
+website-start: website-build
+	@echo "===========> Starting website in background"
+	@cd $(WEBSITE_DIR) && \
+	nohup $(PNPM) run start > $(TMP_DIR)/website.log 2>&1 &
+	@echo "Website started in background, logs at $(TMP_DIR)/website.log"
+
+## website-restart: Restart website in background
+.PHONY: website-restart
+website-restart:
+	@echo "===========> Restarting website"
+	@pkill -f "next start" || true
+	@$(MAKE) website-start
 
 ## website-install: Install website dependencies
 .PHONY: website-install
@@ -352,23 +382,39 @@ website-install: check-pnpm
 	@echo "===========> Installing website dependencies"
 	@cd $(WEBSITE_DIR) && $(PNPM) install
 
-## website-dev: Run website development server
-.PHONY: website-dev
-website-dev: website-install
-	@echo "===========> Running website development server"
-	@cd $(WEBSITE_DIR) && $(PNPM) run dev
-
 ## website-test: Run website tests
 .PHONY: website-test
 website-test: website-install
 	@echo "===========> Running website tests"
 	@cd $(WEBSITE_DIR) && $(PNPM) test || true
 
-## docs: Build documentation
-.PHONY: docs
-docs:
-	@echo "===========> Building documentation"
-	@cd $(WEBSITE_DIR) && $(PNPM) run dev
+
+# ==============================================================================
+# EXTENSION TARGETS
+# ==============================================================================
+
+## extension-all: Run all extension related tasks without starting services
+.PHONY: extension-all
+extension-all: extension-build extension-package
+	@echo "===========> Extension all checks completed successfully"
+
+## extension: Start extension development
+.PHONY: extension
+extension: check-pnpm
+	@echo "===========> Starting browser extension in development mode"
+	@cd $(EXTENSION_DIR) && $(PNPM) run dev
+
+## extension-build: Build browser extension for production
+.PHONY: extension-build
+extension-build: check-pnpm
+	@echo "===========> Building browser extension for production"
+	@cd $(EXTENSION_DIR) && $(PNPM) run build
+
+## extension-package: Package browser extension for distribution
+.PHONY: extension-package
+extension-package: check-pnpm
+	@echo "===========> Packaging browser extension for distribution"
+	@cd $(EXTENSION_DIR) && $(PNPM) run package
 
 # ==============================================================================
 # DOCKER TARGETS
@@ -404,46 +450,45 @@ docker-deploy:
 	@DOMAIN=$(DOMAIN) STACK_NAME=$(STACK_NAME) TAG=$(VERSION) bash $(ROOT_DIR)/scripts/deploy.sh
 
 # ==============================================================================
-# EXTENSION TARGETS
+# HELP INFORMATION
 # ==============================================================================
 
-## extension: Build browser extension for production
-.PHONY: extension
-extension: check-pnpm
-	@echo "===========> Building browser extension for production"
-	@cd $(EXTENSION_DIR) && $(PNPM) run build
-
-## extension-dev: Run browser extension in development mode
-.PHONY: extension-dev
-extension-dev: check-pnpm
-	@echo "===========> Running browser extension in development mode"
-	@cd $(EXTENSION_DIR) && $(PNPM) run dev
-
-## extension-package: Package browser extension for distribution
-.PHONY: extension-package
-extension-package: check-pnpm
-	@echo "===========> Packaging browser extension for distribution"
-	@cd $(EXTENSION_DIR) && $(PNPM) run package
-
-# ==============================================================================
-# DEPLOYMENT TARGETS
-# ==============================================================================
-
-## deploy: Deploy all components
-.PHONY: deploy
-deploy: docker-push docker-deploy
-
-## helm-install: Install Helm chart
-.PHONY: helm-install
-helm-install:
-	@echo "===========> Installing Helm chart"
-	@helm install nexus $(ROOT_DIR)/helm-charts/nexus
-
-## helm-upgrade: Upgrade Helm chart
-.PHONY: helm-upgrade
-helm-upgrade:
-	@echo "===========> Upgrading Helm chart"
-	@helm upgrade nexus $(ROOT_DIR)/helm-charts/nexus
+## help: Show this help information
+.PHONY: help
+help: Makefile
+	@printf "\n\033[1;36m┌─────────────────────────────────────────────────────────────────────┐\033[0m\n"
+	@printf "\033[1;36m│ \033[1;37mNEXUS MAKEFILE COMMANDS                                              \033[1;36m│\033[0m\n"
+	@printf "\033[1;36m└─────────────────────────────────────────────────────────────────────┘\033[0m\n\n"
+	@printf "\033[1mUsage: \033[0mmake \033[1;37m<TARGETS>\033[0m\n\n"
+	
+	@printf "\033[1;34m┌─ PRIMARY COMMANDS ───────────────────────────────────────────────────┐\033[0m\n"
+	@grep -E '^## (all:|dev:|lint:|test:|format:|clean:)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
+	
+	@printf "\n\033[1;34m┌─ BACKEND COMMANDS ──────────────────────────────────────────────────┐\033[0m\n"
+	@grep -E '^## backend' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
+	
+	@printf "\n\033[1;34m┌─ FRONTEND COMMANDS ─────────────────────────────────────────────────┐\033[0m\n"
+	@grep -E '^## frontend' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
+	
+	@printf "\n\033[1;34m┌─ ADMIN COMMANDS ────────────────────────────────────────────────────┐\033[0m\n"
+	@grep -E '^## admin' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
+	
+	@printf "\n\033[1;34m┌─ WEBSITE COMMANDS ──────────────────────────────────────────────────┐\033[0m\n"
+	@grep -E '^## website' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
+	
+	@printf "\n\033[1;34m┌─ DOCKER COMMANDS ───────────────────────────────────────────────────┐\033[0m\n"
+	@grep -E '^## docker' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
+	
+	@printf "\n\033[1;34m┌─ EXTENSION COMMANDS ────────────────────────────────────────────────┐\033[0m\n"
+	@grep -E '^## extension' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
+	
+	@printf "\n\033[1;34m┌─ DEPLOYMENT COMMANDS ────────────────────────────────────────────────┐\033[0m\n"
+	@grep -E '^## (helm|deploy)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
+	
+	@printf "\n\033[1;34m┌─ DEVELOPMENT TOOLS ───────────────────────────────────────────────────┐\033[0m\n"
+	@grep -E '^## (install|setup|generate)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
+	
+	@printf "\n"
 
 # ==============================================================================
 # DEVELOPMENT TOOLS
@@ -492,3 +537,41 @@ generate-admin-client:
 # For backward compatibility
 .PHONY: generate-all-clients
 generate-all-clients: generate-client
+
+# ==============================================================================
+# CHECK AND INSTALL TOOLS
+# ==============================================================================
+
+.PHONY: check-pnpm
+check-pnpm:
+ifndef PNPM_EXISTS
+	@echo "===========> Installing pnpm"
+	@npm install -g pnpm
+endif
+
+.PHONY: check-uv
+check-uv:
+ifndef UV_EXISTS
+	@echo "===========> Installing uv"
+	@curl -sSf https://astral.sh/uv/install.sh | sh
+endif
+
+# ==============================================================================
+# DEPLOYMENT TARGETS
+# ==============================================================================
+
+## deploy: Deploy all components
+.PHONY: deploy
+deploy: docker-push docker-deploy
+
+## helm-install: Install Helm chart
+.PHONY: helm-install
+helm-install:
+	@echo "===========> Installing Helm chart"
+	@helm install nexus $(ROOT_DIR)/helm-charts/nexus
+
+## helm-upgrade: Upgrade Helm chart
+.PHONY: helm-upgrade
+helm-upgrade:
+	@echo "===========> Upgrading Helm chart"
+	@helm upgrade nexus $(ROOT_DIR)/helm-charts/nexus

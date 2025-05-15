@@ -1,24 +1,24 @@
 import {
-  loginAccessToken,
-  recoverPassword as resetForgotPassword,
-  resetPassword as resetResetPassword,
-  registerUser,
-  testToken,
-  readUserMe,
-  updateUserMe,
-  deleteUserMe,
-  updatePasswordMe,
-  readItems,
-  createItem,
-  readItem,
-  updateItem,
-  deleteItem,
+  loginLoginAccessToken as loginAccessToken,
+  loginRecoverPassword as resetForgotPassword,
+  loginResetPassword as resetResetPassword,
+  usersRegisterUser as registerUser,
+  loginTestToken as testToken,
+  usersReadUserMe as readUserMe,
+  usersUpdateUserMe as updateUserMe,
+  usersDeleteUserMe as deleteUserMe,
+  usersUpdatePasswordMe as updatePasswordMe,
+  itemsReadItems as readItems,
+  itemsCreateItem as createItem,
+  itemsReadItem as readItem,
+  itemsUpdateItem as updateItem,
+  itemsDeleteItem as deleteItem,
 } from "./openapi-client/sdk.gen";
 
 import type {
   HTTPValidationError,
-  LoginAccessTokenError as AuthJwtLoginError,
-  RegisterUserError as RegisterUserError,
+  LoginLoginAccessTokenError as AuthJwtLoginError,
+  UsersRegisterUserError as RegisterUserError,
 } from "./openapi-client/types.gen";
 
 // 为兼容性导出别名
