@@ -18,11 +18,19 @@ const isLoggedIn = () => {
   return localStorage.getItem("access_token") !== null
 }
 
-// 自定义logout API调用
+// 自定义logout API调用，确保包含授权令牌
 const callLogoutAPI = async (): Promise<void> => {
+  const token = localStorage.getItem("access_token")
+  if (!token) {
+    throw new Error("No access token found")
+  }
+
   return request(OpenAPI, {
     method: "POST",
     url: "/api/v1/logout",
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
   })
 }
 
@@ -70,8 +78,9 @@ const useAuth = () => {
 
   const logout = async () => {
     try {
-      // 尝试调用后端的logout接口
+      // 尝试调用后端的logout接口，确保请求完成
       await callLogoutAPI()
+      console.log("成功调用登出API")
     } catch (error) {
       console.error("登出API调用失败:", error)
     } finally {

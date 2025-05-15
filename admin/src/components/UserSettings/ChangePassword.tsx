@@ -3,7 +3,8 @@ import { useMutation } from "@tanstack/react-query"
 import { type SubmitHandler, useForm } from "react-hook-form"
 import { FiLock } from "react-icons/fi"
 
-import { type ApiError, type UpdatePassword, UsersService } from "@/client"
+import { type ApiError, type UpdatePassword, UsersService, OpenAPI } from "@/client"
+import { request } from "@/client/core/request"
 import useCustomToast from "@/hooks/useCustomToast"
 import { confirmPasswordRules, handleError, passwordRules } from "@/utils"
 import { PasswordInput } from "../ui/password-input"
@@ -12,8 +13,26 @@ interface UpdatePasswordForm extends UpdatePassword {
   confirm_password: string
 }
 
+// 直接调用MCP API更新密码
+const updatePasswordAPI = async (data: UpdatePassword): Promise<void> => {
+  const token = localStorage.getItem("access_token")
+  if (!token) {
+    throw new Error("No access token found")
+  }
+
+  return request(OpenAPI, {
+    method: "POST",
+    url: "/api/v1/users/me/password",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  })
+}
+
 const ChangePassword = () => {
-  const { showSuccessToast } = useCustomToast()
+  const { showSuccessToast, showErrorToast } = useCustomToast()
   const {
     register,
     handleSubmit,
@@ -26,14 +45,23 @@ const ChangePassword = () => {
   })
 
   const mutation = useMutation({
-    mutationFn: (data: UpdatePassword) =>
-      UsersService.updatePasswordMe({ requestBody: data }),
+    mutationFn: (data: UpdatePassword) => {
+      // 尝试直接使用定制的API调用
+      try {
+        return updatePasswordAPI(data)
+      } catch (error) {
+        console.error("直接API调用失败，回退到服务方法", error)
+        // 回退到默认服务方法
+        return UsersService.updatePasswordMe({ requestBody: data })
+      }
+    },
     onSuccess: () => {
       showSuccessToast("Password updated successfully.")
       reset()
     },
     onError: (err: ApiError) => {
       handleError(err)
+      showErrorToast("Password update failed", err.message || "Please try again")
     },
   })
 

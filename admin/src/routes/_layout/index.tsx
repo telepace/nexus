@@ -1,4 +1,4 @@
-import { Box, Container, Text, Grid, Heading, Link, Flex, Icon } from "@chakra-ui/react"
+import { Box, Container, Text, Grid, Heading, Link, Flex, Icon, Badge } from "@chakra-ui/react"
 import { createFileRoute } from "@tanstack/react-router"
 import { FiDatabase, FiServer, FiMonitor, FiCpu, FiExternalLink } from "react-icons/fi"
 import { useColorModeValue } from "@/components/ui/color-mode"
@@ -14,16 +14,18 @@ function Dashboard() {
   const cardBg = useColorModeValue("white", "gray.800")
   const borderColor = useColorModeValue("gray.200", "gray.700")
   const statBg = useColorModeValue("blue.50", "blue.900")
+  const domain = import.meta.env.VITE_DOMAIN || 'localhost.nip.io'
+  const protocol = import.meta.env.VITE_USE_HTTPS === 'false' ? 'http' : 'https'
 
-  // Deployment information from environment
+  // Deployment information from environment - updated format
   const deploymentTools = [
-    { name: "Admin Dashboard", url: `https://admin.${import.meta.env.VITE_DOMAIN || 'localhost.nip.io'}`, description: "Admin management interface" },
-    { name: "User Dashboard", url: `https://dashboard.${import.meta.env.VITE_DOMAIN || 'localhost.nip.io'}`, description: "User-facing dashboard" },
-    { name: "API Backend", url: `https://api.${import.meta.env.VITE_DOMAIN || 'localhost.nip.io'}`, description: "Backend API server" },
-    { name: "Adminer", url: `https://adminer.${import.meta.env.VITE_DOMAIN || 'localhost.nip.io'}`, description: "Database management" },
-    { name: "PG Admin", url: `https://pgadmin.${import.meta.env.VITE_DOMAIN || 'localhost.nip.io'}`, description: "PostgreSQL administration" },
-    { name: "LiteLLM", url: `https://llm.${import.meta.env.VITE_DOMAIN || 'localhost.nip.io'}`, description: "LLM proxy service" },
-    { name: "Prometheus", url: `https://prometheus.${import.meta.env.VITE_DOMAIN || 'localhost.nip.io'}`, description: "Monitoring and metrics" },
+    { name: "Admin Dashboard", subdomain: "admin", description: "Admin management interface" },
+    { name: "User Dashboard", subdomain: "dashboard", description: "User-facing dashboard" },
+    { name: "API Backend", subdomain: "api", description: "Backend API server" },
+    { name: "Adminer", subdomain: "adminer", description: "Database management" },
+    { name: "PG Admin", subdomain: "pgadmin", description: "PostgreSQL administration" },
+    { name: "LiteLLM", subdomain: "llm", description: "LLM proxy service" },
+    { name: "Prometheus", subdomain: "prometheus", description: "Monitoring and metrics" },
   ]
 
   // System information
@@ -75,38 +77,48 @@ function Dashboard() {
           
           <Box h="1px" bg={borderColor} my={6} />
           
-          <Heading size="md" mb={4}>Project Deployment Resources</Heading>
+          <Heading size="md" mb={4}>
+            Project Deployment Resources
+            <Badge ml={2} colorScheme={domain === 'localhost.nip.io' ? 'yellow' : 'green'}>
+              {domain === 'localhost.nip.io' ? 'Local' : 'Production'}
+            </Badge>
+          </Heading>
           
           <Grid templateColumns={{ base: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }} gap={4}>
-            {deploymentTools.map((tool) => (
-              <Box 
-                key={tool.name}
-                p={4}
-                borderWidth="1px"
-                borderRadius="lg"
-                borderColor={borderColor}
-                bg={cardBg}
-                boxShadow="sm"
-                transition="all 0.2s"
-                _hover={{ transform: "translateY(-2px)", boxShadow: "md" }}
-              >
-                <Heading size="sm" mb={2}>{tool.name}</Heading>
-                <Text fontSize="sm" color="gray.500" mb={3}>{tool.description}</Text>
-                <Link 
-                  href={tool.url} 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  color="blue.500" 
-                  fontSize="sm"
-                  display="flex"
-                  alignItems="center"
-                  _hover={{ textDecoration: "underline", color: "blue.600" }}
+            {deploymentTools.map((tool) => {
+              const url = `${protocol}://${tool.subdomain}.${domain}`;
+              return (
+                <Box 
+                  key={tool.name}
+                  p={4}
+                  borderWidth="1px"
+                  borderRadius="lg"
+                  borderColor={borderColor}
+                  bg={cardBg}
+                  boxShadow="sm"
+                  transition="all 0.2s"
+                  _hover={{ transform: "translateY(-2px)", boxShadow: "md" }}
                 >
-                  {tool.url.replace(/^https?:\/\//, '')} 
-                  <Icon as={FiExternalLink} ml={1} />
-                </Link>
-              </Box>
-            ))}
+                  <Heading size="sm" mb={2}>{tool.name}</Heading>
+                  <Text fontSize="sm" color="gray.500" mb={3}>{tool.description}</Text>
+                  <Box title={url}>
+                    <Link 
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      color="blue.500" 
+                      fontSize="sm"
+                      display="flex"
+                      alignItems="center"
+                      _hover={{ textDecoration: "underline", color: "blue.600" }}
+                    >
+                      {tool.subdomain}.{domain}
+                      <Icon as={FiExternalLink} ml={1} />
+                    </Link>
+                  </Box>
+                </Box>
+              );
+            })}
           </Grid>
         </Box>
       </Container>
