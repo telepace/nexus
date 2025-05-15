@@ -94,7 +94,7 @@ if [ -f "$PROJECT_ROOT/openapi.json" ]; then
   }
   
   echo "🧹 Formatting generated client code..."
-  pnpm exec biome format --write ./src/client || {
+  pnpm exec biome format --write ./app/openapi-client || {
     echo "❌ Failed to format client code"
     exit 1
   }
