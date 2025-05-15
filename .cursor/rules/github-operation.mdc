@@ -13,3 +13,7 @@ alwaysApply: false
     repo: nexus
     
     (i.e., https://github.com/telepace/nexus)
+
+- The language chosen for raising an issue: Chinese- 
+- Be careful not to be too AI in your tone.
+- Pay attention to choosing the appropriate labels and types. And select the latest Milestone
