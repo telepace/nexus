@@ -87,7 +87,7 @@ export async function login(prevState: unknown, formData: FormData) {
 }
 
 // This function could be expanded to support Google login in the backend
-export async function handleGoogleLogin(googleToken: string) {
+export async function handleGoogleLogin() {
   // This would be implemented to call your backend API endpoint for Google auth
   // For now, it's a placeholder for future implementation
   try {

@@ -106,9 +106,7 @@ def update_item(
 
 
 @router.delete("/{id}", response_model=ApiResponse[None])
-def delete_item(
-    session: SessionDep, current_user: CurrentUser, id: uuid.UUID
-) -> Any:
+def delete_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> Any:
     """
     Delete an item.
     """

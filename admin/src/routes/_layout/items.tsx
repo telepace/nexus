@@ -11,7 +11,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { FiSearch } from "react-icons/fi"
 import { z } from "zod"
 
-import { ItemPublic, ItemsService } from "@/client"
+import { type ItemPublic, ItemsService } from "@/client"
 import { ItemActionsMenu } from "@/components/Common/ItemActionsMenu"
 import AddItem from "@/components/Items/AddItem"
 import PendingItems from "@/components/Pending/PendingItems"
@@ -45,7 +45,11 @@ function ItemsTable() {
   const navigate = useNavigate({ from: Route.fullPath })
   const { page } = Route.useSearch()
 
-  const { data: apiResponse, isLoading, isPlaceholderData } = useQuery({
+  const {
+    data: apiResponse,
+    isLoading,
+    isPlaceholderData,
+  } = useQuery({
     ...getItemsQueryOptions({ page }),
     placeholderData: (prevData) => prevData,
   })
@@ -56,17 +60,17 @@ function ItemsTable() {
     })
 
   // 安全地处理API响应
-  const apiData = apiResponse?.data || {} as any
-  
+  const apiData = apiResponse?.data || ({} as any)
+
   // 使用类型断言处理响应数据
-  const items: ItemPublic[] = Array.isArray(apiData.data) 
-    ? apiData.data 
-    : (Array.isArray(apiData) ? apiData : [])
-  
+  const items: ItemPublic[] = Array.isArray(apiData.data)
+    ? apiData.data
+    : Array.isArray(apiData)
+      ? apiData
+      : []
+
   // 使用类型断言处理计数
-  const count = typeof apiData.count === 'number' 
-    ? apiData.count 
-    : items.length
+  const count = typeof apiData.count === "number" ? apiData.count : items.length
 
   if (isLoading) {
     return <PendingItems />

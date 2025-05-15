@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     }
     
     const tokenData = await tokenResponse.json();
-    const { access_token, id_token } = tokenData;
+    const { access_token } = tokenData;
     
     // Get the user's information using the access token
     const userResponse = await fetch(GOOGLE_USER_INFO_URL, {
@@ -81,7 +81,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL("/login?error=user_info", request.url));
     }
     
-    const userData = await userResponse.json();
+    // We need to await the response but don't need to use the userData directly
+    await userResponse.json();
     
     // Here you would typically:
     // 1. Check if the user exists in your database

@@ -56,7 +56,7 @@ def test_token(current_user: CurrentUser) -> Any:
 def logout(current_user: CurrentUser, token: TokenDep, session: SessionDep) -> Message:
     """
     Logout current user
-    
+
     This endpoint invalidates the current token by adding it to a blacklist.
     The frontend should still remove the tokens from local storage after calling this endpoint.
     """
@@ -69,10 +69,7 @@ def logout(current_user: CurrentUser, token: TokenDep, session: SessionDep) -> M
 
         # Add token to blacklist
         crud.add_token_to_blacklist(
-            session=session,
-            token=token,
-            user_id=current_user.id,
-            expires_at=expires_at
+            session=session, token=token, user_id=current_user.id, expires_at=expires_at
         )
 
         # Optionally, clean up expired tokens from the blacklist
@@ -80,10 +77,7 @@ def logout(current_user: CurrentUser, token: TokenDep, session: SessionDep) -> M
 
         return Message(message="Successfully logged out")
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to logout: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to logout: {str(e)}")
 
 
 @router.post("/password-recovery/{email}")

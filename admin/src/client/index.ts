@@ -19,15 +19,21 @@ export interface ItemsPublic {
 
 // Utility functions
 export function isApiResponse(obj: any): boolean {
-  return obj && typeof obj === 'object' && (obj.data !== undefined || obj.error !== undefined || obj.meta !== undefined)
+  return (
+    obj &&
+    typeof obj === "object" &&
+    (obj.data !== undefined ||
+      obj.error !== undefined ||
+      obj.meta !== undefined)
+  )
 }
 
 export function extractApiResponseError(response: any): string | null {
   if (!isApiResponse(response)) return null
-  
-  if (typeof response.error === 'string') {
+
+  if (typeof response.error === "string") {
     return response.error
   }
-  
+
   return null
 }

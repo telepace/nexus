@@ -5,6 +5,9 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    ignores: ["app/openapi-client/types.gen.ts"]
+  },
   ...compat.config({
     extends: ["next/core-web-vitals", "next/typescript", "prettier"],
     rules: { "@typescript-eslint/no-empty-object-type": "off" },

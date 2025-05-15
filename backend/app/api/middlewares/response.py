@@ -26,18 +26,34 @@ class ApiResponseMiddleware(BaseHTTPMiddleware):
 
         # 获取原始响应内容
         response_body = response.body
-        content = response.body.decode()
 
-        # 如果是字节串，则解码
+        # 如果是字节串或memoryview，则解码
         if isinstance(response_body, bytes):
             try:
+                content = response_body.decode()
                 import json
+
                 content = json.loads(content)
             except Exception:
                 return response
+        elif isinstance(response_body, memoryview):
+            try:
+                content = bytes(response_body).decode()
+                import json
+
+                content = json.loads(content)
+            except Exception:
+                return response
+        else:
+            # 不是可解码类型
+            return response
 
         # 检查内容是否已经符合 ApiResponse 格式
-        if isinstance(content, dict) and set(content.keys()) & {"data", "meta", "error"}:
+        if isinstance(content, dict) and set(content.keys()) & {
+            "data",
+            "meta",
+            "error",
+        }:
             return response
 
         # 根据状态码，重新格式化响应
@@ -46,19 +62,14 @@ class ApiResponseMiddleware(BaseHTTPMiddleware):
 
         if 200 <= status_code < 400:
             # 成功响应
-            formatted_response = {
-                "data": content,
-                "meta": {},
-                "error": None
-            }
+            formatted_response = {"data": content, "meta": {}, "error": None}
         else:
             # 错误响应
-            error_msg = content.get("detail", str(content)) if isinstance(content, dict) else str(content)
-            formatted_response = {
-                "data": None,
-                "meta": {},
-                "error": error_msg
-            }
+            if isinstance(content, dict) and "detail" in content:
+                error_msg = content.get("detail", str(content))
+            else:
+                error_msg = str(content)
+            formatted_response = {"data": None, "meta": {}, "error": error_msg}
 
         return JSONResponse(
             content=formatted_response,

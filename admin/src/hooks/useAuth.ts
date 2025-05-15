@@ -6,13 +6,13 @@ import {
   type Body_login_login_access_token as AccessToken,
   type ApiError,
   LoginService,
+  OpenAPI,
   type UserPublic,
   type UserRegister,
   UsersService,
-  OpenAPI
 } from "@/client"
-import { handleError } from "@/utils"
 import { request } from "@/client/core/request"
+import { handleError } from "@/utils"
 
 const isLoggedIn = () => {
   return localStorage.getItem("access_token") !== null
@@ -73,7 +73,7 @@ const useAuth = () => {
       // 尝试调用后端的logout接口
       await callLogoutAPI()
     } catch (error) {
-      console.error('登出API调用失败:', error)
+      console.error("登出API调用失败:", error)
     } finally {
       // 不管API调用成功或失败，都清除本地token并跳转
       localStorage.removeItem("access_token")

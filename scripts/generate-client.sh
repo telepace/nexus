@@ -88,13 +88,13 @@ if [ -f "$PROJECT_ROOT/openapi.json" ]; then
   cd "$PROJECT_ROOT/frontend"
   echo "📍 Changed to frontend directory: $(pwd)"
   
-  npm run generate-client || {
+  pnpm run generate-client || {
     echo "❌ Failed to generate client"
     exit 1
   }
   
   echo "🧹 Formatting generated client code..."
-  npx biome format --write ./src/client || {
+  pnpm exec biome format --write ./src/client || {
     echo "❌ Failed to format client code"
     exit 1
   }

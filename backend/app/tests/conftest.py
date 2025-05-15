@@ -72,7 +72,11 @@ def get_api_response_data(response: Any) -> dict[str, Any]:
         # 如果是标准成功响应格式
         if "data" in content and "meta" in content:
             if content["data"] is not None:
-                result = content["data"] if isinstance(content["data"], dict) else {"data": content["data"]}
+                result = (
+                    content["data"]
+                    if isinstance(content["data"], dict)
+                    else {"data": content["data"]}
+                )
                 # 处理meta中可能的附加字段
                 if isinstance(content["meta"], dict):
                     # 对于某些endpoints需要从meta中复制消息字段

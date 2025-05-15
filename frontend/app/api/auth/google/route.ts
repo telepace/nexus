@@ -1,15 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 // Google OAuth 2.0 configuration
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 const REDIRECT_URI = `${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/auth/google/callback`;
 
 // Google OAuth 2.0 authorization URL
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   // Generate a random state value to prevent CSRF attacks
   const state = Math.random().toString(36).substring(2);
   

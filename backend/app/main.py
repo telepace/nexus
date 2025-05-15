@@ -68,39 +68,39 @@ app.add_middleware(ApiResponseMiddleware)
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+
 # 异常处理器
 @app.exception_handler(AppError)
-async def app_error_handler(request: Request, exc: AppError):
+async def app_error_handler(_request: Request, exc: AppError):
     """处理应用自定义错误"""
     response, status_code = create_error_response(exc)
     return JSONResponse(
-        status_code=status_code,
-        content=response.model_dump(exclude_none=True)
+        status_code=status_code, content=response.model_dump(exclude_none=True)
     )
 
+
 @app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+async def http_exception_handler(_request: Request, exc: StarletteHTTPException):
     """处理HTTP异常"""
     response, status_code = create_error_response(exc)
     return JSONResponse(
-        status_code=status_code,
-        content=response.model_dump(exclude_none=True)
+        status_code=status_code, content=response.model_dump(exclude_none=True)
     )
 
+
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(_request: Request, exc: RequestValidationError):
     """处理请求验证错误"""
     response, status_code = create_error_response(exc)
     return JSONResponse(
-        status_code=status_code,
-        content=response.model_dump(exclude_none=True)
+        status_code=status_code, content=response.model_dump(exclude_none=True)
     )
 
+
 @app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
+async def general_exception_handler(_request: Request, exc: Exception):
     """处理所有其他异常"""
     response, status_code = create_error_response(exc)
     return JSONResponse(
-        status_code=status_code,
-        content=response.model_dump(exclude_none=True)
+        status_code=status_code, content=response.model_dump(exclude_none=True)
     )

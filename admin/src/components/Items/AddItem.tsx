@@ -50,19 +50,19 @@ const AddItem = () => {
       ItemsService.createItem({ requestBody: data }),
     onSuccess: (response) => {
       // 从新的API响应格式中提取消息
-      let message = "项目创建成功";
-      
+      let message = "项目创建成功"
+
       // 如果响应是API格式，尝试从meta中获取消息
-      if (response && typeof response === 'object') {
-        const responseData = response as any;
-        if (responseData.meta && responseData.meta.message) {
-          message = responseData.meta.message;
+      if (response && typeof response === "object") {
+        const responseData = response as any
+        if (responseData.meta?.message) {
+          message = responseData.meta.message
         }
       }
-      
-      showSuccessToast(message);
-      reset();
-      setIsOpen(false);
+
+      showSuccessToast(message)
+      reset()
+      setIsOpen(false)
     },
     onError: (err: ApiError) => {
       handleError(err)

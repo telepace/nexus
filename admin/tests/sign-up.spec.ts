@@ -66,13 +66,7 @@ test("Sign up with valid name, email, and password", async ({ page }) => {
 test("Sign up with invalid email", async ({ page }) => {
   await page.goto("/signup")
 
-  await fillForm(
-    page,
-    "Playwright Test",
-    "invalid-email",
-    "nexus",
-    "nexus",
-  )
+  await fillForm(page, "Playwright Test", "invalid-email", "nexus", "nexus")
   await page.getByRole("button", { name: "Sign Up" }).click()
 
   await expect(page.getByText("Invalid email address")).toBeVisible()
