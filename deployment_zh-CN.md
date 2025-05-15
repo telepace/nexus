@@ -12,7 +12,7 @@
 
 * 准备好一个远程服务器，并确保它可用。
 * 配置域名的DNS记录，使其指向您刚创建的服务器的IP。
-* 为您的域名配置通配符子域名，这样您就可以为不同的服务拥有多个子域名，例如`*.fastapi-project.example.com`。这将有助于访问不同的组件，如`dashboard.fastapi-project.example.com`、`api.fastapi-project.example.com`、`traefik.fastapi-project.example.com`、`adminer.fastapi-project.example.com`等。同时也适用于`staging`环境，例如`dashboard.staging.fastapi-project.example.com`、`adminer.staging..fastapi-project.example.com`等。
+* 为您的域名配置通配符子域名，这样您就可以为不同的服务拥有多个子域名，例如`*.fastapi-project.example.com`。这将有助于访问不同的组件，如`dashboard.fastapi-project.example.com`、`api.fastapi-project.example.com`、`traefik.fastapi-project.example.com`、`pgadmin.fastapi-project.example.com`等。同时也适用于`staging`环境，例如`dashboard.staging.fastapi-project.example.com`、`pgadmin.staging..fastapi-project.example.com`等。
 * 在远程服务器上安装和配置[Docker](https://docs.docker.com/engine/install/)(Docker Engine，而不是Docker Desktop)。
 
 ## 公共Traefik
@@ -37,11 +37,11 @@ rsync -a docker-compose.traefik.yml root@your-server.example.com:/root/code/trae
 
 ### Traefik公共网络
 
-这个Traefik将期望一个名为`traefik-public`的Docker“公共网络”来与您的栈进行通信。
+这个Traefik将期望一个名为`traefik-public`的Docker"公共网络"来与您的栈进行通信。
 
 这样，您将拥有一个单一的公共Traefik代理，它处理与外部世界的通信（HTTP和HTTPS），然后在其后面，您可以拥有一个或多个栈，每个栈都有不同的域名，即使它们在同一个服务器上。
 
-在远程服务器上运行以下命令来创建一个名为`traefik-public`的Docker“公共网络”：
+在远程服务器上运行以下命令来创建一个名为`traefik-public`的Docker"公共网络"：
 
 ```bash
 docker network create traefik-public
@@ -63,7 +63,7 @@ export USERNAME=admin
 export PASSWORD=nexus
 ```
 
-* 使用openssl生成HTTP Basic Auth密码的“哈希”版本，并将其存储在一个环境变量中：
+* 使用openssl生成HTTP Basic Auth密码的"哈希"版本，并将其存储在一个环境变量中：
 
 ```bash
 export HASHED_PASSWORD=$(openssl passwd -apr1 $PASSWORD)
@@ -296,7 +296,7 @@ Traefik UI：`https://traefik.fastapi-project.example.com`
 
 后端API基础URL：`https://api.fastapi-project.example.com`
 
-Adminer：`https://adminer.fastapi-project.example.com`
+pgAdmin：`https://pgadmin.fastapi-project.example.com`
 
 ### 测试环境
 
@@ -306,4 +306,4 @@ Adminer：`https://adminer.fastapi-project.example.com`
 
 后端API基础URL：`https://api.staging.fastapi-project.example.com`
 
-Adminer：`https://adminer.staging.fastapi-project.example.com`
+pgAdmin：`https://pgadmin.staging.fastapi-project.example.com`

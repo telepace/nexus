@@ -1,0 +1,22 @@
+[run]
+source = app
+omit = 
+    */tests/*
+    */site-packages/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if __name__ == .__main__.:
+    pass
+    raise NotImplementedError
+    raise ImportError
+    except ImportError
+    def __str__
+    def __unicode__
+    def __hash__
+    typing.TYPE_CHECKING
+
+[html]
+directory = htmlcov 

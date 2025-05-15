@@ -1,28 +1,16 @@
-import { defineConfig } from "@hey-api/openapi-ts"
+import { defineConfig } from "@hey-api/openapi-ts";
+import { config } from "dotenv";
+
+config({ path: ".env" });
+
+const openapiFile = process.env.OPENAPI_OUTPUT_FILE;
 
 export default defineConfig({
-  client: "legacy/axios",
-  input: "./openapi.json",
-  output: "./src/client",
-  // exportSchemas: true,
-  plugins: [
-    {
-      name: "@hey-api/sdk",
-      // NOTE: this doesn't allow tree-shaking
-      asClass: true,
-      operationId: true,
-      methodNameBuilder: (operation) => {
-        // @ts-ignore
-        let name: string = operation.name
-        // @ts-ignore
-        const service: string = operation.service
-
-        if (service && name.toLowerCase().startsWith(service.toLowerCase())) {
-          name = name.slice(service.length)
-        }
-
-        return name.charAt(0).toLowerCase() + name.slice(1)
-      },
-    },
-  ],
-})
+  client: "@hey-api/client-axios",
+  input: openapiFile as string,
+  output: {
+    format: "prettier",
+    lint: "eslint",
+    path: "app/openapi-client",
+  },
+});

@@ -1,33 +1,24 @@
-# Stage 0, "build-stage", based on Node.js, to build and compile the frontend
-FROM node:20 AS build-stage
+FROM node:20-bookworm
 
+# Set the working directory
 WORKDIR /app
 
-COPY package*.json /app/
+# Install pnpm globally
+RUN npm install -g pnpm
 
-RUN npm install -g pnpm && \
-    pnpm config set auto-install-peers true && \
-    pnpm config set unsafe-perm true && \
-    pnpm install
+# Copy package files and install dependencies
+COPY package*.json ./
 
-COPY ./ /app/
+# Install dependencies as root (or myappuser, depending on your structure)
+RUN pnpm install
 
-ARG VITE_API_URL
-ENV VITE_API_URL=${VITE_API_URL}
+## Switch to the non-root user
+USER node
 
-ARG SKIP_TS_CHECK=false
-ENV SKIP_TS_CHECK=${SKIP_TS_CHECK}
+# Copy the rest of your application code
+COPY . .
 
-RUN if [ "$SKIP_TS_CHECK" = "true" ] ; then \
-        pnpm exec vite build; \
-    else \
-        pnpm build; \
-    fi
+EXPOSE 3000
 
-# Stage 1, based on Nginx, to have only the compiled app, ready for production with Nginx
-FROM nginx:1
-
-COPY --from=build-stage /app/dist/ /usr/share/nginx/html
-
-COPY ./nginx.conf /etc/nginx/conf.d/default.conf
-COPY ./nginx-backend-not-found.conf /etc/nginx/extra-conf.d/backend-not-found.conf
+# Start the application
+CMD ["./start.sh"]

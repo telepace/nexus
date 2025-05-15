@@ -1,95 +1,121 @@
-# Nexus 浏览器扩展
+# Nexus Browser Extension
 
-Nexus平台的Chrome浏览器扩展，提供快速访问和增强功能。
+<div align="center">
+  <img src="assets/icon.png" alt="Nexus Logo" width="128" />
+  <h3>Your Intelligent Reading Companion</h3>
+</div>
 
-## 构建说明
+## Overview
 
-本扩展提供了两种构建方法:
+Nexus Browser Extension is a lightweight, powerful tool that brings AI-powered reading assistance directly to your browser. It serves as your intelligent reading companion, enabling quick access to Nexus platform features and enhancing your web browsing experience.
 
-### 方法1: 使用优化的构建脚本（推荐）
+### Key Features
 
-这种方法使用自定义的构建脚本，可以绕过Node.js版本与sharp模块的兼容性问题:
+- **Instant Content Summarization**: Get concise summaries of articles, research papers, and web pages with a single click
+- **Smart Clipping**: Save web content to your Nexus knowledge base with automatic extraction of key information
+- **Contextual AI Assistance**: Select text for immediate translation, explanation, or extension based on your needs
+- **Seamless Integration**: Access your Nexus content library directly from your browser
 
+## Use Cases
+
+- **Research & Study**: Quickly capture and summarize research materials
+- **Efficient Information Processing**: Filter through content noise with AI-powered summaries
+- **Knowledge Management**: Build your personal knowledge base while browsing
+- **Language Support**: Get instant translations and explanations of complex concepts
+
+## Installation
+
+### From Source
+
+1. Clone this repository
 ```bash
-# 安装依赖
+git clone https://github.com/your-username/nexus-extension.git
+cd nexus-extension
+```
+
+2. Install dependencies
+```bash
 npm install
+```
 
-# 运行优化的构建脚本
+3. Build the extension
+```bash
 npm run build-complete
 ```
 
-该脚本会:
-1. 使用ImageMagick生成扩展图标
-2. 使用esbuild构建JavaScript文件
-3. 生成manifest.json和必要的HTML文件
-4. 将所有文件输出到dist目录
+4. Load the extension in Chrome/Edge/Firefox
+   - Open `chrome://extensions/` (or equivalent in other browsers)
+   - Enable Developer Mode
+   - Click "Load unpacked" and select the `build` directory
 
-构建完成后，所有文件都将在`dist`目录中。
+### From Release
+*Coming soon to browser extension stores*
 
-### 方法2: 使用Plasmo框架（需要兼容的Node.js版本）
+## Development
 
-如果您的系统上安装了兼容的Node.js版本(^18.17.0 || ^20.3.0 || >=21.0.0)，您也可以使用原始的Plasmo构建:
+### Prerequisites
 
-```bash
-npm run build
-```
+- Node.js
+- npm or pnpm
+- ImageMagick (optional, for icon generation)
 
-## 加载扩展到Chrome浏览器
-
-1. 打开Chrome浏览器，进入 `chrome://extensions`
-2. 开启"开发者模式"（右上角开关）
-3. 点击"加载已解压的扩展程序"
-4. 选择`dist`目录
-5. 扩展将被加载到浏览器中
-
-## 开发
-
-在开发过程中，您可以使用以下命令:
+### Development Commands
 
 ```bash
-# 使用优化的构建脚本进行构建
-npm run build-complete
-
-# 如果Node.js版本兼容，可以使用Plasmo开发模式
+# Start development server with hot reload
 npm run dev
+
+# Build for production
+npm run build-complete
+
+# Package for distribution
+npm run package
 ```
 
-## 排错
+## Architecture
 
-如果您在构建过程中遇到"Input file contains unsupported image format"错误，请使用推荐的构建方法（方法1）。
-
-如果ImageMagick生成图标失败，脚本会自动创建简单的图标替代品。
-
-## 依赖项
-
-- Node.js (任何版本都可以使用自定义构建脚本)
-- ImageMagick (可选，用于生成高质量图标)
-
-## 功能
-
-- 快速访问 Nexus 平台
-- 在浏览网页时保存内容和笔记
-- 通过浏览器访问 AI 助手
-- 自定义设置和主题
-
-## 项目结构
+The extension follows a modular architecture:
 
 ```
 extension/
-├── src/              # 源代码
-│   ├── components/   # 组件
-│   ├── pages/        # 页面
-│   ├── utils/        # 工具函数
-│   ├── popup.tsx     # 弹出窗口
-│   ├── options.tsx   # 设置页面
-│   ├── content.tsx   # 内容脚本
-│   ├── background.ts # 后台脚本
-│   └── sidebar.tsx   # 侧边栏
-├── assets/           # 静态资源
-├── package.json      # 依赖和脚本
-└── tsconfig.json     # TypeScript 配置
+├── assets/           # Static assets including icons
+├── background/       # Background scripts for event handling
+│   ├── index.ts      # Main background script
+│   └── messages/     # Message handlers for background-UI communication
+├── routes/           # React Router-based navigation
+│   ├── pages/        # UI pages (Home, Settings, etc.)
+│   └── ui/           # Reusable UI components
+├── utils/            # Utility functions and helpers
+├── lib/              # Shared libraries and services
+├── content.ts        # Content script for webpage interaction
+└── popup.tsx         # Main entry point for the popup UI
 ```
 
-## 许可
+### Key Components
 
-ISC 
+- **Background Service**: Manages extension state, handles browser events, and communicates with the Nexus backend
+- **Content Scripts**: Interact with web pages to extract content and provide UI overlays
+- **Popup Interface**: Provides quick access to Nexus features and content management
+- **API Client**: Communicates with the Nexus platform for data synchronization
+
+## Privacy & Data Handling
+
+The Nexus Browser Extension is designed with privacy in mind:
+
+- All content processing happens through your authenticated Nexus account
+- No browsing data is collected beyond what you explicitly save to your Nexus library
+- Your data remains in your control at all times
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the ISC License - see the LICENSE file for details. 

@@ -35,7 +35,7 @@ docker compose watch
 
 来自OpenAPI后端的自动交互文档，使用Swagger UI：http://localhost:8000/docs
 
-数据库web管理：http://localhost:8080
+数据库web管理：http://localhost:5050
 
 Traefik UI，查看路由如何被代理处理：http://localhost:8090
 
@@ -89,7 +89,7 @@ fastapi dev app/main.py
 
 ## 使用nip.io/nip.io
 
-当你启动Docker Compose栈时，默认情况下它使用`localhost`，每个服务（后端、前端、adminer等）都在不同的端口上。
+当你启动Docker Compose栈时，默认情况下它使用`localhost`，每个服务（后端、前端、pgAdmin等）都在不同的端口上。
 
 当你部署到生产环境（或预演环境）时，它将每个服务部署在不同的子域名下，例如`api.example.com`用于后端和`dashboard.example.com`用于前端。
 
@@ -201,7 +201,7 @@ prettier.................................................................Passed
 
 替代文档（ReDoc）：http://api.127.0.0.1.nip.io/redoc
 
-Adminer：http://localhost:8080
+pgAdmin：http://localhost:5050
 
 Traefik UI：http://localhost:8090
 
@@ -219,7 +219,7 @@ MailCatcher：http://localhost:1080
 
 替代文档（ReDoc）：http://api.localhost.nip.io/redoc
 
-Adminer：http://localhost.nip.io:8080
+pgAdmin：http://pgadmin.localhost.nip.io
 
 Traefik UI：http://localhost.nip.io:8090
 

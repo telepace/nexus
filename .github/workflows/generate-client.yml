@@ -29,12 +29,17 @@ jobs:
           # token: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && secrets.YOUR_PAT_OR_GITHUB_TOKEN || '' }}
 
       # 2. Setup Environment
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: 'npm' # Enable npm caching
-          cache-dependency-path: frontend/package-lock.json
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -49,7 +54,7 @@ jobs:
 
       # 3. Install Dependencies
       - name: Install Frontend Dependencies
-        run: npm ci
+        run: pnpm install
         working-directory: frontend
 
       # 安装所有后端依赖项

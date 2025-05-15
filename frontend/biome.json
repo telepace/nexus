@@ -1,15 +1,16 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.6.1/schema.json",
+  "$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
   "organizeImports": {
     "enabled": true
   },
   "files": {
     "ignore": [
       "node_modules",
-      "src/routeTree.gen.ts",
-      "playwright.config.ts",
-      "playwright-report",
-      "dist"
+      ".next",
+      "dist",
+      "coverage",
+      "public",
+      "**/*.min.js"
     ]
   },
   "linter": {
@@ -17,21 +18,18 @@
     "rules": {
       "recommended": true,
       "suspicious": {
-        "noExplicitAny": "off",
-        "noArrayIndexKey": "off"
-      },
-      "style": {
-        "noNonNullAssertion": "off"
+        "noExplicitAny": "off"
       }
     }
   },
   "formatter": {
-    "indentStyle": "space"
+    "indentStyle": "space",
+    "enabled": true
   },
   "javascript": {
     "formatter": {
       "quoteStyle": "double",
-      "semicolons": "asNeeded"
+      "semicolons": "always"
     }
   }
 }

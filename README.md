@@ -6,6 +6,7 @@
 ![FastAPI](https://images.shields.io/badge/FastAPI-0.104.0-green)
 ![TypeScript](https://images.shields.io/badge/TypeScript-5.2.2-blue)
 ![License](https://images.shields.io/badge/license-MIT-brightgreen)
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/telepace/nexus?utm_source=oss&utm_medium=github&utm_campaign=telepace%2Fnexus&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
 </div>
 
@@ -248,7 +249,7 @@ You can build and run the documentation website locally using Docker:
 docker-compose -f docker-compose.docs.yml up --build
 ```
 
-The documentation will be available at http://localhost:3000.
+The documentation will be available at http://localhost:8000.
 
 ### Documentation Deployment
 
@@ -298,8 +299,8 @@ QuickForge AI makes it simple to integrate various AI services:
 
 ## 📚 Documentation
 
-- [Backend API documentation](http://localhost:3000/docs) - Available when the backend is running
-- [Frontend component documentation](http://localhost:3000/docs) - Available when the frontend is running
+- [Backend API documentation](http://localhost:8000/docs) - Available when the backend is running
+- [Frontend component documentation](http://localhost:8000/docs) - Available when the frontend is running
 - [Project architecture](./docs/architecture.md)
 - [Development guides](./docs/development.md)
 

@@ -1,28 +1,4 @@
-from importlib import util
-
-try:
-    from app.utils import email
-except ImportError:
-    print("Warning: email utils not available")
-
-try:
-    from app.utils import posthog_tracker
-
-    has_posthog = True
-except ImportError:
-    # Fallback to a stub module if posthog is not installed
-    class PosthogStub:
-        def capture(*args, **kwargs):
-            pass
-
-    posthog_tracker = PosthogStub()
-    has_posthog = False
-
-# 导入错误处理模块
-try:
-    from app.utils import error
-except ImportError:
-    print("Warning: error handling utils not available")
+from importlib.util import find_spec
 
 from .email import (
     EmailData,
@@ -34,6 +10,9 @@ from .email import (
     verify_password_reset_token,
 )
 from .posthog_tracker import PostHogTracker
+
+# Check if posthog is available
+has_posthog = find_spec("posthog") is not None
 
 __all__ = [
     "PostHogTracker",

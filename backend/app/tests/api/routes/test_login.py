@@ -1,21 +1,14 @@
-import random
-import uuid
-from typing import Dict
-from datetime import timedelta
-
-import pytest
 from unittest.mock import patch
+
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
-from app.core.security import verify_password, create_access_token, get_password_hash
-from app.crud import create_user
-from app.models import UserCreate, User
-from app.tests.utils.user import user_authentication_headers
+from app.core.security import get_password_hash
+from app.models import User
+from app.tests.conftest import get_api_response_data
 from app.tests.utils.utils import random_email, random_lower_string
 from app.utils import generate_password_reset_token
-from app.tests.conftest import get_api_response_data
 
 
 def test_get_access_token(client: TestClient) -> None:
@@ -115,7 +108,6 @@ def test_incorrect_password(client: TestClient, db: Session) -> None:
     assert "detail" in content
 
 
-@pytest.mark.skip(reason="重置密码端点不可用或已更改")
 def test_reset_password(client: TestClient, db: Session) -> None:
     """Test password reset."""
     # Create test user
@@ -128,11 +120,8 @@ def test_reset_password(client: TestClient, db: Session) -> None:
     db.add(user)
     db.commit()
 
-    # Create reset token
-    token = create_access_token(
-        {"sub": str(user.id)}, 
-        expires_delta=timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
-    )
+    # Create reset token using the same method as the actual implementation
+    token = generate_password_reset_token(email=username)
 
     # Reset password
     new_password = "nexus123"
@@ -141,32 +130,29 @@ def test_reset_password(client: TestClient, db: Session) -> None:
         f"{settings.API_V1_STR}/reset-password/",
         json=data,
     )
-    
-    # 如果API仍可用并且响应成功，则检查密码是否已更新
-    if r.status_code == 200:
-        content = get_api_response_data(r)
-        assert content["msg"] == "Password updated successfully"
 
-        # Verify new password works
-        login_data = {
-            "username": username,
-            "password": new_password,
-        }
-        r = client.post(
-            f"{settings.API_V1_STR}/login/access-token",
-            data=login_data,
-        )
-        assert r.status_code == 200
+    # Check response
+    assert r.status_code == 200
+    content = get_api_response_data(r)
+    assert content["message"] == "Password updated successfully"
+
+    # Verify new password works
+    login_data = {
+        "username": username,
+        "password": new_password,
+    }
+    r = client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data=login_data,
+    )
+    assert r.status_code == 200
 
 
-def test_reset_password_invalid_token(
-    client: TestClient, superuser_token_headers: dict[str, str]
-) -> None:
+def test_reset_password_invalid_token(client: TestClient) -> None:
     """Test invalid password reset token."""
     data = {"new_password": "nexus", "token": "invalid"}
     r = client.post(
         f"{settings.API_V1_STR}/reset-password/",
-        headers=superuser_token_headers,
         json=data,
     )
     response = get_api_response_data(r)

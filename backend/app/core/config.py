@@ -6,6 +6,7 @@ from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import (
     AnyUrl,
+    BaseModel,
     BeforeValidator,
     EmailStr,
     HttpUrl,
@@ -13,9 +14,9 @@ from pydantic import (
     computed_field,
     model_validator,
 )
-from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
+from yarl import URL
 
 # Set up logger
 logger = logging.getLogger("app.config")
@@ -122,14 +123,14 @@ class Settings(BaseSettings):
 
             password = urllib.parse.quote_plus(self.SUPABASE_DB_PASSWORD or "")
 
-            return MultiHostUrl.build(
+            return PostgresDsn(str(URL.build(
                 scheme="postgresql+psycopg",
-                username=self.SUPABASE_DB_USER or "",
+                user=self.SUPABASE_DB_USER or "",
                 password=password,
                 host=self.SUPABASE_DB_HOST,
                 port=port,
-                path=self.SUPABASE_DB_NAME or "",
-            )
+                path=f"/{self.SUPABASE_DB_NAME or ''}",
+            )))
         else:
             # Use standard PostgreSQL connection
             # URL encode the password to handle special characters
@@ -137,14 +138,14 @@ class Settings(BaseSettings):
 
             password = urllib.parse.quote_plus(self.POSTGRES_PASSWORD)
 
-            return MultiHostUrl.build(
+            return PostgresDsn(str(URL.build(
                 scheme="postgresql+psycopg",
-                username=self.POSTGRES_USER,
+                user=self.POSTGRES_USER,
                 password=password,
                 host=self.POSTGRES_SERVER,
                 port=self.POSTGRES_PORT,
-                path=self.POSTGRES_DB,
-            )
+                path=f"/{self.POSTGRES_DB}",
+            )))
 
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False
@@ -181,6 +182,14 @@ class Settings(BaseSettings):
     @property
     def posthog_enabled(self) -> bool:
         return bool(self.POSTHOG_API_KEY and self.ENVIRONMENT != "local")
+
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GOOGLE_OAUTH_REDIRECT_URI: str = (
+        "http://localhost:8000/api/v1/login/google/callback"
+    )
+    FRONTEND_URL: str = "http://localhost:3000"
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         """Check if the provided secret value is "nexus" and raise a warning or error."""

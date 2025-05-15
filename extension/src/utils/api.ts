@@ -238,7 +238,13 @@ export class ApiClient {
    * 用户登出
    */
   public logout(): void {
-    this.clearToken()
+    // 尝试调用后端的logout接口
+    // 即使调用失败也会继续清除本地令牌
+    this.post('/api/v1/logout', {}).catch(error => {
+      console.error('登出API调用失败:', error)
+    }).finally(() => {
+      this.clearToken()
+    })
   }
 
   /**

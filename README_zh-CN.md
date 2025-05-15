@@ -81,7 +81,7 @@ graph TD
         %% 定义附加服务子图
         subgraph additional_serv [Additional Services]
             direction TB
-            adminer[Adminer<br/>Database Management]
+            pgadmin[PG Admin<br/>Database Management]
             mailcatcher[MailCatcher<br/>Email Testing]
         end
 
@@ -96,7 +96,7 @@ graph TD
         openapi_client --> backend_app;
         orm --> db;
         migration_cont --> db;
-        adminer --> db;
+        pgadmin --> db;
         backend_app --> mailcatcher;
     end
 
@@ -113,7 +113,7 @@ graph TD
     class client,proxy default;
     class frontend_cont,backend_cont,migration_cont,db_cont container;
     class frontend_app,openapi_client,backend_app,orm,prestart,alembic app;
-    class adminer,mailcatcher service;
+    class pgadmin,mailcatcher service;
     class db db;
 ```
 
@@ -448,7 +448,7 @@ QuickForge AI使集成各种AI服务变得简单：
 ## 📚 文档
 
 - [后端API文档](http://localhost:8000/docs) - 后端运行时可用
-- [前端组件文档](http://localhost:3000/docs) - 前端运行时可用
+- [前端组件文档](http://localhost:8000/docs) - 前端运行时可用
 - [项目架构](./docs/architecture.md)
 - [开发指南](./docs/development.md)
 

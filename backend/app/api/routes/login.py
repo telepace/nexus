@@ -1,12 +1,13 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Annotated, Any
 
+import jwt
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app import crud
-from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
+from app.api.deps import CurrentUser, SessionDep, TokenDep, get_current_active_superuser
 from app.core import security
 from app.core.config import settings
 from app.core.security import get_password_hash
@@ -49,6 +50,34 @@ def test_token(current_user: CurrentUser) -> Any:
     Test access token
     """
     return current_user
+
+
+@router.post("/logout")
+def logout(current_user: CurrentUser, token: TokenDep, session: SessionDep) -> Message:
+    """
+    Logout current user
+
+    This endpoint invalidates the current token by adding it to a blacklist.
+    The frontend should still remove the tokens from local storage after calling this endpoint.
+    """
+    try:
+        # Decode token to get expiration time
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+        )
+        expires_at = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
+
+        # Add token to blacklist
+        crud.add_token_to_blacklist(
+            session=session, token=token, user_id=current_user.id, expires_at=expires_at
+        )
+
+        # Optionally, clean up expired tokens from the blacklist
+        crud.clean_expired_tokens(session=session)
+
+        return Message(message="Successfully logged out")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to logout: {str(e)}")
 
 
 @router.post("/password-recovery/{email}")
