@@ -41,6 +41,19 @@ export function useAuth(): AuthContextType {
         return;
       }
       
+      // 添加调试信息，解析JWT令牌（不验证签名）
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        
+        console.log("JWT Payload:", JSON.parse(jsonPayload));
+      } catch (e) {
+        console.error("Failed to decode JWT:", e);
+      }
+      
       // In a real implementation, you would fetch from your API
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
       console.log(`Fetching user data from ${apiUrl}/api/v1/users/me`);

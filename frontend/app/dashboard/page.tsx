@@ -26,6 +26,17 @@ interface Item {
   owner_id?: string;
 }
 
+// 定义可能的API响应类型
+interface ApiErrorResponse {
+  message?: string;
+  error?: string;
+  meta?: {
+    message?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 export default async function DashboardPage() {
   const itemsResponse = await fetchItems();
 
@@ -38,12 +49,13 @@ export default async function DashboardPage() {
     console.log("Dashboard received items:", itemsList.length);
   } else if (itemsResponse && typeof itemsResponse === "object") {
     // 处理可能的错误响应格式
-    if ("message" in itemsResponse) {
-      errorMessage = String(itemsResponse.message);
-    } else if ("error" in itemsResponse) {
-      errorMessage = String(itemsResponse.error);
-    } else if (itemsResponse.meta && "message" in itemsResponse.meta) {
-      errorMessage = String(itemsResponse.meta.message);
+    const errorResponse = itemsResponse as ApiErrorResponse;
+    if ("message" in errorResponse) {
+      errorMessage = String(errorResponse.message);
+    } else if ("error" in errorResponse) {
+      errorMessage = String(errorResponse.error);
+    } else if (errorResponse.meta && "message" in errorResponse.meta) {
+      errorMessage = String(errorResponse.meta.message);
     }
     console.error("Dashboard received error:", errorMessage);
   }

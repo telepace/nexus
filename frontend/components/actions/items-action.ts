@@ -15,10 +15,22 @@ import type {
   ApiResponse_ItemsPublic_,
 } from "@/app/openapi-client/types.gen";
 
+// 定义Item数据类型
 interface ItemData {
   id: string;
   title: string;
   description?: string;
+  [key: string]: unknown;
+}
+
+// 定义API错误响应类型
+interface ApiErrorResponse {
+  message?: string;
+  error?: string;
+  meta?: {
+    message?: string;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 
@@ -37,7 +49,10 @@ type DataResponse = {
   error?: string | null;
 };
 
-export async function fetchItems() {
+// 定义 fetchItems 的可能返回类型
+type FetchItemsReturn = ItemData[] | ApiErrorResponse;
+
+export async function fetchItems(): Promise<FetchItemsReturn> {
   const cookieStore = await cookies();
   const token = cookieStore.get("accessToken")?.value;
 
