@@ -7,57 +7,73 @@ import {
   urlSearchParamsBodySerializer,
 } from "@hey-api/client-axios";
 import type {
-  LoginAccessTokenData,
-  LoginAccessTokenError,
-  LoginAccessTokenResponse,
-  TestTokenResponse,
-  RecoverPasswordData,
-  RecoverPasswordError,
-  RecoverPasswordResponse,
-  ResetPasswordData,
-  ResetPasswordError,
-  ResetPasswordResponse,
-  ReadUsersData,
-  ReadUsersError,
-  ReadUsersResponse,
-  CreateUserData,
-  CreateUserError,
-  CreateUserResponse,
-  ReadUserMeResponse,
-  UpdateUserMeData,
-  UpdateUserMeError,
-  UpdateUserMeResponse,
-  DeleteUserMeResponse,
-  UpdatePasswordMeData,
-  UpdatePasswordMeError,
-  UpdatePasswordMeResponse,
-  RegisterUserData,
-  RegisterUserError,
-  RegisterUserResponse,
-  ReadUserByIdData,
-  ReadUserByIdError,
-  ReadUserByIdResponse,
-  UpdateUserData,
-  UpdateUserError,
-  UpdateUserResponse,
-  DeleteUserData,
-  DeleteUserError,
-  DeleteUserResponse,
-  ReadItemsData,
-  ReadItemsError,
-  ReadItemsResponse,
-  CreateItemData,
-  CreateItemError,
-  CreateItemResponse,
-  ReadItemData,
-  ReadItemError,
-  ReadItemResponse,
-  UpdateItemData,
-  UpdateItemError,
-  UpdateItemResponse,
-  DeleteItemData,
-  DeleteItemError,
-  DeleteItemResponse,
+  LoginLoginAccessTokenData,
+  LoginLoginAccessTokenError,
+  LoginLoginAccessTokenResponse,
+  LoginTestTokenError,
+  LoginTestTokenResponse,
+  LoginLogoutError,
+  LoginLogoutResponse,
+  LoginRecoverPasswordData,
+  LoginRecoverPasswordError,
+  LoginRecoverPasswordResponse,
+  LoginResetPasswordData,
+  LoginResetPasswordError,
+  LoginResetPasswordResponse,
+  LoginRecoverPasswordHtmlContentData,
+  LoginRecoverPasswordHtmlContentError,
+  LoginRecoverPasswordHtmlContentResponse,
+  UsersReadUsersData,
+  UsersReadUsersError,
+  UsersReadUsersResponse,
+  UsersCreateUserData,
+  UsersCreateUserError,
+  UsersCreateUserResponse,
+  UsersReadUserMeError,
+  UsersReadUserMeResponse,
+  UsersDeleteUserMeError,
+  UsersDeleteUserMeResponse,
+  UsersUpdateUserMeData,
+  UsersUpdateUserMeError,
+  UsersUpdateUserMeResponse,
+  UsersUpdatePasswordMeData,
+  UsersUpdatePasswordMeError,
+  UsersUpdatePasswordMeResponse,
+  UsersRegisterUserData,
+  UsersRegisterUserError,
+  UsersRegisterUserResponse,
+  UsersReadUserByIdData,
+  UsersReadUserByIdError,
+  UsersReadUserByIdResponse,
+  UsersUpdateUserData,
+  UsersUpdateUserError,
+  UsersUpdateUserResponse,
+  UsersDeleteUserData,
+  UsersDeleteUserError,
+  UsersDeleteUserResponse,
+  UtilsTestEmailData,
+  UtilsTestEmailError,
+  UtilsTestEmailResponse,
+  UtilsHealthCheckError,
+  UtilsHealthCheckResponse,
+  ItemsReadItemsData,
+  ItemsReadItemsError,
+  ItemsReadItemsResponse,
+  ItemsCreateItemData,
+  ItemsCreateItemError,
+  ItemsCreateItemResponse,
+  ItemsReadItemData,
+  ItemsReadItemError,
+  ItemsReadItemResponse,
+  ItemsUpdateItemData,
+  ItemsUpdateItemError,
+  ItemsUpdateItemResponse,
+  ItemsDeleteItemData,
+  ItemsDeleteItemError,
+  ItemsDeleteItemResponse,
+  PrivateCreateUserData,
+  PrivateCreateUserError,
+  PrivateCreateUserResponse,
 } from "./types.gen";
 
 export const client = createClient(createConfig());
@@ -66,12 +82,12 @@ export const client = createClient(createConfig());
  * Login Access Token
  * OAuth2 compatible token login, get an access token for future requests
  */
-export const loginAccessToken = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<LoginAccessTokenData, ThrowOnError>,
+export const loginLoginAccessToken = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<LoginLoginAccessTokenData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).post<
-    LoginAccessTokenResponse,
-    LoginAccessTokenError,
+    LoginLoginAccessTokenResponse,
+    LoginLoginAccessTokenError,
     ThrowOnError
   >({
     ...options,
@@ -88,12 +104,12 @@ export const loginAccessToken = <ThrowOnError extends boolean = false>(
  * Test Token
  * Test access token
  */
-export const testToken = <ThrowOnError extends boolean = false>(
+export const loginTestToken = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<unknown, ThrowOnError>,
 ) => {
   return (options?.client ?? client).post<
-    TestTokenResponse,
-    unknown,
+    LoginTestTokenResponse,
+    LoginTestTokenError,
     ThrowOnError
   >({
     ...options,
@@ -102,15 +118,35 @@ export const testToken = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Logout
+ * Logout current user
+ *
+ * This endpoint invalidates the current token by adding it to a blacklist.
+ * The frontend should still remove the tokens from local storage after calling this endpoint.
+ */
+export const loginLogout = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    LoginLogoutResponse,
+    LoginLogoutError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/logout",
+  });
+};
+
+/**
  * Recover Password
  * Password Recovery
  */
-export const recoverPassword = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<RecoverPasswordData, ThrowOnError>,
+export const loginRecoverPassword = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<LoginRecoverPasswordData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).post<
-    RecoverPasswordResponse,
-    RecoverPasswordError,
+    LoginRecoverPasswordResponse,
+    LoginRecoverPasswordError,
     ThrowOnError
   >({
     ...options,
@@ -122,12 +158,12 @@ export const recoverPassword = <ThrowOnError extends boolean = false>(
  * Reset Password
  * Reset password
  */
-export const resetPassword = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<ResetPasswordData, ThrowOnError>,
+export const loginResetPassword = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<LoginResetPasswordData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).post<
-    ResetPasswordResponse,
-    ResetPasswordError,
+    LoginResetPasswordResponse,
+    LoginResetPasswordError,
     ThrowOnError
   >({
     ...options,
@@ -136,15 +172,37 @@ export const resetPassword = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Read Users
- * Retrieve users
+ * Recover Password Html Content
+ * HTML Content for Password Recovery
  */
-export const readUsers = <ThrowOnError extends boolean = false>(
-  options?: OptionsLegacyParser<ReadUsersData, ThrowOnError>,
+export const loginRecoverPasswordHtmlContent = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    LoginRecoverPasswordHtmlContentData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    LoginRecoverPasswordHtmlContentResponse,
+    LoginRecoverPasswordHtmlContentError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/password-recovery-html-content/{email}",
+  });
+};
+
+/**
+ * Read Users
+ * Retrieve users.
+ */
+export const usersReadUsers = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<UsersReadUsersData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).get<
-    ReadUsersResponse,
-    ReadUsersError,
+    UsersReadUsersResponse,
+    UsersReadUsersError,
     ThrowOnError
   >({
     ...options,
@@ -154,14 +212,14 @@ export const readUsers = <ThrowOnError extends boolean = false>(
 
 /**
  * Create User
- * Create new user
+ * Create new user.
  */
-export const createUser = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<CreateUserData, ThrowOnError>,
+export const usersCreateUser = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UsersCreateUserData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).post<
-    CreateUserResponse,
-    CreateUserError,
+    UsersCreateUserResponse,
+    UsersCreateUserError,
     ThrowOnError
   >({
     ...options,
@@ -171,31 +229,14 @@ export const createUser = <ThrowOnError extends boolean = false>(
 
 /**
  * Read User Me
- * Get current user
+ * Get current user.
  */
-export const readUserMe = <ThrowOnError extends boolean = false>(
+export const usersReadUserMe = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<unknown, ThrowOnError>,
 ) => {
   return (options?.client ?? client).get<
-    ReadUserMeResponse,
-    unknown,
-    ThrowOnError
-  >({
-    ...options,
-    url: "/api/v1/users/me",
-  });
-};
-
-/**
- * Update User Me
- * Update own user
- */
-export const updateUserMe = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<UpdateUserMeData, ThrowOnError>,
-) => {
-  return (options?.client ?? client).patch<
-    UpdateUserMeResponse,
-    UpdateUserMeError,
+    UsersReadUserMeResponse,
+    UsersReadUserMeError,
     ThrowOnError
   >({
     ...options,
@@ -205,14 +246,31 @@ export const updateUserMe = <ThrowOnError extends boolean = false>(
 
 /**
  * Delete User Me
- * Delete own user
+ * Delete own user.
  */
-export const deleteUserMe = <ThrowOnError extends boolean = false>(
+export const usersDeleteUserMe = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<unknown, ThrowOnError>,
 ) => {
   return (options?.client ?? client).delete<
-    DeleteUserMeResponse,
-    unknown,
+    UsersDeleteUserMeResponse,
+    UsersDeleteUserMeError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/users/me",
+  });
+};
+
+/**
+ * Update User Me
+ * Update own user.
+ */
+export const usersUpdateUserMe = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UsersUpdateUserMeData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).patch<
+    UsersUpdateUserMeResponse,
+    UsersUpdateUserMeError,
     ThrowOnError
   >({
     ...options,
@@ -222,14 +280,14 @@ export const deleteUserMe = <ThrowOnError extends boolean = false>(
 
 /**
  * Update Password Me
- * Update own password
+ * Update own password.
  */
-export const updatePasswordMe = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<UpdatePasswordMeData, ThrowOnError>,
+export const usersUpdatePasswordMe = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UsersUpdatePasswordMeData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).patch<
-    UpdatePasswordMeResponse,
-    UpdatePasswordMeError,
+    UsersUpdatePasswordMeResponse,
+    UsersUpdatePasswordMeError,
     ThrowOnError
   >({
     ...options,
@@ -239,14 +297,14 @@ export const updatePasswordMe = <ThrowOnError extends boolean = false>(
 
 /**
  * Register User
- * Create new user without the need to be logged in
+ * Create new user without the need to be logged in.
  */
-export const registerUser = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<RegisterUserData, ThrowOnError>,
+export const usersRegisterUser = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UsersRegisterUserData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).post<
-    RegisterUserResponse,
-    RegisterUserError,
+    UsersRegisterUserResponse,
+    UsersRegisterUserError,
     ThrowOnError
   >({
     ...options,
@@ -256,14 +314,14 @@ export const registerUser = <ThrowOnError extends boolean = false>(
 
 /**
  * Read User By Id
- * Get a specific user by id
+ * Get a specific user by id.
  */
-export const readUserById = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<ReadUserByIdData, ThrowOnError>,
+export const usersReadUserById = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UsersReadUserByIdData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).get<
-    ReadUserByIdResponse,
-    ReadUserByIdError,
+    UsersReadUserByIdResponse,
+    UsersReadUserByIdError,
     ThrowOnError
   >({
     ...options,
@@ -273,14 +331,14 @@ export const readUserById = <ThrowOnError extends boolean = false>(
 
 /**
  * Update User
- * Update a user
+ * Update a user.
  */
-export const updateUser = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<UpdateUserData, ThrowOnError>,
+export const usersUpdateUser = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UsersUpdateUserData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).patch<
-    UpdateUserResponse,
-    UpdateUserError,
+    UsersUpdateUserResponse,
+    UsersUpdateUserError,
     ThrowOnError
   >({
     ...options,
@@ -290,14 +348,14 @@ export const updateUser = <ThrowOnError extends boolean = false>(
 
 /**
  * Delete User
- * Delete a user
+ * Delete a user.
  */
-export const deleteUser = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<DeleteUserData, ThrowOnError>,
+export const usersDeleteUser = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UsersDeleteUserData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).delete<
-    DeleteUserResponse,
-    DeleteUserError,
+    UsersDeleteUserResponse,
+    UsersDeleteUserError,
     ThrowOnError
   >({
     ...options,
@@ -306,15 +364,48 @@ export const deleteUser = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Read Items
- * Retrieve items
+ * Test Email
+ * Test emails.
  */
-export const readItems = <ThrowOnError extends boolean = false>(
-  options?: OptionsLegacyParser<ReadItemsData, ThrowOnError>,
+export const utilsTestEmail = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UtilsTestEmailData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    UtilsTestEmailResponse,
+    UtilsTestEmailError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/utils/test-email/",
+  });
+};
+
+/**
+ * Health Check
+ */
+export const utilsHealthCheck = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
 ) => {
   return (options?.client ?? client).get<
-    ReadItemsResponse,
-    ReadItemsError,
+    UtilsHealthCheckResponse,
+    UtilsHealthCheckError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/utils/health-check/",
+  });
+};
+
+/**
+ * Read Items
+ * Retrieve items.
+ */
+export const itemsReadItems = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<ItemsReadItemsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ItemsReadItemsResponse,
+    ItemsReadItemsError,
     ThrowOnError
   >({
     ...options,
@@ -324,14 +415,14 @@ export const readItems = <ThrowOnError extends boolean = false>(
 
 /**
  * Create Item
- * Create new item
+ * Create new item.
  */
-export const createItem = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<CreateItemData, ThrowOnError>,
+export const itemsCreateItem = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ItemsCreateItemData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).post<
-    CreateItemResponse,
-    CreateItemError,
+    ItemsCreateItemResponse,
+    ItemsCreateItemError,
     ThrowOnError
   >({
     ...options,
@@ -341,14 +432,14 @@ export const createItem = <ThrowOnError extends boolean = false>(
 
 /**
  * Read Item
- * Get item by ID
+ * Get item by ID.
  */
-export const readItem = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<ReadItemData, ThrowOnError>,
+export const itemsReadItem = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ItemsReadItemData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).get<
-    ReadItemResponse,
-    ReadItemError,
+    ItemsReadItemResponse,
+    ItemsReadItemError,
     ThrowOnError
   >({
     ...options,
@@ -358,14 +449,14 @@ export const readItem = <ThrowOnError extends boolean = false>(
 
 /**
  * Update Item
- * Update an item
+ * Update an item.
  */
-export const updateItem = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<UpdateItemData, ThrowOnError>,
+export const itemsUpdateItem = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ItemsUpdateItemData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).put<
-    UpdateItemResponse,
-    UpdateItemError,
+    ItemsUpdateItemResponse,
+    ItemsUpdateItemError,
     ThrowOnError
   >({
     ...options,
@@ -375,17 +466,34 @@ export const updateItem = <ThrowOnError extends boolean = false>(
 
 /**
  * Delete Item
- * Delete an item
+ * Delete an item.
  */
-export const deleteItem = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<DeleteItemData, ThrowOnError>,
+export const itemsDeleteItem = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ItemsDeleteItemData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).delete<
-    DeleteItemResponse,
-    DeleteItemError,
+    ItemsDeleteItemResponse,
+    ItemsDeleteItemError,
     ThrowOnError
   >({
     ...options,
     url: "/api/v1/items/{id}",
+  });
+};
+
+/**
+ * Create User
+ * Create a new user.
+ */
+export const privateCreateUser = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<PrivateCreateUserData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    PrivateCreateUserResponse,
+    PrivateCreateUserError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/private/users/",
   });
 };

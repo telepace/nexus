@@ -47,6 +47,10 @@ jobs:
       fail-fast: false
     steps:
     - uses: actions/checkout@v4
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
     - uses: actions/setup-node@v4
       with:
         node-version: lts/*
@@ -64,8 +68,6 @@ jobs:
       with:
         version: "0.4.15"
         enable-cache: true
-    - name: Install pnpm
-      run: npm install -g pnpm
     - run: uv sync
       working-directory: backend
     - run: pnpm install --frozen-lockfile
