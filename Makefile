@@ -476,4 +476,15 @@ setup-git-hooks:
 .PHONY: generate-client
 generate-client:
 	@echo "===========> Generate OpenAPI client"
-	@source $(BACKEND_DIR)/.venv/bin/activate && $(ROOT_DIR)/scripts/generate-client.sh 
+	@source $(BACKEND_DIR)/.venv/bin/activate && $(ROOT_DIR)/scripts/generate-client.sh
+
+## generate-admin-client: Generate OpenAPI client for admin panel
+.PHONY: generate-admin-client
+generate-admin-client:
+	@echo "===========> Generate OpenAPI client for admin panel"
+	@source $(BACKEND_DIR)/.venv/bin/activate && $(ROOT_DIR)/scripts/generate-admin-client.sh
+
+## generate-all-clients: Generate OpenAPI clients for both frontend and admin
+.PHONY: generate-all-clients
+generate-all-clients: generate-client generate-admin-client
+	@echo "===========> All clients generated successfully" 
