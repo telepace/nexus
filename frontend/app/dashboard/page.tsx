@@ -37,10 +37,15 @@ export default async function DashboardPage() {
     itemsList = itemsResponse;
     console.log("Dashboard received items:", itemsList.length);
   } else if (itemsResponse && typeof itemsResponse === "object") {
+    // 处理可能的错误响应格式
     if ("message" in itemsResponse) {
-      errorMessage = itemsResponse.message as string;
-      console.error("Dashboard received error:", errorMessage);
+      errorMessage = String(itemsResponse.message);
+    } else if ("error" in itemsResponse) {
+      errorMessage = String(itemsResponse.error);
+    } else if (itemsResponse.meta && "message" in itemsResponse.meta) {
+      errorMessage = String(itemsResponse.meta.message);
     }
+    console.error("Dashboard received error:", errorMessage);
   }
 
   return (

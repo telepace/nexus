@@ -57,7 +57,8 @@ export async function fetchItems() {
 
     if (error) {
       console.error("API error:", error);
-      return { message: error };
+      // 标准化错误返回格式
+      return { error: typeof error === 'string' ? error : JSON.stringify(error) };
     }
 
     // 处理三层嵌套的数据结构
@@ -79,6 +80,11 @@ export async function fetchItems() {
       return responseData.data;
     } else if (Array.isArray(responseData)) {
       return responseData;
+    }
+
+    // 检查是否有嵌套的错误信息
+    if (responseData && responseData.error) {
+      return { error: responseData.error };
     }
 
     console.warn("Unexpected API response format:", data);
