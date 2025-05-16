@@ -21,7 +21,7 @@ import Link from "next/link";
 interface Item {
   id: string;
   title: string;
-  description: string;
+  description?: string | null;
   quantity?: number;
   owner_id?: string;
 }
@@ -108,7 +108,7 @@ export default async function DashboardPage() {
               itemsList.map((item, index) => (
                 <TableRow key={index}>
                   <TableCell>{item.title}</TableCell>
-                  <TableCell>{item.description}</TableCell>
+                  <TableCell>{item.description ?? ""}</TableCell>
                   <TableCell className="text-center">
                     <DropdownMenu>
                       <DropdownMenuTrigger className="cursor-pointer p-1 text-gray-600 hover:text-gray-800">
