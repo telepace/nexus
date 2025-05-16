@@ -14,6 +14,7 @@ import { register } from "@/components/actions/register-action";
 import { useActionState } from "react";
 import { SubmitButton } from "@/components/ui/submitButton";
 import { FieldError, FormError } from "@/components/ui/FormError";
+import { initiateGoogleLogin } from "@/components/actions/google-auth-action";
 
 // SearchParams component to handle useSearchParams hook with Suspense
 function SearchParamsHandler({
@@ -85,7 +86,7 @@ export default function Page() {
               variant="outline"
               className="w-full py-6 border-slate-200 dark:border-slate-700 flex items-center justify-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all duration-300 mb-6 relative group overflow-hidden"
               type="button"
-              onClick={() => (window.location.href = "/api/auth/google")}
+              onClick={() => initiateGoogleLogin()}
             >
               <div className="absolute inset-0 w-0 bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/30 dark:to-transparent transition-all duration-500 group-hover:w-full"></div>
               <svg
@@ -115,7 +116,7 @@ export default function Page() {
                 </g>
               </svg>
               <span className="text-sm text-slate-800 dark:text-slate-200 font-medium relative z-10">
-                Continue with Google
+                使用 Google 账号注册
               </span>
             </Button>
 

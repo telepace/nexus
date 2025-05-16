@@ -126,10 +126,6 @@ export type ValidationError = {
   type: string;
 };
 
-export type HealthGetHealthRootResponse = unknown;
-
-export type HealthGetHealthRootError = unknown;
-
 export type HealthGetHealthApiResponse = unknown;
 
 export type HealthGetHealthApiError = unknown;

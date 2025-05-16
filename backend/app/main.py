@@ -25,6 +25,7 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.api.main import api_router
 from app.api.middlewares.posthog import PostHogMiddleware
@@ -59,19 +60,12 @@ app = FastAPI(
     generate_unique_id_function=custom_generate_unique_id,
 )
 
-
-# 添加健康检查路由 - 根级别健康检查，兼容前端
-@app.get("/health", tags=["health"])
-async def get_health_root():
-    """兼容前端的根级别健康检查路由"""
-    logger.info("收到根级别健康检查请求")
-    return {"status": "ok"}
+# 添加 SessionMiddleware，secret_key 建议用 settings.SECRET_KEY
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
 
-# 添加健康检查路由
 @app.get("/api/v1/health", tags=["health"])
 async def get_health_api():
-    """兼容前端的API级别健康检查路由"""
     logger.info("收到API级别健康检查请求")
     return {"status": "ok"}
 

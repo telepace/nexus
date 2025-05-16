@@ -21,9 +21,20 @@ import Link from "next/link";
 interface Item {
   id: string;
   title: string;
-  description: string;
+  description?: string | null;
   quantity?: number;
   owner_id?: string;
+}
+
+// 定义可能的API响应类型
+interface ApiErrorResponse {
+  message?: string;
+  error?: string;
+  meta?: {
+    message?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
 }
 
 export default async function DashboardPage() {
@@ -37,10 +48,16 @@ export default async function DashboardPage() {
     itemsList = itemsResponse;
     console.log("Dashboard received items:", itemsList.length);
   } else if (itemsResponse && typeof itemsResponse === "object") {
-    if ("message" in itemsResponse) {
-      errorMessage = itemsResponse.message as string;
-      console.error("Dashboard received error:", errorMessage);
+    // 处理可能的错误响应格式
+    const errorResponse = itemsResponse as ApiErrorResponse;
+    if ("message" in errorResponse) {
+      errorMessage = String(errorResponse.message);
+    } else if ("error" in errorResponse) {
+      errorMessage = String(errorResponse.error);
+    } else if (errorResponse.meta && "message" in errorResponse.meta) {
+      errorMessage = String(errorResponse.meta.message);
     }
+    console.error("Dashboard received error:", errorMessage);
   }
 
   return (
@@ -91,7 +108,7 @@ export default async function DashboardPage() {
               itemsList.map((item, index) => (
                 <TableRow key={index}>
                   <TableCell>{item.title}</TableCell>
-                  <TableCell>{item.description}</TableCell>
+                  <TableCell>{item.description ?? ""}</TableCell>
                   <TableCell className="text-center">
                     <DropdownMenu>
                       <DropdownMenuTrigger className="cursor-pointer p-1 text-gray-600 hover:text-gray-800">

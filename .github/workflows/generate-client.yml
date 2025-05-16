@@ -32,7 +32,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: 8
+          version: 9.9.0
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -56,6 +56,10 @@ jobs:
       - name: Install Frontend Dependencies
         run: pnpm install
         working-directory: frontend
+        
+      - name: Install Admin Dependencies
+        run: pnpm install
+        working-directory: admin
 
       # 安装所有后端依赖项
       - name: Install Backend Dependencies
@@ -94,7 +98,9 @@ jobs:
 
       # 6. Stage Generated Files
       - name: Stage Generated Client Files
-        run: git add frontend/src/client # Adjust path if needed
+        run: |
+          git add frontend/app/openapi-client
+          git add admin/src/client
 
       # 7. Handle Changes for Same-Repo Events (Push/PR from same repo)
       - name: Commit and Push Changes (Same Repo)
@@ -104,8 +110,8 @@ jobs:
           # Check if there are staged changes
           if ! git diff --staged --quiet; then
             echo "✅ Changes detected in generated client. Committing and pushing..."
-            # Pull before pushing to avoid conflicts if possible (optional)
-            # git pull --ff-only origin ${{ github.head_ref || github.ref_name }}
+            # Pull before pushing to avoid conflicts
+            git pull --rebase origin ${{ github.head_ref || github.ref_name }}
             git commit -m "ci: ✨ Autogenerate frontend client"
             git push origin HEAD:${{ github.head_ref || github.ref_name }}
           else

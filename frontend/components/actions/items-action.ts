@@ -15,10 +15,22 @@ import type {
   ApiResponse_ItemsPublic_,
 } from "@/app/openapi-client/types.gen";
 
+// 定义Item数据类型
 interface ItemData {
   id: string;
   title: string;
   description?: string;
+  [key: string]: unknown;
+}
+
+// 定义API错误响应类型
+interface ApiErrorResponse {
+  message?: string;
+  error?: string;
+  meta?: {
+    message?: string;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 
@@ -37,12 +49,14 @@ type DataResponse = {
   error?: string | null;
 };
 
-export async function fetchItems() {
+// 定义 fetchItems 的可能返回类型
+type FetchItemsReturn = ItemData[] | ApiErrorResponse;
+
+export async function fetchItems(): Promise<FetchItemsReturn> {
   const cookieStore = await cookies();
   const token = cookieStore.get("accessToken")?.value;
 
   if (!token) {
-    console.error("No access token found in cookies");
     redirect("/login");
   }
 
@@ -57,7 +71,8 @@ export async function fetchItems() {
 
     if (error) {
       console.error("API error:", error);
-      return { message: error };
+      // 标准化错误返回格式
+      return { error: typeof error === 'string' ? error : JSON.stringify(error) };
     }
 
     // 处理三层嵌套的数据结构
@@ -79,6 +94,11 @@ export async function fetchItems() {
       return responseData.data;
     } else if (Array.isArray(responseData)) {
       return responseData;
+    }
+
+    // 检查是否有嵌套的错误信息
+    if (responseData && responseData.error) {
+      return { error: responseData.error };
     }
 
     console.warn("Unexpected API response format:", data);

@@ -418,7 +418,7 @@ This project provides optimized scripts and Makefile targets for common developm
 ### Frontend Development
 
 - `make frontend-install` - Install frontend dependencies
-- `make frontend-dev` - Run frontend development server
+- `make frontend` - Run frontend development server
 - `make frontend-build` - Build frontend for production
 - `make frontend-test` - Run frontend tests
 - `make frontend-lint` - Run linters on frontend code

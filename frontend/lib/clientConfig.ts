@@ -5,8 +5,8 @@ import checkApiHealth from "./apiHealthCheck";
 const configureClient = async () => {
   // Default to localhost for development, but this should be overridden in production
   const baseURL =
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    process.env.API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
     "http://localhost:8000";
 
   client.setConfig({

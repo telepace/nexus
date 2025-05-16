@@ -142,8 +142,6 @@ export type GoogleOauthGoogleCallbackData = {
 
 export type GoogleOauthGoogleCallbackResponse = (unknown);
 
-export type HealthGetHealthRootResponse = (unknown);
-
 export type HealthGetHealthApiResponse = (unknown);
 
 export type ItemsReadItemsData = {

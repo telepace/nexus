@@ -6,7 +6,6 @@ from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import (
     AnyUrl,
-    BaseModel,
     BeforeValidator,
     EmailStr,
     HttpUrl,
@@ -123,14 +122,18 @@ class Settings(BaseSettings):
 
             password = urllib.parse.quote_plus(self.SUPABASE_DB_PASSWORD or "")
 
-            return PostgresDsn(str(URL.build(
-                scheme="postgresql+psycopg",
-                user=self.SUPABASE_DB_USER or "",
-                password=password,
-                host=self.SUPABASE_DB_HOST,
-                port=port,
-                path=f"/{self.SUPABASE_DB_NAME or ''}",
-            )))
+            return PostgresDsn(
+                str(
+                    URL.build(
+                        scheme="postgresql+psycopg",
+                        user=self.SUPABASE_DB_USER or "",
+                        password=password,
+                        host=self.SUPABASE_DB_HOST,
+                        port=port,
+                        path=f"/{self.SUPABASE_DB_NAME or ''}",
+                    )
+                )
+            )
         else:
             # Use standard PostgreSQL connection
             # URL encode the password to handle special characters
@@ -138,14 +141,18 @@ class Settings(BaseSettings):
 
             password = urllib.parse.quote_plus(self.POSTGRES_PASSWORD)
 
-            return PostgresDsn(str(URL.build(
-                scheme="postgresql+psycopg",
-                user=self.POSTGRES_USER,
-                password=password,
-                host=self.POSTGRES_SERVER,
-                port=self.POSTGRES_PORT,
-                path=f"/{self.POSTGRES_DB}",
-            )))
+            return PostgresDsn(
+                str(
+                    URL.build(
+                        scheme="postgresql+psycopg",
+                        user=self.POSTGRES_USER,
+                        password=password,
+                        host=self.POSTGRES_SERVER,
+                        port=self.POSTGRES_PORT,
+                        path=f"/{self.POSTGRES_DB}",
+                    )
+                )
+            )
 
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False
@@ -186,15 +193,25 @@ class Settings(BaseSettings):
     # Google OAuth
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
-    GOOGLE_OAUTH_REDIRECT_URI: str = (
-        "http://localhost:8000/api/v1/login/google/callback"
-    )
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_HOST: str = "http://localhost:3000"
+    # 后端 API URL 配置，可通过环境变量覆盖
+    BACKEND_API_URL: str = "http://localhost:8000"
+
+    @property
+    def google_oauth_redirect_uri(self) -> str:
+        """Generate Google OAuth redirect URI pointing to backend API."""
+        # 使用后端 API URL 而不是前端 URL
+        redirect_uri = f"{self.BACKEND_API_URL}/api/v1/login/google/callback"
+        # 打印调试信息
+        logger.info(f"Configured Google OAuth redirect_uri: {redirect_uri}")
+        logger.info(f"Make sure this matches your Google Console configuration")
+        return redirect_uri
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         """Check if the provided secret value is "nexus" and raise a warning or error."""
         if value == "nexus":
             message = (
+                
                 f'The value of {var_name} is "nexus", '
                 "for security, please change it, at least for deployments."
             )
