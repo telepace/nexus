@@ -1,42 +1,60 @@
 import React from "react"
-import { Button } from "~/components/ui/button"
 
 interface ActionButtonsProps {
   onSummarize: () => void
   onExtractPoints: () => void
   onAskAI: () => void
+  disabled?: boolean
 }
 
 const ActionButtons: React.FC<ActionButtonsProps> = ({
   onSummarize,
   onExtractPoints,
-  onAskAI
+  onAskAI,
+  disabled = false
 }) => {
   return (
-    <div className="mb-6">
-      <h2 className="text-sm font-semibold mb-2">AI 洞察当前页</h2>
+    <div className="mb-4">
+      <h3 className="text-sm font-medium text-gray-700 mb-2">AI工具</h3>
       <div className="grid grid-cols-3 gap-2">
-        <Button 
-          variant="outline" 
-          className="text-xs py-1" 
+        <button
           onClick={onSummarize}
+          disabled={disabled}
+          className={`p-2 rounded-md text-xs font-medium flex flex-col items-center ${
+            disabled
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+          }`}
         >
-          总结此页
-        </Button>
-        <Button 
-          variant="outline" 
-          className="text-xs py-1" 
+          <span className="text-lg mb-1">📝</span>
+          <span>总结</span>
+        </button>
+        
+        <button
           onClick={onExtractPoints}
+          disabled={disabled}
+          className={`p-2 rounded-md text-xs font-medium flex flex-col items-center ${
+            disabled
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-purple-50 text-purple-700 hover:bg-purple-100"
+          }`}
         >
-          提取要点
-        </Button>
-        <Button 
-          variant="outline" 
-          className="text-xs py-1" 
+          <span className="text-lg mb-1">🔍</span>
+          <span>提取要点</span>
+        </button>
+        
+        <button
           onClick={onAskAI}
+          disabled={disabled}
+          className={`p-2 rounded-md text-xs font-medium flex flex-col items-center ${
+            disabled
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-green-50 text-green-700 hover:bg-green-100"
+          }`}
         >
-          提问 (AI)
-        </Button>
+          <span className="text-lg mb-1">💬</span>
+          <span>对话</span>
+        </button>
       </div>
     </div>
   )

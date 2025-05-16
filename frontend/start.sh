@@ -12,12 +12,17 @@ if [ -f "./watcher.js" ] && [ ! -x "./watcher.js" ]; then
   chmod +x "./watcher.js"
 fi
 
-# 启动Next.js应用
-echo "Starting Next.js application..."
-pnpm run dev &
+# 根据环境变量决定运行开发模式还是生产模式
+if [ "$NODE_ENV" = "production" ]; then
+  echo "Starting Next.js application in production mode..."
+  pnpm start &
+else
+  echo "Starting Next.js application in development mode..."
+  pnpm run dev &
 
-# 启动watcher脚本监视OpenAPI文件变化
-echo "Starting watcher..."
-node watcher.js
+  # 仅在开发模式下启动watcher
+  echo "Starting watcher..."
+  node watcher.js &
+fi
 
 wait

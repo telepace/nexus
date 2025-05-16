@@ -20,6 +20,11 @@ async function getAuthHeaders(): Promise<Headers> {
 export async function saveClipping(clipping: Omit<ClippedItem, "id">): Promise<ClippedItem> {
   try {
     const headers = await getAuthHeaders()
+    
+    if (!navigator.onLine) {
+      throw new Error("离线状态")
+    }
+    
     const response = await fetch(`${API_BASE_URL}/api/clippings`, {
       method: "POST",
       headers,
@@ -33,7 +38,6 @@ export async function saveClipping(clipping: Omit<ClippedItem, "id">): Promise<C
     return await response.json()
   } catch (error) {
     console.error("Error saving clipping:", error)
-    // Store locally when offline or error
     const tempId = `temp_${Date.now()}`
     const newClipping = { ...clipping, id: tempId }
     
@@ -41,12 +45,18 @@ export async function saveClipping(clipping: Omit<ClippedItem, "id">): Promise<C
     pendingClippings.push(newClipping)
     await storage.set("pendingClippings", pendingClippings)
     
+    chrome.runtime.sendMessage({ action: "updateBadgeCount" })
+    
     return newClipping
   }
 }
 
 export async function getRecentClippings(limit: number = 5): Promise<ClippedItem[]> {
   try {
+    if (!navigator.onLine) {
+      throw new Error("离线状态")
+    }
+    
     const headers = await getAuthHeaders()
     const response = await fetch(`${API_BASE_URL}/api/clippings?limit=${limit}`, {
       headers
@@ -59,7 +69,8 @@ export async function getRecentClippings(limit: number = 5): Promise<ClippedItem
     return await response.json()
   } catch (error) {
     console.error("Error fetching clippings:", error)
-    return []
+    const pendingClippings: ClippedItem[] = await storage.get("pendingClippings") || []
+    return pendingClippings.slice(0, limit)
   }
 }
 
@@ -69,6 +80,10 @@ export async function getAIInsight(
   options?: Record<string, any>
 ): Promise<AIResponse> {
   try {
+    if (!navigator.onLine) {
+      throw new Error("离线状态")
+    }
+    
     const headers = await getAuthHeaders()
     const response = await fetch(`${API_BASE_URL}/api/ai/${type}`, {
       method: "POST",
@@ -85,7 +100,11 @@ export async function getAIInsight(
     console.error(`Error getting ${type}:`, error)
     return {
       type,
-      content: `Error processing ${type}. Please try again later.`,
+      content: `处理${type === "summary" ? "总结" : 
+                type === "explanation" ? "解释" : 
+                type === "translation" ? "翻译" : "要点提取"}失败。${
+                navigator.onLine ? "请稍后重试。" : "您当前处于离线状态。"
+              }`,
       sourceText: content,
       timestamp: Date.now()
     }
@@ -94,6 +113,10 @@ export async function getAIInsight(
 
 export async function login(email: string, password: string): Promise<UserProfile> {
   try {
+    if (!navigator.onLine) {
+      throw new Error("离线状态，无法登录")
+    }
+    
     const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: "POST",
       headers: {
@@ -103,7 +126,7 @@ export async function login(email: string, password: string): Promise<UserProfil
     })
     
     if (!response.ok) {
-      throw new Error(`Login failed: ${response.statusText}`)
+      throw new Error(`登录失败: ${response.statusText}`)
     }
     
     const userData = await response.json()
@@ -117,11 +140,13 @@ export async function login(email: string, password: string): Promise<UserProfil
 
 export async function logout(): Promise<void> {
   try {
-    const headers = await getAuthHeaders()
-    await fetch(`${API_BASE_URL}/api/auth/logout`, {
-      method: "POST",
-      headers
-    })
+    if (navigator.onLine) {
+      const headers = await getAuthHeaders()
+      await fetch(`${API_BASE_URL}/api/auth/logout`, {
+        method: "POST",
+        headers
+      })
+    }
   } catch (error) {
     console.error("Logout error:", error)
   } finally {
@@ -135,6 +160,10 @@ export async function register(
   password: string
 ): Promise<UserProfile> {
   try {
+    if (!navigator.onLine) {
+      throw new Error("离线状态，无法注册")
+    }
+    
     const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: "POST",
       headers: {
@@ -144,7 +173,7 @@ export async function register(
     })
     
     if (!response.ok) {
-      throw new Error(`Registration failed: ${response.statusText}`)
+      throw new Error(`注册失败: ${response.statusText}`)
     }
     
     return await response.json()
