@@ -31,7 +31,22 @@ fi
 
 cd admin
 echo "Generating TypeScript client from schema"
-pnpm run generate-client
+
+# 检查node_modules目录是否存在，如果不存在则安装依赖
+if [ ! -d "node_modules" ]; then
+  echo "⚠️ node_modules directory not found in admin directory"
+  echo "📦 Installing dependencies..."
+  pnpm install || {
+    echo "❌ Failed to install dependencies with pnpm"
+    exit 1
+  }
+  echo "✅ Dependencies installed successfully"
+fi
+
+pnpm run generate-client || {
+  echo "❌ Failed to generate client"
+  exit 1
+}
 
 echo "🧹 Formatting generated client code..."
 pnpm exec biome format --write ./src/client || {

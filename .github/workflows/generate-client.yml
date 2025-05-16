@@ -56,6 +56,10 @@ jobs:
       - name: Install Frontend Dependencies
         run: pnpm install
         working-directory: frontend
+        
+      - name: Install Admin Dependencies
+        run: pnpm install
+        working-directory: admin
 
       # 安装所有后端依赖项
       - name: Install Backend Dependencies
@@ -94,7 +98,9 @@ jobs:
 
       # 6. Stage Generated Files
       - name: Stage Generated Client Files
-        run: git add frontend/src/client # Adjust path if needed
+        run: |
+          git add frontend/app/openapi-client
+          git add admin/src/client
 
       # 7. Handle Changes for Same-Repo Events (Push/PR from same repo)
       - name: Commit and Push Changes (Same Repo)
