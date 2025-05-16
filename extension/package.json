@@ -1,5 +1,5 @@
 {
-  "name": "nexus_browser_extension",
+  "name": "nexus-browser-extension",
   "displayName": "Nexus Browser Extension",
   "version": "0.1.0",
   "description": "AI-powered reading assistant that helps you understand, save, and interact with web content.",
@@ -7,7 +7,6 @@
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
-    "build-complete": "plasmo build",
     "package": "plasmo package",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -27,7 +26,7 @@
     "dom-to-semantic-markdown": "^1.2.11",
     "linkedom": "0.1.34",
     "lucide-react": "^0.454.0",
-    "plasmo": "0.89.4",
+    "plasmo": "0.90.3",
     "postcss-loader": "^8.1.1",
     "radix-ui": "^1.0.1",
     "react": "18.2.0",
@@ -65,23 +64,14 @@
     ],
     "name": "Nexus",
     "description": "AI-powered reading assistant that helps you understand, save, and interact with web content.",
-    "version": "0.1.0"
-  },
-  "permissions": [
-    "storage",
-    "scripting",
-    "unlimitedStorage",
-    "activeTab",
-    "contextMenus"
-  ],
-  "content_scripts": [
-    {
-      "matches": [
-        "*://*/*"
-      ],
-      "js": [
-        "content-scripts/oauth-receiver.ts"
-      ]
-    }
-  ]
+    "version": "0.1.0",
+    "permissions": [
+      "storage",
+      "scripting",
+      "unlimitedStorage",
+      "activeTab",
+      "contextMenus",
+      "notifications"
+    ]
+  }
 }

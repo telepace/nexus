@@ -1,9 +1,16 @@
-const { fontFamily } = require("tailwindcss/defaultTheme")
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
-  content: ["./*.{js,jsx,ts,tsx}","./routes/*.tsx","./routes/**/*.tsx"],
+  content: [
+    "./components/**/*.{ts,tsx}",
+    "./pages/**/*.{ts,tsx}",
+    "./popup/**/*.{ts,tsx}",
+    "./options/**/*.{ts,tsx}",
+    "./sidebar/**/*.{ts,tsx}",
+    "./background/**/*.{ts,tsx}",
+    "./content-scripts/**/*.{ts,tsx}",
+    "./contents/**/*.{ts,tsx}"
+  ],
   theme: {
     container: {
       center: true,
@@ -49,21 +56,18 @@ module.exports = {
         },
       },
       borderRadius: {
-        lg: `var(--radius)`,
-        md: `calc(var(--radius) - 2px)`,
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-      },
-      fontFamily: {
-        sans: ["var(--font-sans)", ...fontFamily.sans],
       },
       keyframes: {
         "accordion-down": {
-          from: { height: "0" },
+          from: { height: 0 },
           to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
+          to: { height: 0 },
         },
       },
       animation: {
@@ -73,4 +77,4 @@ module.exports = {
     },
   },
   plugins: [require("tailwindcss-animate")],
-}
+} 

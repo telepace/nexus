@@ -49,8 +49,15 @@ const handleOAuthCallback = async () => {
 }
 
 // 页面加载后执行处理
+export {}
+
 if (document.readyState === "complete") {
   handleOAuthCallback()
 } else {
   window.addEventListener("load", handleOAuthCallback)
+}
+
+// 指定匹配规则
+export const config = {
+  matches: ["https://app.nexus.com/oauth/callback*", "https://api.nexus.com/oauth/callback*"]
 } 

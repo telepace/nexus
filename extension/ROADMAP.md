@@ -156,6 +156,4 @@ Throughout all phases, the following principles will guide development:
 - Phase 2 (Enhanced UX): 6-8 weeks
 - Phase 3 (Advanced Features): 8-10 weeks
 - Phase 4 (Ecosystem): 10-12 weeks
-- Phase 5 (Future Vision): Ongoing
-
-Note: These timelines are estimates and may be adjusted based on resources, priorities, and user feedback. 
+- Phase 5 (Future Vision): Ongoing 
