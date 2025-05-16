@@ -3,7 +3,7 @@ description: Any operations involving issues and pulls on GitHub
 globs: 
 alwaysApply: false
 ---
-**Repository Resolution Logic:**
+**Github Repository Resolution Logic:**
 
 - If owner and repo are explicitly provided, use them.
 - Otherwise, default to:
@@ -17,3 +17,7 @@ alwaysApply: false
 - The language chosen for raising an issue: Chinese- 
 - Be careful not to be too AI in your tone.
 - Pay attention to choosing the appropriate labels and types. And select the latest Milestone
+
+**Postgres db operation Logic:**
+
+- db name is `app`

@@ -30,7 +30,7 @@ export default function Home() {
           >
             <FaGithub className="w-5 h-5 text-black dark:text-white" />
             <Link
-              href="https://github.com/vintasoftware/nextjs-fastapi-template"
+              href="https://github.com/https://github.com/telepace"
               target="_blank"
               className="hover:underline"
             >

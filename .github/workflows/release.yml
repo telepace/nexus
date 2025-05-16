@@ -57,5 +57,5 @@ jobs:
         run: |
           echo "## 🚀 Release Summary" >> $GITHUB_STEP_SUMMARY
           echo "Release draft created for version ${{ github.event.inputs.version }}." >> $GITHUB_STEP_SUMMARY
-          echo "Visit the [Releases section](https://github.com/vintasoftware/nextjs-fastapi-template/releases) to review and publish the release." >> $GITHUB_STEP_SUMMARY
+          echo "Visit the [Releases section](https://github.com/https://github.com/telepace/releases) to review and publish the release." >> $GITHUB_STEP_SUMMARY
           echo "Once the draft is published, another action will automatically be triggered to publish the packages." >> $GITHUB_STEP_SUMMARY

@@ -193,10 +193,19 @@ class Settings(BaseSettings):
     # Google OAuth
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
-    GOOGLE_OAUTH_REDIRECT_URI: str = (
-        "http://localhost:8000/api/v1/login/google/callback"
-    )
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_HOST: str = "http://localhost:3000"
+    # 后端 API URL 配置，可通过环境变量覆盖
+    BACKEND_API_URL: str = "http://localhost:8000"
+
+    @property
+    def google_oauth_redirect_uri(self) -> str:
+        """Generate Google OAuth redirect URI pointing to backend API."""
+        # 使用后端 API URL 而不是前端 URL
+        redirect_uri = f"{self.BACKEND_API_URL}/api/v1/login/google/callback"
+        # 打印调试信息
+        logger.info(f"Configured Google OAuth redirect_uri: {redirect_uri}")
+        logger.info(f"Make sure this matches your Google Console configuration")
+        return redirect_uri
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         """Check if the provided secret value is "nexus" and raise a warning or error."""

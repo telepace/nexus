@@ -57,7 +57,6 @@ export async function fetchItems(): Promise<FetchItemsReturn> {
   const token = cookieStore.get("accessToken")?.value;
 
   if (!token) {
-    console.error("No access token found in cookies");
     redirect("/login");
   }
 

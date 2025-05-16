@@ -1,43 +1,81 @@
 import { sendToBackground } from "@plasmohq/messaging"
 
 /**
- * This content script listens for messages from the OAuth callback page
- * and forwards them to the extension's background script.
+ * This content script handles the OAuth callback flow,
+ * intercepting both success and error states.
  */
 (function() {
-  // We only want this script to run on our OAuth callback page
-  if (!window.location.href.includes("/api/v1/login/google/callback")) {
+  // Check if we're on a relevant page
+  const isCallbackPage = window.location.href.includes("/login/google/callback") || 
+                        window.location.href.includes("/api/v1/login/google/callback")
+  
+  const isErrorPage = window.location.href.includes("/login?error=token_processing_error") ||
+                      window.location.href.includes("/login?error=no_token")
+  
+  if (!isCallbackPage && !isErrorPage) {
     return
   }
   
-  // Function to extract token from page content or URL params
-  const extractTokenFromPage = () => {
-    // Check if the token is in URL fragment or query params
+  console.log("OAuth receiver content script activated")
+  
+  // If we're on the error page, try to recover the flow
+  if (isErrorPage) {
+    handleErrorRecovery()
+    return
+  }
+  
+  // Otherwise, we're on the callback page with a token
+  handleCallbackPage()
+  
+  /**
+   * Handles the case where we're on the error page
+   */
+  function handleErrorRecovery() {
+    console.log("Detected error page, attempting recovery")
+    
+    // Show a user friendly message
+    document.body.innerHTML = `
+      <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+        <h1>Authentication Handling</h1>
+        <p>We're processing your login. You'll be redirected to the dashboard shortly...</p>
+      </div>
+    `
+    
+    // Wait briefly then redirect to dashboard
+    setTimeout(() => {
+      navigateToDashboard()
+    }, 1500)
+  }
+  
+  /**
+   * Handles the callback page with token
+   */
+  function handleCallbackPage() {
+    // Extract token from URL
     const urlParams = new URLSearchParams(window.location.search)
     const token = urlParams.get("token")
     
-    if (token) {
-      return token
-    }
-    
-    // Look for token in page content (if the API embeds it in the page)
-    const tokenElement = document.getElementById("auth-token")
-    if (tokenElement) {
-      return tokenElement.textContent.trim()
-    }
-    
-    return null
-  }
-  
-  // Extract token and send to background
-  const processToken = async () => {
-    const token = extractTokenFromPage()
-    
     if (!token) {
-      console.error("No authentication token found")
+      console.error("No token found in URL")
       return
     }
     
+    // Show processing message first
+    document.body.innerHTML = `
+      <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+        <h1>Authentication Processing</h1>
+        <p>Please wait while we complete your sign-in...</p>
+      </div>
+    `
+    
+    // Process the token through our background script
+    processTokenAndRedirect(token)
+  }
+  
+  /**
+   * Processes the token and handles redirection
+   */
+  async function processTokenAndRedirect(token) {
     try {
       // Send token to background script
       const response = await sendToBackground({
@@ -45,39 +83,89 @@ import { sendToBackground } from "@plasmohq/messaging"
         body: { token }
       })
       
+      // Update UI based on result
       if (response.success) {
-        // Token was processed successfully, close this tab
-        // First show a success message
         document.body.innerHTML = `
           <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-            <h1>Authentication Successful</h1>
-            <p>You've been successfully authenticated with Google. You can now close this tab and return to the extension.</p>
+            <h1>Authentication Successful!</h1>
+            <p>Redirecting you to the dashboard...</p>
           </div>
         `
         
-        // After a short delay, close the tab
+        // Redirect to dashboard
         setTimeout(() => {
-          window.close()
-        }, 3000)
+          navigateToDashboard()
+        }, 1000)
       } else {
-        // Show error
+        // Show error but still try to redirect
         document.body.innerHTML = `
           <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-            <h1>Authentication Failed</h1>
-            <p>Error: ${response.message}</p>
-            <p>Please close this tab and try again.</p>
+            <h1>Authentication Notice</h1>
+            <p>Message: ${response.message || 'Unknown status'}</p>
+            <p>We'll still try to navigate you to the dashboard...</p>
           </div>
         `
+        
+        // Try to redirect anyway after a delay
+        setTimeout(() => {
+          navigateToDashboard()
+        }, 2000)
       }
     } catch (error) {
       console.error("Failed to process token:", error)
+      
+      document.body.innerHTML = `
+        <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+          <h1>Authentication Error</h1>
+          <p>An error occurred: ${error.message || 'Unknown error'}</p>
+          <p>We'll still try to navigate you to the dashboard...</p>
+        </div>
+      `
+      
+      // Try to redirect anyway after a longer delay
+      setTimeout(() => {
+        navigateToDashboard()
+      }, 3000)
     }
   }
   
-  // Process when the DOM is fully loaded
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", processToken)
-  } else {
-    processToken()
+  /**
+   * Utility function to try multiple navigation methods to dashboard
+   */
+  function navigateToDashboard() {
+    const dashboardUrl = "http://localhost:3000/dashboard"
+    
+    console.log("Attempting to navigate to dashboard:", dashboardUrl)
+    
+    // Try multiple navigation methods
+    try {
+      // Method 1: Direct location change
+      window.location.href = dashboardUrl
+    } catch (err) {
+      console.log("Direct navigation failed, trying window.open", err)
+      
+      try {
+        // Method 2: Open in new tab
+        const newTab = window.open(dashboardUrl, "_self")
+        
+        if (!newTab) {
+          throw new Error("Could not open new tab")
+        }
+      } catch (err2) {
+        console.error("All automatic navigation methods failed", err2)
+        
+        // Method 3: Show clickable link
+        document.body.innerHTML = `
+          <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1>Navigation Failed</h1>
+            <p>We couldn't automatically redirect you to the dashboard.</p>
+            <p>Please click the button below:</p>
+            <a href="${dashboardUrl}" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #4285f4; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+              Go to Dashboard
+            </a>
+          </div>
+        `
+      }
+    }
   }
 })(); 

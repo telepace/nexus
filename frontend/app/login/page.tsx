@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { initiateGoogleLogin } from "@/components/actions/google-auth-action";
 
 // SearchParams component to handle useSearchParams hook with Suspense
 function SearchParamsHandler({
@@ -126,7 +127,7 @@ export default function LoginPage() {
               variant="outline"
               className="w-full py-6 border-slate-200 dark:border-slate-700 flex items-center justify-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all duration-300 mb-6 relative group overflow-hidden"
               type="button"
-              onClick={() => (window.location.href = "/api/auth/google")}
+              onClick={() => initiateGoogleLogin()}
             >
               <div className="absolute inset-0 w-0 bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/30 dark:to-transparent transition-all duration-500 group-hover:w-full"></div>
               <svg
