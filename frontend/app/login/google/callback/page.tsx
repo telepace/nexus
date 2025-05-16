@@ -2,11 +2,13 @@
 
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/lib/auth";
 
 // 创建一个内部组件处理参数
 function CallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { login } = useAuth();
 
   useEffect(() => {
     // 从URL获取token参数
@@ -28,32 +30,21 @@ function CallbackContent() {
       return;
     }
 
-    // 客户端处理token和Cookie
-    const handleToken = async () => {
-      try {
-        // 使用fetch API设置cookie
-        const response = await fetch('/api/auth/set-token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ token }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to set authentication token');
-        }
-
-        // 成功后导航到dashboard
+    // 使用auth hook的login方法设置cookie
+    try {
+      console.log("Setting token from Google login");
+      login(token);
+      
+      // 添加延迟以确保token被设置和处理
+      setTimeout(() => {
+        console.log("Navigating to dashboard after Google login");
         router.push('/dashboard');
-      } catch (error) {
-        console.error("Error setting token:", error);
-        router.push("/login?error=token_processing_error");
-      }
-    };
-
-    handleToken();
-  }, [searchParams, router]);
+      }, 500);
+    } catch (error) {
+      console.error("Error processing Google login token:", error);
+      router.push("/login?error=token_processing_error");
+    }
+  }, [searchParams, router, login]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center">

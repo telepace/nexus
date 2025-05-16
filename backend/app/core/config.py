@@ -211,6 +211,7 @@ class Settings(BaseSettings):
         """Check if the provided secret value is "nexus" and raise a warning or error."""
         if value == "nexus":
             message = (
+                
                 f'The value of {var_name} is "nexus", '
                 "for security, please change it, at least for deployments."
             )

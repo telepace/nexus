@@ -23,29 +23,66 @@ export default function CustomersPage() {
     const checkAuth = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        
+        // 更详细地检查cookie
+        console.log("[Customer] 检查cookie信息");
+        console.log("[Customer] 全部cookie:", document.cookie);
+        
         const token = document.cookie
           .split('; ')
           .find(row => row.startsWith('accessToken='))
           ?.split('=')[1];
         
+        console.log("[Customer] accessToken:", token ? `${token.substring(0, 10)}...` : "Missing");
+        
         if (token) {
+          console.log("[Customer] 尝试获取用户信息");
           const response = await fetch(`${apiUrl}/api/v1/users/me`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
+            credentials: 'include', // 包含cookies
           });
           
+          const status = response.status;
+          console.log("[Customer] API响应状态:", status);
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("[Customer] API错误:", errorText);
+            setDebugInfo({
+              status,
+              error: errorText,
+              token: token ? '部分显示: ' + token.substring(0, 10) + '...' : 'Missing',
+              fullCookies: document.cookie,
+            });
+            return;
+          }
+          
           const data = await response.json();
+          console.log("[Customer] 获取到的用户数据:", data);
+          
           setDebugInfo({
-            status: response.status,
-            data: data,
-            token: token ? 'Present' : 'Missing',
+            status,
+            data,
+            token: token ? '部分显示: ' + token.substring(0, 10) + '...' : 'Missing',
+            fullCookies: document.cookie,
           });
         } else {
-          setDebugInfo({ token: 'Missing' });
+          console.log("[Customer] 未找到token");
+          setDebugInfo({ 
+            token: 'Missing', 
+            fullCookies: document.cookie,
+            timestamp: new Date().toISOString(),
+          });
         }
       } catch (e) {
-        setDebugInfo({ error: e instanceof Error ? e.message : String(e) });
+        console.error("[Customer] 检查认证时出错:", e);
+        setDebugInfo({ 
+          error: e instanceof Error ? e.message : String(e),
+          fullCookies: document.cookie,
+          timestamp: new Date().toISOString(),
+        });
       }
     };
     

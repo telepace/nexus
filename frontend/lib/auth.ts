@@ -35,8 +35,11 @@ export function useAuth(): AuthContextType {
       setError(null);
       
       const token = getCookie("accessToken");
+      
+      console.log("[Auth] 尝试获取accessToken:", token ? "存在" : "不存在");
+      
       if (!token) {
-        console.log("No access token found");
+        console.log("[Auth] No access token found");
         setIsLoading(false);
         return;
       }
@@ -49,32 +52,33 @@ export function useAuth(): AuthContextType {
           return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''));
         
-        console.log("JWT Payload:", JSON.parse(jsonPayload));
+        console.log("[Auth] JWT Payload:", JSON.parse(jsonPayload));
       } catch (e) {
-        console.error("Failed to decode JWT:", e);
+        console.error("[Auth] Failed to decode JWT:", e);
       }
       
       // In a real implementation, you would fetch from your API
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      console.log(`Fetching user data from ${apiUrl}/api/v1/users/me`);
+      console.log(`[Auth] Fetching user data from ${apiUrl}/api/v1/users/me`);
       
       const response = await fetch(`${apiUrl}/api/v1/users/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        credentials: 'include', // 包含cookies
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("API Error:", response.status, errorText);
+        console.error("[Auth] API Error:", response.status, errorText);
         throw new Error(`Failed to fetch user data: ${response.status} ${errorText}`);
       }
 
       const userData = await response.json();
-      console.log("User data fetched successfully:", userData);
+      console.log("[Auth] User data fetched successfully:", userData);
       setUser(userData);
     } catch (err) {
-      console.error("Error in fetchUser:", err);
+      console.error("[Auth] Error in fetchUser:", err);
       setError(
         err instanceof Error ? err : new Error("An unknown error occurred"),
       );
@@ -98,6 +102,7 @@ export function useAuth(): AuthContextType {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(userData),
+        credentials: 'include', // 包含cookies
       });
 
       if (!response.ok) {
@@ -108,7 +113,7 @@ export function useAuth(): AuthContextType {
       const updatedUser = await response.json();
       setUser(updatedUser);
     } catch (err) {
-      console.error("Error in updateUser:", err);
+      console.error("[Auth] Error in updateUser:", err);
       setError(
         err instanceof Error ? err : new Error("An unknown error occurred"),
       );
@@ -117,17 +122,37 @@ export function useAuth(): AuthContextType {
   };
 
   const login = (token: string) => {
-    // Store the token in a cookie
-    document.cookie = `accessToken=${token};path=/;max-age=${60 * 60 * 24 * 7}`; // 7 days
-    console.log("Access token stored in cookie");
-    // Fetch user data after login
-    fetchUser();
+    try {
+      console.log("[Auth] Setting access token in cookie");
+      
+      // 确保token有效
+      if (!token || token.trim() === '') {
+        console.error("[Auth] Invalid token provided");
+        return;
+      }
+      
+      // 设置cookie，添加更多安全选项
+      const cookieValue = `accessToken=${token};path=/;max-age=${60 * 60 * 24 * 7}`;
+      document.cookie = cookieValue;
+      
+      // 验证cookie是否设置成功
+      const savedToken = getCookie("accessToken");
+      console.log("[Auth] Token saved in cookie:", savedToken ? "成功" : "失败");
+      
+      // 打印所有的cookie以便调试
+      console.log("[Auth] Current cookies:", document.cookie);
+      
+      // Fetch user data after login
+      fetchUser();
+    } catch (error) {
+      console.error("[Auth] Error setting token in cookie:", error);
+    }
   };
 
   const logout = () => {
     // Clear the token
     document.cookie = "accessToken=;path=/;max-age=0";
-    console.log("Access token cleared");
+    console.log("[Auth] Access token cleared");
     // Reset user
     setUser(null);
     // Redirect to login page
@@ -135,13 +160,13 @@ export function useAuth(): AuthContextType {
   };
 
   useEffect(() => {
-    console.log("Auth hook mounted, checking for token");
+    console.log("[Auth] Auth hook mounted, checking for token");
     const token = getCookie("accessToken");
     if (token) {
-      console.log("Token found, fetching user");
+      console.log("[Auth] Token found, fetching user");
       fetchUser();
     } else {
-      console.log("No token found");
+      console.log("[Auth] No token found");
       setIsLoading(false);
     }
   }, []);
@@ -158,12 +183,24 @@ export function useAuth(): AuthContextType {
 
 // Helper to get cookie value on client side
 function getCookie(name: string): string | undefined {
-  if (typeof document === "undefined") return undefined;
-
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    return parts.pop()?.split(";").shift();
+  if (typeof document === "undefined") {
+    console.log("[Auth] getCookie: document is undefined (server side)");
+    return undefined;
   }
+
+  console.log("[Auth] getCookie: 搜索cookie:", name);
+  console.log("[Auth] getCookie: 所有cookie:", document.cookie);
+  
+  const cookies = document.cookie.split(';');
+  for (let i = 0; i < cookies.length; i++) {
+    const cookie = cookies[i].trim();
+    if (cookie.startsWith(name + '=')) {
+      const value = cookie.substring(name.length + 1);
+      console.log(`[Auth] getCookie: 找到 ${name} = ${value.substring(0, 10)}...`);
+      return value;
+    }
+  }
+  
+  console.log(`[Auth] getCookie: ${name} 未找到`);
   return undefined;
 }
