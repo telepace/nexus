@@ -81,7 +81,8 @@ lint: backend-lint frontend-lint admin-lint
 
 ## test: Run tests for all components
 .PHONY: test
-test: backend-test frontend-test website-test admin-test
+test: backend-test frontend-test website-test admin-test extension-test-unit
+	@echo "===========> All tests completed successfully"
 
 ## format: Format code in all components
 .PHONY: format
@@ -397,7 +398,7 @@ website-test: website-install
 
 ## extension-all: Run all extension related tasks without starting services
 .PHONY: extension-all
-extension-all: extension-build extension-package
+extension-all: extension-build extension-package extension-test
 	@echo "===========> Extension all checks completed successfully"
 
 ## extension: Start extension development
@@ -417,6 +418,23 @@ extension-build: check-pnpm
 extension-package: check-pnpm
 	@echo "===========> Packaging browser extension for distribution"
 	@cd $(EXTENSION_DIR) && $(PNPM) run package
+
+## extension-test: Run all extension tests
+.PHONY: extension-test
+extension-test: extension-test-unit extension-test-e2e
+	@echo "===========> All extension tests completed"
+
+## extension-test-unit: Run extension unit tests with Jest
+.PHONY: extension-test-unit
+extension-test-unit: check-pnpm
+	@echo "===========> Running extension unit tests"
+	@cd $(EXTENSION_DIR) && $(PNPM) test
+
+## extension-test-e2e: Run extension E2E tests with Playwright
+.PHONY: extension-test-e2e
+extension-test-e2e: check-pnpm
+	@echo "===========> Running extension E2E tests"
+	@cd $(EXTENSION_DIR) && $(PNPM) exec playwright test
 
 # ==============================================================================
 # DOCKER TARGETS

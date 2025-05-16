@@ -39,6 +39,7 @@
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "4.1.1",
+    "@playwright/test": "^1.52.0",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.1",
     "@testing-library/user-event": "^14.5.2",
@@ -75,8 +76,12 @@
   ],
   "content_scripts": [
     {
-      "matches": ["*://*/*"],
-      "js": ["content-scripts/oauth-receiver.ts"]
+      "matches": [
+        "*://*/*"
+      ],
+      "js": [
+        "content-scripts/oauth-receiver.ts"
+      ]
     }
   ]
 }

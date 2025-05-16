@@ -12,6 +12,7 @@ module.exports = {
   },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testMatch: ['**/__tests__/**/*.spec.(ts|tsx)'],
+  testPathIgnorePatterns: ['<rootDir>/__tests__/e2e/'],
   collectCoverageFrom: [
     'utils/**/*.{ts,tsx}',
     'lib/**/*.{ts,tsx}',

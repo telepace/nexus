@@ -78,6 +78,9 @@ importers:
       '@ianvs/prettier-plugin-sort-imports':
         specifier: 4.1.1
         version: 4.1.1(@vue/compiler-sfc@3.3.4)(prettier@3.2.4)
+      '@playwright/test':
+        specifier: ^1.52.0
+        version: 1.52.0
       '@testing-library/jest-dom':
         specifier: ^6.4.2
         version: 6.6.3
@@ -1360,6 +1363,11 @@ packages:
     peerDependenciesMeta:
       react:
         optional: true
+
+  '@playwright/test@1.52.0':
+    resolution: {integrity: sha512-uh6W7sb55hl7D6vsAeA+V2p5JnlAqzhqFyF0VcJkKZXkgnFcVG9PziERRHQfPLfNGx1C292a4JqbWzhR8L4R1g==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   '@pnpm/config.env-replace@1.1.0':
     resolution: {integrity: sha512-htyl8TWnKL7K/ESFa1oW2UB5lVDxuF5DpM7tBi6Hu2LNL3mWkIzNLG6N4zoCUP1lCKNxWy/3iu8mS8MvToGd6w==}
@@ -7391,6 +7399,10 @@ snapshots:
       pify: 6.1.0
     optionalDependencies:
       react: 18.2.0
+
+  '@playwright/test@1.52.0':
+    dependencies:
+      playwright: 1.52.0
 
   '@pnpm/config.env-replace@1.1.0': {}
 
