@@ -10,7 +10,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# 忽略构建输出目录
+# 忽略构建输出目录（但在构建阶段需要复制）
 .next
 out
 build
@@ -33,14 +33,16 @@ jest.config.js
 .prettierrc
 .prettierignore
 biome.json
-tsconfig.json
+# 不排除 tsconfig.json，构建时需要
+# tsconfig.json
 next.config.js.bak
 
 # 忽略文档和其他不需要的文件
 README.md
 LICENSE
 *.md
-Dockerfile
+# 不排除 Dockerfile, 但它默认被排除在构建上下文外
+# Dockerfile
 .dockerignore
 
 # 忽略环境变量文件

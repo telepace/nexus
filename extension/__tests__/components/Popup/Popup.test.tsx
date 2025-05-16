@@ -56,14 +56,14 @@ describe('Popup Component', () => {
   });
 
   it('should display login form when user is not authenticated', async () => {
-    // 模拟未登录状态
+    // 模拟未授权错误
     (getRecentClippings as jest.Mock).mockRejectedValueOnce(new Error('Unauthorized'));
     
     render(<Popup />);
     
     // 等待登录表单显示
     await waitFor(() => {
-      expect(screen.getByText(/登录/i) || screen.getByText(/Login/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /登录/i })).toBeInTheDocument();
       expect(screen.getByLabelText(/邮箱/i) || screen.getByLabelText(/Email/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/密码/i) || screen.getByLabelText(/Password/i)).toBeInTheDocument();
     });
@@ -109,33 +109,28 @@ describe('Popup Component', () => {
   });
 
   it('should show error message when login fails', async () => {
-    // 模拟未登录状态
-    (getRecentClippings as jest.Mock).mockRejectedValueOnce(new Error('Unauthorized'));
-    
     // 模拟登录失败
+    (getRecentClippings as jest.Mock).mockRejectedValueOnce(new Error('Unauthorized'));
     (login as jest.Mock).mockRejectedValueOnce(new Error('Invalid credentials'));
     
     render(<Popup />);
     
-    // 等待登录表单显示
+    // 填写登录表单
     await waitFor(() => {
       expect(screen.getByLabelText(/邮箱/i) || screen.getByLabelText(/Email/i)).toBeInTheDocument();
     });
     
-    // 填写登录表单
     const emailInput = screen.getByLabelText(/邮箱/i) || screen.getByLabelText(/Email/i);
     const passwordInput = screen.getByLabelText(/密码/i) || screen.getByLabelText(/Password/i);
-    const loginButton = screen.getByRole('button', { name: /登录/i }) || screen.getByRole('button', { name: /Login/i });
+    const loginButton = screen.getByRole('button');
     
-    await userEvent.type(emailInput, 'test@example.com');
-    await userEvent.type(passwordInput, 'wrongpassword');
-    
-    // 提交表单
+    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
     fireEvent.click(loginButton);
     
     // 验证显示错误消息
     await waitFor(() => {
-      expect(screen.getByText(/登录失败/i) || screen.getByText(/Login failed/i)).toBeInTheDocument();
+      expect(screen.getByText('Invalid credentials')).toBeInTheDocument();
     });
   });
 

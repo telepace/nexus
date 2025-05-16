@@ -1,5 +1,5 @@
 # Stage 1: Dependencies
-FROM node:20-bookworm as deps
+FROM node:20-bookworm AS deps
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ COPY package.json pnpm-lock.yaml* ./
 RUN pnpm install --frozen-lockfile
 
 # Stage 2: Build
-FROM node:20-bookworm as builder
+FROM node:20-bookworm AS builder
 
 WORKDIR /app
 
@@ -22,13 +22,21 @@ RUN npm install -g pnpm
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
+
+# Copy all source files EXCEPT those in .dockerignore
 COPY . .
+
+# Ensure that tsconfig paths are set correctly
+RUN cat tsconfig.json
+
+# Make sure the components directory is present
+RUN ls -la components
 
 # Build the Next.js application
 RUN pnpm build
 
 # Stage 3: Production
-FROM node:20-bookworm-slim as runner
+FROM node:20-bookworm-slim AS runner
 
 WORKDIR /app
 
@@ -45,6 +53,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/start.sh ./start.sh
 COPY --from=builder /app/watcher.js ./watcher.js
+COPY --from=builder /app/next.config.js ./next.config.js
 
 # Make scripts executable
 RUN chmod +x start.sh watcher.js

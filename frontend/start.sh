@@ -12,10 +12,17 @@ if [ -f "./watcher.js" ] && [ ! -x "./watcher.js" ]; then
   chmod +x "./watcher.js"
 fi
 
+# 检查.next目录是否存在，它应该在构建时由 builder 阶段生成
+if [ ! -d "./.next" ] && [ "$NODE_ENV" = "production" ]; then
+  echo "Warning: .next directory not found. The application might not start correctly."
+  echo "This could happen if the build process was not completed successfully."
+  ls -la
+fi
+
 # 根据环境变量决定运行开发模式还是生产模式
 if [ "$NODE_ENV" = "production" ]; then
   echo "Starting Next.js application in production mode..."
-  pnpm start &
+  exec pnpm start
 else
   echo "Starting Next.js application in development mode..."
   pnpm run dev &
@@ -23,6 +30,6 @@ else
   # 仅在开发模式下启动watcher
   echo "Starting watcher..."
   node watcher.js &
+  
+  wait
 fi
-
-wait

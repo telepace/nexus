@@ -1,11 +1,11 @@
 import React, { ReactElement } from 'react';
-import { render, RenderOptions } from '@testing-library/react';
+import { render as rtlRender, RenderOptions } from '@testing-library/react';
 
 // 添加自定义渲染器（如果项目有Providers，可以添加在这里）
 const customRender = (
   ui: ReactElement,
   options?: Omit<RenderOptions, 'wrapper'>,
-) => render(ui, { ...options });
+) => rtlRender(ui, { ...options });
 
 // 测试数据生成器
 export const generateMockClipping = (override = {}) => ({

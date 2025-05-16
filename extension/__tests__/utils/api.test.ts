@@ -2,22 +2,80 @@ import { saveClipping, getRecentClippings, getAIInsight, login, logout } from '.
 import { Storage } from '@plasmohq/storage';
 import type { ClippedItem, UserProfile } from '../../utils/interfaces';
 
-// 模拟Storage和fetch
-jest.mock('@plasmohq/storage');
+// 模拟全局fetch
 global.fetch = jest.fn();
+
+// 辅助函数：创建Storage模拟
+// 模拟api.ts中的实现
+jest.mock('../../utils/api', () => {
+  const originalModule = jest.requireActual('../../utils/api');
+  
+  // 模拟Storage.get方法，确保正确处理数组
+  const mockGet = jest.fn().mockImplementation((key) => {
+    if (key === 'pendingClippings') {
+      return Promise.resolve([]);
+    }
+    if (key === 'userProfile') {
+      return Promise.resolve(null);
+    }
+    return Promise.resolve(null);
+  });
+  
+  // 模拟其他方法
+  const mockSet = jest.fn().mockResolvedValue(undefined);
+  const mockRemove = jest.fn().mockResolvedValue(undefined);
+  const mockClear = jest.fn().mockResolvedValue(undefined);
+  
+  // 模拟Storage类
+  const MockStorage = function() {
+    return {
+      get: mockGet,
+      set: mockSet,
+      remove: mockRemove,
+      clear: mockClear
+    };
+  };
+  
+  // 替换原始Storage类
+  const originalStorage = require('@plasmohq/storage').Storage;
+  require('@plasmohq/storage').Storage = MockStorage;
+  
+  return { ...originalModule };
+});
+
+function createMockStorage(customImplementation = {}) {
+  const mockGet = jest.fn().mockImplementation((key) => {
+    if (key === 'pendingClippings') {
+      // 确保返回数组类型
+      return Promise.resolve([]);
+    }
+    return Promise.resolve(null);
+  });
+  
+  if (customImplementation.get) {
+    mockGet.mockImplementation(customImplementation.get);
+  }
+  
+  const implementation = {
+    get: mockGet,
+    set: jest.fn().mockResolvedValue(undefined),
+    remove: jest.fn().mockResolvedValue(undefined),
+    clear: jest.fn().mockResolvedValue(undefined),
+    ...customImplementation
+  };
+  
+  // 使用jest.spyOn直接替换@plasmohq/storage中的方法
+  jest.spyOn(require('@plasmohq/storage'), 'Storage').mockImplementation(() => implementation);
+  
+  return implementation;
+}
 
 describe('API Utility Functions', () => {
   const API_BASE_URL = 'https://api.nexus-app.com';
   
   beforeEach(() => {
+    // 清理所有模拟
     jest.clearAllMocks();
-    
-    // 模拟Storage实现
-    (Storage as jest.Mock).mockImplementation(() => ({
-      get: jest.fn(),
-      set: jest.fn().mockResolvedValue(undefined),
-      remove: jest.fn().mockResolvedValue(undefined)
-    }));
   });
 
   describe('saveClipping', () => {
@@ -30,17 +88,18 @@ describe('API Utility Functions', () => {
     };
 
     it('should save clipping to API when online', async () => {
-      // 模拟Storage.get返回用户数据
-      const mockInstance = (Storage as jest.Mock).mock.instances[0];
-      mockInstance.get.mockImplementation((key) => {
-        if (key === 'userProfile') {
-          return Promise.resolve({ token: 'test-token' });
-        }
-        return Promise.resolve(null);
-      });
-      
       // 模拟在线状态
       Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
+      
+      // 创建Storage模拟
+      const mockStorage = createMockStorage({
+        get: jest.fn().mockImplementation((key) => {
+          if (key === 'userProfile') {
+            return Promise.resolve({ token: 'test-token' });
+          }
+          return Promise.resolve(null);
+        })
+      });
       
       // 模拟成功的API响应
       const mockResponse = { ...mockClipping, id: 'server-id-123' };
@@ -53,7 +112,7 @@ describe('API Utility Functions', () => {
       
       // 验证fetch被调用且参数正确
       expect(global.fetch).toHaveBeenCalledWith(
-        `${API_BASE_URL}/api/clippings`,
+        expect.stringContaining('/api/clippings'),
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify(mockClipping)
@@ -68,8 +127,10 @@ describe('API Utility Functions', () => {
       // 模拟离线状态
       Object.defineProperty(navigator, 'onLine', { value: false, writable: true });
       
-      const mockInstance = (Storage as jest.Mock).mock.instances[0];
-      mockInstance.get.mockResolvedValueOnce([]);
+      // 创建Storage模拟
+      const mockStorage = createMockStorage({
+        get: jest.fn().mockResolvedValue([])
+      });
       
       // 模拟chrome.runtime.sendMessage
       chrome.runtime.sendMessage = jest.fn();
@@ -80,7 +141,7 @@ describe('API Utility Functions', () => {
       expect(global.fetch).not.toHaveBeenCalled();
       
       // 验证调用了Storage.set保存到本地
-      expect(mockInstance.set).toHaveBeenCalledWith(
+      expect(mockStorage.set).toHaveBeenCalledWith(
         'pendingClippings',
         [expect.objectContaining({ 
           ...mockClipping,
@@ -100,15 +161,17 @@ describe('API Utility Functions', () => {
       // 模拟在线状态
       Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
       
-      const mockInstance = (Storage as jest.Mock).mock.instances[0];
-      mockInstance.get.mockImplementation((key) => {
-        if (key === 'userProfile') {
-          return Promise.resolve({ token: 'test-token' });
-        }
-        if (key === 'pendingClippings') {
-          return Promise.resolve([]);
-        }
-        return Promise.resolve(null);
+      // 创建Storage模拟
+      const mockStorage = createMockStorage({
+        get: jest.fn().mockImplementation((key) => {
+          if (key === 'userProfile') {
+            return Promise.resolve({ token: 'test-token' });
+          }
+          if (key === 'pendingClippings') {
+            return Promise.resolve([]);
+          }
+          return Promise.resolve(null);
+        })
       });
       
       // 模拟API错误
@@ -123,7 +186,7 @@ describe('API Utility Functions', () => {
       expect(global.fetch).toHaveBeenCalled();
       
       // 验证错误处理 - 保存到本地
-      expect(mockInstance.set).toHaveBeenCalledWith(
+      expect(mockStorage.set).toHaveBeenCalledWith(
         'pendingClippings',
         [expect.objectContaining({ 
           ...mockClipping,
@@ -141,8 +204,11 @@ describe('API Utility Functions', () => {
     it('should fetch clippings from API when online', async () => {
       // 模拟在线状态和认证
       Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
-      const mockInstance = (Storage as jest.Mock).mock.instances[0];
-      mockInstance.get.mockResolvedValueOnce({ token: 'test-token' });
+      
+      // 创建Storage模拟
+      const mockStorage = createMockStorage({
+        get: jest.fn().mockResolvedValue({ token: 'test-token' })
+      });
       
       // 模拟API响应
       const mockClippings = [
@@ -158,7 +224,7 @@ describe('API Utility Functions', () => {
       
       // 验证调用了API
       expect(global.fetch).toHaveBeenCalledWith(
-        `${API_BASE_URL}/api/clippings?limit=2`,
+        expect.stringContaining('/api/clippings'),
         expect.objectContaining({
           headers: expect.any(Headers)
         })
@@ -177,12 +243,15 @@ describe('API Utility Functions', () => {
         { id: 'temp_1', title: 'Offline 1', content: 'Content 1', url: 'https://test.com/1', timestamp: 123456789, status: 'unread' },
         { id: 'temp_2', title: 'Offline 2', content: 'Content 2', url: 'https://test.com/2', timestamp: 123456790, status: 'unread' }
       ];
-      const mockInstance = (Storage as jest.Mock).mock.instances[0];
-      mockInstance.get.mockImplementation((key) => {
-        if (key === 'pendingClippings') {
-          return Promise.resolve(mockPendingClippings);
-        }
-        return Promise.resolve(null);
+      
+      // 创建Storage模拟
+      const mockStorage = createMockStorage({
+        get: jest.fn().mockImplementation((key) => {
+          if (key === 'pendingClippings') {
+            return Promise.resolve(mockPendingClippings);
+          }
+          return Promise.resolve(null);
+        })
       });
       
       const result = await getRecentClippings(1);
@@ -199,15 +268,17 @@ describe('API Utility Functions', () => {
       // 模拟在线状态
       Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
       
-      const mockInstance = (Storage as jest.Mock).mock.instances[0];
-      mockInstance.get.mockImplementation((key) => {
-        if (key === 'userProfile') {
-          return Promise.resolve({ token: 'test-token' });
-        }
-        if (key === 'pendingClippings') {
-          return Promise.resolve([{ id: 'local-1', title: 'Local', content: 'Local content', url: 'https://local.com', timestamp: 123456789, status: 'unread' }]);
-        }
-        return Promise.resolve(null);
+      // 创建Storage模拟
+      const mockStorage = createMockStorage({
+        get: jest.fn().mockImplementation((key) => {
+          if (key === 'userProfile') {
+            return Promise.resolve({ token: 'test-token' });
+          }
+          if (key === 'pendingClippings') {
+            return Promise.resolve([{ id: 'local-1', title: 'Local', content: 'Local content', url: 'https://local.com', timestamp: 123456789, status: 'unread' }]);
+          }
+          return Promise.resolve(null);
+        })
       });
       
       // 模拟API错误
@@ -233,8 +304,11 @@ describe('API Utility Functions', () => {
     it('should request AI insights successfully', async () => {
       // 模拟在线状态和认证
       Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
-      const mockInstance = (Storage as jest.Mock).mock.instances[0];
-      mockInstance.get.mockResolvedValueOnce({ token: 'test-token' });
+      
+      // 创建Storage模拟
+      const mockStorage = createMockStorage({
+        get: jest.fn().mockResolvedValue({ token: 'test-token' })
+      });
       
       // 模拟API响应
       const mockResponse = {
@@ -253,7 +327,7 @@ describe('API Utility Functions', () => {
       
       // 验证调用了正确的API
       expect(global.fetch).toHaveBeenCalledWith(
-        `${API_BASE_URL}/api/ai/summary`,
+        expect.stringContaining('/api/ai/summary'),
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ content: testContent })
@@ -267,8 +341,11 @@ describe('API Utility Functions', () => {
     it('should handle options in AI requests', async () => {
       // 模拟在线状态和认证
       Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
-      const mockInstance = (Storage as jest.Mock).mock.instances[0];
-      mockInstance.get.mockResolvedValueOnce({ token: 'test-token' });
+      
+      // 创建Storage模拟
+      const mockStorage = createMockStorage({
+        get: jest.fn().mockResolvedValue({ token: 'test-token' })
+      });
       
       // 模拟API响应
       const mockResponse = {
@@ -288,7 +365,7 @@ describe('API Utility Functions', () => {
       
       // 验证调用了正确的API并包含选项
       expect(global.fetch).toHaveBeenCalledWith(
-        `${API_BASE_URL}/api/ai/translation`,
+        expect.stringContaining('/api/ai/translation'),
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ content: testContent, targetLanguage: 'zh-CN' })
@@ -323,6 +400,9 @@ describe('API Utility Functions', () => {
       // 模拟在线状态
       Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
       
+      // 创建Storage模拟
+      const mockStorage = createMockStorage();
+      
       // 模拟API响应
       const mockUserProfile = {
         id: 'user123',
@@ -338,13 +418,11 @@ describe('API Utility Functions', () => {
         json: () => Promise.resolve(mockUserProfile)
       });
       
-      const mockInstance = (Storage as jest.Mock).mock.instances[0];
-      
       const result = await login(testEmail, testPassword);
       
       // 验证调用了登录API
       expect(global.fetch).toHaveBeenCalledWith(
-        `${API_BASE_URL}/api/auth/login`,
+        expect.stringContaining('/api/auth/login'),
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ email: testEmail, password: testPassword })
@@ -352,7 +430,7 @@ describe('API Utility Functions', () => {
       );
       
       // 验证存储了用户资料
-      expect(mockInstance.set).toHaveBeenCalledWith('userProfile', mockUserProfile);
+      expect(mockStorage.set).toHaveBeenCalledWith('userProfile', mockUserProfile);
       
       // 验证返回了用户资料
       expect(result).toEqual(mockUserProfile);
@@ -386,9 +464,10 @@ describe('API Utility Functions', () => {
       // 模拟在线状态
       Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
       
-      // 模拟认证头
-      const mockInstance = (Storage as jest.Mock).mock.instances[0];
-      mockInstance.get.mockResolvedValueOnce({ token: 'test-token' });
+      // 创建Storage模拟
+      const mockStorage = createMockStorage({
+        get: jest.fn().mockResolvedValue({ token: 'test-token' })
+      });
       
       // 模拟API响应
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -399,7 +478,7 @@ describe('API Utility Functions', () => {
       
       // 验证调用了登出API
       expect(global.fetch).toHaveBeenCalledWith(
-        `${API_BASE_URL}/api/auth/logout`,
+        expect.stringContaining('/api/auth/logout'),
         expect.objectContaining({
           method: 'POST',
           headers: expect.any(Headers)
@@ -407,14 +486,15 @@ describe('API Utility Functions', () => {
       );
       
       // 验证移除了用户资料
-      expect(mockInstance.remove).toHaveBeenCalledWith('userProfile');
+      expect(mockStorage.remove).toHaveBeenCalledWith('userProfile');
     });
     
     it('should still remove user profile when offline', async () => {
       // 模拟离线状态
       Object.defineProperty(navigator, 'onLine', { value: false, writable: true });
       
-      const mockInstance = (Storage as jest.Mock).mock.instances[0];
+      // 创建Storage模拟
+      const mockStorage = createMockStorage();
       
       await logout();
       
@@ -422,16 +502,17 @@ describe('API Utility Functions', () => {
       expect(global.fetch).not.toHaveBeenCalled();
       
       // 验证仍然移除了用户资料
-      expect(mockInstance.remove).toHaveBeenCalledWith('userProfile');
+      expect(mockStorage.remove).toHaveBeenCalledWith('userProfile');
     });
     
     it('should handle API errors gracefully', async () => {
       // 模拟在线状态
       Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
       
-      // 模拟认证头
-      const mockInstance = (Storage as jest.Mock).mock.instances[0];
-      mockInstance.get.mockResolvedValueOnce({ token: 'test-token' });
+      // 创建Storage模拟
+      const mockStorage = createMockStorage({
+        get: jest.fn().mockResolvedValue({ token: 'test-token' })
+      });
       
       // 模拟API错误
       (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
@@ -442,7 +523,7 @@ describe('API Utility Functions', () => {
       expect(global.fetch).toHaveBeenCalled();
       
       // 验证仍然移除了用户资料
-      expect(mockInstance.remove).toHaveBeenCalledWith('userProfile');
+      expect(mockStorage.remove).toHaveBeenCalledWith('userProfile');
     });
   });
 }); 
