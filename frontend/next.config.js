@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'standalone',
+  output: "standalone",
   experimental: {
     // 启用顶级 await
     serverActions: true,
@@ -10,9 +10,9 @@ const nextConfig = {
     // 解决路径别名问题
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@': require('path').resolve(__dirname),
+      "@": require("path").resolve(__dirname),
     };
-    
+
     return config;
   },
 };

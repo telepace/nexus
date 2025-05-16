@@ -66,7 +66,7 @@ UV_EXISTS := $(shell command -v uv 2> /dev/null)
 
 ## all: Run all tests, linting, formatting and build all components
 .PHONY: all
-all: format lint test backend-build frontend-build admin-build
+all: format lint generate-client test backend-build frontend-build admin-build
 	@echo "===========> All checks and builds completed successfully"
 
 ## dev: Start development environment

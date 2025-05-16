@@ -204,14 +204,13 @@ class Settings(BaseSettings):
         redirect_uri = f"{self.BACKEND_API_URL}/api/v1/login/google/callback"
         # 打印调试信息
         logger.info(f"Configured Google OAuth redirect_uri: {redirect_uri}")
-        logger.info(f"Make sure this matches your Google Console configuration")
+        logger.info("Make sure this matches your Google Console configuration")
         return redirect_uri
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         """Check if the provided secret value is "nexus" and raise a warning or error."""
         if value == "nexus":
             message = (
-                
                 f'The value of {var_name} is "nexus", '
                 "for security, please change it, at least for deployments."
             )

@@ -46,7 +46,7 @@ export default function LoginPage() {
     try {
       // Get API URL from env
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      
+
       // 修正登录端点
       const response = await fetch(`${apiUrl}/api/v1/login/access-token`, {
         method: "POST",
@@ -60,24 +60,24 @@ export default function LoginPage() {
       });
 
       const data = await response.json();
-      
+
       // 添加调试信息
       setDebugInfo(JSON.stringify(data, null, 2));
-      
+
       if (!response.ok) {
         throw new Error(data.detail || "登录失败，请检查用户名和密码");
       }
 
       console.log("Login successful:", data);
-      
+
       // 确保响应包含access_token
       if (!data.access_token) {
         throw new Error("登录响应缺少访问令牌");
       }
-      
+
       // Store token using auth hook
       login(data.access_token);
-      
+
       // Redirect to dashboard
       router.push("/dashboard");
     } catch (err) {
@@ -177,7 +177,7 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label 
+                <Label
                   htmlFor="email"
                   className="text-sm font-medium text-slate-700 dark:text-slate-300"
                 >
@@ -198,13 +198,13 @@ export default function LoginPage() {
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <Label 
+                  <Label
                     htmlFor="password"
                     className="text-sm font-medium text-slate-700 dark:text-slate-300"
                   >
                     密码
                   </Label>
-                  <Link 
+                  <Link
                     href={`/password-recovery${email ? `?email=${encodeURIComponent(email)}` : ""}`}
                     className="text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300"
                   >
@@ -227,8 +227,8 @@ export default function LoginPage() {
 
               <div className="relative group">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isLoading}
                   className="relative w-full h-11 bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 dark:from-slate-50 dark:to-white dark:text-slate-800 transition-all duration-300"
                 >
@@ -236,20 +236,32 @@ export default function LoginPage() {
                 </Button>
               </div>
             </form>
-            
+
             {/* 测试用户信息 */}
             <div className="mt-4 p-2 border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-800">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">测试用户信息：</p>
-              <p className="text-xs text-gray-700 dark:text-gray-300">邮箱: test@example.com</p>
-              <p className="text-xs text-gray-700 dark:text-gray-300">密码: password</p>
-              <p className="text-xs text-gray-700 dark:text-gray-300">用户ID: d17ab34d-b82f-4756-a315-82fca4264c4e</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                测试用户信息：
+              </p>
+              <p className="text-xs text-gray-700 dark:text-gray-300">
+                邮箱: test@example.com
+              </p>
+              <p className="text-xs text-gray-700 dark:text-gray-300">
+                密码: password
+              </p>
+              <p className="text-xs text-gray-700 dark:text-gray-300">
+                用户ID: d17ab34d-b82f-4756-a315-82fca4264c4e
+              </p>
             </div>
-            
+
             {/* 调试信息 */}
             {debugInfo && (
               <div className="mt-4 p-2 border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-800">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">调试信息：</p>
-                <pre className="text-xs overflow-auto max-h-32">{debugInfo}</pre>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  调试信息：
+                </p>
+                <pre className="text-xs overflow-auto max-h-32">
+                  {debugInfo}
+                </pre>
               </div>
             )}
           </CardContent>
@@ -257,7 +269,7 @@ export default function LoginPage() {
 
         <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
           还没有账号？{" "}
-          <Link 
+          <Link
             href={`/register${email ? `?email=${encodeURIComponent(email)}` : ""}`}
             className="font-medium text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300"
           >

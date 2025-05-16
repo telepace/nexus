@@ -1,8 +1,8 @@
+import logging
 import secrets
 from datetime import timedelta
 from typing import Any
 from urllib.parse import urlencode
-import logging
 
 import requests
 from fastapi import APIRouter, HTTPException, Request
@@ -99,15 +99,17 @@ async def google_login(request: Request):
         return RedirectResponse(
             f"{settings.FRONTEND_HOST}/login?error=oauth_config_error"
         )
-        
+
     # u6253u5370u914du7f6eu4fe1u606fu4fbfu4e8eu8c03u8bd5
-    logger.info(f"Google OAuth using redirect_uri: {settings.google_oauth_redirect_uri}")
-    logger.info(f"Make sure this matches the Authorized redirect URIs in Google Console")
-        
+    logger.info(
+        f"Google OAuth using redirect_uri: {settings.google_oauth_redirect_uri}"
+    )
+    logger.info("Make sure this matches the Authorized redirect URIs in Google Console")
+
     # Generate a random state value to prevent CSRF attacks
     state = secrets.token_urlsafe(16)
     request.session["google_oauth_state"] = state
-    
+
     # u6253u5370u5f53u524du7684 session u72b6u6001
     logger.info(f"Generated OAuth state: {state}")
 
@@ -138,8 +140,10 @@ async def google_callback(
     Handle the callback from Google OAuth
     This endpoint is called by Google after the user has logged in
     """
-    logger.info(f"Received Google OAuth callback: code={bool(code)}, state={bool(state)}, error={error or 'None'}")
-    
+    logger.info(
+        f"Received Google OAuth callback: code={bool(code)}, state={bool(state)}, error={error or 'None'}"
+    )
+
     # Check for errors
     if error:
         logger.error(f"Google OAuth error: {error}")
@@ -150,9 +154,11 @@ async def google_callback(
     # Verify state to prevent CSRF attacks
     stored_state = request.session.get("google_oauth_state")
     logger.info(f"Validating state: received={state}, stored={stored_state}")
-    
+
     if not stored_state or stored_state != state:
-        logger.error(f"State validation failed: stored={stored_state}, received={state}")
+        logger.error(
+            f"State validation failed: stored={stored_state}, received={state}"
+        )
         return RedirectResponse(f"{settings.FRONTEND_HOST}/login?error=invalid_state")
 
     # Clear the state from session
@@ -172,8 +178,10 @@ async def google_callback(
             "redirect_uri": settings.google_oauth_redirect_uri,
             "grant_type": "authorization_code",
         }
-        
-        logger.info(f"Exchanging code for token with redirect_uri: {settings.google_oauth_redirect_uri}")
+
+        logger.info(
+            f"Exchanging code for token with redirect_uri: {settings.google_oauth_redirect_uri}"
+        )
 
         token_response = requests.post(GOOGLE_TOKEN_URL, data=token_data)
         token_response.raise_for_status()
@@ -220,7 +228,9 @@ async def google_callback(
         logger.info(f"Generated access token for user: {user_info['email']}")
 
         # Redirect to frontend with token
-        redirect_url = f"{settings.FRONTEND_HOST}/login/google/callback?token={access_token}"
+        redirect_url = (
+            f"{settings.FRONTEND_HOST}/login/google/callback?token={access_token}"
+        )
         logger.info(f"Redirecting to frontend: {redirect_url}")
         return RedirectResponse(redirect_url)
 

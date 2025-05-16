@@ -19,7 +19,9 @@ function CallbackContent() {
     // 处理错误情况
     if (error) {
       console.error("OAuth error:", error, errorMessage);
-      router.push(`/login?error=${error}&message=${errorMessage || "Authentication failed"}`);
+      router.push(
+        `/login?error=${error}&message=${errorMessage || "Authentication failed"}`,
+      );
       return;
     }
 
@@ -34,11 +36,11 @@ function CallbackContent() {
     try {
       console.log("Setting token from Google login");
       login(token);
-      
+
       // 添加延迟以确保token被设置和处理
       setTimeout(() => {
         console.log("Navigating to dashboard after Google login");
-        router.push('/dashboard');
+        router.push("/dashboard");
       }, 500);
     } catch (error) {
       console.error("Error processing Google login token:", error);

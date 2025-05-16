@@ -10,7 +10,7 @@ import { redirect } from "next/navigation";
 export async function initiateGoogleLogin() {
   // Get the backend API URL from environment variables
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-  
+
   // Redirect to the backend Google OAuth endpoint
   redirect(`${apiUrl}/api/v1/login/google`);
 }
@@ -41,4 +41,4 @@ export async function processGoogleAuthToken(token: string) {
     console.error("Error processing Google auth token:", error);
     redirect("/login?error=token_processing_error");
   }
-} 
+}

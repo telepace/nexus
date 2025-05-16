@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react"
 import { Storage } from "@plasmohq/storage"
 import type { UserSettings, UserProfile } from "~/utils/interfaces"
 import { logout } from "~/utils/api"
-import { Button } from "~/components/ui/button"
+import Button from "~/components/ui/button"
 
 const OptionsPage = () => {
   const [settings, setSettings] = useState<UserSettings>({

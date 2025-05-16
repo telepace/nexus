@@ -19,11 +19,7 @@ export function Alert({
 
   return (
     <div
-      className={cn(
-        "p-4 rounded-md mb-4",
-        variantClasses[variant],
-        className
-      )}
+      className={cn("p-4 rounded-md mb-4", variantClasses[variant], className)}
       {...props}
     />
   );
@@ -41,4 +37,4 @@ export function AlertDescription({
   ...props
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return <p className={cn("text-sm", className)} {...props} />;
-} 
+}

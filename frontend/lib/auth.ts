@@ -33,45 +33,52 @@ export function useAuth(): AuthContextType {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const token = getCookie("accessToken");
-      
+
       console.log("[Auth] 尝试获取accessToken:", token ? "存在" : "不存在");
-      
+
       if (!token) {
         console.log("[Auth] No access token found");
         setIsLoading(false);
         return;
       }
-      
+
       // 添加调试信息，解析JWT令牌（不验证签名）
       try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        
+        const base64Url = token.split(".")[1];
+        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split("")
+            .map(function (c) {
+              return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+            })
+            .join(""),
+        );
+
         console.log("[Auth] JWT Payload:", JSON.parse(jsonPayload));
       } catch (e) {
         console.error("[Auth] Failed to decode JWT:", e);
       }
-      
+
       // In a real implementation, you would fetch from your API
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
       console.log(`[Auth] Fetching user data from ${apiUrl}/api/v1/users/me`);
-      
+
       const response = await fetch(`${apiUrl}/api/v1/users/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        credentials: 'include', // 包含cookies
+        credentials: "include", // 包含cookies
       });
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error("[Auth] API Error:", response.status, errorText);
-        throw new Error(`Failed to fetch user data: ${response.status} ${errorText}`);
+        throw new Error(
+          `Failed to fetch user data: ${response.status} ${errorText}`,
+        );
       }
 
       const userData = await response.json();
@@ -93,7 +100,7 @@ export function useAuth(): AuthContextType {
       if (!token) {
         throw new Error("No access token found");
       }
-      
+
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
       const response = await fetch(`${apiUrl}/api/v1/users/me`, {
         method: "PATCH",
@@ -102,12 +109,14 @@ export function useAuth(): AuthContextType {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(userData),
-        credentials: 'include', // 包含cookies
+        credentials: "include", // 包含cookies
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Failed to update user data: ${response.status} ${errorText}`);
+        throw new Error(
+          `Failed to update user data: ${response.status} ${errorText}`,
+        );
       }
 
       const updatedUser = await response.json();
@@ -124,24 +133,27 @@ export function useAuth(): AuthContextType {
   const login = (token: string) => {
     try {
       console.log("[Auth] Setting access token in cookie");
-      
+
       // 确保token有效
-      if (!token || token.trim() === '') {
+      if (!token || token.trim() === "") {
         console.error("[Auth] Invalid token provided");
         return;
       }
-      
+
       // 设置cookie，添加更多安全选项
       const cookieValue = `accessToken=${token};path=/;max-age=${60 * 60 * 24 * 7}`;
       document.cookie = cookieValue;
-      
+
       // 验证cookie是否设置成功
       const savedToken = getCookie("accessToken");
-      console.log("[Auth] Token saved in cookie:", savedToken ? "成功" : "失败");
-      
+      console.log(
+        "[Auth] Token saved in cookie:",
+        savedToken ? "成功" : "失败",
+      );
+
       // 打印所有的cookie以便调试
       console.log("[Auth] Current cookies:", document.cookie);
-      
+
       // Fetch user data after login
       fetchUser();
     } catch (error) {
@@ -190,17 +202,19 @@ function getCookie(name: string): string | undefined {
 
   console.log("[Auth] getCookie: 搜索cookie:", name);
   console.log("[Auth] getCookie: 所有cookie:", document.cookie);
-  
-  const cookies = document.cookie.split(';');
+
+  const cookies = document.cookie.split(";");
   for (let i = 0; i < cookies.length; i++) {
     const cookie = cookies[i].trim();
-    if (cookie.startsWith(name + '=')) {
+    if (cookie.startsWith(name + "=")) {
       const value = cookie.substring(name.length + 1);
-      console.log(`[Auth] getCookie: 找到 ${name} = ${value.substring(0, 10)}...`);
+      console.log(
+        `[Auth] getCookie: 找到 ${name} = ${value.substring(0, 10)}...`,
+      );
       return value;
     }
   }
-  
+
   console.log(`[Auth] getCookie: ${name} 未找到`);
   return undefined;
 }
