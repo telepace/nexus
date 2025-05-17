@@ -16,6 +16,11 @@ import { fetchItems } from "@/components/actions/items-action";
 import { DeleteButton } from "./deleteButton";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { getAuthState } from "@/lib/server-auth-bridge";
+import { Suspense } from "react";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 // 定义Item类型
 interface Item {
@@ -26,108 +31,190 @@ interface Item {
   owner_id?: string;
 }
 
-// 定义可能的API响应类型
+// 定义API错误响应类型
 interface ApiErrorResponse {
+  error?: string | null;
   message?: string;
-  error?: string;
-  meta?: {
-    message?: string;
-    [key: string]: unknown;
-  };
-  [key: string]: unknown;
+  meta?: { message?: string } | null;
+  status?: number;
 }
 
+// Dashboard 顶级页面组件，增加错误边界和Suspense
 export default async function DashboardPage() {
-  const itemsResponse = await fetchItems();
-
-  // 处理错误或空结果
-  let itemsList: Item[] = [];
-  let errorMessage: string | null = null;
-
-  if (Array.isArray(itemsResponse)) {
-    itemsList = itemsResponse;
-    console.log("Dashboard received items:", itemsList.length);
-  } else if (itemsResponse && typeof itemsResponse === "object") {
-    // 处理可能的错误响应格式
-    const errorResponse = itemsResponse as ApiErrorResponse;
-    if ("message" in errorResponse) {
-      errorMessage = String(errorResponse.message);
-    } else if ("error" in errorResponse) {
-      errorMessage = String(errorResponse.error);
-    } else if (errorResponse.meta && "message" in errorResponse.meta) {
-      errorMessage = String(errorResponse.meta.message);
-    }
-    console.error("Dashboard received error:", errorMessage);
-  }
-
-  return (
-    <div>
-      <h2 className="text-2xl font-semibold mb-6">Welcome to your Dashboard</h2>
-      <p className="text-lg mb-6">
-        Here, you can see the overview of your items and manage them.
-      </p>
-
-      <div className="mb-6">
-        <Link href="/dashboard/add-item">
-          <Button variant="outline" className="text-lg px-4 py-2">
-            Add New Item
-          </Button>
-        </Link>
+  // 获取认证状态
+  const authState = await getAuthState();
+  
+  // 如果未认证，将在 getAuthState 内部重定向到登录页
+  if (!authState.isAuthenticated) {
+    return (
+      <div className="container py-10">
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>认证错误</AlertTitle>
+          <AlertDescription>未登录或会话已过期，请登录</AlertDescription>
+        </Alert>
+        <Button asChild>
+          <Link href="/login">去登录</Link>
+        </Button>
       </div>
-
-      {errorMessage && (
-        <div className="p-4 mb-6 bg-red-50 border border-red-200 rounded-md text-red-600">
-          {errorMessage}
+    );
+  }
+  
+  return (
+    <ErrorBoundary
+      fallback={
+        <div className="container py-10">
+          <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>页面加载错误</AlertTitle>
+            <AlertDescription>
+              加载数据时出现意外错误，请稍后再试或联系管理员
+            </AlertDescription>
+          </Alert>
+          <Button asChild>
+            <Link href="/dashboard/add-item">添加物品</Link>
+          </Button>
         </div>
-      )}
-
-      <section className="p-6 bg-white rounded-lg shadow-lg mt-8">
-        <h2 className="text-xl font-semibold mb-4">Items</h2>
-        {/* 调试信息 */}
-        {itemsList.length > 0 && (
-          <div className="mb-4 p-2 bg-gray-100 text-xs overflow-auto max-h-24">
-            <pre>数据示例: {JSON.stringify(itemsList[0], null, 2)}</pre>
+      }
+    >
+      <Suspense
+        fallback={
+          <div className="container py-10">
+            <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+            <div className="animate-pulse">
+              <div className="rounded-md bg-gray-200 h-8 w-24 mb-4"></div>
+              <div className="rounded-md bg-gray-200 h-4 w-full mb-2"></div>
+              <div className="rounded-md bg-gray-200 h-4 w-full mb-2"></div>
+              <div className="rounded-md bg-gray-200 h-4 w-3/4 mb-2"></div>
+            </div>
           </div>
-        )}
-        <Table className="min-w-full text-sm">
+        }
+      >
+        <DashboardContent />
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+
+// 实际内容组件，可能会挂起(Suspend)
+async function DashboardContent() {
+  // 使用唯一ID标识这次渲染，帮助调试
+  const renderID = Math.random().toString(36).substring(7);
+  console.log(`[dashboard-${renderID}] 开始渲染 Dashboard 内容`);
+  
+  try {
+    // 获取物品数据
+    const itemsResponse = await fetchItems();
+
+    // 处理错误或空结果
+    let itemsList: Item[] = [];
+    let errorMessage: string | null = null;
+    let errorStatus: number | null = null;
+
+    if (Array.isArray(itemsResponse)) {
+      itemsList = itemsResponse;
+      console.log(`[dashboard-${renderID}] 成功获取 ${itemsList.length} 个物品`);
+    } else if (itemsResponse && typeof itemsResponse === "object") {
+      // 处理可能的错误响应格式
+      const errorResponse = itemsResponse as ApiErrorResponse;
+      
+      if (errorResponse.error) {
+        errorMessage = String(errorResponse.error);
+      } else if (errorResponse.message) {
+        errorMessage = String(errorResponse.message);
+      } else if (errorResponse.meta && errorResponse.meta.message) {
+        errorMessage = String(errorResponse.meta.message);
+      } else {
+        errorMessage = "未知错误";
+      }
+      
+      errorStatus = errorResponse.status || 500;
+      console.error(`[dashboard-${renderID}] 获取物品出错:`, errorMessage, "状态:", errorStatus);
+    }
+
+    // 当有错误时显示错误信息
+    if (errorMessage) {
+      return (
+        <div className="container py-10">
+          <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>错误 {errorStatus}</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+          <Button asChild>
+            <Link href="/dashboard/add-item">添加物品</Link>
+          </Button>
+        </div>
+      );
+    }
+
+    // 没有错误但也没有数据
+    if (itemsList.length === 0) {
+      return (
+        <div className="container py-10">
+          <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+          <div className="bg-muted p-8 text-center rounded-lg mb-6">
+            <h2 className="text-xl mb-2">暂无物品</h2>
+            <p className="text-muted-foreground mb-4">您当前没有任何物品，请添加一个新物品开始使用。</p>
+            <Button asChild>
+              <Link href="/dashboard/add-item">添加物品</Link>
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    // 正常情况：显示物品列表
+    console.log(`[dashboard-${renderID}] 渲染完成，显示 ${itemsList.length} 个物品`);
+    return (
+      <div className="container py-10">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <Button asChild>
+            <Link href="/dashboard/add-item">添加物品</Link>
+          </Button>
+        </div>
+
+        <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[120px]">Title</TableHead>
+              <TableHead>Title</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead className="text-center">Actions</TableHead>
+              <TableHead className="w-24">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {itemsList.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center">
-                  No results.
+            {itemsList.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell>{item.title}</TableCell>
+                <TableCell>{item.description || "No description"}</TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        ⋯
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem>
+                        <Link href={`/dashboard/edit/${item.id}`}>Edit</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <DeleteButton itemId={item.id} />
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ) : (
-              itemsList.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell>{item.title}</TableCell>
-                  <TableCell>{item.description ?? ""}</TableCell>
-                  <TableCell className="text-center">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="cursor-pointer p-1 text-gray-600 hover:text-gray-800">
-                        <span className="text-lg font-semibold">...</span>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="p-2">
-                        <DropdownMenuItem disabled={true}>
-                          Edit
-                        </DropdownMenuItem>
-                        <DeleteButton itemId={item.id} />
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
+            ))}
           </TableBody>
         </Table>
-      </section>
-    </div>
-  );
+      </div>
+    );
+  } catch (error) {
+    console.error(`[dashboard-${renderID}] 渲染过程出错:`, error);
+    throw error; // 让错误边界处理
+  }
 }

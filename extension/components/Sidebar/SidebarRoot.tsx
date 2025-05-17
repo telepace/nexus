@@ -7,7 +7,7 @@ import ChatContainer from './ChatContainer';
 import InputArea from './InputArea';
 import FooterArea from './FooterArea';
 
-const SidebarRoot: React.FC<SidebarRootProps> = ({ initialOpen = true }) => {
+const SidebarRoot: React.FC<SidebarRootProps> = ({ initialOpen = true, isNativeSidePanel = false }) => {
   const [isOpen, setIsOpen] = useState(initialOpen);
 
   // 侧边栏最小化/最大化处理
@@ -20,6 +20,22 @@ const SidebarRoot: React.FC<SidebarRootProps> = ({ initialOpen = true }) => {
     setIsOpen(true);
   };
 
+  // 原生侧边栏模式下始终以全尺寸渲染
+  if (isNativeSidePanel) {
+    return (
+      <SidebarProvider>
+        <div className="h-screen w-full bg-background flex flex-col" data-testid="native-sidebar-root">
+          <SidebarHeader isNativeSidePanel={true} data-testid="sidebar-header" />
+          <QuickActionPanel data-testid="quick-action-panel" />
+          <ChatContainer data-testid="chat-container" />
+          <InputArea data-testid="input-area" />
+          <FooterArea data-testid="footer-area" />
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  // 传统DOM注入模式
   if (!isOpen) {
     return (
       <div 

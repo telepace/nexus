@@ -18,12 +18,16 @@ export interface ClippedItem {
 }
 
 export interface UserSettings {
-  theme: 'light' | 'dark' | 'system';
+  theme: 'light' | 'dark' | 'system' | 'elmo';
   defaultClipAction: 'save' | 'save-and-summarize' | 'save-and-highlight';
   openSidebarOnClip: boolean;
   autoSummarize: boolean;
   defaultLanguage: string;
   showBadgeCounter: boolean;
+  useBrowserLanguage: boolean;
+  keepSidePanelOpen: boolean;
+  promptShortcuts: { shortcut: string; prompt: string }[];
+  keyboardShortcut: string;
 }
 
 export interface UserProfile {

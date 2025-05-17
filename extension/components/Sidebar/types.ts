@@ -50,11 +50,13 @@ export interface SidebarContext {
 
 export interface SidebarRootProps {
   initialOpen?: boolean;
+  isNativeSidePanel?: boolean;
 }
 
 export interface SidebarHeaderProps {
   onMinimize?: () => void;
   connectionStatus?: ConnectionStatus;
+  isNativeSidePanel?: boolean;
 }
 
 export interface QuickActionPanelProps {

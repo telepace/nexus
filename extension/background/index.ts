@@ -4,6 +4,12 @@ import type { WebHistory, UserSettings } from "~/utils/interfaces"
 import { syncOfflineClippings } from "../utils/api"
 import { LOG_PREFIX, OFFLINE_CONFIG } from "../utils/config"
 
+// 检查是否支持chrome.sidePanel API
+const isSidePanelSupported = () => {
+  return typeof chrome !== 'undefined' && 
+         typeof chrome.sidePanel !== 'undefined';
+}
+
 // 初始化设置
 const initializeSettings = async () => {
   const storage = new Storage({ area: "local" })
@@ -16,9 +22,21 @@ const initializeSettings = async () => {
       openSidebarOnClip: false,
       autoSummarize: false,
       defaultLanguage: "en",
-      showBadgeCounter: true
+      showBadgeCounter: true,
+      useBrowserLanguage: false,
+      keepSidePanelOpen: true,
+      promptShortcuts: [],
+      keyboardShortcut: "Alt+N"
     }
     await storage.set("userSettings", defaultSettings)
+  }
+  
+  // 设置侧边栏行为
+  if (isSidePanelSupported()) {
+    console.log(`${LOG_PREFIX} 设置侧边栏行为`);
+    chrome.sidePanel.setPanelBehavior({ 
+      openPanelOnActionClick: true 
+    }).catch(err => console.error(`${LOG_PREFIX} 设置侧边栏行为失败:`, err));
   }
 }
 
@@ -71,55 +89,133 @@ const initializeContextMenu = () => {
   })
 }
 
+// 安装和更新时的处理
+chrome.runtime.onInstalled.addListener(async () => {
+  await initializeSettings();
+  initializeContextMenu();
+  updateBadgeCount();
+});
+
+// 监听扩展图标点击
+chrome.action.onClicked.addListener((tab) => {
+  if (!tab?.id) return;
+  
+  // 优先使用侧边栏API
+  if (isSidePanelSupported()) {
+    chrome.sidePanel.open({ tabId: tab.id })
+      .catch(err => {
+        console.error(`${LOG_PREFIX} 打开侧边栏失败:`, err);
+        // 失败时回退到传统方式
+        sendMessageToContentScript(tab.id, { action: "toggleSidebar", show: true });
+      });
+  } else {
+    // 不支持侧边栏API时使用传统方式
+    sendMessageToContentScript(tab.id, { action: "toggleSidebar", show: true });
+  }
+});
+
+// 发送消息到内容脚本，包含错误处理和注入修复脚本的逻辑
+const sendMessageToContentScript = (tabId: number, message: any) => {
+  chrome.tabs.sendMessage(tabId, message, (response) => {
+    if (chrome.runtime.lastError) {
+      console.warn(`${LOG_PREFIX} 发送消息错误:`, chrome.runtime.lastError);
+      
+      // 尝试注入修复脚本
+      chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        files: ["sidebar-fix.js"]
+      }).then(() => {
+        console.log(`${LOG_PREFIX} 侧边栏修复脚本已注入`);
+        
+        // 重新发送消息
+        setTimeout(() => {
+          chrome.tabs.sendMessage(tabId, message);
+        }, 200);
+      }).catch(err => {
+        console.error(`${LOG_PREFIX} 注入修复脚本失败:`, err);
+      });
+    }
+  });
+};
+
 // 处理右键菜单点击
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (!tab?.id) return
+  if (!tab?.id) return;
   
-  switch (info.menuItemId) {
+  const action = String(info.menuItemId);
+  const text = info.selectionText || "";
+  
+  if (isSidePanelSupported()) {
+    // 使用侧边栏API
+    chrome.sidePanel.open({ tabId: tab.id })
+      .then(() => {
+        // 通过运行时消息发送到侧边栏
+        chrome.runtime.sendMessage({ 
+          action: action,
+          data: text
+        });
+      })
+      .catch(err => {
+        console.error(`${LOG_PREFIX} 打开侧边栏失败:`, err);
+        // 失败时回退到传统方式，根据不同菜单项使用不同的消息格式
+        handleMenuActionFallback(tab.id, action, text);
+      });
+  } else {
+    // 使用传统方式
+    handleMenuActionFallback(tab.id, action, text);
+  }
+});
+
+// 处理不同菜单项的传统方式回退
+function handleMenuActionFallback(tabId: number, action: string, text: string) {
+  switch (action) {
     case "nexus-explain-selection":
-      chrome.tabs.sendMessage(tab.id, { 
+      sendMessageToContentScript(tabId, { 
         action: "processSelection", 
         type: "explanation", 
-        text: info.selectionText 
-      })
-      break
+        text 
+      });
+      break;
       
     case "nexus-summarize-selection":
-      chrome.tabs.sendMessage(tab.id, { 
+      sendMessageToContentScript(tabId, { 
         action: "processSelection", 
         type: "summary", 
-        text: info.selectionText 
-      })
-      break
+        text 
+      });
+      break;
       
     case "nexus-translate-selection":
-      chrome.tabs.sendMessage(tab.id, { 
+      sendMessageToContentScript(tabId, { 
         action: "processSelection", 
         type: "translation", 
-        text: info.selectionText 
-      })
-      break
+        text 
+      });
+      break;
       
     case "nexus-save-selection":
-      chrome.tabs.sendMessage(tab.id, { 
+      sendMessageToContentScript(tabId, { 
         action: "saveSelection", 
-        text: info.selectionText 
-      })
-      break
+        text 
+      });
+      break;
       
     case "nexus-clip-page":
-      chrome.tabs.sendMessage(tab.id, { action: "clipPage" })
-      break
+      sendMessageToContentScript(tabId, { action: "clipPage" });
+      break;
       
     case "nexus-summarize-page":
-      chrome.tabs.sendMessage(tab.id, { action: "summarizePage" })
-      break
+      sendMessageToContentScript(tabId, { action: "summarizePage" });
+      break;
       
     case "nexus-open-app":
-      chrome.tabs.create({ url: "https://app.nexus.com" })
-      break
+      chrome.tabs.create({ url: "https://app.nexus.com" });
+      break;
+      
+    default:
+      console.warn(`${LOG_PREFIX} 未识别的菜单项:`, action);
   }
-})
+}
 
 // 更新徽章计数
 async function updateBadgeCount() {
@@ -241,24 +337,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   // 返回true表示异步处理
   return true
-})
-
-// 处理安装/更新事件
-chrome.runtime.onInstalled.addListener(details => {
-  if (details.reason === "install") {
-    console.log(`${LOG_PREFIX} 插件已安装`)
-    // 可以在这里执行首次安装的操作
-    
-    // 打开欢迎页面
-    chrome.tabs.create({
-      url: chrome.runtime.getURL("pages/welcome/index.html")
-    }).catch(error => {
-      console.error(`${LOG_PREFIX} 打开欢迎页面失败:`, error)
-    })
-  } else if (details.reason === "update") {
-    console.log(`${LOG_PREFIX} 插件已更新到版本 ${chrome.runtime.getManifest().version}`)
-    // 可以在这里执行更新后的操作
-  }
 })
 
 // 定期同步离线数据

@@ -6,14 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Bell, Mail, MessageSquare, AlertTriangle } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 interface NotificationSetting {
@@ -103,7 +96,7 @@ export function NotificationsForm() {
         description: "Your notification preferences have been saved.",
         variant: "default",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Update failed",
         description: "Failed to save notification settings. Please try again.",
@@ -126,7 +119,7 @@ export function NotificationsForm() {
               Email Notifications
             </h3>
             <p className="text-muted-foreground mb-4">
-              Configure which emails you'd like to receive from us.
+              Configure which emails you&apos;d like to receive from us.
             </p>
 
             <div className="space-y-4">

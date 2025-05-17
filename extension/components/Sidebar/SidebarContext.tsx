@@ -79,6 +79,80 @@ export const SidebarProvider: React.FC<{ children: ReactNode }> = ({ children })
     loadCustomPrompts();
   }, []);
 
+  // 监听来自background script的消息
+  useEffect(() => {
+    const handleMessage = (message, sender, sendResponse) => {
+      console.log("[Nexus SidePanel] Received message:", message);
+      
+      if (message.action) {
+        switch (message.action) {
+          case "nexus-explain-selection":
+          case "nexus-summarize-selection":
+            // 处理选中文本
+            if (message.data) {
+              sendMessage(`请${message.action === "nexus-explain-selection" ? "解释" : "总结"}以下内容：${message.data}`);
+            }
+            break;
+          case "nexus-translate-selection":
+            // 处理翻译请求
+            if (message.data) {
+              sendMessage(`请将以下内容翻译成中文：${message.data}`);
+            }
+            break;
+          case "nexus-save-selection":
+            // 保存选中内容
+            if (message.data) {
+              const systemMessage: Message = {
+                id: uuidv4(),
+                type: 'system',
+                content: '已保存选中内容。',
+                timestamp: new Date()
+              };
+              setMessages(prev => [...prev, systemMessage]);
+            }
+            break;
+          case "nexus-clip-page":
+          case "clipPage":
+            // 剪藏页面
+            const clipMessage: Message = {
+              id: uuidv4(),
+              type: 'system',
+              content: '已将当前页面添加到剪藏列表。',
+              timestamp: new Date()
+            };
+            setMessages(prev => [...prev, clipMessage]);
+            break;
+          case "nexus-summarize-page":
+          case "summarizePage":
+            // 总结页面
+            sendMessage('请总结当前页面的内容');
+            break;
+          default:
+            console.log("[Nexus SidePanel] 未处理的消息类型:", message.action);
+        }
+        
+        // 回复消息发送成功
+        if (sendResponse) {
+          sendResponse({ success: true });
+        }
+      }
+      
+      return true; // 保持消息通道开放
+    };
+
+    // 添加消息监听
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+      chrome.runtime.onMessage.addListener(handleMessage);
+    }
+    
+    // 清理函数
+    return () => {
+      if (typeof chrome !== 'undefined' && chrome.runtime) {
+        chrome.runtime.onMessage.removeListener(handleMessage);
+      }
+    };
+  }, []);
+
   // 发送消息
   const sendMessage = async (content: string) => {
     if (!content.trim()) return;

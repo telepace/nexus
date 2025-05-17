@@ -12,12 +12,26 @@ const OptionsPage = () => {
     openSidebarOnClip: false,
     autoSummarize: false,
     defaultLanguage: "en",
-    showBadgeCounter: true
+    showBadgeCounter: true,
+    useBrowserLanguage: false,
+    keepSidePanelOpen: false,
+    promptShortcuts: [
+      { shortcut: '/insight', prompt: 'Get insight from internet' },
+      { shortcut: '/summarize', prompt: 'Summarize the context' },
+      { shortcut: '/rephrase', prompt: 'Rephrase the sentence' },
+      { shortcut: '/translate', prompt: 'Translate to local language' }
+    ],
+    keyboardShortcut: '⇧⌘E'
   })
   
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  
+  // 快捷提示相关状态
+  const [newShortcut, setNewShortcut] = useState({ shortcut: "", prompt: "" })
+  const [editingShortcutIndex, setEditingShortcutIndex] = useState<number | null>(null)
+  const [isAddingShortcut, setIsAddingShortcut] = useState(false)
   
   // 获取设置和用户信息
   useEffect(() => {
@@ -78,6 +92,69 @@ const OptionsPage = () => {
         [name]: value
       }))
     }
+  }
+  
+  // 快捷提示相关函数
+  const handleAddShortcut = () => {
+    setIsAddingShortcut(true)
+    setNewShortcut({ shortcut: "", prompt: "" })
+  }
+  
+  const handleCancelAddShortcut = () => {
+    setIsAddingShortcut(false)
+    setEditingShortcutIndex(null)
+    setNewShortcut({ shortcut: "", prompt: "" })
+  }
+  
+  const handleSaveShortcut = () => {
+    if (!newShortcut.shortcut || !newShortcut.prompt) {
+      return
+    }
+    
+    if (editingShortcutIndex !== null) {
+      // 编辑现有快捷提示
+      const updatedShortcuts = [...settings.promptShortcuts]
+      updatedShortcuts[editingShortcutIndex] = newShortcut
+      
+      setSettings(prev => ({
+        ...prev,
+        promptShortcuts: updatedShortcuts
+      }))
+      
+      setEditingShortcutIndex(null)
+    } else {
+      // 添加新快捷提示
+      setSettings(prev => ({
+        ...prev,
+        promptShortcuts: [...prev.promptShortcuts, newShortcut]
+      }))
+    }
+    
+    setIsAddingShortcut(false)
+    setNewShortcut({ shortcut: "", prompt: "" })
+  }
+  
+  const handleEditShortcut = (index: number) => {
+    setEditingShortcutIndex(index)
+    setNewShortcut(settings.promptShortcuts[index])
+    setIsAddingShortcut(true)
+  }
+  
+  const handleDeleteShortcut = (index: number) => {
+    const updatedShortcuts = settings.promptShortcuts.filter((_, i) => i !== index)
+    
+    setSettings(prev => ({
+      ...prev,
+      promptShortcuts: updatedShortcuts
+    }))
+  }
+  
+  const handleShortcutInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setNewShortcut(prev => ({
+      ...prev,
+      [name]: value
+    }))
   }
   
   // 处理登出
@@ -153,7 +230,9 @@ const OptionsPage = () => {
             <option value="light">亮色</option>
             <option value="dark">暗色</option>
             <option value="system">跟随系统</option>
+            <option value="elmo">Elmo 主题</option>
           </select>
+          <p className="text-sm text-muted-foreground mt-1">Change the elmo theme</p>
         </div>
         
         {/* 默认语言 */}
@@ -164,10 +243,27 @@ const OptionsPage = () => {
             value={settings.defaultLanguage}
             onChange={handleChange}
             className="w-full p-2 border rounded"
+            disabled={settings.useBrowserLanguage}
           >
             <option value="zh">中文</option>
             <option value="en">英文</option>
           </select>
+          <p className="text-sm text-muted-foreground mt-1">Will answer in this language when possible</p>
+          
+          {/* 使用浏览器语言 */}
+          <div className="flex items-center mt-2">
+            <input
+              type="checkbox"
+              id="useBrowserLanguage"
+              name="useBrowserLanguage"
+              checked={settings.useBrowserLanguage}
+              onChange={handleChange}
+              className="mr-2"
+            />
+            <label htmlFor="useBrowserLanguage">
+              Use browser language
+            </label>
+          </div>
         </div>
         
         {/* 显示徽章计数器 */}
@@ -183,6 +279,22 @@ const OptionsPage = () => {
           <label htmlFor="showBadgeCounter">
             显示徽章计数器 (显示待处理项数量)
           </label>
+        </div>
+        
+        {/* 保持侧边栏打开 */}
+        <div className="flex items-center mb-4">
+          <input
+            type="checkbox"
+            id="keepSidePanelOpen"
+            name="keepSidePanelOpen"
+            checked={settings.keepSidePanelOpen}
+            onChange={handleChange}
+            className="mr-2"
+          />
+          <label htmlFor="keepSidePanelOpen">
+            Keep side panel open
+          </label>
+          <p className="text-sm text-muted-foreground ml-2">The side panel remains open when navigating between tabs</p>
         </div>
       </div>
       
@@ -233,6 +345,124 @@ const OptionsPage = () => {
           <label htmlFor="autoSummarize">
             自动为剪藏的内容生成摘要 (可能会增加API使用量)
           </label>
+        </div>
+      </div>
+      
+      {/* 快捷提示设置 */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">Prompt shortcuts</h2>
+        
+        <div className="border rounded-md p-4 mb-4">
+          <table className="w-full mb-4">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left pb-2 w-1/3">Shortcut</th>
+                <th className="text-left pb-2 w-2/3">Prompt</th>
+                <th className="text-right pb-2">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {settings.promptShortcuts.map((item, index) => (
+                <tr key={index} className="border-b">
+                  <td className="py-2 pr-2">{item.shortcut}</td>
+                  <td className="py-2 pr-2">{item.prompt}</td>
+                  <td className="py-2 text-right">
+                    <button 
+                      onClick={() => handleEditShortcut(index)}
+                      className="text-blue-500 mr-2"
+                    >
+                      编辑
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteShortcut(index)}
+                      className="text-red-500"
+                    >
+                      删除
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {settings.promptShortcuts.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="py-4 text-center text-muted-foreground">
+                    没有快捷提示
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          
+          {isAddingShortcut ? (
+            <div className="mt-4 border rounded p-3">
+              <div className="mb-3">
+                <label className="block mb-1 text-sm font-medium">
+                  Shortcut
+                </label>
+                <input
+                  type="text"
+                  name="shortcut"
+                  value={newShortcut.shortcut}
+                  onChange={handleShortcutInputChange}
+                  placeholder="例如: /summarize"
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              
+              <div className="mb-3">
+                <label className="block mb-1 text-sm font-medium">
+                  Prompt
+                </label>
+                <input
+                  type="text"
+                  name="prompt"
+                  value={newShortcut.prompt}
+                  onChange={handleShortcutInputChange}
+                  placeholder="例如: Summarize the context"
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              
+              <div className="flex justify-end">
+                <button
+                  onClick={handleCancelAddShortcut}
+                  className="px-3 py-1 mr-2 border rounded"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleSaveShortcut}
+                  disabled={!newShortcut.shortcut || !newShortcut.prompt}
+                  className="px-3 py-1 bg-primary text-white rounded disabled:opacity-50"
+                >
+                  保存
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={handleAddShortcut}
+              className="mt-2 px-3 py-1 border rounded"
+            >
+              添加
+            </button>
+          )}
+        </div>
+      </div>
+      
+      {/* 键盘快捷键设置 */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">Keyboard shortcut</h2>
+        
+        <div className="flex items-center mb-4">
+          <span className="mr-2">Press</span>
+          <input
+            type="text"
+            name="keyboardShortcut"
+            value={settings.keyboardShortcut}
+            onChange={handleChange}
+            className="p-2 border rounded mx-2 w-24 text-center"
+          />
+          <span>to activate the extension</span>
         </div>
       </div>
       

@@ -62,10 +62,18 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
         token_data = TokenPayload(**payload)
-    except (InvalidTokenError, ValidationError):
+    except InvalidTokenError as e:
+        # Log the specific token error for better debugging
+        import logging
+        logging.getLogger("app").error(f"JWT Token Error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
+            detail=f"Could not validate credentials: {str(e)}",
+        )
+    except ValidationError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid token payload",
         )
 
     # Check if token is in blacklist

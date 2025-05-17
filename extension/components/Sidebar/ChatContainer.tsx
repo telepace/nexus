@@ -1,21 +1,9 @@
 import React from 'react';
 import { ChatContainerProps, MessageProps, SuggestionChipsProps } from './types';
 import { useSidebar } from './SidebarContext';
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import remarkGfm from 'remark-gfm';
-import remarkReact from 'remark-react';
 
 // 消息组件
 const Message: React.FC<MessageProps> = ({ message }) => {
-  // Markdown 解析器
-  const processor = unified()
-    .use(remarkParse)
-    .use(remarkGfm)
-    .use(remarkReact, {
-      createElement: React.createElement,
-    }) as any;
-
   // 根据消息类型设置不同的样式
   const getMessageStyle = () => {
     switch (message.type) {
@@ -30,7 +18,7 @@ const Message: React.FC<MessageProps> = ({ message }) => {
     }
   };
 
-  // 渲染消息内容，支持Markdown
+  // 渲染消息内容
   const renderContent = () => {
     if (message.isLoading) {
       return (
@@ -44,14 +32,9 @@ const Message: React.FC<MessageProps> = ({ message }) => {
         </div>
       );
     }
-
-    try {
-      // 解析Markdown内容
-      return processor.processSync(message.content).result;
-    } catch (error) {
-      console.error('Failed to parse markdown:', error);
-      return <p>{message.content}</p>;
-    }
+    
+    // 简单文本渲染，不使用markdown解析
+    return <p>{message.content}</p>;
   };
 
   // 获取发送者名称

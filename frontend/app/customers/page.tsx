@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,13 +10,22 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+interface DebugInfo {
+  status?: number;
+  data?: unknown;
+  error?: string;
+  token?: string;
+  fullCookies?: string;
+  timestamp?: string;
+}
+
 export default function CustomersPage() {
   const { user, isLoading, error, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [updateError, setUpdateError] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
 
   useEffect(() => {
     // For debugging purposes
@@ -115,7 +124,7 @@ export default function CustomersPage() {
       setTimeout(() => {
         setUpdateSuccess(false);
       }, 3000);
-    } catch (error) {
+    } catch {
       setUpdateError(true);
       setUpdateSuccess(false);
 

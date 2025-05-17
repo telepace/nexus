@@ -73,7 +73,7 @@ export default function CreateItemPage() {
           <SubmitButton text="Create Item" />
 
           {state?.message && (
-            <div className="mt-2 text-center text-sm text-red-500">
+            <div className={`mt-2 text-center text-sm ${state.success ? 'text-green-500' : 'text-red-500'}`}>
               <p>{state.message}</p>
             </div>
           )}

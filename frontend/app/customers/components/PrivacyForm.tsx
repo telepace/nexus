@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User } from "@/lib/auth";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
@@ -21,11 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { Shield, Trash2, Lock, Fingerprint, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
-interface PrivacyFormProps {
-  user: User;
-}
-
-export function PrivacyForm({ user }: PrivacyFormProps) {
+export function PrivacyForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
@@ -57,7 +52,7 @@ export function PrivacyForm({ user }: PrivacyFormProps) {
         description: "Your privacy preferences have been saved.",
         variant: "default",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Update failed",
         description: "Failed to save privacy settings. Please try again.",
@@ -80,7 +75,7 @@ export function PrivacyForm({ user }: PrivacyFormProps) {
         description: "Your account will be permanently deleted within 30 days.",
         variant: "default",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Deletion failed",
         description:

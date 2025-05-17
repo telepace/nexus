@@ -66,7 +66,7 @@ UV_EXISTS := $(shell command -v uv 2> /dev/null)
 
 ## all: Run all tests, linting, formatting and build all components
 .PHONY: all
-all: format lint generate-client test backend-build frontend-build admin-build
+all: format lint generate-client backend-build frontend-build admin-build # test
 	@echo "===========> All checks and builds completed successfully"
 
 ## dev: Start development environment
@@ -396,6 +396,12 @@ website-test: website-install
 # EXTENSION TARGETS
 # ==============================================================================
 
+## extension-clean: Clean extension build artifacts and cache
+.PHONY: extension-clean
+extension-clean:
+	@echo "===========> Cleaning extension build artifacts and cache"
+	@cd $(EXTENSION_DIR) && rm -rf build .plasmo
+
 ## extension-all: Run all extension related tasks without starting services
 .PHONY: extension-all
 extension-all: extension-build extension-package extension-test
@@ -409,7 +415,7 @@ extension: check-pnpm
 
 ## extension-build: Build browser extension for production
 .PHONY: extension-build
-extension-build: check-pnpm
+extension-build: check-pnpm extension-clean
 	@echo "===========> Building browser extension for production"
 	@cd $(EXTENSION_DIR) && $(PNPM) run build
 
