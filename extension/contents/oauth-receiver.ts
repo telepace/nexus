@@ -1,10 +1,20 @@
 import { Storage } from "@plasmohq/storage"
 import type { UserProfile } from "~/utils/interfaces"
+import { API_CONFIG } from "~/utils/config"
+
+const ALLOWED_OAUTH_DOMAINS = [
+  API_CONFIG.FRONTEND_URL.replace(/\/$/, ""),
+  API_CONFIG.API_URL.replace(/\/$/, "")
+]
 
 const handleOAuthCallback = async () => {
   try {
     // 检查URL是否包含授权回调参数
     const url = new URL(window.location.href)
+    // 只允许在配置的域名下处理
+    if (!ALLOWED_OAUTH_DOMAINS.some(domain => url.origin === domain)) {
+      return
+    }
     const token = url.searchParams.get("token")
     const userId = url.searchParams.get("user_id")
     const expiresIn = url.searchParams.get("expires_in")
@@ -57,7 +67,7 @@ if (document.readyState === "complete") {
   window.addEventListener("load", handleOAuthCallback)
 }
 
-// 指定匹配规则
+// 指定匹配规则（保留原有，实际处理时用变量判断）
 export const config = {
-  matches: ["https://app.nexus.com/oauth/callback*", "https://api.nexus.com/oauth/callback*"]
+  matches: ["<all_urls>"]
 } 

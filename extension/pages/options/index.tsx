@@ -3,6 +3,7 @@ import { Storage } from "@plasmohq/storage"
 import type { UserSettings, UserProfile } from "~/utils/interfaces"
 import { logout } from "~/utils/api"
 import Button from "~/components/ui/button"
+import { getFrontendUrl } from "~/utils/config"
 
 const OptionsPage = () => {
   const [settings, setSettings] = useState<UserSettings>({
@@ -91,7 +92,7 @@ const OptionsPage = () => {
   
   // 处理登录
   const handleLogin = () => {
-    chrome.tabs.create({ url: "https://app.nexus.com/login" })
+    chrome.tabs.create({ url: getFrontendUrl("/login") })
   }
   
   return (

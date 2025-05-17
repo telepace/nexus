@@ -1,6 +1,8 @@
 import { Storage } from "@plasmohq/storage"
 import { initQueues, initWebHistory, getRenderedHtml } from "~/utils/commons"
 import type { WebHistory, UserSettings } from "~/utils/interfaces"
+import { syncOfflineClippings } from "../utils/api"
+import { LOG_PREFIX, OFFLINE_CONFIG } from "../utils/config"
 
 // 初始化设置
 const initializeSettings = async () => {
@@ -119,23 +121,20 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
 })
 
-// 更新徽章
-export const updateBadgeCount = async () => {
-  const storage = new Storage({ area: "local" })
-  const settings: UserSettings = await storage.get("userSettings")
-  
-  if (settings?.showBadgeCounter) {
-    const pendingItems = await storage.get("pendingClippings") || []
-    const count = pendingItems.length
+// 更新徽章计数
+async function updateBadgeCount() {
+  try {
+    const storage = await chrome.storage.local.get(OFFLINE_CONFIG.PENDING_ITEMS_KEY)
+    const pendingClippings = storage[OFFLINE_CONFIG.PENDING_ITEMS_KEY] || []
     
-    if (count > 0) {
-      chrome.action.setBadgeText({ text: count.toString() })
-      chrome.action.setBadgeBackgroundColor({ color: "#4285F4" })
+    if (pendingClippings.length > 0) {
+      chrome.action.setBadgeText({ text: pendingClippings.length.toString() })
+      chrome.action.setBadgeBackgroundColor({ color: "#4f46e5" })
     } else {
       chrome.action.setBadgeText({ text: "" })
     }
-  } else {
-    chrome.action.setBadgeText({ text: "" })
+  } catch (error) {
+    console.error(`${LOG_PREFIX} 获取待处理项失败:`, error)
   }
 }
 
@@ -224,19 +223,73 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
   }
 })
 
-// 监听安装或更新事件
-chrome.runtime.onInstalled.addListener(async ({ reason }) => {
-  if (reason === "install") {
-    await initializeSettings()
-    initializeContextMenu()
-    
-    // 打开欢迎页面
-    chrome.tabs.create({ url: "https://app.nexus.com/welcome" })
-  } else if (reason === "update") {
-    initializeContextMenu()
+// 注册消息监听器
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log(`${LOG_PREFIX} 收到消息:`, message)
+  
+  // 处理打开弹出窗口
+  if (message.action === "openPopup") {
+    chrome.action.openPopup()
+      .catch(error => console.error(`${LOG_PREFIX} 打开弹出窗口失败:`, error))
   }
   
+  // 处理更新徽章
+  if (message.action === "updateBadgeCount") {
+    updateBadgeCount()
+      .catch(error => console.error(`${LOG_PREFIX} 更新徽章失败:`, error))
+  }
+  
+  // 返回true表示异步处理
+  return true
+})
+
+// 处理安装/更新事件
+chrome.runtime.onInstalled.addListener(details => {
+  if (details.reason === "install") {
+    console.log(`${LOG_PREFIX} 插件已安装`)
+    // 可以在这里执行首次安装的操作
+    
+    // 打开欢迎页面
+    chrome.tabs.create({
+      url: chrome.runtime.getURL("pages/welcome/index.html")
+    }).catch(error => {
+      console.error(`${LOG_PREFIX} 打开欢迎页面失败:`, error)
+    })
+  } else if (details.reason === "update") {
+    console.log(`${LOG_PREFIX} 插件已更新到版本 ${chrome.runtime.getManifest().version}`)
+    // 可以在这里执行更新后的操作
+  }
+})
+
+// 定期同步离线数据
+async function scheduleSyncOfflineData() {
+  try {
+    const syncCount = await syncOfflineClippings()
+    if (syncCount > 0) {
+      console.log(`${LOG_PREFIX} 成功同步 ${syncCount} 个离线项`)
+    }
+  } catch (error) {
+    console.error(`${LOG_PREFIX} 同步离线数据失败:`, error)
+  }
+  
+  // 每10分钟尝试同步一次
+  setTimeout(scheduleSyncOfflineData, 10 * 60 * 1000)
+}
+
+// 网络状态变化监听
+chrome.runtime.onStartup.addListener(() => {
+  scheduleSyncOfflineData()
+    .catch(error => console.error(`${LOG_PREFIX} 启动同步离线数据失败:`, error))
+  
   updateBadgeCount()
+    .catch(error => console.error(`${LOG_PREFIX} 启动更新徽章失败:`, error))
+})
+
+// 监听在线状态变化
+window.addEventListener("online", () => {
+  console.log(`${LOG_PREFIX} 网络已恢复连接，开始同步数据`)
+  syncOfflineClippings()
+    .catch(error => console.error(`${LOG_PREFIX} 网络恢复同步失败:`, error))
 })
 
 // 定期更新徽章

@@ -6,8 +6,15 @@
   "author": "Nexus Team",
   "scripts": {
     "dev": "plasmo dev",
+    "dev:local": "cross-env PLASMO_PUBLIC_API_URL=http://localhost:8000 PLASMO_PUBLIC_FRONTEND_URL=http://localhost:3000 plasmo dev",
+    "dev:staging": "cross-env PLASMO_PUBLIC_API_URL=https://api-staging.nexus-app.com PLASMO_PUBLIC_FRONTEND_URL=https://staging.nexus-app.com plasmo dev",
     "build": "plasmo build",
+    "build:local": "cross-env PLASMO_PUBLIC_API_URL=http://localhost:8000 PLASMO_PUBLIC_FRONTEND_URL=http://localhost:3000 plasmo build",
+    "build:staging": "cross-env PLASMO_PUBLIC_API_URL=https://api-staging.nexus-app.com PLASMO_PUBLIC_FRONTEND_URL=https://staging.nexus-app.com plasmo build",
+    "build:prod": "cross-env PLASMO_PUBLIC_API_URL=https://api.nexus-app.com PLASMO_PUBLIC_FRONTEND_URL=https://app.nexus-app.com plasmo build",
     "package": "plasmo package",
+    "package:staging": "cross-env PLASMO_PUBLIC_API_URL=https://api-staging.nexus-app.com PLASMO_PUBLIC_FRONTEND_URL=https://staging.nexus-app.com plasmo package",
+    "package:prod": "cross-env PLASMO_PUBLIC_API_URL=https://api.nexus-app.com PLASMO_PUBLIC_FRONTEND_URL=https://app.nexus-app.com plasmo package",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
@@ -33,8 +40,13 @@
     "react-dom": "18.2.0",
     "react-hooks-global-state": "^2.1.0",
     "react-router-dom": "^6.26.1",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-react": "^10.0.0",
     "tailwind-merge": "^2.5.4",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "unified": "^11.0.5",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.27.1",
@@ -53,6 +65,8 @@
     "@types/react-dom": "18.2.18",
     "autoprefixer": "^10.4.20",
     "babel-jest": "^29.7.0",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.1",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "msw": "^2.1.7",
@@ -76,10 +90,21 @@
       "unlimitedStorage",
       "activeTab",
       "contextMenus",
-      "notifications"
+      "notifications",
+      "identity"
     ],
     "content_security_policy": {
       "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://* http://*;"
-    }
+    },
+    "web_accessible_resources": [
+      {
+        "resources": [
+          "oauth-callback.html"
+        ],
+        "matches": [
+          "<all_urls>"
+        ]
+      }
+    ]
   }
 }
