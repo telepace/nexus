@@ -4,6 +4,7 @@ interface ActionButtonsProps {
   onSummarize: () => void
   onExtractPoints: () => void
   onAskAI: () => void
+  onDiagnose?: () => void
   disabled?: boolean
 }
 
@@ -11,12 +12,13 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   onSummarize,
   onExtractPoints,
   onAskAI,
+  onDiagnose,
   disabled = false
 }) => {
   return (
     <div className="mb-4">
       <h3 className="text-sm font-medium text-gray-700 mb-2">AI工具</h3>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-4 gap-2">
         <button
           onClick={onSummarize}
           disabled={disabled}
@@ -55,6 +57,16 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           <span className="text-lg mb-1">💬</span>
           <span>对话</span>
         </button>
+        
+        {onDiagnose && (
+          <button
+            onClick={onDiagnose}
+            className="p-2 rounded-md text-xs font-medium flex flex-col items-center bg-yellow-50 text-yellow-700 hover:bg-yellow-100"
+          >
+            <span className="text-lg mb-1">🛠️</span>
+            <span>诊断</span>
+          </button>
+        )}
       </div>
     </div>
   )

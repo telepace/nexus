@@ -10,6 +10,28 @@ import ClipButton from "~/components/Popup/ClipButton"
 import ActionButtons from "~/components/Popup/ActionButtons"
 import RecentItems from "~/components/Popup/RecentItems"
 
+// 全局类型声明
+declare global {
+  interface Window {
+    __nexusSidebar?: {
+      toggle?: (show: boolean) => boolean;
+      create?: () => void;
+      summarize?: () => void;
+      extractPoints?: () => void;
+      openAIChat?: () => void;
+    };
+    __nexusSidebarFix?: {
+      show?: () => void;
+    };
+    __nexusTest?: {
+      testSidebarToggle?: () => void;
+      testSummarize?: () => void;
+      testExtractPoints?: () => void;
+      testAIChat?: () => void;
+    };
+  }
+}
+
 const PopupApp = () => {
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
@@ -363,6 +385,146 @@ const PopupApp = () => {
     }
   }
   
+  // 诊断侧边栏问题
+  const handleDiagnose = async () => {
+    if (!canAccessCurrentPage(currentUrl)) {
+      setError("无法在此页面使用扩展。请访问正常网页使用扩展功能。")
+      return
+    }
+    
+    try {
+      if (!currentTabId) {
+        throw new Error("无法确定当前标签页")
+      }
+      
+      // 注入诊断脚本
+      await chrome.scripting.executeScript({
+        target: { tabId: currentTabId },
+        files: ["sidebar-fix.js"]
+      })
+      
+      // 或者尝试注入修复脚本
+      await chrome.scripting.executeScript({
+        target: { tabId: currentTabId },
+        func: () => {
+          console.log('%c[Nexus] 开始诊断侧边栏', 'color: blue; font-weight: bold');
+          
+          // 尝试激活侧边栏
+          if (window.__nexusSidebarFix && typeof window.__nexusSidebarFix.show === 'function') {
+            console.log('[Nexus] 使用修复工具显示侧边栏');
+            window.__nexusSidebarFix.show();
+            return { fixed: 'used-fix-tool' };
+          }
+          
+          // 检查原始侧边栏对象
+          if (window.__nexusSidebar) {
+            console.log('[Nexus] 使用原始对象显示侧边栏');
+            
+            // 先尝试创建
+            if (typeof window.__nexusSidebar.create === 'function') {
+              try {
+                window.__nexusSidebar.create();
+              } catch (e) {
+                console.error('[Nexus] 创建侧边栏失败:', e);
+              }
+            }
+            
+            // 再尝试显示
+            if (typeof window.__nexusSidebar.toggle === 'function') {
+              try {
+                window.__nexusSidebar.toggle(true);
+              } catch (e) {
+                console.error('[Nexus] 显示侧边栏失败:', e);
+              }
+            }
+            
+            return { fixed: 'used-original' };
+          }
+          
+          // 直接尝试修复DOM
+          const sidebarElement = document.getElementById('nexus-sidebar');
+          if (sidebarElement) {
+            console.log('[Nexus] 直接修改DOM显示侧边栏');
+            sidebarElement.style.right = '0';
+            sidebarElement.classList.add('visible');
+            return { fixed: 'direct-dom' };
+          }
+          
+          // 都不行，创建一个临时的侧边栏
+          console.log('[Nexus] 创建临时侧边栏');
+          
+          // 注入样式
+          const style = document.createElement('style');
+          style.textContent = `
+            #nexus-temporary-sidebar {
+              position: fixed;
+              top: 0;
+              right: 0;
+              width: 400px;
+              height: 100vh;
+              z-index: 2147483647;
+              background: white;
+              box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
+              display: flex;
+              flex-direction: column;
+              font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            }
+          `;
+          document.head.appendChild(style);
+          
+          // 创建侧边栏
+          const sidebar = document.createElement('div');
+          sidebar.id = 'nexus-temporary-sidebar';
+          sidebar.innerHTML = `
+            <div style="display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee;">
+              <div style="font-weight: bold; font-size: 16px;">Nexus 诊断</div>
+              <button id="nexus-temp-close" style="background: none; border: none; font-size: 18px; cursor: pointer;">&times;</button>
+            </div>
+            <div style="padding: 20px; overflow-y: auto; flex: 1;">
+              <p style="color: #d97706; font-weight: bold;">发现侧边栏问题</p>
+              <p>原始侧边栏加载失败，已创建临时侧边栏。</p>
+              <div style="margin: 20px 0; padding: 10px; background: #f9fafb; border-radius: 4px;">
+                <p style="margin-top: 0; font-weight: bold;">诊断信息：</p>
+                <ul style="padding-left: 20px;">
+                  <li>window.__nexusSidebar: ${window.__nexusSidebar ? '存在' : '不存在'}</li>
+                  <li>nexus-sidebar元素: ${document.getElementById('nexus-sidebar') ? '存在' : '不存在'}</li>
+                </ul>
+              </div>
+              <p>请尝试以下解决方法：</p>
+              <ol style="padding-left: 20px;">
+                <li>刷新当前页面</li>
+                <li>重新安装扩展</li>
+                <li>检查浏览器控制台是否有错误信息</li>
+              </ol>
+              <div style="margin-top: 20px;">
+                <button id="nexus-temp-retry" style="background: #4f46e5; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">修复并重试</button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(sidebar);
+          
+          // 添加关闭按钮事件
+          document.getElementById('nexus-temp-close').addEventListener('click', () => {
+            sidebar.remove();
+          });
+          
+          // 添加重试按钮事件
+          document.getElementById('nexus-temp-retry').addEventListener('click', () => {
+            // 尝试修复并重新加载
+            window.location.reload();
+          });
+          
+          return { fixed: 'created-temporary' };
+        }
+      });
+      
+      window.close(); // 关闭弹出窗口
+    } catch (err) {
+      console.error("诊断错误:", err);
+      setError("诊断功能暂时不可用，请刷新页面后重试");
+    }
+  };
+  
   return (
     <div className="w-80 p-4 bg-background text-foreground">
       {error && (
@@ -392,12 +554,18 @@ const PopupApp = () => {
         onSummarize={handleSummarize}
         onExtractPoints={handleExtractPoints}
         onAskAI={handleAskAI}
+        onDiagnose={handleDiagnose}
         disabled={!canAccessCurrentPage(currentUrl)}
       />
       
       {/* 最近项目 */}
       {recentItems.length > 0 && (
-        <RecentItems items={recentItems} onItemClick={viewClipping} />
+        <RecentItems 
+          items={recentItems} 
+          onViewItem={viewClipping}
+          onViewAll={openMainApp}
+          onOpenSettings={openSettings}
+        />
       )}
       
       {/* 页脚操作 */}

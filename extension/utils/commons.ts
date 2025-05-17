@@ -18,10 +18,31 @@ export const getRenderedHtml = (): {
   }
 }
 
+interface TabHistoryItem {
+  pageContentMarkdown?: string;
+  url?: string;
+  title?: string;
+  entryTime: number;
+  referrerUrl?: string;
+  duration?: number;
+}
+
+interface LangChainDocument {
+  pageContent: string;
+  metadata: {
+    BrowsingSessionId: number;
+    VisitedWebPageURL: string;
+    VisitedWebPageTitle: string;
+    VisitedWebPageDateWithTimeInISOString: string;
+    VisitedWebPageReferrerURL: string;
+    VisitedWebPageVisitDurationInMilliseconds: number;
+  };
+}
+
 export const webhistoryToLangChainDocument = (
   tabsessionId: number,
-  tabHistory: any[]
-): any[] => {
+  tabHistory: TabHistoryItem[]
+): LangChainDocument[] => {
   if (!tabHistory || tabHistory.length === 0) {
     return []
   }
@@ -35,7 +56,7 @@ export const webhistoryToLangChainDocument = (
         VisitedWebPageURL: item.url || "",
         VisitedWebPageTitle: item.title || "No Title",
         VisitedWebPageDateWithTimeInISOString: new Date(item.entryTime).toISOString(),
-        VisitedWebPageReffererURL: item.reffererUrl || "",
+        VisitedWebPageReferrerURL: item.referrerUrl || "",
         VisitedWebPageVisitDurationInMilliseconds: item.duration || 0
       }
     }
@@ -118,17 +139,46 @@ export const formatDate = (date: Date): string => {
 
 export function extractMainContent(htmlContent: string): string {
   try {
-    // 提取主要内容逻辑
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlContent, 'text/html');
     
-    // 优先提取main标签内容
-    const mainContent = doc.querySelector('main');
-    if (mainContent) {
-      return mainContent.innerHTML;
+    // Try to find content in a prioritized manner
+    // 1. Look for main content containers
+    const contentSelectors = [
+      'main',
+      'article',
+      '[role="main"]',
+      '#content',
+      '.content',
+      '.post',
+      '.article'
+    ];
+    
+    for (const selector of contentSelectors) {
+      const element = doc.querySelector(selector);
+      if (element && element.textContent.trim().length > 100) {
+        return element.innerHTML;
+      }
     }
     
-    // 如果没有main标签，提取body内容
+    // 2. Remove non-content elements
+    const elementsToRemove = [
+      'header',
+      'footer',
+      'nav',
+      'aside',
+      '.sidebar',
+      '.ads',
+      '.navigation',
+      'style',
+      'script'
+    ];
+    
+    elementsToRemove.forEach(selector => {
+      doc.querySelectorAll(selector).forEach(el => el.remove());
+    });
+    
+    // 3. Return the cleaned body content
     return doc.body.innerHTML;
   } catch (error) {
     console.error('提取内容失败:', error);

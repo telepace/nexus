@@ -99,7 +99,9 @@
     "web_accessible_resources": [
       {
         "resources": [
-          "oauth-callback.html"
+          "oauth-callback.html",
+          "sidebar-fix.js",
+          "debug-sidebar.js"
         ],
         "matches": [
           "<all_urls>"
