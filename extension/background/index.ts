@@ -8,12 +8,14 @@ import { LOG_PREFIX, OFFLINE_CONFIG } from "../utils/config"
 import { handler as authHandler } from "./messages/auth"
 import { handler as savedataHandler } from "./messages/savedata"
 import { handler as aiHandler } from "./messages/ai"
+import { handler as onboardingHandler } from "./messages/onboarding"
 
 // 导出消息名称与处理程序的映射，用于Plasmo消息系统
 export const messaging = {
   auth: authHandler,
   savedata: savedataHandler,
-  ai: aiHandler
+  ai: aiHandler,
+  onboarding: onboardingHandler
 }
 
 // 检查是否支持chrome.sidePanel API
@@ -112,10 +114,13 @@ const initializeContextMenu = () => {
 }
 
 // 安装和更新时的处理
-chrome.runtime.onInstalled.addListener(async () => {
+chrome.runtime.onInstalled.addListener(async (details) => {
   await initializeSettings();
   initializeContextMenu();
   updateBadgeCount();
+  
+  // 注意：onboarding 模块中已有安装事件监听器处理引导页面打开逻辑
+  // 无需重复添加
 });
 
 // 处理键盘快捷键

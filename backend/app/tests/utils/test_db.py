@@ -1,10 +1,17 @@
 """
 Test database utilities for isolating tests from production database.
 
-This module provides functions to:
-1. Create and prepare a test database
-2. Create and manage database engine for tests
-3. Clean up test database after tests
+这个模块提供了测试数据库的隔离机制，确保测试不会影响真实的数据库环境。
+主要功能包括：
+1. 创建和准备测试数据库
+2. 创建和管理测试专用的数据库引擎
+3. 测试后清理测试数据库
+
+设计决策：
+- 测试数据库使用主数据库名称加 _test 后缀，明确区分测试环境
+- 使用 SQLModel.metadata.create_all() 直接创建表，避免 Alembic 迁移的复杂性
+- 测试完成后自动删除测试数据库，确保环境干净
+- 使用直接的 psycopg 连接进行数据库管理操作，避免 SQLAlchemy 事务限制
 """
 
 import logging
@@ -31,89 +38,156 @@ def get_test_db_name() -> str:
     return f"{settings.POSTGRES_DB}{TEST_DB_SUFFIX}"
 
 
-def get_admin_db_url() -> str:
-    """Get a connection URL to the default postgres database for admin operations."""
-    admin_url = (
-        f"postgresql+psycopg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@"
-        f"{settings.POSTGRES_SERVER}:{settings.POSTGRES_PORT}/{DEFAULT_DB}"
-    )
-    return admin_url
-
-
 def get_test_db_url() -> str:
-    """Get the connection URL for the test database."""
+    """Get the SQLAlchemy URL for the test database."""
+    # 从主数据库 URL 构建测试数据库 URL
+    main_url = str(settings.SQLALCHEMY_DATABASE_URI)
     test_db_name = get_test_db_name()
-    test_url = (
-        f"postgresql+psycopg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@"
-        f"{settings.POSTGRES_SERVER}:{settings.POSTGRES_PORT}/{test_db_name}"
-    )
-    return test_url
+    
+    # 替换数据库名称部分，并确保使用 psycopg2 驱动
+    if "postgres://" in main_url or "postgresql://" in main_url:
+        # 替换数据库名称
+        db_name_part = main_url.split("/")[-1]
+        new_url = main_url.replace(db_name_part, test_db_name)
+        
+        # 确保使用 psycopg2 驱动
+        if "+psycopg" in new_url:
+            new_url = new_url.replace("+psycopg", "+psycopg2")
+        elif "postgresql://" in new_url and "+psycopg" not in new_url and "+psycopg2" not in new_url:
+            new_url = new_url.replace("postgresql://", "postgresql+psycopg2://")
+        
+        return new_url
+    
+    # 如无法解析，则构建新的 URL，显式使用 psycopg2
+    return f"postgresql+psycopg2://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_SERVER}:{settings.POSTGRES_PORT}/{test_db_name}"
+
+
+def get_connection_string() -> str:
+    """Get the psycopg connection string for the default database."""
+    # 连接到默认数据库而非测试数据库，用于创建/删除测试数据库
+    return f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_SERVER}:{settings.POSTGRES_PORT}/{DEFAULT_DB}"
 
 
 def create_test_database() -> None:
-    """Create the test database if it doesn't exist."""
+    """Create the test database if it does not exist."""
     test_db_name = get_test_db_name()
-    admin_engine = create_engine(get_admin_db_url())
-
+    conn_str = get_connection_string()
+    
+    logger.info(f"Checking if test database {test_db_name} exists")
+    
     try:
-        with admin_engine.connect() as conn:
-            # Disconnect all active connections to the test DB
-            conn.execute(
-                text(
-                    f"""
-                    SELECT pg_terminate_backend(pg_stat_activity.pid)
-                    FROM pg_stat_activity
-                    WHERE pg_stat_activity.datname = '{test_db_name}'
-                    AND pid <> pg_backend_pid()
-                    """
-                )
-            )
-            conn.execute(text("COMMIT"))
-
-            # Drop test database if it exists
-            conn.execute(text(f"DROP DATABASE IF EXISTS {test_db_name}"))
-            conn.execute(text("COMMIT"))
-
-            # Create a new test database
-            conn.execute(text(f"CREATE DATABASE {test_db_name}"))
-            conn.execute(text("COMMIT"))
-            logger.info(f"Created test database: {test_db_name}")
+        # 使用 psycopg 直接连接默认数据库
+        with psycopg.connect(conn_str) as conn:
+            # 设置自动提交，确保每条语句在自己的事务中执行
+            conn.autocommit = True
+            
+            with conn.cursor() as cur:
+                # 检查数据库是否存在
+                cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (test_db_name,))
+                exists = cur.fetchone()
+                
+                if exists:
+                    logger.info(f"Test database {test_db_name} already exists, dropping it for a clean start")
+                    # 断开可能的所有连接
+                    cur.execute(
+                        f"""
+                        SELECT pg_terminate_backend(pg_stat_activity.pid)
+                        FROM pg_stat_activity
+                        WHERE pg_stat_activity.datname = %s
+                        AND pid <> pg_backend_pid()
+                        """,
+                        (test_db_name,)
+                    )
+                    # 删除数据库
+                    cur.execute(f"DROP DATABASE IF EXISTS {test_db_name}")
+                
+                # 创建新的测试数据库
+                logger.info(f"Creating test database {test_db_name}")
+                cur.execute(f"CREATE DATABASE {test_db_name}")
+                logger.info(f"Test database {test_db_name} created successfully")
+    
     except Exception as e:
         logger.error(f"Error creating test database: {e}")
         raise
-    finally:
-        admin_engine.dispose()
 
 
 def apply_migrations() -> None:
     """Apply database migrations to the test database."""
     try:
-        # Get the alembic.ini file path
-        basedir = os.path.abspath(os.path.dirname(__file__))
-        backend_dir = os.path.abspath(os.path.join(basedir, "../../../.."))
-        alembic_cfg = Config(os.path.join(backend_dir, "alembic.ini"))
-
-        # Override the SQLAlchemy URL with our test database URL
-        alembic_cfg.set_main_option("sqlalchemy.url", get_test_db_url())
-
-        # Run migrations to the latest version
-        command.upgrade(alembic_cfg, "head")
-        logger.info("Applied all migrations to test database")
+        # 我们不再使用 alembic 迁移，因为 env.py 中使用了 fileConfig，在测试中会有问题
+        # 改用直接创建表的方式
+        from sqlmodel import SQLModel
+        from app.models import User, Item  # 导入所有模型，确保它们注册到 SQLModel.metadata
+        
+        # 创建连接到测试数据库的引擎
+        test_db_url = get_test_db_url()
+        test_engine = create_engine(test_db_url)
+        
+        logger.info(f"Creating all tables in test database: {get_test_db_name()}")
+        # 直接创建所有表
+        SQLModel.metadata.create_all(test_engine)
+        logger.info("Created all tables in test database")
     except Exception as e:
-        logger.error(f"Error applying migrations: {e}")
+        logger.error(f"Error creating tables: {e}")
         raise
 
 
+def apply_migrations_with_engine(engine: Engine) -> None:
+    """Apply database migrations to the test database using an existing engine."""
+    try:
+        # 使用直接创建表的方式
+        from sqlmodel import SQLModel
+        from app.models import User, Item  # 导入所有模型，确保它们注册到 SQLModel.metadata
+        
+        logger.info(f"Creating all tables in test database: {get_test_db_name()}")
+        # 直接创建所有表
+        SQLModel.metadata.create_all(engine)
+        logger.info("Created all tables in test database")
+    except Exception as e:
+        logger.error(f"Error creating tables: {e}")
+        raise
+
+
+def create_tables(engine: Engine) -> None:
+    """Create all tables directly using SQLModel metadata."""
+    from sqlmodel import SQLModel
+    from app.models import User, Item  # 确保所有模型都被导入，注册到 metadata
+    
+    logger.info("Creating tables directly with SQLModel")
+    SQLModel.metadata.create_all(engine)
+    logger.info("Tables created successfully")
+
+
 def setup_test_db() -> Engine:
-    """Set up the test database, create it if needed, apply migrations, and return an engine."""
+    """Set up the test database, create it if needed, create all tables, and return an engine."""
     # Create test database
     create_test_database()
 
-    # Apply migrations
-    apply_migrations()
-
     # Create and return a new engine connected to the test database
     test_db_url = get_test_db_url()
+    
+    # 检查并确保我们使用的驱动在当前环境可用
+    try:
+        import psycopg2
+        logger.info("Using psycopg2 driver for database connection")
+        driver_name = "postgresql+psycopg2"
+    except ImportError:
+        try:
+            import psycopg
+            logger.info("Using psycopg (v3) driver for database connection")
+            driver_name = "postgresql+psycopg"
+        except ImportError:
+            logger.error("Neither psycopg nor psycopg2 is available. Please install one of them.")
+            raise ImportError("Database driver not available. Install either psycopg2-binary or psycopg[binary]")
+    
+    # 确保 URL 使用正确的驱动前缀
+    if "postgresql+" in test_db_url:
+        parts = test_db_url.split("://", 1)
+        prefix = parts[0]
+        if prefix != driver_name:
+            test_db_url = test_db_url.replace(prefix, driver_name)
+    
+    # 使用确定的驱动创建引擎
     test_engine = create_engine(
         test_db_url,
         pool_pre_ping=True,
@@ -122,44 +196,73 @@ def setup_test_db() -> Engine:
         max_overflow=10,
     )
     
+    # Create all tables using the same engine
+    apply_migrations_with_engine(test_engine)
+    
     return test_engine
-
-
-def get_test_db_session() -> Generator[Session, None, None]:
-    """Get a session connected to the test database."""
-    engine = create_engine(get_test_db_url())
-    with Session(engine) as session:
-        yield session
 
 
 def teardown_test_db() -> None:
     """Clean up the test database after tests."""
-    # Optional: Drop the test database if you want a totally clean slate next time
-    # This can be commented out if you want to inspect the test database after tests
+    test_db_name = get_test_db_name()
+    conn_str = get_connection_string()
+    
     try:
-        admin_engine = create_engine(get_admin_db_url())
-        test_db_name = get_test_db_name()
-
-        with admin_engine.connect() as conn:
-            # Disconnect all users from the test database
-            conn.execute(
-                text(
+        # 使用 psycopg 直接连接
+        with psycopg.connect(conn_str) as conn:
+            conn.autocommit = True
+            
+            with conn.cursor() as cur:
+                # 断开所有到测试数据库的连接
+                logger.info(f"Terminating all connections to {test_db_name}")
+                cur.execute(
                     f"""
                     SELECT pg_terminate_backend(pg_stat_activity.pid)
                     FROM pg_stat_activity
-                    WHERE pg_stat_activity.datname = '{test_db_name}'
+                    WHERE pg_stat_activity.datname = %s
                     AND pid <> pg_backend_pid()
-                    """
+                    """,
+                    (test_db_name,)
                 )
-            )
-            conn.execute(text("COMMIT"))
-
-            # Drop the test database
-            conn.execute(text(f"DROP DATABASE IF EXISTS {test_db_name}"))
-            conn.execute(text("COMMIT"))
-            logger.info(f"Dropped test database: {test_db_name}")
+                
+                # 删除测试数据库
+                logger.info(f"Dropping test database {test_db_name}")
+                cur.execute(f"DROP DATABASE IF EXISTS {test_db_name}")
+                logger.info(f"Test database {test_db_name} dropped successfully")
+    
     except Exception as e:
-        logger.warning(f"Could not drop test database: {e}")
-    finally:
-        if 'admin_engine' in locals():
-            admin_engine.dispose() 
+        logger.warning(f"Error during test database cleanup: {e}")
+        # 不抛出异常，避免测试因清理问题而失败
+
+
+def test_database_connection() -> bool:
+    """测试与测试数据库的连接，用于单元测试。"""
+    test_db_url = get_test_db_url()
+    
+    # 检查并确保我们使用的驱动在当前环境可用
+    try:
+        import psycopg2
+        driver_name = "postgresql+psycopg2"
+    except ImportError:
+        try:
+            import psycopg
+            driver_name = "postgresql+psycopg"
+        except ImportError:
+            return False  # 如果两个驱动都不可用，则连接失败
+    
+    # 确保 URL 使用正确的驱动前缀
+    if "postgresql+" in test_db_url:
+        parts = test_db_url.split("://", 1)
+        prefix = parts[0]
+        if prefix != driver_name:
+            test_db_url = test_db_url.replace(prefix, driver_name)
+    
+    # 创建引擎并测试连接
+    engine = create_engine(test_db_url)
+    
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT 1")).scalar()
+            return result == 1
+    except:
+        return False 

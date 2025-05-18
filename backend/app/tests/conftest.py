@@ -1,5 +1,6 @@
 from collections.abc import Generator
 from typing import Any
+import os
 
 import pytest
 from fastapi.testclient import TestClient
@@ -24,7 +25,7 @@ def setup_test_environment() -> Generator[None, None, None]:
     
     After all tests, it cleans up the test database.
     """
-    # Create test database, apply migrations, and get the test engine
+    # Create test database, apply migrations (or create tables directly), and get the test engine
     test_engine = setup_test_db()
     
     # Replace the global engine with our test engine
@@ -51,6 +52,11 @@ def db() -> Generator[Session, None, None]:
     # We're using the engine that was set up in setup_test_environment
     from app.core.db import engine
     
+    # 确保测试用的超级用户密码为 "adminadmin"，满足至少8个字符的要求
+    original_password = settings.FIRST_SUPERUSER_PASSWORD
+    settings.FIRST_SUPERUSER_PASSWORD = "adminadmin"
+    
+    # 创建测试用的数据库会话
     with Session(engine) as session:
         init_db(session)
         yield session
@@ -61,6 +67,9 @@ def db() -> Generator[Session, None, None]:
         statement = delete(User)
         session.execute(statement)
         session.commit()
+    
+    # 恢复原始密码设置
+    settings.FIRST_SUPERUSER_PASSWORD = original_password
 
 
 @pytest.fixture(scope="module")

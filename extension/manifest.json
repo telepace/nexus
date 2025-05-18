@@ -63,6 +63,7 @@
     {
       "resources": [
         "pages/oauth-callback.html",
+        "pages/onboarding.html",
         "assets/*",
         "sidepanel.html",
         "sidepanel.js",
