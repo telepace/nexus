@@ -83,27 +83,39 @@ jobs:
           git add frontend/app/openapi-client
           git add admin/src/client
 
+      # 7. Handle Changes for Same-Repo Events (Push/PR from same repo)
       - name: Commit and Push Changes (Same Repo)
+        # Run only if it's NOT a PR from a fork
         if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
         run: |
-          BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
-          if ! git diff --quiet || ! git diff --staged --quiet; then
+          # Check if there are staged changes
+          if ! git diff --staged --quiet; then
             echo "✅ Changes detected in generated client. Committing and pushing..."
-            git add .
-            git pull --rebase origin "$BRANCH_NAME" || true
+            # Pull before pushing to avoid conflicts if possible (optional)
+            # git pull --ff-only origin ${{ github.head_ref || github.ref_name }}
             git commit -m "ci: ✨ Autogenerate frontend client"
-            git push origin HEAD:"$BRANCH_NAME"
+            git push origin HEAD:${{ github.head_ref || github.ref_name }}
           else
             echo "✅ No changes detected in generated client."
           fi
         env:
+          # GITHUB_TOKEN has write permissions for same-repo events by default
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use a PAT if you need to trigger subsequent workflows:
+          # GITHUB_TOKEN: ${{ secrets.YOUR_PAT_WITH_WRITE_ACCESS }}
 
+      # 8. Handle Changes for Fork PRs (Warn, Don't Fail)
       - name: Check for Uncommitted Changes (Fork PRs)
+        # Run only if it IS a PR from a fork
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
         run: |
+          # Check if there are staged changes that were generated
           if ! git diff --staged --quiet; then
+            echo "⚠️ Changes detected in generated client."
+            echo "➡️ Please run 'bash scripts/generate-client.sh' locally and commit the changes to this PR."
+            # Optionally, use GitHub annotations for better visibility in the PR
             echo "::warning title=Generated Client Changes Detected::Please run 'bash scripts/generate-client.sh' locally and commit the changes to this PR."
+            # DO NOT exit 1 - Allow the workflow to continue
           else
             echo "✅ No changes detected in generated client."
           fi
