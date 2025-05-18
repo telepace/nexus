@@ -4,7 +4,69 @@ import type { UserSettings, UserProfile } from "~/utils/interfaces"
 import { logout } from "~/utils/api"
 import Button from "~/components/ui/button"
 import { getFrontendUrl } from "~/utils/config"
+import { FaWeixin, FaFacebook, FaDiscord, FaComments } from "react-icons/fa"
 import "./options.css"
+
+// 社交媒体图标组件
+const SocialMediaBar: React.FC = () => {
+  const handleSocialClick = (platform: string) => {
+    let url = ''
+    
+    switch (platform) {
+      case 'wechat':
+        // 这里可以替换为实际的WeChat链接或二维码弹窗
+        alert('WeChat QR Code')
+        return
+      case 'facebook':
+        url = 'https://facebook.com/nexusai'
+        break
+      case 'discord':
+        url = 'https://discord.gg/nexusai'
+        break
+      case 'feedback':
+        url = 'https://github.com/telepace/nexus/issues/new'
+        break
+    }
+    
+    if (url) {
+      window.open(url, '_blank')
+    }
+  }
+  
+  return (
+    <div className="social-media-bar">
+      <button 
+        className="social-button" 
+        onClick={() => handleSocialClick('wechat')}
+        title="WeChat"
+      >
+        <FaWeixin />
+      </button>
+      <button 
+        className="social-button" 
+        onClick={() => handleSocialClick('facebook')}
+        title="Facebook"
+      >
+        <FaFacebook />
+      </button>
+      <button 
+        className="social-button" 
+        onClick={() => handleSocialClick('discord')}
+        title="Discord"
+      >
+        <FaDiscord />
+      </button>
+      <button 
+        className="social-button feedback-button" 
+        onClick={() => handleSocialClick('feedback')}
+        title="Feedback"
+      >
+        <FaComments />
+        <span className="feedback-text">Feedback</span>
+      </button>
+    </div>
+  )
+}
 
 const OptionsPage: React.FC = () => {
   // 状态定义
@@ -282,10 +344,18 @@ const OptionsPage: React.FC = () => {
       </div>
       
       <div className="options-content">
+        <div className="content-header">
+          <h1 className="page-title">设置</h1>
+          <SocialMediaBar />
+        </div>
+        
         {/* 账户设置 */}
         {activeSection === "account" && (
-          <div className="section">
-            <h2 className="section-title">账户</h2>
+          <div className="settings-card">
+            <div className="settings-card-header">
+              <h2 className="settings-card-title">账户信息</h2>
+              <p className="settings-card-description">管理您的账户和同步设置</p>
+            </div>
             
             {userProfile?.isAuthenticated ? (
               <div className="account-info">
@@ -326,8 +396,12 @@ const OptionsPage: React.FC = () => {
               </div>
             )}
             
-            <div className="sync-settings">
-              <h3>同步设置</h3>
+            <div className="settings-card">
+              <div className="settings-card-header">
+                <h3 className="settings-card-title">同步设置</h3>
+                <p className="settings-card-description">管理您的数据同步选项</p>
+              </div>
+              
               <div className="settings-row">
                 <div className="setting-label">
                   <label htmlFor="sync-settings">
@@ -338,14 +412,17 @@ const OptionsPage: React.FC = () => {
                   </span>
                 </div>
                 <div className="setting-control">
-                  <input
-                    type="checkbox"
-                    id="sync-settings"
-                    name="syncSettings"
-                    checked={true}
-                    onChange={() => {}}
-                    disabled={!userProfile?.isAuthenticated}
-                  />
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      id="sync-settings"
+                      name="syncSettings"
+                      checked={true}
+                      onChange={() => {}}
+                      disabled={!userProfile?.isAuthenticated}
+                    />
+                    <span className="slider"></span>
+                  </label>
                 </div>
               </div>
               
@@ -359,14 +436,17 @@ const OptionsPage: React.FC = () => {
                   </span>
                 </div>
                 <div className="setting-control">
-                  <input
-                    type="checkbox"
-                    id="sync-history"
-                    name="syncHistory"
-                    checked={true}
-                    onChange={() => {}}
-                    disabled={!userProfile?.isAuthenticated}
-                  />
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      id="sync-history"
+                      name="syncHistory"
+                      checked={true}
+                      onChange={() => {}}
+                      disabled={!userProfile?.isAuthenticated}
+                    />
+                    <span className="slider"></span>
+                  </label>
                 </div>
               </div>
             </div>
@@ -375,8 +455,11 @@ const OptionsPage: React.FC = () => {
         
         {/* 一般设置 */}
         {activeSection === "general" && (
-          <div className="section">
-            <h2 className="section-title">一般设置</h2>
+          <div className="settings-card">
+            <div className="settings-card-header">
+              <h2 className="settings-card-title">一般设置</h2>
+              <p className="settings-card-description">调整应用主题和基本功能</p>
+            </div>
             
             <div className="settings-row">
               <div className="setting-label">
@@ -432,13 +515,16 @@ const OptionsPage: React.FC = () => {
                 </span>
               </div>
               <div className="setting-control">
-                <input
-                  type="checkbox"
-                  id="useBrowserLanguage"
-                  name="useBrowserLanguage"
-                  checked={settings.useBrowserLanguage}
-                  onChange={handleChange}
-                />
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    id="useBrowserLanguage"
+                    name="useBrowserLanguage"
+                    checked={settings.useBrowserLanguage}
+                    onChange={handleChange}
+                  />
+                  <span className="slider"></span>
+                </label>
               </div>
             </div>
             
@@ -452,13 +538,16 @@ const OptionsPage: React.FC = () => {
                 </span>
               </div>
               <div className="setting-control">
-                <input
-                  type="checkbox"
-                  id="showBadgeCounter"
-                  name="showBadgeCounter"
-                  checked={settings.showBadgeCounter}
-                  onChange={handleChange}
-                />
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    id="showBadgeCounter"
+                    name="showBadgeCounter"
+                    checked={settings.showBadgeCounter}
+                    onChange={handleChange}
+                  />
+                  <span className="slider"></span>
+                </label>
               </div>
             </div>
             
@@ -472,13 +561,16 @@ const OptionsPage: React.FC = () => {
                 </span>
               </div>
               <div className="setting-control">
-                <input
-                  type="checkbox"
-                  id="keepSidePanelOpen"
-                  name="keepSidePanelOpen"
-                  checked={settings.keepSidePanelOpen}
-                  onChange={handleChange}
-                />
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    id="keepSidePanelOpen"
+                    name="keepSidePanelOpen"
+                    checked={settings.keepSidePanelOpen}
+                    onChange={handleChange}
+                  />
+                  <span className="slider"></span>
+                </label>
               </div>
             </div>
           </div>
@@ -486,12 +578,17 @@ const OptionsPage: React.FC = () => {
         
         {/* AI 设置 */}
         {activeSection === "ai" && (
-          <div className="section">
-            <h2 className="section-title">AI 设置</h2>
+          <div className="settings-card">
+            <div className="settings-card-header">
+              <h2 className="settings-card-title">AI 设置</h2>
+              <p className="settings-card-description">管理AI模型和API密钥</p>
+            </div>
             
-            <div className="subsection">
-              <h3>可用模型</h3>
-              <p className="subsection-description">选择您要使用的AI模型</p>
+            <div className="settings-card">
+              <div className="settings-card-header">
+                <h3 className="settings-card-title">可用模型</h3>
+                <p className="settings-card-description">选择您要使用的AI模型</p>
+              </div>
               
               <div className="model-list">
                 {availableModels.map(model => (
@@ -500,19 +597,24 @@ const OptionsPage: React.FC = () => {
                       <span className="model-name">{model.name}</span>
                       {model.free && <span className="model-badge free">免费</span>}
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={model.selected}
-                      onChange={() => handleModelToggle(model.id)}
-                    />
+                    <label className="switch">
+                      <input 
+                        type="checkbox" 
+                        checked={model.selected}
+                        onChange={() => handleModelToggle(model.id)}
+                      />
+                      <span className="slider"></span>
+                    </label>
                   </div>
                 ))}
               </div>
             </div>
             
-            <div className="subsection">
-              <h3>API 密钥</h3>
-              <p className="subsection-description">使用您自己的API密钥以使用更多功能</p>
+            <div className="settings-card">
+              <div className="settings-card-header">
+                <h3 className="settings-card-title">API 密钥</h3>
+                <p className="settings-card-description">使用您自己的API密钥以使用更多功能</p>
+              </div>
               
               <div className="api-key-section">
                 <div className="api-key-item">
@@ -529,63 +631,6 @@ const OptionsPage: React.FC = () => {
                     可使用GPT-3.5和GPT-4模型
                   </div>
                 </div>
-                
-                <div className="api-key-item">
-                  <div className="api-key-header">
-                    <span>Anthropic API 密钥</span>
-                    <span className="api-key-status">未设置</span>
-                  </div>
-                  <input
-                    type="password"
-                    placeholder="sk-ant-..."
-                    className="api-key-input"
-                  />
-                  <div className="api-key-description">
-                    可使用Claude模型
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="subsection">
-              <h3>AI行为</h3>
-              
-              <div className="settings-row">
-                <div className="setting-label">
-                  <label htmlFor="defaultModel">默认模型</label>
-                  <span className="setting-description">
-                    当未指定模型时使用
-                  </span>
-                </div>
-                <div className="setting-control">
-                  <select
-                    id="defaultModel"
-                    name="defaultModel"
-                    className="select"
-                  >
-                    <option value="gpt-3.5">GPT-3.5</option>
-                    <option value="gpt-4">GPT-4</option>
-                    <option value="claude">Claude</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div className="settings-row">
-                <div className="setting-label">
-                  <label htmlFor="systemPrompt">系统提示词</label>
-                  <span className="setting-description">
-                    自定义AI助手的行为和个性
-                  </span>
-                </div>
-                <div className="setting-control full-width">
-                  <textarea
-                    id="systemPrompt"
-                    name="systemPrompt"
-                    rows={3}
-                    placeholder="你是一个有用的AI助手..."
-                    className="textarea"
-                  ></textarea>
-                </div>
               </div>
             </div>
           </div>
@@ -593,114 +638,112 @@ const OptionsPage: React.FC = () => {
         
         {/* 快捷提示 */}
         {activeSection === "shortcuts" && (
-          <div className="section">
-            <h2 className="section-title">快捷提示</h2>
-            <p className="section-description">创建可在对话中快速使用的提示快捷方式</p>
-            
-            <div className="shortcuts-table">
-              <div className="shortcuts-header">
-                <div className="shortcut-col">快捷键</div>
-                <div className="prompt-col">提示内容</div>
-                <div className="actions-col">操作</div>
-              </div>
-              
-              {settings.promptShortcuts.length > 0 ? (
-                <div className="shortcuts-body">
-                  {settings.promptShortcuts.map((item, index) => (
-                    <div key={index} className="shortcut-row">
-                      <div className="shortcut-col">{item.shortcut}</div>
-                      <div className="prompt-col">{item.prompt}</div>
-                      <div className="actions-col">
-                        <button 
-                          onClick={() => handleEditShortcut(index)}
-                          className="edit-button"
-                        >
-                          编辑
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteShortcut(index)}
-                          className="delete-button"
-                        >
-                          删除
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-shortcuts">
-                  没有快捷提示
-                </div>
-              )}
+          <div className="settings-card">
+            <div className="settings-card-header">
+              <h2 className="settings-card-title">快捷提示</h2>
+              <p className="settings-card-description">管理常用提示词快捷方式</p>
             </div>
             
-            {isAddingShortcut ? (
+            {!isAddingShortcut && (
+              <button className="add-button" onClick={handleAddShortcut}>
+                添加新快捷提示
+              </button>
+            )}
+            
+            {isAddingShortcut && (
               <div className="shortcut-editor">
                 <div className="shortcut-form">
                   <div className="form-group">
-                    <label htmlFor="shortcut">快捷键</label>
+                    <label htmlFor="shortcut">快捷指令</label>
                     <input
                       type="text"
                       id="shortcut"
                       name="shortcut"
+                      placeholder="/command"
                       value={newShortcut.shortcut}
                       onChange={handleShortcutInputChange}
-                      placeholder="例如: /summarize"
                       className="input"
                     />
                   </div>
-                  
                   <div className="form-group">
-                    <label htmlFor="prompt">提示内容</label>
+                    <label htmlFor="prompt">提示词</label>
                     <input
                       type="text"
                       id="prompt"
                       name="prompt"
+                      placeholder="输入对应的提示词..."
                       value={newShortcut.prompt}
                       onChange={handleShortcutInputChange}
-                      placeholder="例如: Summarize the context"
                       className="input"
                     />
                   </div>
                 </div>
                 
                 <div className="shortcut-actions">
-                  <button
-                    onClick={handleCancelAddShortcut}
-                    className="cancel-button"
-                  >
+                  <button className="cancel-button" onClick={handleCancelAddShortcut}>
                     取消
                   </button>
-                  <button
-                    onClick={handleSaveShortcut}
-                    disabled={!newShortcut.shortcut || !newShortcut.prompt}
-                    className="save-button"
-                  >
+                  <button className="save-button" onClick={handleSaveShortcut}>
                     保存
                   </button>
                 </div>
               </div>
+            )}
+            
+            {settings.promptShortcuts.length > 0 ? (
+              <table className="shortcuts-table">
+                <thead>
+                  <tr>
+                    <th className="shortcuts-header shortcut-col">快捷指令</th>
+                    <th className="shortcuts-header prompt-col">提示词</th>
+                    <th className="shortcuts-header actions-col">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="shortcuts-body">
+                  {settings.promptShortcuts.map((shortcut, index) => (
+                    <tr className="shortcut-row" key={index}>
+                      <td className="shortcut-col">{shortcut.shortcut}</td>
+                      <td className="prompt-col">{shortcut.prompt}</td>
+                      <td className="actions-col">
+                        <button className="edit-button" onClick={() => handleEditShortcut(index)}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 20h9"></path>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                          </svg>
+                        </button>
+                        <button className="delete-button" onClick={() => handleDeleteShortcut(index)}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18"></path>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             ) : (
-              <button
-                onClick={handleAddShortcut}
-                className="add-button"
-              >
-                添加快捷提示
-              </button>
+              <div className="empty-shortcuts">
+                没有保存的快捷提示
+              </div>
             )}
           </div>
         )}
         
         {/* 剪藏设置 */}
         {activeSection === "clip" && (
-          <div className="section">
-            <h2 className="section-title">剪藏设置</h2>
+          <div className="settings-card">
+            <div className="settings-card-header">
+              <h2 className="settings-card-title">剪藏设置</h2>
+              <p className="settings-card-description">自定义剪藏功能的行为</p>
+            </div>
             
             <div className="settings-row">
               <div className="setting-label">
-                <label htmlFor="defaultClipAction">默认剪藏行为</label>
+                <label htmlFor="defaultClipAction">默认剪藏动作</label>
                 <span className="setting-description">
-                  选择剪藏内容时的默认操作
+                  选中文本后默认执行的操作
                 </span>
               </div>
               <div className="setting-control">
@@ -711,9 +754,9 @@ const OptionsPage: React.FC = () => {
                   onChange={handleChange}
                   className="select"
                 >
-                  <option value="save">仅保存</option>
-                  <option value="save-and-summarize">保存并总结</option>
-                  <option value="save-and-highlight">保存并高亮关键点</option>
+                  <option value="save">保存</option>
+                  <option value="ask">提问</option>
+                  <option value="summarize">摘要</option>
                 </select>
               </div>
             </div>
@@ -724,37 +767,43 @@ const OptionsPage: React.FC = () => {
                   剪藏时自动打开侧边栏
                 </label>
                 <span className="setting-description">
-                  剪藏内容后自动打开侧边栏查看结果
+                  剪藏内容时自动打开侧边栏面板
                 </span>
               </div>
               <div className="setting-control">
-                <input
-                  type="checkbox"
-                  id="openSidebarOnClip"
-                  name="openSidebarOnClip"
-                  checked={settings.openSidebarOnClip}
-                  onChange={handleChange}
-                />
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    id="openSidebarOnClip"
+                    name="openSidebarOnClip"
+                    checked={settings.openSidebarOnClip}
+                    onChange={handleChange}
+                  />
+                  <span className="slider"></span>
+                </label>
               </div>
             </div>
             
             <div className="settings-row">
               <div className="setting-label">
                 <label htmlFor="autoSummarize">
-                  自动总结
+                  自动生成内容摘要
                 </label>
                 <span className="setting-description">
-                  自动为剪藏的内容生成摘要 (可能会增加API使用量)
+                  剪藏时自动生成内容摘要
                 </span>
               </div>
               <div className="setting-control">
-                <input
-                  type="checkbox"
-                  id="autoSummarize"
-                  name="autoSummarize"
-                  checked={settings.autoSummarize}
-                  onChange={handleChange}
-                />
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    id="autoSummarize"
+                    name="autoSummarize"
+                    checked={settings.autoSummarize}
+                    onChange={handleChange}
+                  />
+                  <span className="slider"></span>
+                </label>
               </div>
             </div>
           </div>
@@ -762,82 +811,119 @@ const OptionsPage: React.FC = () => {
         
         {/* 键盘快捷键 */}
         {activeSection === "keyboard" && (
-          <div className="section">
-            <h2 className="section-title">键盘快捷键</h2>
-            <p className="section-description">设置扩展的键盘快捷键</p>
+          <div className="settings-card">
+            <div className="settings-card-header">
+              <h2 className="settings-card-title">键盘快捷键</h2>
+              <p className="settings-card-description">管理扩展的键盘快捷键</p>
+            </div>
             
             <div className="settings-row">
               <div className="setting-label">
-                <label htmlFor="keyboardShortcut">
-                  激活扩展
-                </label>
+                <label htmlFor="keyboardShortcut">剪藏快捷键</label>
                 <span className="setting-description">
-                  按下此快捷键激活扩展
+                  用于激活扩展的剪藏功能
                 </span>
               </div>
               <div className="setting-control">
-                <input
-                  type="text"
-                  id="keyboardShortcut"
-                  name="keyboardShortcut"
-                  value={settings.keyboardShortcut}
-                  onChange={handleChange}
-                  className="input text-center"
-                  style={{width: "100px"}}
-                />
+                <span className="keyboard-shortcut">{settings.keyboardShortcut}</span>
               </div>
             </div>
             
             <div className="keyboard-info">
-              <h3>Chrome快捷键</h3>
-              <p>
-                您可以在Chrome的扩展管理页面设置以下快捷键:
-              </p>
+              <h3>可用快捷键</h3>
               <ul className="keyboard-list">
                 <li>
-                  <span className="keyboard-action">打开Nexus弹出窗口</span>
-                  <a href="chrome://extensions/shortcuts" target="_blank" rel="noopener noreferrer" className="configure-link">配置</a>
+                  <span>打开侧边栏</span>
+                  <span className="keyboard-shortcut">⇧⌘S</span>
                 </li>
                 <li>
-                  <span className="keyboard-action">剪藏当前页面</span>
-                  <a href="chrome://extensions/shortcuts" target="_blank" rel="noopener noreferrer" className="configure-link">配置</a>
+                  <span>剪藏选中内容</span>
+                  <span className="keyboard-shortcut">⇧⌘E</span>
                 </li>
                 <li>
-                  <span className="keyboard-action">打开侧边栏总结当前页面</span>
-                  <a href="chrome://extensions/shortcuts" target="_blank" rel="noopener noreferrer" className="configure-link">配置</a>
+                  <span>打开弹出窗口</span>
+                  <span className="keyboard-shortcut">⇧⌘P</span>
                 </li>
               </ul>
+              
+              <div className="settings-row" style={{ borderBottom: 'none', paddingTop: '1.5rem' }}>
+                <div className="setting-label">
+                  <span>自定义键盘快捷键</span>
+                  <span className="setting-description">
+                    在浏览器的扩展设置中更改快捷键
+                  </span>
+                </div>
+                <div className="setting-control">
+                  <button 
+                    className="save-button" 
+                    onClick={() => {
+                      chrome.tabs.create({ url: 'chrome://extensions/shortcuts' })
+                    }}
+                  >
+                    配置快捷键
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
         
         {/* 关于 */}
         {activeSection === "about" && (
-          <div className="section">
-            <h2 className="section-title">关于 Nexus AI</h2>
+          <div className="settings-card">
+            <div className="settings-card-header">
+              <h2 className="settings-card-title">关于 Nexus AI</h2>
+              <p className="settings-card-description">版本信息和使用帮助</p>
+            </div>
             
             <div className="about-info">
               <div className="version-info">
-                <strong>版本:</strong> 0.1.0
+                版本: 1.0.0
               </div>
               
-              <p>
-                Nexus AI 是一个强大的AI助手，帮助您理解、保存和与网页内容互动。
-              </p>
+              <div className="about-description">
+                <p>
+                  Nexus AI 是您的智能助手，帮助您更高效地浏览网页、整理资料和获取信息。利用先进的AI技术，Nexus能够理解您的需求，提供个性化的帮助。
+                </p>
+                <p>
+                  我们致力于提供最佳的用户体验和隐私保护。如果您有任何问题或建议，请随时联系我们。
+                </p>
+              </div>
               
               <div className="links">
-                <a href="https://nexus.yourdomain.com/help" target="_blank" rel="noopener noreferrer">帮助文档</a>
-                <a href="https://nexus.yourdomain.com/privacy" target="_blank" rel="noopener noreferrer">隐私政策</a>
-                <a href="https://nexus.yourdomain.com/terms" target="_blank" rel="noopener noreferrer">使用条款</a>
+                <a href="https://nexusai.example.com/docs" target="_blank" rel="noopener noreferrer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                  </svg>
+                  文档
+                </a>
+                <a href="https://github.com/telepace/nexus" target="_blank" rel="noopener noreferrer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path>
+                    <path d="M9 18c-4.51 2-5-2-7-2"></path>
+                  </svg>
+                  GitHub
+                </a>
+                <a href="https://nexusai.example.com/privacy" target="_blank" rel="noopener noreferrer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                  隐私政策
+                </a>
               </div>
               
               <div className="contact">
-                <strong>联系我们:</strong> support@nexus.yourdomain.com
+                © {new Date().getFullYear()} Nexus AI. 保留所有权利。
               </div>
             </div>
           </div>
         )}
       </div>
+      
+      {/* 底部装饰 */}
+      <div className="footer-decoration"></div>
     </div>
   )
 }
