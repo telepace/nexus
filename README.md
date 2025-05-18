@@ -1,8 +1,8 @@
-# QuickForge AI
+# nexus
 
 <div align="center">
 
-![QuickForge AI](https://images.shields.io/badge/QuickForge-AI-blue)
+![nexus](https://images.shields.io/badge/QuickForge-AI-blue)
 ![FastAPI](https://images.shields.io/badge/FastAPI-0.104.0-green)
 ![TypeScript](https://images.shields.io/badge/TypeScript-5.2.2-blue)
 ![License](https://images.shields.io/badge/license-MIT-brightgreen)
@@ -283,7 +283,7 @@ This template is optimized for use with Cursor:
 
 ### AI Integration Development
 
-QuickForge AI makes it simple to integrate various AI services:
+nexus makes it simple to integrate various AI services:
 
 - Pre-configured connectors for popular AI APIs
 - Example implementations for common AI patterns
