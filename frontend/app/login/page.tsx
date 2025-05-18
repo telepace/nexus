@@ -36,11 +36,11 @@ function CallbackUrlHandler({
 }) {
   const searchParams = useSearchParams();
   const callbackUrlFromQuery = searchParams.get("callbackUrl") || "/dashboard";
-  
+
   useEffect(() => {
     setCallbackUrl(callbackUrlFromQuery);
   }, [callbackUrlFromQuery, setCallbackUrl]);
-  
+
   return null;
 }
 

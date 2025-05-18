@@ -1,5 +1,4 @@
 import logging
-
 import os
 
 from sqlalchemy import Engine
@@ -33,20 +32,22 @@ def init(db_engine: Engine) -> None:
 
 def main() -> None:
     logger.info("Initializing service")
-    
+
     # Check if we're running in test mode and should use test database
     is_testing = os.environ.get("TESTING", "").lower() == "true"
-    
+
     if is_testing:
-        from app.tests.utils.test_db import get_test_db_url
         from sqlmodel import create_engine
+
+        from app.tests.utils.test_db import get_test_db_url
+
         logger.info("Test mode detected. Using test database.")
         test_engine = create_engine(get_test_db_url())
         init(test_engine)
     else:
         # Use the default engine for normal operation
         init(engine)
-    
+
     logger.info("Service finished initializing")
 
 

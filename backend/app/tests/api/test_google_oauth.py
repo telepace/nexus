@@ -86,7 +86,7 @@ def test_google_callback_api_invalid_token(client: TestClient, mock_google_respo
 def test_google_callback_api_mismatched_user(client: TestClient, mock_google_response):
     """Test the /auth/google-callback endpoint with mismatched user info"""
     with patch("requests.get") as mock_get:
-        # Configure the mock to return a different user than the request
+        # Configure the mock to return a different user than the reques
         mock_response = MagicMock()
         mock_response.raise_for_status.return_value = None
 

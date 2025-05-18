@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.backend_pre_start import init
+from app.db.init_db import init
 
 
 @pytest.mark.skip(reason="需要修复mock配置问题，暂时跳过")

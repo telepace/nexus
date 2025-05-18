@@ -328,9 +328,15 @@ export type GoogleOauthGoogleCallbackApiResponse = unknown;
 
 export type GoogleOauthGoogleCallbackApiError = HTTPValidationError;
 
+export type GoogleOauthGoogleLoginData = {
+  query?: {
+    extension_callback?: string;
+  };
+};
+
 export type GoogleOauthGoogleLoginResponse = unknown;
 
-export type GoogleOauthGoogleLoginError = unknown;
+export type GoogleOauthGoogleLoginError = HTTPValidationError;
 
 export type GoogleOauthGoogleCallbackData = {
   query?: {

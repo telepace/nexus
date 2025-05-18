@@ -797,10 +797,26 @@
         "summary": "Google Login",
         "description": "Initiate Google OAuth2 authentication flow\nThis endpoint redirects to Google's login page",
         "operationId": "google_oauth-google_login",
+        "parameters": [
+          {
+            "name": "extension_callback",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "title": "Extension Callback" }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
           }
         }
       }

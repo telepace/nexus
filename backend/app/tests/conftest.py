@@ -1,10 +1,9 @@
 from collections.abc import Generator
 from typing import Any
-import os
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import Session, delete, create_engine
+from sqlmodel import Session, delete
 
 from app.core.config import settings
 from app.core.db import init_db
@@ -15,26 +14,27 @@ from app.tests.utils.user import authentication_token_from_email
 from app.tests.utils.utils import get_superuser_token_headers
 
 
-# This runs before all tests to set up the test environment
+# This runs before all tests to set up the test environmen
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_environment() -> Generator[None, None, None]:
     """
     Set up test environment by creating a test database and applying migrations.
-    
+
     This fixture runs once per test session before any tests are executed.
-    
+
     After all tests, it cleans up the test database.
     """
     # Create test database, apply migrations (or create tables directly), and get the test engine
     test_engine = setup_test_db()
-    
+
     # Replace the global engine with our test engine
     import app.core.db
+
     original_engine = app.core.db.engine
     app.core.db.engine = test_engine
-    
+
     yield
-    
+
     # After all tests, restore the original engine and clean up the test database
     app.core.db.engine = original_engine
     teardown_test_db()
@@ -44,30 +44,30 @@ def setup_test_environment() -> Generator[None, None, None]:
 def db() -> Generator[Session, None, None]:
     """
     Get a database session for testing.
-    
+
     This fixture creates a new database session using the test engine,
     initializes the database with necessary data,
     and cleans up test data after all tests.
     """
-    # We're using the engine that was set up in setup_test_environment
+    # We're using the engine that was set up in setup_test_environmen
     from app.core.db import engine
-    
+
     # 确保测试用的超级用户密码为 "adminadmin"，满足至少8个字符的要求
     original_password = settings.FIRST_SUPERUSER_PASSWORD
     settings.FIRST_SUPERUSER_PASSWORD = "adminadmin"
-    
+
     # 创建测试用的数据库会话
     with Session(engine) as session:
         init_db(session)
         yield session
-        # Clean up test data, but don't drop the database yet
+        # Clean up test data, but don't drop the database ye
         # (that will happen in teardown_test_db)
         statement = delete(Item)
         session.execute(statement)
         statement = delete(User)
         session.execute(statement)
         session.commit()
-    
+
     # 恢复原始密码设置
     settings.FIRST_SUPERUSER_PASSWORD = original_password
 
