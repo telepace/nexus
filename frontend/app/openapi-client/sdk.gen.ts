@@ -7,8 +7,6 @@ import {
   urlSearchParamsBodySerializer,
 } from "@hey-api/client-axios";
 import type {
-  HealthGetHealthRootError,
-  HealthGetHealthRootResponse,
   HealthGetHealthApiError,
   HealthGetHealthApiResponse,
   LoginLoginAccessTokenData,
@@ -91,25 +89,7 @@ import type {
 export const client = createClient(createConfig());
 
 /**
- * Get Health Root
- * 兼容前端的根级别健康检查路由
- */
-export const healthGetHealthRoot = <ThrowOnError extends boolean = false>(
-  options?: OptionsLegacyParser<unknown, ThrowOnError>,
-) => {
-  return (options?.client ?? client).get<
-    HealthGetHealthRootResponse,
-    HealthGetHealthRootError,
-    ThrowOnError
-  >({
-    ...options,
-    url: "/health",
-  });
-};
-
-/**
  * Get Health Api
- * 兼容前端的API级别健康检查路由
  */
 export const healthGetHealthApi = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<unknown, ThrowOnError>,
@@ -530,6 +510,7 @@ export const itemsDeleteItem = <ThrowOnError extends boolean = false>(
 /**
  * Google Callback Api
  * Handle Google OAuth callback from frontend
+ * This is maintained for backward compatibility but not used in the new flow
  */
 export const googleOauthGoogleCallbackApi = <
   ThrowOnError extends boolean = false,
@@ -549,6 +530,7 @@ export const googleOauthGoogleCallbackApi = <
 /**
  * Google Login
  * Initiate Google OAuth2 authentication flow
+ * This endpoint redirects to Google's login page
  */
 export const googleOauthGoogleLogin = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<unknown, ThrowOnError>,
@@ -566,6 +548,7 @@ export const googleOauthGoogleLogin = <ThrowOnError extends boolean = false>(
 /**
  * Google Callback
  * Handle the callback from Google OAuth
+ * This endpoint is called by Google after the user has logged in
  */
 export const googleOauthGoogleCallback = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<GoogleOauthGoogleCallbackData, ThrowOnError>,

@@ -6,7 +6,6 @@ from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import (
     AnyUrl,
-    BaseModel,
     BeforeValidator,
     EmailStr,
     HttpUrl,
@@ -47,6 +46,11 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     FRONTEND_HOST: str = "http://localhost:5173"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
+
+    # Flag to indicate we're running tests
+    TESTING: bool = os.environ.get("TESTING", "").lower() == "true"
+    # We also check for TEST_MODE for compatibility
+    TEST_MODE: bool = os.environ.get("TEST_MODE", "").lower() == "true"
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)
@@ -90,6 +94,15 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
+        # Check if we're running in test mode and modify database name if needed
+        postgres_db = self.POSTGRES_DB
+        
+        # Log information about test status
+        if self.TESTING or self.TEST_MODE:
+            logger.info("Test mode detected. Using test database configuration.")
+            # Note: We don't modify the database name here
+            # That will be handled by the test_db.py utilities
+        
         # Return different connection URI based on database type
         """Returns the SQLAlchemy database URI based on the configured database type.
 
@@ -123,14 +136,18 @@ class Settings(BaseSettings):
 
             password = urllib.parse.quote_plus(self.SUPABASE_DB_PASSWORD or "")
 
-            return PostgresDsn(str(URL.build(
-                scheme="postgresql+psycopg",
-                user=self.SUPABASE_DB_USER or "",
-                password=password,
-                host=self.SUPABASE_DB_HOST,
-                port=port,
-                path=f"/{self.SUPABASE_DB_NAME or ''}",
-            )))
+            return PostgresDsn(
+                str(
+                    URL.build(
+                        scheme="postgresql+psycopg",
+                        user=self.SUPABASE_DB_USER or "",
+                        password=password,
+                        host=self.SUPABASE_DB_HOST,
+                        port=port,
+                        path=f"/{self.SUPABASE_DB_NAME or ''}",
+                    )
+                )
+            )
         else:
             # Use standard PostgreSQL connection
             # URL encode the password to handle special characters
@@ -138,14 +155,18 @@ class Settings(BaseSettings):
 
             password = urllib.parse.quote_plus(self.POSTGRES_PASSWORD)
 
-            return PostgresDsn(str(URL.build(
-                scheme="postgresql+psycopg",
-                user=self.POSTGRES_USER,
-                password=password,
-                host=self.POSTGRES_SERVER,
-                port=self.POSTGRES_PORT,
-                path=f"/{self.POSTGRES_DB}",
-            )))
+            return PostgresDsn(
+                str(
+                    URL.build(
+                        scheme="postgresql+psycopg",
+                        user=self.POSTGRES_USER,
+                        password=password,
+                        host=self.POSTGRES_SERVER,
+                        port=self.POSTGRES_PORT,
+                        path=f"/{postgres_db}",
+                    )
+                )
+            )
 
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False
@@ -186,10 +207,19 @@ class Settings(BaseSettings):
     # Google OAuth
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
-    GOOGLE_OAUTH_REDIRECT_URI: str = (
-        "http://localhost:8000/api/v1/login/google/callback"
-    )
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_HOST: str = "http://localhost:3000"
+    # 后端 API URL 配置，可通过环境变量覆盖
+    BACKEND_API_URL: str = "http://localhost:8000"
+
+    @property
+    def google_oauth_redirect_uri(self) -> str:
+        """Generate Google OAuth redirect URI pointing to backend API."""
+        # 使用后端 API URL 而不是前端 URL
+        redirect_uri = f"{self.BACKEND_API_URL}/api/v1/login/google/callback"
+        # 打印调试信息
+        logger.info(f"Configured Google OAuth redirect_uri: {redirect_uri}")
+        logger.info("Make sure this matches your Google Console configuration")
+        return redirect_uri
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         """Check if the provided secret value is "nexus" and raise a warning or error."""

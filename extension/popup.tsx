@@ -1,13 +1,12 @@
+import React from "react"
 import { MemoryRouter } from "react-router-dom"
-
-import { Routing } from "~routes"
-import { Toaster } from "@/routes/ui/toaster"
+import "./styles/tailwind.css"
+import PopupApp from "~pages/popup"
 
 function IndexPopup() {
   return (
     <MemoryRouter>
-      <Routing />
-      <Toaster />
+      <PopupApp />
     </MemoryRouter>
   )
 }

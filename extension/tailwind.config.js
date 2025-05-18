@@ -1,9 +1,12 @@
-const { fontFamily } = require("tailwindcss/defaultTheme")
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: ["class"],
-  content: ["./*.{js,jsx,ts,tsx}","./routes/*.tsx","./routes/**/*.tsx"],
+  darkMode: 'media',
+  content: [
+    "./pages/**/*.{js,jsx,ts,tsx}",
+    "./components/**/*.{js,jsx,ts,tsx}",
+    "./sidepanel.tsx",
+    "./popup.tsx"
+  ],
   theme: {
     container: {
       center: true,
@@ -14,15 +17,15 @@ module.exports = {
     },
     extend: {
       colors: {
-        border: "hsl(var(--border))",
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        primary: "var(--primary)",
+        "primary-foreground": "var(--primary-foreground)",
+        muted: "var(--muted)",
+        "muted-foreground": "var(--muted-foreground)",
+        border: "var(--border)",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
@@ -30,10 +33,6 @@ module.exports = {
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
         },
         accent: {
           DEFAULT: "hsl(var(--accent))",
@@ -49,21 +48,18 @@ module.exports = {
         },
       },
       borderRadius: {
-        lg: `var(--radius)`,
-        md: `calc(var(--radius) - 2px)`,
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-      },
-      fontFamily: {
-        sans: ["var(--font-sans)", ...fontFamily.sans],
       },
       keyframes: {
         "accordion-down": {
-          from: { height: "0" },
+          from: { height: 0 },
           to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
+          to: { height: 0 },
         },
       },
       animation: {
@@ -72,5 +68,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
-}
+  plugins: [],
+} 

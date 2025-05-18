@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { Eye, EyeOff, Lock } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 export function PasswordForm() {
   const { toast } = useToast();

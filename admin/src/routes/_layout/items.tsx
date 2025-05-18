@@ -60,17 +60,16 @@ function ItemsTable() {
     })
 
   // 安全地处理API响应
-  const apiData = apiResponse?.data || ({} as any)
+  const responseData = apiResponse?.data || ({} as any)
 
   // 使用类型断言处理响应数据
-  const items: ItemPublic[] = Array.isArray(apiData.data)
-    ? apiData.data
-    : Array.isArray(apiData)
-      ? apiData
-      : []
+  const items: ItemPublic[] = Array.isArray(responseData.data)
+    ? responseData.data
+    : []
 
   // 使用类型断言处理计数
-  const count = typeof apiData.count === "number" ? apiData.count : items.length
+  const count =
+    typeof responseData.count === "number" ? responseData.count : items.length
 
   if (isLoading) {
     return <PendingItems />

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,45 +10,99 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+interface DebugInfo {
+  status?: number;
+  data?: unknown;
+  error?: string;
+  token?: string;
+  fullCookies?: string;
+  timestamp?: string;
+}
+
 export default function CustomersPage() {
   const { user, isLoading, error, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [updateError, setUpdateError] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
 
   useEffect(() => {
     // For debugging purposes
     const checkAuth = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+        // 更详细地检查cookie
+        console.log("[Customer] 检查cookie信息");
+        console.log("[Customer] 全部cookie:", document.cookie);
+
         const token = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('accessToken='))
-          ?.split('=')[1];
-        
+          .split("; ")
+          .find((row) => row.startsWith("accessToken="))
+          ?.split("=")[1];
+
+        console.log(
+          "[Customer] accessToken:",
+          token ? `${token.substring(0, 10)}...` : "Missing",
+        );
+
         if (token) {
+          console.log("[Customer] 尝试获取用户信息");
           const response = await fetch(`${apiUrl}/api/v1/users/me`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
+            credentials: "include", // 包含cookies
           });
-          
+
+          const status = response.status;
+          console.log("[Customer] API响应状态:", status);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("[Customer] API错误:", errorText);
+            setDebugInfo({
+              status,
+              error: errorText,
+              token: token
+                ? "部分显示: " + token.substring(0, 10) + "..."
+                : "Missing",
+              fullCookies: document.cookie,
+            });
+            return;
+          }
+
           const data = await response.json();
+          console.log("[Customer] 获取到的用户数据:", data);
+
           setDebugInfo({
-            status: response.status,
-            data: data,
-            token: token ? 'Present' : 'Missing',
+            status,
+            data,
+            token: token
+              ? "部分显示: " + token.substring(0, 10) + "..."
+              : "Missing",
+            fullCookies: document.cookie,
           });
         } else {
-          setDebugInfo({ token: 'Missing' });
+          console.log("[Customer] 未找到token");
+          setDebugInfo({
+            token: "Missing",
+            fullCookies: document.cookie,
+            timestamp: new Date().toISOString(),
+          });
         }
       } catch (e) {
-        setDebugInfo({ error: e instanceof Error ? e.message : String(e) });
+        console.error("[Customer] 检查认证时出错:", e);
+        setDebugInfo({
+          error: e instanceof Error ? e.message : String(e),
+          fullCookies: document.cookie,
+          timestamp: new Date().toISOString(),
+        });
       }
     };
-    
+
     checkAuth();
   }, []);
 
@@ -70,7 +124,7 @@ export default function CustomersPage() {
       setTimeout(() => {
         setUpdateSuccess(false);
       }, 3000);
-    } catch (error) {
+    } catch {
       setUpdateError(true);
       setUpdateSuccess(false);
 
@@ -82,33 +136,47 @@ export default function CustomersPage() {
   };
 
   if (isLoading) {
-    return <div className="container mx-auto py-8">
-      <p className="text-center">Loading user data...</p>
-    </div>;
+    return (
+      <div className="container mx-auto py-8">
+        <p className="text-center">Loading user data...</p>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="container mx-auto py-8">
-      <Alert variant="destructive">
-        <AlertDescription>Error loading user data: {error.message}</AlertDescription>
-      </Alert>
-      <div className="mt-4 p-4 border rounded bg-gray-50">
-        <h3 className="font-medium">Debug Info:</h3>
-        <pre className="text-sm mt-2 overflow-auto">{JSON.stringify(debugInfo, null, 2)}</pre>
+    return (
+      <div className="container mx-auto py-8">
+        <Alert variant="destructive">
+          <AlertDescription>
+            Error loading user data: {error.message}
+          </AlertDescription>
+        </Alert>
+        <div className="mt-4 p-4 border rounded bg-gray-50">
+          <h3 className="font-medium">Debug Info:</h3>
+          <pre className="text-sm mt-2 overflow-auto">
+            {JSON.stringify(debugInfo, null, 2)}
+          </pre>
+        </div>
       </div>
-    </div>;
+    );
   }
 
   if (!user) {
-    return <div className="container mx-auto py-8">
-      <Alert variant="warning">
-        <AlertDescription>You are not logged in. Please login to view this page.</AlertDescription>
-      </Alert>
-      <div className="mt-4 p-4 border rounded bg-gray-50">
-        <h3 className="font-medium">Debug Info:</h3>
-        <pre className="text-sm mt-2 overflow-auto">{JSON.stringify(debugInfo, null, 2)}</pre>
+    return (
+      <div className="container mx-auto py-8">
+        <Alert variant="warning">
+          <AlertDescription>
+            You are not logged in. Please login to view this page.
+          </AlertDescription>
+        </Alert>
+        <div className="mt-4 p-4 border rounded bg-gray-50">
+          <h3 className="font-medium">Debug Info:</h3>
+          <pre className="text-sm mt-2 overflow-auto">
+            {JSON.stringify(debugInfo, null, 2)}
+          </pre>
+        </div>
       </div>
-    </div>;
+    );
   }
 
   return (
@@ -117,18 +185,22 @@ export default function CustomersPage() {
 
       {updateSuccess && (
         <Alert variant="success">
-          <AlertDescription>Your profile has been updated successfully.</AlertDescription>
+          <AlertDescription>
+            Your profile has been updated successfully.
+          </AlertDescription>
         </Alert>
       )}
 
       {updateError && (
         <Alert variant="destructive">
-          <AlertDescription>There was an error updating your profile.</AlertDescription>
+          <AlertDescription>
+            There was an error updating your profile.
+          </AlertDescription>
         </Alert>
       )}
 
       {/* Debug info in development */}
-      {process.env.NODE_ENV === 'development' && (
+      {process.env.NODE_ENV === "development" && (
         <div className="mb-4 p-2 border rounded bg-gray-50 text-xs">
           <details>
             <summary>Debug Info</summary>

@@ -12,9 +12,11 @@
     "paths": {
       "~*": [
         "./*"
-      ],
-      "@/*": ["./*"]
+      ]
     },
-    "baseUrl": "."
+    "baseUrl": ".",
+    "verbatimModuleSyntax": false,
+    "esModuleInterop": true,
+    "isolatedModules": true
   }
 }

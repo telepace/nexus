@@ -1,121 +1,144 @@
 # Nexus Browser Extension
 
-<div align="center">
-  <img src="assets/icon.png" alt="Nexus Logo" width="128" />
-  <h3>Your Intelligent Reading Companion</h3>
-</div>
+## 重构概述
 
-## Overview
+本次重构旨在优化扩展架构，减少冗余代码，重新设计UI，并提高用户体验。主要内容包括：
 
-Nexus Browser Extension is a lightweight, powerful tool that brings AI-powered reading assistance directly to your browser. It serves as your intelligent reading companion, enabling quick access to Nexus platform features and enhancing your web browsing experience.
+1. **架构层面**：
+   - 采用模块化设计，清晰区分UI层、业务逻辑层和基础设施层
+   - 建立统一的API服务层
+   - 简化组件结构，提高可维护性
 
-### Key Features
+2. **UI重新设计**：
+   - 重新设计侧边栏，使用React Hooks和函数组件
+   - 重构选项页面，采用侧边导航样式
+   - 实现新的弹出窗口设计，优化用户体验
 
-- **Instant Content Summarization**: Get concise summaries of articles, research papers, and web pages with a single click
-- **Smart Clipping**: Save web content to your Nexus knowledge base with automatic extraction of key information
-- **Contextual AI Assistance**: Select text for immediate translation, explanation, or extension based on your needs
-- **Seamless Integration**: Access your Nexus content library directly from your browser
+3. **功能优化**：
+   - 增强AI功能，添加多模型支持
+   - 改进内容提取算法
+   - 添加更丰富的上下文操作
+   - 实现统一的暗色模式支持
 
-## Use Cases
+## 已完成的工作
 
-- **Research & Study**: Quickly capture and summarize research materials
-- **Efficient Information Processing**: Filter through content noise with AI-powered summaries
-- **Knowledge Management**: Build your personal knowledge base while browsing
-- **Language Support**: Get instant translations and explanations of complex concepts
+1. 侧边栏(SidePanel)重构：
+   - 使用React Hooks和函数组件替代类组件
+   - 实现类似Sider的对话界面
+   - 增加对话历史管理
+   - 添加暗色模式支持
 
-## Installation
+2. 选项页面(Options)重构：
+   - 设计全新的选项页面布局，采用侧边导航样式
+   - 设置集中归类管理
+   - 实现多AI模型支持和API密钥配置
+   - 添加快捷提示管理功能
 
-### From Source
+3. 弹出窗口(Popup)重构：
+   - 重新设计界面，简洁现代
+   - 优化快速操作功能
+   - 增强与侧边栏的联动
+   - 改进最近剪藏展示
 
-1. Clone this repository
+4. 服务层抽象：
+   - 统一API调用到服务层
+   - 封装浏览器API，降低组件与基础设施的耦合
+   - 建立AI服务模块，处理AI相关功能
+
+5. 配置文件更新：
+   - 更新manifest.json，优化权限和资源管理
+   - 添加键盘快捷键支持
+   - 调整文件路径结构，更符合模块化设计
+
+## 待完成的工作
+
+1. **背景服务(Background Service)优化**：
+   - 重构消息处理机制
+   - 改进授权流程
+   - 优化与AI服务的接口
+
+2. **内容脚本(Content Scripts)优化**：
+   - 改进页面内容提取算法
+   - 优化DOM操作性能
+   - 增强上下文感知能力
+
+3. **状态管理统一**：
+   - 实现全局状态管理机制
+   - 使用React Context或类似方案管理共享状态
+   - 解决组件间通信问题
+
+4. **AI功能增强**：
+   - 完善多模型支持
+   - 增加提示词模板功能
+   - 提高AI响应速度和质量
+
+5. **自动测试**：
+   - 添加单元测试和集成测试
+   - 实现端到端测试
+   - 提高代码质量和稳定性
+
+## 下一步计划
+
+1. 完成背景服务优化，改进消息处理机制
+2. 重构内容脚本，提高页面内容提取质量
+3. 实现状态管理系统，使用React Context
+4. 集成单元测试和端到端测试
+5. 进行性能优化和兼容性测试
+
+## 开发指南
+
+### 安装依赖
+
 ```bash
-git clone https://github.com/your-username/nexus-extension.git
-cd nexus-extension
-```
-
-2. Install dependencies
-```bash
+cd extension
 npm install
 ```
 
-3. Build the extension
+### 开发模式
+
 ```bash
-npm run build-complete
+# 启动开发服务器
+npm run dev
 ```
 
-4. Load the extension in Chrome/Edge/Firefox
-   - Open `chrome://extensions/` (or equivalent in other browsers)
-   - Enable Developer Mode
-   - Click "Load unpacked" and select the `build` directory
-
-### From Release
-*Coming soon to browser extension stores*
-
-## Development
-
-### Prerequisites
-
-- Node.js
-- npm or pnpm
-- ImageMagick (optional, for icon generation)
-
-### Development Commands
+### 构建扩展
 
 ```bash
-# Start development server with hot reload
-npm run dev
+# 构建扩展
+npm run build
 
-# Build for production
-npm run build-complete
-
-# Package for distribution
+# 打包扩展为zip文件
 npm run package
 ```
 
-## Architecture
-
-The extension follows a modular architecture:
+### 目录结构
 
 ```
 extension/
-├── assets/           # Static assets including icons
-├── background/       # Background scripts for event handling
-│   ├── index.ts      # Main background script
-│   └── messages/     # Message handlers for background-UI communication
-├── routes/           # React Router-based navigation
-│   ├── pages/        # UI pages (Home, Settings, etc.)
-│   └── ui/           # Reusable UI components
-├── utils/            # Utility functions and helpers
-├── lib/              # Shared libraries and services
-├── content.ts        # Content script for webpage interaction
-└── popup.tsx         # Main entry point for the popup UI
+├── background/         # 后台脚本
+│   ├── index.ts
+│   └── messages/       # 消息处理器
+├── components/         # 共享组件
+│   ├── ui/             # UI基础组件
+│   └── ...
+├── content-scripts/    # 内容脚本
+├── pages/              # 页面
+│   ├── options/        # 选项页面
+│   └── popup/          # 弹出窗口
+├── utils/              # 工具函数和服务
+│   ├── interfaces.ts   # 类型定义
+│   └── services.ts     # API服务层
+├── sidepanel.tsx       # 侧边栏组件
+├── manifest.json       # 扩展配置
+└── package.json
 ```
 
-### Key Components
+## Making production build
 
-- **Background Service**: Manages extension state, handles browser events, and communicates with the Nexus backend
-- **Content Scripts**: Interact with web pages to extract content and provide UI overlays
-- **Popup Interface**: Provides quick access to Nexus features and content management
-- **API Client**: Communicates with the Nexus platform for data synchronization
+Run the following:
 
-## Privacy & Data Handling
-
-The Nexus Browser Extension is designed with privacy in mind:
-
-- All content processing happens through your authenticated Nexus account
-- No browsing data is collected beyond what you explicitly save to your Nexus library
-- Your data remains in your control at all times
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the ISC License - see the LICENSE file for details. 
+```bash
+pnpm build
+# or
+npm run build
+```

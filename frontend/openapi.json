@@ -2,25 +2,10 @@
   "openapi": "3.1.0",
   "info": { "title": "nexus", "version": "0.1.0" },
   "paths": {
-    "/health": {
-      "get": {
-        "tags": ["health"],
-        "summary": "Get Health Root",
-        "description": "\u517c\u5bb9\u524d\u7aef\u7684\u6839\u7ea7\u522b\u5065\u5eb7\u68c0\u67e5\u8def\u7531",
-        "operationId": "health-get_health_root",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
-          }
-        }
-      }
-    },
     "/api/v1/health": {
       "get": {
         "tags": ["health"],
         "summary": "Get Health Api",
-        "description": "\u517c\u5bb9\u524d\u7aef\u7684API\u7ea7\u522b\u5065\u5eb7\u68c0\u67e5\u8def\u7531",
         "operationId": "health-get_health_api",
         "responses": {
           "200": {
@@ -780,7 +765,7 @@
       "post": {
         "tags": ["google_oauth"],
         "summary": "Google Callback Api",
-        "description": "Handle Google OAuth callback from frontend",
+        "description": "Handle Google OAuth callback from frontend\nThis is maintained for backward compatibility but not used in the new flow",
         "operationId": "google_oauth-google_callback_api",
         "requestBody": {
           "content": {
@@ -810,7 +795,7 @@
       "get": {
         "tags": ["google_oauth"],
         "summary": "Google Login",
-        "description": "Initiate Google OAuth2 authentication flow",
+        "description": "Initiate Google OAuth2 authentication flow\nThis endpoint redirects to Google's login page",
         "operationId": "google_oauth-google_login",
         "responses": {
           "200": {
@@ -824,7 +809,7 @@
       "get": {
         "tags": ["google_oauth"],
         "summary": "Google Callback",
-        "description": "Handle the callback from Google OAuth",
+        "description": "Handle the callback from Google OAuth\nThis endpoint is called by Google after the user has logged in",
         "operationId": "google_oauth-google_callback",
         "parameters": [
           {

@@ -1,83 +1,56 @@
-import { sendToBackground } from "@plasmohq/messaging"
+import { Storage } from "@plasmohq/storage"
+import type { UserProfile } from "~/utils/interfaces"
 
-/**
- * This content script listens for messages from the OAuth callback page
- * and forwards them to the extension's background script.
- */
-(function() {
-  // We only want this script to run on our OAuth callback page
-  if (!window.location.href.includes("/api/v1/login/google/callback")) {
-    return
-  }
-  
-  // Function to extract token from page content or URL params
-  const extractTokenFromPage = () => {
-    // Check if the token is in URL fragment or query params
-    const urlParams = new URLSearchParams(window.location.search)
-    const token = urlParams.get("token")
+const handleOAuthCallback = async () => {
+  try {
+    // 检查URL是否包含授权回调参数
+    const url = new URL(window.location.href)
+    const token = url.searchParams.get("token")
+    const userId = url.searchParams.get("user_id")
+    const expiresIn = url.searchParams.get("expires_in")
     
-    if (token) {
-      return token
-    }
-    
-    // Look for token in page content (if the API embeds it in the page)
-    const tokenElement = document.getElementById("auth-token")
-    if (tokenElement) {
-      return tokenElement.textContent.trim()
-    }
-    
-    return null
-  }
-  
-  // Extract token and send to background
-  const processToken = async () => {
-    const token = extractTokenFromPage()
-    
-    if (!token) {
-      console.error("No authentication token found")
-      return
-    }
-    
-    try {
-      // Send token to background script
-      const response = await sendToBackground({
-        name: "google-auth",
-        body: { token }
-      })
+    if (token && userId) {
+      const storage = new Storage({ area: "local" })
       
-      if (response.success) {
-        // Token was processed successfully, close this tab
-        // First show a success message
-        document.body.innerHTML = `
-          <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-            <h1>Authentication Successful</h1>
-            <p>You've been successfully authenticated with Google. You can now close this tab and return to the extension.</p>
-          </div>
-        `
-        
-        // After a short delay, close the tab
-        setTimeout(() => {
-          window.close()
-        }, 3000)
-      } else {
-        // Show error
-        document.body.innerHTML = `
-          <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-            <h1>Authentication Failed</h1>
-            <p>Error: ${response.message}</p>
-            <p>Please close this tab and try again.</p>
-          </div>
-        `
+      // 计算过期时间
+      const tokenExpiry = expiresIn 
+        ? Date.now() + parseInt(expiresIn) * 1000
+        : Date.now() + 30 * 24 * 60 * 60 * 1000 // 默认30天
+      
+      // 获取或创建用户资料
+      let userProfile: UserProfile = await storage.get("userProfile") || {
+        id: userId,
+        name: "",
+        email: "",
+        isAuthenticated: true
       }
-    } catch (error) {
-      console.error("Failed to process token:", error)
+      
+      // 更新用户资料
+      userProfile = {
+        ...userProfile,
+        id: userId,
+        token,
+        tokenExpiry,
+        isAuthenticated: true
+      }
+      
+      // 保存到存储
+      await storage.set("userProfile", userProfile)
+      
+      // 通知后台脚本授权成功
+      chrome.runtime.sendMessage({ action: "auth_success", userId, token })
+      
+      // 关闭窗口或重定向到成功页面
+      window.close()
     }
+  } catch (error) {
+    console.error("OAuth处理错误:", error)
   }
-  
-  // Process when the DOM is fully loaded
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", processToken)
-  } else {
-    processToken()
-  }
-})(); 
+}
+
+// 页面加载后执行处理
+if (document.readyState === "complete") {
+  handleOAuthCallback()
+} else {
+  window.addEventListener("load", handleOAuthCallback)
+} 

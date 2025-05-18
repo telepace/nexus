@@ -138,7 +138,7 @@ type ToastType = {
 };
 
 const TOAST_LIMIT = 5;
-const TOAST_REMOVE_DELAY = 1000 * 60 * 5; // 5 minutes
+// const TOAST_REMOVE_DELAY = 1000 * 60 * 5; // 5 minutes
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -178,7 +178,7 @@ interface State {
   toasts: ToastType[];
 }
 
-const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+// const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {

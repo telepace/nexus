@@ -66,7 +66,7 @@ UV_EXISTS := $(shell command -v uv 2> /dev/null)
 
 ## all: Run all tests, linting, formatting and build all components
 .PHONY: all
-all: format lint test backend-build frontend-build admin-build
+all: format lint generate-client backend-build frontend-build admin-build # test
 	@echo "===========> All checks and builds completed successfully"
 
 ## dev: Start development environment
@@ -81,7 +81,8 @@ lint: backend-lint frontend-lint admin-lint
 
 ## test: Run tests for all components
 .PHONY: test
-test: backend-test frontend-test website-test admin-test
+test: backend-test frontend-test website-test admin-test extension-test-unit
+	@echo "===========> All tests completed successfully"
 
 ## format: Format code in all components
 .PHONY: format
@@ -395,9 +396,15 @@ website-test: website-install
 # EXTENSION TARGETS
 # ==============================================================================
 
+## extension-clean: Clean extension build artifacts and cache
+.PHONY: extension-clean
+extension-clean:
+	@echo "===========> Cleaning extension build artifacts and cache"
+	@cd $(EXTENSION_DIR) && rm -rf build .plasmo
+
 ## extension-all: Run all extension related tasks without starting services
 .PHONY: extension-all
-extension-all: extension-build extension-package
+extension-all: extension-build extension-package extension-test
 	@echo "===========> Extension all checks completed successfully"
 
 ## extension: Start extension development
@@ -408,15 +415,34 @@ extension: check-pnpm
 
 ## extension-build: Build browser extension for production
 .PHONY: extension-build
-extension-build: check-pnpm
+extension-build: check-pnpm extension-clean
 	@echo "===========> Building browser extension for production"
-	@cd $(EXTENSION_DIR) && $(PNPM) run build
+	@cd $(EXTENSION_DIR) && $(PNPM) run build:with-tailwind
+	@echo "===========> Running post-build fixes"
+	@cd $(EXTENSION_DIR) && ./scripts/fix-build.sh
 
 ## extension-package: Package browser extension for distribution
 .PHONY: extension-package
 extension-package: check-pnpm
 	@echo "===========> Packaging browser extension for distribution"
 	@cd $(EXTENSION_DIR) && $(PNPM) run package
+
+## extension-test: Run all extension tests
+.PHONY: extension-test
+extension-test: extension-test-unit extension-test-e2e
+	@echo "===========> All extension tests completed"
+
+## extension-test-unit: Run extension unit tests with Jest
+.PHONY: extension-test-unit
+extension-test-unit: check-pnpm
+	@echo "===========> Running extension unit tests"
+	@cd $(EXTENSION_DIR) && $(PNPM) test
+
+## extension-test-e2e: Run extension E2E tests with Playwright
+.PHONY: extension-test-e2e
+extension-test-e2e: check-pnpm
+	@echo "===========> Running extension E2E tests"
+	@cd $(EXTENSION_DIR) && $(PNPM) exec playwright test
 
 # ==============================================================================
 # DOCKER TARGETS

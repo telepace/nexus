@@ -46,7 +46,7 @@ const config = {
         <meta name="og:title" content={title ? title + ' – nexus' : 'nexus'} />
         <meta name="og:image" content={socialCard} />
         <meta name="apple-mobile-web-app-title" content="nexus" />
-        <link rel="icon" href="/favicon.ico" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
       </>
     )
   },
