@@ -88,7 +88,10 @@ async def google_callback_api(
 
 
 @router.get("/login/google")
-async def google_login(request: Request):
+async def google_login(
+    request: Request,
+    extension_callback: str = None,  # 添加扩展回调链接参数
+):
     """
     Initiate Google OAuth2 authentication flow
     This endpoint redirects to Google's login page
@@ -109,6 +112,11 @@ async def google_login(request: Request):
     # Generate a random state value to prevent CSRF attacks
     state = secrets.token_urlsafe(16)
     request.session["google_oauth_state"] = state
+
+    # 保存扩展回调链接（如果有）
+    if extension_callback:
+        request.session["extension_callback"] = extension_callback
+        logger.info(f"Extension callback URL registered: {extension_callback}")
 
     # u6253u5370u5f53u524du7684 session u72b6u6001
     logger.info(f"Generated OAuth state: {state}")
@@ -227,7 +235,15 @@ async def google_callback(
         )
         logger.info(f"Generated access token for user: {user_info['email']}")
 
-        # Redirect to frontend with token
+        # 检查是否存在扩展回调 URL
+        extension_callback = request.session.pop("extension_callback", None)
+        if extension_callback:
+            logger.info(f"Redirecting to extension callback: {extension_callback}")
+            # 将令牌作为 URL 参数添加到扩展回调地址
+            redirect_url = f"{extension_callback}?token={access_token}"
+            return RedirectResponse(redirect_url)
+
+        # 否则重定向到前端
         redirect_url = (
             f"{settings.FRONTEND_HOST}/login/google/callback?token={access_token}"
         )

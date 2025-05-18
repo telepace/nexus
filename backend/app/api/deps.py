@@ -65,6 +65,7 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
     except InvalidTokenError as e:
         # Log the specific token error for better debugging
         import logging
+
         logging.getLogger("app").error(f"JWT Token Error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

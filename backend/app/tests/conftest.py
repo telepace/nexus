@@ -3,21 +3,59 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import Session, delete
+from sqlmodel import Session, delete, create_engine
 
 from app.core.config import settings
-from app.core.db import engine, init_db
+from app.core.db import init_db
 from app.main import app
 from app.models import Item, User
+from app.tests.utils.test_db import setup_test_db, teardown_test_db
 from app.tests.utils.user import authentication_token_from_email
 from app.tests.utils.utils import get_superuser_token_headers
 
 
+# This runs before all tests to set up the test environment
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_environment() -> Generator[None, None, None]:
+    """
+    Set up test environment by creating a test database and applying migrations.
+    
+    This fixture runs once per test session before any tests are executed.
+    
+    After all tests, it cleans up the test database.
+    """
+    # Create test database, apply migrations, and get the test engine
+    test_engine = setup_test_db()
+    
+    # Replace the global engine with our test engine
+    import app.core.db
+    original_engine = app.core.db.engine
+    app.core.db.engine = test_engine
+    
+    yield
+    
+    # After all tests, restore the original engine and clean up the test database
+    app.core.db.engine = original_engine
+    teardown_test_db()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def db() -> Generator[Session, None, None]:
+    """
+    Get a database session for testing.
+    
+    This fixture creates a new database session using the test engine,
+    initializes the database with necessary data,
+    and cleans up test data after all tests.
+    """
+    # We're using the engine that was set up in setup_test_environment
+    from app.core.db import engine
+    
     with Session(engine) as session:
         init_db(session)
         yield session
+        # Clean up test data, but don't drop the database yet
+        # (that will happen in teardown_test_db)
         statement = delete(Item)
         session.execute(statement)
         statement = delete(User)

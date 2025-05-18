@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -219,4 +219,4 @@ export function getCookie(name: string): string | undefined {
 
   console.log(`[Auth] getCookie: ${name} 未找到`);
   return undefined;
-} 
+}

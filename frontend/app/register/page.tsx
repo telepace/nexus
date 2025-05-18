@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/lib/auth";
 
 import { register } from "@/components/actions/register-action";
 import { useActionState } from "react";
@@ -32,11 +33,31 @@ function SearchParamsHandler({
 }
 
 export default function Page() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
 
   const [state, dispatch] = useActionState(register, undefined);
+
+  // 添加登录状态检查
+  useEffect(() => {
+    // 只有在加载完成且用户存在时才重定向
+    if (!isLoading && user) {
+      console.log("[RegisterPage] 用户已登录，重定向到仪表盘");
+      router.push("/dashboard");
+    }
+  }, [isLoading, user, router]);
+
+  // 如果正在检查登录状态，显示加载提示
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center">
+        <p className="text-lg">正在检查登录状态...</p>
+      </div>
+    );
+  }
 
   // Maintain form values when there's an error
   const handleSubmit = (formData: FormData) => {
@@ -76,7 +97,7 @@ export default function Page() {
             />
           </div>
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
-            Sign up
+            注册账号
           </h1>
         </div>
 
@@ -123,7 +144,7 @@ export default function Page() {
             <div className="flex items-center gap-3 my-6">
               <Separator className="flex-1 bg-slate-200 dark:bg-slate-700" />
               <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                OR
+                或者
               </span>
               <Separator className="flex-1 bg-slate-200 dark:bg-slate-700" />
             </div>
@@ -134,7 +155,7 @@ export default function Page() {
                   htmlFor="full_name"
                   className="text-sm font-medium text-slate-700 dark:text-slate-300"
                 >
-                  Full Name
+                  姓名
                 </Label>
                 <div className="relative group">
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
@@ -142,7 +163,7 @@ export default function Page() {
                     id="full_name"
                     name="full_name"
                     type="text"
-                    placeholder="John Doe"
+                    placeholder="张三"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     className="relative h-11 border-slate-200 dark:border-slate-700 rounded-md focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:border-slate-400 transition-all duration-300 bg-white dark:bg-slate-800"
@@ -156,7 +177,7 @@ export default function Page() {
                   htmlFor="email"
                   className="text-sm font-medium text-slate-700 dark:text-slate-300"
                 >
-                  Email
+                  邮箱
                 </Label>
                 <div className="relative group">
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
@@ -179,7 +200,7 @@ export default function Page() {
                   htmlFor="password"
                   className="text-sm font-medium text-slate-700 dark:text-slate-300"
                 >
-                  Password
+                  密码
                 </Label>
                 <div className="relative group">
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
@@ -199,7 +220,7 @@ export default function Page() {
               <div className="relative group">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
                 <SubmitButton
-                  text="Sign up"
+                  text="注册"
                   className="relative w-full h-11 bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 dark:from-slate-50 dark:to-white dark:text-slate-800 transition-all duration-300"
                 />
               </div>
@@ -209,12 +230,12 @@ export default function Page() {
         </Card>
 
         <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
-          Already have an account?{" "}
+          已有账号？{" "}
           <Link
             href={`/login${email ? `?email=${encodeURIComponent(email)}` : ""}`}
             className="font-medium text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300"
           >
-            Log in
+            登录
           </Link>
         </div>
       </div>

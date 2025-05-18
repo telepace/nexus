@@ -15,6 +15,13 @@ echo "🔧 Preparing test environment..."
 # Enter backend directory
 cd "$BACKEND_DIR"
 
+# Set testing environment variable to enable test database mode
+export TESTING=true
+export TEST_MODE=true
+
+# Print database information
+echo "🗄️  Using dedicated test database for testing"
+
 # Initialize test environment
 echo "🏁 Running test pre-start checks..."
 python app/tests_pre_start.py || {
@@ -24,7 +31,8 @@ python app/tests_pre_start.py || {
 
 # Run the test script
 echo "🧪 Running tests..."
-bash "$SCRIPT_DIR/test.sh" "$@" || {
+# Pass the testing flag to the test script
+TESTING=true bash "$SCRIPT_DIR/test.sh" "$@" || {
   echo "❌ Tests failed"
   exit 1
 }

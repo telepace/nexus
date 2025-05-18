@@ -184,59 +184,67 @@ async function saveOfflineClipping(clipping: ClippedItem) {
 }
 
 // 同步离线数据
-export async function syncOfflineClippings(): Promise<number> {
-  if (!navigator.onLine) return 0
+export async function syncOfflineClippings(pendingItems?: ClippedItem[]): Promise<{success: boolean, syncedIds: string[]}> {
+  if (!navigator.onLine) return { success: false, syncedIds: [] };
   
   try {
-    const isLoggedIn = await isAuthenticated()
-    if (!isLoggedIn) return 0
+    const isLoggedIn = await isAuthenticated();
+    if (!isLoggedIn) return { success: false, syncedIds: [] };
 
-    const pendingClippings = await storage.get(OFFLINE_CONFIG.PENDING_ITEMS_KEY) || []
-    if (pendingClippings.length === 0) return 0
+    // 使用传入的项或从存储获取
+    const pendingClippings = pendingItems || await storage.get(OFFLINE_CONFIG.PENDING_ITEMS_KEY) || [];
+    if (pendingClippings.length === 0) return { success: true, syncedIds: [] };
     
-    const headers = await getAuthHeaders()
-    let syncedCount = 0
+    const headers = await getAuthHeaders();
+    const syncedIds: string[] = [];
     
-    const newPendingClippings = [...pendingClippings]
+    const newPendingClippings = [...pendingClippings];
     
     for (let i = 0; i < pendingClippings.length; i++) {
-      const clipping = pendingClippings[i]
+      const clipping = pendingClippings[i];
       
-      // 跳过已经同步的项
-      if (!clipping.id.startsWith(OFFLINE_CONFIG.TEMP_ID_PREFIX)) continue
+      // 如果有离线标记或者ID以临时前缀开头
+      const isOfflineItem = clipping.offline === true || 
+                           (clipping.id && clipping.id.startsWith(OFFLINE_CONFIG.TEMP_ID_PREFIX));
+      
+      if (!isOfflineItem) continue;
       
       try {
-        // 移除临时ID并发送到服务器
-        const { id, ...clippingData } = clipping
+        // 移除临时ID和离线标记，然后发送到服务器
+        const { id, offline, ...clippingData } = clipping;
         
         const response = await safeFetch(`${API_BASE_URL}/api/clippings`, {
           method: "POST",
           headers,
           body: JSON.stringify(clippingData)
-        })
+        });
         
-        const syncedClipping = await response.json()
+        const syncedClipping = await response.json();
         
         // 替换临时数据
-        newPendingClippings[i] = syncedClipping
-        syncedCount++
+        newPendingClippings[i] = syncedClipping;
+        syncedIds.push(id);
       } catch (error) {
-        console.error(`${LOG_PREFIX} 同步离线项失败 (ID: ${clipping.id}):`, error)
+        console.error(`${LOG_PREFIX} 同步离线项失败 (ID: ${clipping.id}):`, error);
       }
     }
     
-    if (syncedCount > 0) {
-      await storage.set(OFFLINE_CONFIG.PENDING_ITEMS_KEY, newPendingClippings)
+    if (syncedIds.length > 0 && !pendingItems) {
+      // 只有在未传入pendingItems参数时才更新存储
+      // 如果传入了pendingItems，由调用者负责存储管理
+      await storage.set(OFFLINE_CONFIG.PENDING_ITEMS_KEY, 
+        newPendingClippings.filter(item => !syncedIds.includes(item.id))
+      );
       
       chrome.runtime.sendMessage({
         action: "updateBadgeCount"
-      }).catch(() => {/* 忽略错误 */})
+      }).catch(() => {/* 忽略错误 */});
     }
     
-    return syncedCount
+    return { success: true, syncedIds };
   } catch (error) {
-    console.error(`${LOG_PREFIX} 同步离线剪藏失败:`, error)
-    return 0
+    console.error(`${LOG_PREFIX} 同步离线剪藏失败:`, error);
+    return { success: false, syncedIds: [] };
   }
 }
 

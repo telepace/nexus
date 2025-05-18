@@ -4,6 +4,18 @@ import type { WebHistory, UserSettings } from "~/utils/interfaces"
 import { syncOfflineClippings } from "../utils/api"
 import { LOG_PREFIX, OFFLINE_CONFIG } from "../utils/config"
 
+// 消息处理程序注册
+import { handler as authHandler } from "./messages/auth"
+import { handler as savedataHandler } from "./messages/savedata"
+import { handler as aiHandler } from "./messages/ai"
+
+// 导出消息名称与处理程序的映射，用于Plasmo消息系统
+export const messaging = {
+  auth: authHandler,
+  savedata: savedataHandler,
+  ai: aiHandler
+}
+
 // 检查是否支持chrome.sidePanel API
 const isSidePanelSupported = () => {
   return typeof chrome !== 'undefined' && 
@@ -13,22 +25,32 @@ const isSidePanelSupported = () => {
 // 初始化设置
 const initializeSettings = async () => {
   const storage = new Storage({ area: "local" })
-  const settings = await storage.get("userSettings")
+  const settingsData = await storage.get("userSettings")
   
-  if (!settings) {
+  if (!settingsData || typeof settingsData !== 'object') {
     const defaultSettings: UserSettings = {
       theme: "system",
       defaultClipAction: "save",
       openSidebarOnClip: false,
       autoSummarize: false,
-      defaultLanguage: "en",
+      defaultLanguage: "zh",
       showBadgeCounter: true,
       useBrowserLanguage: false,
       keepSidePanelOpen: true,
-      promptShortcuts: [],
-      keyboardShortcut: "Alt+N"
+      promptShortcuts: []
     }
     await storage.set("userSettings", defaultSettings)
+  } else {
+    // 确保设置对象结构正确
+    const settings = settingsData as any
+    if (!settings.promptShortcuts || !Array.isArray(settings.promptShortcuts)) {
+      // 修复现有设置中的promptShortcuts属性
+      const updatedSettings: UserSettings = {
+        ...settings,
+        promptShortcuts: []
+      }
+      await storage.set("userSettings", updatedSettings)
+    }
   }
   
   // 设置侧边栏行为
@@ -96,73 +118,93 @@ chrome.runtime.onInstalled.addListener(async () => {
   updateBadgeCount();
 });
 
-// 监听扩展图标点击
-chrome.action.onClicked.addListener((tab) => {
-  if (!tab?.id) return;
-  
-  // 优先使用侧边栏API
-  if (isSidePanelSupported()) {
-    chrome.sidePanel.open({ tabId: tab.id })
-      .catch(err => {
-        console.error(`${LOG_PREFIX} 打开侧边栏失败:`, err);
-        // 失败时回退到传统方式
-        sendMessageToContentScript(tab.id, { action: "toggleSidebar", show: true });
-      });
-  } else {
-    // 不支持侧边栏API时使用传统方式
-    sendMessageToContentScript(tab.id, { action: "toggleSidebar", show: true });
-  }
-});
-
-// 发送消息到内容脚本，包含错误处理和注入修复脚本的逻辑
-const sendMessageToContentScript = (tabId: number, message: any) => {
-  chrome.tabs.sendMessage(tabId, message, (response) => {
-    if (chrome.runtime.lastError) {
-      console.warn(`${LOG_PREFIX} 发送消息错误:`, chrome.runtime.lastError);
-      
-      // 尝试注入修复脚本
-      chrome.scripting.executeScript({
-        target: { tabId: tabId },
-        files: ["sidebar-fix.js"]
-      }).then(() => {
-        console.log(`${LOG_PREFIX} 侧边栏修复脚本已注入`);
+// 处理键盘快捷键
+if (chrome.commands && chrome.commands.onCommand) {
+  chrome.commands.onCommand.addListener((command, tab) => {
+    if (!tab?.id) return;
+    
+    switch (command) {
+      case "open_side_panel":
+        if (isSidePanelSupported()) {
+          chrome.sidePanel.open({ tabId: tab.id });
+        }
+        break;
         
-        // 重新发送消息
-        setTimeout(() => {
-          chrome.tabs.sendMessage(tabId, message);
-        }, 200);
-      }).catch(err => {
-        console.error(`${LOG_PREFIX} 注入修复脚本失败:`, err);
-      });
+      case "clip_current_page":
+        sendMessageToContentScript(tab.id, { action: "clipPage" });
+        break;
+        
+      default:
+        console.log(`${LOG_PREFIX} 未处理的命令:`, command);
     }
   });
-};
+}
 
-// 处理右键菜单点击
+// 处理消息
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // 特权背景脚本消息处理
+  if (message.action) {
+    try {
+      switch (message.action) {
+        case "summarize":
+          if (sender.tab?.id) {
+            sendMessageToContentScript(sender.tab.id, { action: "summarizePage" });
+          }
+          break;
+          
+        case "extractPoints":
+          if (sender.tab?.id) {
+            sendMessageToContentScript(sender.tab.id, { 
+              action: "processPage", 
+              type: "highlights" 
+            });
+          }
+          break;
+          
+        case "openAIChat":
+          if (sender.tab?.id) {
+            sendMessageToContentScript(sender.tab.id, { action: "openAIChat" });
+          }
+          break;
+      }
+    } catch (error) {
+      console.error(`${LOG_PREFIX} 处理消息错误:`, error);
+    }
+  }
+  
+  // 确保异步响应
+  sendResponse({ success: true });
+  return true;
+});
+
+// 处理右键菜单点击，使用侧边栏显示结果
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (!tab?.id) return;
   
   const action = String(info.menuItemId);
   const text = info.selectionText || "";
   
-  if (isSidePanelSupported()) {
-    // 使用侧边栏API
-    chrome.sidePanel.open({ tabId: tab.id })
-      .then(() => {
-        // 通过运行时消息发送到侧边栏
-        chrome.runtime.sendMessage({ 
-          action: action,
-          data: text
+  // 只在特定操作时打开侧边栏
+  if (action.startsWith("nexus-")) {
+    if (isSidePanelSupported()) {
+      // 使用侧边栏API
+      chrome.sidePanel.open({ tabId: tab.id })
+        .then(() => {
+          // 通过运行时消息发送到侧边栏
+          chrome.runtime.sendMessage({ 
+            action: action,
+            data: text
+          });
+        })
+        .catch(err => {
+          console.error(`${LOG_PREFIX} 打开侧边栏失败:`, err);
+          // 失败时回退到传统方式
+          handleMenuActionFallback(tab.id, action, text);
         });
-      })
-      .catch(err => {
-        console.error(`${LOG_PREFIX} 打开侧边栏失败:`, err);
-        // 失败时回退到传统方式，根据不同菜单项使用不同的消息格式
-        handleMenuActionFallback(tab.id, action, text);
-      });
-  } else {
-    // 使用传统方式
-    handleMenuActionFallback(tab.id, action, text);
+    } else {
+      // 使用传统方式
+      handleMenuActionFallback(tab.id, action, text);
+    }
   }
 });
 
@@ -271,8 +313,13 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
           )
           
           if (tabHistory) {
-            tabHistory.urlQueue.push(pageData.url)
-            await storage.set("urlQueueList", urlQueueListObj)
+            tabHistory.history.push({
+              url: pageData.url,
+              title: pageData.title,
+              content: pageData.renderedHtml,
+              timestamp: pageData.entryTime
+            })
+            await storage.set("urlQueueList", urlQueueListObj.urlQueueList)
           }
         }
 
@@ -282,93 +329,81 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
           )
           
           if (tabHistory) {
-            tabHistory.timeQueue.push(pageData.entryTime)
-            await storage.set("timeQueueList", timeQueueListObj)
+            tabHistory.history.push({
+              url: pageData.url,
+              title: pageData.title,
+              content: pageData.renderedHtml,
+              timestamp: new Date().getTime()
+            })
+            await storage.set("timeQueueList", timeQueueListObj.timeQueueList)
           }
         }
       }
     } catch (error) {
-      console.error("Error processing page data:", error)
+      console.error(`${LOG_PREFIX} 执行脚本错误:`, error)
     }
   }
 })
 
-// 监听标签页关闭
-chrome.tabs.onRemoved.addListener(async (tabId) => {
-  const storage = new Storage({ area: "local" })
-  
-  try {
-    let urlQueueListObj: { urlQueueList: WebHistory[] } = await storage.get("urlQueueList")
-    let timeQueueListObj: { timeQueueList: WebHistory[] } = await storage.get("timeQueueList")
-    
-    if (urlQueueListObj?.urlQueueList) {
-      urlQueueListObj.urlQueueList = urlQueueListObj.urlQueueList.filter(
-        (element) => element.tabsessionId !== tabId
-      )
-      await storage.set("urlQueueList", urlQueueListObj)
-    }
-    
-    if (timeQueueListObj?.timeQueueList) {
-      timeQueueListObj.timeQueueList = timeQueueListObj.timeQueueList.filter(
-        (element) => element.tabsessionId !== tabId
-      )
-      await storage.set("timeQueueList", timeQueueListObj)
-    }
-  } catch (error) {
-    console.error("Error cleaning up tab data:", error)
-  }
-})
-
-// 注册消息监听器
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log(`${LOG_PREFIX} 收到消息:`, message)
-  
-  // 处理打开弹出窗口
-  if (message.action === "openPopup") {
-    chrome.action.openPopup()
-      .catch(error => console.error(`${LOG_PREFIX} 打开弹出窗口失败:`, error))
-  }
-  
-  // 处理更新徽章
-  if (message.action === "updateBadgeCount") {
-    updateBadgeCount()
-      .catch(error => console.error(`${LOG_PREFIX} 更新徽章失败:`, error))
-  }
-  
-  // 返回true表示异步处理
-  return true
-})
-
-// 定期同步离线数据
+// 尝试同步离线数据
 async function scheduleSyncOfflineData() {
-  try {
-    const syncCount = await syncOfflineClippings()
-    if (syncCount > 0) {
-      console.log(`${LOG_PREFIX} 成功同步 ${syncCount} 个离线项`)
-    }
-  } catch (error) {
-    console.error(`${LOG_PREFIX} 同步离线数据失败:`, error)
-  }
+  const syncInterval = 5 * 60 * 1000 // 5分钟
   
-  // 每10分钟尝试同步一次
-  setTimeout(scheduleSyncOfflineData, 10 * 60 * 1000)
+  // 定期检查并同步
+  setInterval(async () => {
+    try {
+      const storage = await chrome.storage.local.get(OFFLINE_CONFIG.PENDING_ITEMS_KEY)
+      const pendingClippings = storage[OFFLINE_CONFIG.PENDING_ITEMS_KEY] || []
+      
+      if (pendingClippings.length > 0) {
+        const result = await syncOfflineClippings(pendingClippings)
+        
+        if (result.success) {
+          await chrome.storage.local.set({
+            [OFFLINE_CONFIG.PENDING_ITEMS_KEY]: pendingClippings.filter(
+              (item) => !result.syncedIds.includes(item.id)
+            )
+          })
+          
+          updateBadgeCount()
+        }
+      }
+    } catch (error) {
+      console.error(`${LOG_PREFIX} 同步离线数据失败:`, error)
+    }
+  }, syncInterval)
 }
 
-// 网络状态变化监听
-chrome.runtime.onStartup.addListener(() => {
-  scheduleSyncOfflineData()
-    .catch(error => console.error(`${LOG_PREFIX} 启动同步离线数据失败:`, error))
-  
+// 向内容脚本发送消息
+const sendMessageToContentScript = (tabId: number, message: any) => {
+  chrome.tabs.sendMessage(tabId, message, (response) => {
+    if (chrome.runtime.lastError) {
+      console.warn(`${LOG_PREFIX} 发送消息错误:`, chrome.runtime.lastError)
+      
+      // 尝试注入内容脚本
+      chrome.scripting
+        .executeScript({
+          target: { tabId },
+          files: ["content-scripts/content.js"]
+        })
+        .then(() => {
+          // 重新尝试发送消息
+          setTimeout(() => {
+            chrome.tabs.sendMessage(tabId, message)
+          }, 500)
+        })
+        .catch((err) => {
+          console.error(`${LOG_PREFIX} 注入内容脚本失败:`, err)
+        })
+    }
+  })
+}
+
+// 启动时初始化
+(async function initialize() {
+  await initializeSettings()
   updateBadgeCount()
-    .catch(error => console.error(`${LOG_PREFIX} 启动更新徽章失败:`, error))
-})
-
-// 监听在线状态变化
-window.addEventListener("online", () => {
-  console.log(`${LOG_PREFIX} 网络已恢复连接，开始同步数据`)
-  syncOfflineClippings()
-    .catch(error => console.error(`${LOG_PREFIX} 网络恢复同步失败:`, error))
-})
-
-// 定期更新徽章
-setInterval(updateBadgeCount, 60000) 
+  scheduleSyncOfflineData()
+  
+  console.log(`${LOG_PREFIX} 扩展后台已初始化`)
+})(); 

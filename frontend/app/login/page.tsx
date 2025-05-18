@@ -28,18 +28,53 @@ function SearchParamsHandler({
   return null;
 }
 
+// CallbackUrlHandler component to handle callback URL
+function CallbackUrlHandler({
+  setCallbackUrl,
+}: {
+  setCallbackUrl: (url: string) => void;
+}) {
+  const searchParams = useSearchParams();
+  const callbackUrlFromQuery = searchParams.get("callbackUrl") || "/dashboard";
+  
+  useEffect(() => {
+    setCallbackUrl(callbackUrlFromQuery);
+  }, [callbackUrlFromQuery, setCallbackUrl]);
+  
+  return null;
+}
+
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, user, isLoading } = useAuth();
   const router = useRouter();
+  const [callbackUrl, setCallbackUrl] = useState("/dashboard");
   const [email, setEmail] = useState("test@example.com"); // 预填测试用户
   const [password, setPassword] = useState("password"); // 预填测试用户密码
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [error, setError] = useState("");
   const [debugInfo, setDebugInfo] = useState("");
 
+  // 添加登录状态检查
+  useEffect(() => {
+    // 只有在加载完成且用户存在时才重定向
+    if (!isLoading && user) {
+      console.log("[LoginPage] 用户已登录，重定向到：", callbackUrl);
+      router.push(callbackUrl);
+    }
+  }, [isLoading, user, router, callbackUrl]);
+
+  // 如果正在检查登录状态，显示加载提示
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center">
+        <p className="text-lg">正在检查登录状态...</p>
+      </div>
+    );
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsLoggingIn(true);
     setError("");
     setDebugInfo("");
 
@@ -78,13 +113,13 @@ export default function LoginPage() {
       // Store token using auth hook
       login(data.access_token);
 
-      // Redirect to dashboard
-      router.push("/dashboard");
+      // Redirect to callback URL or dashboard
+      router.push(callbackUrl);
     } catch (err) {
       console.error("Login error:", err);
       setError(err instanceof Error ? err.message : "登录失败");
     } finally {
-      setIsLoading(false);
+      setIsLoggingIn(false);
     }
   };
 
@@ -93,6 +128,7 @@ export default function LoginPage() {
       {/* Wrap useSearchParams in Suspense */}
       <Suspense fallback={null}>
         <SearchParamsHandler setEmail={setEmail} />
+        <CallbackUrlHandler setCallbackUrl={setCallbackUrl} />
       </Suspense>
 
       {/* Tech-inspired background elements */}
@@ -229,10 +265,10 @@ export default function LoginPage() {
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
                 <Button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoggingIn}
                   className="relative w-full h-11 bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 dark:from-slate-50 dark:to-white dark:text-slate-800 transition-all duration-300"
                 >
-                  {isLoading ? "登录中..." : "登录"}
+                  {isLoggingIn ? "登录中..." : "登录"}
                 </Button>
               </div>
             </form>
@@ -268,12 +304,14 @@ export default function LoginPage() {
         </Card>
 
         <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
-          还没有账号？{" "}
+          没有账号？{" "}
           <Link
-            href={`/register${email ? `?email=${encodeURIComponent(email)}` : ""}`}
+            href={`/register${
+              email ? `?email=${encodeURIComponent(email)}` : ""
+            }`}
             className="font-medium text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300"
           >
-            注册
+            注册新账号
           </Link>
         </div>
       </div>

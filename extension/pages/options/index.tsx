@@ -4,8 +4,10 @@ import type { UserSettings, UserProfile } from "~/utils/interfaces"
 import { logout } from "~/utils/api"
 import Button from "~/components/ui/button"
 import { getFrontendUrl } from "~/utils/config"
+import "./options.css"
 
-const OptionsPage = () => {
+const OptionsPage: React.FC = () => {
+  // 状态定义
   const [settings, setSettings] = useState<UserSettings>({
     theme: "system",
     defaultClipAction: "save",
@@ -25,15 +27,23 @@ const OptionsPage = () => {
   })
   
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
-  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [isSaving, setIsSaving] = useState<boolean>(false)
+  const [saveSuccess, setSaveSuccess] = useState<boolean>(false)
+  const [activeSection, setActiveSection] = useState<string>("general")
   
   // 快捷提示相关状态
   const [newShortcut, setNewShortcut] = useState({ shortcut: "", prompt: "" })
   const [editingShortcutIndex, setEditingShortcutIndex] = useState<number | null>(null)
-  const [isAddingShortcut, setIsAddingShortcut] = useState(false)
+  const [isAddingShortcut, setIsAddingShortcut] = useState<boolean>(false)
   
-  // 获取设置和用户信息
+  // AI模型相关状态
+  const [availableModels, setAvailableModels] = useState([
+    { id: "gpt-3.5", name: "GPT-3.5", free: true, selected: true },
+    { id: "gpt-4", name: "GPT-4", free: false, selected: false },
+    { id: "claude", name: "Claude", free: false, selected: false }
+  ])
+  
+  // 加载设置和用户信息
   useEffect(() => {
     const loadData = async () => {
       const storage = new Storage({ area: "local" })
@@ -45,7 +55,7 @@ const OptionsPage = () => {
         }
         
         const profile = await storage.get("userProfile") as UserProfile
-        setUserProfile(profile)
+        setUserProfile(profile || null)
       } catch (error) {
         console.error("加载设置失败:", error)
       }
@@ -157,6 +167,16 @@ const OptionsPage = () => {
     }))
   }
   
+  // 处理AI模型选择
+  const handleModelToggle = (modelId: string) => {
+    setAvailableModels(models => 
+      models.map(model => ({
+        ...model,
+        selected: model.id === modelId ? !model.selected : model.selected
+      }))
+    )
+  }
+  
   // 处理登出
   const handleLogout = async () => {
     try {
@@ -172,324 +192,650 @@ const OptionsPage = () => {
     chrome.tabs.create({ url: getFrontendUrl("/login") })
   }
   
+  // 渲染侧边导航项
+  const renderNavItem = (id: string, label: string, icon: React.ReactNode) => (
+    <button
+      className={`nav-item ${activeSection === id ? 'active' : ''}`}
+      onClick={() => setActiveSection(id)}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  )
+  
   return (
-    <div className="container max-w-2xl mx-auto p-6 bg-background text-foreground">
-      <h1 className="text-2xl font-bold mb-6">Nexus 扩展设置</h1>
-      
-      {/* 账户设置 */}
-      <div className="mb-8 p-4 border rounded-lg">
-        <h2 className="text-xl font-semibold mb-4">账户</h2>
+    <div className="options-container">
+      <div className="options-sidebar">
+        <div className="sidebar-header">
+          <div className="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+            </svg>
+            <span>Nexus AI</span>
+          </div>
+        </div>
         
-        {userProfile?.isAuthenticated ? (
-          <div>
-            <div className="flex items-center mb-4">
-              {userProfile.avatar && (
-                <img 
-                  src={userProfile.avatar} 
-                  alt="头像" 
-                  className="w-10 h-10 rounded-full mr-3" 
-                />
-              )}
-              <div>
-                <div className="font-medium">{userProfile.name}</div>
-                <div className="text-sm text-muted-foreground">{userProfile.email}</div>
+        <div className="sidebar-nav">
+          {renderNavItem("account", "账户", 
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          )}
+          
+          {renderNavItem("general", "一般设置", 
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          )}
+          
+          {renderNavItem("ai", "AI 设置", 
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"></path>
+              <circle cx="7.5" cy="14.5" r=".5"></circle>
+              <circle cx="16.5" cy="14.5" r=".5"></circle>
+            </svg>
+          )}
+          
+          {renderNavItem("shortcuts", "快捷提示", 
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          )}
+          
+          {renderNavItem("clip", "剪藏设置", 
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2H2v10h10V2zM12 12H2v10h10V12zM22 2h-10v20h10V2z"></path>
+            </svg>
+          )}
+          
+          {renderNavItem("keyboard", "键盘快捷键", 
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+              <path d="M6 8h.001"></path>
+              <path d="M10 8h.001"></path>
+              <path d="M14 8h.001"></path>
+              <path d="M18 8h.001"></path>
+              <path d="M8 12h.001"></path>
+              <path d="M12 12h.001"></path>
+              <path d="M16 12h.001"></path>
+              <path d="M7 16h10"></path>
+            </svg>
+          )}
+          
+          {renderNavItem("about", "关于", 
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 8v4"></path>
+              <path d="M12 16h.01"></path>
+            </svg>
+          )}
+        </div>
+        
+        <div className="sidebar-footer">
+          <button className="save-button" onClick={saveSettings} disabled={isSaving}>
+            {isSaving ? "保存中..." : "保存设置"}
+          </button>
+          {saveSuccess && <span className="save-success">已保存!</span>}
+        </div>
+      </div>
+      
+      <div className="options-content">
+        {/* 账户设置 */}
+        {activeSection === "account" && (
+          <div className="section">
+            <h2 className="section-title">账户</h2>
+            
+            {userProfile?.isAuthenticated ? (
+              <div className="account-info">
+                <div className="user-profile">
+                  {userProfile.avatar && (
+                    <img 
+                      src={userProfile.avatar} 
+                      alt="头像" 
+                      className="avatar" 
+                    />
+                  )}
+                  <div className="user-details">
+                    <div className="user-name">{userProfile.name}</div>
+                    <div className="user-email">{userProfile.email}</div>
+                  </div>
+                </div>
+                
+                <div className="account-actions">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleLogout}
+                  >
+                    登出
+                  </Button>
+                  
+                  <a href={getFrontendUrl("/account")} target="_blank" rel="noopener noreferrer" className="account-link">
+                    管理账户
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className="login-prompt">
+                <p>
+                  登录 Nexus 账户以同步您的剪藏和设置。
+                </p>
+                <Button onClick={handleLogin}>登录</Button>
+              </div>
+            )}
+            
+            <div className="sync-settings">
+              <h3>同步设置</h3>
+              <div className="settings-row">
+                <div className="setting-label">
+                  <label htmlFor="sync-settings">
+                    同步设置到所有设备
+                  </label>
+                  <span className="setting-description">
+                    在所有登录相同账户的设备上同步您的设置
+                  </span>
+                </div>
+                <div className="setting-control">
+                  <input
+                    type="checkbox"
+                    id="sync-settings"
+                    name="syncSettings"
+                    checked={true}
+                    onChange={() => {}}
+                    disabled={!userProfile?.isAuthenticated}
+                  />
+                </div>
+              </div>
+              
+              <div className="settings-row">
+                <div className="setting-label">
+                  <label htmlFor="sync-history">
+                    同步历史记录
+                  </label>
+                  <span className="setting-description">
+                    在所有设备上同步您的对话历史记录
+                  </span>
+                </div>
+                <div className="setting-control">
+                  <input
+                    type="checkbox"
+                    id="sync-history"
+                    name="syncHistory"
+                    checked={true}
+                    onChange={() => {}}
+                    disabled={!userProfile?.isAuthenticated}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* 一般设置 */}
+        {activeSection === "general" && (
+          <div className="section">
+            <h2 className="section-title">一般设置</h2>
+            
+            <div className="settings-row">
+              <div className="setting-label">
+                <label htmlFor="theme">主题</label>
+                <span className="setting-description">
+                  选择外观主题
+                </span>
+              </div>
+              <div className="setting-control">
+                <select
+                  id="theme"
+                  name="theme"
+                  value={settings.theme}
+                  onChange={handleChange}
+                  className="select"
+                >
+                  <option value="light">亮色</option>
+                  <option value="dark">暗色</option>
+                  <option value="system">跟随系统</option>
+                </select>
               </div>
             </div>
             
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleLogout}
-            >
-              登出
-            </Button>
-          </div>
-        ) : (
-          <div>
-            <p className="mb-4 text-muted-foreground">
-              登录 Nexus 账户以同步您的剪藏和设置。
-            </p>
-            <Button onClick={handleLogin}>登录</Button>
-          </div>
-        )}
-      </div>
-      
-      {/* 通用设置 */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">通用设置</h2>
-        
-        {/* 主题 */}
-        <div className="mb-4">
-          <label className="block mb-2 font-medium">主题</label>
-          <select
-            name="theme"
-            value={settings.theme}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-          >
-            <option value="light">亮色</option>
-            <option value="dark">暗色</option>
-            <option value="system">跟随系统</option>
-            <option value="elmo">Elmo 主题</option>
-          </select>
-          <p className="text-sm text-muted-foreground mt-1">Change the elmo theme</p>
-        </div>
-        
-        {/* 默认语言 */}
-        <div className="mb-4">
-          <label className="block mb-2 font-medium">默认语言</label>
-          <select
-            name="defaultLanguage"
-            value={settings.defaultLanguage}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            disabled={settings.useBrowserLanguage}
-          >
-            <option value="zh">中文</option>
-            <option value="en">英文</option>
-          </select>
-          <p className="text-sm text-muted-foreground mt-1">Will answer in this language when possible</p>
-          
-          {/* 使用浏览器语言 */}
-          <div className="flex items-center mt-2">
-            <input
-              type="checkbox"
-              id="useBrowserLanguage"
-              name="useBrowserLanguage"
-              checked={settings.useBrowserLanguage}
-              onChange={handleChange}
-              className="mr-2"
-            />
-            <label htmlFor="useBrowserLanguage">
-              Use browser language
-            </label>
-          </div>
-        </div>
-        
-        {/* 显示徽章计数器 */}
-        <div className="flex items-center mb-4">
-          <input
-            type="checkbox"
-            id="showBadgeCounter"
-            name="showBadgeCounter"
-            checked={settings.showBadgeCounter}
-            onChange={handleChange}
-            className="mr-2"
-          />
-          <label htmlFor="showBadgeCounter">
-            显示徽章计数器 (显示待处理项数量)
-          </label>
-        </div>
-        
-        {/* 保持侧边栏打开 */}
-        <div className="flex items-center mb-4">
-          <input
-            type="checkbox"
-            id="keepSidePanelOpen"
-            name="keepSidePanelOpen"
-            checked={settings.keepSidePanelOpen}
-            onChange={handleChange}
-            className="mr-2"
-          />
-          <label htmlFor="keepSidePanelOpen">
-            Keep side panel open
-          </label>
-          <p className="text-sm text-muted-foreground ml-2">The side panel remains open when navigating between tabs</p>
-        </div>
-      </div>
-      
-      {/* 剪藏设置 */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">剪藏设置</h2>
-        
-        {/* 默认剪藏行为 */}
-        <div className="mb-4">
-          <label className="block mb-2 font-medium">默认剪藏行为</label>
-          <select
-            name="defaultClipAction"
-            value={settings.defaultClipAction}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-          >
-            <option value="save">仅保存</option>
-            <option value="save-and-summarize">保存并总结</option>
-            <option value="save-and-highlight">保存并高亮关键点</option>
-          </select>
-        </div>
-        
-        {/* 剪藏时自动打开侧边栏 */}
-        <div className="flex items-center mb-4">
-          <input
-            type="checkbox"
-            id="openSidebarOnClip"
-            name="openSidebarOnClip"
-            checked={settings.openSidebarOnClip}
-            onChange={handleChange}
-            className="mr-2"
-          />
-          <label htmlFor="openSidebarOnClip">
-            剪藏时自动打开侧边栏总结
-          </label>
-        </div>
-        
-        {/* 自动总结 */}
-        <div className="flex items-center mb-4">
-          <input
-            type="checkbox"
-            id="autoSummarize"
-            name="autoSummarize"
-            checked={settings.autoSummarize}
-            onChange={handleChange}
-            className="mr-2"
-          />
-          <label htmlFor="autoSummarize">
-            自动为剪藏的内容生成摘要 (可能会增加API使用量)
-          </label>
-        </div>
-      </div>
-      
-      {/* 快捷提示设置 */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Prompt shortcuts</h2>
-        
-        <div className="border rounded-md p-4 mb-4">
-          <table className="w-full mb-4">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left pb-2 w-1/3">Shortcut</th>
-                <th className="text-left pb-2 w-2/3">Prompt</th>
-                <th className="text-right pb-2">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {settings.promptShortcuts.map((item, index) => (
-                <tr key={index} className="border-b">
-                  <td className="py-2 pr-2">{item.shortcut}</td>
-                  <td className="py-2 pr-2">{item.prompt}</td>
-                  <td className="py-2 text-right">
-                    <button 
-                      onClick={() => handleEditShortcut(index)}
-                      className="text-blue-500 mr-2"
-                    >
-                      编辑
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteShortcut(index)}
-                      className="text-red-500"
-                    >
-                      删除
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {settings.promptShortcuts.length === 0 && (
-                <tr>
-                  <td colSpan={3} className="py-4 text-center text-muted-foreground">
-                    没有快捷提示
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-          
-          {isAddingShortcut ? (
-            <div className="mt-4 border rounded p-3">
-              <div className="mb-3">
-                <label className="block mb-1 text-sm font-medium">
-                  Shortcut
-                </label>
-                <input
-                  type="text"
-                  name="shortcut"
-                  value={newShortcut.shortcut}
-                  onChange={handleShortcutInputChange}
-                  placeholder="例如: /summarize"
-                  className="w-full p-2 border rounded"
-                />
+            <div className="settings-row">
+              <div className="setting-label">
+                <label htmlFor="defaultLanguage">默认语言</label>
+                <span className="setting-description">
+                  AI 将尽可能使用此语言回答
+                </span>
               </div>
-              
-              <div className="mb-3">
-                <label className="block mb-1 text-sm font-medium">
-                  Prompt
-                </label>
-                <input
-                  type="text"
-                  name="prompt"
-                  value={newShortcut.prompt}
-                  onChange={handleShortcutInputChange}
-                  placeholder="例如: Summarize the context"
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-              
-              <div className="flex justify-end">
-                <button
-                  onClick={handleCancelAddShortcut}
-                  className="px-3 py-1 mr-2 border rounded"
+              <div className="setting-control">
+                <select
+                  id="defaultLanguage"
+                  name="defaultLanguage"
+                  value={settings.defaultLanguage}
+                  onChange={handleChange}
+                  className="select"
+                  disabled={settings.useBrowserLanguage}
                 >
-                  取消
-                </button>
-                <button
-                  onClick={handleSaveShortcut}
-                  disabled={!newShortcut.shortcut || !newShortcut.prompt}
-                  className="px-3 py-1 bg-primary text-white rounded disabled:opacity-50"
-                >
-                  保存
-                </button>
+                  <option value="zh">中文</option>
+                  <option value="en">英文</option>
+                </select>
               </div>
             </div>
-          ) : (
-            <button
-              onClick={handleAddShortcut}
-              className="mt-2 px-3 py-1 border rounded"
-            >
-              添加
-            </button>
-          )}
-        </div>
-      </div>
-      
-      {/* 键盘快捷键设置 */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Keyboard shortcut</h2>
+            
+            <div className="settings-row">
+              <div className="setting-label">
+                <label htmlFor="useBrowserLanguage">
+                  使用浏览器语言
+                </label>
+                <span className="setting-description">
+                  自动检测并使用浏览器设置的语言
+                </span>
+              </div>
+              <div className="setting-control">
+                <input
+                  type="checkbox"
+                  id="useBrowserLanguage"
+                  name="useBrowserLanguage"
+                  checked={settings.useBrowserLanguage}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+            
+            <div className="settings-row">
+              <div className="setting-label">
+                <label htmlFor="showBadgeCounter">
+                  显示徽章计数器
+                </label>
+                <span className="setting-description">
+                  在扩展图标上显示未处理项的数量
+                </span>
+              </div>
+              <div className="setting-control">
+                <input
+                  type="checkbox"
+                  id="showBadgeCounter"
+                  name="showBadgeCounter"
+                  checked={settings.showBadgeCounter}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+            
+            <div className="settings-row">
+              <div className="setting-label">
+                <label htmlFor="keepSidePanelOpen">
+                  保持侧边栏打开
+                </label>
+                <span className="setting-description">
+                  在标签页之间导航时保持侧边栏打开
+                </span>
+              </div>
+              <div className="setting-control">
+                <input
+                  type="checkbox"
+                  id="keepSidePanelOpen"
+                  name="keepSidePanelOpen"
+                  checked={settings.keepSidePanelOpen}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+          </div>
+        )}
         
-        <div className="flex items-center mb-4">
-          <span className="mr-2">Press</span>
-          <input
-            type="text"
-            name="keyboardShortcut"
-            value={settings.keyboardShortcut}
-            onChange={handleChange}
-            className="p-2 border rounded mx-2 w-24 text-center"
-          />
-          <span>to activate the extension</span>
-        </div>
-      </div>
-      
-      {/* 快捷键说明 */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">快捷键</h2>
-        <p className="text-muted-foreground mb-2">
-          您可以在浏览器的扩展管理页面设置以下快捷键:
-        </p>
-        <ul className="list-disc pl-5 text-sm space-y-1 text-muted-foreground">
-          <li>打开 Nexus 弹出窗口</li>
-          <li>剪藏当前页面</li>
-          <li>打开侧边栏总结当前页面</li>
-        </ul>
-      </div>
-      
-      {/* 保存按钮 */}
-      <div className="flex items-center">
-        <Button 
-          onClick={saveSettings} 
-          disabled={isSaving}
-        >
-          {isSaving ? "保存中..." : "保存设置"}
-        </Button>
+        {/* AI 设置 */}
+        {activeSection === "ai" && (
+          <div className="section">
+            <h2 className="section-title">AI 设置</h2>
+            
+            <div className="subsection">
+              <h3>可用模型</h3>
+              <p className="subsection-description">选择您要使用的AI模型</p>
+              
+              <div className="model-list">
+                {availableModels.map(model => (
+                  <div key={model.id} className="model-item">
+                    <div className="model-info">
+                      <span className="model-name">{model.name}</span>
+                      {model.free && <span className="model-badge free">免费</span>}
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      checked={model.selected}
+                      onChange={() => handleModelToggle(model.id)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="subsection">
+              <h3>API 密钥</h3>
+              <p className="subsection-description">使用您自己的API密钥以使用更多功能</p>
+              
+              <div className="api-key-section">
+                <div className="api-key-item">
+                  <div className="api-key-header">
+                    <span>OpenAI API 密钥</span>
+                    <span className="api-key-status">未设置</span>
+                  </div>
+                  <input
+                    type="password"
+                    placeholder="sk-..."
+                    className="api-key-input"
+                  />
+                  <div className="api-key-description">
+                    可使用GPT-3.5和GPT-4模型
+                  </div>
+                </div>
+                
+                <div className="api-key-item">
+                  <div className="api-key-header">
+                    <span>Anthropic API 密钥</span>
+                    <span className="api-key-status">未设置</span>
+                  </div>
+                  <input
+                    type="password"
+                    placeholder="sk-ant-..."
+                    className="api-key-input"
+                  />
+                  <div className="api-key-description">
+                    可使用Claude模型
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="subsection">
+              <h3>AI行为</h3>
+              
+              <div className="settings-row">
+                <div className="setting-label">
+                  <label htmlFor="defaultModel">默认模型</label>
+                  <span className="setting-description">
+                    当未指定模型时使用
+                  </span>
+                </div>
+                <div className="setting-control">
+                  <select
+                    id="defaultModel"
+                    name="defaultModel"
+                    className="select"
+                  >
+                    <option value="gpt-3.5">GPT-3.5</option>
+                    <option value="gpt-4">GPT-4</option>
+                    <option value="claude">Claude</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="settings-row">
+                <div className="setting-label">
+                  <label htmlFor="systemPrompt">系统提示词</label>
+                  <span className="setting-description">
+                    自定义AI助手的行为和个性
+                  </span>
+                </div>
+                <div className="setting-control full-width">
+                  <textarea
+                    id="systemPrompt"
+                    name="systemPrompt"
+                    rows={3}
+                    placeholder="你是一个有用的AI助手..."
+                    className="textarea"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
-        {saveSuccess && (
-          <span className="ml-3 text-green-600">已保存!</span>
+        {/* 快捷提示 */}
+        {activeSection === "shortcuts" && (
+          <div className="section">
+            <h2 className="section-title">快捷提示</h2>
+            <p className="section-description">创建可在对话中快速使用的提示快捷方式</p>
+            
+            <div className="shortcuts-table">
+              <div className="shortcuts-header">
+                <div className="shortcut-col">快捷键</div>
+                <div className="prompt-col">提示内容</div>
+                <div className="actions-col">操作</div>
+              </div>
+              
+              {settings.promptShortcuts.length > 0 ? (
+                <div className="shortcuts-body">
+                  {settings.promptShortcuts.map((item, index) => (
+                    <div key={index} className="shortcut-row">
+                      <div className="shortcut-col">{item.shortcut}</div>
+                      <div className="prompt-col">{item.prompt}</div>
+                      <div className="actions-col">
+                        <button 
+                          onClick={() => handleEditShortcut(index)}
+                          className="edit-button"
+                        >
+                          编辑
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteShortcut(index)}
+                          className="delete-button"
+                        >
+                          删除
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-shortcuts">
+                  没有快捷提示
+                </div>
+              )}
+            </div>
+            
+            {isAddingShortcut ? (
+              <div className="shortcut-editor">
+                <div className="shortcut-form">
+                  <div className="form-group">
+                    <label htmlFor="shortcut">快捷键</label>
+                    <input
+                      type="text"
+                      id="shortcut"
+                      name="shortcut"
+                      value={newShortcut.shortcut}
+                      onChange={handleShortcutInputChange}
+                      placeholder="例如: /summarize"
+                      className="input"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="prompt">提示内容</label>
+                    <input
+                      type="text"
+                      id="prompt"
+                      name="prompt"
+                      value={newShortcut.prompt}
+                      onChange={handleShortcutInputChange}
+                      placeholder="例如: Summarize the context"
+                      className="input"
+                    />
+                  </div>
+                </div>
+                
+                <div className="shortcut-actions">
+                  <button
+                    onClick={handleCancelAddShortcut}
+                    className="cancel-button"
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={handleSaveShortcut}
+                    disabled={!newShortcut.shortcut || !newShortcut.prompt}
+                    className="save-button"
+                  >
+                    保存
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={handleAddShortcut}
+                className="add-button"
+              >
+                添加快捷提示
+              </button>
+            )}
+          </div>
+        )}
+        
+        {/* 剪藏设置 */}
+        {activeSection === "clip" && (
+          <div className="section">
+            <h2 className="section-title">剪藏设置</h2>
+            
+            <div className="settings-row">
+              <div className="setting-label">
+                <label htmlFor="defaultClipAction">默认剪藏行为</label>
+                <span className="setting-description">
+                  选择剪藏内容时的默认操作
+                </span>
+              </div>
+              <div className="setting-control">
+                <select
+                  id="defaultClipAction"
+                  name="defaultClipAction"
+                  value={settings.defaultClipAction}
+                  onChange={handleChange}
+                  className="select"
+                >
+                  <option value="save">仅保存</option>
+                  <option value="save-and-summarize">保存并总结</option>
+                  <option value="save-and-highlight">保存并高亮关键点</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="settings-row">
+              <div className="setting-label">
+                <label htmlFor="openSidebarOnClip">
+                  剪藏时自动打开侧边栏
+                </label>
+                <span className="setting-description">
+                  剪藏内容后自动打开侧边栏查看结果
+                </span>
+              </div>
+              <div className="setting-control">
+                <input
+                  type="checkbox"
+                  id="openSidebarOnClip"
+                  name="openSidebarOnClip"
+                  checked={settings.openSidebarOnClip}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+            
+            <div className="settings-row">
+              <div className="setting-label">
+                <label htmlFor="autoSummarize">
+                  自动总结
+                </label>
+                <span className="setting-description">
+                  自动为剪藏的内容生成摘要 (可能会增加API使用量)
+                </span>
+              </div>
+              <div className="setting-control">
+                <input
+                  type="checkbox"
+                  id="autoSummarize"
+                  name="autoSummarize"
+                  checked={settings.autoSummarize}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* 键盘快捷键 */}
+        {activeSection === "keyboard" && (
+          <div className="section">
+            <h2 className="section-title">键盘快捷键</h2>
+            <p className="section-description">设置扩展的键盘快捷键</p>
+            
+            <div className="settings-row">
+              <div className="setting-label">
+                <label htmlFor="keyboardShortcut">
+                  激活扩展
+                </label>
+                <span className="setting-description">
+                  按下此快捷键激活扩展
+                </span>
+              </div>
+              <div className="setting-control">
+                <input
+                  type="text"
+                  id="keyboardShortcut"
+                  name="keyboardShortcut"
+                  value={settings.keyboardShortcut}
+                  onChange={handleChange}
+                  className="input text-center"
+                  style={{width: "100px"}}
+                />
+              </div>
+            </div>
+            
+            <div className="keyboard-info">
+              <h3>Chrome快捷键</h3>
+              <p>
+                您可以在Chrome的扩展管理页面设置以下快捷键:
+              </p>
+              <ul className="keyboard-list">
+                <li>
+                  <span className="keyboard-action">打开Nexus弹出窗口</span>
+                  <a href="chrome://extensions/shortcuts" target="_blank" rel="noopener noreferrer" className="configure-link">配置</a>
+                </li>
+                <li>
+                  <span className="keyboard-action">剪藏当前页面</span>
+                  <a href="chrome://extensions/shortcuts" target="_blank" rel="noopener noreferrer" className="configure-link">配置</a>
+                </li>
+                <li>
+                  <span className="keyboard-action">打开侧边栏总结当前页面</span>
+                  <a href="chrome://extensions/shortcuts" target="_blank" rel="noopener noreferrer" className="configure-link">配置</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        )}
+        
+        {/* 关于 */}
+        {activeSection === "about" && (
+          <div className="section">
+            <h2 className="section-title">关于 Nexus AI</h2>
+            
+            <div className="about-info">
+              <div className="version-info">
+                <strong>版本:</strong> 0.1.0
+              </div>
+              
+              <p>
+                Nexus AI 是一个强大的AI助手，帮助您理解、保存和与网页内容互动。
+              </p>
+              
+              <div className="links">
+                <a href="https://nexus.yourdomain.com/help" target="_blank" rel="noopener noreferrer">帮助文档</a>
+                <a href="https://nexus.yourdomain.com/privacy" target="_blank" rel="noopener noreferrer">隐私政策</a>
+                <a href="https://nexus.yourdomain.com/terms" target="_blank" rel="noopener noreferrer">使用条款</a>
+              </div>
+              
+              <div className="contact">
+                <strong>联系我们:</strong> support@nexus.yourdomain.com
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

@@ -417,7 +417,9 @@ extension: check-pnpm
 .PHONY: extension-build
 extension-build: check-pnpm extension-clean
 	@echo "===========> Building browser extension for production"
-	@cd $(EXTENSION_DIR) && $(PNPM) run build
+	@cd $(EXTENSION_DIR) && $(PNPM) run build:with-tailwind
+	@echo "===========> Running post-build fixes"
+	@cd $(EXTENSION_DIR) && ./scripts/fix-build.sh
 
 ## extension-package: Package browser extension for distribution
 .PHONY: extension-package

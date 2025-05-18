@@ -2,8 +2,18 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { FaGithub } from "react-icons/fa";
 import { Badge } from "@/components/ui/badge";
+import { redirect } from "next/navigation";
+import { getAuthState } from "@/lib/server-auth";
 
-export default function Home() {
+export default async function Home() {
+  // 检查用户登录状态
+  const authState = await getAuthState();
+  
+  // 如果已登录，重定向到仪表盘
+  if (authState.isAuthenticated) {
+    redirect("/dashboard");
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-8">
       <div className="text-center max-w-2xl">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { handleOAuthCallback } from "../../utils/api"
+import { handleOAuthCallback } from "../../utils/auth-handler"
 import { LOG_PREFIX } from "../../utils/config"
 
 const OAuthCallback: React.FC = () => {
@@ -11,8 +11,7 @@ const OAuthCallback: React.FC = () => {
       try {
         // 获取URL参数
         const params = new URLSearchParams(window.location.search)
-        const code = params.get('code')
-        const provider = params.get('provider') || 'google' // 默认为google
+        const token = params.get('token')
         const error = params.get('error')
 
         if (error) {
@@ -21,16 +20,16 @@ const OAuthCallback: React.FC = () => {
           return
         }
 
-        if (!code) {
+        if (!token) {
           setStatus('error')
-          setMessage('登录失败: 未收到授权码')
+          setMessage('登录失败: 未收到认证令牌')
           return
         }
 
         // 处理OAuth回调
-        await handleOAuthCallback(code, provider)
+        await handleOAuthCallback(token)
         setStatus('success')
-        setMessage('登录成功！请稍候...')
+        setMessage('登录成功！正在返回扩展...')
 
         // 关闭此标签页并打开弹出窗口
         setTimeout(() => {

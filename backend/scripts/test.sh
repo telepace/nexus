@@ -12,6 +12,9 @@ BACKEND_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
 
 echo "🧪 Running backend tests with coverage..."
 
+# Make sure we're using the test database
+export TESTING=true
+
 # Enter backend directory
 cd "$BACKEND_DIR"
 
@@ -19,8 +22,8 @@ cd "$BACKEND_DIR"
 TITLE="${@:-coverage}"
 
 # Run tests with coverage
-echo "🧪 Running tests..."
-coverage run --source=app -m pytest || {
+echo "🧪 Running tests with test database..."
+TESTING=true coverage run --source=app -m pytest || {
   echo "❌ Tests failed"
   exit 1
 }

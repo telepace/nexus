@@ -1,10 +1,10 @@
 import { readFileSync, writeFileSync, copyFileSync } from "fs";
 import { copyFile } from "fs/promises";
 import { resolve } from "path";
-import type { Configuration } from "plasmo";
+import type { Configuration, PlasmoCSConfig } from "plasmo";
 
 // 确保在构建中复制修复脚本
-export const config: Configuration = {
+export const config: PlasmoCSConfig = {
   verbose: true,
   additionalManifestKeys: {
     browser_specific_settings: {
@@ -47,10 +47,33 @@ export const config: Configuration = {
           resolve(buildConfig.outputDir, "sidepanel.html")
         );
         
+        // 确保样式目录存在
+        const stylesDir = resolve(buildConfig.outputDir, "styles");
+        try {
+          // 尝试创建样式目录（如果不存在）
+          require('fs').mkdirSync(stylesDir, { recursive: true });
+        } catch (err) {
+          // 如果目录已存在，忽略错误
+          if (err.code !== 'EEXIST') throw err;
+        }
+        
+        // 复制样式文件
+        copyFileSync(
+          resolve(__dirname, "styles", "tailwind.css"),
+          resolve(buildConfig.outputDir, "styles", "tailwind.css")
+        );
+        
         console.log('All files copied successfully');
       } catch (error) {
         console.error('Error copying files:', error);
       }
     }
+  },
+  css: {
+    copy: [
+      { from: "./styles/tailwind.css", to: "styles/tailwind.css" }
+    ]
   }
-}; 
+};
+
+export default config 

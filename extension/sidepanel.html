@@ -1,11 +1,349 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Nexus AI 助手</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  </head>
-  <body>
-    <div id="__plasmo"></div>
-  </body>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus AI 侧边栏</title>
+  <style>
+    :root {
+      --background: #ffffff;
+      --foreground: #1f2937;
+      --primary: #4f46e5;
+      --primary-foreground: #ffffff;
+      --primary-hover: #4338ca;
+      --muted: #f3f4f6;
+      --muted-foreground: #6b7280;
+      --border: #e5e7eb;
+      --radius: 0.375rem;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    /* 暗色模式变量 */
+    .dark-mode, body.dark-mode {
+      --background: #1f2937;
+      --foreground: #f3f4f6;
+      --primary: #6366f1;
+      --primary-foreground: #ffffff;
+      --primary-hover: #4f46e5;
+      --muted: #374151;
+      --muted-foreground: #9ca3af;
+      --border: #4b5563;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+    }
+
+    /* 全局重置 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background-color: var(--background);
+      color: var(--foreground);
+      line-height: 1.5;
+      font-size: 14px;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* 布局 */
+    .sidepanel-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background-color: var(--background);
+      color: var(--foreground);
+    }
+
+    /* 头部 */
+    .sidepanel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .header-logo svg {
+      color: var(--primary);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* 操作区域 */
+    .quick-actions {
+      display: flex;
+      padding: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      gap: 0.5rem;
+    }
+
+    .action-button {
+      padding: 0.5rem;
+      border-radius: var(--radius);
+      background-color: var(--muted);
+      color: var(--foreground);
+      border: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      flex: 1;
+      transition: background-color 0.2s;
+    }
+
+    .action-button:hover {
+      background-color: rgba(79, 70, 229, 0.1);
+    }
+
+    .action-icon {
+      width: 20px;
+      height: 20px;
+      color: var(--primary);
+    }
+
+    .action-label {
+      font-size: 0.75rem;
+    }
+
+    /* 内容区域 */
+    .content-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+
+    .text-muted-foreground {
+      color: var(--muted-foreground);
+    }
+
+    /* 输入区域 */
+    .input-container {
+      padding: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background-color: var(--background);
+      padding: 0.5rem;
+    }
+
+    .question-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      resize: none;
+      min-height: 40px;
+      max-height: 120px;
+      background-color: transparent;
+      color: var(--foreground);
+      font-family: inherit;
+      font-size: 0.875rem;
+    }
+
+    .send-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+      border-radius: var(--radius);
+      border: none;
+      width: 2rem;
+      height: 2rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .send-button:hover {
+      background-color: var(--primary-hover);
+    }
+
+    /* 用户下拉菜单 */
+    .user-dropdown {
+      position: absolute;
+      right: 0.75rem;
+      top: 3rem;
+      width: 12rem;
+      background-color: var(--background);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 0.25rem;
+      z-index: 10;
+      display: none;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: calc(var(--radius) - 0.125rem);
+      cursor: pointer;
+      color: var(--foreground);
+      font-size: 0.875rem;
+      text-align: left;
+      width: 100%;
+      background-color: transparent;
+      border: none;
+    }
+
+    .dropdown-item:hover {
+      background-color: var(--muted);
+    }
+
+    /* 开关按钮样式 */
+    .toggle-btn {
+      position: relative;
+      width: 44px;
+      height: 22px;
+      background-color: var(--muted);
+      border-radius: 11px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .toggle-btn[data-active="true"] {
+      background-color: var(--primary);
+    }
+
+    .toggle-circle {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      background-color: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .toggle-btn[data-active="true"] .toggle-circle {
+      transform: translateX(22px);
+    }
+  </style>
+</head>
+<body>
+  <div class="sidepanel-container">
+    <div class="sidepanel-header">
+      <div class="header-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+        </svg>
+        <span>Nexus AI</span>
+      </div>
+      <div class="header-actions">
+        <button id="login-btn" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+          <div style="width: 24px; height: 24px; border-radius: 50%; background-color: var(--muted); display: flex; align-items: center; justify-content: center; font-size: 12px;">
+            ?
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div id="user-dropdown" class="user-dropdown">
+      <button class="dropdown-item">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+          <polyline points="10 17 15 12 10 7" />
+          <line x1="15" y1="12" x2="3" y2="12" />
+        </svg>
+        <span>登录</span>
+      </button>
+      <button class="dropdown-item">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+        <span>访问 Nexus 主页</span>
+      </button>
+    </div>
+
+    <div class="quick-actions">
+      <button id="summary-btn" class="action-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="action-icon">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span class="action-label">摘要</span>
+      </button>
+      <button id="search-btn" class="action-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="action-icon">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <span class="action-label">搜索</span>
+      </button>
+      <button id="clear-btn" class="action-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="action-icon">
+          <path d="M3 6h18"></path>
+          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+          <line x1="10" y1="11" x2="10" y2="17"></line>
+          <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+        <span class="action-label">清除</span>
+      </button>
+      <button id="settings-btn" class="action-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="action-icon">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        <span class="action-label">设置</span>
+      </button>
+      <button id="help-btn" class="action-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="action-icon">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span class="action-label">帮助</span>
+      </button>
+    </div>
+
+    <div id="content-area" class="content-container">
+      <div class="text-muted-foreground text-center py-4">内容将在这里显示</div>
+    </div>
+
+    <div class="input-container">
+      <div class="input-wrapper">
+        <textarea id="question-input" class="question-input" placeholder="输入问题或指令..."></textarea>
+        <button class="send-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/sidepanel.js"></script>
+</body>
 </html> 

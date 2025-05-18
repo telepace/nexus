@@ -17,7 +17,10 @@
     "package:prod": "cross-env PLASMO_PUBLIC_API_URL=https://api.nexus-app.com PLASMO_PUBLIC_FRONTEND_URL=https://app.nexus-app.com plasmo package",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "build:tailwind": "tailwindcss -i ./styles/globals.css -o ./styles/tailwind.css",
+    "dev:with-tailwind": "concurrently \"npm run build:tailwind -- --watch\" \"npm run dev:local\"",
+    "build:with-tailwind": "npm run build:tailwind && npm run build"
   },
   "dependencies": {
     "@plasmohq/messaging": "^0.6.2",
@@ -97,7 +100,7 @@
       "identity"
     ],
     "content_security_policy": {
-      "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://* http://*;"
+      "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://localhost:8000 https://* http://*;"
     },
     "web_accessible_resources": [
       {

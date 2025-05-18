@@ -43,7 +43,7 @@ interface ApiErrorResponse {
 export default async function DashboardPage() {
   // 获取认证状态
   const authState = await getAuthState();
-  
+
   // 如果未认证，将在 getAuthState 内部重定向到登录页
   if (!authState.isAuthenticated) {
     return (
@@ -59,7 +59,7 @@ export default async function DashboardPage() {
       </div>
     );
   }
-  
+
   return (
     <ErrorBoundary
       fallback={
@@ -102,7 +102,7 @@ async function DashboardContent() {
   // 使用唯一ID标识这次渲染，帮助调试
   const renderID = Math.random().toString(36).substring(7);
   console.log(`[dashboard-${renderID}] 开始渲染 Dashboard 内容`);
-  
+
   try {
     // 获取物品数据
     const itemsResponse = await fetchItems();
@@ -114,11 +114,13 @@ async function DashboardContent() {
 
     if (Array.isArray(itemsResponse)) {
       itemsList = itemsResponse;
-      console.log(`[dashboard-${renderID}] 成功获取 ${itemsList.length} 个物品`);
+      console.log(
+        `[dashboard-${renderID}] 成功获取 ${itemsList.length} 个物品`,
+      );
     } else if (itemsResponse && typeof itemsResponse === "object") {
       // 处理可能的错误响应格式
       const errorResponse = itemsResponse as ApiErrorResponse;
-      
+
       if (errorResponse.error) {
         errorMessage = String(errorResponse.error);
       } else if (errorResponse.message) {
@@ -128,9 +130,14 @@ async function DashboardContent() {
       } else {
         errorMessage = "未知错误";
       }
-      
+
       errorStatus = errorResponse.status || 500;
-      console.error(`[dashboard-${renderID}] 获取物品出错:`, errorMessage, "状态:", errorStatus);
+      console.error(
+        `[dashboard-${renderID}] 获取物品出错:`,
+        errorMessage,
+        "状态:",
+        errorStatus,
+      );
     }
 
     // 当有错误时显示错误信息
@@ -157,7 +164,9 @@ async function DashboardContent() {
           <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
           <div className="bg-muted p-8 text-center rounded-lg mb-6">
             <h2 className="text-xl mb-2">暂无物品</h2>
-            <p className="text-muted-foreground mb-4">您当前没有任何物品，请添加一个新物品开始使用。</p>
+            <p className="text-muted-foreground mb-4">
+              您当前没有任何物品，请添加一个新物品开始使用。
+            </p>
             <Button asChild>
               <Link href="/dashboard/add-item">添加物品</Link>
             </Button>
@@ -167,7 +176,9 @@ async function DashboardContent() {
     }
 
     // 正常情况：显示物品列表
-    console.log(`[dashboard-${renderID}] 渲染完成，显示 ${itemsList.length} 个物品`);
+    console.log(
+      `[dashboard-${renderID}] 渲染完成，显示 ${itemsList.length} 个物品`,
+    );
     return (
       <div className="container py-10">
         <div className="flex justify-between items-center mb-6">

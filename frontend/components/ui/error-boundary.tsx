@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { Component, ReactNode } from 'react';
+import React, { Component, ReactNode } from "react";
 
 interface ErrorBoundaryProps {
   fallback: ReactNode;
@@ -12,12 +12,15 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
       hasError: false,
-      error: null
+      error: null,
     };
   }
 
@@ -25,15 +28,15 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     // 更新状态，以便下一次渲染显示后备UI
     return {
       hasError: true,
-      error
+      error,
     };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     // 记录错误信息
-    console.error('ErrorBoundary 捕获到错误:', error);
-    console.error('错误组件堆栈:', errorInfo.componentStack);
-    
+    console.error("ErrorBoundary 捕获到错误:", error);
+    console.error("错误组件堆栈:", errorInfo.componentStack);
+
     // 这里可以将错误发送到监控服务
   }
 
@@ -53,7 +56,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
  */
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
-  fallback: ReactNode
+  fallback: ReactNode,
 ): React.FC<P> {
   return function WithErrorBoundary(props: P) {
     return (
@@ -62,4 +65,4 @@ export function withErrorBoundary<P extends object>(
       </ErrorBoundary>
     );
   };
-} 
+}

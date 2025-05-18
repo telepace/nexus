@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     FRONTEND_HOST: str = "http://localhost:5173"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
+    # Flag to indicate we're running tests
+    TESTING: bool = os.environ.get("TESTING", "").lower() == "true"
+    # We also check for TEST_MODE for compatibility
+    TEST_MODE: bool = os.environ.get("TEST_MODE", "").lower() == "true"
+
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)
     ] = []
@@ -89,6 +94,15 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
+        # Check if we're running in test mode and modify database name if needed
+        postgres_db = self.POSTGRES_DB
+        
+        # Log information about test status
+        if self.TESTING or self.TEST_MODE:
+            logger.info("Test mode detected. Using test database configuration.")
+            # Note: We don't modify the database name here
+            # That will be handled by the test_db.py utilities
+        
         # Return different connection URI based on database type
         """Returns the SQLAlchemy database URI based on the configured database type.
 
@@ -149,7 +163,7 @@ class Settings(BaseSettings):
                         password=password,
                         host=self.POSTGRES_SERVER,
                         port=self.POSTGRES_PORT,
-                        path=f"/{self.POSTGRES_DB}",
+                        path=f"/{postgres_db}",
                     )
                 )
             )

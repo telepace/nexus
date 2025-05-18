@@ -1,20 +1,137 @@
-This is a [Plasmo extension](https://docs.plasmo.com/) project bootstrapped with [`plasmo init`](https://www.npmjs.com/package/plasmo).
+# Nexus Browser Extension
 
-## Getting Started
+## 重构概述
 
-First, run the development server:
+本次重构旨在优化扩展架构，减少冗余代码，重新设计UI，并提高用户体验。主要内容包括：
+
+1. **架构层面**：
+   - 采用模块化设计，清晰区分UI层、业务逻辑层和基础设施层
+   - 建立统一的API服务层
+   - 简化组件结构，提高可维护性
+
+2. **UI重新设计**：
+   - 重新设计侧边栏，使用React Hooks和函数组件
+   - 重构选项页面，采用侧边导航样式
+   - 实现新的弹出窗口设计，优化用户体验
+
+3. **功能优化**：
+   - 增强AI功能，添加多模型支持
+   - 改进内容提取算法
+   - 添加更丰富的上下文操作
+   - 实现统一的暗色模式支持
+
+## 已完成的工作
+
+1. 侧边栏(SidePanel)重构：
+   - 使用React Hooks和函数组件替代类组件
+   - 实现类似Sider的对话界面
+   - 增加对话历史管理
+   - 添加暗色模式支持
+
+2. 选项页面(Options)重构：
+   - 设计全新的选项页面布局，采用侧边导航样式
+   - 设置集中归类管理
+   - 实现多AI模型支持和API密钥配置
+   - 添加快捷提示管理功能
+
+3. 弹出窗口(Popup)重构：
+   - 重新设计界面，简洁现代
+   - 优化快速操作功能
+   - 增强与侧边栏的联动
+   - 改进最近剪藏展示
+
+4. 服务层抽象：
+   - 统一API调用到服务层
+   - 封装浏览器API，降低组件与基础设施的耦合
+   - 建立AI服务模块，处理AI相关功能
+
+5. 配置文件更新：
+   - 更新manifest.json，优化权限和资源管理
+   - 添加键盘快捷键支持
+   - 调整文件路径结构，更符合模块化设计
+
+## 待完成的工作
+
+1. **背景服务(Background Service)优化**：
+   - 重构消息处理机制
+   - 改进授权流程
+   - 优化与AI服务的接口
+
+2. **内容脚本(Content Scripts)优化**：
+   - 改进页面内容提取算法
+   - 优化DOM操作性能
+   - 增强上下文感知能力
+
+3. **状态管理统一**：
+   - 实现全局状态管理机制
+   - 使用React Context或类似方案管理共享状态
+   - 解决组件间通信问题
+
+4. **AI功能增强**：
+   - 完善多模型支持
+   - 增加提示词模板功能
+   - 提高AI响应速度和质量
+
+5. **自动测试**：
+   - 添加单元测试和集成测试
+   - 实现端到端测试
+   - 提高代码质量和稳定性
+
+## 下一步计划
+
+1. 完成背景服务优化，改进消息处理机制
+2. 重构内容脚本，提高页面内容提取质量
+3. 实现状态管理系统，使用React Context
+4. 集成单元测试和端到端测试
+5. 进行性能优化和兼容性测试
+
+## 开发指南
+
+### 安装依赖
 
 ```bash
-pnpm dev
-# or
+cd extension
+npm install
+```
+
+### 开发模式
+
+```bash
+# 启动开发服务器
 npm run dev
 ```
 
-Open your browser and load the appropriate development build. For example, if you are developing for the chrome browser, using manifest v3, use: `build/chrome-mv3-dev`.
+### 构建扩展
 
-You can start editing the popup by modifying `popup.tsx`. It should auto-update as you make changes. To add an options page, simply add a `options.tsx` file to the root of the project, with a react component default exported. Likewise to add a content page, add a `content.ts` file to the root of the project, importing some module and do some logic, then reload the extension on your browser.
+```bash
+# 构建扩展
+npm run build
 
-For further guidance, [visit our Documentation](https://docs.plasmo.com/)
+# 打包扩展为zip文件
+npm run package
+```
+
+### 目录结构
+
+```
+extension/
+├── background/         # 后台脚本
+│   ├── index.ts
+│   └── messages/       # 消息处理器
+├── components/         # 共享组件
+│   ├── ui/             # UI基础组件
+│   └── ...
+├── content-scripts/    # 内容脚本
+├── pages/              # 页面
+│   ├── options/        # 选项页面
+│   └── popup/          # 弹出窗口
+├── utils/              # 工具函数和服务
+│   ├── interfaces.ts   # 类型定义
+│   └── services.ts     # API服务层
+├── sidepanel.tsx       # 侧边栏组件
+├── manifest.json       # 扩展配置
+└── package.json
+```
 
 ## Making production build
 
@@ -25,9 +142,3 @@ pnpm build
 # or
 npm run build
 ```
-
-This should create a production bundle for your extension, ready to be zipped and published to the stores.
-
-## Submit to the webstores
-
-The easiest way to deploy your Plasmo extension is to use the built-in [bpp](https://bpp.browser.market) GitHub action. Prior to using this action however, make sure to build your extension and upload the first version to the store to establish the basic credentials. Then, simply follow [this setup instruction](https://docs.plasmo.com/framework/workflows/submit) and you should be on your way for automated submission!
