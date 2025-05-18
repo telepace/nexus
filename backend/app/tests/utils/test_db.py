@@ -40,26 +40,26 @@ def get_test_db_url() -> str:
     main_url = str(settings.SQLALCHEMY_DATABASE_URI)
     test_db_name = get_test_db_name()
 
-    # 替换数据库名称部分，并确保使用 psycopg2 驱动
+    # 替换数据库名称部分，并确保使用 psycopg 驱动
     if "postgres://" in main_url or "postgresql://" in main_url:
         # 替换数据库名称
         db_name_part = main_url.split("/")[-1]
         new_url = main_url.replace(db_name_part, test_db_name)
 
-        # 确保使用 psycopg2 驱动
-        if "+psycopg" in new_url:
-            new_url = new_url.replace("+psycopg", "+psycopg2")
+        # 确保使用 psycopg 驱动 (不是 psycopg2)
+        if "+psycopg2" in new_url:
+            new_url = new_url.replace("+psycopg2", "+psycopg")
         elif (
             "postgresql://" in new_url
             and "+psycopg" not in new_url
             and "+psycopg2" not in new_url
         ):
-            new_url = new_url.replace("postgresql://", "postgresql+psycopg2://")
+            new_url = new_url.replace("postgresql://", "postgresql+psycopg://")
 
         return new_url
 
-    # 如无法解析，则构建新的 URL，显式使用 psycopg2
-    return f"postgresql+psycopg2://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_SERVER}:{settings.POSTGRES_PORT}/{test_db_name}"
+    # 如无法解析，则构建新的 URL，显式使用 psycopg
+    return f"postgresql+psycopg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_SERVER}:{settings.POSTGRES_PORT}/{test_db_name}"
 
 
 def get_connection_string() -> str:
@@ -171,12 +171,12 @@ def setup_test_db() -> Engine:
     driver_name = "postgresql+psycopg"
 
     # 使用importlib.util.find_spec检查模块可用性
-    if importlib.util.find_spec("psycopg2"):
-        driver_name = "postgresql+psycopg2"
-        logger.info("Using psycopg2 driver for database connection")
-    elif importlib.util.find_spec("psycopg"):
+    if importlib.util.find_spec("psycopg"):
         driver_name = "postgresql+psycopg"
         logger.info("Using psycopg (v3) driver for database connection")
+    elif importlib.util.find_spec("psycopg2"):
+        driver_name = "postgresql+psycopg2"
+        logger.info("Using psycopg2 driver for database connection")
     else:
         logger.error(
             "Neither psycopg nor psycopg2 is available. Please install one of them."
@@ -248,10 +248,10 @@ def test_database_connection() -> bool:
     driver_name = "postgresql+psycopg"
 
     # 使用importlib.util.find_spec检查模块可用性
-    if importlib.util.find_spec("psycopg2"):
-        driver_name = "postgresql+psycopg2"
-    elif importlib.util.find_spec("psycopg"):
+    if importlib.util.find_spec("psycopg"):
         driver_name = "postgresql+psycopg"
+    elif importlib.util.find_spec("psycopg2"):
+        driver_name = "postgresql+psycopg2"
     else:
         return False  # 如果两个驱动都不可用，则连接失败
 

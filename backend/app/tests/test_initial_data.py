@@ -126,7 +126,7 @@ print("Success: Module executed")
         )
 
         # Verify execution was successful
-        assert "Success: Module executed" in result.stdou
+        assert "Success: Module executed" in result.stdout
     finally:
         # Clean up
         if os.path.exists(temp_file):

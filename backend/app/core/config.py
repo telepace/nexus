@@ -207,7 +207,6 @@ class Settings(BaseSettings):
     # Google OAuth
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
-    FRONTEND_HOST: str = "http://localhost:3000"
     # 后端 API URL 配置，可通过环境变量覆盖
     BACKEND_API_URL: str = "http://localhost:8000"
 
