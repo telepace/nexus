@@ -92,7 +92,7 @@ jobs:
           if ! git diff --staged --quiet; then
             echo "✅ Changes detected in generated client. Committing and pushing..."
             # Pull before pushing to avoid conflicts if possible (optional)
-            # git pull --ff-only origin ${{ github.head_ref || github.ref_name }}
+            git pull --ff-only origin ${{ github.head_ref || github.ref_name }}
             git commit -m "ci: ✨ Autogenerate frontend client"
             git push origin HEAD:${{ github.head_ref || github.ref_name }}
           else

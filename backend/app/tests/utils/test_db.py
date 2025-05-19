@@ -108,11 +108,32 @@ def create_test_database() -> None:
                 # 创建新的测试数据库
                 logger.info(f"Creating test database {test_db_name}")
                 cur.execute(f"CREATE DATABASE {test_db_name}")
+                # 设置所有者和权限
+                cur.execute(f"GRANT ALL PRIVILEGES ON DATABASE {test_db_name} TO {settings.POSTGRES_USER}")
                 logger.info(f"Test database {test_db_name} created successfully")
 
     except Exception as e:
         logger.error(f"Error creating test database: {e}")
-        raise
+        # 如果连接失败或数据库已存在的错误，尝试修复
+        try:
+            # 打印更详细的错误信息以帮助调试
+            logger.warning(f"Attempting to recover from error: {str(e)}")
+            logger.warning(f"Connection string (password hidden): {conn_str.replace(settings.POSTGRES_PASSWORD, '********')}")
+            
+            # 重新尝试创建
+            with psycopg.connect(conn_str) as conn:
+                conn.autocommit = True
+                with conn.cursor() as cur:
+                    # 强制删除数据库（如果存在）
+                    cur.execute(f"DROP DATABASE IF EXISTS {test_db_name}")
+                    # 创建数据库
+                    cur.execute(f"CREATE DATABASE {test_db_name}")
+                    # 设置所有者
+                    cur.execute(f"GRANT ALL PRIVILEGES ON DATABASE {test_db_name} TO {settings.POSTGRES_USER}")
+                    logger.info(f"Successfully recovered and created test database {test_db_name}")
+        except Exception as recovery_error:
+            logger.error(f"Recovery attempt failed: {recovery_error}")
+            raise
 
 
 def apply_migrations() -> None:
