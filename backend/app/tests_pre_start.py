@@ -37,11 +37,12 @@ def main() -> None:
     is_testing = os.environ.get("TESTING", "").lower() == "true"
 
     if is_testing:
+        # 从 sqlmodel 导入 create_engine 而不是 sqlalchemy，确保使用 psycopg
         from sqlmodel import create_engine
 
         from app.tests.utils.test_db import get_test_db_url
 
-        logger.info("Test mode detected. Using test database.")
+        logger.info("Test mode detected. Using test database configuration.")
         test_engine = create_engine(get_test_db_url())
         init(test_engine)
     else:

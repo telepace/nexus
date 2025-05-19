@@ -170,20 +170,33 @@ def setup_test_db() -> Engine:
     # 检查并确保我们使用的驱动在当前环境可用
     driver_name = "postgresql+psycopg"
 
-    # 使用importlib.util.find_spec检查模块可用性
-    if importlib.util.find_spec("psycopg"):
+    # 尝试按优先级导入模块
+    try:
+        import psycopg  # 首选 psycopg (v3)
         driver_name = "postgresql+psycopg"
         logger.info("Using psycopg (v3) driver for database connection")
-    elif importlib.util.find_spec("psycopg2"):
-        driver_name = "postgresql+psycopg2"
-        logger.info("Using psycopg2 driver for database connection")
-    else:
-        logger.error(
-            "Neither psycopg nor psycopg2 is available. Please install one of them."
-        )
-        raise ImportError(
-            "Database driver not available. Install either psycopg2-binary or psycopg[binary]"
-        )
+    except ImportError:
+        try:
+            import psycopg2  # 备选 psycopg2
+            driver_name = "postgresql+psycopg2"
+            logger.info("Using psycopg2 driver for database connection")
+        except ImportError:
+            # 如果两者都不可用，尝试安装
+            logger.error(
+                "Neither psycopg nor psycopg2 is available. Please install one of them."
+            )
+            logger.info("Attempting to install psycopg[binary]...")
+            import subprocess
+            try:
+                subprocess.check_call(["uv", "pip", "install", "psycopg[binary]"])
+                import psycopg
+                driver_name = "postgresql+psycopg"
+                logger.info("Successfully installed and imported psycopg")
+            except Exception as e:
+                logger.error(f"Failed to install psycopg: {e}")
+                raise ImportError(
+                    "Database driver not available. Install either psycopg2-binary or psycopg[binary]"
+                )
 
     # 确保 URL 使用正确的驱动前缀
     if "postgresql+" in test_db_url:
