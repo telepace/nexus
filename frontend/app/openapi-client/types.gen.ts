@@ -330,7 +330,7 @@ export type GoogleOauthGoogleCallbackApiError = HTTPValidationError;
 
 export type GoogleOauthGoogleLoginData = {
   query?: {
-    extension_callback?: string;
+    extension_callback?: string | null;
   };
 };
 
