@@ -1,6 +1,15 @@
 import logging
 import os
 
+# Use distutils.util.strtobool for tolerant boolean parsing
+try:
+    from distutils.util import strtobool
+except ImportError:
+
+    def strtobool(val):
+        return val.lower() in ("y", "yes", "t", "true", "on", "1")
+
+
 from sqlalchemy import Engine
 from sqlmodel import Session, select
 from tenacity import after_log, before_log, retry, stop_after_attempt, wait_fixed
@@ -34,7 +43,12 @@ def main() -> None:
     logger.info("Initializing service")
 
     # Check if we're running in test mode and should use test database
-    is_testing = os.environ.get("TESTING", "").lower() == "true"
+    is_testing = False
+    testing_env = os.environ.get("TESTING", "")
+    try:
+        is_testing = bool(strtobool(testing_env))
+    except Exception:
+        is_testing = False
 
     if is_testing:
         # 从 sqlmodel 导入 create_engine 而不是 sqlalchemy，确保使用 psycopg
