@@ -103,13 +103,18 @@ env-doppler: check-doppler doppler-login-check
 	@doppler secrets download --no-file --format env > .env
 	@echo "===========> .env file generated from Doppler secrets"
 
-## check-root-env: Check if root .env exists, copy from .env.example if not
+## check-root-env: Check if root .env exists, generate from Doppler if possible, else copy from .env.example
 .PHONY: check-root-env
 check-root-env:
 	@if [ ! -f "$(ROOT_DIR)/.env" ]; then \
-		echo "===========> Root .env file not found, creating from .env.example"; \
-		cp "$(ROOT_DIR)/.env.example" "$(ROOT_DIR)/.env"; \
-		echo "===========> Consider running 'make env-doppler' to initialize with Doppler"; \
+		if command -v doppler >/dev/null 2>&1 && (doppler configure > /dev/null 2>&1 || [ ! -z "$$DOPPLER_TOKEN" ]); then \
+			echo "===========> Root .env file not found, generating from Doppler..."; \
+			$(MAKE) env-doppler; \
+		else \
+			echo "===========> Root .env file not found, creating from .env.example"; \
+			cp "$(ROOT_DIR)/.env.example" "$(ROOT_DIR)/.env"; \
+			echo "===========> Consider running 'make env-doppler' to initialize with Doppler"; \
+		fi \
 	else \
 		echo "===========> Root .env file exists"; \
 	fi
