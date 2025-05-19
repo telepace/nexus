@@ -100,9 +100,7 @@ jobs:
           fi
         env:
           # GITHUB_TOKEN has write permissions for same-repo events by default
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Use a PAT if you need to trigger subsequent workflows:
-          # GITHUB_TOKEN: ${{ secrets.YOUR_PAT_WITH_WRITE_ACCESS }}
+          GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
 
       # 8. Handle Changes for Fork PRs (Warn, Don't Fail)
       - name: Check for Uncommitted Changes (Fork PRs)
