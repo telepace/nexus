@@ -35,7 +35,6 @@ function ResetPasswordForm() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center">
-        <p className="text-lg">正在检查登录状态...</p>
       </div>
     );
   }
