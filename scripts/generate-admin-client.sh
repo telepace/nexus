@@ -54,4 +54,8 @@ pnpm exec biome format --write ./src/client || {
   # 不要立即退出，继续执行
 }
 
+# 执行修复脚本
+echo "🛠️ 修复客户端代码..."
+"$PROJECT_ROOT/scripts/fix-admin-client.sh"
+
 echo "Admin client successfully generated" 
