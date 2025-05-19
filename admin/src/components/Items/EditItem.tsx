@@ -12,7 +12,7 @@ import { type SubmitHandler, useForm } from "react-hook-form"
 import { FaExchangeAlt } from "react-icons/fa"
 
 import { type ApiError, ItemsService } from "@/client"
-import { type ItemPublic } from "@/client/custom"
+import type { ItemPublic } from "@/client/custom"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 import {

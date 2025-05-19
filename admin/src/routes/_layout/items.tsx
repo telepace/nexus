@@ -12,7 +12,7 @@ import { FiSearch } from "react-icons/fi"
 import { z } from "zod"
 
 import { ItemsService } from "@/client"
-import { type ItemPublic } from "@/client/custom"
+import type { ItemPublic } from "@/client/custom"
 import { ItemActionsMenu } from "@/components/Common/ItemActionsMenu"
 import AddItem from "@/components/Items/AddItem"
 import PendingItems from "@/components/Pending/PendingItems"

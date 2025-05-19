@@ -109,7 +109,9 @@ def create_test_database() -> None:
                 logger.info(f"Creating test database {test_db_name}")
                 cur.execute(f"CREATE DATABASE {test_db_name}")
                 # 设置所有者和权限
-                cur.execute(f"GRANT ALL PRIVILEGES ON DATABASE {test_db_name} TO {settings.POSTGRES_USER}")
+                cur.execute(
+                    f"GRANT ALL PRIVILEGES ON DATABASE {test_db_name} TO {settings.POSTGRES_USER}"
+                )
                 logger.info(f"Test database {test_db_name} created successfully")
 
     except Exception as e:
@@ -118,7 +120,9 @@ def create_test_database() -> None:
         try:
             # 打印更详细的错误信息以帮助调试
             logger.warning(f"Attempting to recover from error: {str(e)}")
-            logger.warning(f"Connection string (password hidden): {conn_str.replace(settings.POSTGRES_PASSWORD, '********')}")
+            logger.warning(
+                f"Connection string (password hidden): {conn_str.replace(settings.POSTGRES_PASSWORD, '********')}"
+            )
 
             # 重新尝试创建
             with psycopg.connect(conn_str) as conn:
@@ -129,8 +133,12 @@ def create_test_database() -> None:
                     # 创建数据库
                     cur.execute(f"CREATE DATABASE {test_db_name}")
                     # 设置所有者
-                    cur.execute(f"GRANT ALL PRIVILEGES ON DATABASE {test_db_name} TO {settings.POSTGRES_USER}")
-                    logger.info(f"Successfully recovered and created test database {test_db_name}")
+                    cur.execute(
+                        f"GRANT ALL PRIVILEGES ON DATABASE {test_db_name} TO {settings.POSTGRES_USER}"
+                    )
+                    logger.info(
+                        f"Successfully recovered and created test database {test_db_name}"
+                    )
         except Exception as recovery_error:
             logger.error(f"Recovery attempt failed: {recovery_error}")
             raise
@@ -191,32 +199,30 @@ def setup_test_db() -> Engine:
     # 检查并确保我们使用的驱动在当前环境可用
     driver_name = "postgresql+psycopg"
 
-    # 尝试按优先级导入模块
-    try:
-        import psycopg  # 首选 psycopg (v3)
+    # 使用 importlib.util.find_spec 检查模块可用性
+    if importlib.util.find_spec("psycopg"):
         driver_name = "postgresql+psycopg"
         logger.info("Using psycopg (v3) driver for database connection")
-    except ImportError:
+    elif importlib.util.find_spec("psycopg2"):
+        driver_name = "postgresql+psycopg2"
+        logger.info("Using psycopg2 driver for database connection")
+    else:
+        # 如果两者都不可用，尝试安装
+        logger.error(
+            "Neither psycopg nor psycopg2 is available. Please install one of them."
+        )
+        logger.info("Attempting to install psycopg[binary]...")
+        import subprocess
+
         try:
-            import psycopg2  # 备选 psycopg2
-            driver_name = "postgresql+psycopg2"
-            logger.info("Using psycopg2 driver for database connection")
-        except ImportError:
-            # 如果两者都不可用，尝试安装
-            logger.error(
-                "Neither psycopg nor psycopg2 is available. Please install one of them."
+            subprocess.check_call(["uv", "pip", "install", "psycopg[binary]"])
+            driver_name = "postgresql+psycopg"
+            logger.info("Successfully installed and imported psycopg")
+        except Exception as e:
+            logger.error(f"Failed to install psycopg: {e}")
+            raise ImportError(
+                "Database driver not available. Install either psycopg2-binary or psycopg[binary]"
             )
-            logger.info("Attempting to install psycopg[binary]...")
-            import subprocess
-            try:
-                subprocess.check_call(["uv", "pip", "install", "psycopg[binary]"])
-                driver_name = "postgresql+psycopg"
-                logger.info("Successfully installed and imported psycopg")
-            except Exception as e:
-                logger.error(f"Failed to install psycopg: {e}")
-                raise ImportError(
-                    "Database driver not available. Install either psycopg2-binary or psycopg[binary]"
-                )
 
     # 确保 URL 使用正确的驱动前缀
     if "postgresql+" in test_db_url:
