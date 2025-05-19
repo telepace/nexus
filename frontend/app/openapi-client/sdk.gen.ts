@@ -76,6 +76,7 @@ import type {
   GoogleOauthGoogleCallbackApiData,
   GoogleOauthGoogleCallbackApiError,
   GoogleOauthGoogleCallbackApiResponse,
+  GoogleOauthGoogleLoginData,
   GoogleOauthGoogleLoginError,
   GoogleOauthGoogleLoginResponse,
   GoogleOauthGoogleCallbackData,
@@ -533,7 +534,7 @@ export const googleOauthGoogleCallbackApi = <
  * This endpoint redirects to Google's login page
  */
 export const googleOauthGoogleLogin = <ThrowOnError extends boolean = false>(
-  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+  options?: OptionsLegacyParser<GoogleOauthGoogleLoginData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).get<
     GoogleOauthGoogleLoginResponse,

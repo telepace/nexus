@@ -1,13 +1,14 @@
 from datetime import timedelta
 from typing import Any
 
+import jwt
 from fastapi import APIRouter, HTTPException, Request
+from jwt.exceptions import InvalidTokenError
 
-from app import crud
 from app.api.deps import SessionDep
 from app.core import security
 from app.core.config import settings
-from app.models import Token, UserPublic
+from app.models import Token, User, UserPublic
 
 router = APIRouter(tags=["extension"])
 
@@ -24,18 +25,22 @@ def check_extension_auth_status(request: Request, session: SessionDep) -> Any:
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header.replace("Bearer ", "")
-            payload = security.decode_access_token(token)
+            payload = jwt.decode(
+                token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+            )
             user_id = payload.get("sub")
-            user = crud.get_user(session=session, id=user_id)
+            user = session.get(User, user_id)
             if user and user.is_active:
                 return {"authenticated": True, "user": UserPublic.model_validate(user)}
 
         # 从 cookie 获取令牌
         cookie_token = request.cookies.get("accessToken")
         if cookie_token:
-            payload = security.decode_access_token(cookie_token)
+            payload = jwt.decode(
+                cookie_token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+            )
             user_id = payload.get("sub")
-            user = crud.get_user(session=session, id=user_id)
+            user = session.get(User, user_id)
             if user and user.is_active:
                 return {"authenticated": True, "user": UserPublic.model_validate(user)}
 
@@ -56,9 +61,11 @@ def get_extension_token(request: Request, session: SessionDep) -> Any:
         cookie_token = request.cookies.get("accessToken")
         if cookie_token:
             try:
-                payload = security.decode_access_token(cookie_token)
+                payload = jwt.decode(
+                    cookie_token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+                )
                 user_id = payload.get("sub")
-                user = crud.get_user(session=session, id=user_id)
+                user = session.get(User, user_id)
 
                 if user and user.is_active:
                     # 为扩展创建新令牌
@@ -70,7 +77,7 @@ def get_extension_token(request: Request, session: SessionDep) -> Any:
                     )
 
                     return Token(access_token=token)
-            except Exception as e:
+            except InvalidTokenError as e:
                 raise HTTPException(status_code=401, detail=f"无效的网页会话: {str(e)}")
 
         raise HTTPException(status_code=401, detail="未找到有效的网页会话")

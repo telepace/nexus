@@ -11,10 +11,8 @@ from app.initial_data import init, main
 @pytest.fixture
 def mock_session():
     """Mock the Session to avoid actual DB operations during tests"""
-    with mock.patch("app.initial_data.Session", autospec=True) as mock_session_class:
-        mock_session_instance = mock.MagicMock()
-        mock_session_class.return_value.__enter__.return_value = mock_session_instance
-        yield mock_session_instance
+    with mock.patch("sqlmodel.Session") as mock_session:
+        yield mock_session
 
 
 @pytest.fixture
@@ -70,8 +68,8 @@ def test_main(mock_init_function, mock_logger):
     mock_init_function.assert_called_once()
 
 
-def test_script_entry_point():
-    """Test that the script has a main entry point that gets called when run as __main__"""
+def test_initial_data_has_entry_point():
+    """Test that the initial_data module has the correct entry point."""
     # Check if the file has the entry point pattern
     with open("app/initial_data.py") as f:
         content = f.read()
@@ -118,7 +116,7 @@ print("Success: Module executed")
 """
     temp_file = "temp_direct_exec.py"
     try:
-        # Write the temporary script
+        # Write the temporary scrip
         with open(temp_file, "w") as f:
             f.write(temp_script)
 

@@ -1,10 +1,12 @@
 from fastapi import APIRouter
 
 from .extension_auth import router as extension_auth_router
+
 # from .github import router as github_router
 from .google_oauth import router as google_oauth_router
 from .items import router as items_router
 from .login import router as login_router
+
 # from .profile import router as profile_router
 # from .upload import router as upload_router
 from .users import router as users_router

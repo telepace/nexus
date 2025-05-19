@@ -96,13 +96,13 @@ class Settings(BaseSettings):
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
         # Check if we're running in test mode and modify database name if needed
         postgres_db = self.POSTGRES_DB
-        
+
         # Log information about test status
         if self.TESTING or self.TEST_MODE:
             logger.info("Test mode detected. Using test database configuration.")
             # Note: We don't modify the database name here
             # That will be handled by the test_db.py utilities
-        
+
         # Return different connection URI based on database type
         """Returns the SQLAlchemy database URI based on the configured database type.
 
@@ -207,7 +207,6 @@ class Settings(BaseSettings):
     # Google OAuth
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
-    FRONTEND_HOST: str = "http://localhost:3000"
     # 后端 API URL 配置，可通过环境变量覆盖
     BACKEND_API_URL: str = "http://localhost:8000"
 

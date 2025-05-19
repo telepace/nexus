@@ -40,6 +40,7 @@ def get_supabase_client() -> Any | None:
 
     # Create and return the Supabase client
     try:
+        # 使用 type: ignore[attr-defined] 忽略 mypy 警告，因为 supabase 库在运行时确实有 create_client 方法
         client = supabase.create_client(  # type: ignore[attr-defined]
             url, settings.SUPABASE_API_KEY
         )

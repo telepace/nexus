@@ -1,6 +1,14 @@
 import logging
-
 import os
+
+# Use distutils.util.strtobool for tolerant boolean parsing
+try:
+    from distutils.util import strtobool
+except ImportError:
+
+    def strtobool(val):
+        return val.lower() in ("y", "yes", "t", "true", "on", "1")
+
 
 from sqlalchemy import Engine
 from sqlmodel import Session, select
@@ -33,20 +41,46 @@ def init(db_engine: Engine) -> None:
 
 def main() -> None:
     logger.info("Initializing service")
-    
+
     # Check if we're running in test mode and should use test database
-    is_testing = os.environ.get("TESTING", "").lower() == "true"
-    
+    is_testing = False
+    testing_env = os.environ.get("TESTING", "")
+    try:
+        is_testing = bool(strtobool(testing_env))
+    except Exception:
+        is_testing = False
+
     if is_testing:
-        from app.tests.utils.test_db import get_test_db_url
+        # 从 sqlmodel 导入 create_engine 而不是 sqlalchemy，确保使用 psycopg
         from sqlmodel import create_engine
-        logger.info("Test mode detected. Using test database.")
+
+        from app.tests.utils.test_db import (
+            create_test_database,
+            get_test_db_url,
+            setup_test_db,
+        )
+
+        logger.info("Test mode detected. Using test database configuration.")
+
+        # 首先创建测试数据库
+        try:
+            logger.info("Creating test database if it doesn't exist...")
+            create_test_database()
+        except Exception as e:
+            logger.error(f"Failed to create test database: {e}")
+            # 如果失败，尝试使用 setup_test_db，它会尝试重新创建
+            logger.info("Trying alternative setup approach...")
+            test_engine = setup_test_db()
+            init(test_engine)
+            return
+
+        # 创建数据库引擎并进行连接测试
         test_engine = create_engine(get_test_db_url())
         init(test_engine)
     else:
         # Use the default engine for normal operation
         init(engine)
-    
+
     logger.info("Service finished initializing")
 
 

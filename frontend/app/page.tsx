@@ -8,7 +8,7 @@ import { getAuthState } from "@/lib/server-auth";
 export default async function Home() {
   // 检查用户登录状态
   const authState = await getAuthState();
-  
+
   // 如果已登录，重定向到仪表盘
   if (authState.isAuthenticated) {
     redirect("/dashboard");

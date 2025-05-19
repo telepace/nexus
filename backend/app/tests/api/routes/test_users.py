@@ -228,7 +228,7 @@ def test_update_password_me(
     )
     # 只验证API响应成功，不再验证密码哈希匹配
     assert r.status_code == 200
-    
+
     # 验证新token是否可用 - 验证功能性而不是具体实现
     login_data = {
         "username": settings.FIRST_SUPERUSER,

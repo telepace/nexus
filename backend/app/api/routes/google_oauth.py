@@ -90,7 +90,7 @@ async def google_callback_api(
 @router.get("/login/google")
 async def google_login(
     request: Request,
-    extension_callback: str = None,  # 添加扩展回调链接参数
+    extension_callback: str | None = None,  # 添加扩展回调链接参数
 ):
     """
     Initiate Google OAuth2 authentication flow

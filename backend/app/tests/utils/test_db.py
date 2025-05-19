@@ -14,15 +14,11 @@ Test database utilities for isolating tests from production database.
 - 使用直接的 psycopg 连接进行数据库管理操作，避免 SQLAlchemy 事务限制
 """
 
+import importlib.util
 import logging
-import os
-from typing import Generator
 
 import psycopg
-from alembic import command
-from alembic.config import Config
-from sqlalchemy import Engine, create_engine, exc, text
-from sqlmodel import Session
+from sqlalchemy import Engine, create_engine, text
 
 from app.core.config import settings
 
@@ -43,23 +39,27 @@ def get_test_db_url() -> str:
     # 从主数据库 URL 构建测试数据库 URL
     main_url = str(settings.SQLALCHEMY_DATABASE_URI)
     test_db_name = get_test_db_name()
-    
-    # 替换数据库名称部分，并确保使用 psycopg2 驱动
+
+    # 替换数据库名称部分，并确保使用 psycopg 驱动
     if "postgres://" in main_url or "postgresql://" in main_url:
         # 替换数据库名称
         db_name_part = main_url.split("/")[-1]
         new_url = main_url.replace(db_name_part, test_db_name)
-        
-        # 确保使用 psycopg2 驱动
-        if "+psycopg" in new_url:
-            new_url = new_url.replace("+psycopg", "+psycopg2")
-        elif "postgresql://" in new_url and "+psycopg" not in new_url and "+psycopg2" not in new_url:
-            new_url = new_url.replace("postgresql://", "postgresql+psycopg2://")
-        
+
+        # 确保使用 psycopg 驱动 (不是 psycopg2)
+        if "+psycopg2" in new_url:
+            new_url = new_url.replace("+psycopg2", "+psycopg")
+        elif (
+            "postgresql://" in new_url
+            and "+psycopg" not in new_url
+            and "+psycopg2" not in new_url
+        ):
+            new_url = new_url.replace("postgresql://", "postgresql+psycopg://")
+
         return new_url
-    
-    # 如无法解析，则构建新的 URL，显式使用 psycopg2
-    return f"postgresql+psycopg2://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_SERVER}:{settings.POSTGRES_PORT}/{test_db_name}"
+
+    # 如无法解析，则构建新的 URL，显式使用 psycopg
+    return f"postgresql+psycopg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_SERVER}:{settings.POSTGRES_PORT}/{test_db_name}"
 
 
 def get_connection_string() -> str:
@@ -72,43 +72,76 @@ def create_test_database() -> None:
     """Create the test database if it does not exist."""
     test_db_name = get_test_db_name()
     conn_str = get_connection_string()
-    
+
     logger.info(f"Checking if test database {test_db_name} exists")
-    
+
     try:
         # 使用 psycopg 直接连接默认数据库
         with psycopg.connect(conn_str) as conn:
             # 设置自动提交，确保每条语句在自己的事务中执行
             conn.autocommit = True
-            
+
             with conn.cursor() as cur:
                 # 检查数据库是否存在
-                cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (test_db_name,))
+                cur.execute(
+                    "SELECT 1 FROM pg_database WHERE datname = %s", (test_db_name,)
+                )
                 exists = cur.fetchone()
-                
+
                 if exists:
-                    logger.info(f"Test database {test_db_name} already exists, dropping it for a clean start")
+                    logger.info(
+                        f"Test database {test_db_name} already exists, dropping it for a clean start"
+                    )
                     # 断开可能的所有连接
                     cur.execute(
-                        f"""
+                        """
                         SELECT pg_terminate_backend(pg_stat_activity.pid)
                         FROM pg_stat_activity
                         WHERE pg_stat_activity.datname = %s
                         AND pid <> pg_backend_pid()
                         """,
-                        (test_db_name,)
+                        (test_db_name,),
                     )
                     # 删除数据库
                     cur.execute(f"DROP DATABASE IF EXISTS {test_db_name}")
-                
+
                 # 创建新的测试数据库
                 logger.info(f"Creating test database {test_db_name}")
                 cur.execute(f"CREATE DATABASE {test_db_name}")
+                # 设置所有者和权限
+                cur.execute(
+                    f"GRANT ALL PRIVILEGES ON DATABASE {test_db_name} TO {settings.POSTGRES_USER}"
+                )
                 logger.info(f"Test database {test_db_name} created successfully")
-    
+
     except Exception as e:
         logger.error(f"Error creating test database: {e}")
-        raise
+        # 如果连接失败或数据库已存在的错误，尝试修复
+        try:
+            # 打印更详细的错误信息以帮助调试
+            logger.warning(f"Attempting to recover from error: {str(e)}")
+            logger.warning(
+                f"Connection string (password hidden): {conn_str.replace(settings.POSTGRES_PASSWORD, '********')}"
+            )
+
+            # 重新尝试创建
+            with psycopg.connect(conn_str) as conn:
+                conn.autocommit = True
+                with conn.cursor() as cur:
+                    # 强制删除数据库（如果存在）
+                    cur.execute(f"DROP DATABASE IF EXISTS {test_db_name}")
+                    # 创建数据库
+                    cur.execute(f"CREATE DATABASE {test_db_name}")
+                    # 设置所有者
+                    cur.execute(
+                        f"GRANT ALL PRIVILEGES ON DATABASE {test_db_name} TO {settings.POSTGRES_USER}"
+                    )
+                    logger.info(
+                        f"Successfully recovered and created test database {test_db_name}"
+                    )
+        except Exception as recovery_error:
+            logger.error(f"Recovery attempt failed: {recovery_error}")
+            raise
 
 
 def apply_migrations() -> None:
@@ -117,12 +150,11 @@ def apply_migrations() -> None:
         # 我们不再使用 alembic 迁移，因为 env.py 中使用了 fileConfig，在测试中会有问题
         # 改用直接创建表的方式
         from sqlmodel import SQLModel
-        from app.models import User, Item  # 导入所有模型，确保它们注册到 SQLModel.metadata
-        
+
         # 创建连接到测试数据库的引擎
         test_db_url = get_test_db_url()
         test_engine = create_engine(test_db_url)
-        
+
         logger.info(f"Creating all tables in test database: {get_test_db_name()}")
         # 直接创建所有表
         SQLModel.metadata.create_all(test_engine)
@@ -137,8 +169,7 @@ def apply_migrations_with_engine(engine: Engine) -> None:
     try:
         # 使用直接创建表的方式
         from sqlmodel import SQLModel
-        from app.models import User, Item  # 导入所有模型，确保它们注册到 SQLModel.metadata
-        
+
         logger.info(f"Creating all tables in test database: {get_test_db_name()}")
         # 直接创建所有表
         SQLModel.metadata.create_all(engine)
@@ -151,8 +182,7 @@ def apply_migrations_with_engine(engine: Engine) -> None:
 def create_tables(engine: Engine) -> None:
     """Create all tables directly using SQLModel metadata."""
     from sqlmodel import SQLModel
-    from app.models import User, Item  # 确保所有模型都被导入，注册到 metadata
-    
+
     logger.info("Creating tables directly with SQLModel")
     SQLModel.metadata.create_all(engine)
     logger.info("Tables created successfully")
@@ -165,28 +195,42 @@ def setup_test_db() -> Engine:
 
     # Create and return a new engine connected to the test database
     test_db_url = get_test_db_url()
-    
+
     # 检查并确保我们使用的驱动在当前环境可用
-    try:
-        import psycopg2
-        logger.info("Using psycopg2 driver for database connection")
+    driver_name = "postgresql+psycopg"
+
+    # 使用 importlib.util.find_spec 检查模块可用性
+    if importlib.util.find_spec("psycopg"):
+        driver_name = "postgresql+psycopg"
+        logger.info("Using psycopg (v3) driver for database connection")
+    elif importlib.util.find_spec("psycopg2"):
         driver_name = "postgresql+psycopg2"
-    except ImportError:
+        logger.info("Using psycopg2 driver for database connection")
+    else:
+        # 如果两者都不可用，尝试安装
+        logger.error(
+            "Neither psycopg nor psycopg2 is available. Please install one of them."
+        )
+        logger.info("Attempting to install psycopg[binary]...")
+        import subprocess
+
         try:
-            import psycopg
-            logger.info("Using psycopg (v3) driver for database connection")
+            subprocess.check_call(["uv", "pip", "install", "psycopg[binary]"])
             driver_name = "postgresql+psycopg"
-        except ImportError:
-            logger.error("Neither psycopg nor psycopg2 is available. Please install one of them.")
-            raise ImportError("Database driver not available. Install either psycopg2-binary or psycopg[binary]")
-    
+            logger.info("Successfully installed and imported psycopg")
+        except Exception as e:
+            logger.error(f"Failed to install psycopg: {e}")
+            raise ImportError(
+                "Database driver not available. Install either psycopg2-binary or psycopg[binary]"
+            )
+
     # 确保 URL 使用正确的驱动前缀
     if "postgresql+" in test_db_url:
         parts = test_db_url.split("://", 1)
         prefix = parts[0]
         if prefix != driver_name:
             test_db_url = test_db_url.replace(prefix, driver_name)
-    
+
     # 使用确定的驱动创建引擎
     test_engine = create_engine(
         test_db_url,
@@ -195,10 +239,10 @@ def setup_test_db() -> Engine:
         pool_size=5,
         max_overflow=10,
     )
-    
+
     # Create all tables using the same engine
     apply_migrations_with_engine(test_engine)
-    
+
     return test_engine
 
 
@@ -206,30 +250,30 @@ def teardown_test_db() -> None:
     """Clean up the test database after tests."""
     test_db_name = get_test_db_name()
     conn_str = get_connection_string()
-    
+
     try:
         # 使用 psycopg 直接连接
         with psycopg.connect(conn_str) as conn:
             conn.autocommit = True
-            
+
             with conn.cursor() as cur:
                 # 断开所有到测试数据库的连接
                 logger.info(f"Terminating all connections to {test_db_name}")
                 cur.execute(
-                    f"""
+                    """
                     SELECT pg_terminate_backend(pg_stat_activity.pid)
                     FROM pg_stat_activity
                     WHERE pg_stat_activity.datname = %s
                     AND pid <> pg_backend_pid()
                     """,
-                    (test_db_name,)
+                    (test_db_name,),
                 )
-                
+
                 # 删除测试数据库
                 logger.info(f"Dropping test database {test_db_name}")
                 cur.execute(f"DROP DATABASE IF EXISTS {test_db_name}")
                 logger.info(f"Test database {test_db_name} dropped successfully")
-    
+
     except Exception as e:
         logger.warning(f"Error during test database cleanup: {e}")
         # 不抛出异常，避免测试因清理问题而失败
@@ -238,31 +282,32 @@ def teardown_test_db() -> None:
 def test_database_connection() -> bool:
     """测试与测试数据库的连接，用于单元测试。"""
     test_db_url = get_test_db_url()
-    
+
     # 检查并确保我们使用的驱动在当前环境可用
-    try:
-        import psycopg2
+    driver_name = "postgresql+psycopg"
+
+    # 使用importlib.util.find_spec检查模块可用性
+    if importlib.util.find_spec("psycopg"):
+        driver_name = "postgresql+psycopg"
+    elif importlib.util.find_spec("psycopg2"):
         driver_name = "postgresql+psycopg2"
-    except ImportError:
-        try:
-            import psycopg
-            driver_name = "postgresql+psycopg"
-        except ImportError:
-            return False  # 如果两个驱动都不可用，则连接失败
-    
+    else:
+        return False  # 如果两个驱动都不可用，则连接失败
+
     # 确保 URL 使用正确的驱动前缀
     if "postgresql+" in test_db_url:
         parts = test_db_url.split("://", 1)
         prefix = parts[0]
         if prefix != driver_name:
             test_db_url = test_db_url.replace(prefix, driver_name)
-    
+
     # 创建引擎并测试连接
     engine = create_engine(test_db_url)
-    
+
     try:
         with engine.connect() as conn:
             result = conn.execute(text("SELECT 1")).scalar()
             return result == 1
-    except:
-        return False 
+    except Exception as e:
+        logger.warning(f"Database connection test failed: {e}")
+        return False

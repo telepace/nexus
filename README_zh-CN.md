@@ -3,14 +3,15 @@
 </p>
 
 <h3 align="center" style="border-bottom: none">
-    ⭐️  QuickForge AI - 快速构建AI应用的全栈模板 ⭐️ <br>
+    ⭐️  nexus - 快速构建AI应用的全栈模板 ⭐️ <br>
 </h3>
 
 <p align=center>
-<images src="https://images.shields.io/badge/QuickForge-AI-blue" alt="QuickForge AI">
-<images src="https://images.shields.io/badge/FastAPI-0.104.0-green" alt="FastAPI">
-<images src="https://images.shields.io/badge/TypeScript-5.2.2-blue" alt="TypeScript">
-<images src="https://images.shields.io/badge/license-MIT-brightgreen" alt="License">
+<a href="https://github.com/telepace/nexus/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3A%22good+first+issue%22"><img src="https://img.shields.io/github/issues/telepace/nexus/good%20first%20issue?logo=%22github%22" alt="good first"></a>
+<a href="https://github.com/telepace/nexus"><img src="https://img.shields.io/github/stars/telepace/nexus.svg?style=flat&logo=github&colorB=deeppink&label=stars"></a>
+<a href="https://discord.gg/qCyeGqaE3d"><img src="https://img.shields.io/badge/Discord-100%2B-blueviolet?logo=discord&amp;logoColor=white"></a>
+<a href="https://github.com/telepace/nexus/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-green"></a>
+<a href="https://www.python.org/"><img src="https://img.shields.io/badge/Language-Python-blue.svg"></a>
 </p>
 
 <p align="center">
@@ -20,7 +21,7 @@
 
 <br>
 
-QuickForge AI是一个生产级全栈模板，结合了FastAPI (Python)和TypeScript，用于快速AI原型开发。专为自由职业者和AI创业者设计，他们需要迅速构建和部署具有现代开发实践的专业应用程序。
+nexus是一个生产级全栈模板，结合了FastAPI (Python)和TypeScript，用于快速AI原型开发。专为自由职业者和AI创业者设计，他们需要迅速构建和部署具有现代开发实践的专业应用程序。
 
 ## 🚀 功能特点
 
@@ -431,7 +432,7 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ### AI集成开发
 
-QuickForge AI使集成各种AI服务变得简单：
+nexus使集成各种AI服务变得简单：
 
 - 预配置流行AI API的连接器
 - 常见AI模式的示例实现

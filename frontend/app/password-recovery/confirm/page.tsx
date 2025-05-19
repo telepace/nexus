@@ -49,9 +49,7 @@ function ResetPasswordForm() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">重置您的密码</CardTitle>
-          <CardDescription>
-            请输入新密码并确认。
-          </CardDescription>
+          <CardDescription>请输入新密码并确认。</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">

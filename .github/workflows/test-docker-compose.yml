@@ -39,13 +39,16 @@ jobs:
         run: |
           docker compose down -v --remove-orphans
           docker compose build
-          docker compose up -d --wait backend frontend pgadmin
+          docker compose up -d --wait backend frontend admin pgadmin
 
       - name: Test backend is up
         run: curl http://localhost:8000/api/v1/utils/health-check
 
       - name: Test frontend is up
         run: curl http://localhost:5173
+
+      - name: Test admin is up
+        run: curl http://localhost:3000
 
       - name: Clean up
         run: docker compose down -v --remove-orphans

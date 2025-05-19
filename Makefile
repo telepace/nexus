@@ -59,6 +59,132 @@ EXTENSION_DIR := $(ROOT_DIR)/extension
 # Check if tools are installed
 PNPM_EXISTS := $(shell command -v pnpm 2> /dev/null)
 UV_EXISTS := $(shell command -v uv 2> /dev/null)
+DOPPLER_EXISTS := $(shell command -v doppler 2> /dev/null)
+
+# ==============================================================================
+# ENV MANAGEMENT
+# ==============================================================================
+
+## env-init: Initialize all .env files by checking for their existence and creating if missing
+.PHONY: env-init
+env-init: check-root-env check-admin-env check-frontend-env check-extension-env
+
+## check-doppler: Check if Doppler CLI is installed
+.PHONY: check-doppler
+check-doppler:
+ifndef DOPPLER_EXISTS
+	@echo "===========> Doppler CLI is not installed. Please install it following the instructions at https://docs.doppler.com/docs/cli"
+	@echo "===========> For example: (curl -Ls --tlsv1.2 --proto \"=https\" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh"
+	@exit 1
+endif
+	@echo "===========> Doppler CLI is installed"
+
+## doppler-login-check: Check if user is logged in to Doppler
+.PHONY: doppler-login-check
+doppler-login-check: check-doppler
+	@if ! doppler configure > /dev/null 2>&1; then \
+		if [ -z "$$DOPPLER_TOKEN" ]; then \
+			echo "===========> You are not logged in to Doppler and DOPPLER_TOKEN is not set"; \
+			echo "===========> Please run 'doppler login' or set DOPPLER_TOKEN environment variable"; \
+			exit 1; \
+		else \
+			echo "===========> Using DOPPLER_TOKEN for authentication"; \
+		fi \
+	else \
+		echo "===========> Doppler authentication verified"; \
+	fi
+
+## env-doppler: Generate .env from Doppler secrets
+.PHONY: env-doppler
+env-doppler: check-doppler doppler-login-check
+	@echo "===========> Setting up Doppler for nexus project with dev config"
+	@doppler setup --silent --project nexus --config dev
+	@echo "===========> Downloading secrets to .env file"
+	@doppler secrets download --no-file --format env > .env
+	@echo "===========> .env file generated from Doppler secrets"
+
+## check-root-env: Check if root .env exists, generate from Doppler if possible, else copy from .env.example
+.PHONY: check-root-env
+check-root-env:
+	@if [ ! -f "$(ROOT_DIR)/.env" ]; then \
+		if command -v doppler >/dev/null 2>&1 && (doppler configure > /dev/null 2>&1 || [ ! -z "$$DOPPLER_TOKEN" ]); then \
+			echo "===========> Root .env file not found, generating from Doppler..."; \
+			$(MAKE) env-doppler; \
+		else \
+			echo "===========> Root .env file not found, creating from .env.example"; \
+			cp "$(ROOT_DIR)/.env.example" "$(ROOT_DIR)/.env"; \
+			echo "===========> Consider running 'make env-doppler' to initialize with Doppler"; \
+		fi \
+	else \
+		echo "===========> Root .env file exists"; \
+	fi
+
+## check-admin-env: Check if admin .env exists, copy from .env.example if not
+.PHONY: check-admin-env
+check-admin-env:
+	@if [ -d "$(ADMIN_DIR)" ]; then \
+		if [ ! -f "$(ADMIN_DIR)/.env" ]; then \
+			echo "===========> Admin .env file not found, creating from .env.example"; \
+			if [ -f "$(ADMIN_DIR)/.env.example" ]; then \
+				cp "$(ADMIN_DIR)/.env.example" "$(ADMIN_DIR)/.env"; \
+			else \
+				echo "VITE_API_URL=http://localhost:8000" > "$(ADMIN_DIR)/.env"; \
+				echo "NODE_ENV=development" >> "$(ADMIN_DIR)/.env"; \
+			fi; \
+		else \
+			echo "===========> Admin .env file exists"; \
+		fi; \
+	else \
+		echo "===========> Admin directory not found, skipping"; \
+	fi
+
+## check-frontend-env: Check if frontend .env exists, copy from .env.example if not
+.PHONY: check-frontend-env
+check-frontend-env:
+	@if [ -d "$(FRONTEND_DIR)" ]; then \
+		if [ ! -f "$(FRONTEND_DIR)/.env" ]; then \
+			echo "===========> Frontend .env file not found, creating from .env.example"; \
+			if [ -f "$(FRONTEND_DIR)/.env.example" ]; then \
+				cp "$(FRONTEND_DIR)/.env.example" "$(FRONTEND_DIR)/.env"; \
+			else \
+				echo "# Backend API base URL" > "$(FRONTEND_DIR)/.env"; \
+				echo "NEXT_PUBLIC_API_URL=http://localhost:8000" >> "$(FRONTEND_DIR)/.env"; \
+				echo "" >> "$(FRONTEND_DIR)/.env"; \
+				echo "# OpenAPI generated file name (relative to the frontend directory)" >> "$(FRONTEND_DIR)/.env"; \
+				echo "OPENAPI_OUTPUT_FILE=openapi.json" >> "$(FRONTEND_DIR)/.env"; \
+				echo "" >> "$(FRONTEND_DIR)/.env"; \
+				echo "NODE_ENV=development" >> "$(FRONTEND_DIR)/.env"; \
+			fi; \
+		else \
+			echo "===========> Frontend .env file exists"; \
+		fi; \
+	else \
+		echo "===========> Frontend directory not found, skipping"; \
+	fi
+
+## check-extension-env: Check if extension .env exists, copy from .env.example if not
+.PHONY: check-extension-env
+check-extension-env:
+	@if [ -d "$(EXTENSION_DIR)" ]; then \
+		if [ ! -f "$(EXTENSION_DIR)/.env" ]; then \
+			echo "===========> Extension .env file not found, creating from .env.example"; \
+			if [ -f "$(EXTENSION_DIR)/.env.example" ]; then \
+				cp "$(EXTENSION_DIR)/.env.example" "$(EXTENSION_DIR)/.env"; \
+			else \
+				echo "# Extension环境变量" > "$(EXTENSION_DIR)/.env"; \
+				echo "" >> "$(EXTENSION_DIR)/.env"; \
+				echo "# API服务器地址" >> "$(EXTENSION_DIR)/.env"; \
+				echo "PLASMO_PUBLIC_API_URL=http://localhost:8000" >> "$(EXTENSION_DIR)/.env"; \
+				echo "" >> "$(EXTENSION_DIR)/.env"; \
+				echo "# 前端地址" >> "$(EXTENSION_DIR)/.env"; \
+				echo "PLASMO_PUBLIC_FRONTEND_URL=http://localhost:3000" >> "$(EXTENSION_DIR)/.env"; \
+			fi; \
+		else \
+			echo "===========> Extension .env file exists"; \
+		fi; \
+	else \
+		echo "===========> Extension directory not found, skipping"; \
+	fi
 
 # ==============================================================================
 # PRIMARY TARGETS
@@ -66,14 +192,14 @@ UV_EXISTS := $(shell command -v uv 2> /dev/null)
 
 ## all: Run all tests, linting, formatting and build all components
 .PHONY: all
-all: format lint generate-client backend-build frontend-build admin-build # test
+all: env-init backend-build frontend-build admin-build format lint generate-client # test
 	@echo "===========> All checks and builds completed successfully"
 
 ## dev: Start development environment
 .PHONY: dev
-dev:
+dev: env-init
 	@echo "===========> Starting development environment"
-	docker-compose up -d
+	docker compose up -d
 
 ## lint: Run linters on all components
 .PHONY: lint
@@ -112,7 +238,7 @@ backend-all: backend-format backend-lint backend-test
 
 ## backend: Start backend development server
 .PHONY: backend
-backend: check-uv backend-install
+backend: check-uv backend-install env-init
 	@echo "===========> Starting backend development server"
 	@source backend/.venv/bin/activate && \
 	cd $(BACKEND_DIR) && fastapi dev app/main.py
@@ -184,7 +310,7 @@ backend-migration:
 .PHONY: backend-db-shell
 backend-db-shell:
 	@echo "===========> Connecting to database"
-	@docker-compose exec db psql -U postgres -d app || \
+	@docker compose exec db psql -U postgres -d app || \
 	 psql "$(shell cd $(BACKEND_DIR) && python -c "from app.core.config import settings; print(settings.SQLALCHEMY_DATABASE_URI)")"
 
 # ==============================================================================
@@ -198,7 +324,7 @@ frontend-all: frontend-format frontend-lint frontend-test
 
 ## frontend: Start frontend development server
 .PHONY: frontend
-frontend: check-pnpm frontend-install
+frontend: check-pnpm frontend-install check-frontend-env
 	@echo "===========> Starting frontend development server"
 	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
 		cd $(FRONTEND_DIR) && unset http_proxy https_proxy && $(PNPM) run dev; \
@@ -286,7 +412,7 @@ admin-all: admin-format admin-lint admin-test
 
 ## admin: Start admin development server
 .PHONY: admin
-admin: check-pnpm admin-install
+admin: check-pnpm admin-install check-admin-env
 	@echo "===========> Starting admin development server"
 	@cd $(ADMIN_DIR) && $(PNPM) run dev
 
@@ -409,7 +535,7 @@ extension-all: extension-build extension-package extension-test
 
 ## extension: Start extension development
 .PHONY: extension
-extension: check-pnpm
+extension: check-pnpm check-extension-env
 	@echo "===========> Starting browser extension in development mode"
 	@cd $(EXTENSION_DIR) && $(PNPM) run dev
 
@@ -492,6 +618,9 @@ help: Makefile
 	@printf "\033[1;34m┌─ PRIMARY COMMANDS ───────────────────────────────────────────────────┐\033[0m\n"
 	@grep -E '^## (all:|dev:|lint:|test:|format:|clean:)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
 	
+	@printf "\n\033[1;34m┌─ ENV MANAGEMENT ────────────────────────────────────────────────────┐\033[0m\n"
+	@grep -E '^## (env|check-doppler|doppler)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
+	
 	@printf "\n\033[1;34m┌─ BACKEND COMMANDS ──────────────────────────────────────────────────┐\033[0m\n"
 	@grep -E '^## backend' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
 	
@@ -521,6 +650,14 @@ help: Makefile
 # ==============================================================================
 # DEVELOPMENT TOOLS
 # ==============================================================================
+
+## setup: Quick setup the whole project (recommended first command for new users)
+.PHONY: setup
+setup: env-init install-tools
+	@echo "===========> Setting up environment completed"
+	@echo "===========> Run 'make dev' to start all services in Docker"
+	@echo "===========> Or you can run individual components with 'make backend', 'make frontend', etc."
+	@echo "===========> Note: For better environment variables, run 'make env-doppler' if you have Doppler access"
 
 ## install-tools: Install development tools
 .PHONY: install-tools

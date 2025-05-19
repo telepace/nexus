@@ -51,6 +51,8 @@ jobs:
       uses: pnpm/action-setup@v3
       with:
         version: 9.9.0
+    - name: Symlink pnpm-lock.yaml to root
+      run: ln -s frontend/pnpm-lock.yaml pnpm-lock.yaml
     - uses: actions/setup-node@v4
       with:
         node-version: lts/*
@@ -109,9 +111,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    - name: Install pnpm
+      uses: pnpm/action-setup@v3
+      with:
+        version: 9.9.0
     - uses: actions/setup-node@v4
       with:
         node-version: 20
+        cache: 'pnpm'
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
       working-directory: frontend

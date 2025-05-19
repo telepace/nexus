@@ -132,6 +132,10 @@ export type GoogleOauthGoogleCallbackApiData = {
 
 export type GoogleOauthGoogleCallbackApiResponse = (unknown);
 
+export type GoogleOauthGoogleLoginData = {
+    extensionCallback?: (string | null);
+};
+
 export type GoogleOauthGoogleLoginResponse = (unknown);
 
 export type GoogleOauthGoogleCallbackData = {

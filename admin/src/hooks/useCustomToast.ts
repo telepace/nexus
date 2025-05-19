@@ -1,6 +1,6 @@
 "use client"
 
-import { extractApiResponseError, isApiResponse } from "@/client"
+import { extractApiResponseError, isApiResponse } from "@/client/custom"
 import { toaster } from "@/components/ui/toaster"
 
 const useCustomToast = () => {
