@@ -119,7 +119,7 @@ def create_test_database() -> None:
             # 打印更详细的错误信息以帮助调试
             logger.warning(f"Attempting to recover from error: {str(e)}")
             logger.warning(f"Connection string (password hidden): {conn_str.replace(settings.POSTGRES_PASSWORD, '********')}")
-            
+
             # 重新尝试创建
             with psycopg.connect(conn_str) as conn:
                 conn.autocommit = True
@@ -210,7 +210,6 @@ def setup_test_db() -> Engine:
             import subprocess
             try:
                 subprocess.check_call(["uv", "pip", "install", "psycopg[binary]"])
-                import psycopg
                 driver_name = "postgresql+psycopg"
                 logger.info("Successfully installed and imported psycopg")
             except Exception as e:

@@ -40,10 +40,14 @@ def main() -> None:
         # 从 sqlmodel 导入 create_engine 而不是 sqlalchemy，确保使用 psycopg
         from sqlmodel import create_engine
 
-        from app.tests.utils.test_db import get_test_db_url, create_test_database, setup_test_db
+        from app.tests.utils.test_db import (
+            create_test_database,
+            get_test_db_url,
+            setup_test_db,
+        )
 
         logger.info("Test mode detected. Using test database configuration.")
-        
+
         # 首先创建测试数据库
         try:
             logger.info("Creating test database if it doesn't exist...")
@@ -55,7 +59,7 @@ def main() -> None:
             test_engine = setup_test_db()
             init(test_engine)
             return
-            
+
         # 创建数据库引擎并进行连接测试
         test_engine = create_engine(get_test_db_url())
         init(test_engine)
