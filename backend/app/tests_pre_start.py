@@ -6,8 +6,8 @@ try:
     from distutils.util import strtobool
 except ImportError:
 
-    def strtobool(val):
-        return val.lower() in ("y", "yes", "t", "true", "on", "1")
+    def strtobool(val: str) -> int:
+        return int(val.lower() in ("y", "yes", "t", "true", "on", "1"))
 
 
 from sqlalchemy import Engine
