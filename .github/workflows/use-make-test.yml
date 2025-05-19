@@ -1,4 +1,4 @@
-name: Lint Backend
+name: Use Make All Test
 
 on:
   push:
@@ -24,5 +24,5 @@ jobs:
         with:
           version: "0.4.15"
           enable-cache: true
-      - run: uv run bash scripts/lint.sh
+      - run: make all test
         working-directory: backend
