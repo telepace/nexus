@@ -20,17 +20,24 @@ jobs:
         with:
           python-version: "3.10"
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          version: "0.4.15"
-          enable-cache: true
+        uses: astral-sh/setup-uv@v5
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
-          run_install: |
-            - pnpm install --dir frontend
-            - pnpm install --dir admin
-            - pnpm install --dir extension
+          version: 8
+      
+      # 分别安装各个目录的依赖
+      - name: Install frontend dependencies
+        run: pnpm install --dir frontend
+        if: hashFiles('frontend/package.json') != ''
+      
+      - name: Install admin dependencies
+        run: pnpm install --dir admin
+        if: hashFiles('admin/package.json') != ''
+      
+      - name: Install extension dependencies
+        run: pnpm install --dir extension
+        if: hashFiles('extension/package.json') != ''
         
       - name: Make all
         run: make all
