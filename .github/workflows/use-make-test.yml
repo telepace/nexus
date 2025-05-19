@@ -26,5 +26,11 @@ jobs:
           enable-cache: true
       - name: Install pnpm
         uses: pnpm/action-setup@v3
+        with:
+          run_install: |
+            - pnpm install --dir frontend
+            - pnpm install --dir admin
+            - pnpm install --dir extension
+        
       - name: Make all
         run: make all
