@@ -48,7 +48,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install pnpm
-      uses: pnpm/action-setup@v3
+      uses: pnpm/action-setup@v4
       with:
         version: 9.9.0
     - name: Symlink pnpm-lock.yaml to root
@@ -112,7 +112,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install pnpm
-      uses: pnpm/action-setup@v3
+      uses: pnpm/action-setup@v4
       with:
         version: 9.9.0
     - uses: actions/setup-node@v4
