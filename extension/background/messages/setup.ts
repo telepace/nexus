@@ -1,20 +1,78 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging"
+import { Storage } from "@plasmohq/storage"
+import { AUTH_CONFIG, LOG_PREFIX } from "../../utils/config"
+import { handleOAuthCallback } from "../../utils/auth-handler" 
 
 /**
  * 处理来自网页的设置相关消息
  * - ping: 用于检测扩展是否已安装
  * - openSidebar: 请求打开浏览器侧边栏
+ * - connectPlugin: 建立插件与Web端的连接
+ * - saveToken: 保存从Web端接收的认证Token
  */
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
-  const { action } = req.body
+  const { action, data } = req.body
   
   try {
     // 处理ping消息，仅返回扩展已安装的确认
     if (action === "ping") {
+      // 检查是否有存储的plugin_id，有则返回
+      const pluginId = await chrome.storage.local.get("plugin_id")
+      
       res.send({
         success: true,
-        message: "Nexus extension is installed"
+        message: "Nexus extension is installed",
+        pluginId: pluginId?.plugin_id || null
       })
+      return
+    }
+    
+    // 处理保存Token的请求（来自setup页面）
+    if (action === "saveToken") {
+      if (!data || !data.token) {
+        res.send({
+          success: false,
+          message: "Missing token in request"
+        })
+        return
+      }
+      
+      try {
+        // 验证plugin_id是否匹配（防止跨站点请求伪造）
+        const storedPluginId = (await chrome.storage.local.get("plugin_id")).plugin_id
+        if (data.pluginId && storedPluginId && data.pluginId !== storedPluginId) {
+          console.warn(`${LOG_PREFIX} Plugin ID不匹配，可能存在安全风险`)
+          res.send({
+            success: false,
+            message: "Invalid plugin ID"
+          })
+          return
+        }
+        
+        // 调用auth-handler的方法保存token
+        const saveResult = await handleOAuthCallback(data.token)
+        
+        if (saveResult) {
+          console.log(`${LOG_PREFIX} 从Setup页面成功保存Token`)
+          res.send({
+            success: true,
+            message: "Token saved successfully"
+          })
+        } else {
+          console.error(`${LOG_PREFIX} 保存Token失败`)
+          res.send({
+            success: false,
+            message: "Failed to save token"
+          })
+        }
+      } catch (error) {
+        console.error(`${LOG_PREFIX} 处理Token保存请求时出错:`, error)
+        res.send({
+          success: false,
+          message: "Error processing token",
+          error: String(error)
+        })
+      }
       return
     }
     

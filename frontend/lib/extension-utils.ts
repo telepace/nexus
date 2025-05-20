@@ -123,6 +123,125 @@ export const openSidebar = async (): Promise<boolean> => {
 };
 
 /**
+ * 获取扩展的Plugin ID
+ * @returns 返回Plugin ID或null
+ */
+export const getExtensionPluginId = async (): Promise<string | null> => {
+  // 确保代码在浏览器环境中运行
+  if (typeof window === "undefined" || !window.chrome) {
+    return null;
+  }
+
+  try {
+    const extensionId =
+      process.env.NEXT_PUBLIC_EXTENSION_ID ||
+      "jhjpjjpkmepceonjdjgpfhhllilmdnae";
+
+    return new Promise<string | null>((resolve) => {
+      const timeoutId = setTimeout(() => resolve(null), 500);
+
+      if (
+        typeof window.chrome === "object" &&
+        window.chrome &&
+        "runtime" in window.chrome &&
+        (window.chrome as { runtime?: unknown }).runtime &&
+        typeof (window.chrome as { runtime: { sendMessage?: unknown } }).runtime
+          .sendMessage === "function"
+      ) {
+        (
+          window.chrome as {
+            runtime: {
+              sendMessage: (
+                id: string,
+                msg: object,
+                cb: (response: ExtensionResponse & { pluginId?: string }) => void,
+              ) => void;
+            };
+          }
+        ).runtime.sendMessage(
+          extensionId,
+          { action: "ping" },
+          (response) => {
+            clearTimeout(timeoutId);
+            resolve(response?.pluginId || null);
+          },
+        );
+      } else {
+        resolve(null);
+      }
+    });
+  } catch (error) {
+    console.error("获取插件ID时出错:", error);
+    return null;
+  }
+};
+
+/**
+ * 将认证Token保存到浏览器扩展
+ * @param token 认证Token
+ * @param pluginId 浏览器扩展的Plugin ID
+ * @returns 是否成功保存Token的Promise
+ */
+export const saveTokenToExtension = async (
+  token: string,
+  pluginId: string | null
+): Promise<boolean> => {
+  // 确保代码在浏览器环境中运行
+  if (typeof window === "undefined" || !window.chrome) {
+    return false;
+  }
+
+  try {
+    const extensionId =
+      process.env.NEXT_PUBLIC_EXTENSION_ID ||
+      "jhjpjjpkmepceonjdjgpfhhllilmdnae";
+
+    return new Promise<boolean>((resolve) => {
+      const timeoutId = setTimeout(() => resolve(false), 1000);
+
+      if (
+        typeof window.chrome === "object" &&
+        window.chrome &&
+        "runtime" in window.chrome &&
+        (window.chrome as { runtime?: unknown }).runtime &&
+        typeof (window.chrome as { runtime: { sendMessage?: unknown } }).runtime
+          .sendMessage === "function"
+      ) {
+        (
+          window.chrome as {
+            runtime: {
+              sendMessage: (
+                id: string,
+                msg: object,
+                cb: (response: ExtensionResponse) => void,
+              ) => void;
+            };
+          }
+        ).runtime.sendMessage(
+          extensionId,
+          { 
+            action: "saveToken", 
+            data: { 
+              token,
+              pluginId 
+            }
+          },
+          (response) => {
+            clearTimeout(timeoutId);
+            resolve(!!response && response.success === true);
+          },
+        );
+      } else {
+        resolve(false);
+      }
+    });
+  } catch (error) {
+    console.error("保存Token到扩展时出错:", error);
+    return false;
+  }
+};
+
+/**
  * 检查浏览器是否支持侧边栏功能
  */
 export const isSidebarSupported = (): boolean => {

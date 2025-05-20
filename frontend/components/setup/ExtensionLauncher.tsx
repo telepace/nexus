@@ -14,7 +14,11 @@ import { PanelRightOpen, ExternalLink, AlertCircle, Check } from "lucide-react";
 import { isExtensionInstalled, openSidebar } from "@/lib/extension-utils";
 import { motion, AnimatePresence } from "framer-motion";
 
-export function ExtensionLauncher() {
+interface ExtensionLauncherProps {
+  onSidebarOpened?: () => void;
+}
+
+export function ExtensionLauncher({ onSidebarOpened }: ExtensionLauncherProps) {
   const [extensionInstalled, setExtensionInstalled] = useState<boolean | null>(
     null,
   );
@@ -37,6 +41,12 @@ export function ExtensionLauncher() {
 
     if (success) {
       setSidebarOpened(true);
+      
+      // 如果提供了回调函数，则执行它
+      if (onSidebarOpened) {
+        onSidebarOpened();
+      }
+      
       // 显示固定侧边栏的提示
       setTimeout(() => {
         setShowTooltip(true);

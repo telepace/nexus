@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Stepper } from "@/components/ui/stepper";
 import {
@@ -12,7 +12,14 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { ExtensionLauncher } from "./ExtensionLauncher";
+import { useAuth } from "@/lib/auth";
+import { 
+  getExtensionPluginId, 
+  saveTokenToExtension 
+} from "@/lib/extension-utils";
+import { useToast } from "@/components/ui/use-toast";
 
 // 设置向导步骤
 const SETUP_STEPS = ["欢迎", "个性化设置", "完成"];
@@ -119,7 +126,12 @@ const PreferencesStep = () => (
   </div>
 );
 
-const CompleteStep = () => (
+type CompleteStepProps = {
+  fromExtension?: boolean;
+  onFinish?: () => void;
+};
+
+const CompleteStep = ({ fromExtension, onFinish }: CompleteStepProps) => (
   <div className="space-y-6">
     <div className="text-center">
       <div className="flex justify-center">
@@ -144,27 +156,101 @@ const CompleteStep = () => (
       <p className="text-muted-foreground">
         您已成功完成 Nexus 的初始设置。现在您可以开始体验全部功能。
       </p>
+      
+      {fromExtension && (
+        <div className="mt-4 text-sm text-green-600 dark:text-green-400">
+          您的浏览器扩展将自动配置，无需额外设置。
+        </div>
+      )}
     </div>
 
     <div className="mt-6 pt-6 border-t">
       <h4 className="text-lg font-medium text-center mb-4">启用浏览器侧边栏</h4>
-      <ExtensionLauncher />
+      <ExtensionLauncher onSidebarOpened={onFinish} />
     </div>
   </div>
 );
 
-const StepComponents = [WelcomeStep, PreferencesStep, CompleteStep];
+const StepComponents = [WelcomeStep, PreferencesStep];
 
 export function SetupContent() {
   const [currentStep, setCurrentStep] = useState(0);
   const router = useRouter();
+  const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const [extensionPluginId, setExtensionPluginId] = useState<string | null>(null);
+  const [extensionCallback, setExtensionCallback] = useState<string | null>(null);
+  const [tokenSent, setTokenSent] = useState(false);
+  const { toast } = useToast();
+  
+  // 检查URL参数中是否包含plugin_id和extension_callback
+  useEffect(() => {
+    const pluginId = searchParams?.get("plugin_id");
+    const callback = searchParams?.get("extension_callback");
+    
+    // 如果URL中有plugin_id，则保存它
+    if (pluginId) {
+      console.log("Setup页面从URL获取了plugin_id:", pluginId);
+      setExtensionPluginId(pluginId);
+    } else {
+      // 尝试从扩展中获取plugin_id
+      async function fetchPluginId() {
+        const id = await getExtensionPluginId();
+        if (id) {
+          console.log("Setup页面从扩展获取了plugin_id:", id);
+          setExtensionPluginId(id);
+        }
+      }
+      fetchPluginId();
+    }
+    
+    if (callback) {
+      setExtensionCallback(callback);
+    }
+  }, [searchParams]);
+  
+  // 在完成设置时向扩展发送Token
+  const handleFinish = async () => {
+    if (user?.token && extensionPluginId && !tokenSent) {
+      try {
+        console.log("Setup页面尝试向扩展发送Token");
+        const success = await saveTokenToExtension(user.token, extensionPluginId);
+        
+        if (success) {
+          setTokenSent(true);
+          toast({
+            title: "扩展配置成功",
+            description: "Nexus扩展已完成设置",
+            variant: "default",
+          });
+          
+          // 如果有回调URL，则重定向
+          if (extensionCallback) {
+            window.location.href = `${extensionCallback}?token=${encodeURIComponent(user.token)}`;
+            return;
+          }
+        } else {
+          toast({
+            title: "扩展配置失败",
+            description: "无法将Token发送至扩展",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("发送Token到扩展时出错:", error);
+      }
+    }
+    
+    // 如果没有扩展或发送失败，则正常重定向到仪表盘
+    router.push("/dashboard");
+  };
 
   const handleNext = () => {
     if (currentStep < SETUP_STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // 完成设置，重定向到仪表盘
-      router.push("/dashboard");
+      // 完成设置，调用处理函数
+      handleFinish();
     }
   };
 
@@ -173,8 +259,18 @@ export function SetupContent() {
       setCurrentStep(currentStep - 1);
     }
   };
-
-  const CurrentStepComponent = StepComponents[currentStep];
+  
+  // 动态添加完成步骤组件
+  const AllStepComponents = [
+    ...StepComponents, 
+    (props: CompleteStepProps) => <CompleteStep 
+      fromExtension={!!extensionPluginId} 
+      onFinish={handleFinish} 
+      {...props} 
+    />
+  ];
+  
+  const CurrentStepComponent = AllStepComponents[currentStep];
 
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-lg">

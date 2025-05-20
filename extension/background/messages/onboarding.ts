@@ -1,18 +1,23 @@
 import { LOG_PREFIX, API_CONFIG } from "../../utils/config"
 
 /**
- * 处理安装事件，安装后直接跳转到web登录页面
+ * 处理安装事件，安装后直接跳转到web setup页面
  * @param details 安装详情
  */
 export function handleInstall(details: chrome.runtime.InstalledDetails): void {
   if (details.reason === "install") {
-    console.log(`${LOG_PREFIX} 首次安装扩展，跳转到web登录页面`);
-    // 构建回调URL，用于登录后重定向回来
+    console.log(`${LOG_PREFIX} 首次安装扩展，跳转到web setup页面`);
+    // 构建回调URL，用于设置完成后重定向回来
     const callbackUrl = chrome.runtime.getURL("pages/oauth-callback.html");
-    // 直接跳转到web登录页面
+    // 生成唯一的插件ID
+    const pluginId = crypto.randomUUID();
+    // 跳转到setup页面
     chrome.tabs.create({ 
-      url: `${API_CONFIG.WEB_URL}/login?extension_callback=${encodeURIComponent(callbackUrl)}` 
+      url: `${API_CONFIG.WEB_URL}/setup?plugin_id=${pluginId}&extension_callback=${encodeURIComponent(callbackUrl)}` 
     });
+    
+    // 存储pluginId用于后续验证
+    chrome.storage.local.set({ "plugin_id": pluginId });
   }
 }
 
