@@ -88,17 +88,17 @@ jobs:
         # Run only if it's NOT a PR from a fork
         if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
         run: |
-          # Check if there are staged changes
           if ! git diff --staged --quiet; then
             echo "✅ Changes detected in generated client. Committing and pushing..."
-            # Pull before pushing to avoid conflicts using rebase
-            git commit -a -m "ci: ✨ Autogenerate frontend client"
             git pull --rebase origin ${{ github.head_ref || github.ref_name }}
-            git commit -a -m "ci: ✨ Autogenerate frontend client"
-            git push origin HEAD:${{ github.head_ref || github.ref_name }}
+            if ! git diff --quiet || ! git diff --staged --quiet; then
+              git commit -a -m "ci: ✨ Autogenerate frontend client"
+              git push origin HEAD:${{ github.head_ref || github.ref_name }}
+            else
+              echo "✅ No changes to commit after rebase."
+              git push origin HEAD:${{ github.head_ref || github.ref_name }}
           else
             echo "✅ No changes detected in generated client."
-          fi
         env:
           # GITHUB_TOKEN has write permissions for same-repo events by default
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
