@@ -20,11 +20,19 @@ WORKDIR /app
 # Install pnpm globally
 RUN npm install -g pnpm
 
+# 添加环境变量以确保构建稳定性
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_SHARP_PATH=/tmp/node_modules/sharp
+
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 
 # Copy all source files EXCEPT those in .dockerignore
 COPY . .
+
+# 确保 .next 目录存在
+RUN mkdir -p .next
 
 # Ensure that tsconfig paths are set correctly
 RUN cat tsconfig.json
@@ -32,8 +40,11 @@ RUN cat tsconfig.json
 # Make sure the components directory is present
 RUN ls -la components
 
-# Build the Next.js application
+# 进行稳定的生产构建
 RUN pnpm build
+
+# 确保生成了.next目录
+RUN ls -la .next
 
 # Stage 3: Production
 FROM node:20-bookworm-slim AS runner
@@ -45,6 +56,9 @@ RUN npm install -g pnpm
 
 # Set environment to production
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
 
 # Copy necessary files for production
 COPY --from=builder /app/public ./public
@@ -64,5 +78,5 @@ USER node
 
 EXPOSE 3000
 
-# Update the start script to use production mode
-CMD ["./start.sh"]
+# 修改启动命令，适应standalone输出
+CMD ["node", ".next/standalone/server.js"]

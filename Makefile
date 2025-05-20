@@ -277,7 +277,7 @@ backend-test: backend-install
 	@echo "===========> Running backend tests with coverage"
 	@source $(BACKEND_DIR)/.venv/bin/activate && \
 	cd $(BACKEND_DIR) && \
-	@bash scripts/tests-start.sh
+	bash scripts/tests-start.sh
 
 ## backend-lint: Run backend linters
 .PHONY: backend-lint

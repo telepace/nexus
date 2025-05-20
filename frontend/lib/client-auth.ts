@@ -12,6 +12,7 @@ export interface User {
   is_superuser: boolean;
   created_at: string;
   avatar_url?: string;
+  token?: string;
 }
 
 // Type for auth context
@@ -22,6 +23,7 @@ export interface AuthContextType {
   updateUser: (userData: Partial<User>) => Promise<void>;
   login: (token: string) => void;
   logout: () => void;
+  setCustomToken: (token: string) => void;
 }
 
 // Client-side hook
@@ -85,7 +87,10 @@ export function useAuth(): AuthContextType {
 
       const userData = await response.json();
       console.log("[Auth] User data fetched successfully:", userData);
-      setUser(userData);
+      setUser({
+        ...userData,
+        token: token, // 保存token到用户对象中
+      });
     } catch (err) {
       console.error("[Auth] Error in fetchUser:", err);
       setError(
@@ -156,10 +161,46 @@ export function useAuth(): AuthContextType {
       // 打印所有的cookie以便调试
       console.log("[Auth] Current cookies:", document.cookie);
 
+      // 如果已有用户数据，将token添加到用户对象
+      if (user) {
+        setUser({
+          ...user,
+          token: token,
+        });
+      }
+
       // Fetch user data after login
       fetchUser();
     } catch (error) {
       console.error("[Auth] Error setting token in cookie:", error);
+    }
+  };
+
+  // 添加设置自定义token的方法，用于测试
+  const setCustomToken = (token: string) => {
+    try {
+      console.log(
+        "[Auth] Setting custom token for testing:",
+        token.substring(0, 15) + "...",
+      );
+
+      if (!token || token.trim() === "") {
+        console.error("[Auth] Invalid custom token provided");
+        return;
+      }
+
+      // 设置cookie
+      const cookieValue = `accessToken=${token};path=/;max-age=${60 * 60 * 24 * 7}`;
+      document.cookie = cookieValue;
+
+      // 验证设置成功
+      const savedToken = getCookie("accessToken");
+      console.log("[Auth] Custom token saved:", savedToken ? "成功" : "失败");
+
+      // 尝试获取用户信息
+      fetchUser();
+    } catch (error) {
+      console.error("[Auth] Error setting custom token:", error);
     }
   };
 
@@ -192,6 +233,7 @@ export function useAuth(): AuthContextType {
     updateUser,
     login,
     logout,
+    setCustomToken,
   };
 }
 

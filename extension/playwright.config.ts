@@ -1,32 +1,47 @@
-import { PlaywrightTestConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
 
-const config: PlaywrightTestConfig = {
-  testDir: './e2e',
-  timeout: 30000,
+export default defineConfig({
+  testDir: './tests/e2e',
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: [['html'], ['list']],
+  retries: process.env.CI ? 2 : 1,
+  workers: 1,
+  timeout: 5 * 60 * 1000,
+  reporter: 'html',
+  
   use: {
-    actionTimeout: 15000,
+    baseURL: 'chrome-extension://',
     trace: 'on-first-retry',
-    video: 'on-first-retry',
-    baseURL: 'chrome-extension://[extension-id]/'
+    headless: false,
+    launchOptions: {
+      slowMo: 100,
+      timeout: 5 * 60 * 1000,
+    },
   },
+
   projects: [
     {
-      name: 'Chrome',
+      name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
+        viewport: { width: 1280, height: 720 },
         launchOptions: {
           args: [
-            '--disable-extensions-except=./build/chrome-mv3-dev',
-            '--load-extension=./build/chrome-mv3-dev'
-          ]
-        }
-      }
-    }
-  ]
-};
+            `--disable-extensions-except=${path.join(__dirname)}`,
+            `--load-extension=${path.join(__dirname)}`,
+            '--no-sandbox',
+            '--disable-dev-shm-usage',
+          ],
+        },
+      },
+    },
+  ],
 
-export default config; 
+  webServer: {
+    command: 'pnpm dev',
+    port: 1815,
+    reuseExistingServer: !process.env.CI,
+    timeout: 5 * 60 * 1000,
+  },
+}); 

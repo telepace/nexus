@@ -47,8 +47,7 @@ export default function Page() {
   // 如果正在检查登录状态，显示加载提示
   if (isLoading) {
     return (
-      <div className="flex min-h-screen w-full items-center justify-center">
-      </div>
+      <div className="flex min-h-screen w-full items-center justify-center"></div>
     );
   }
 

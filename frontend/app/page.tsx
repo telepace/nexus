@@ -25,11 +25,19 @@ export default async function Home() {
           development using Next.js and FastAPI.
         </p>
 
-        {/* Link to Dashboard */}
-        <Link href="/dashboard">
+        {/* Link to Setup */}
+        <Link href="/setup">
           <Button className="px-8 py-4 text-xl font-semibold rounded-full shadow-lg bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 focus:ring-4 focus:ring-blue-300">
-            Go to Dashboard
+            开始设置
           </Button>
+        </Link>
+
+        {/* Link to Dashboard */}
+        <Link
+          href="/dashboard"
+          className="mt-4 inline-block text-blue-600 dark:text-blue-400 hover:underline"
+        >
+          直接进入仪表盘
         </Link>
 
         {/* GitHub Badge */}

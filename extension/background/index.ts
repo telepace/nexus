@@ -9,13 +9,15 @@ import { handler as authHandler } from "./messages/auth"
 import { handler as savedataHandler } from "./messages/savedata"
 import { handler as aiHandler } from "./messages/ai"
 import { handler as onboardingHandler } from "./messages/onboarding"
+import { handler as setupHandler } from "./messages/setup"
 
 // 导出消息名称与处理程序的映射，用于Plasmo消息系统
 export const messaging = {
   auth: authHandler,
   savedata: savedataHandler,
   ai: aiHandler,
-  onboarding: onboardingHandler
+  onboarding: onboardingHandler,
+  setup: setupHandler
 }
 
 // 检查是否支持chrome.sidePanel API
@@ -318,13 +320,17 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
           )
           
           if (tabHistory) {
+            // 确保history属性存在
+            if (!tabHistory.history) {
+              tabHistory.history = [];
+            }
             tabHistory.history.push({
               url: pageData.url,
               title: pageData.title,
               content: pageData.renderedHtml,
               timestamp: pageData.entryTime
             })
-            await storage.set("urlQueueList", urlQueueListObj.urlQueueList)
+            await storage.set("urlQueueList", urlQueueListObj)
           }
         }
 

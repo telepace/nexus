@@ -152,23 +152,23 @@ export function initiateWebGoogleLogin(): void {
  * 处理OAuth回调
  * 从URL获取token并保存
  */
-export async function handleOAuthCallback(token: string): Promise<UserProfile> {
+export async function handleOAuthCallback(token: string): Promise<boolean> {
   try {
     if (!token) {
-      throw new Error("未收到令牌")
+      console.error(`${LOG_PREFIX} OAuth回调处理失败：未提供令牌`);
+      return false;
     }
     
-    // 保存令牌到存储
-    const userData = {
+    // 保存令牌到本地存储
+    await storage.set(AUTH_CONFIG.STORAGE_KEY, { 
       token,
-      loginMethod: "google",
-      loginTime: new Date().toISOString()
-    }
+      syncedAt: new Date().toISOString()
+    });
     
-    await storage.set(AUTH_CONFIG.STORAGE_KEY, userData)
-    return userData
+    console.log(`${LOG_PREFIX} OAuth登录成功，已保存令牌`);
+    return true;
   } catch (error) {
-    console.error(`${LOG_PREFIX} 处理OAuth回调失败:`, error)
-    throw error
+    console.error(`${LOG_PREFIX} OAuth处理错误:`, error);
+    return false;
   }
 } 
