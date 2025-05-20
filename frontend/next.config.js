@@ -4,7 +4,7 @@ const nextConfig = {
   output: "standalone",
   experimental: {
     // 启用顶级 await
-    serverActions: true,
+    serverActions: {},
   },
   webpack: (config) => {
     // 解决路径别名问题

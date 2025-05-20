@@ -2,16 +2,17 @@
 name: Generate Client
 
 on:
-  pull_request:
-    types: [opened, synchronize]
   push:
     branches: [main]
+  pull_request:
+    types: [closed]
 
 permissions:
   contents: write
 
 jobs:
   generate-client:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
 
     steps:
@@ -73,34 +74,32 @@ jobs:
           POSTHOG_HOST: ""
           VIRTUAL_ENV: .venv
 
-      - name: Configure Git User
-        run: |
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "GitHub Actions"
-
       - name: Stage Generated Files
         run: |
           git add frontend/app/openapi-client
           git add admin/src/client
 
-      # 7. Handle Changes for Same-Repo Events (Push/PR from same repo)
-      - name: Commit and Push Changes (Same Repo)
-        # Run only if it's NOT a PR from a fork
-        if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+  auto-commit-push:
+    needs: generate-client
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Git User
         run: |
-          # Check if there are staged changes
-          if ! git diff --staged --quiet; then
-            echo "✅ Changes detected in generated client. Committing and pushing..."
-            # Pull before pushing to avoid conflicts using rebase
-            git commit -a -m "ci: ✨ Autogenerate frontend client"
-            git pull --rebase origin ${{ github.head_ref || github.ref_name }}
-            git commit -a -m "ci: ✨ Autogenerate frontend client"
-            git push origin HEAD:${{ github.head_ref || github.ref_name }}
-          else
-            echo "✅ No changes detected in generated client."
-          fi
+          git config --local user.email "3293172751ysy@gmail.com"
+          git config --local user.name "kubbot"
+          git remote set-url origin https://${{ secrets.BOT_GITHUB_TOKEN }}@github.com/${{ github.repository }}
+
+      - name: Commit and Push Changes (Auto Green)
+        run: |
+          git pull --rebase
+          local_time=$(date -u -d "$(date -u)" "+%Y-%m-%d %H:%M:%S" -d "8 hours")
+          git commit --allow-empty -a -s -m "ci: ✨ Autogenerate frontend & admin clients ($local_time) [skip ci]"
+          git push
         env:
-          # GITHUB_TOKEN has write permissions for same-repo events by default
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
 
       # 8. Handle Changes for Fork PRs (Warn, Don't Fail)
