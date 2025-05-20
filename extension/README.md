@@ -77,6 +77,8 @@
    - 实现端到端测试
    - 提高代码质量和稳定性
 
+e2e 测试框架： https://github.com/puppeteer/puppeteer
+
 ## 下一步计划
 
 1. 完成背景服务优化，改进消息处理机制
