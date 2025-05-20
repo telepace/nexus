@@ -41,12 +41,12 @@ export function ExtensionLauncher({ onSidebarOpened }: ExtensionLauncherProps) {
 
     if (success) {
       setSidebarOpened(true);
-      
+
       // 如果提供了回调函数，则执行它
       if (onSidebarOpened) {
         onSidebarOpened();
       }
-      
+
       // 显示固定侧边栏的提示
       setTimeout(() => {
         setShowTooltip(true);

@@ -154,18 +154,16 @@ export const getExtensionPluginId = async (): Promise<string | null> => {
               sendMessage: (
                 id: string,
                 msg: object,
-                cb: (response: ExtensionResponse & { pluginId?: string }) => void,
+                cb: (
+                  response: ExtensionResponse & { pluginId?: string },
+                ) => void,
               ) => void;
             };
           }
-        ).runtime.sendMessage(
-          extensionId,
-          { action: "ping" },
-          (response) => {
-            clearTimeout(timeoutId);
-            resolve(response?.pluginId || null);
-          },
-        );
+        ).runtime.sendMessage(extensionId, { action: "ping" }, (response) => {
+          clearTimeout(timeoutId);
+          resolve(response?.pluginId || null);
+        });
       } else {
         resolve(null);
       }
@@ -184,7 +182,7 @@ export const getExtensionPluginId = async (): Promise<string | null> => {
  */
 export const saveTokenToExtension = async (
   token: string,
-  pluginId: string | null
+  pluginId: string | null,
 ): Promise<boolean> => {
   // 确保代码在浏览器环境中运行
   if (typeof window === "undefined" || !window.chrome) {
@@ -219,12 +217,12 @@ export const saveTokenToExtension = async (
           }
         ).runtime.sendMessage(
           extensionId,
-          { 
-            action: "saveToken", 
-            data: { 
+          {
+            action: "saveToken",
+            data: {
               token,
-              pluginId 
-            }
+              pluginId,
+            },
           },
           (response) => {
             clearTimeout(timeoutId);
