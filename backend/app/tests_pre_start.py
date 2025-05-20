@@ -1,13 +1,14 @@
 import logging
 import os
+from typing import Literal
 
 # Use distutils.util.strtobool for tolerant boolean parsing
 try:
     from distutils.util import strtobool
 except ImportError:
 
-    def strtobool(val: str) -> int:
-        return int(val.lower() in ("y", "yes", "t", "true", "on", "1"))
+    def strtobool(val: str) -> Literal[0, 1]:
+        return 1 if val.lower() in ("y", "yes", "t", "true", "on", "1") else 0
 
 
 from sqlalchemy import Engine
