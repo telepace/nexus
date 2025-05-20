@@ -97,7 +97,7 @@ jobs:
         run: |
           git pull --rebase
           local_time=$(date -u -d "$(date -u)" "+%Y-%m-%d %H:%M:%S" -d "8 hours")
-          git commit --allow-empty -a -s -m "ci: ✨ Autogenerate frontend client ($local_time)"
+          git commit --allow-empty -a -s -m "ci: ✨ Autogenerate frontend & admin clients ($local_time) [skip ci]"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
