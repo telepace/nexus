@@ -9,9 +9,20 @@ import { passwordResetConfirmSchema } from "@/lib/definitions";
 import { getErrorMessage } from "@/lib/utils";
 
 export async function passwordReset(prevState: unknown, formData: FormData) {
+  const email = formData.get("email") as string;
+
+  // 基本的电子邮件验证
+  if (!email || !email.includes("@")) {
+    return { 
+      errors: {
+        email: ["请输入有效的电子邮件地址"]
+      }
+    };
+  }
+
   const input = {
     path: {
-      email: formData.get("email") as string,
+      email,
     },
   };
 
@@ -20,11 +31,11 @@ export async function passwordReset(prevState: unknown, formData: FormData) {
     if (error) {
       return { server_validation_error: getErrorMessage(error) };
     }
-    return { message: "Password reset instructions sent to your email." };
+    return { message: "密码重置链接已发送到您的邮箱，请查收。" };
   } catch (err) {
     console.error("Password reset error:", err);
     return {
-      server_error: "An unexpected error occurred. Please try again later.",
+      server_error: "发生了意外错误，请稍后再试。",
     };
   }
 }
@@ -57,11 +68,18 @@ export async function passwordResetConfirm(
     if (error) {
       return { server_validation_error: getErrorMessage(error) };
     }
-    redirect(`/login`);
+    
+    // 成功后先返回成功消息，延迟重定向让用户看到成功提示
+    return { message: "密码已成功重置！正在跳转到登录页面..." };
   } catch (err) {
     console.error("Password reset confirmation error:", err);
     return {
-      server_error: "An unexpected error occurred. Please try again later.",
+      server_error: "发生了意外错误，请稍后再试。",
     };
   }
+}
+
+// 成功后的重定向函数，用于客户端使用
+export async function redirectAfterSuccess() {
+  redirect('/login');
 }

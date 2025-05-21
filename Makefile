@@ -455,7 +455,13 @@ admin-test: admin-install
 	@echo "===========> Running admin tests"
 	@echo "===========> Tests temporarily skipped due to network issues"
 	@echo "===========> Consider running tests manually when network is stable"
-	@true
+	@cd $(ADMIN_DIR) && $(PNPM) test
+
+## admin-test-ui: Run admin tests with UI
+.PHONY: admin-test-ui
+admin-test-ui: admin-install
+	@echo "===========> Running admin tests with UI"
+	@cd $(ADMIN_DIR) && $(PNPM) test --ui
 
 ## admin-lint: Run admin linters
 .PHONY: admin-lint

@@ -1,152 +1,127 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
-import { useState, Suspense, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/lib/auth";
-
-import { passwordReset } from "@/components/actions/password-reset-action";
 import { useActionState } from "react";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submitButton";
-import { FormError } from "@/components/ui/FormError";
+import { useAuth } from "@/lib/auth";
+import { passwordReset } from "@/components/actions/password-reset-action";
+import { useEffect, useState, Suspense } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { FormError, FieldError } from "@/components/ui/FormError";
 
 // SearchParams component to handle useSearchParams hook with Suspense
 function SearchParamsHandler({
-  setEmail,
-}: { setEmail: (email: string) => void }) {
+  setInitialEmail,
+}: { setInitialEmail: (email: string) => void }) {
   const searchParams = useSearchParams();
   const emailFromQuery = searchParams.get("email") || "";
 
   // Set email in parent component
   useEffect(() => {
-    setEmail(emailFromQuery);
-  }, [emailFromQuery, setEmail]);
+    setInitialEmail(emailFromQuery);
+  }, [emailFromQuery, setInitialEmail]);
 
   return null;
 }
 
 export default function Page() {
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
-  const [email, setEmail] = useState("");
   const [state, dispatch] = useActionState(passwordReset, undefined);
+  const router = useRouter();
+  const { user, isLoading } = useAuth();
+  const [initialEmail, setInitialEmail] = useState("");
 
-  // 添加登录状态检查
   useEffect(() => {
-    // 只有在加载完成且用户存在时才重定向
-    if (!isLoading && user) {
-      console.log("[PasswordRecoveryPage] 用户已登录，重定向到仪表盘");
+    // 如果用户已登录，重定向到首页
+    if (user && !isLoading) {
       router.push("/dashboard");
     }
-  }, [isLoading, user, router]);
+  }, [user, isLoading, router]);
 
-  // 如果正在检查登录状态，显示加载提示
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen w-full items-center justify-center"></div>
-    );
-  }
-
-  // Maintain form values when there's an error
-  const handleSubmit = (formData: FormData) => {
-    // Save current value before submitting
-    setEmail(formData.get("email") as string);
-    dispatch(formData);
-  };
+  const success = state?.message;
+  const serverError = state?.server_validation_error;
+  const errors = state?.errors;
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 p-4 relative overflow-hidden">
+    <div className="w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 px-4">
       {/* Wrap useSearchParams in Suspense */}
       <Suspense fallback={null}>
-        <SearchParamsHandler setEmail={setEmail} />
+        <SearchParamsHandler setInitialEmail={setInitialEmail} />
       </Suspense>
 
-      {/* Tech-inspired background elements */}
-      <div className="absolute w-full h-full pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-0 w-1/3 h-1/3 bg-blue-50 dark:bg-blue-900/10 rounded-full blur-3xl opacity-30 -translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-1/3 h-1/3 bg-indigo-50 dark:bg-indigo-900/10 rounded-full blur-3xl opacity-30 translate-x-1/2 translate-y-1/2"></div>
-
-        {/* Tech grid lines */}
-        <div className="absolute inset-0 bg-grid-slate-200/50 dark:bg-grid-slate-700/20 bg-[length:30px_30px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_50%,#000_20%,transparent_100%)]"></div>
-      </div>
-
-      <div className="w-full max-w-md mb-8 relative z-10">
-        <div className="text-center mb-8">
-          <div className="relative mx-auto w-12 h-12 mb-4 flex items-center justify-center">
-            <div className="absolute inset-0 bg-blue-100 dark:bg-blue-900/30 rounded-full blur-md"></div>
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="space-y-2 text-center">
+          <div className="flex justify-center mb-3">
             <Image
               src="/images/logo.svg"
               alt="Logo"
               width={40}
               height={40}
-              className="relative z-10 transform transition-transform hover:scale-110"
+              className="dark:invert"
             />
           </div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
-            找回密码
-          </h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-            请输入您的邮箱，我们将发送密码重置链接给您。
-          </p>
-        </div>
-
-        <Card className="w-full rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm transition-all duration-300 hover:shadow-blue-100 dark:hover:shadow-blue-900/20">
-          <CardContent className="pt-6 px-6">
-            <form action={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <Label
-                  htmlFor="email"
-                  className="text-sm font-medium text-slate-700 dark:text-slate-300"
+          <CardTitle className="text-2xl font-bold">找回密码</CardTitle>
+          <CardDescription>
+            输入您的邮箱，我们将发送重置密码的链接
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {success ? (
+            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-md text-green-700 dark:text-green-300 text-center mb-4">
+              {success}
+              <div className="mt-3">
+                <Link 
+                  href="/login" 
+                  className="text-blue-600 dark:text-blue-400 hover:underline mt-2 inline-block"
                 >
-                  邮箱
-                </Label>
-                <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="your.email@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="relative h-11 border-slate-200 dark:border-slate-700 rounded-md focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:border-slate-400 transition-all duration-300 bg-white dark:bg-slate-800"
-                  />
-                </div>
+                  返回登录
+                </Link>
               </div>
-
-              <div className="relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
-                <SubmitButton
-                  text="发送重置链接"
-                  className="relative w-full h-11 bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 dark:from-slate-50 dark:to-white dark:text-slate-800 transition-all duration-300"
+            </div>
+          ) : (
+            <form action={dispatch} className="space-y-4">
+              {serverError && <FormError state={state} />}
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">邮箱</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  defaultValue={initialEmail}
+                  placeholder="example@example.com"
+                  className="w-full"
+                  required
                 />
+                {errors?.email && <FieldError state={state} field="email" />}
               </div>
-
-              {state?.message && (
-                <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-sm text-green-800 dark:text-green-200 text-center">
-                  {state.message}
-                </div>
-              )}
-
-              <FormError state={state} className="text-center" />
+              
+              <SubmitButton data-testid="reset-password-submit" className="w-full">
+                发送重置链接
+              </SubmitButton>
+              
+              <div className="text-center text-sm text-muted-foreground mt-4">
+                <Link 
+                  href="/login" 
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  返回登录
+                </Link>
+              </div>
             </form>
-          </CardContent>
-        </Card>
-
-        <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
-          <Link
-            href={`/login${email ? `?email=${encodeURIComponent(email)}` : ""}`}
-            className="font-medium text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300"
-          >
-            返回登录
-          </Link>
-        </div>
-      </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

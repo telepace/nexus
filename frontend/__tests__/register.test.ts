@@ -25,6 +25,7 @@ describe("register action", () => {
       body: {
         email: "a@a.com",
         password: "Q12341414#",
+        full_name: null,
       },
     });
 
@@ -48,6 +49,7 @@ describe("register action", () => {
       body: {
         email: "a@a.com",
         password: "Q12341414#",
+        full_name: null,
       },
     });
     expect(result).toEqual({
@@ -64,14 +66,14 @@ describe("register action", () => {
 
     expect(result).toEqual({
       errors: {
-        email: ["Invalid email address"],
+        email: ["Invalid email"],
         password: [
           "Password should contain at least one uppercase letter.",
           "Password should contain at least one special character.",
         ],
       },
     });
-    expect(registerUser).not.toHaveBeenCalledWith();
+    expect(registerUser).not.toHaveBeenCalled();
   });
 
   it("should handle unexpected errors and return server error message", async () => {

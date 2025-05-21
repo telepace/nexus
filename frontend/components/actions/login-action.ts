@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 
-import { loginAccessToken } from "@/app/clientService";
+import { authJwtLogin } from "@/app/clientService";
 import { redirect } from "next/navigation";
 import { loginSchema } from "@/lib/definitions";
 import { getErrorMessage } from "@/lib/utils";
@@ -16,7 +16,6 @@ export async function login(prevState: unknown, formData: FormData) {
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: "Please correct the errors below.",
     };
   }
 
@@ -26,7 +25,7 @@ export async function login(prevState: unknown, formData: FormData) {
     body: {
       username,
       password,
-      // Ensure we're sending the data in the format expected by the API
+      // 确保发送需要的参数
       grant_type: "password",
       scope: "",
       client_id: "",
@@ -35,63 +34,58 @@ export async function login(prevState: unknown, formData: FormData) {
   };
 
   try {
-    const { data, error } = await loginAccessToken(input);
+    const { data, error } = await authJwtLogin(input);
 
-    // Handle API specific errors
+    // 处理API特定错误
     if (error) {
       console.error("Login API error:", error);
 
-      // Check for specific validation errors
+      // 检查特定的验证错误
       if (error.detail) {
-        // Process validation errors here
+        // 返回验证错误
         return {
-          server_validation_error: "Validation failed",
-          message: "Login failed. Please check your input and try again.",
+          server_validation_error: error.detail,
         };
       }
 
-      // For any other error types
+      // 处理其他类型错误
       return {
         server_validation_error: getErrorMessage(error),
-        message: "Login failed. Please check your credentials and try again.",
       };
     }
 
-    // Check if data exists and has access_token
+    // 检查data是否存在并有access_token
     if (!data || !data.access_token) {
       console.error("Login API returned invalid response:", data);
       return {
         server_error: "The server returned an invalid response.",
-        message: "Login failed. Please try again later.",
       };
     }
 
-    // Set the access token in a cookie with appropriate security settings
+    // 在cookie中设置带有适当安全设置的访问令牌
     const cookieStore = await cookies();
     cookieStore.set("accessToken", data.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7, // 7天
       path: "/",
     });
   } catch (err) {
     console.error("Login error:", err);
     return {
       server_error: "An unexpected error occurred. Please try again later.",
-      message: "Server error occurred. Please try again later.",
     };
   }
 
-  // Redirect to dashboard on successful login
+  // 成功登录后重定向到控制面板
   redirect("/dashboard");
 }
 
-// This function could be expanded to support Google login in the backend
+// 此函数可扩展以支持后端的Google登录
 export async function handleGoogleLogin() {
-  // This would be implemented to call your backend API endpoint for Google auth
-  // For now, it's a placeholder for future implementation
+  // 以后实现的占位符
   try {
-    // Example implementation (commented out):
+    // 示例实现（注释掉）:
     /*
     const response = await fetch('/api/auth/google/verify', {
       method: 'POST',

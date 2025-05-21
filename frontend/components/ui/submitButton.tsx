@@ -1,18 +1,29 @@
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ButtonHTMLAttributes } from "react";
+
+interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  text?: string;
+  className?: string;
+  children?: React.ReactNode;
+}
 
 export function SubmitButton({
   text,
   className,
-}: { text: string; className?: string }) {
+  children,
+  ...props
+}: SubmitButtonProps) {
   const { pending } = useFormStatus();
+  const buttonText = text || (typeof children === 'string' ? children : undefined);
 
   return (
     <Button
       className={cn("w-full relative overflow-hidden", className)}
       type="submit"
       disabled={pending}
+      {...props}
     >
       {pending ? (
         <span className="flex items-center justify-center">
@@ -36,17 +47,19 @@ export function SubmitButton({
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             ></path>
           </svg>
-          Processing...
+          处理中...
         </span>
-      ) : (
+      ) : buttonText ? (
         <>
           <span className="absolute inset-0 flex items-center justify-center w-full h-full transition-all duration-300 ease-out transform translate-y-0 group-hover:translate-y-full">
-            {text}
+            {buttonText}
           </span>
           <span className="absolute inset-0 flex items-center justify-center w-full h-full transition-all duration-300 ease-out transform -translate-y-full group-hover:translate-y-0">
-            {text}
+            {buttonText}
           </span>
         </>
+      ) : (
+        children
       )}
     </Button>
   );

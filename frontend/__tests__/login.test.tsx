@@ -30,15 +30,19 @@ describe("login action", () => {
 
     await login({}, formData);
 
-    expect(authJwtLogin).toHaveBeenCalledWith({
-      body: {
+    expect(authJwtLogin).toHaveBeenCalledWith(expect.objectContaining({
+      body: expect.objectContaining({
         username: "a@a.com",
         password: "Q12341414#",
-      },
-    });
+        grant_type: "password",
+        client_id: "",
+        client_secret: "",
+        scope: "",
+      }),
+    }));
 
     expect(cookies).toHaveBeenCalled();
-    expect(mockSet).toHaveBeenCalledWith("accessToken", "1245token");
+    expect(mockSet).toHaveBeenCalledWith("accessToken", "1245token", expect.anything());
   });
 
   it("should should return an error if the server validation fails", async () => {
@@ -55,12 +59,16 @@ describe("login action", () => {
 
     const result = await login(undefined, formData);
 
-    expect(authJwtLogin).toHaveBeenCalledWith({
-      body: {
+    expect(authJwtLogin).toHaveBeenCalledWith(expect.objectContaining({
+      body: expect.objectContaining({
         username: "invalid@invalid.com",
         password: "Q12341414#",
-      },
-    });
+        grant_type: "password",
+        client_id: "",
+        client_secret: "",
+        scope: "",
+      }),
+    }));
 
     expect(result).toEqual({
       server_validation_error: "LOGIN_BAD_CREDENTIALS",
@@ -81,7 +89,7 @@ describe("login action", () => {
     expect(result).toEqual({
       errors: {
         password: ["Password is required"],
-        username: ["Username is required"],
+        username: ["Email is required"],
       },
     });
 

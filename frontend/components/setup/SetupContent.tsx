@@ -177,7 +177,7 @@ export function SetupContent() {
   const [currentStep, setCurrentStep] = useState(0);
   const router = useRouter();
   const { user } = useAuth();
-  const searchParams = useSearchParams();
+  const searchParamsObj = useSearchParams();
   const [extensionPluginId, setExtensionPluginId] = useState<string | null>(
     null,
   );
@@ -189,29 +189,32 @@ export function SetupContent() {
 
   // 检查URL参数中是否包含plugin_id和extension_callback
   useEffect(() => {
-    const pluginId = searchParams?.get("plugin_id");
-    const callback = searchParams?.get("extension_callback");
+    // 确保 searchParamsObj 存在
+    if (searchParamsObj) {
+      const pluginId = searchParamsObj.get?.("plugin_id") || null;
+      const callback = searchParamsObj.get?.("extension_callback") || null;
 
-    // 如果URL中有plugin_id，则保存它
-    if (pluginId) {
-      console.log("Setup页面从URL获取了plugin_id:", pluginId);
-      setExtensionPluginId(pluginId);
-    } else {
-      // 尝试从扩展中获取plugin_id
-      async function fetchPluginId() {
-        const id = await getExtensionPluginId();
-        if (id) {
-          console.log("Setup页面从扩展获取了plugin_id:", id);
-          setExtensionPluginId(id);
+      // 如果URL中有plugin_id，则保存它
+      if (pluginId) {
+        console.log("Setup页面从URL获取了plugin_id:", pluginId);
+        setExtensionPluginId(pluginId);
+      } else {
+        // 尝试从扩展中获取plugin_id
+        async function fetchPluginId() {
+          const id = await getExtensionPluginId();
+          if (id) {
+            console.log("Setup页面从扩展获取了plugin_id:", id);
+            setExtensionPluginId(id);
+          }
         }
+        fetchPluginId();
       }
-      fetchPluginId();
-    }
 
-    if (callback) {
-      setExtensionCallback(callback);
+      if (callback) {
+        setExtensionCallback(callback);
+      }
     }
-  }, [searchParams]);
+  }, [searchParamsObj]);
 
   // 在完成设置时向扩展发送Token
   const handleFinish = async () => {
