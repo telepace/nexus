@@ -32,6 +32,13 @@ export default async function Home() {
           </Button>
         </Link>
 
+        {/* Link to Prompts */}
+        <Link href="/prompts">
+          <Button className="px-8 py-4 text-xl font-semibold rounded-full shadow-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 focus:ring-4 focus:ring-green-300 mt-4">
+            探索 Prompt
+          </Button>
+        </Link>
+
         {/* Link to Dashboard */}
         <Link
           href="/dashboard"

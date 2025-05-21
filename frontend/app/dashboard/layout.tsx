@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Home, Users2, List } from "lucide-react";
+import { Home, Users2, List, MessageSquare } from "lucide-react";
 import Image from "next/image";
 
 import {
@@ -17,6 +17,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { logout } from "@/components/actions/logout-action";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function DashboardLayout({
   children,
@@ -39,18 +45,58 @@ export default function DashboardLayout({
               className="object-cover transition-transform duration-200 hover:scale-105"
             />
           </Link>
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <List className="h-5 w-5" />
-          </Link>
-          <Link
-            href="/customers"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <Users2 className="h-5 w-5" />
-          </Link>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                  aria-label="Dashboard"
+                >
+                  <List className="h-5 w-5" />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Dashboard</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href="/customers"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                  aria-label="Customers"
+                >
+                  <Users2 className="h-5 w-5" />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Customers</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href="/prompts"
+                  aria-label="Prompt Hub"
+                >
+                  <span className="flex flex-col items-center">
+                    <MessageSquare className="h-5 w-5" />
+                    <span className="sr-only">Prompt Hub</span>
+                  </span>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Prompt Hub</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </aside>
       <main className="ml-16 w-full p-8 bg-muted/40">

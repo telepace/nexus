@@ -1,0 +1,14 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+- Use black, white, and gray as the base colors for all interfaces. Main text should be black or dark gray, secondary text should use medium gray, and dividers/borders should use very light gray.
+- Use the theme color (such as blue #3366FF or green #2EC27E) for interactive elements like action buttons and links.
+- Highlight summaries and keywords with yellow (#FFF8DC) or a light blue background, combined with bold text.
+- Semantic color system includes: Primary (#3B82F6/#2EC27E), Info (#0284C7), Success (#16A34A), Warning (#F59E0B), Error (#DC2626), Highlight (#FEF9C3).
+- Support light and dark themes. Color is managed through theme tokens and semantic colors to maintain consistency, not by direct inversion.
+- Recommend providing 3–5 theme options (such as Calm Blue, Rhythm Green, Midnight Black, Classic Gray), as well as highlight color customization, to ensure both consistency and adaptability.
+- Avoid large areas of bright colors or complex gradient backgrounds. Emphasize information hierarchy and minimize visual distractions.
+- Encourage continuous iteration and maintenance of components and color schemes. For scenarios not covered, communicate with product/design teams.
+- Strive for an interface that is as elegant and visually appealing as possible, with a minimalist and refined high-end feel.

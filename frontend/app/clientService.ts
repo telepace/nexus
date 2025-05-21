@@ -13,6 +13,19 @@ import {
   itemsReadItem as readItem,
   itemsUpdateItem as updateItem,
   itemsDeleteItem as deleteItem,
+  promptsReadPrompts as readPrompts,
+  promptsCreatePrompt as createPrompt,
+  promptsReadPrompt as readPrompt,
+  promptsUpdatePrompt as updatePrompt,
+  promptsDeletePrompt as deletePrompt,
+  promptsReadTags as readTags,
+  promptsCreateTag as createTag,
+  promptsUpdateTag as updateTag,
+  promptsDeleteTag as deleteTag,
+  promptsReadPromptVersions as readPromptVersions,
+  promptsCreatePromptVersion as createPromptVersion,
+  promptsReadPromptVersion as readPromptVersion,
+  promptsDuplicatePrompt as duplicatePrompt,
 } from "./openapi-client/sdk.gen";
 
 import type {
@@ -45,6 +58,19 @@ export {
   readItem,
   updateItem,
   deleteItem,
+  readPrompts,
+  createPrompt,
+  readPrompt,
+  updatePrompt,
+  deletePrompt,
+  readTags,
+  createTag,
+  updateTag,
+  deleteTag,
+  readPromptVersions,
+  createPromptVersion,
+  readPromptVersion,
+  duplicatePrompt,
 };
 
 // 确保配置被导入
