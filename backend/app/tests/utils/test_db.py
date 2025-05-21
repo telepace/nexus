@@ -170,9 +170,84 @@ def apply_migrations_with_engine(engine: Engine) -> None:
         # 使用直接创建表的方式
         from sqlmodel import SQLModel
 
+        # 确保预先导入所有模型
+        import app.models  # noqa
+        from app.models.prompt import Prompt, PromptTagLink, PromptVersion, Tag  # noqa
+
         logger.info(f"Creating all tables in test database: {get_test_db_name()}")
         # 直接创建所有表
         SQLModel.metadata.create_all(engine)
+
+        # 确认表是否创建成功
+        with engine.connect() as conn:
+            tables = conn.execute(
+                text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
+            ).fetchall()
+            table_names = [t[0] for t in tables]
+            logger.info(f"Created tables: {table_names}")
+
+            # 如果prompts表不存在，手动创建
+            if "prompts" not in table_names:
+                logger.warning(
+                    "prompts table was not created automatically, attempting to create manually"
+                )
+                conn.execute(
+                    text("""
+                CREATE TABLE IF NOT EXISTS prompts (
+                    id UUID PRIMARY KEY,
+                    name VARCHAR NOT NULL,
+                    description VARCHAR,
+                    content VARCHAR NOT NULL,
+                    type VARCHAR NOT NULL,
+                    input_vars JSON,
+                    visibility VARCHAR NOT NULL,
+                    team_id UUID,
+                    meta_data JSON,
+                    version INTEGER NOT NULL DEFAULT 1,
+                    created_by UUID NOT NULL,
+                    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+                    updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+                    embedding JSON
+                )
+                """)
+                )
+                conn.execute(
+                    text("""
+                CREATE TABLE IF NOT EXISTS tags (
+                    id UUID PRIMARY KEY,
+                    name VARCHAR NOT NULL UNIQUE,
+                    description VARCHAR,
+                    color VARCHAR,
+                    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
+                )
+                """)
+                )
+                conn.execute(
+                    text("""
+                CREATE TABLE IF NOT EXISTS prompt_tags (
+                    prompt_id UUID NOT NULL REFERENCES prompts(id),
+                    tag_id UUID NOT NULL REFERENCES tags(id),
+                    PRIMARY KEY (prompt_id, tag_id)
+                )
+                """)
+                )
+                conn.execute(
+                    text("""
+                CREATE TABLE IF NOT EXISTS prompt_versions (
+                    id UUID PRIMARY KEY,
+                    prompt_id UUID NOT NULL REFERENCES prompts(id),
+                    version INTEGER NOT NULL,
+                    content VARCHAR NOT NULL,
+                    input_vars JSON,
+                    created_by UUID NOT NULL,
+                    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+                    change_notes VARCHAR
+                )
+                """)
+                )
+                conn.commit()
+                logger.info("Manually created prompts and related tables")
+
         logger.info("Created all tables in test database")
     except Exception as e:
         logger.error(f"Error creating tables: {e}")
@@ -182,6 +257,8 @@ def apply_migrations_with_engine(engine: Engine) -> None:
 def create_tables(engine: Engine) -> None:
     """Create all tables directly using SQLModel metadata."""
     from sqlmodel import SQLModel
+
+    # 确保提前导入所有模型，以便SQLModel能够创建所有表
 
     logger.info("Creating tables directly with SQLModel")
     SQLModel.metadata.create_all(engine)

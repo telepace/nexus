@@ -1,0 +1,12 @@
+---
+description: 
+globs: frontend/**
+alwaysApply: false
+---
+description: Frontend Development Code Guidelines
+
+- When writing frontend code, prioritize using Next.js as the framework
+- Prefer the combination of shadcn/ui and Tailwind CSS for UI components
+- Do not use Next.js API routes (/api); always use backend APIs for all API requests
+- If the backend API is unclear or in question, use the MCP api docs tool to find the relevant API definition- 
+- The UI library should be isolated from the code base and placed in components/ui

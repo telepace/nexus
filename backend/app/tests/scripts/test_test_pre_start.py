@@ -1,23 +1,26 @@
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import MagicMock
 
 from app.core.db import init_db as init
 
 
-@pytest.mark.skip(reason="需要修复mock配置问题，暂时跳过")
-@patch("sqlmodel.Session")
-def test_init_successful_connection(session_mock_class):
+def test_init_successful_connection():
     """测试数据库初始化连接成功"""
-    # 创建一个mock对象
-    engine_mock = MagicMock()
-
-    # 设置session_mock的返回值和方法调用
+    # 创建一个mock的session对象
     session_mock = MagicMock()
-    session_mock_class.return_value = session_mock
+
+    # 模拟session.exec的返回值
+    exec_mock = MagicMock()
+    session_mock.exec.return_value = exec_mock
+    exec_mock.first.return_value = None  # 模拟没有找到用户
 
     # 调用要测试的函数
-    init(engine_mock)
+    init(session_mock)
 
-    # 检查Session是否以正确的参数被调用
-    session_mock_class.assert_called_once()
+    # 验证session.exec被调用
+    session_mock.exec.assert_called_once()
+    # 验证first()被调用
+    exec_mock.first.assert_called_once()
+    # 验证add被调用（创建用户时）
+    assert session_mock.add.called
+    # 验证commit被调用
+    assert session_mock.commit.called

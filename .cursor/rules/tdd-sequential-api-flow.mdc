@@ -22,6 +22,7 @@ Design with Test-Driven Development + sequential thinking + API documentation re
 4. **Implement Minimally**
    - Write code that passes tests
    - Follow your sequential thought chain
+
 5. **Refactor & Validate**
    - Clean up while maintaining passing tests
    - Verify all requirements are met

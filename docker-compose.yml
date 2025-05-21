@@ -246,6 +246,11 @@ services:
       - OR_SITE_URL=${OR_SITE_URL:-https://openrouter.ai/api/v1}
       - OR_APP_NAME=${OR_APP_NAME:-LiteLLM Nexus app}
       - OR_API_KEY=${OR_API_KEY:-sk-or-v1-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:sk-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v}
+      - GITHUB_API_KEY=${GITHUB_API_KEY:-sk-}
+      - VOLCENGINE_API_KEY=${VOLCENGINE_API_KEY:-sk-}
+      - VOLCENGINE_BASE_URL=${VOLCENGINE_BASE_URL:-https://api.volcengine.com/v1}
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-sk-lf-}
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-pk-lf-}
       - LANGFUSE_HOST=${LANGFUSE_HOST:-https://cloud.langfuse.com}

@@ -82,6 +82,45 @@ import type {
   GoogleOauthGoogleCallbackData,
   GoogleOauthGoogleCallbackError,
   GoogleOauthGoogleCallbackResponse,
+  PromptsReadTagsData,
+  PromptsReadTagsError,
+  PromptsReadTagsResponse,
+  PromptsCreateTagData,
+  PromptsCreateTagError,
+  PromptsCreateTagResponse,
+  PromptsUpdateTagData,
+  PromptsUpdateTagError,
+  PromptsUpdateTagResponse,
+  PromptsDeleteTagData,
+  PromptsDeleteTagError,
+  PromptsDeleteTagResponse,
+  PromptsCreatePromptData,
+  PromptsCreatePromptError,
+  PromptsCreatePromptResponse,
+  PromptsReadPromptsData,
+  PromptsReadPromptsError,
+  PromptsReadPromptsResponse,
+  PromptsReadPromptData,
+  PromptsReadPromptError,
+  PromptsReadPromptResponse,
+  PromptsUpdatePromptData,
+  PromptsUpdatePromptError,
+  PromptsUpdatePromptResponse,
+  PromptsDeletePromptData,
+  PromptsDeletePromptError,
+  PromptsDeletePromptResponse,
+  PromptsReadPromptVersionsData,
+  PromptsReadPromptVersionsError,
+  PromptsReadPromptVersionsResponse,
+  PromptsCreatePromptVersionData,
+  PromptsCreatePromptVersionError,
+  PromptsCreatePromptVersionResponse,
+  PromptsReadPromptVersionData,
+  PromptsReadPromptVersionError,
+  PromptsReadPromptVersionResponse,
+  PromptsDuplicatePromptData,
+  PromptsDuplicatePromptError,
+  PromptsDuplicatePromptResponse,
   PrivateCreateUserData,
   PrivateCreateUserError,
   PrivateCreateUserResponse,
@@ -561,6 +600,229 @@ export const googleOauthGoogleCallback = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/api/v1/login/google/callback",
+  });
+};
+
+/**
+ * Read Tags
+ * 获取标签列表
+ */
+export const promptsReadTags = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<PromptsReadTagsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    PromptsReadTagsResponse,
+    PromptsReadTagsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/tags",
+  });
+};
+
+/**
+ * Create Tag
+ * 创建新标签
+ */
+export const promptsCreateTag = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<PromptsCreateTagData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    PromptsCreateTagResponse,
+    PromptsCreateTagError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/tags",
+  });
+};
+
+/**
+ * Update Tag
+ * 更新标签
+ */
+export const promptsUpdateTag = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<PromptsUpdateTagData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).put<
+    PromptsUpdateTagResponse,
+    PromptsUpdateTagError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/tags/{tag_id}",
+  });
+};
+
+/**
+ * Delete Tag
+ * 删除标签 (需要超级用户权限)
+ */
+export const promptsDeleteTag = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<PromptsDeleteTagData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).delete<
+    PromptsDeleteTagResponse,
+    PromptsDeleteTagError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/tags/{tag_id}",
+  });
+};
+
+/**
+ * Create Prompt
+ * 创建新的提示词
+ */
+export const promptsCreatePrompt = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<PromptsCreatePromptData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    PromptsCreatePromptResponse,
+    PromptsCreatePromptError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/",
+  });
+};
+
+/**
+ * Read Prompts
+ * 获取提示词列表
+ */
+export const promptsReadPrompts = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<PromptsReadPromptsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    PromptsReadPromptsResponse,
+    PromptsReadPromptsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/",
+  });
+};
+
+/**
+ * Read Prompt
+ * 获取提示词详情
+ */
+export const promptsReadPrompt = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<PromptsReadPromptData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    PromptsReadPromptResponse,
+    PromptsReadPromptError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/{prompt_id}",
+  });
+};
+
+/**
+ * Update Prompt
+ * 更新提示词
+ */
+export const promptsUpdatePrompt = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<PromptsUpdatePromptData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).put<
+    PromptsUpdatePromptResponse,
+    PromptsUpdatePromptError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/{prompt_id}",
+  });
+};
+
+/**
+ * Delete Prompt
+ * 删除提示词
+ */
+export const promptsDeletePrompt = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<PromptsDeletePromptData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).delete<
+    PromptsDeletePromptResponse,
+    PromptsDeletePromptError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/{prompt_id}",
+  });
+};
+
+/**
+ * Read Prompt Versions
+ * 获取提示词的版本历史
+ */
+export const promptsReadPromptVersions = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<PromptsReadPromptVersionsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    PromptsReadPromptVersionsResponse,
+    PromptsReadPromptVersionsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/{prompt_id}/versions",
+  });
+};
+
+/**
+ * Create Prompt Version
+ * 创建新版本
+ */
+export const promptsCreatePromptVersion = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<PromptsCreatePromptVersionData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    PromptsCreatePromptVersionResponse,
+    PromptsCreatePromptVersionError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/{prompt_id}/versions",
+  });
+};
+
+/**
+ * Read Prompt Version
+ * 获取提示词特定版本
+ */
+export const promptsReadPromptVersion = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<PromptsReadPromptVersionData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    PromptsReadPromptVersionResponse,
+    PromptsReadPromptVersionError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/{prompt_id}/versions/{version_num}",
+  });
+};
+
+/**
+ * Duplicate Prompt
+ * 复制提示词
+ */
+export const promptsDuplicatePrompt = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<PromptsDuplicatePromptData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    PromptsDuplicatePromptResponse,
+    PromptsDuplicatePromptError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/{prompt_id}/duplicate",
   });
 };
 

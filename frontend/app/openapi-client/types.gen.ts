@@ -44,6 +44,12 @@ export type HTTPValidationError = {
   detail?: Array<ValidationError>;
 };
 
+export type InputVariable = {
+  name: string;
+  description?: string | null;
+  required?: boolean;
+};
+
 export type ItemCreate = {
   title: string;
   description?: string | null;
@@ -68,6 +74,111 @@ export type PrivateUserCreate = {
   password: string;
   full_name: string;
   is_verified?: boolean;
+};
+
+export type Prompt = {
+  name: string;
+  description?: string | null;
+  content: string;
+  type: string;
+  input_vars?: Array<InputVariable> | null;
+  visibility: string;
+  meta_data?: {
+    [key: string]: unknown;
+  } | null;
+  version?: number;
+  team_id?: string | null;
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+  embedding?: Array<number> | null;
+  created_by: string;
+};
+
+export type PromptCreate = {
+  name: string;
+  description?: string | null;
+  content: string;
+  type: string;
+  input_vars?: Array<InputVariable> | null;
+  visibility: string;
+  meta_data?: {
+    [key: string]: unknown;
+  } | null;
+  version?: number;
+  team_id?: string | null;
+  tag_ids?: Array<string> | null;
+};
+
+export type PromptReadWithTags = {
+  name: string;
+  description?: string | null;
+  content: string;
+  type: string;
+  input_vars?: Array<InputVariable> | null;
+  visibility: string;
+  meta_data?: {
+    [key: string]: unknown;
+  } | null;
+  version?: number;
+  team_id?: string | null;
+  id: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  embedding?: Array<number> | null;
+  tags?: Array<Tag>;
+};
+
+export type PromptUpdate = {
+  name?: string | null;
+  description?: string | null;
+  content?: string | null;
+  type?: string | null;
+  input_vars?: Array<InputVariable> | null;
+  visibility?: string | null;
+  team_id?: string | null;
+  meta_data?: {
+    [key: string]: unknown;
+  } | null;
+  tag_ids?: Array<string> | null;
+};
+
+export type PromptVersion = {
+  id?: string;
+  prompt_id: string;
+  version: number;
+  content: string;
+  input_vars?: Array<InputVariable> | null;
+  created_by: string;
+  created_at?: string;
+  change_notes?: string | null;
+};
+
+export type PromptVersionCreate = {
+  content: string;
+  input_vars?: Array<InputVariable> | null;
+  change_notes?: string | null;
+};
+
+export type Tag = {
+  id?: string;
+  name: string;
+  description?: string | null;
+  color?: string | null;
+  created_at?: string;
+};
+
+export type TagCreate = {
+  name: string;
+  description?: string | null;
+  color?: string | null;
+};
+
+export type TagUpdate = {
+  name?: string | null;
+  description?: string | null;
+  color?: string | null;
 };
 
 export type Token = {
@@ -349,6 +460,145 @@ export type GoogleOauthGoogleCallbackData = {
 export type GoogleOauthGoogleCallbackResponse = unknown;
 
 export type GoogleOauthGoogleCallbackError = HTTPValidationError;
+
+export type PromptsReadTagsData = {
+  query?: {
+    limit?: number;
+    skip?: number;
+  };
+};
+
+export type PromptsReadTagsResponse = Array<Tag>;
+
+export type PromptsReadTagsError = HTTPValidationError;
+
+export type PromptsCreateTagData = {
+  body: TagCreate;
+};
+
+export type PromptsCreateTagResponse = Tag;
+
+export type PromptsCreateTagError = HTTPValidationError;
+
+export type PromptsUpdateTagData = {
+  body: TagUpdate;
+  path: {
+    tag_id: string;
+  };
+};
+
+export type PromptsUpdateTagResponse = Tag;
+
+export type PromptsUpdateTagError = HTTPValidationError;
+
+export type PromptsDeleteTagData = {
+  path: {
+    tag_id: string;
+  };
+};
+
+export type PromptsDeleteTagResponse = void;
+
+export type PromptsDeleteTagError = HTTPValidationError;
+
+export type PromptsCreatePromptData = {
+  body: PromptCreate;
+};
+
+export type PromptsCreatePromptResponse = Prompt;
+
+export type PromptsCreatePromptError = HTTPValidationError;
+
+export type PromptsReadPromptsData = {
+  query?: {
+    limit?: number;
+    order?: string;
+    search?: string | null;
+    skip?: number;
+    sort?: string | null;
+    tag_ids?: Array<string> | null;
+  };
+};
+
+export type PromptsReadPromptsResponse = Array<Prompt>;
+
+export type PromptsReadPromptsError = HTTPValidationError;
+
+export type PromptsReadPromptData = {
+  path: {
+    prompt_id: string;
+  };
+};
+
+export type PromptsReadPromptResponse = PromptReadWithTags;
+
+export type PromptsReadPromptError = HTTPValidationError;
+
+export type PromptsUpdatePromptData = {
+  body: PromptUpdate;
+  path: {
+    prompt_id: string;
+  };
+  query?: {
+    create_version?: boolean;
+  };
+};
+
+export type PromptsUpdatePromptResponse = Prompt;
+
+export type PromptsUpdatePromptError = HTTPValidationError;
+
+export type PromptsDeletePromptData = {
+  path: {
+    prompt_id: string;
+  };
+};
+
+export type PromptsDeletePromptResponse = void;
+
+export type PromptsDeletePromptError = HTTPValidationError;
+
+export type PromptsReadPromptVersionsData = {
+  path: {
+    prompt_id: string;
+  };
+};
+
+export type PromptsReadPromptVersionsResponse = Array<PromptVersion>;
+
+export type PromptsReadPromptVersionsError = HTTPValidationError;
+
+export type PromptsCreatePromptVersionData = {
+  body: PromptVersionCreate;
+  path: {
+    prompt_id: string;
+  };
+};
+
+export type PromptsCreatePromptVersionResponse = PromptVersion;
+
+export type PromptsCreatePromptVersionError = HTTPValidationError;
+
+export type PromptsReadPromptVersionData = {
+  path: {
+    prompt_id: string;
+    version_num: number;
+  };
+};
+
+export type PromptsReadPromptVersionResponse = PromptVersion;
+
+export type PromptsReadPromptVersionError = HTTPValidationError;
+
+export type PromptsDuplicatePromptData = {
+  path: {
+    prompt_id: string;
+  };
+};
+
+export type PromptsDuplicatePromptResponse = Prompt;
+
+export type PromptsDuplicatePromptError = HTTPValidationError;
 
 export type PrivateCreateUserData = {
   body: PrivateUserCreate;

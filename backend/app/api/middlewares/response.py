@@ -5,6 +5,8 @@ from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.utils.response import ApiResponse
+
 
 class ApiResponseMiddleware(BaseHTTPMiddleware):
     """
@@ -62,14 +64,20 @@ class ApiResponseMiddleware(BaseHTTPMiddleware):
 
         if 200 <= status_code < 400:
             # 成功响应
-            formatted_response = {"data": content, "meta": {}, "error": None}
+            success_response: ApiResponse[Any] = ApiResponse[Any](
+                data=content, meta={}, error=None
+            )
+            formatted_response = success_response.model_dump()
         else:
             # 错误响应
             if isinstance(content, dict) and "detail" in content:
                 error_msg = content.get("detail", str(content))
             else:
                 error_msg = str(content)
-            formatted_response = {"data": None, "meta": {}, "error": error_msg}
+            error_response: ApiResponse[Any] = ApiResponse[Any](
+                data=None, meta={}, error=error_msg
+            )
+            formatted_response = error_response.model_dump()
 
         return JSONResponse(
             content=formatted_response,

@@ -6,7 +6,6 @@ from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import (
-    ApiResponse,
     Item,
     ItemCreate,
     ItemPublic,
@@ -14,6 +13,7 @@ from app.models import (
     ItemUpdate,
 )
 from app.utils.error import NotFoundError, PermissionError
+from app.utils.response import ApiResponse
 
 router = APIRouter(prefix="/items", tags=["items"])
 
