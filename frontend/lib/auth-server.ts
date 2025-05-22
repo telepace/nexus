@@ -16,7 +16,6 @@ export async function getCurrentUser(): Promise<User | null> {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-      next: { revalidate: 60 }, // Revalidate every minute
     });
 
     if (!response.ok) {
