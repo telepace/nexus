@@ -15,33 +15,15 @@ jobs:
         with:
           fetch-depth: 0  # 获取完整历史以生成正确的 changelog
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9.9.0
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: 'pnpm'
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          version: "0.4.15"
-          enable-cache: true
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10.11'
-          cache: 'uv'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v3
         with:
-          version: latest
+          version: 9.9.0
           run_install: false
 
       # 缓存 pnpm 依赖
@@ -55,12 +37,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
-      # 设置代理环境变量
-      - name: Set proxy variables
-        run: |
-          echo "HTTPS_PROXY=http://127.0.0.1:7890" >> $GITHUB_ENV
-          echo "HTTP_PROXY=http://127.0.0.1:7890" >> $GITHUB_ENV
-          echo "ALL_PROXY=socks5://127.0.0.1:7890" >> $GITHUB_ENV
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.4.15"
 
       # 准备环境文件
       - name: Prepare environment
@@ -115,21 +100,15 @@ jobs:
           mkdir -p ../dist
           tar -czf ../dist/website-${{ env.VERSION }}.tar.gz .next public
 
-      # 安装 conventional-changelog
-      - name: Install conventional-changelog
+      # 安装并生成 changelog
+      - name: Generate changelog
         run: |
           pnpm add -g conventional-changelog-cli
-          mkdir -p node_modules/@semantic-release
-
-      # 获取上次发布以来的变更
-      - name: Generate changelog
-        id: changelog
-        run: |
           conventional-changelog -p angular -i CHANGELOG.md -s -r 0
           echo "Generated changelog:"
           cat CHANGELOG.md
 
-      # 使用 ncipollo/release-action 创建 Release
+      # 创建 GitHub Release
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
