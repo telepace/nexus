@@ -238,6 +238,7 @@ def create_token_blacklist(
         user_id=user_id,
         expires_at=expires_at,
         created_at=datetime.utcnow(),
+        blacklisted_at=datetime.utcnow(),
     )
     session.add(token_blacklist)
     session.commit()
@@ -331,9 +332,8 @@ def get_tags(db: Session, skip: int = 0, limit: int = 100) -> Sequence[Any]:
     """获取所有标签"""
     from app.models import Tag
 
-    query = select(Tag)
-    results = db.exec(query).all()
-    return results[skip : skip + limit]
+    query = select(Tag).offset(skip).limit(limit)
+    return db.exec(query).all()
 
 
 def get_tag(db: Session, tag_id: uuid.UUID):

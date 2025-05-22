@@ -76,6 +76,7 @@ swc = "swc"
 reactjs = "reactjs"
 backend = "backend"
 frontend = "frontend"
+selectin = "selectin"  # SQLAlchemy relationship loading strategy
 # CI/CD and GitHub related terms
 snorkell = "snorkell"
 penify = "penify"

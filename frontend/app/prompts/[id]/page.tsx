@@ -3,14 +3,12 @@ import {
   fetchPromptVersions,
 } from "@/components/actions/prompts-action";
 import { getAuthState } from "@/lib/server-auth-bridge";
-import { redirect as _redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import {
   AlertCircle,
   Clock,
   Edit,
-  Copy,
   History,
   Tag as TagIcon,
   Eye,
@@ -44,7 +42,8 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
       title: `${promptData.name} - 提示词详情`,
       description: promptData.description || "提示词详情页面",
     };
-  } catch (_error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
     return {
       title: "提示词 - 错误",
       description: "无法加载提示词详情",

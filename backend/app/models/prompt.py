@@ -47,7 +47,7 @@ class Tag(SQLModel, table=True):
     prompts: list["Prompt"] = Relationship(
         back_populates="tags",
         link_model=PromptTagLink,
-        sa_relationship_kwargs={"lazy": "selectin"},  # noqa: typos
+        sa_relationship_kwargs={"lazy": "selectin"},  # type: ignore # SQLAlchemy loading strategy
     )
 
     class Config:

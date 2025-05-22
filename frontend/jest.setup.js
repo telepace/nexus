@@ -87,6 +87,7 @@ jest.mock("next/navigation", () => ({
     forward: jest.fn(),
     refresh: jest.fn(),
     prefetch: jest.fn(),
+    pathname: "/test-path",
   }),
   useSearchParams: () => ({
     get: jest.fn((param) => {
@@ -106,18 +107,26 @@ jest.mock("next/navigation", () => ({
   }),
   usePathname: () => "/",
   redirect: jest.fn(),
+  notFound: jest.fn(),
 }));
 
 // Mock console.error to handle expected errors during testing
 const originalConsoleError = console.error;
 console.error = (...args) => {
-  // Only suppress LOGIN_BAD_CREDENTIALS error logs
+  // Suppress expected errors and warnings
   if (
     args[0] &&
     typeof args[0] === "string" &&
-    args[0].includes("LOGIN_BAD_CREDENTIALS")
+    (args[0].includes("LOGIN_BAD_CREDENTIALS") ||
+      args[0].includes(
+        "Warning: An update to Root inside a test was not wrapped in act",
+      ) ||
+      args[0].includes("Warning: It looks like you're using the wrong act()") ||
+      args[0].includes(
+        "act(...) is not supported in production builds of React",
+      ))
   ) {
-    return; // Suppress expected login credential errors
+    return; // Suppress expected login credential errors and act warnings
   }
   originalConsoleError(...args);
 };
@@ -125,7 +134,7 @@ console.error = (...args) => {
 // Intercept debug logs
 const originalConsoleDebug = console.debug;
 console.debug = (...args) => {
-  // Uncomment to see debug logs during testing
+  // Disable all debug logs during testing
   // originalConsoleDebug(...args);
 };
 
@@ -182,6 +191,17 @@ jest.mock("react", () => {
   return {
     ...actualReact,
     useActionState: jest.fn(() => [null, jest.fn()]),
+    act: (callback) => {
+      if (typeof callback === "function") {
+        return callback();
+      }
+      return Promise.resolve();
+    },
+    cache: (fn) => fn,
+    experimental_useOptimistic: jest.fn(() => [null, jest.fn()]),
+    useFormStatus: jest.fn(() => ({ pending: false })),
+    useFormState: jest.fn((action, initialState) => [initialState, jest.fn()]),
+    useTransition: jest.fn(() => [false, jest.fn()]),
   };
 });
 
@@ -222,4 +242,33 @@ afterEach(() => {
   jest.clearAllMocks();
   delete global.mockSearchParams;
   delete global.mockPathname;
+});
+
+// Add mock for React act function
+jest.mock("react", () => {
+  const originalReact = jest.requireActual("react");
+  return {
+    ...originalReact,
+    act: (callback) => {
+      if (typeof callback === "function") {
+        return callback();
+      }
+      return Promise.resolve();
+    },
+    cache: (fn) => fn,
+  };
+});
+
+// Add mock for react-dom act function
+jest.mock("react-dom/test-utils", () => {
+  const originalTestUtils = jest.requireActual("react-dom/test-utils");
+  return {
+    ...originalTestUtils,
+    act: (callback) => {
+      if (typeof callback === "function") {
+        return callback();
+      }
+      return Promise.resolve();
+    },
+  };
 });

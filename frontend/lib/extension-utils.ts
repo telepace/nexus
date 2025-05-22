@@ -4,7 +4,7 @@
 
 // 扩展 Window 接口以添加 chrome 属性
 // 这里不能直接用 typeof chrome，因为类型可能不存在于全局，推荐用 unknown 或 any，并加注释
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 declare global {
   interface Window {
     chrome?: unknown;
@@ -254,5 +254,5 @@ export const isSidebarSupported = (): boolean => {
 
 // 定义扩展消息响应类型
 // 只关心 success 字段
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+
 type ExtensionResponse = { success?: boolean } | undefined;

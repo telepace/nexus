@@ -2,18 +2,11 @@
 
 import { useActionState } from "react";
 import { notFound, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { passwordResetConfirm } from "@/components/actions/password-reset-action";
 import { SubmitButton } from "@/components/ui/submitButton";
 import Image from "next/image";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Suspense } from "react";

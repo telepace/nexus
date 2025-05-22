@@ -66,13 +66,6 @@ interface ApiErrorResponse {
   status?: number;
 }
 
-// 定义API响应类型
-interface ApiResponse<T> {
-  data?: T | { data?: T } | null;
-  meta?: { message?: string } | null;
-  error?: string | null;
-}
-
 // 定义 fetchPrompts 的可能返回类型
 type FetchPromptsReturn = PromptData[] | ApiErrorResponse;
 type FetchTagsReturn = TagData[] | ApiErrorResponse;
@@ -464,7 +457,7 @@ export async function updatePromptAction(id: string, formData: FormData) {
     const createVersionValue = formData.get("create_version");
     const create_version = createVersionValue === "true";
 
-    const { data, error } = await updatePrompt({
+    const { error } = await updatePrompt({
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -521,7 +514,7 @@ export async function removePrompt(id: string) {
   }
 
   try {
-    const { data, error } = await deletePrompt({
+    const { error } = await deletePrompt({
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -704,7 +697,7 @@ export async function updateTagAction(id: string, formData: FormData) {
     const description = formData.get("description") as string;
     const color = formData.get("color") as string;
 
-    const { data, error } = await updateTag({
+    const { error } = await updateTag({
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -753,7 +746,7 @@ export async function removeTag(id: string) {
   }
 
   try {
-    const { data, error } = await deleteTag({
+    const { error } = await deleteTag({
       headers: {
         Authorization: `Bearer ${token}`,
       },

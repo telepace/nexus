@@ -1,6 +1,6 @@
-import { test as setup, expect } from "@playwright/test"
+import { writeFileSync } from "node:fs"
+import { expect, test as setup } from "@playwright/test"
 import { firstSuperuser, firstSuperuserPassword } from "./config.ts"
-import { writeFileSync } from "fs"
 
 const authFile = "playwright/.auth/user.json"
 

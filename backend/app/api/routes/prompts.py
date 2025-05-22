@@ -164,7 +164,7 @@ def delete_tag(
 
 
 # ===== 提示词 CRUD 操作 =====
-@router.post("/", response_model=Prompt, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=PromptReadWithTags, status_code=status.HTTP_201_CREATED)
 def create_prompt(
     *,
     db: Session = Depends(get_db),
@@ -201,7 +201,9 @@ def create_prompt(
 
         db.commit()
         db.refresh(prompt)
-        return prompt
+        # 确保加载标签关系
+        db.refresh(prompt, ["tags"])
+        return PromptReadWithTags.model_validate(prompt)
     except Exception as e:
         db.rollback()
         logger.error(f"创建提示词失败: {str(e)}")
@@ -292,12 +294,16 @@ def read_prompt(
         # 手动加载标签
         db.refresh(prompt, ["tags"])
         return PromptReadWithTags.model_validate(prompt)
+    except HTTPException as e:
+        # 如果是 HTTPException，直接传递
+        logger.error(f"Error reading prompt: {e}")
+        raise
     except Exception as e:
         logger.error(f"Error reading prompt: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/{prompt_id}", response_model=Prompt)
+@router.put("/{prompt_id}", response_model=PromptReadWithTags)
 def update_prompt(
     *,
     db: Session = Depends(get_db),
@@ -320,8 +326,13 @@ def update_prompt(
         # pre_content = prompt.content
         # pre_input_vars = prompt.input_vars
 
-        # 更新其他字段
+        # 更新标签关系
+        tag_ids = None
         update_data = prompt_in.model_dump(exclude_unset=True)
+        if "tag_ids" in update_data:
+            tag_ids = update_data.pop("tag_ids")
+
+        # 更新其他字段
         for key, value in update_data.items():
             setattr(prompt, key, value)
 
@@ -352,11 +363,24 @@ def update_prompt(
             )
             db.add(version)
 
+        # 更新标签关系
+        if tag_ids is not None:
+            # 清除现有关系
+            prompt.tags = []
+            db.flush()
+            
+            # 添加新标签
+            for tag_id in tag_ids:
+                tag = db.get(Tag, tag_id)
+                if tag:
+                    prompt.tags.append(tag)
+
         db.add(prompt)
         db.commit()
         db.refresh(prompt)
-
-        return prompt
+        # 确保加载标签关系
+        db.refresh(prompt, ["tags"])
+        return PromptReadWithTags.model_validate(prompt)
     except HTTPException:
         raise
     except Exception as e:

@@ -1,6 +1,5 @@
 import { fetchPrompt, fetchTags } from "@/components/actions/prompts-action";
 import { getAuthState } from "@/lib/server-auth-bridge";
-import { redirect as _redirect } from "next/navigation";
 import { PromptForm } from "../../_components/PromptForm";
 import { Suspense } from "react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -24,6 +23,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
       title: `编辑提示词 - ${promptData.name}`,
       description: `编辑提示词 ${promptData.name}`,
     };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     return {
       title: "编辑提示词",

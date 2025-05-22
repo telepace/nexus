@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5,8 +6,7 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { v4 as uuidv4 } from "uuid";
-import { X, Plus, Trash, Plus as PlusIcon } from "lucide-react";
+import { X, Trash, Plus as PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -166,7 +166,7 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
   const updateInputVar = (
     index: number,
     field: keyof InputVariable,
-    value: any,
+    value: string | boolean,
   ) => {
     const updatedVars = [...inputVars];
     updatedVars[index] = { ...updatedVars[index], [field]: value };
@@ -471,6 +471,13 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
               )}
             />
           )}
+
+          <div className="text-sm text-muted-foreground mb-2 p-3 bg-muted rounded-md">
+            <p>
+              提示: 您可以使用 <code>{"{{变量名}}"}</code> 语法在内容中插入变量,
+              例如 <code>{"{{user_input}}"}</code>
+            </p>
+          </div>
         </div>
 
         {/* 表单按钮 */}

@@ -1,12 +1,4 @@
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TableHeader,
-} from "@/components/ui/table";
-import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -23,7 +15,6 @@ import Link from "next/link";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import {
   AlertCircle,
-  Search,
   Tag as TagIcon,
   Clock,
   SortDesc,
@@ -204,13 +195,16 @@ async function PromptsContent({
   console.log(`[prompts-${renderID}] 开始渲染 Prompts 内容`);
 
   try {
+    // 使用安全的方式处理 searchParams
+    const params = searchParams
+      ? Object.fromEntries(Object.entries(searchParams))
+      : {};
+
     // 准备查询参数
-    const search = searchParams?.query || undefined;
-    const tagIds = searchParams?.tags
-      ? searchParams.tags.split(",")
-      : undefined;
-    const sort = searchParams?.sort || undefined;
-    const order = (searchParams?.order || "desc") as "asc" | "desc";
+    const search = params.query || undefined;
+    const tagIds = params.tags ? params.tags.split(",") : undefined;
+    const sort = params.sort || undefined;
+    const order = (params.order || "desc") as "asc" | "desc";
 
     // 获取提示词和标签数据
     const [promptsResponse, tagsResponse] = await Promise.all([
@@ -331,7 +325,7 @@ async function PromptsContent({
           </div>
           <div className="flex items-center gap-2">
             <Link
-              href={`/prompts?sort=${sort || "updated_at"}&order=${order === "asc" ? "desc" : "asc"}`}
+              href={`/prompts?sort=${params.sort || "updated_at"}&order=${params.order === "asc" ? "desc" : "asc"}`}
               className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
             >
               {order === "asc" ? (
@@ -339,7 +333,7 @@ async function PromptsContent({
               ) : (
                 <SortDesc className="h-4 w-4" />
               )}
-              {sort === "created_at" ? "创建时间" : "更新时间"}
+              {params.sort === "created_at" ? "创建时间" : "更新时间"}
             </Link>
           </div>
         </div>
