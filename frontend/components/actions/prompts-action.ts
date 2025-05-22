@@ -46,6 +46,11 @@ export interface PromptData {
   created_at: string;
   updated_at: string;
   tags?: TagData[];
+  creator?: {
+    id?: string;
+    name?: string;
+    email?: string;
+  };
 }
 
 interface PromptVersionData {

@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useState } from "react";
-import { X, User, Lock, Eye, Bell, Shield, ChevronRight } from "lucide-react";
+import { X, User, Lock, Eye, Bell, Shield, ChevronRight, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -11,6 +11,37 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "next-themes";
+import { TimeZoneSelector } from "@/components/ui/TimeZoneSelector";
+import { useTimeZone } from "../../lib/time-zone-context";
+
+// 添加时区设置组件
+const TimeZoneSettings = () => {
+  const { timeZone, setTimeZone, isAutoTimeZone, setIsAutoTimeZone } = useTimeZone();
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Label htmlFor="auto-timezone" className="text-sm font-normal">使用浏览器时区</Label>
+        <Switch 
+          id="auto-timezone" 
+          checked={isAutoTimeZone}
+          onCheckedChange={setIsAutoTimeZone}
+        />
+      </div>
+      
+      {!isAutoTimeZone && (
+        <div className="grid gap-2">
+          <Label htmlFor="timezone" className="text-sm font-normal">选择时区</Label>
+          <TimeZoneSelector 
+            value={timeZone}
+            onChange={setTimeZone}
+            label=""
+          />
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface SettingsPanelProps {
   open: boolean;
@@ -190,76 +221,37 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">外观</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">自定义界面外观</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">自定义界面外观和显示设置</p>
                 </div>
                 <Separator />
-
-                <div className="space-y-4">
+                <div className="grid gap-6">
                   <div className="grid gap-2">
-                    <Label htmlFor="theme">主题</Label>
-                    <RadioGroup 
-                      defaultValue={theme} 
-                      className="flex gap-4"
-                      onValueChange={handleThemeChange}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="light" id="theme-light" />
-                        <Label htmlFor="theme-light">浅色</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="dark" id="theme-dark" />
-                        <Label htmlFor="theme-dark">深色</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="system" id="theme-system" />
-                        <Label htmlFor="theme-system">跟随系统</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="language">语言选择</Label>
-                    <Select defaultValue="zh-CN" onValueChange={handleLanguageChange}>
-                      <SelectTrigger className="w-[200px]" />
-                      <SelectContent>
-                        <SelectItem value="zh-CN">中文</SelectItem>
-                        <SelectItem value="en-US">English</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <Separator />
-                
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">界面密度</h4>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="density">卡片信息密度</Label>
-                    <RadioGroup defaultValue="standard" className="flex gap-4">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="compact" id="density-compact" />
-                        <Label htmlFor="density-compact">紧凑</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="standard" id="density-standard" />
-                        <Label htmlFor="density-standard">标准</Label>
-                      </div>
-                    </RadioGroup>
+                    <h4 className="font-medium text-gray-900 dark:text-white">主题</h4>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="theme" className="text-sm font-normal">深色模式</Label>
+                      <Switch id="theme" />
+                    </div>
                   </div>
                   
                   <div className="grid gap-2">
-                    <Label htmlFor="fontSize">默认字体大小</Label>
-                    <Select defaultValue="medium">
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="选择字体大小" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="small">小</SelectItem>
-                        <SelectItem value="medium">中</SelectItem>
-                        <SelectItem value="large">大</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <h4 className="font-medium text-gray-900 dark:text-white">时区设置</h4>
+                    <TimeZoneSettings />
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <h4 className="font-medium text-gray-900 dark:text-white">字体大小</h4>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="font-size" className="text-sm font-normal">界面字体大小</Label>
+                      <select id="font-size" className="w-40 rounded-md border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-1 text-sm">
+                        <option value="small">小</option>
+                        <option value="medium" selected>中</option>
+                        <option value="large">大</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button className="bg-primary hover:bg-primary/90">保存更改</Button>
                   </div>
                 </div>
               </div>

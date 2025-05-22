@@ -26,8 +26,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
-import { formatDistance } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { DateDisplay } from "@/components/ui/DateDisplay";
 
 // 导入删除按钮组件
 import { DeleteButton } from "./deleteButton";
@@ -71,38 +70,30 @@ function PromptCards({ prompts }: { prompts: PromptData[] }) {
               {prompt.description || "无描述"}
             </p>
 
-            <div className="flex flex-wrap gap-1 mb-2">
-              {prompt.tags &&
-                prompt.tags.map((tag) => (
-                  <Badge
-                    key={tag.id}
-                    variant="outline"
-                    style={{
-                      borderColor: tag.color || "#888",
-                      color: tag.color || "#888",
-                    }}
-                  >
-                    {tag.name}
-                  </Badge>
-                ))}
-              {(!prompt.tags || prompt.tags.length === 0) && (
-                <span className="text-xs text-muted-foreground">无标签</span>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <div className="flex items-center">
-                <TagIcon className="h-3 w-3 mr-1" />
-                <span>{prompt.type}</span>
+            <div className="mt-auto">
+              <div className="flex flex-wrap gap-1 mb-2">
+                {prompt.tags && prompt.tags.length > 0 ? (
+                  prompt.tags.map((tag) => (
+                    <Badge key={tag.id} variant="outline" className="text-xs">
+                      <TagIcon className="h-3 w-3 mr-1" />
+                      {tag.name}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-xs text-muted-foreground">无标签</span>
+                )}
               </div>
-              <div className="flex items-center">
-                <Clock className="h-3 w-3 mr-1" />
-                <span title={new Date(prompt.updated_at).toLocaleString()}>
-                  {formatDistance(new Date(prompt.updated_at), new Date(), {
-                    addSuffix: true,
-                    locale: zhCN,
-                  })}
-                </span>
+
+              <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+                <div className="flex items-center">
+                  <Clock className="h-3 w-3 mr-1" />
+                  <DateDisplay 
+                    date={prompt.updated_at} 
+                    format="distance" 
+                    className="text-xs"
+                  />
+                </div>
+                <div>作者: {prompt.creator?.name || "未知"}</div>
               </div>
             </div>
           </div>

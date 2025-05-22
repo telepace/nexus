@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { TimeZoneProvider } from "@/lib/time-zone-context";
 
 // 配置 Inter 字体
 const inter = Inter({
@@ -28,7 +29,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <TimeZoneProvider>
+            {children}
+          </TimeZoneProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -19,6 +19,7 @@ alwaysApply: false
 - Be careful not to be too AI in your tone.
 - Pay attention to choosing the appropriate labels and types. And select the latest Milestone(OR v0.1)
 - Assign tasks. If it is a simple UI-related task, assign it to @Neo-Neooo, and if it is a complex task, deployment, cicd, assign it to @cubxxw.
+- If possible, describe the design drawings or architecture drawings using mermaid code blocks as much as possible
 - No need for my confirmation. Just execute directly
 
 **Postgres db operation Logic:**
