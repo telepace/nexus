@@ -2,10 +2,12 @@
 
 <div align="center">
 
-![nexus](https://images.shields.io/badge/QuickForge-AI-blue)
-![FastAPI](https://images.shields.io/badge/FastAPI-0.104.0-green)
-![TypeScript](https://images.shields.io/badge/TypeScript-5.2.2-blue)
-![License](https://images.shields.io/badge/license-MIT-brightgreen)
+![nexus](https://img.shields.io/badge/nexus-AI-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104.0-green)
+![Next.js](https://img.shields.io/badge/Next.js-15.1.0-blue)
+![React](https://img.shields.io/badge/React-19.1.0-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-blue)
+![License](https://img.shields.io/badge/license-MIT-brightgreen)
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/telepace/nexus?utm_source=oss&utm_medium=github&utm_campaign=telepace%2Fnexus&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
 </div>
@@ -440,119 +442,3 @@ This project provides optimized scripts and Makefile targets for common developm
 - `make format` - Format code in all components
 - `make lint` - Run linters on all components
 - `make clean` - Clean build artifacts
-
-# Nexus 浏览器扩展重构计划
-
-## 目标
-- 优化扩展架构，减少冗余代码
-- 重新设计UI，提高用户体验
-- 将设置整合到options.html中
-- 简化侧边栏功能，提高性能和可维护性
-- 参考Sider等优秀扩展的设计模式
-
-## 现状分析
-目前扩展存在以下问题：
-1. 多个重复或未使用的文件和模块
-2. 侧边栏实现混合了原生DOM操作和React，不够统一
-3. 设置功能分散在多个位置
-4. UI组件结构复杂，维护困难
-5. 缺乏统一的状态管理
-
-## 架构重构计划
-
-### 1. 核心架构优化
-- **采用模块化设计**：清晰区分UI层、业务逻辑层和基础设施层
-- **统一状态管理**：使用React Context或Redux管理全局状态
-- **API抽象**：将所有浏览器API调用封装到单独的服务层
-
-### 2. 组件结构调整
-- **UI组件库精简**：保留必要的UI组件，移除未使用组件
-- **功能组件化**：将每个主要功能（摘要、搜索等）封装为独立组件
-- **采用React Hooks**：重构类组件为函数组件，使用hooks管理状态
-
-### 3. 页面重组
-- **侧边栏（SidePanel）**：专注于内容交互和AI对话功能
-- **弹出窗口（Popup）**：提供快速访问和简要信息
-- **选项页面（Options）**：集中所有设置管理功能
-
-## 功能优化计划
-
-### 1. 侧边栏优化
-- 重新设计侧边栏UI，更简洁现代
-- 实现类似Sider的AI对话界面
-- 增强上下文感知能力，更好地理解当前页面内容
-- 添加对话历史记录功能
-
-### 2. 设置功能整合
-- 将所有设置集中到options.html
-- 按类别组织设置选项（一般设置、AI设置、剪藏设置等）
-- 增加设置搜索功能
-- 实现设置同步功能
-
-### 3. 增强功能
-- 实现多AI模型支持（类似Sider）
-- 添加更丰富的上下文操作（翻译、解释、总结等）
-- 改进内容提取算法，更准确识别页面主要内容
-- 添加键盘快捷方式
-
-## 技术实现计划
-
-### 第一阶段：架构整理与基础重构
-1. 清理未使用的代码和文件
-2. 创建新的核心架构（服务层、状态管理）
-3. 重构基础UI组件库
-
-### 第二阶段：功能组件重构
-1. 重构侧边栏核心组件
-2. 重构弹出窗口UI
-3. 重新设计Options页面
-
-### 第三阶段：功能优化与扩展
-1. 实现新的AI对话界面
-2. 增强设置功能
-3. 添加新功能
-
-### 第四阶段：测试与性能优化
-1. 全面测试各项功能
-2. 性能优化
-3. 兼容性测试
-
-## 具体实施计划
-每个阶段详细的任务清单和实现时间表将根据开发资源和优先级另行制定。
-
-## 重构进度
-
-### 已完成
-1. 设计规划：制定了全面的重构计划
-2. 侧边栏重构：
-   - 重新设计了侧边栏组件，使用React Hooks和函数组件
-   - 实现了类似Sider的对话界面
-   - 增加了对话历史管理
-   - 添加了暗色模式切换
-3. 选项页面重构：
-   - 设计了全新的选项页面布局，采用侧边导航样式
-   - 将所有设置集中归类，包括一般设置、AI设置、剪藏设置和键盘快捷键等
-   - 实现了多AI模型支持和API密钥配置
-   - 添加了快捷提示管理功能
-
-### 未完成
-1. Popup页面重构
-2. 背景服务优化
-3. 内容脚本优化
-4. 状态管理统一
-5. API服务层抽象
-6. Manifest.json更新
-
-## 下一步计划
-1. 更新manifest.json，添加必要的权限和配置
-2. 重构Popup页面，实现快速访问功能
-3. 创建服务层，统一API调用
-4. 实现状态管理系统，使用React Context或Redux
-5. 优化页面内容提取算法
-6. 增强AI功能，添加更多模型支持
-
-## ⚠️ OpenAI API 版本说明
-
-- 默认的 `OPENAI_BASE_URL` 配置为 `https://api.openai.com/v1`，即使用 OpenAI API v1 版本（当前支持 GPT-4.1）。
-- 如需升级 OpenAI API 版本，请相应修改 `.env` 或 `docker-compose.yml` 中的 `OPENAI_BASE_URL` 变量，例如：`https://api.openai.com/v2`。
-- 请参考 OpenAI 官方文档，确保新版本兼容。
