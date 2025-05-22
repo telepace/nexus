@@ -244,7 +244,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
                       <Label htmlFor="font-size" className="text-sm font-normal">界面字体大小</Label>
                       <select id="font-size" className="w-40 rounded-md border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-1 text-sm">
                         <option value="small">小</option>
-                        <option value="medium" selected>中</option>
+                        <option value="medium">中</option>
                         <option value="large">大</option>
                       </select>
                     </div>

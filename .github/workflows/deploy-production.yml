@@ -32,11 +32,11 @@ jobs:
           # z.B.: uses: dopplerhq/cli-action@v2
           echo "Setting up Doppler for Production"
           # Passe --project und --config an deine Produktionskonfiguration an
-          doppler setup --silent --project nexus --config prd # Beispiel: prd für Produktion
+          doppler setup --silent --project nexus --config prd
           echo "Downloading production secrets to .env"
           doppler secrets download --no-file --format env > .env
           # Hole den Stack-Namen aus Doppler (oder verwende ein Secret, falls bevorzugt)
-          STACK_NAME=$(doppler run -- printenv STACK_NAME) # Hole den Produktions-Stack-Namen
+          STACK_NAME=$(doppler run -- printenv STACK_NAME)
           # Alternativ, wenn STACK_NAME direkt als Secret verfügbar ist:
           echo "STACK_NAME=${STACK_NAME}" >> $GITHUB_ENV
           # Hole den Release-Tag (z.B. v1.0.0) aus dem GitHub-Kontext
