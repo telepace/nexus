@@ -4,7 +4,8 @@ from fastapi import HTTPException, status
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 
-from app.models import ApiResponse
+# 从response模块导入ApiResponse
+from app.utils.response import ApiResponse
 
 
 class AppError(Exception):

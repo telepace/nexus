@@ -1,18 +1,24 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { FaGithub } from "react-icons/fa";
 import { Badge } from "@/components/ui/badge";
-import { redirect } from "next/navigation";
-import { getAuthState } from "@/lib/server-auth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useAuth } from "@/lib/auth";
 
-export default async function Home() {
-  // 检查用户登录状态
-  const authState = await getAuthState();
+export default function Home() {
+  // 使用客户端Auth Hook
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
 
   // 如果已登录，重定向到仪表盘
-  if (authState.isAuthenticated) {
-    redirect("/dashboard");
-  }
+  useEffect(() => {
+    if (user && !isLoading) {
+      router.push("/dashboard");
+    }
+  }, [user, isLoading, router]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-8">
@@ -25,11 +31,26 @@ export default async function Home() {
           development using Next.js and FastAPI.
         </p>
 
-        {/* Link to Dashboard */}
-        <Link href="/dashboard">
+        {/* Link to Setup */}
+        <Link href="/setup">
           <Button className="px-8 py-4 text-xl font-semibold rounded-full shadow-lg bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 focus:ring-4 focus:ring-blue-300">
-            Go to Dashboard
+            开始设置
           </Button>
+        </Link>
+
+        {/* Link to Prompts */}
+        <Link href="/prompts">
+          <Button className="px-8 py-4 text-xl font-semibold rounded-full shadow-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 focus:ring-4 focus:ring-green-300 mt-4">
+            探索 Prompt
+          </Button>
+        </Link>
+
+        {/* Link to Dashboard */}
+        <Link
+          href="/dashboard"
+          className="mt-4 inline-block text-blue-600 dark:text-blue-400 hover:underline"
+        >
+          直接进入仪表盘
         </Link>
 
         {/* GitHub Badge */}

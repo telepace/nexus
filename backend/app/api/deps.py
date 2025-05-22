@@ -58,10 +58,16 @@ SupabaseDep = Annotated[Any | None, Depends(get_supabase)]
 
 def get_current_user(session: SessionDep, token: TokenDep) -> User:
     try:
+        import logging
+
+        logger = logging.getLogger("app")
+        logger.info("Attempting to decode JWT token...")
+
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
         token_data = TokenPayload(**payload)
+        logger.info(f"JWT token decoded successfully. User ID: {token_data.sub}")
     except InvalidTokenError as e:
         # Log the specific token error for better debugging
         import logging
@@ -72,6 +78,11 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
             detail=f"Could not validate credentials: {str(e)}",
         )
     except ValidationError:
+        import logging
+
+        logging.getLogger("app").error(
+            "JWT Token Validation Error: Invalid payload format"
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid token payload",
@@ -79,14 +90,30 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
 
     # Check if token is in blacklist
     if crud.is_token_blacklisted(session=session, token=token):
+        import logging
+
+        logging.getLogger("app").error("Token found in blacklist")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has been revoked",
         )
 
+    logger.info(f"Looking up user with ID: {token_data.sub}")
     user = session.get(User, token_data.sub)
+
     if not user:
+        logger.error(f"User with ID '{token_data.sub}' not found in database")
+        # 尝试手动查询用户表
+        from sqlmodel import select
+
+        all_users = session.exec(select(User)).all()
+        logger.info(f"Database contains {len(all_users)} users")
+        for db_user in all_users:
+            logger.info(f"DB User: {db_user.id} / {db_user.email}")
+
         raise HTTPException(status_code=404, detail="User not found")
+
+    logger.info(f"User found: {user.email}, active: {user.is_active}")
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return user

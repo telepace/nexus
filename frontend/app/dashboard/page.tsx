@@ -22,6 +22,9 @@ import { getAuthState } from "@/lib/server-auth-bridge";
 import { Suspense } from "react";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 
+// 导入客户端组件
+import { TokenDebugTool } from "./TokenDebugTool";
+
 // 定义Item类型
 interface Item {
   id: string;
@@ -187,6 +190,14 @@ async function DashboardContent() {
             <Link href="/dashboard/add-item">添加物品</Link>
           </Button>
         </div>
+
+        {/* 添加Token调试工具，仅在开发环境中显示 */}
+        {process.env.NODE_ENV === "development" && (
+          <div className="bg-yellow-50 border border-yellow-200 p-4 mb-6 rounded-md">
+            <h3 className="text-sm font-semibold mb-2">调试工具</h3>
+            <TokenDebugTool />
+          </div>
+        )}
 
         <Table>
           <TableHeader>

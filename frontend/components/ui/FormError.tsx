@@ -19,7 +19,14 @@ export function FormError({ state, className = "" }: FormErrorProps) {
     state.message || state.server_validation_error || state.server_error;
   if (!error) return null;
 
-  return <p className={`text-sm text-red-500 ${className}`}>{error}</p>;
+  return (
+    <p
+      data-testid="form-error"
+      className={`text-sm text-destructive ${className}`}
+    >
+      {error}
+    </p>
+  );
 }
 
 interface FieldErrorProps {
@@ -36,15 +43,22 @@ export function FieldError({ state, field, className = "" }: FieldErrorProps) {
 
   if (Array.isArray(error)) {
     return (
-      <div className={`text-sm text-red-500 ${className}`}>
-        <ul className="list-disc ml-4">
-          {error.map((err) => (
-            <li key={err}>{err}</li>
-          ))}
-        </ul>
+      <div className={`text-sm text-destructive ${className}`}>
+        {error.map((err, index) => (
+          <p key={index} data-testid={`field-error-${field}-${index}`}>
+            {err}
+          </p>
+        ))}
       </div>
     );
   }
 
-  return <p className={`text-sm text-red-500 ${className}`}>{error}</p>;
+  return (
+    <p
+      data-testid={`field-error-${field}`}
+      className={`text-sm text-destructive ${className}`}
+    >
+      {error}
+    </p>
+  );
 }

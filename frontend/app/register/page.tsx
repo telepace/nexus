@@ -53,8 +53,7 @@ export default function Page() {
   // 如果正在检查登录状态，显示加载提示
   if (isLoading) {
     return (
-      <div className="flex min-h-screen w-full items-center justify-center">
-      </div>
+      <div className="flex min-h-screen w-full items-center justify-center"></div>
     );
   }
 
@@ -210,6 +209,7 @@ export default function Page() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    placeholder="请输入密码"
                     className="relative h-11 border-slate-200 dark:border-slate-700 rounded-md focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:border-slate-400 transition-all duration-300 bg-white dark:bg-slate-800"
                   />
                 </div>

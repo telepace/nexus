@@ -31,3 +31,12 @@ dist/
 
 # typescript
 .tsbuildinfo
+
+# Playwright
+/playwright-report/
+
+# Generated test files
+/tests/e2e/*.generated.*
+
+# Source maps
+*.js.map

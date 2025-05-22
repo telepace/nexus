@@ -8,7 +8,6 @@ from jwt.exceptions import InvalidTokenError
 from app.api.deps import SessionDep
 from app.core import security
 from app.core.config import settings
-from app.models import Token, User, UserPublic
 
 router = APIRouter(tags=["extension"])
 
@@ -21,6 +20,9 @@ def check_extension_auth_status(request: Request, session: SessionDep) -> Any:
     by reading the same cookies or authorization header
     """
     try:
+        # 需要时才动态导入
+        from app.models import User, UserPublic
+
         # 尝试从请求头获取令牌
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
@@ -57,6 +59,9 @@ def get_extension_token(request: Request, session: SessionDep) -> Any:
     This allows the extension to get a token if the user is already logged in via browser
     """
     try:
+        # 需要时才动态导入
+        from app.models import Token, User
+
         # 尝试从 cookie 获取令牌
         cookie_token = request.cookies.get("accessToken")
         if cookie_token:

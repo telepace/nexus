@@ -1,9 +1,14 @@
 import { ReactNode } from "react";
+import MainLayout from "@/components/layout/MainLayout";
 
 export default function CustomersLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  return <div className="customers-layout">{children}</div>;
+  return (
+    <MainLayout pageTitle="Customers" currentPath="/customers">
+      {children}
+    </MainLayout>
+  );
 }

@@ -408,7 +408,18 @@ export async function logout(): Promise<void> {
   } catch (error) {
     console.error(`${LOG_PREFIX} 登出错误:`, error)
   } finally {
+    // 清除用户资料，同时通知其他组件用户已登出
     await storage.remove(AUTH_CONFIG.STORAGE_KEY)
+    
+    // 发送消息通知所有组件用户状态已更改
+    try {
+      chrome.runtime.sendMessage({
+        action: "updateUserStatus",
+        data: { isAuthenticated: false }
+      }).catch(() => {/* 忽略错误 */})
+    } catch (error) {
+      // 忽略错误
+    }
   }
 }
 

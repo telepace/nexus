@@ -151,6 +151,10 @@ def apply_migrations() -> None:
         # 改用直接创建表的方式
         from sqlmodel import SQLModel
 
+        # 确保预先导入所有模型
+        import app.models  # noqa
+        from app.models.prompt import Prompt, PromptTagLink, PromptVersion, Tag  # noqa
+
         # 创建连接到测试数据库的引擎
         test_db_url = get_test_db_url()
         test_engine = create_engine(test_db_url)
@@ -170,9 +174,22 @@ def apply_migrations_with_engine(engine: Engine) -> None:
         # 使用直接创建表的方式
         from sqlmodel import SQLModel
 
+        # 确保预先导入所有模型
+        import app.models  # noqa
+        from app.models.prompt import Prompt, PromptTagLink, PromptVersion, Tag  # noqa
+
         logger.info(f"Creating all tables in test database: {get_test_db_name()}")
         # 直接创建所有表
         SQLModel.metadata.create_all(engine)
+
+        # 确认表是否创建成功
+        with engine.connect() as conn:
+            tables = conn.execute(
+                text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
+            ).fetchall()
+            table_names = [t[0] for t in tables]
+            logger.info(f"Created tables: {table_names}")
+
         logger.info("Created all tables in test database")
     except Exception as e:
         logger.error(f"Error creating tables: {e}")
@@ -182,6 +199,10 @@ def apply_migrations_with_engine(engine: Engine) -> None:
 def create_tables(engine: Engine) -> None:
     """Create all tables directly using SQLModel metadata."""
     from sqlmodel import SQLModel
+
+    # 确保提前导入所有模型，以便SQLModel能够创建所有表
+    import app.models  # noqa
+    from app.models.prompt import Prompt, PromptTagLink, PromptVersion, Tag  # noqa
 
     logger.info("Creating tables directly with SQLModel")
     SQLModel.metadata.create_all(engine)

@@ -91,7 +91,7 @@ const OptionsPage: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [isSaving, setIsSaving] = useState<boolean>(false)
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false)
-  const [activeSection, setActiveSection] = useState<string>("general")
+  const [activeSection, setActiveSection] = useState<string>("account")
   
   // 快捷提示相关状态
   const [newShortcut, setNewShortcut] = useState({ shortcut: "", prompt: "" })
@@ -118,12 +118,66 @@ const OptionsPage: React.FC = () => {
         
         const profile = await storage.get("userProfile") as UserProfile
         setUserProfile(profile || null)
+        
+        // 新增：尝试与Web端同步登录状态
+        if (!profile?.isAuthenticated) {
+          try {
+            // 使用sendMessage向background脚本请求同步Web会话
+            const response = await chrome.runtime.sendMessage({
+              name: "auth",
+              body: {
+                action: "syncWebSession"
+              }
+            })
+            
+            if (response?.success) {
+              // 同步成功，重新获取用户配置
+              const updatedProfile = await storage.get("userProfile") as UserProfile
+              if (updatedProfile) {
+                setUserProfile(updatedProfile)
+                console.log("[Nexus] 成功从Web端同步登录状态")
+              }
+            }
+          } catch (error) {
+            console.error("[Nexus] 同步Web登录状态失败:", error)
+          }
+        }
       } catch (error) {
         console.error("加载设置失败:", error)
       }
     }
     
     loadData()
+  }, [])
+  
+  // 监听storage变化，实时刷新账户信息
+  useEffect(() => {
+    function handleStorageChange(changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) {
+      if (areaName === "local" && changes.userProfile) {
+        setUserProfile(changes.userProfile.newValue || null)
+      }
+    }
+    
+    // 监听来自background的消息，包括登录状态变化
+    function handleRuntimeMessage(message: any) {
+      if (message.action === "updateUserStatus") {
+        if (!message.data.isAuthenticated) {
+          // 用户已登出
+          setUserProfile(null)
+        } else if (message.data.profile) {
+          // 用户数据已更新
+          setUserProfile(message.data.profile)
+        }
+      }
+    }
+    
+    chrome.storage.onChanged.addListener(handleStorageChange)
+    chrome.runtime.onMessage.addListener(handleRuntimeMessage)
+    
+    return () => {
+      chrome.storage.onChanged.removeListener(handleStorageChange)
+      chrome.runtime.onMessage.removeListener(handleRuntimeMessage)
+    }
   }, [])
   
   // 保存设置

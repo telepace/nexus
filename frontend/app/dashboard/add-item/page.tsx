@@ -43,8 +43,8 @@ export default function CreateItemPage() {
                 required
                 className="w-full border-gray-300 dark:border-gray-600"
               />
-              {state.errors?.title && (
-                <p className="text-red-500 text-sm">{state.errors.title}</p>
+              {(state as any).errors?.title && (
+                <p className="text-red-500 text-sm">{(state as any).errors.title}</p>
               )}
             </div>
 
@@ -62,9 +62,9 @@ export default function CreateItemPage() {
                 placeholder="Description of the item"
                 className="w-full border-gray-300 dark:border-gray-600"
               />
-              {state.errors?.description && (
+              {(state as any).errors?.description && (
                 <p className="text-red-500 text-sm">
-                  {state.errors.description}
+                  {(state as any).errors.description}
                 </p>
               )}
             </div>
@@ -72,11 +72,11 @@ export default function CreateItemPage() {
 
           <SubmitButton text="Create Item" />
 
-          {state?.message && (
+          {(state as any).message && (
             <div
-              className={`mt-2 text-center text-sm ${state.success ? "text-green-500" : "text-red-500"}`}
+              className={`mt-2 text-center text-sm ${(state as any).success ? "text-green-500" : "text-red-500"}`}
             >
-              <p>{state.message}</p>
+              <p>{(state as any).message}</p>
             </div>
           )}
         </form>

@@ -9,6 +9,9 @@ export const API_CONFIG = {
   // 前端APP URL - 从环境变量获取或使用默认值
   FRONTEND_URL: process.env.PLASMO_PUBLIC_FRONTEND_URL || "https://app.nexus-app.com",
   
+  // Web应用URL - 用于重定向到登录页面
+  WEB_URL: process.env.PLASMO_PUBLIC_FRONTEND_URL || "https://app.nexus-app.com",
+  
   // 请求超时时间(毫秒)
   TIMEOUT: Number(process.env.PLASMO_PUBLIC_API_TIMEOUT) || 10000,
   
@@ -37,7 +40,10 @@ export const OFFLINE_CONFIG = {
   PENDING_ITEMS_KEY: "pendingClippings",
   
   // 离线项标识符前缀
-  TEMP_ID_PREFIX: "temp_"
+  TEMP_ID_PREFIX: "temp_",
+  
+  // 尝试同步的最大次数
+  MAX_RETRIES: 3
 }
 
 // 其他配置项
@@ -48,6 +54,15 @@ export const GENERAL_CONFIG = {
 
 // 日志前缀
 export const LOG_PREFIX = "[Nexus]"
+
+// 环境配置
+export const ENV_CONFIG = {
+  // 是否为开发环境
+  IS_DEV: process.env.NODE_ENV === 'development',
+  
+  // WebSocket调试端口 (用于Plasmo HMR)
+  DEV_WS_PORTS: [1815, 1816, 1817, 1818, 1819, 1820]
+}
 
 export function getFrontendUrl(path: string = ""): string {
   let base = API_CONFIG.FRONTEND_URL

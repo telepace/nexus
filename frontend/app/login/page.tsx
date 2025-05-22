@@ -31,15 +31,24 @@ function SearchParamsHandler({
 // CallbackUrlHandler component to handle callback URL
 function CallbackUrlHandler({
   setCallbackUrl,
+  setExtensionCallback,
 }: {
   setCallbackUrl: (url: string) => void;
+  setExtensionCallback: (url: string | null) => void;
 }) {
   const searchParams = useSearchParams();
   const callbackUrlFromQuery = searchParams.get("callbackUrl") || "/dashboard";
+  const extensionCallbackUrl = searchParams.get("extension_callback");
 
   useEffect(() => {
     setCallbackUrl(callbackUrlFromQuery);
-  }, [callbackUrlFromQuery, setCallbackUrl]);
+    setExtensionCallback(extensionCallbackUrl);
+  }, [
+    callbackUrlFromQuery,
+    extensionCallbackUrl,
+    setCallbackUrl,
+    setExtensionCallback,
+  ]);
 
   return null;
 }
@@ -47,7 +56,10 @@ function CallbackUrlHandler({
 export default function LoginPage() {
   const { login, user, isLoading } = useAuth();
   const router = useRouter();
-  const [callbackUrl, setCallbackUrl] = useState("/dashboard");
+  const [callbackUrl, setCallbackUrl] = useState("/setup");
+  const [extensionCallback, setExtensionCallback] = useState<string | null>(
+    null,
+  );
   const [email, setEmail] = useState("test@example.com"); // 预填测试用户
   const [password, setPassword] = useState("password"); // 预填测试用户密码
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -58,16 +70,27 @@ export default function LoginPage() {
   useEffect(() => {
     // 只有在加载完成且用户存在时才重定向
     if (!isLoading && user) {
-      console.log("[LoginPage] 用户已登录，重定向到：", callbackUrl);
+      console.log("[LoginPage] 用户已登录，检查是否需要重定向到扩展");
+
+      // 如果存在扩展回调URL，则重定向到扩展
+      if (extensionCallback) {
+        // 构建带有token的URL，以便扩展获取认证信息
+        const redirectUrl = `${extensionCallback}?token=${encodeURIComponent(user.token || "")}`;
+        console.log("[LoginPage] 重定向到扩展:", redirectUrl);
+        window.location.href = redirectUrl;
+        return;
+      }
+
+      // 否则重定向到常规回调URL
+      console.log("[LoginPage] 重定向到:", callbackUrl);
       router.push(callbackUrl);
     }
-  }, [isLoading, user, router, callbackUrl]);
+  }, [isLoading, user, router, callbackUrl, extensionCallback]);
 
   // 如果正在检查登录状态，显示加载提示
   if (isLoading) {
     return (
-      <div className="flex min-h-screen w-full items-center justify-center">
-      </div>
+      <div className="flex min-h-screen w-full items-center justify-center"></div>
     );
   }
 
@@ -127,8 +150,18 @@ export default function LoginPage() {
       {/* Wrap useSearchParams in Suspense */}
       <Suspense fallback={null}>
         <SearchParamsHandler setEmail={setEmail} />
-        <CallbackUrlHandler setCallbackUrl={setCallbackUrl} />
+        <CallbackUrlHandler
+          setCallbackUrl={setCallbackUrl}
+          setExtensionCallback={setExtensionCallback}
+        />
       </Suspense>
+
+      {/* 如果来自扩展的请求，显示提示 */}
+      {extensionCallback && (
+        <div className="absolute top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-md shadow-md">
+          来自 Nexus 浏览器扩展的登录请求
+        </div>
+      )}
 
       {/* Tech-inspired background elements */}
       <div className="absolute w-full h-full pointer-events-none overflow-hidden">

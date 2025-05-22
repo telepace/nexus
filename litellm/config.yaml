@@ -4,27 +4,112 @@ general_settings:
   database_url: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-telepace}@db:5432/${LITELLM_DB_NAME:-litellm}
   drop_params: false
   environment_variables:
-    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-    OPENAI_API_KEY: ${OPENAI_API_KEY}
+    OPENAI_API_KEY: "os.environ/OPENAI_API_KEY"
+    OPENAI_BASE_URL: "os.environ/OPENAI_BASE_URL"
+    OR_API_KEY: "os.environ/OR_API_KEY"
 
 model_list:
   - model_name: gpt-3.5-turbo
     litellm_params:
       model: gpt-3.5-turbo
-      api_key: ${OPENAI_API_KEY}
+      api_key: "os.environ/OPENAI_API_KEY"
+      base_url: "os.environ/OPENAI_BASE_URL"
   
-  - model_name: gpt-4
+  - model_name: gpt-4-turbo
     litellm_params:
-      model: gpt-4
-      api_key: ${OPENAI_API_KEY}
+      model: gpt-4-turbo
+      api_key: "os.environ/OPENAI_API_KEY"
+      base_url: "os.environ/OPENAI_BASE_URL"
+
+  - model_name: gpt-4.1-mini
+    litellm_params:
+      model: gpt-4.1-mini
+      api_key: "os.environ/OPENAI_API_KEY"
+      base_url: "os.environ/OPENAI_BASE_URL"
+
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: gpt-4o-mini
+      api_key: "os.environ/OPENAI_API_KEY"
+      base_url: "os.environ/OPENAI_BASE_URL"
+
+  - model_name: o4-mini
+    litellm_params:
+      model: o4-mini
+      api_key: "os.environ/OPENAI_API_KEY"
+      base_url: "os.environ/OPENAI_BASE_URL"
+
+  # OpenRouter models
+  - model_name: google/gemma-3n-4b
+    litellm_params:
+      model: openrouter/google/gemma-3n-4b
+      api_key: "os.environ/OR_API_KEY"
   
-  - model_name: claude-3-opus
+  - model_name: meta/llama-3.3-8b-instruct
     litellm_params:
-      model: claude-3-opus-20240229
-      api_key: ${ANTHROPIC_API_KEY}
+      model: openrouter/meta/llama-3.3-8b-instruct
+      api_key: "os.environ/OR_API_KEY"
+
+  - model_name: nous/deephermes-3-mistral-24b-preview
+    litellm_params:
+      model: openrouter/nous/deephermes-3-mistral-24b-preview
+      api_key: "os.environ/OR_API_KEY"
+
+  - model_name: mistral/mistral-medium-3
+    litellm_params:
+      model: openrouter/mistral/mistral-medium-3
+      api_key: "os.environ/OR_API_KEY"
+
+  - model_name: arcee-ai/coder-large
+    litellm_params:
+      model: openrouter/arcee-ai/coder-large
+      api_key: "os.environ/OR_API_KEY"
+
+  - model_name: arcee-ai/arcee-blitz
+    litellm_params:
+      model: openrouter/arcee-ai/arcee-blitz
+      api_key: "os.environ/OR_API_KEY"
+
+  - model_name: microsoft/phi-4-reasoning-plus
+    litellm_params:
+      model: openrouter/microsoft/phi-4-reasoning-plus
+      api_key: "os.environ/OR_API_KEY"
+
+  - model_name: qwen/qwen3-32b
+    litellm_params:
+      model: openrouter/qwen/qwen3-32b
+      api_key: "os.environ/OR_API_KEY"
+
+  - model_name: qwen/qwen3-235b-a22b
+    litellm_params:
+      model: openrouter/qwen/qwen3-235b-a22b
+      api_key: "os.environ/OR_API_KEY"
+
+  - model_name: tng/deepseek-r1t-chimera
+    litellm_params:
+      model: openrouter/tng/deepseek-r1t-chimera
+      api_key: "os.environ/OR_API_KEY"
+
+  - model_name: github-Llama-3.2-11B-Vision-Instruct
+    litellm_params:
+      model: github/Llama-3.2-11B-Vision-Instruct
+      api_key: "os.environ/GITHUB_API_KEY"
+
+  - model_name: github-llama-3.1-8b-instant
+    litellm_params:
+      model: github/llama-3.1-8b-instant
+      api_key: "os.environ/GITHUB_API_KEY"
+
+  - model_name: volcengine-model
+    litellm_params:
+      model: volcengine/doubao-pro-32k-241215
+      api_key: "os.environ/VOLCENGINE_API_KEY"
+      base_url: "os.environ/VOLCENGINE_BASE_URL"
 
 litellm_settings:
-  success_callback: ["prometheus"]
+  drop_params: True
+  success_callback: ["prometheus", "langfuse"]
+  langfuse_default_tags: ["cache_hit", "cache_key", "proxy_base_url", "user_api_key_alias", "user_api_key_user_id", "user_api_key_user_email", "user_api_key_team_alias", "semantic-similarity", "proxy_base_url"] # default tags for Langfuse Logging
   cache: true
   cache_params:
     type: "redis"

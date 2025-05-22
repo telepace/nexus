@@ -75,6 +75,8 @@ async def google_callback_api(
             session.refresh(user)
 
         # Create access token for the user
+        if not user:
+            raise HTTPException(status_code=400, detail="User not found after OAuth")
         access_token = create_access_token(
             subject=user.id,
             expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
@@ -229,6 +231,8 @@ async def google_callback(
             logger.info(f"User already exists: {user_info['email']}")
 
         # Create access token for the user
+        if not user:
+            raise HTTPException(status_code=400, detail="User not found after OAuth")
         access_token = create_access_token(
             subject=user.id,
             expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),

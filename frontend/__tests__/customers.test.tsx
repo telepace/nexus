@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
+import { act } from "react";
 import userEvent from "@testing-library/user-event";
 import CustomersPage from "../app/customers/page";
 
@@ -81,7 +82,9 @@ describe("Customers Page", () => {
     render(<CustomersPage />);
 
     // Click edit button
-    await user.click(screen.getByRole("button", { name: /edit/i }));
+    await act(async () => {
+      await user.click(screen.getByRole("button", { name: /edit/i }));
+    });
 
     // Check if form inputs appear
     const nameInput = screen.getByLabelText(/full name/i);
@@ -91,13 +94,17 @@ describe("Customers Page", () => {
     expect(emailInput).toBeInTheDocument();
 
     // Edit values
-    await user.clear(nameInput);
-    await user.type(nameInput, "Updated Name");
-    await user.clear(emailInput);
-    await user.type(emailInput, "updated@example.com");
+    await act(async () => {
+      await user.clear(nameInput);
+      await user.type(nameInput, "Updated Name");
+      await user.clear(emailInput);
+      await user.type(emailInput, "updated@example.com");
+    });
 
     // Submit form
-    await user.click(screen.getByRole("button", { name: /save/i }));
+    await act(async () => {
+      await user.click(screen.getByRole("button", { name: /save/i }));
+    });
 
     // Check for success message
     await waitFor(() => {
@@ -112,7 +119,9 @@ describe("Customers Page", () => {
     render(<CustomersPage />);
 
     // Click password tab
-    await user.click(screen.getByRole("tab", { name: /password/i }));
+    await act(async () => {
+      await user.click(screen.getByRole("tab", { name: /password/i }));
+    });
 
     // Check if password form fields appear
     expect(
@@ -130,7 +139,9 @@ describe("Customers Page", () => {
     render(<CustomersPage />);
 
     // Click appearance tab
-    await user.click(screen.getByRole("tab", { name: /appearance/i }));
+    await act(async () => {
+      await user.click(screen.getByRole("tab", { name: /appearance/i }));
+    });
 
     // Check if theme options appear
     expect(screen.getByLabelText(/system/i)).toBeInTheDocument();
@@ -143,7 +154,9 @@ describe("Customers Page", () => {
     render(<CustomersPage />);
 
     // Click notifications tab
-    await user.click(screen.getByRole("tab", { name: /notifications/i }));
+    await act(async () => {
+      await user.click(screen.getByRole("tab", { name: /notifications/i }));
+    });
 
     // Check if notification settings appear
     expect(screen.getByText(/email notifications/i)).toBeInTheDocument();
@@ -155,14 +168,19 @@ describe("Customers Page", () => {
     render(<CustomersPage />);
 
     // Click privacy tab
-    await user.click(screen.getByRole("tab", { name: /privacy/i }));
+    await act(async () => {
+      await user.click(screen.getByRole("tab", { name: /privacy/i }));
+    });
 
     // Check if privacy settings appear
     expect(
       screen.getByRole("heading", { name: /privacy settings/i }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/delete account/i, { exact: true }),
-    ).toBeInTheDocument();
+
+    // 使用更精确的方式寻找文本元素
+    const deleteAccountHeading = screen.getByRole("heading", {
+      name: /delete account/i,
+    });
+    expect(deleteAccountHeading).toBeInTheDocument();
   });
 });

@@ -71,7 +71,17 @@ async def get_health_api():
 
 
 # Set all CORS enabled origins
-if settings.all_cors_origins:
+if settings.ENVIRONMENT == "local":
+    # 开发环境允许所有源
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    # 生产环境使用配置的源
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.all_cors_origins,

@@ -57,7 +57,7 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://localhost:8000 https://* http://*;"
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://localhost:8000 https://* http://* ws://localhost:* wss://*;"
   },
   "web_accessible_resources": [
     {

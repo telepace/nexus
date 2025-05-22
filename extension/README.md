@@ -144,3 +144,45 @@ pnpm build
 # or
 npm run build
 ```
+
+## WebSocket连接问题的解决方案
+
+在扩展开发过程中，我们遇到了与WebSocket连接相关的CSP（内容安全策略）问题：
+
+```
+Refused to connect to 'ws://localhost:1815/' because it violates the following Content Security Policy directive: "connect-src 'self' http://localhost:8000 https://* http://*".
+```
+
+### 问题原因
+
+1. **扩展的CSP限制** - 扩展的manifest.json中的CSP没有包含`ws://`协议的连接权限
+2. **开发环境需求** - 开发环境中使用了WebSocket进行热重载和调试（端口1815和1816）
+
+### 解决方案
+
+1. **更新manifest.json中的CSP**
+   - 在connect-src指令中添加`ws://localhost:* wss://*`允许WebSocket连接
+
+   ```json
+   "content_security_policy": {
+     "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://localhost:8000 https://* http://* ws://localhost:* wss://*;"
+   }
+   ```
+
+2. **添加内联CSP到关键页面**
+   - 在onboarding.html页面添加CSP meta标签，确保页面级别允许WebSocket
+
+3. **WebSocket连接包装器**
+   - 创建`utils/dev-helper.ts`提供安全的WebSocket创建函数
+   - 在`theme-helper.js`中添加全局WebSocket构造函数的包装，优雅处理CSP错误
+
+4. **环境配置**
+   - 在`utils/config.ts`中添加环境检测和WebSocket端口配置
+
+### 调试技巧
+
+如果仍然出现WebSocket连接问题：
+
+1. 打开Chrome扩展的隐私错误页面：`chrome://net-export/`
+2. 收集日志并分析WebSocket连接尝试
+3. 查看扩展的后台脚本控制台（在扩展管理页面点击"检查视图：服务工作程序"）

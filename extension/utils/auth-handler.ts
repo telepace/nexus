@@ -11,8 +11,8 @@ const storage = new Storage({ area: AUTH_CONFIG.STORAGE_AREA })
 export async function syncWebSession(): Promise<boolean> {
   try {
     // 检查用户是否已经登录
-    const userProfile = await storage.get(AUTH_CONFIG.STORAGE_KEY)
-    if (userProfile?.token) {
+    const userProfile = await storage.get(AUTH_CONFIG.STORAGE_KEY) as UserProfile
+    if (userProfile?.token && userProfile?.isAuthenticated) {
       console.log(`${LOG_PREFIX} 扩展已有登录信息，无需同步Web会话`)
       return true
     }
@@ -36,12 +36,54 @@ export async function syncWebSession(): Promise<boolean> {
       return false
     }
 
-    // 保存令牌
-    await storage.set(AUTH_CONFIG.STORAGE_KEY, { 
-      token: data.access_token,
-      syncedFromWeb: true,
-      syncedAt: new Date().toISOString()
-    })
+    // 获取用户信息
+    try {
+      const userInfoResponse = await fetch(`${API_CONFIG.API_URL}/api/v1/extension/auth/me`, {
+        method: "GET",
+        headers: {
+          "Authorization": `${AUTH_CONFIG.TOKEN_PREFIX} ${data.access_token}`
+        }
+      });
+      
+      if (userInfoResponse.ok) {
+        const userInfo = await userInfoResponse.json();
+        
+        // 保存完整的用户信息
+        const profileData: UserProfile = { 
+          token: data.access_token,
+          isAuthenticated: true,
+          syncedFromWeb: true,
+          syncedAt: new Date().toISOString(),
+          name: userInfo.name || userInfo.username || "用户",
+          email: userInfo.email || "",
+          avatar: userInfo.avatar_url || "",
+          user_id: userInfo.id || ""
+        };
+        
+        await storage.set(AUTH_CONFIG.STORAGE_KEY, profileData);
+      } else {
+        // 基本令牌信息
+        const basicProfile: UserProfile = { 
+          token: data.access_token,
+          isAuthenticated: true,
+          syncedFromWeb: true,
+          syncedAt: new Date().toISOString()
+        };
+        
+        await storage.set(AUTH_CONFIG.STORAGE_KEY, basicProfile);
+      }
+    } catch (error) {
+      // 如果获取用户信息失败，仍保存基本令牌信息
+      console.warn(`${LOG_PREFIX} 获取用户信息失败，仅保存令牌:`, error);
+      const fallbackProfile: UserProfile = { 
+        token: data.access_token,
+        isAuthenticated: true,
+        syncedFromWeb: true,
+        syncedAt: new Date().toISOString()
+      };
+      
+      await storage.set(AUTH_CONFIG.STORAGE_KEY, fallbackProfile);
+    }
 
     console.log(`${LOG_PREFIX} 成功从Web同步会话`)
     return true
@@ -152,23 +194,23 @@ export function initiateWebGoogleLogin(): void {
  * 处理OAuth回调
  * 从URL获取token并保存
  */
-export async function handleOAuthCallback(token: string): Promise<UserProfile> {
+export async function handleOAuthCallback(token: string): Promise<boolean> {
   try {
     if (!token) {
-      throw new Error("未收到令牌")
+      console.error(`${LOG_PREFIX} OAuth回调处理失败：未提供令牌`);
+      return false;
     }
     
-    // 保存令牌到存储
-    const userData = {
+    // 保存令牌到本地存储
+    await storage.set(AUTH_CONFIG.STORAGE_KEY, { 
       token,
-      loginMethod: "google",
-      loginTime: new Date().toISOString()
-    }
+      syncedAt: new Date().toISOString()
+    });
     
-    await storage.set(AUTH_CONFIG.STORAGE_KEY, userData)
-    return userData
+    console.log(`${LOG_PREFIX} OAuth登录成功，已保存令牌`);
+    return true;
   } catch (error) {
-    console.error(`${LOG_PREFIX} 处理OAuth回调失败:`, error)
-    throw error
+    console.error(`${LOG_PREFIX} OAuth处理错误:`, error);
+    return false;
   }
 } 

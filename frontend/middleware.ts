@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
     };
 
     console.log("[Middleware] 验证token有效性");
-    const { data, error } = await readUserMe(options);
+    const { data, error } = await readUserMe(options as any);
 
     if (error) {
       console.log("[Middleware] 验证失败:", error);

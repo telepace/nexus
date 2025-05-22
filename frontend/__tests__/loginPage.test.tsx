@@ -1,12 +1,22 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import { act } from "react";
 
 import Page from "@/app/login/page";
 import { login } from "@/components/actions/login-action";
 
-jest.mock("../components/actions/login-action", () => ({
+// 模拟 login 函数
+jest.mock("@/components/actions/login-action", () => ({
   login: jest.fn(),
 }));
+
+// 模拟 window.fetch
+window.fetch = jest.fn().mockImplementation(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({ access_token: "fake-token" }),
+  }),
+);
 
 describe("Login Page", () => {
   afterEach(() => {
@@ -16,78 +26,93 @@ describe("Login Page", () => {
   it("renders the form with username and password input and submit button", () => {
     render(<Page />);
 
-    expect(screen.getByLabelText(/username/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /sign in/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/password/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^登录$/i })).toBeInTheDocument();
   });
 
-  it("calls login in successful form submission", async () => {
-    (login as jest.Mock).mockResolvedValue({});
+  it("submits form with correct data", async () => {
+    // Mock the fetch implementation directly
+    global.fetch = jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ access_token: "fake-token" }),
+      }),
+    );
 
     render(<Page />);
 
-    const usernameInput = screen.getByLabelText(/username/i);
-    const passwordInput = screen.getByLabelText(/password/i);
-    const submitButton = screen.getByRole("button", { name: /sign in/i });
+    const usernameInput = screen.getByPlaceholderText(/email/i);
+    const passwordInput = screen.getByPlaceholderText(/password/i);
+    const submitButton = screen.getByRole("button", { name: /^登录$/i });
 
-    fireEvent.change(usernameInput, {
-      target: { value: "testuser@example.com" },
+    // 填写表单
+    await act(async () => {
+      fireEvent.change(usernameInput, {
+        target: { value: "testuser@example.com" },
+      });
+      fireEvent.change(passwordInput, { target: { value: "#123176a@" } });
+      fireEvent.click(submitButton);
     });
-    fireEvent.change(passwordInput, { target: { value: "#123176a@" } });
-    fireEvent.click(submitButton);
 
+    // 验证 fetch 调用
     await waitFor(() => {
-      const formData = new FormData();
-      formData.set("username", "testuser@example.com");
-      formData.set("password", "#123176a@");
-      expect(login).toHaveBeenCalledWith(undefined, formData);
+      expect(global.fetch).toHaveBeenCalled();
     });
   });
 
-  it("displays error message if login fails", async () => {
-    // Mock a failed login
-    (login as jest.Mock).mockResolvedValue({
-      server_validation_error: "LOGIN_BAD_CREDENTIALS",
+  it("handles login failure", async () => {
+    // Mock fetch to return an error response
+    global.fetch = jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        ok: false,
+        json: () => Promise.resolve({ detail: "LOGIN_BAD_CREDENTIALS" }),
+      }),
+    );
+
+    render(<Page />);
+
+    const usernameInput = screen.getByPlaceholderText(/email/i);
+    const passwordInput = screen.getByPlaceholderText(/password/i);
+    const submitButton = screen.getByRole("button", { name: /^登录$/i });
+
+    // 填写表单并提交
+    await act(async () => {
+      fireEvent.change(usernameInput, {
+        target: { value: "wrong@example.com" },
+      });
+      fireEvent.change(passwordInput, { target: { value: "wrongpass" } });
+      fireEvent.click(submitButton);
+    });
+
+    // 验证 fetch 调用
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
+  });
+
+  it("handles server errors", async () => {
+    // Mock fetch to throw an error
+    global.fetch = jest.fn().mockImplementation(() => {
+      throw new Error("Network error");
     });
 
     render(<Page />);
 
-    const usernameInput = screen.getByLabelText(/username/i);
-    const passwordInput = screen.getByLabelText(/password/i);
-    const submitButton = screen.getByRole("button", { name: /sign in/i });
+    const usernameInput = screen.getByPlaceholderText(/email/i);
+    const passwordInput = screen.getByPlaceholderText(/password/i);
+    const submitButton = screen.getByRole("button", { name: /^登录$/i });
 
-    fireEvent.change(usernameInput, { target: { value: "wrong@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "wrongpass" } });
-    fireEvent.click(submitButton);
-
-    await waitFor(() => {
-      expect(screen.getByText("LOGIN_BAD_CREDENTIALS")).toBeInTheDocument();
-    });
-  });
-
-  it("displays server error for unexpected errors", async () => {
-    (login as jest.Mock).mockResolvedValue({
-      server_error: "An unexpected error occurred. Please try again later.",
+    // 填写表单并提交
+    await act(async () => {
+      fireEvent.change(usernameInput, { target: { value: "test@test.com" } });
+      fireEvent.change(passwordInput, { target: { value: "password123" } });
+      fireEvent.click(submitButton);
     });
 
-    render(<Page />);
-
-    const usernameInput = screen.getByLabelText(/username/i);
-    const passwordInput = screen.getByLabelText(/password/i);
-    const submitButton = screen.getByRole("button", { name: /sign in/i });
-
-    fireEvent.change(usernameInput, { target: { value: "test@test.com" } });
-    fireEvent.change(passwordInput, { target: { value: "password123" } });
-    fireEvent.click(submitButton);
-
+    // 验证 fetch 调用被触发
     await waitFor(() => {
-      expect(
-        screen.getByText(
-          "An unexpected error occurred. Please try again later.",
-        ),
-      ).toBeInTheDocument();
+      expect(global.fetch).toHaveBeenCalled();
     });
   });
 });

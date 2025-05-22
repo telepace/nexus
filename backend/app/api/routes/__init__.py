@@ -6,6 +6,7 @@ from .extension_auth import router as extension_auth_router
 from .google_oauth import router as google_oauth_router
 from .items import router as items_router
 from .login import router as login_router
+from .prompts import router as prompts_router
 
 # from .profile import router as profile_router
 # from .upload import router as upload_router
@@ -20,3 +21,4 @@ api_router.include_router(items_router, prefix="/items")
 # api_router.include_router(github_router, prefix="/github")
 api_router.include_router(google_oauth_router)
 api_router.include_router(extension_auth_router)
+api_router.include_router(prompts_router, prefix="/prompts")

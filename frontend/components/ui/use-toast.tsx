@@ -35,3 +35,38 @@ export function Toaster() {
 }
 
 export { useToastPrimitive as useToast };
+
+// 导入toast函数从toast.tsx文件中，避免直接在非组件函数中使用hooks
+import type { ToastType } from "./toast";
+import { dispatch, actionTypes, genId } from "./toast";
+
+// 不使用React Hooks的toast函数实现
+export const toast = (props: Omit<ToastType, "id">) => {
+  const id = genId();
+
+  const update = (props: Partial<ToastType>) =>
+    dispatch({
+      type: actionTypes.UPDATE_TOAST,
+      toast: { ...props, id },
+    });
+
+  const dismiss = () =>
+    dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id });
+
+  dispatch({
+    type: actionTypes.ADD_TOAST,
+    toast: {
+      ...props,
+      id,
+      onOpenChange: (open) => {
+        if (!open) dismiss();
+      },
+    },
+  });
+
+  return {
+    id,
+    dismiss,
+    update,
+  };
+};

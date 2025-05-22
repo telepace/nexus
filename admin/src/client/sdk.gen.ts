@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class GoogleOauthService {
     /**
@@ -333,6 +333,307 @@ export class PrivateService {
             url: '/api/v1/private/users/',
             body: data.requestBody,
             mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+}
+
+export class PromptsService {
+    /**
+     * Read Tags
+     * 获取标签列表
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns Tag Successful Response
+     * @throws ApiError
+     */
+    public static readTags(data: PromptsReadTagsData = {}): CancelablePromise<PromptsReadTagsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/prompts/tags',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Tag
+     * 创建新标签
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns Tag Successful Response
+     * @throws ApiError
+     */
+    public static createTag(data: PromptsCreateTagData): CancelablePromise<PromptsCreateTagResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/prompts/tags',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Tag
+     * 更新标签
+     * @param data The data for the request.
+     * @param data.tagId
+     * @param data.requestBody
+     * @returns Tag Successful Response
+     * @throws ApiError
+     */
+    public static updateTag(data: PromptsUpdateTagData): CancelablePromise<PromptsUpdateTagResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/prompts/tags/{tag_id}',
+            path: {
+                tag_id: data.tagId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Tag
+     * 删除标签 (需要超级用户权限)
+     * @param data The data for the request.
+     * @param data.tagId
+     * @returns void Successful Response
+     * @throws ApiError
+     */
+    public static deleteTag(data: PromptsDeleteTagData): CancelablePromise<PromptsDeleteTagResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/prompts/tags/{tag_id}',
+            path: {
+                tag_id: data.tagId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Prompt
+     * 创建新的提示词
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns Prompt Successful Response
+     * @throws ApiError
+     */
+    public static createPrompt(data: PromptsCreatePromptData): CancelablePromise<PromptsCreatePromptResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/prompts/',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read Prompts
+     * 获取提示词列表
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @param data.tagIds
+     * @param data.search
+     * @param data.sort
+     * @param data.order
+     * @returns Prompt Successful Response
+     * @throws ApiError
+     */
+    public static readPrompts(data: PromptsReadPromptsData = {}): CancelablePromise<PromptsReadPromptsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/prompts/',
+            query: {
+                skip: data.skip,
+                limit: data.limit,
+                tag_ids: data.tagIds,
+                search: data.search,
+                sort: data.sort,
+                order: data.order
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read Prompt
+     * 获取提示词详情
+     * @param data The data for the request.
+     * @param data.promptId
+     * @returns PromptReadWithTags Successful Response
+     * @throws ApiError
+     */
+    public static readPrompt(data: PromptsReadPromptData): CancelablePromise<PromptsReadPromptResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/prompts/{prompt_id}',
+            path: {
+                prompt_id: data.promptId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Prompt
+     * 更新提示词
+     * @param data The data for the request.
+     * @param data.promptId
+     * @param data.requestBody
+     * @param data.createVersion
+     * @returns Prompt Successful Response
+     * @throws ApiError
+     */
+    public static updatePrompt(data: PromptsUpdatePromptData): CancelablePromise<PromptsUpdatePromptResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/prompts/{prompt_id}',
+            path: {
+                prompt_id: data.promptId
+            },
+            query: {
+                create_version: data.createVersion
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Prompt
+     * 删除提示词
+     * @param data The data for the request.
+     * @param data.promptId
+     * @returns void Successful Response
+     * @throws ApiError
+     */
+    public static deletePrompt(data: PromptsDeletePromptData): CancelablePromise<PromptsDeletePromptResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/prompts/{prompt_id}',
+            path: {
+                prompt_id: data.promptId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read Prompt Versions
+     * 获取提示词的版本历史
+     * @param data The data for the request.
+     * @param data.promptId
+     * @returns PromptVersion Successful Response
+     * @throws ApiError
+     */
+    public static readPromptVersions(data: PromptsReadPromptVersionsData): CancelablePromise<PromptsReadPromptVersionsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/prompts/{prompt_id}/versions',
+            path: {
+                prompt_id: data.promptId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Prompt Version
+     * 创建新版本
+     * @param data The data for the request.
+     * @param data.promptId
+     * @param data.requestBody
+     * @returns PromptVersion Successful Response
+     * @throws ApiError
+     */
+    public static createPromptVersion(data: PromptsCreatePromptVersionData): CancelablePromise<PromptsCreatePromptVersionResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/prompts/{prompt_id}/versions',
+            path: {
+                prompt_id: data.promptId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read Prompt Version
+     * 获取提示词特定版本
+     * @param data The data for the request.
+     * @param data.promptId
+     * @param data.versionNum
+     * @returns PromptVersion Successful Response
+     * @throws ApiError
+     */
+    public static readPromptVersion(data: PromptsReadPromptVersionData): CancelablePromise<PromptsReadPromptVersionResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/prompts/{prompt_id}/versions/{version_num}',
+            path: {
+                prompt_id: data.promptId,
+                version_num: data.versionNum
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Duplicate Prompt
+     * 复制提示词
+     * @param data The data for the request.
+     * @param data.promptId
+     * @returns Prompt Successful Response
+     * @throws ApiError
+     */
+    public static duplicatePrompt(data: PromptsDuplicatePromptData): CancelablePromise<PromptsDuplicatePromptResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/prompts/{prompt_id}/duplicate',
+            path: {
+                prompt_id: data.promptId
+            },
             errors: {
                 422: 'Validation Error'
             }
