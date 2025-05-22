@@ -1,61 +1,136 @@
-name: Release draft creation
+name: Auto Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "Version of the release"
-        required: true
-        type: number
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   release:
-    name: Release
-
+    name: Build and Release
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Extract changelog for version
-        run: |
-          VERSION=${{ github.event.inputs.version }}
-
-          # Extract changelog for version
-          CHANGELOG=$(awk -v version="$VERSION" 'BEGIN{RS="## "; FS="\n"} $0 ~ version {print "## "$0}' CHANGELOG.md)
-
-          # Remove the first line (version title)
-          CHANGELOG=$(echo "$CHANGELOG" | sed '1d')
-
-          # Verify if changelog was found
-          if [ -z "$CHANGELOG" ]; then
-            echo "Changelog for version $VERSION not found"
-            exit 1
-          fi
-
-          # Set output
-          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
-          echo "$CHANGELOG" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: Create GitHub Release Draft
-        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.version }}
-          name: ${{ github.event.inputs.version }}
-          body: ${{ env.CHANGELOG }}
-          draft: true
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0  # 获取完整历史以生成正确的 changelog
 
-      - name: Summary
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'pnpm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'uv'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.4.15"
+          enable-cache: true
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+          run_install: false
+
+      # 缓存 pnpm 依赖
+      - name: Cache pnpm dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pnpm-store
+            **/node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      # 设置代理环境变量
+      - name: Set proxy variables
         run: |
-          echo "## 🚀 Release Summary" >> $GITHUB_STEP_SUMMARY
-          echo "Release draft created for version ${{ github.event.inputs.version }}." >> $GITHUB_STEP_SUMMARY
-          echo "Visit the [Releases section](https://github.com/https://github.com/telepace/releases) to review and publish the release." >> $GITHUB_STEP_SUMMARY
-          echo "Once the draft is published, another action will automatically be triggered to publish the packages." >> $GITHUB_STEP_SUMMARY
+          echo "HTTPS_PROXY=http://127.0.0.1:7890" >> $GITHUB_ENV
+          echo "HTTP_PROXY=http://127.0.0.1:7890" >> $GITHUB_ENV
+          echo "ALL_PROXY=socks5://127.0.0.1:7890" >> $GITHUB_ENV
+
+      # 准备环境文件
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      # 构建前端
+      - name: Build Frontend
+        run: |
+          cd frontend
+          pnpm install
+          pnpm run build
+          mkdir -p ../dist
+          tar -czf ../dist/frontend-${{ env.VERSION }}.tar.gz .next public
+
+      # 构建后端
+      - name: Build Backend
+        run: |
+          cd backend
+          uv pip install -e .
+          uv pip install build wheel
+          python -m build
+          mkdir -p ../dist
+          cp dist/*.whl ../dist/
+
+      # 构建扩展
+      - name: Build Extension
+        run: |
+          cd extension
+          pnpm install
+          pnpm run build:with-tailwind
+          pnpm run package
+          mkdir -p ../dist
+          cp build/chrome-mv3-prod.zip ../dist/extension-${{ env.VERSION }}.zip
+
+      # 构建管理面板
+      - name: Build Admin
+        run: |
+          cd admin
+          pnpm install
+          pnpm exec vite build
+          mkdir -p ../dist
+          tar -czf ../dist/admin-${{ env.VERSION }}.tar.gz dist
+
+      # 构建网站
+      - name: Build Website
+        run: |
+          cd website
+          pnpm install
+          pnpm run build
+          mkdir -p ../dist
+          tar -czf ../dist/website-${{ env.VERSION }}.tar.gz .next public
+
+      # 安装 conventional-changelog
+      - name: Install conventional-changelog
+        run: |
+          pnpm add -g conventional-changelog-cli
+          mkdir -p node_modules/@semantic-release
+
+      # 获取上次发布以来的变更
+      - name: Generate changelog
+        id: changelog
+        run: |
+          conventional-changelog -p angular -i CHANGELOG.md -s -r 0
+          echo "Generated changelog:"
+          cat CHANGELOG.md
+
+      # 使用 ncipollo/release-action 创建 Release
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*"
+          generateReleaseNotes: true
+          bodyFile: "CHANGELOG.md"
+          token: ${{ secrets.BOT_GITHUB_TOKEN }}
+          draft: false
+          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
