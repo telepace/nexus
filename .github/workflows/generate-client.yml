@@ -93,11 +93,21 @@ jobs:
           git config --local user.name "kubbot"
           git remote set-url origin https://${{ secrets.BOT_GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
+      - name: Check for Changes
+        id: check-changes
+        run: |
+          if ! git diff --staged --quiet; then
+            echo "changes_detected=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes_detected=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Commit and Push Changes (Auto Green)
+        if: steps.check-changes.outputs.changes_detected == 'true'
         run: |
           git pull --rebase
           local_time=$(date -u -d "$(date -u)" "+%Y-%m-%d %H:%M:%S" -d "8 hours")
-          git commit --allow-empty -a -s -m "ci: ✨ Autogenerate frontend & admin clients ($local_time) [skip ci]"
+          git commit -a -s -m "ci: ✨ Autogenerate frontend & admin clients ($local_time) [skip ci]"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
