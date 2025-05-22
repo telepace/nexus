@@ -19,20 +19,21 @@ import { cache } from "react";
 import { getAuthToken, requireAuth } from "@/lib/server-auth-bridge";
 
 // 定义Prompt和Tag数据类型
-interface TagData {
+export interface TagData {
   id: string;
   name: string;
   description?: string;
   color?: string;
+  created_at: string;
 }
 
-interface InputVariable {
+export interface InputVariable {
   name: string;
   description?: string;
   required?: boolean;
 }
 
-interface PromptData {
+export interface PromptData {
   id: string;
   name: string;
   description?: string;
@@ -176,14 +177,16 @@ export const fetchPrompts = async (options?: {
     let result: FetchPromptsReturn;
 
     if (Array.isArray(data)) {
-      result = data;
+      // 使用类型断言将数据转换为 PromptData[]
+      result = data as unknown as PromptData[];
     } else if (
       data &&
       typeof data === "object" &&
-      "data" in data &&
-      Array.isArray(data.data)
+      "data" in (data as Record<string, unknown>) &&
+      Array.isArray((data as Record<string, unknown>).data)
     ) {
-      result = data.data;
+      // 使用类型断言将数据转换为 PromptData[]
+      result = (data as Record<string, unknown>).data as unknown as PromptData[];
     } else {
       console.warn(`[${requestId}] 意外的 API 响应格式:`, data);
       result = { error: "API返回了意外的数据格式", status: 400 };
@@ -332,14 +335,14 @@ export const fetchTags = cache(async (): Promise<FetchTagsReturn> => {
     let result: FetchTagsReturn;
 
     if (Array.isArray(data)) {
-      result = data;
+      result = data as unknown as TagData[];
     } else if (
       data &&
       typeof data === "object" &&
-      "data" in data &&
-      Array.isArray(data.data)
+      "data" in (data as Record<string, unknown>) &&
+      Array.isArray((data as Record<string, unknown>).data)
     ) {
-      result = data.data;
+      result = (data as Record<string, unknown>).data as unknown as TagData[];
     } else {
       console.warn(`[${requestId}] 意外的 API 响应格式:`, data);
       result = { error: "API返回了意外的数据格式", status: 400 };
@@ -398,8 +401,8 @@ export async function addPrompt(formData: FormData) {
         name,
         description,
         content,
-        type,
-        visibility,
+        type: type as any,
+        visibility: visibility as any,
         tag_ids,
         input_vars,
       },
@@ -471,8 +474,8 @@ export async function updatePromptAction(id: string, formData: FormData) {
         name,
         description,
         content,
-        type,
-        visibility,
+        type: type as any,
+        visibility: visibility as any,
         tag_ids,
         input_vars,
       },
@@ -778,9 +781,6 @@ export async function removeTag(id: string) {
 
 // 导出类型
 export type {
-  PromptData,
-  TagData,
-  InputVariable,
   PromptVersionData,
   ApiErrorResponse,
 };

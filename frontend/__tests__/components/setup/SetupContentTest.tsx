@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { act } from "react";
 import { SetupContent } from "@/components/setup/SetupContent";
@@ -7,6 +7,8 @@ import { useAuth } from "@/lib/auth";
 
 // 模拟useSearchParams hook的实现
 let mockSearchParams = new (class {
+  params: Record<string, string>;
+  
   constructor() {
     this.params = {
       plugin_id: "test-plugin-id",
@@ -48,7 +50,7 @@ jest.mock("@/lib/auth", () => ({
 
 // 模拟ExtensionLauncher组件
 jest.mock("@/components/setup/ExtensionLauncher", () => ({
-  ExtensionLauncher: ({ onSidebarOpened }) => (
+  ExtensionLauncher: ({ onSidebarOpened }: { onSidebarOpened: () => void }) => (
     <div data-testid="extension-launcher">
       浏览器侧边栏启动器
       <button onClick={onSidebarOpened}>打开侧边栏</button>
@@ -68,6 +70,8 @@ jest.mock("@/lib/extension-utils", () => ({
 describe("SetupContent", () => {
   beforeEach(() => {
     mockSearchParams = new (class {
+      params: Record<string, string>;
+      
       constructor() {
         this.params = {
           plugin_id: "test-plugin-id",

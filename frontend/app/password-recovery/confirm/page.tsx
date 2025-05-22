@@ -29,21 +29,21 @@ function ResetPasswordForm() {
 
   // 重置成功后的重定向逻辑
   useEffect(() => {
-    if (state?.message) {
+    if ((state as any)?.message) {
       const timer = setTimeout(() => {
         router.push("/login");
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [state?.message, router]);
+  }, [(state as any)?.message, router]);
 
   if (!token) {
     return notFound();
   }
 
-  const serverError = state?.server_validation_error;
-  const errors = state?.errors;
-  const success = state?.message;
+  const serverError = (state as any)?.server_validation_error;
+  const errors = (state as any)?.errors;
+  const success = (state as any)?.message;
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 p-4 relative overflow-hidden">

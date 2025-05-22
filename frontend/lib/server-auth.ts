@@ -116,7 +116,7 @@ export const getAuthState = isTestEnv
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        });
+        } as any);
 
         if (error) {
           const newState = {

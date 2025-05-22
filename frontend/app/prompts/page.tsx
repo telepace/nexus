@@ -114,7 +114,7 @@ function PromptCards({ prompts }: { prompts: PromptData[] }) {
 
 // Prompts 顶级页面组件，增加错误边界和Suspense
 export default async function PromptsPage({
-  searchParams,
+  searchParams
 }: {
   searchParams?: {
     query?: string;

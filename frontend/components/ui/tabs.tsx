@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface TabsProps {
   value?: string;
+  defaultValue?: string;
   onValueChange?: (value: string) => void;
   children: React.ReactNode;
   className?: string;
@@ -37,8 +38,8 @@ const TabsContext = React.createContext<{
   onValueChange: () => {},
 });
 
-function Tabs({ value = "", onValueChange, children, className }: TabsProps) {
-  const [selectedValue, setSelectedValue] = React.useState(value);
+function Tabs({ value, defaultValue, onValueChange, children, className }: TabsProps) {
+  const [selectedValue, setSelectedValue] = React.useState(value || defaultValue || "");
 
   const handleValueChange = (newValue: string) => {
     setSelectedValue(newValue);

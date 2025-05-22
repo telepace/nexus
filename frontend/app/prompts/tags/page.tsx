@@ -1,4 +1,4 @@
-import { fetchTags, type TagData } from "@/components/actions/prompts-action";
+import { fetchTags } from "@/components/actions/prompts-action";
 import { getAuthState } from "@/lib/server-auth-bridge";
 import { Suspense } from "react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -13,6 +13,14 @@ import { zhCN } from "date-fns/locale";
 // 导入客户端组件
 import { TagForm } from "./_components/TagForm";
 import { DeleteTagButton } from "./_components/DeleteTagButton";
+
+// 导入类型
+import type { TagData } from "@/components/actions/prompts-action";
+
+// 扩展 TagData 类型，添加运行时类型安全
+function hasCreatedAt(tag: any): tag is TagData & { created_at: string } {
+  return typeof tag.created_at === 'string';
+}
 
 export const metadata = {
   title: "标签管理",

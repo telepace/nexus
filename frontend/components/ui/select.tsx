@@ -4,10 +4,21 @@ import * as React from "react";
 
 type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
   children: React.ReactNode;
+  onValueChange?: (value: string) => void;
 };
 
-export function Select({ children, ...props }: SelectProps) {
-  return <select {...props}>{children}</select>;
+export function Select({ children, onValueChange, ...props }: SelectProps) {
+  return <select 
+    {...props} 
+    onChange={(e) => {
+      if (onValueChange) {
+        onValueChange(e.target.value);
+      }
+      props.onChange?.(e);
+    }}
+  >
+    {children}
+  </select>;
 }
 
 export function SelectTrigger({

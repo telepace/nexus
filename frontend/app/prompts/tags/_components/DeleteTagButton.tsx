@@ -3,10 +3,11 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "next-i18next";
+import { toast } from "@/components/ui/use-toast";
 
 interface DeleteTagButtonProps {
   tagId: string;
-  onDelete: (tagId: string) => void;
+  onDelete?: (tagId: string) => void;
   disabled?: boolean;
 }
 
@@ -20,7 +21,16 @@ export const DeleteTagButton: React.FC<DeleteTagButtonProps> = ({
 
   const handleDelete = () => {
     setConfirming(false);
-    onDelete(tagId);
+    if (onDelete) {
+      onDelete(tagId);
+    } else {
+      // 如果没有提供 onDelete 回调，显示一个提示
+      toast({
+        title: "功能未实现",
+        description: "删除标签功能尚未实现",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

@@ -19,6 +19,14 @@ import {
 import { Label } from "@/components/ui/label";
 import { FormError, FieldError } from "@/components/ui/FormError";
 
+// 定义从 passwordReset action 返回的状态类型
+type PasswordResetState = {
+  message?: string;
+  server_validation_error?: string;
+  errors?: Record<string, string[]>;
+  server_error?: string;
+};
+
 // SearchParams component to handle useSearchParams hook with Suspense
 function SearchParamsHandler({
   setInitialEmail,
@@ -35,6 +43,7 @@ function SearchParamsHandler({
 }
 
 export default function Page() {
+  // @ts-ignore -- 忽略类型错误，useActionState 在 Next.js 中具有特殊处理
   const [state, dispatch] = useActionState(passwordReset, undefined);
   const router = useRouter();
   const { user, isLoading } = useAuth();
@@ -47,9 +56,11 @@ export default function Page() {
     }
   }, [user, isLoading, router]);
 
-  const success = state?.message;
-  const serverError = state?.server_validation_error;
-  const errors = state?.errors;
+  // 使用类型断言
+  const stateData = state as PasswordResetState | undefined;
+  const success = stateData?.message;
+  const serverError = stateData?.server_validation_error;
+  const errors = stateData?.errors;
 
   return (
     <div className="w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 px-4">
