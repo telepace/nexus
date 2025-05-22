@@ -12,6 +12,12 @@ jobs:
       - staging
 
     steps:
+      - name: Fix workspace permissions
+        run: |
+          sudo chown -R $USER:$USER .
+          sudo find . -type d -exec chmod 755 {} \;
+          sudo find . -type f -exec chmod 644 {} \;
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
