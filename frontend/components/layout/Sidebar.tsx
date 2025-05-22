@@ -3,7 +3,7 @@
 import { FC } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings, Home, Users2, List, MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
+import { Home, List, MessageSquare, BookmarkIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
   Tooltip, 
@@ -28,9 +28,9 @@ export const Sidebar: FC<SidebarProps> = ({ collapsed, onToggleCollapse }) => {
       icon: <List className="h-5 w-5" /> 
     },
     { 
-      name: "Customers", 
-      href: "/customers", 
-      icon: <Users2 className="h-5 w-5" /> 
+      name: "Favorites", 
+      href: "/favorites", 
+      icon: <BookmarkIcon className="h-5 w-5" /> 
     },
     { 
       name: "Prompts", 
@@ -111,34 +111,6 @@ export const Sidebar: FC<SidebarProps> = ({ collapsed, onToggleCollapse }) => {
           );
         })}
       </nav>
-
-      {/* 底部设置按钮 */}
-      <div className="mt-auto pt-4">
-        <TooltipProvider delayDuration={0}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                href="/settings"
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                  pathname === "/settings"
-                    ? "bg-blue-50 text-primary dark:bg-blue-950"
-                    : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-                )}
-                aria-label="设置"
-              >
-                <Settings className="h-5 w-5" />
-                {!collapsed && <span>设置</span>}
-              </Link>
-            </TooltipTrigger>
-            {collapsed && (
-              <TooltipContent side="right">
-                <p>设置</p>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
-      </div>
     </aside>
   );
 }; 

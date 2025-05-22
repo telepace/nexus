@@ -13,7 +13,8 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: [
-          "var(--font-geist-sans)",
+          "Inter",
+          "var(--font-inter)",
           "ui-sans-serif",
           "system-ui",
           "-apple-system",
@@ -25,7 +26,6 @@ module.exports = {
           "sans-serif",
         ],
         mono: [
-          "var(--font-geist-mono)",
           "ui-monospace",
           "SFMono-Regular",
           "Menlo",

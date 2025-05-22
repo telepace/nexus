@@ -7,13 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -36,7 +29,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({ open, onClose }) => 
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [notebook, setNotebook] = useState("default");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   
@@ -92,8 +84,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({ open, onClose }) => 
       // 此处实现添加内容的逻辑
       console.log("Adding content:", {
         type: contentType,
-        content: contentType === "file" ? selectedFiles : content,
-        notebook,
+        content: contentType === "file" ? selectedFiles : content
       });
       
       // 模拟API请求
@@ -114,7 +105,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({ open, onClose }) => 
     setContent("");
     setTitle("");
     setSelectedFiles([]);
-    setNotebook("default");
     setError("");
   };
 
@@ -256,21 +246,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({ open, onClose }) => 
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Notebook 选择器 */}
-          <div className="space-y-2">
-            <Label htmlFor="notebook">(可选) 添加到 Notebook</Label>
-            <Select value={notebook} onValueChange={setNotebook}>
-              <SelectTrigger id="notebook" className="w-full md:w-[250px]">
-                <SelectValue placeholder="选择 Notebook" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">默认 Notebook</SelectItem>
-                <SelectItem value="research">研究资料</SelectItem>
-                <SelectItem value="personal">个人笔记</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* 支持的格式信息 */}

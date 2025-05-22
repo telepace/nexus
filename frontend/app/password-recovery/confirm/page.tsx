@@ -1,8 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
-import { notFound, useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, FormEvent } from "react";
 import { useAuth } from "@/lib/auth";
 import { passwordResetConfirm } from "@/components/actions/password-reset-action";
 import { SubmitButton } from "@/components/ui/submitButton";
@@ -14,7 +13,8 @@ import { FieldError, FormError } from "@/components/ui/FormError";
 import Link from "next/link";
 
 function ResetPasswordForm() {
-  const [state, dispatch] = useActionState(passwordResetConfirm, undefined);
+  const [state, setState] = useState<any>(null);
+  const [isPending, setIsPending] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams?.get("token");
@@ -29,21 +29,36 @@ function ResetPasswordForm() {
 
   // 重置成功后的重定向逻辑
   useEffect(() => {
-    if ((state as any)?.message) {
+    if (state?.message) {
       const timer = setTimeout(() => {
         router.push("/login");
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [(state as any)?.message, router]);
+  }, [state?.message, router]);
 
   if (!token) {
-    return notFound();
+    return <div>无效的令牌</div>;
+  }
+  
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setIsPending(true);
+    
+    const formData = new FormData(e.currentTarget);
+    try {
+      const result = await passwordResetConfirm(undefined, formData);
+      setState(result);
+    } catch (error) {
+      setState({ server_validation_error: "提交失败，请重试" });
+    } finally {
+      setIsPending(false);
+    }
   }
 
-  const serverError = (state as any)?.server_validation_error;
-  const errors = (state as any)?.errors;
-  const success = (state as any)?.message;
+  const serverError = state?.server_validation_error;
+  const errors = state?.errors;
+  const success = state?.message;
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 p-4 relative overflow-hidden">
@@ -54,7 +69,7 @@ function ResetPasswordForm() {
       </div>
 
       <div className="w-full max-w-md z-10 relative">
-        <form action={dispatch}>
+        <form onSubmit={handleSubmit}>
           <div className="text-card-foreground w-full max-w-sm shadow-lg border border-slate-200/50 dark:border-slate-700/50 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-xl">
             <div className="flex flex-col p-6 space-y-1 pb-2">
               <div className="relative mx-auto w-12 h-12 mb-3 flex items-center justify-center">
@@ -122,7 +137,13 @@ function ResetPasswordForm() {
               {!success && (
                 <div className="relative group mt-2">
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-300" />
-                  <SubmitButton>重置密码</SubmitButton>
+                  <button 
+                    type="submit" 
+                    className="relative inline-flex items-center justify-center w-full h-10 px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-600 rounded-md shadow-sm hover:bg-blue-700 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50"
+                    disabled={isPending}
+                  >
+                    {isPending ? "处理中..." : "重置密码"}
+                  </button>
                 </div>
               )}
 

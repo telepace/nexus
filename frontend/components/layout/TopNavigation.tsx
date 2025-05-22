@@ -1,7 +1,7 @@
 "use client";
 
-import { FC, useState } from "react";
-import { Search, PlusCircle, Settings, User, LogOut } from "lucide-react";
+import { FC, useState, useEffect } from "react";
+import { Search, PlusCircle, Settings, User, LogOut, Command } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { logout } from "@/components/actions/logout-action";
+import { cn } from "@/lib/utils";
 
 interface TopNavigationProps {
   onSettingsClick: () => void;
@@ -24,11 +25,27 @@ export const TopNavigation: FC<TopNavigationProps> = ({
   onAddContentClick,
 }) => {
   const [searchValue, setSearchValue] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  // 监听 cmd+k 快捷键
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('global-search')?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // 实现搜索逻辑
-    console.log("Searching for:", searchValue);
+    if (searchValue.trim()) {
+      // 实现搜索逻辑
+      console.log("Searching for:", searchValue);
+    }
   };
 
   return (
@@ -45,15 +62,34 @@ export const TopNavigation: FC<TopNavigationProps> = ({
           </span>
         </div>
         
-        <form onSubmit={handleSearch} className="hidden md:flex items-center relative">
-          <Input
-            type="search"
-            placeholder="搜索您的内容库..."
-            className="w-64 lg:w-80 pl-9"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-          />
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
+        <form 
+          onSubmit={handleSearch} 
+          className="relative w-[260px]"
+        >
+          <div className={cn(
+            "flex items-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-gray-500 dark:text-gray-400 transition-all",
+            isSearchFocused && "ring-2 ring-primary/50 border-primary/50"
+          )}>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="8" cy="8" r="7" />
+                <line x1="13" y1="13" x2="17" y2="17" />
+              </svg>
+            </span>
+            <Input
+              id="global-search"
+              type="text"
+              placeholder="搜索您的内容库…"
+              className="pl-10 pr-3 py-2 w-full rounded-md border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-sm placeholder:text-gray-400 transition"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
+            />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
+              ⌘ K
+            </span>
+          </div>
         </form>
       </div>
       

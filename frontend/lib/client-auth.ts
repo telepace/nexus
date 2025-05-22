@@ -26,7 +26,8 @@ export interface AuthContextType {
   setCustomToken: (token: string) => void;
 }
 
-// Client-side hook
+// 避免使用 React 的 createContext，直接返回一个对象
+// 此简化版本仅用于解决构建问题
 export function useAuth(): AuthContextType {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);

@@ -2,24 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 字体导入 */
-@font-face {
-  font-family: "GeistSans";
-  src: url("/fonts/GeistVF.woff") format("woff");
-  font-weight: 100 900;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "GeistMono";
-  src: url("/fonts/GeistMonoVF.woff") format("woff");
-  font-weight: 100 900;
-  font-display: swap;
-}
-
 :root {
-  --font-geist-sans: "GeistSans", system-ui, sans-serif;
-  --font-geist-mono: "GeistMono", monospace;
   --background: 0 0% 100%;
   --foreground: 0 0% 3.9%;
   --card: 0 0% 100%;

@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useState } from "react";
-import { X } from "lucide-react";
+import { X, User, Lock, Eye, Bell, Shield, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -9,6 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { useTheme } from "next-themes";
 
 interface SettingsPanelProps {
   open: boolean;
@@ -16,11 +18,33 @@ interface SettingsPanelProps {
 }
 
 export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
-  const [activeTab, setActiveTab] = useState("account");
+  const [activeTab, setActiveTab] = useState("profile");
+  const { theme, setTheme } = useTheme();
+  const [notifications, setNotifications] = useState({
+    email: true,
+    push: false,
+    updates: true
+  });
 
   if (!open) {
     return <div className="hidden" />;
   }
+
+  const handleThemeChange = (value: string) => {
+    setTheme(value as "light" | "dark" | "system");
+  };
+
+  const handleNotificationChange = (key: keyof typeof notifications) => {
+    setNotifications(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+
+  const handleLanguageChange = (value: string) => {
+    // TODO: implement language change logic, e.g., update i18n or localStorage
+    console.log("Language changed to:", value);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -36,105 +60,179 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
           <div className="border-b border-gray-200 dark:border-gray-800">
             <TabsList className="p-0 bg-transparent border-b-0">
               <TabsTrigger
-                value="account"
+                value="profile"
                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2"
               >
-                账户信息
+                <User className="h-4 w-4 mr-2" />
+                个人资料
               </TabsTrigger>
               <TabsTrigger
-                value="preferences"
+                value="password"
                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2"
               >
-                偏好设置
+                <Lock className="h-4 w-4 mr-2" />
+                密码安全
               </TabsTrigger>
               <TabsTrigger
-                value="about"
+                value="appearance"
                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2"
               >
-                关于 Nexus
+                <Eye className="h-4 w-4 mr-2" />
+                外观
+              </TabsTrigger>
+              <TabsTrigger
+                value="notifications"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2"
+              >
+                <Bell className="h-4 w-4 mr-2" />
+                通知
+              </TabsTrigger>
+              <TabsTrigger
+                value="privacy"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2"
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                隐私
               </TabsTrigger>
             </TabsList>
           </div>
 
           <div className="h-[calc(80vh-8rem)] overflow-y-auto p-6">
-            <TabsContent value="account" className="mt-0">
+            <TabsContent value="profile" className="mt-0">
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">账户信息</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">管理您的账户详情和设置</p>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">个人资料</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">管理您的个人信息</p>
                 </div>
                 <Separator />
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">姓名</Label>
-                    <div className="rounded-md border border-gray-200 dark:border-gray-800 px-3 py-2 text-sm">
-                      用户名
+                <div className="grid gap-6">
+                  <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                    <div className="h-24 w-24 relative rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
+                      <img src="/images/vinta.png" alt="Profile" className="object-cover w-full h-full" />
+                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                        <Button variant="secondary" size="sm">更换</Button>
+                      </div>
+                    </div>
+                    <div className="flex-1 space-y-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="name">姓名</Label>
+                        <Input id="name" defaultValue="用户名" />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="bio">简介</Label>
+                        <Input id="bio" defaultValue="用户简介" />
+                      </div>
                     </div>
                   </div>
+                  
                   <div className="grid gap-2">
                     <Label htmlFor="email">邮箱</Label>
-                    <div className="rounded-md border border-gray-200 dark:border-gray-800 px-3 py-2 text-sm">
-                      user@example.com
-                    </div>
+                    <Input id="email" type="email" defaultValue="user@example.com" />
                   </div>
-                </div>
-                <Separator />
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">账户安全</h4>
-                  <Button variant="outline">更改密码</Button>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="company">公司/组织</Label>
+                    <Input id="company" defaultValue="" placeholder="输入您的公司或组织名称" />
+                  </div>
+                  
+                  <div className="flex justify-end">
+                    <Button className="bg-primary hover:bg-primary/90">保存更改</Button>
+                  </div>
                 </div>
               </div>
             </TabsContent>
 
-            <TabsContent value="preferences" className="mt-0">
+            <TabsContent value="password" className="mt-0">
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">偏好设置</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">自定义您的应用体验</p>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">密码安全</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">更新您的密码和安全设置</p>
+                </div>
+                <Separator />
+                
+                <div className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="current-password">当前密码</Label>
+                    <Input id="current-password" type="password" />
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="new-password">新密码</Label>
+                    <Input id="new-password" type="password" />
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="confirm-password">确认新密码</Label>
+                    <Input id="confirm-password" type="password" />
+                  </div>
+                  
+                  <div className="flex justify-end">
+                    <Button className="bg-primary hover:bg-primary/90">更新密码</Button>
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">双重认证</h4>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">双重认证</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">增强账户安全性</p>
+                    </div>
+                    <Button variant="outline">设置</Button>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="appearance" className="mt-0">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">外观</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">自定义界面外观</p>
                 </div>
                 <Separator />
 
                 <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">通用</h4>
+                  <div className="grid gap-2">
+                    <Label htmlFor="theme">主题</Label>
+                    <RadioGroup 
+                      defaultValue={theme} 
+                      className="flex gap-4"
+                      onValueChange={handleThemeChange}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="light" id="theme-light" />
+                        <Label htmlFor="theme-light">浅色</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="dark" id="theme-dark" />
+                        <Label htmlFor="theme-dark">深色</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="system" id="theme-system" />
+                        <Label htmlFor="theme-system">跟随系统</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
 
-                  <div className="space-y-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="theme">主题</Label>
-                      <RadioGroup defaultValue="system" className="flex gap-4">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="light" id="theme-light" />
-                          <Label htmlFor="theme-light">浅色</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="dark" id="theme-dark" />
-                          <Label htmlFor="theme-dark">深色</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="system" id="theme-system" />
-                          <Label htmlFor="theme-system">跟随系统</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="language">语言选择</Label>
-                      <Select defaultValue="zh-CN">
-                        <SelectTrigger className="w-[200px]">
-                          <SelectValue placeholder="选择语言" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="zh-CN">简体中文</SelectItem>
-                          <SelectItem value="en-US">English (US)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="language">语言选择</Label>
+                    <Select defaultValue="zh-CN" onValueChange={handleLanguageChange}>
+                      <SelectTrigger className="w-[200px]" />
+                      <SelectContent>
+                        <SelectItem value="zh-CN">中文</SelectItem>
+                        <SelectItem value="en-US">English</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
                 <Separator />
                 
                 <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">Feed 流</h4>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">界面密度</h4>
                   
                   <div className="grid gap-2">
                     <Label htmlFor="density">卡片信息密度</Label>
@@ -151,26 +249,6 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
                   </div>
                   
                   <div className="grid gap-2">
-                    <Label htmlFor="sort">默认排序方式</Label>
-                    <Select defaultValue="recent">
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="选择排序方式" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="recent">最近添加</SelectItem>
-                        <SelectItem value="title">标题</SelectItem>
-                        <SelectItem value="type">内容类型</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <Separator />
-                
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">阅读界面</h4>
-                  
-                  <div className="grid gap-2">
                     <Label htmlFor="fontSize">默认字体大小</Label>
                     <Select defaultValue="medium">
                       <SelectTrigger className="w-[200px]">
@@ -183,52 +261,107 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Switch id="ai-collapse" />
-                    <Label htmlFor="ai-collapse">AI Message 默认折叠</Label>
-                  </div>
                 </div>
               </div>
             </TabsContent>
 
-            <TabsContent value="about" className="mt-0">
+            <TabsContent value="notifications" className="mt-0">
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">关于 Nexus</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">应用信息与帮助资源</p>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">通知设置</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">管理您接收通知的方式</p>
                 </div>
                 <Separator />
                 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">版本</span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">1.0.0</span>
+                    <div className="space-y-0.5">
+                      <Label htmlFor="email-notifications">电子邮件通知</Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">接收重要更新和通知</p>
+                    </div>
+                    <Switch 
+                      id="email-notifications" 
+                      checked={notifications.email}
+                      onCheckedChange={() => handleNotificationChange('email')}
+                    />
                   </div>
                   
-                  <div className="grid gap-4">
-                    <Button variant="outline" className="justify-start">
-                      <a href="#" className="flex w-full">隐私协议</a>
-                    </Button>
-                    <Button variant="outline" className="justify-start">
-                      <a href="#" className="flex w-full">用户协议</a>
-                    </Button>
-                    <Button variant="outline" className="justify-start">
-                      <a href="#" className="flex w-full">用户手册/FAQ</a>
-                    </Button>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="push-notifications">推送通知</Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">在您的设备上接收通知</p>
+                    </div>
+                    <Switch 
+                      id="push-notifications" 
+                      checked={notifications.push}
+                      onCheckedChange={() => handleNotificationChange('push')}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="product-updates">产品更新</Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">接收关于新功能和改进的信息</p>
+                    </div>
+                    <Switch 
+                      id="product-updates" 
+                      checked={notifications.updates}
+                      onCheckedChange={() => handleNotificationChange('updates')}
+                    />
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="privacy" className="mt-0">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">隐私与安全</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">管理您的隐私和数据设置</p>
+                </div>
+                <Separator />
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">数据收集</h4>
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <p className="font-medium">使用数据分析</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">帮助我们改进产品</p>
+                      </div>
+                      <Switch defaultChecked />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">隐私控制</h4>
+                    <div className="space-y-2">
+                      <Button variant="outline" className="w-full justify-between">
+                        <span>隐私设置</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" className="w-full justify-between">
+                        <span>查看我的数据</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" className="w-full justify-between text-red-500 dark:text-red-400 hover:text-red-500/90 dark:hover:text-red-400/90">
+                        <span>删除我的账户</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 
                 <Separator />
                 
                 <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">联系支持</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    如果您有任何问题或需要帮助，请发送邮件至 
-                    <a href="mailto:support@nexus.com" className="text-primary hover:underline">
-                      support@nexus.com
-                    </a>
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">安全日志</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">查看账户活动和安全事件</p>
+                    </div>
+                    <Button variant="outline">查看日志</Button>
+                  </div>
                 </div>
               </div>
             </TabsContent>
