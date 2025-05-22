@@ -1,10 +1,11 @@
 import uuid
 from datetime import datetime
+from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel
 from sqlalchemy import Column
-from sqlalchemy.types import JSON
+from sqlalchemy.types import JSON, String
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -46,11 +47,27 @@ class Tag(SQLModel, table=True):
     prompts: list["Prompt"] = Relationship(
         back_populates="tags",
         link_model=PromptTagLink,
-        sa_relationship_kwargs={"lazy": "selectin"},
+        sa_relationship_kwargs={"lazy": "selectin"},  # noqa: typos
     )
 
     class Config:
         from_attributes = True
+
+
+# Prompt type Enum
+class PromptType(str, Enum):
+    SIMPLE = "simple"
+    CHAT = "chat"
+    TEMPLATE = "template"
+    SYSTEM = "system"
+    FUNCTION = "function"
+
+
+# Visibility Enum
+class Visibility(str, Enum):
+    PUBLIC = "public"
+    PRIVATE = "private"
+    TEAM = "team"
 
 
 # 提示词基础模型
@@ -58,9 +75,11 @@ class PromptBase(SQLModel):
     name: str = Field(...)
     description: str | None = None
     content: str = Field(...)
-    type: str = Field(...)  # 'simple', 'chat', 'template', 'system', 'function'
+    type: PromptType = Field(..., sa_column=Column("type", String(), nullable=False))
     input_vars: list[InputVariable] | None = Field(default=None, sa_column=Column(JSON))
-    visibility: str = Field(...)  # 'public', 'private', 'team'
+    visibility: Visibility = Field(
+        ..., sa_column=Column("visibility", String(), nullable=False)
+    )
     meta_data: dict[str, Any] | None = Field(default=None, sa_column=Column(JSON))
     version: int = Field(default=1)
 
@@ -78,9 +97,9 @@ class PromptUpdate(SQLModel):
     name: str | None = None
     description: str | None = None
     content: str | None = None
-    type: str | None = None
+    type: PromptType | None = None
     input_vars: list[InputVariable] | None = None
-    visibility: str | None = None
+    visibility: Visibility | None = None
     team_id: uuid.UUID | None = None
     meta_data: dict[str, Any] | None = None
     tag_ids: list[uuid.UUID] | None = None

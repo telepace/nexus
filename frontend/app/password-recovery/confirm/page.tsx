@@ -38,7 +38,7 @@ function ResetPasswordForm() {
   useEffect(() => {
     if (state?.message) {
       const timer = setTimeout(() => {
-        router.push('/login');
+        router.push("/login");
       }, 2000);
       return () => clearTimeout(timer);
     }
@@ -83,7 +83,7 @@ function ResetPasswordForm() {
             </div>
             <div className="p-6 grid gap-4 pt-2">
               {serverError && <FormError state={state} />}
-              
+
               <div className="grid gap-2">
                 <Label htmlFor="password">密码</Label>
                 <div className="relative group">
@@ -100,7 +100,7 @@ function ResetPasswordForm() {
                   <FieldError state={state} field="password" />
                 )}
               </div>
-              
+
               <div className="grid gap-2">
                 <Label htmlFor="passwordConfirm">确认密码</Label>
                 <div className="relative group">
@@ -117,7 +117,7 @@ function ResetPasswordForm() {
                   <FieldError state={state} field="passwordConfirm" />
                 )}
               </div>
-              
+
               <input
                 id="resetToken"
                 name="resetToken"
@@ -125,20 +125,23 @@ function ResetPasswordForm() {
                 value={token}
                 readOnly
               />
-              
+
               {!success && (
                 <div className="relative group mt-2">
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-300" />
                   <SubmitButton>重置密码</SubmitButton>
                 </div>
               )}
-              
+
               {success && (
-                <div data-testid="success-message" className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-sm text-green-800 dark:text-green-200 text-center">
+                <div
+                  data-testid="success-message"
+                  className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-sm text-green-800 dark:text-green-200 text-center"
+                >
                   {success}
                 </div>
               )}
-              
+
               <div className="text-center text-sm text-slate-600 dark:text-slate-400">
                 <Link
                   href="/login"

@@ -287,7 +287,8 @@ def read_prompt(
         if not prompt:
             raise HTTPException(status_code=404, detail="Prompt not found")
         # 检查访问权限
-        _check_prompt_access(prompt, current_user)
+        if not _check_prompt_access(prompt, current_user):
+            raise HTTPException(status_code=403, detail="Not enough permissions")
         # 手动加载标签
         db.refresh(prompt, ["tags"])
         return PromptReadWithTags.model_validate(prompt)
@@ -315,22 +316,12 @@ def update_prompt(
         if not _check_prompt_access(prompt, current_user):
             raise HTTPException(status_code=403, detail="Not enough permissions")
 
-        # 更新字段
-        update_data = prompt_in.model_dump(exclude_unset=True)
-
-        # 处理标签
-        if "tag_ids" in update_data:
-            tag_ids = update_data.pop("tag_ids")
-            if tag_ids is not None:
-                # 清除现有标签
-                prompt.tags = []
-                # 添加新标签
-                for tag_id in tag_ids:
-                    tag = db.get(Tag, tag_id)
-                    if tag:
-                        prompt.tags.append(tag)
+        # 先保存更新前的内容和输入变量（已移除未使用变量）
+        # pre_content = prompt.content
+        # pre_input_vars = prompt.input_vars
 
         # 更新其他字段
+        update_data = prompt_in.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(prompt, key, value)
 
@@ -339,11 +330,24 @@ def update_prompt(
 
         # 如果内容有更改且需要创建新版本
         if create_version and "content" in update_data:
+            # 1. 先复制旧内容
+            old_content = prompt.content
+            old_input_vars = prompt.input_vars
+            # 2. 查询最大版本号
+            max_version = (
+                db.exec(
+                    select(sa_func.max(PromptVersion.version)).where(
+                        PromptVersion.prompt_id == prompt.id
+                    )
+                ).first()
+                or 0
+            )
+            # 3. 用旧内容和新版本号创建 PromptVersion
             version = PromptVersion(
                 prompt_id=prompt.id,
-                version=len(prompt.versions) + 1,
-                content=prompt.content,
-                input_vars=prompt.input_vars,
+                version=max_version + 1,
+                content=old_content,
+                input_vars=old_input_vars,
                 created_by=current_user.id,
             )
             db.add(version)
@@ -451,7 +455,8 @@ def create_prompt_version(
             raise HTTPException(status_code=404, detail="Prompt not found")
 
         # 检查访问权限
-        _check_prompt_access(prompt, current_user)
+        if not _check_prompt_access(prompt, current_user):
+            raise HTTPException(status_code=403, detail="Not enough permissions")
 
         # 获取当前最大版本号
         max_version = (

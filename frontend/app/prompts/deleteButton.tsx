@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,11 +11,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { TrashIcon } from 'lucide-react';
-import { removePrompt } from '@/components/actions/prompts-action';
-import { useRouter } from 'next/navigation';
-import { toast } from '@/components/ui/use-toast';
+} from "@/components/ui/alert-dialog";
+import { TrashIcon } from "lucide-react";
+import { removePrompt } from "@/components/actions/prompts-action";
+import { useRouter } from "next/navigation";
+import { toast } from "@/components/ui/use-toast";
 
 interface DeleteButtonProps {
   promptId: string;
@@ -30,7 +30,7 @@ export function DeleteButton({ promptId }: DeleteButtonProps) {
     try {
       setIsDeleting(true);
       const result = await removePrompt(promptId);
-      
+
       if (result.error) {
         toast({
           title: "删除失败",
@@ -42,7 +42,7 @@ export function DeleteButton({ promptId }: DeleteButtonProps) {
           title: "删除成功",
           description: "提示词已成功删除",
         });
-        
+
         // 刷新页面或重定向
         router.refresh();
       }
@@ -60,15 +60,15 @@ export function DeleteButton({ promptId }: DeleteButtonProps) {
 
   return (
     <>
-      <Button 
-        variant="ghost" 
+      <Button
+        variant="ghost"
         className="flex items-center w-full justify-start p-2 text-destructive hover:text-destructive"
         onClick={() => setOpen(true)}
       >
         <TrashIcon className="mr-2 h-4 w-4" />
         删除
       </Button>
-      
+
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -94,4 +94,4 @@ export function DeleteButton({ promptId }: DeleteButtonProps) {
       </AlertDialog>
     </>
   );
-} 
+}

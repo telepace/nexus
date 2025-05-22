@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import React from 'react';
-import { act } from 'react';
+import React from "react";
+import { act } from "react";
 
 import Page from "@/app/password-recovery/confirm/page";
 import { passwordResetConfirm } from "@/components/actions/password-reset-action";
@@ -51,17 +51,22 @@ describe("Password Reset Confirm Page", () => {
     }));
 
     // Mock useActionState
-    jest.spyOn(React, 'useActionState').mockImplementation(() => [
-      undefined,
-      jest.fn(),
-    ]);
+    jest
+      .spyOn(React, "useActionState")
+      .mockImplementation(() => [undefined, jest.fn()]);
 
     render(<Page />);
 
     // 直接使用getByPlaceholderText查找密码输入框
-    expect(screen.getByPlaceholderText("至少8个字符，包含大写字母和特殊字符")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("再次输入相同的密码")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /重置密码/i })).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("至少8个字符，包含大写字母和特殊字符"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("再次输入相同的密码"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /重置密码/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders the 404 page in case there is not a token", () => {
@@ -82,10 +87,12 @@ describe("Password Reset Confirm Page", () => {
     }));
 
     // Mock error state
-    jest.spyOn(React, 'useActionState').mockImplementation(() => [
-      { server_validation_error: "密码重置失败" },
-      jest.fn(),
-    ]);
+    jest
+      .spyOn(React, "useActionState")
+      .mockImplementation(() => [
+        { server_validation_error: "密码重置失败" },
+        jest.fn(),
+      ]);
 
     // Mock router
     (useRouter as jest.Mock).mockReturnValue({
@@ -104,7 +111,7 @@ describe("Password Reset Confirm Page", () => {
     }));
 
     // Mock validation errors
-    jest.spyOn(React, 'useActionState').mockImplementation(() => [
+    jest.spyOn(React, "useActionState").mockImplementation(() => [
       {
         errors: {
           password: ["密码至少需要8个字符"],
@@ -127,10 +134,12 @@ describe("Password Reset Confirm Page", () => {
     }));
 
     // Mock success message
-    jest.spyOn(React, 'useActionState').mockImplementation(() => [
-      { message: "密码已成功重置！正在跳转到登录页面..." },
-      jest.fn(),
-    ]);
+    jest
+      .spyOn(React, "useActionState")
+      .mockImplementation(() => [
+        { message: "密码已成功重置！正在跳转到登录页面..." },
+        jest.fn(),
+      ]);
 
     const mockPush = jest.fn();
     // Mock router
@@ -144,13 +153,15 @@ describe("Password Reset Confirm Page", () => {
     render(<Page />);
 
     // 使用getAllByText来处理可能有多个匹配的情况
-    expect(screen.getAllByText("密码已成功重置！正在跳转到登录页面...")[0]).toBeInTheDocument();
+    expect(
+      screen.getAllByText("密码已成功重置！正在跳转到登录页面...")[0],
+    ).toBeInTheDocument();
 
     // Advance timers to trigger redirect
     act(() => {
       jest.advanceTimersByTime(2000);
     });
-    
+
     expect(mockPush).toHaveBeenCalledWith("/login");
 
     // Restore real timers

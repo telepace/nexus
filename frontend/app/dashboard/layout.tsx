@@ -61,7 +61,7 @@ export default function DashboardLayout({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          
+
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -78,14 +78,11 @@ export default function DashboardLayout({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          
+
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link
-                  href="/prompts"
-                  aria-label="Prompt Hub"
-                >
+                <Link href="/prompts" aria-label="Prompt Hub">
                   <span className="flex flex-col items-center">
                     <MessageSquare className="h-5 w-5" />
                     <span className="sr-only">Prompt Hub</span>

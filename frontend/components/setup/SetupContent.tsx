@@ -218,7 +218,8 @@ export function SetupContent() {
 
   // 在完成设置时向扩展发送Token
   const handleFinish = async () => {
-    if (user?.token && extensionPluginId && !tokenSent) {
+    if (tokenSent) return; // Prevent duplicate execution
+    if (user?.token && extensionPluginId) {
       try {
         console.log("Setup页面尝试向扩展发送Token");
         const success = await saveTokenToExtension(

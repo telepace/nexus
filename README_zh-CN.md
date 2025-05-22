@@ -506,4 +506,10 @@ git merge --continue
 
 ---
 
-为AI创业者和自由职业者用❤️构建。祝编码愉快！ 
+为AI创业者和自由职业者用❤️构建。祝编码愉快！
+
+## ⚠️ OpenAI API 版本说明
+
+- 默认的 `OPENAI_BASE_URL` 配置为 `https://api.openai.com/v1`，即使用 OpenAI API v1 版本（当前支持 GPT-4.1）。
+- 如需升级 OpenAI API 版本，请相应修改 `.env` 或 `docker-compose.yml` 中的 `OPENAI_BASE_URL` 变量，例如：`https://api.openai.com/v2`。
+- 请参考 OpenAI 官方文档，确保新版本兼容。 

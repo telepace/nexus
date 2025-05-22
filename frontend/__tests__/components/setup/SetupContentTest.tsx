@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import { act } from 'react';
+import { act } from "react";
 import { SetupContent } from "@/components/setup/SetupContent";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth";
@@ -83,7 +83,7 @@ describe("SetupContent", () => {
       toString = jest.fn(() => "");
       forEach = jest.fn();
     })();
-    
+
     (useSearchParams as jest.Mock).mockReturnValue(mockSearchParams);
     (useRouter as jest.Mock).mockReturnValue({
       push: jest.fn(),
@@ -116,7 +116,9 @@ describe("SetupContent", () => {
 
     // 使用 queryAllByText 获取所有匹配的元素，然后检查 h3 标题
     const headings = screen.queryAllByText("个性化设置");
-    const settingsHeading = headings.find(el => el.tagName.toLowerCase() === 'h3');
+    const settingsHeading = headings.find(
+      (el) => el.tagName.toLowerCase() === "h3",
+    );
     expect(settingsHeading).toBeInTheDocument();
   });
 
@@ -147,7 +149,9 @@ describe("SetupContent", () => {
     });
 
     const headings = screen.queryAllByText("欢迎使用 Nexus");
-    const welcomeHeading = headings.find(el => el.tagName.toLowerCase() === 'h3');
+    const welcomeHeading = headings.find(
+      (el) => el.tagName.toLowerCase() === "h3",
+    );
     expect(welcomeHeading).toBeInTheDocument();
   });
 
@@ -165,7 +169,9 @@ describe("SetupContent", () => {
     });
 
     const headings = screen.queryAllByText("设置完成！");
-    const completeHeading = headings.find(el => el.tagName.toLowerCase() === 'h3');
+    const completeHeading = headings.find(
+      (el) => el.tagName.toLowerCase() === "h3",
+    );
     expect(completeHeading).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /完成/i })).toBeInTheDocument();
   });

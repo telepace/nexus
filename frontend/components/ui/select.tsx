@@ -1,6 +1,6 @@
 // Basic Select component implementation compatible with shadcn/ui style
 // You can replace this with your own or a third-party implementation later
-import * as React from 'react';
+import * as React from "react";
 
 type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
   children: React.ReactNode;
@@ -10,18 +10,35 @@ export function Select({ children, ...props }: SelectProps) {
   return <select {...props}>{children}</select>;
 }
 
-export function SelectTrigger({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function SelectTrigger({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return <div {...props}>{children}</div>;
 }
 
-export function SelectValue({ placeholder, ...props }: { placeholder?: string } & React.HTMLAttributes<HTMLSpanElement>) {
+export function SelectValue({
+  placeholder,
+  ...props
+}: { placeholder?: string } & React.HTMLAttributes<HTMLSpanElement>) {
   return <span {...props}>{placeholder}</span>;
 }
 
-export function SelectContent({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function SelectContent({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return <div {...props}>{children}</div>;
 }
 
-export function SelectItem({ value, children, ...props }: { value: string } & React.LiHTMLAttributes<HTMLLIElement>) {
-  return <li data-value={value} {...props}>{children}</li>;
-} 
+export function SelectItem({
+  value,
+  children,
+  ...props
+}: { value: string } & React.LiHTMLAttributes<HTMLLIElement>) {
+  return (
+    <li data-value={value} {...props}>
+      {children}
+    </li>
+  );
+}

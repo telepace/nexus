@@ -2,13 +2,45 @@ import "@testing-library/jest-dom";
 import React from "react";
 
 // Add fetch mock for tests
-global.fetch = jest.fn().mockImplementation(() => 
-  Promise.resolve({
+global.fetch = jest.fn().mockImplementation((input, init) => {
+  // Basic mock data
+  const body = JSON.stringify({ access_token: "fake-token" });
+  let _bodyUsed = false;
+  const headers = {
+    get: jest.fn(() => null),
+    has: jest.fn(() => false),
+    entries: jest.fn(() => [].entries()),
+    keys: jest.fn(() => [].keys()),
+    values: jest.fn(() => [].values()),
+    forEach: jest.fn(),
+    append: jest.fn(),
+    delete: jest.fn(),
+    set: jest.fn(),
+  };
+  const response = {
     ok: true,
-    json: () => Promise.resolve({ access_token: "fake-token" }),
     status: 200,
-  })
-);
+    statusText: "OK",
+    url: typeof input === "string" ? input : (input && input.url) || "",
+    redirected: false,
+    type: "basic",
+    headers,
+    body: null,
+    bodyUsed: false,
+    json: jest.fn(() => {
+      response.bodyUsed = true;
+      return Promise.resolve({ access_token: "fake-token" });
+    }),
+    text: jest.fn(() => {
+      response.bodyUsed = true;
+      return Promise.resolve(body);
+    }),
+    clone: jest.fn(() => ({ ...response })),
+    // Optionally add more methods as needed
+    // arrayBuffer, blob, formData, etc.
+  };
+  return Promise.resolve(response);
+});
 
 // Mock framer-motion
 jest.mock("framer-motion", () => {
@@ -16,26 +48,33 @@ jest.mock("framer-motion", () => {
   return {
     ...actualFramerMotion,
     AnimatePresence: jest.fn(({ children }) => <>{children}</>),
-    motion: new Proxy({}, {
-      get: (target, prop) => {
-        // For motion.div, motion.span, etc.
-        return jest.fn(({ children, ...rest }) => {
-          const Component = prop; // e.g., 'div'
-          try {
-            // @ts-expect-error - type is dynamic
-            return <Component {...rest}>{children}</Component>;
-          } catch (_) {
-            // Fallback for custom components
-            return <div data-testid={`mock-motion-${String(prop)}`} {...rest}>{children}</div>;
-          }
-        });
-      }
-    }),
+    motion: new Proxy(
+      {},
+      {
+        get: (target, prop) => {
+          // For motion.div, motion.span, etc.
+          return jest.fn(({ children, ...rest }) => {
+            const Component = prop; // e.g., 'div'
+            try {
+              // @ts-expect-error - type is dynamic
+              return <Component {...rest}>{children}</Component>;
+            } catch (_) {
+              // Fallback for custom components
+              return (
+                <div data-testid={`mock-motion-${String(prop)}`} {...rest}>
+                  {children}
+                </div>
+              );
+            }
+          });
+        },
+      },
+    ),
     useAnimate: () => [null, jest.fn()],
     useInView: () => true,
     useScroll: () => ({
       scrollYProgress: { onChange: jest.fn(), get: () => 0 },
-    })
+    }),
   };
 });
 
@@ -75,8 +114,8 @@ console.error = (...args) => {
   // Only suppress LOGIN_BAD_CREDENTIALS error logs
   if (
     args[0] &&
-    typeof args[0] === 'string' &&
-    args[0].includes('LOGIN_BAD_CREDENTIALS')
+    typeof args[0] === "string" &&
+    args[0].includes("LOGIN_BAD_CREDENTIALS")
   ) {
     return; // Suppress expected login credential errors
   }
@@ -93,10 +132,10 @@ console.debug = (...args) => {
 // Mock auth hooks
 jest.mock("@/lib/auth", () => ({
   useAuth: jest.fn().mockReturnValue({
-    user: { 
+    user: {
       id: "test-user-id",
       email: "test@example.com",
-      token: "fake-test-token"
+      token: "fake-test-token",
     },
     isLoading: false,
     isAuthenticated: true,
@@ -138,8 +177,8 @@ jest.mock("next/headers", () => ({
 }));
 
 // Mock React's useActionState
-jest.mock('react', () => {
-  const actualReact = jest.requireActual('react');
+jest.mock("react", () => {
+  const actualReact = jest.requireActual("react");
   return {
     ...actualReact,
     useActionState: jest.fn(() => [null, jest.fn()]),
@@ -148,7 +187,9 @@ jest.mock('react', () => {
 
 // Mock clientService to fix 'authJwtLogin' tests
 jest.mock("@/app/clientService", () => ({
-  authJwtLogin: jest.fn().mockResolvedValue({ data: { access_token: 'test-token' } }),
+  authJwtLogin: jest
+    .fn()
+    .mockResolvedValue({ data: { access_token: "test-token" } }),
 }));
 
 // Mock useToast
@@ -159,23 +200,21 @@ jest.mock("@/components/ui/use-toast", () => ({
 }));
 
 // Additional log filtering
-jest.spyOn(console, 'log').mockImplementation((...args) => {
+jest.spyOn(console, "log").mockImplementation((...args) => {
   // Filter out debug info if DEBUG env variable not set
   if (!process.env.DEBUG) {
     if (
-      args[0] && 
-      typeof args[0] === 'string' && 
-      (
-        args[0].includes('emittery') ||
-        args[0].includes('[data:') ||
-        args[0].includes('[Customer]') ||
-        args[0].match(/\[\d{2}:\d{2}:\d{2}\.\d{3}\]/)
-      )
+      args[0] &&
+      typeof args[0] === "string" &&
+      (args[0].includes("emittery") ||
+        args[0].includes("[data:") ||
+        args[0].includes("[Customer]") ||
+        args[0].match(/\[\d{2}:\d{2}:\d{2}\.\d{3}\]/))
     ) {
       return;
     }
   }
-  process.stdout.write(args.join(' ') + '\n');
+  process.stdout.write(args.join(" ") + "\n");
 });
 
 // Clean up after each test

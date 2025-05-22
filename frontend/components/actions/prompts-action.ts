@@ -85,14 +85,12 @@ let lastTagsFetchTime = 0;
 const CACHE_TTL = 3000; // 3秒缓存
 
 // 获取所有Prompts
-export const fetchPrompts = cache(async (
-  options?: { 
-    search?: string; 
-    tag_ids?: string[];
-    sort?: string;
-    order?: 'asc' | 'desc';
-  }
-): Promise<FetchPromptsReturn> => {
+export const fetchPrompts = async (options?: {
+  search?: string;
+  tag_ids?: string[];
+  sort?: string;
+  order?: "asc" | "desc";
+}): Promise<FetchPromptsReturn> => {
   const now = Date.now();
   const requestId = `fetchPrompts-${Math.random().toString(36).substring(7)}`;
 
@@ -134,8 +132,8 @@ export const fetchPrompts = cache(async (
         search: options?.search,
         tag_ids: options?.tag_ids,
         sort: options?.sort,
-        order: options?.order || 'desc',
-      }
+        order: options?.order || "desc",
+      },
     });
 
     // 检查响应是否为空或无效
@@ -186,7 +184,12 @@ export const fetchPrompts = cache(async (
 
     if (Array.isArray(data)) {
       result = data;
-    } else if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+    } else if (
+      data &&
+      typeof data === "object" &&
+      "data" in data &&
+      Array.isArray(data.data)
+    ) {
       result = data.data;
     } else {
       console.warn(`[${requestId}] 意外的 API 响应格式:`, data);
@@ -216,7 +219,7 @@ export const fetchPrompts = cache(async (
 
     return errorResult;
   }
-});
+};
 
 // 获取单个Prompt
 export const fetchPrompt = cache(async (id: string) => {
@@ -337,7 +340,12 @@ export const fetchTags = cache(async (): Promise<FetchTagsReturn> => {
 
     if (Array.isArray(data)) {
       result = data;
-    } else if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+    } else if (
+      data &&
+      typeof data === "object" &&
+      "data" in data &&
+      Array.isArray(data.data)
+    ) {
       result = data.data;
     } else {
       console.warn(`[${requestId}] 意外的 API 响应格式:`, data);
@@ -379,14 +387,14 @@ export async function addPrompt(formData: FormData) {
   }
 
   try {
-    const name = formData.get('name') as string;
-    const description = formData.get('description') as string;
-    const content = formData.get('content') as string;
-    const type = formData.get('type') as string;
-    const visibility = formData.get('visibility') as string;
-    const tagIdsValue = formData.get('tag_ids') as string;
+    const name = formData.get("name") as string;
+    const description = formData.get("description") as string;
+    const content = formData.get("content") as string;
+    const type = formData.get("type") as string;
+    const visibility = formData.get("visibility") as string;
+    const tagIdsValue = formData.get("tag_ids") as string;
     const tag_ids = tagIdsValue ? JSON.parse(tagIdsValue) : [];
-    const inputVarsValue = formData.get('input_vars') as string;
+    const inputVarsValue = formData.get("input_vars") as string;
     const input_vars = inputVarsValue ? JSON.parse(inputVarsValue) : [];
 
     const { data, error } = await createPrompt({
@@ -400,13 +408,15 @@ export async function addPrompt(formData: FormData) {
         type,
         visibility,
         tag_ids,
-        input_vars
+        input_vars,
       },
     });
 
     if (error) {
       console.error("创建prompt出错:", error);
-      return { error: typeof error === "string" ? error : JSON.stringify(error) };
+      return {
+        error: typeof error === "string" ? error : JSON.stringify(error),
+      };
     }
 
     // 清除缓存以便重新加载
@@ -417,7 +427,7 @@ export async function addPrompt(formData: FormData) {
     revalidatePath("/prompts");
 
     // 创建成功，重定向到prompt详情页
-    if (data && 'id' in data) {
+    if (data && "id" in data) {
       redirect(`/prompts/${data.id}`);
     }
 
@@ -442,17 +452,17 @@ export async function updatePromptAction(id: string, formData: FormData) {
   }
 
   try {
-    const name = formData.get('name') as string;
-    const description = formData.get('description') as string;
-    const content = formData.get('content') as string;
-    const type = formData.get('type') as string;
-    const visibility = formData.get('visibility') as string;
-    const tagIdsValue = formData.get('tag_ids') as string;
+    const name = formData.get("name") as string;
+    const description = formData.get("description") as string;
+    const content = formData.get("content") as string;
+    const type = formData.get("type") as string;
+    const visibility = formData.get("visibility") as string;
+    const tagIdsValue = formData.get("tag_ids") as string;
     const tag_ids = tagIdsValue ? JSON.parse(tagIdsValue) : [];
-    const inputVarsValue = formData.get('input_vars') as string;
+    const inputVarsValue = formData.get("input_vars") as string;
     const input_vars = inputVarsValue ? JSON.parse(inputVarsValue) : [];
-    const createVersionValue = formData.get('create_version');
-    const create_version = createVersionValue === 'true';
+    const createVersionValue = formData.get("create_version");
+    const create_version = createVersionValue === "true";
 
     const { data, error } = await updatePrompt({
       headers: {
@@ -471,13 +481,15 @@ export async function updatePromptAction(id: string, formData: FormData) {
         type,
         visibility,
         tag_ids,
-        input_vars
+        input_vars,
       },
     });
 
     if (error) {
       console.error("更新prompt出错:", error);
-      return { error: typeof error === "string" ? error : JSON.stringify(error) };
+      return {
+        error: typeof error === "string" ? error : JSON.stringify(error),
+      };
     }
 
     // 清除缓存以便重新加载
@@ -520,7 +532,9 @@ export async function removePrompt(id: string) {
 
     if (error) {
       console.error("删除prompt出错:", error);
-      return { error: typeof error === "string" ? error : JSON.stringify(error) };
+      return {
+        error: typeof error === "string" ? error : JSON.stringify(error),
+      };
     }
 
     // 清除缓存以便重新加载
@@ -598,7 +612,9 @@ export async function duplicatePromptAction(id: string) {
 
     if (error) {
       console.error("复制prompt出错:", error);
-      return { error: typeof error === "string" ? error : JSON.stringify(error) };
+      return {
+        error: typeof error === "string" ? error : JSON.stringify(error),
+      };
     }
 
     // 清除缓存以便重新加载
@@ -609,7 +625,7 @@ export async function duplicatePromptAction(id: string) {
     revalidatePath("/prompts");
 
     // 复制成功，重定向到新prompt详情页
-    if (data && 'id' in data) {
+    if (data && "id" in data) {
       redirect(`/prompts/${data.id}`);
     }
 
@@ -634,9 +650,9 @@ export async function addTag(formData: FormData) {
   }
 
   try {
-    const name = formData.get('name') as string;
-    const description = formData.get('description') as string;
-    const color = formData.get('color') as string;
+    const name = formData.get("name") as string;
+    const description = formData.get("description") as string;
+    const color = formData.get("color") as string;
 
     const { data, error } = await createTag({
       headers: {
@@ -645,13 +661,15 @@ export async function addTag(formData: FormData) {
       body: {
         name,
         description,
-        color
+        color,
       },
     });
 
     if (error) {
       console.error("创建tag出错:", error);
-      return { error: typeof error === "string" ? error : JSON.stringify(error) };
+      return {
+        error: typeof error === "string" ? error : JSON.stringify(error),
+      };
     }
 
     // 清除缓存以便重新加载
@@ -682,9 +700,9 @@ export async function updateTagAction(id: string, formData: FormData) {
   }
 
   try {
-    const name = formData.get('name') as string;
-    const description = formData.get('description') as string;
-    const color = formData.get('color') as string;
+    const name = formData.get("name") as string;
+    const description = formData.get("description") as string;
+    const color = formData.get("color") as string;
 
     const { data, error } = await updateTag({
       headers: {
@@ -696,13 +714,15 @@ export async function updateTagAction(id: string, formData: FormData) {
       body: {
         name,
         description,
-        color
+        color,
       },
     });
 
     if (error) {
       console.error("更新tag出错:", error);
-      return { error: typeof error === "string" ? error : JSON.stringify(error) };
+      return {
+        error: typeof error === "string" ? error : JSON.stringify(error),
+      };
     }
 
     // 清除缓存以便重新加载
@@ -744,7 +764,9 @@ export async function removeTag(id: string) {
 
     if (error) {
       console.error("删除tag出错:", error);
-      return { error: typeof error === "string" ? error : JSON.stringify(error) };
+      return {
+        error: typeof error === "string" ? error : JSON.stringify(error),
+      };
     }
 
     // 清除缓存以便重新加载
@@ -767,5 +789,5 @@ export type {
   TagData,
   InputVariable,
   PromptVersionData,
-  ApiErrorResponse
-}; 
+  ApiErrorResponse,
+};

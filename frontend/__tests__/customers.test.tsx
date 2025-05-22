@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
-import { act } from 'react';
+import { act } from "react";
 import userEvent from "@testing-library/user-event";
 import CustomersPage from "../app/customers/page";
 
@@ -176,9 +176,11 @@ describe("Customers Page", () => {
     expect(
       screen.getByRole("heading", { name: /privacy settings/i }),
     ).toBeInTheDocument();
-    
+
     // 使用更精确的方式寻找文本元素
-    const deleteAccountHeading = screen.getByRole("heading", { name: /delete account/i });
+    const deleteAccountHeading = screen.getByRole("heading", {
+      name: /delete account/i,
+    });
     expect(deleteAccountHeading).toBeInTheDocument();
   });
 });

@@ -7,7 +7,6 @@ Create Date: 2023-01-01 00:00:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
-import sqlmodel
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
@@ -36,7 +35,7 @@ def upgrade():
         sa.Column('id', postgresql.UUID(), nullable=False),
         sa.Column('name', sa.String(), nullable=False),
         sa.Column('description', sa.String(), nullable=True),
-        sa.Column('content', sa.String(), nullable=False),
+        sa.Column('content', sa.Text(), nullable=False),
         sa.Column('type', sa.String(), nullable=False),
         sa.Column('input_vars', sa.JSON(), nullable=True),
         sa.Column('visibility', sa.String(), nullable=False),
@@ -45,7 +44,7 @@ def upgrade():
         sa.Column('version', sa.Integer(), nullable=False, server_default='1'),
         sa.Column('created_by', postgresql.UUID(), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
-        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP'), server_onupdate=sa.text('CURRENT_TIMESTAMP')),
         sa.Column('embedding', sa.JSON(), nullable=True),
         sa.PrimaryKeyConstraint('id')
     )
@@ -61,7 +60,7 @@ def upgrade():
         sa.Column('id', postgresql.UUID(), nullable=False),
         sa.Column('prompt_id', postgresql.UUID(), nullable=False),
         sa.Column('version', sa.Integer(), nullable=False),
-        sa.Column('content', sa.String(), nullable=False),
+        sa.Column('content', sa.Text(), nullable=False),
         sa.Column('input_vars', sa.JSON(), nullable=True),
         sa.Column('created_by', postgresql.UUID(), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),

@@ -12,14 +12,14 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 export async function generateMetadata({ params }: { params: { id: string } }) {
   try {
     const promptData = await fetchPrompt(params.id);
-    
-    if ('error' in promptData) {
+
+    if ("error" in promptData) {
       return {
         title: "编辑提示词 - 错误",
         description: "无法加载提示词详情",
       };
     }
-    
+
     return {
       title: `编辑提示词 - ${promptData.name}`,
       description: `编辑提示词 ${promptData.name}`,
@@ -33,7 +33,9 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 }
 
 // 主页面组件
-export default async function EditPromptPage({ params }: { params: { id: string } }) {
+export default async function EditPromptPage({
+  params,
+}: { params: { id: string } }) {
   // 获取认证状态
   const authState = await getAuthState();
 
@@ -97,9 +99,9 @@ async function EditPromptContent({ id }: { id: string }) {
       fetchPrompt(id),
       fetchTags(),
     ]);
-    
+
     // 检查提示词数据是否有错误
-    if ('error' in promptData) {
+    if ("error" in promptData) {
       return (
         <div className="container py-10">
           <h1 className="text-2xl font-bold mb-6">编辑提示词</h1>
@@ -114,7 +116,7 @@ async function EditPromptContent({ id }: { id: string }) {
         </div>
       );
     }
-    
+
     // 检查标签数据是否有错误
     if (!Array.isArray(tagsResponse)) {
       return (
@@ -123,7 +125,9 @@ async function EditPromptContent({ id }: { id: string }) {
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>加载错误</AlertTitle>
-            <AlertDescription>{tagsResponse.error || '获取标签失败'}</AlertDescription>
+            <AlertDescription>
+              {tagsResponse.error || "获取标签失败"}
+            </AlertDescription>
           </Alert>
           <Button asChild>
             <Link href="/prompts">返回提示词列表</Link>
@@ -131,7 +135,7 @@ async function EditPromptContent({ id }: { id: string }) {
         </div>
       );
     }
-    
+
     return (
       <div className="container py-10">
         <div className="max-w-3xl mx-auto">
@@ -146,13 +150,13 @@ async function EditPromptContent({ id }: { id: string }) {
               </Button>
             </div>
           </div>
-          
+
           <PromptForm tags={tagsResponse} prompt={promptData} />
         </div>
       </div>
     );
   } catch (_error) {
-    console.error('编辑提示词页面加载出错:', _error);
+    console.error("编辑提示词页面加载出错:", _error);
     throw _error; // 让错误边界处理
   }
-} 
+}

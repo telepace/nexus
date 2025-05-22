@@ -158,6 +158,9 @@ SMTP_HOST=
 SMTP_USER=
 SMTP_PASSWORD=
 EMAILS_FROM_EMAIL=info@example.com
+
+# OpenAI API settings
+OPENAI_BASE_URL=https://api.openai.com/v1
 ```
 
 ## 🧪 Testing
@@ -547,3 +550,9 @@ This project provides optimized scripts and Makefile targets for common developm
 4. 实现状态管理系统，使用React Context或Redux
 5. 优化页面内容提取算法
 6. 增强AI功能，添加更多模型支持
+
+## ⚠️ OpenAI API 版本说明
+
+- 默认的 `OPENAI_BASE_URL` 配置为 `https://api.openai.com/v1`，即使用 OpenAI API v1 版本（当前支持 GPT-4.1）。
+- 如需升级 OpenAI API 版本，请相应修改 `.env` 或 `docker-compose.yml` 中的 `OPENAI_BASE_URL` 变量，例如：`https://api.openai.com/v2`。
+- 请参考 OpenAI 官方文档，确保新版本兼容。

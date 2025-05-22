@@ -1,9 +1,20 @@
-import { fetchPrompt, fetchPromptVersions } from "@/components/actions/prompts-action";
+import {
+  fetchPrompt,
+  fetchPromptVersions,
+} from "@/components/actions/prompts-action";
 import { getAuthState } from "@/lib/server-auth-bridge";
 import { redirect as _redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Clock, Edit, Copy, History, Tag as TagIcon, Eye } from "lucide-react";
+import {
+  AlertCircle,
+  Clock,
+  Edit,
+  Copy,
+  History,
+  Tag as TagIcon,
+  Eye,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -16,18 +27,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // 引入客户端组件
 import { DuplicateButton } from "../_components/DuplicateButton";
+import { CopyToClipboardButton } from "./CopyToClipboardButton";
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
   try {
     const promptData = await fetchPrompt(params.id);
-    
-    if ('error' in promptData) {
+
+    if ("error" in promptData) {
       return {
         title: "提示词 - 错误",
         description: "无法加载提示词详情",
       };
     }
-    
+
     return {
       title: `${promptData.name} - 提示词详情`,
       description: promptData.description || "提示词详情页面",
@@ -41,7 +53,9 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 }
 
 // 主页面组件
-export default async function PromptDetailPage({ params }: { params: { id: string } }) {
+export default async function PromptDetailPage({
+  params,
+}: { params: { id: string } }) {
   // 获取认证状态
   const authState = await getAuthState();
 
@@ -107,9 +121,9 @@ async function PromptDetailContent({ id }: { id: string }) {
       fetchPrompt(id),
       fetchPromptVersions(id),
     ]);
-    
+
     // 处理错误
-    if ('error' in promptData) {
+    if ("error" in promptData) {
       return (
         <div className="container py-10">
           <h1 className="text-2xl font-bold mb-6">提示词详情</h1>
@@ -124,17 +138,17 @@ async function PromptDetailContent({ id }: { id: string }) {
         </div>
       );
     }
-    
+
     // 版本列表
     const versions = Array.isArray(versionsData) ? versionsData : [];
-    
+
     // 可见性映射
     const visibilityMap = {
-      'public': { label: '公开', icon: <Eye className="h-4 w-4 mr-2" /> },
-      'private': { label: '私有', icon: <Eye className="h-4 w-4 mr-2" /> },
-      'team': { label: '团队', icon: <Eye className="h-4 w-4 mr-2" /> },
+      public: { label: "公开", icon: <Eye className="h-4 w-4 mr-2" /> },
+      private: { label: "私有", icon: <Eye className="h-4 w-4 mr-2" /> },
+      team: { label: "团队", icon: <Eye className="h-4 w-4 mr-2" /> },
     };
-    
+
     return (
       <div className="container py-10">
         <div className="max-w-4xl mx-auto">
@@ -142,13 +156,13 @@ async function PromptDetailContent({ id }: { id: string }) {
           <div className="flex justify-between items-start mb-6">
             <div>
               <h1 className="text-2xl font-bold">{promptData.name}</h1>
-              <p className="text-muted-foreground mt-1">{promptData.description || "无描述"}</p>
+              <p className="text-muted-foreground mt-1">
+                {promptData.description || "无描述"}
+              </p>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" asChild>
-                <Link href="/prompts">
-                  返回列表
-                </Link>
+                <Link href="/prompts">返回列表</Link>
               </Button>
               <DuplicateButton promptId={promptData.id} />
               <Button asChild>
@@ -159,7 +173,7 @@ async function PromptDetailContent({ id }: { id: string }) {
               </Button>
             </div>
           </div>
-          
+
           {/* 元数据信息 */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card className="p-4">
@@ -169,41 +183,53 @@ async function PromptDetailContent({ id }: { id: string }) {
                 <span className="ml-auto">{promptData.type}</span>
               </div>
             </Card>
-            
+
             <Card className="p-4">
               <div className="flex items-center text-sm">
-                {visibilityMap[promptData.visibility as keyof typeof visibilityMap]?.icon}
+                {
+                  visibilityMap[
+                    promptData.visibility as keyof typeof visibilityMap
+                  ]?.icon
+                }
                 <span className="font-medium">可见性:</span>
                 <span className="ml-auto">
-                  {visibilityMap[promptData.visibility as keyof typeof visibilityMap]?.label || promptData.visibility}
+                  {visibilityMap[
+                    promptData.visibility as keyof typeof visibilityMap
+                  ]?.label || promptData.visibility}
                 </span>
               </div>
             </Card>
-            
+
             <Card className="p-4">
               <div className="flex items-center text-sm">
                 <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
                 <span className="font-medium">更新时间:</span>
-                <span className="ml-auto" title={new Date(promptData.updated_at).toLocaleString()}>
-                  {formatDistance(new Date(promptData.updated_at), new Date(), { 
+                <span
+                  className="ml-auto"
+                  title={new Date(promptData.updated_at).toLocaleString()}
+                >
+                  {formatDistance(new Date(promptData.updated_at), new Date(), {
                     addSuffix: true,
-                    locale: zhCN 
+                    locale: zhCN,
                   })}
                 </span>
               </div>
             </Card>
           </div>
-          
+
           {/* 标签 */}
           {promptData.tags && promptData.tags.length > 0 && (
             <div className="mb-6">
               <h2 className="text-sm font-medium mb-2">标签:</h2>
               <div className="flex flex-wrap gap-2">
                 {promptData.tags.map((tag) => (
-                  <Badge 
+                  <Badge
                     key={tag.id}
-                    variant="outline" 
-                    style={{ borderColor: tag.color || '#888', color: tag.color || '#888' }}
+                    variant="outline"
+                    style={{
+                      borderColor: tag.color || "#888",
+                      color: tag.color || "#888",
+                    }}
                   >
                     {tag.name}
                   </Badge>
@@ -211,15 +237,17 @@ async function PromptDetailContent({ id }: { id: string }) {
               </div>
             </div>
           )}
-          
+
           <Separator className="my-6" />
-          
+
           {/* 内容和版本历史 */}
           <Tabs defaultValue="content">
             <TabsList className="mb-4">
               <TabsTrigger value="content">提示词内容</TabsTrigger>
               {promptData.input_vars && promptData.input_vars.length > 0 && (
-                <TabsTrigger value="variables">输入变量 ({promptData.input_vars.length})</TabsTrigger>
+                <TabsTrigger value="variables">
+                  输入变量 ({promptData.input_vars.length})
+                </TabsTrigger>
               )}
               {versions.length > 0 && (
                 <TabsTrigger value="versions">
@@ -228,29 +256,19 @@ async function PromptDetailContent({ id }: { id: string }) {
                 </TabsTrigger>
               )}
             </TabsList>
-            
+
             <TabsContent value="content">
               <Card className="mb-6">
                 <pre className="p-4 overflow-auto whitespace-pre-wrap bg-muted/30 rounded-md font-mono text-sm">
                   {promptData.content}
                 </pre>
               </Card>
-              
+
               <div className="flex justify-end">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    navigator.clipboard.writeText(promptData.content);
-                    // 如果需要加入提示可以使用toast通知
-                  }}
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  复制内容
-                </Button>
+                <CopyToClipboardButton content={promptData.content} />
               </div>
             </TabsContent>
-            
+
             {promptData.input_vars && promptData.input_vars.length > 0 && (
               <TabsContent value="variables">
                 <div className="space-y-4">
@@ -275,7 +293,7 @@ async function PromptDetailContent({ id }: { id: string }) {
                 </div>
               </TabsContent>
             )}
-            
+
             {versions.length > 0 && (
               <TabsContent value="versions">
                 <div className="space-y-4">
@@ -284,10 +302,14 @@ async function PromptDetailContent({ id }: { id: string }) {
                       <div className="flex justify-between items-center mb-2">
                         <h3 className="font-medium">版本 {version.version}</h3>
                         <span className="text-sm text-muted-foreground">
-                          {formatDistance(new Date(version.created_at), new Date(), { 
-                            addSuffix: true,
-                            locale: zhCN 
-                          })}
+                          {formatDistance(
+                            new Date(version.created_at),
+                            new Date(),
+                            {
+                              addSuffix: true,
+                              locale: zhCN,
+                            },
+                          )}
                         </span>
                       </div>
                       {version.change_notes && (
@@ -306,7 +328,7 @@ async function PromptDetailContent({ id }: { id: string }) {
       </div>
     );
   } catch (error) {
-    console.error('提示词详情页面加载出错:', error);
+    console.error("提示词详情页面加载出错:", error);
     throw error; // 让错误边界处理
   }
-} 
+}

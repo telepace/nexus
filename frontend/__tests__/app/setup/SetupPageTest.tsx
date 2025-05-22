@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import { act } from 'react';
+import { act } from "react";
 
 import Page from "@/app/setup/page";
 
@@ -21,7 +21,9 @@ describe.skip("SetupPage", () => {
   it("应该渲染设置向导标题", () => {
     render(<Page />);
 
-    expect(screen.getByRole("heading", { name: /设置向导/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /设置向导/i }),
+    ).toBeInTheDocument();
   });
 
   it("应该显示多步骤进度指示器", () => {

@@ -80,9 +80,9 @@ export type Prompt = {
   name: string;
   description?: string | null;
   content: string;
-  type: string;
+  type: PromptType;
   input_vars?: Array<InputVariable> | null;
-  visibility: string;
+  visibility: Visibility;
   meta_data?: {
     [key: string]: unknown;
   } | null;
@@ -99,9 +99,9 @@ export type PromptCreate = {
   name: string;
   description?: string | null;
   content: string;
-  type: string;
+  type: PromptType;
   input_vars?: Array<InputVariable> | null;
-  visibility: string;
+  visibility: Visibility;
   meta_data?: {
     [key: string]: unknown;
   } | null;
@@ -114,9 +114,9 @@ export type PromptReadWithTags = {
   name: string;
   description?: string | null;
   content: string;
-  type: string;
+  type: PromptType;
   input_vars?: Array<InputVariable> | null;
-  visibility: string;
+  visibility: Visibility;
   meta_data?: {
     [key: string]: unknown;
   } | null;
@@ -130,13 +130,15 @@ export type PromptReadWithTags = {
   tags?: Array<Tag>;
 };
 
+export type PromptType = "simple" | "chat" | "template" | "system" | "function";
+
 export type PromptUpdate = {
   name?: string | null;
   description?: string | null;
   content?: string | null;
-  type?: string | null;
+  type?: PromptType | null;
   input_vars?: Array<InputVariable> | null;
-  visibility?: string | null;
+  visibility?: Visibility | null;
   team_id?: string | null;
   meta_data?: {
     [key: string]: unknown;
@@ -236,6 +238,8 @@ export type ValidationError = {
   msg: string;
   type: string;
 };
+
+export type Visibility = "public" | "private" | "team";
 
 export type HealthGetHealthApiResponse = unknown;
 

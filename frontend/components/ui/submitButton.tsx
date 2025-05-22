@@ -16,7 +16,8 @@ export function SubmitButton({
   ...props
 }: SubmitButtonProps) {
   const { pending } = useFormStatus();
-  const buttonText = text || (typeof children === 'string' ? children : undefined);
+  const buttonText =
+    text || (typeof children === "string" ? children : undefined);
 
   return (
     <Button

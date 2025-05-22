@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import { act } from 'react';
+import { act } from "react";
 
 import Page from "@/app/login/page";
 import { login } from "@/components/actions/login-action";
@@ -11,11 +11,11 @@ jest.mock("@/components/actions/login-action", () => ({
 }));
 
 // 模拟 window.fetch
-window.fetch = jest.fn().mockImplementation(() => 
+window.fetch = jest.fn().mockImplementation(() =>
   Promise.resolve({
     ok: true,
     json: () => Promise.resolve({ access_token: "fake-token" }),
-  })
+  }),
 );
 
 describe("Login Page", () => {
@@ -28,18 +28,16 @@ describe("Login Page", () => {
 
     expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/password/i)).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /^登录$/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^登录$/i })).toBeInTheDocument();
   });
 
   it("submits form with correct data", async () => {
     // Mock the fetch implementation directly
-    global.fetch = jest.fn().mockImplementation(() => 
+    global.fetch = jest.fn().mockImplementation(() =>
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ access_token: "fake-token" }),
-      })
+      }),
     );
 
     render(<Page />);
@@ -69,7 +67,7 @@ describe("Login Page", () => {
       Promise.resolve({
         ok: false,
         json: () => Promise.resolve({ detail: "LOGIN_BAD_CREDENTIALS" }),
-      })
+      }),
     );
 
     render(<Page />);
@@ -80,7 +78,9 @@ describe("Login Page", () => {
 
     // 填写表单并提交
     await act(async () => {
-      fireEvent.change(usernameInput, { target: { value: "wrong@example.com" } });
+      fireEvent.change(usernameInput, {
+        target: { value: "wrong@example.com" },
+      });
       fireEvent.change(passwordInput, { target: { value: "wrongpass" } });
       fireEvent.click(submitButton);
     });

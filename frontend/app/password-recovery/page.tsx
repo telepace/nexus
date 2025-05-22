@@ -79,8 +79,8 @@ export default function Page() {
             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-md text-green-700 dark:text-green-300 text-center mb-4">
               {success}
               <div className="mt-3">
-                <Link 
-                  href="/login" 
+                <Link
+                  href="/login"
                   className="text-blue-600 dark:text-blue-400 hover:underline mt-2 inline-block"
                 >
                   返回登录
@@ -90,7 +90,7 @@ export default function Page() {
           ) : (
             <form action={dispatch} className="space-y-4">
               {serverError && <FormError state={state} />}
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email">邮箱</Label>
                 <Input
@@ -105,14 +105,17 @@ export default function Page() {
                 />
                 {errors?.email && <FieldError state={state} field="email" />}
               </div>
-              
-              <SubmitButton data-testid="reset-password-submit" className="w-full">
+
+              <SubmitButton
+                data-testid="reset-password-submit"
+                className="w-full"
+              >
                 发送重置链接
               </SubmitButton>
-              
+
               <div className="text-center text-sm text-muted-foreground mt-4">
-                <Link 
-                  href="/login" 
+                <Link
+                  href="/login"
                   className="text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   返回登录

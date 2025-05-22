@@ -36,8 +36,9 @@ export function Toaster() {
 
 export { useToastPrimitive as useToast };
 
-// 导出 toast 函数，使其可以从这个文件导入
-export const toast = function(props: any) {
+// Export the toast function so it can be imported from this file
+import type { ToastType } from "./toast";
+export const toast = function (props: Omit<ToastType, "id">) {
   const { toast: toastFn } = useToastPrimitive();
   return toastFn(props);
 };

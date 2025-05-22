@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { v4 as uuidv4 } from 'uuid';
-import { X, Plus, Trash, Plus as PlusIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { v4 as uuidv4 } from "uuid";
+import { X, Plus, Trash, Plus as PlusIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Form,
   FormControl,
@@ -27,31 +27,31 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { toast } from '@/components/ui/use-toast';
-import { 
-  addPrompt, 
-  updatePromptAction, 
-  type TagData, 
-  type InputVariable, 
-  type PromptData 
-} from '@/components/actions/prompts-action';
-import { Switch } from '@/components/ui/switch';
+} from "@/components/ui/form";
+import { toast } from "@/components/ui/use-toast";
+import {
+  addPrompt,
+  updatePromptAction,
+  type TagData,
+  type InputVariable,
+  type PromptData,
+} from "@/components/actions/prompts-action";
+import { Switch } from "@/components/ui/switch";
 
 // 创建输入变量的表单schema
 const inputVarSchema = z.object({
-  name: z.string().min(1, { message: '变量名称必填' }),
+  name: z.string().min(1, { message: "变量名称必填" }),
   description: z.string().optional(),
   required: z.boolean().default(false),
 });
 
 // 创建提示词表单schema
 const promptFormSchema = z.object({
-  name: z.string().min(1, { message: '名称必填' }),
+  name: z.string().min(1, { message: "名称必填" }),
   description: z.string().optional(),
-  content: z.string().min(1, { message: '内容必填' }),
-  type: z.string().min(1, { message: '类型必填' }),
-  visibility: z.string().min(1, { message: '可见性必填' }),
+  content: z.string().min(1, { message: "内容必填" }),
+  type: z.string().min(1, { message: "类型必填" }),
+  visibility: z.string().min(1, { message: "可见性必填" }),
   tag_ids: z.array(z.string()).optional(),
   input_vars: z.array(inputVarSchema).optional(),
   create_version: z.boolean().default(false),
@@ -66,44 +66,47 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [inputVars, setInputVars] = useState<InputVariable[]>(
-    prompt?.input_vars || []
+    prompt?.input_vars || [],
   );
-  
+
   // 初始化表单
   const form = useForm<z.infer<typeof promptFormSchema>>({
     resolver: zodResolver(promptFormSchema),
     defaultValues: {
-      name: prompt?.name || '',
-      description: prompt?.description || '',
-      content: prompt?.content || '',
-      type: prompt?.type || 'simple',
-      visibility: prompt?.visibility || 'public',
-      tag_ids: prompt?.tags?.map(tag => tag.id) || [],
+      name: prompt?.name || "",
+      description: prompt?.description || "",
+      content: prompt?.content || "",
+      type: prompt?.type || "simple",
+      visibility: prompt?.visibility || "public",
+      tag_ids: prompt?.tags?.map((tag) => tag.id) || [],
       input_vars: prompt?.input_vars || [],
       create_version: false,
     },
   });
-  
+
   // 表单提交处理
   const onSubmit = async (values: z.infer<typeof promptFormSchema>) => {
     try {
       setSubmitting(true);
-      
+
       // 将表单数据准备为FormData
       const formData = new FormData();
-      formData.append('name', values.name);
-      formData.append('description', values.description || '');
-      formData.append('content', values.content);
-      formData.append('type', values.type);
-      formData.append('visibility', values.visibility);
-      formData.append('tag_ids', JSON.stringify(values.tag_ids || []));
-      formData.append('input_vars', JSON.stringify(inputVars));
-      
+      formData.append("name", values.name);
+      formData.append("description", values.description || "");
+      formData.append("content", values.content);
+      formData.append("type", values.type);
+      formData.append("visibility", values.visibility);
+      formData.append("tag_ids", JSON.stringify(values.tag_ids || []));
+      formData.append("input_vars", JSON.stringify(inputVars));
+
       if (prompt) {
         // 如果是编辑，则调用更新API
-        formData.append('create_version', values.create_version ? 'true' : 'false');
+        formData.append(
+          "create_version",
+          values.create_version ? "true" : "false",
+        );
         const result = await updatePromptAction(prompt.id, formData);
-        
+
         if (result.error) {
           toast({
             title: "更新失败",
@@ -120,7 +123,7 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
       } else {
         // 如果是创建，则调用创建API
         const result = await addPrompt(formData);
-        
+
         if (result.error) {
           toast({
             title: "创建失败",
@@ -145,32 +148,36 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
       setSubmitting(false);
     }
   };
-  
+
   // 添加输入变量
   const addInputVar = () => {
     setInputVars([
       ...inputVars,
-      { name: '', description: '', required: false }
+      { name: "", description: "", required: false },
     ]);
   };
-  
+
   // 移除输入变量
   const removeInputVar = (index: number) => {
     setInputVars(inputVars.filter((_, i) => i !== index));
   };
-  
+
   // 更新输入变量
-  const updateInputVar = (index: number, field: keyof InputVariable, value: any) => {
+  const updateInputVar = (
+    index: number,
+    field: keyof InputVariable,
+    value: any,
+  ) => {
     const updatedVars = [...inputVars];
     updatedVars[index] = { ...updatedVars[index], [field]: value };
     setInputVars(updatedVars);
   };
-  
+
   // 监听输入变量变化，同步到表单
   useEffect(() => {
-    form.setValue('input_vars', inputVars);
+    form.setValue("input_vars", inputVars);
   }, [inputVars, form]);
-  
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -190,7 +197,7 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="description"
@@ -198,11 +205,11 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
                 <FormItem>
                   <FormLabel>描述</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="输入提示词描述（可选）" 
+                    <Textarea
+                      placeholder="输入提示词描述（可选）"
                       rows={3}
                       {...field}
-                      value={field.value || ''}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -210,7 +217,7 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
               )}
             />
           </div>
-          
+
           {/* 类型和可见性 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
@@ -219,8 +226,8 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>类型</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
+                  <Select
+                    onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
@@ -243,15 +250,15 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="visibility"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>可见性</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
+                  <Select
+                    onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
@@ -273,7 +280,7 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
               )}
             />
           </div>
-          
+
           {/* 标签选择 */}
           <FormField
             control={form.control}
@@ -287,18 +294,26 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
                       <div
                         key={tag.id}
                         className={`flex items-center px-3 py-1 rounded-full text-sm cursor-pointer 
-                                  ${field.value?.includes(tag.id) 
-                                    ? `bg-primary text-primary-foreground` 
-                                    : `bg-muted hover:bg-muted/80`
+                                  ${
+                                    field.value?.includes(tag.id)
+                                      ? `bg-primary text-primary-foreground`
+                                      : `bg-muted hover:bg-muted/80`
                                   }`}
-                        style={field.value?.includes(tag.id) 
-                          ? {} 
-                          : { borderColor: tag.color || '#888', color: tag.color || '#888', backgroundColor: `${tag.color}10` || 'transparent' }
+                        style={
+                          field.value?.includes(tag.id)
+                            ? {}
+                            : {
+                                borderColor: tag.color || "#888",
+                                color: tag.color || "#888",
+                                backgroundColor: tag.color
+                                  ? `${tag.color}10`
+                                  : "transparent",
+                              }
                         }
                         onClick={() => {
                           const currentValues = field.value || [];
                           const newValues = currentValues.includes(tag.id)
-                            ? currentValues.filter(id => id !== tag.id)
+                            ? currentValues.filter((id) => id !== tag.id)
                             : [...currentValues, tag.id];
                           field.onChange(newValues);
                         }}
@@ -316,14 +331,12 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
                     </p>
                   )}
                 </div>
-                <FormDescription>
-                  选择标签帮助分类和查找提示词
-                </FormDescription>
+                <FormDescription>选择标签帮助分类和查找提示词</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-          
+
           {/* 提示词内容 */}
           <FormField
             control={form.control}
@@ -332,8 +345,8 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
               <FormItem>
                 <FormLabel>提示词内容</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="输入提示词内容" 
+                  <Textarea
+                    placeholder="输入提示词内容"
                     rows={10}
                     className="font-mono text-sm"
                     {...field}
@@ -346,14 +359,14 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
               </FormItem>
             )}
           />
-          
+
           {/* 输入变量 */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <FormLabel>输入变量</FormLabel>
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 size="sm"
                 onClick={addInputVar}
               >
@@ -361,7 +374,7 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
                 添加变量
               </Button>
             </div>
-            
+
             <div className="space-y-4">
               {inputVars.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
@@ -372,7 +385,9 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
                   <Card key={index} className="p-4">
                     <CardContent className="p-0 space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-medium">变量 #{index + 1}</h4>
+                        <h4 className="text-sm font-medium">
+                          变量 #{index + 1}
+                        </h4>
                         <Button
                           type="button"
                           variant="ghost"
@@ -383,36 +398,46 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
                           <Trash className="h-4 w-4" />
                         </Button>
                       </div>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
                           <Label htmlFor={`var-name-${index}`}>变量名</Label>
                           <Input
                             id={`var-name-${index}`}
                             value={variable.name}
-                            onChange={(e) => updateInputVar(index, 'name', e.target.value)}
+                            onChange={(e) =>
+                              updateInputVar(index, "name", e.target.value)
+                            }
                             placeholder="变量名称，如: user_input"
                             className="mt-1"
                           />
                         </div>
-                        
+
                         <div>
                           <Label htmlFor={`var-desc-${index}`}>描述</Label>
                           <Input
                             id={`var-desc-${index}`}
-                            value={variable.description || ''}
-                            onChange={(e) => updateInputVar(index, 'description', e.target.value)}
+                            value={variable.description || ""}
+                            onChange={(e) =>
+                              updateInputVar(
+                                index,
+                                "description",
+                                e.target.value,
+                              )
+                            }
                             placeholder="变量描述，可选"
                             className="mt-1"
                           />
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center space-x-2">
                         <Switch
                           id={`var-required-${index}`}
                           checked={variable.required || false}
-                          onCheckedChange={(checked) => updateInputVar(index, 'required', checked)}
+                          onCheckedChange={(checked) =>
+                            updateInputVar(index, "required", checked)
+                          }
                         />
                         <Label htmlFor={`var-required-${index}`}>必填</Label>
                       </div>
@@ -422,7 +447,7 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
               )}
             </div>
           </div>
-          
+
           {/* 创建版本选项 - 仅在编辑模式显示 */}
           {prompt && (
             <FormField
@@ -447,7 +472,7 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
             />
           )}
         </div>
-        
+
         {/* 表单按钮 */}
         <div className="flex justify-end space-x-4">
           <Button
@@ -465,4 +490,4 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
       </form>
     </Form>
   );
-} 
+}

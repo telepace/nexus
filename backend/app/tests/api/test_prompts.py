@@ -1,7 +1,6 @@
 import uuid
 from typing import Any
 
-import pytest
 from fastapi.testclient import TestClient
 
 
@@ -242,10 +241,3 @@ def test_prompt_with_tags(
     assert response.status_code == 200
     updated_prompt = response.json()
     assert len(updated_prompt["tags"]) == 0
-
-
-# 辅助函数
-if not hasattr(pytest, "get_unique_id"):
-    import uuid
-
-    pytest.get_unique_id = lambda: str(uuid.uuid4())

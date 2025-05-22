@@ -12,11 +12,23 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { fetchPrompts, fetchTags, type PromptData, type TagData } from "@/components/actions/prompts-action";
+import {
+  fetchPrompts,
+  fetchTags,
+  type PromptData,
+  type TagData,
+} from "@/components/actions/prompts-action";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Search, Tag as TagIcon, Clock, SortDesc, SortAsc } from "lucide-react";
+import {
+  AlertCircle,
+  Search,
+  Tag as TagIcon,
+  Clock,
+  SortDesc,
+  SortAsc,
+} from "lucide-react";
 import { getAuthState } from "@/lib/server-auth-bridge";
 import { Suspense } from "react";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -63,26 +75,30 @@ function PromptCards({ prompts }: { prompts: PromptData[] }) {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            
+
             <p className="text-sm text-muted-foreground mb-3 flex-grow">
               {prompt.description || "无描述"}
             </p>
-            
+
             <div className="flex flex-wrap gap-1 mb-2">
-              {prompt.tags && prompt.tags.map((tag) => (
-                <Badge 
-                  key={tag.id}
-                  variant="outline" 
-                  style={{ borderColor: tag.color || '#888', color: tag.color || '#888' }}
-                >
-                  {tag.name}
-                </Badge>
-              ))}
+              {prompt.tags &&
+                prompt.tags.map((tag) => (
+                  <Badge
+                    key={tag.id}
+                    variant="outline"
+                    style={{
+                      borderColor: tag.color || "#888",
+                      color: tag.color || "#888",
+                    }}
+                  >
+                    {tag.name}
+                  </Badge>
+                ))}
               {(!prompt.tags || prompt.tags.length === 0) && (
                 <span className="text-xs text-muted-foreground">无标签</span>
               )}
             </div>
-            
+
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <div className="flex items-center">
                 <TagIcon className="h-3 w-3 mr-1" />
@@ -91,9 +107,9 @@ function PromptCards({ prompts }: { prompts: PromptData[] }) {
               <div className="flex items-center">
                 <Clock className="h-3 w-3 mr-1" />
                 <span title={new Date(prompt.updated_at).toLocaleString()}>
-                  {formatDistance(new Date(prompt.updated_at), new Date(), { 
+                  {formatDistance(new Date(prompt.updated_at), new Date(), {
                     addSuffix: true,
-                    locale: zhCN 
+                    locale: zhCN,
                   })}
                 </span>
               </div>
@@ -190,9 +206,11 @@ async function PromptsContent({
   try {
     // 准备查询参数
     const search = searchParams?.query || undefined;
-    const tagIds = searchParams?.tags ? searchParams.tags.split(',') : undefined;
+    const tagIds = searchParams?.tags
+      ? searchParams.tags.split(",")
+      : undefined;
     const sort = searchParams?.sort || undefined;
-    const order = (searchParams?.order || 'desc') as 'asc' | 'desc';
+    const order = (searchParams?.order || "desc") as "asc" | "desc";
 
     // 获取提示词和标签数据
     const [promptsResponse, tagsResponse] = await Promise.all([
@@ -206,7 +224,11 @@ async function PromptsContent({
 
     if (Array.isArray(tagsResponse)) {
       tagsList = tagsResponse;
-    } else if (tagsResponse && typeof tagsResponse === "object" && 'error' in tagsResponse) {
+    } else if (
+      tagsResponse &&
+      typeof tagsResponse === "object" &&
+      "error" in tagsResponse
+    ) {
       tagsErrorMessage = String(tagsResponse.error);
     }
 
@@ -220,7 +242,11 @@ async function PromptsContent({
       console.log(
         `[prompts-${renderID}] 成功获取 ${promptsList.length} 个提示词`,
       );
-    } else if (promptsResponse && typeof promptsResponse === "object" && 'error' in promptsResponse) {
+    } else if (
+      promptsResponse &&
+      typeof promptsResponse === "object" &&
+      "error" in promptsResponse
+    ) {
       // 处理可能的错误响应
       errorMessage = String(promptsResponse.error);
       errorStatus = promptsResponse.status || 500;
@@ -279,14 +305,14 @@ async function PromptsContent({
             </h2>
             <div className="flex flex-wrap gap-2">
               {tagsList.map((tag) => (
-                <Link 
-                  key={tag.id}
-                  href={`/prompts?tags=${tag.id}`}
-                >
-                  <Badge 
-                    variant="outline" 
+                <Link key={tag.id} href={`/prompts?tags=${tag.id}`}>
+                  <Badge
+                    variant="outline"
                     className="cursor-pointer hover:bg-muted"
-                    style={{ borderColor: tag.color || '#888', color: tag.color || '#888' }}
+                    style={{
+                      borderColor: tag.color || "#888",
+                      color: tag.color || "#888",
+                    }}
                   >
                     {tag.name}
                   </Badge>
@@ -304,12 +330,16 @@ async function PromptsContent({
             共 {promptsList.length} 个提示词
           </div>
           <div className="flex items-center gap-2">
-            <Link 
-              href={`/prompts?sort=${sort || 'updated_at'}&order=${order === 'asc' ? 'desc' : 'asc'}`}
+            <Link
+              href={`/prompts?sort=${sort || "updated_at"}&order=${order === "asc" ? "desc" : "asc"}`}
               className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
             >
-              {order === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
-              {sort === 'created_at' ? '创建时间' : '更新时间'}
+              {order === "asc" ? (
+                <SortAsc className="h-4 w-4" />
+              ) : (
+                <SortDesc className="h-4 w-4" />
+              )}
+              {sort === "created_at" ? "创建时间" : "更新时间"}
             </Link>
           </div>
         </div>
@@ -335,4 +365,4 @@ async function PromptsContent({
     console.error(`[prompts-${renderID}] 渲染过程出错:`, error);
     throw error; // 让错误边界处理
   }
-} 
+}

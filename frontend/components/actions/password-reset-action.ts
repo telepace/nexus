@@ -13,10 +13,10 @@ export async function passwordReset(prevState: unknown, formData: FormData) {
 
   // 基本的电子邮件验证
   if (!email || !email.includes("@")) {
-    return { 
+    return {
       errors: {
-        email: ["请输入有效的电子邮件地址"]
-      }
+        email: ["请输入有效的电子邮件地址"],
+      },
     };
   }
 
@@ -68,7 +68,7 @@ export async function passwordResetConfirm(
     if (error) {
       return { server_validation_error: getErrorMessage(error) };
     }
-    
+
     // 成功后先返回成功消息，延迟重定向让用户看到成功提示
     return { message: "密码已成功重置！正在跳转到登录页面..." };
   } catch (err) {
@@ -81,5 +81,5 @@ export async function passwordResetConfirm(
 
 // 成功后的重定向函数，用于客户端使用
 export async function redirectAfterSuccess() {
-  redirect('/login');
+  redirect("/login");
 }

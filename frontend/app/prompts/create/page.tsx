@@ -1,6 +1,5 @@
 import { fetchTags } from "@/components/actions/prompts-action";
 import { getAuthState } from "@/lib/server-auth-bridge";
-import { redirect as _redirect } from "next/navigation";
 import { PromptForm } from "../_components/PromptForm";
 import { Suspense } from "react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -76,13 +75,13 @@ async function CreatePromptContent() {
   try {
     // 获取所有标签
     const tagsResponse = await fetchTags();
-    
+
     // 检查是否有错误
     if (!Array.isArray(tagsResponse)) {
-      const errorMsg = tagsResponse.error || '获取标签失败';
+      const errorMsg = tagsResponse.error || "获取标签失败";
       throw new Error(errorMsg);
     }
-    
+
     return (
       <div className="container py-10">
         <div className="max-w-3xl mx-auto">
@@ -92,13 +91,13 @@ async function CreatePromptContent() {
               <Link href="/prompts">返回列表</Link>
             </Button>
           </div>
-          
+
           <PromptForm tags={tagsResponse} />
         </div>
       </div>
     );
   } catch (error) {
-    console.error('创建提示词页面加载出错:', error);
+    console.error("创建提示词页面加载出错:", error);
     throw error; // 让错误边界处理
   }
-} 
+}

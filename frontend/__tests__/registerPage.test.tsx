@@ -1,14 +1,14 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import { act } from 'react';
-import React from 'react';
+import { act } from "react";
+import React from "react";
 
 import Page from "@/app/register/page";
 import { register } from "@/components/actions/register-action";
 
 // 使用 jest.mock 模拟整个模块
 jest.mock("@/components/actions/register-action", () => ({
-  register: jest.fn().mockResolvedValue({})
+  register: jest.fn().mockResolvedValue({}),
 }));
 
 // 模拟重定向和路由
@@ -29,13 +29,19 @@ jest.mock("@/components/actions/google-auth-action", () => ({
 }));
 
 describe("Register Page", () => {
+  let originalFetch: typeof global.fetch;
   beforeEach(() => {
     jest.clearAllMocks();
     (register as jest.Mock).mockClear();
+    originalFetch = global.fetch;
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: jest.fn().mockResolvedValue({ success: true }),
     });
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
   });
 
   it("renders form with email, password, and submit button", () => {
@@ -138,10 +144,7 @@ describe("Register Page", () => {
 
   it("renders Google login button", () => {
     render(<Page />);
-    
-    expect(
-      screen.getByText(/使用 Google 账号/i),
-    ).toBeInTheDocument();
+
+    expect(screen.getByText(/使用 Google 账号/i)).toBeInTheDocument();
   });
 });
-

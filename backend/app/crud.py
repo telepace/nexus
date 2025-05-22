@@ -36,9 +36,9 @@ def get_multi(
     limit: int = 100,
 ) -> Sequence[ModelType]:
     """获取对象列表"""
-    query = select(model)
+    query = select(model).offset(skip).limit(limit)
     results = session.exec(query).all()
-    return list(results[skip : skip + limit])
+    return list(results)
 
 
 def create(
@@ -226,12 +226,19 @@ def delete_item(session: Session, item: Any) -> Any:
     return item
 
 
-def create_token_blacklist(session: Session, token: str) -> Any:
-    """将令牌加入黑名单"""
+def create_token_blacklist(
+    session: Session, token: str, user_id: uuid.UUID, expires_at: datetime
+) -> Any:
+    """Add a token to the blacklist"""
     # 动态导入TokenBlacklist
     from app.models import TokenBlacklist
 
-    token_blacklist = TokenBlacklist(token=token, created_at=datetime.utcnow())
+    token_blacklist = TokenBlacklist(
+        token=token,
+        user_id=user_id,
+        expires_at=expires_at,
+        created_at=datetime.utcnow(),
+    )
     session.add(token_blacklist)
     session.commit()
     session.refresh(token_blacklist)

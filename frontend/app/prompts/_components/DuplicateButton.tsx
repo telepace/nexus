@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Copy } from 'lucide-react';
-import { duplicatePromptAction } from '@/components/actions/prompts-action';
-import { toast } from '@/components/ui/use-toast';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Copy } from "lucide-react";
+import { duplicatePromptAction } from "@/components/actions/prompts-action";
+import { toast } from "@/components/ui/use-toast";
 
 interface DuplicateButtonProps {
   promptId: string;
@@ -16,9 +16,9 @@ export function DuplicateButton({ promptId }: DuplicateButtonProps) {
   const handleDuplicate = async () => {
     try {
       setIsDuplicating(true);
-      
+
       const result = await duplicatePromptAction(promptId);
-      
+
       if (result.error) {
         toast({
           title: "复制失败",
@@ -44,8 +44,8 @@ export function DuplicateButton({ promptId }: DuplicateButtonProps) {
   };
 
   return (
-    <Button 
-      variant="outline" 
+    <Button
+      variant="outline"
       onClick={handleDuplicate}
       disabled={isDuplicating}
     >
@@ -53,4 +53,4 @@ export function DuplicateButton({ promptId }: DuplicateButtonProps) {
       {isDuplicating ? "复制中..." : "复制"}
     </Button>
   );
-} 
+}
