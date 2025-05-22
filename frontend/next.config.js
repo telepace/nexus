@@ -1,6 +1,7 @@
-/** @type {import('next').NextConfig} */
 const path = require("path");
+const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
@@ -16,12 +17,28 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     // 解决路径别名问题
     config.resolve.alias = {
       ...config.resolve.alias,
       "@": path.resolve(__dirname),
     };
+
+    // ForkTsCheckerWebpackPlugin
+    if (!isServer) {
+      config.plugins.push(
+        new ForkTsCheckerWebpackPlugin({
+          async: true,
+          typescript: {
+            configOverwrite: {
+              compilerOptions: {
+                skipLibCheck: true,
+              },
+            },
+          },
+        })
+      );
+    }
 
     // 修复CSS加载问题 - 处理@tailwind指令
     const rules = config.module.rules
