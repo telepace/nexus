@@ -15,6 +15,12 @@ jobs:
       - staging # Überlege, ob hier 'production' sinnvoller wäre
 
     steps:
+      - name: Fix workspace permissions before checkout
+        run: |
+          sudo chown -R $USER:$USER .
+          sudo find . -type d -exec chmod 755 {} \;
+          sudo find . -type f -exec chmod 644 {} \;
+
       - name: Checkout code
         uses: actions/checkout@v4
 
