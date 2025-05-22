@@ -1,9 +1,11 @@
 name: Deploy to Production
-
 on:
   release:
     types:
-      - published # Wird ausgelöst, wenn ein Release veröffentlicht wird
+      - published
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'  # Only matches version tags like v1.0.0, excludes test tags
 
 jobs:
   deploy:
