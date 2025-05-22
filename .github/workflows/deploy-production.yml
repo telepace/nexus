@@ -24,6 +24,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Fix workspace permissions
+        run: |
+          sudo chown -R $USER:$USER .
+          sudo find . -type d -exec chmod 755 {} \;
+          sudo find . -type f -exec chmod 644 {} \;
+
       - name: Show current user and docker access
         run: |
           echo "Running as user: $(whoami)"
