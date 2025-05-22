@@ -52,7 +52,7 @@ jobs:
       with:
         version: 9.9.0
     - name: Symlink pnpm-lock.yaml to root
-      run: ln -s frontend/pnpm-lock.yaml pnpm-lock.yaml
+      run: ln -sf frontend/pnpm-lock.yaml pnpm-lock.yaml
     - uses: actions/setup-node@v4
       with:
         node-version: lts/*
