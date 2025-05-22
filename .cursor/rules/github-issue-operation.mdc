@@ -17,7 +17,7 @@ alwaysApply: false
 - The language chosen for raising an issue: Chinese-
 - Before writing the issue content, use mcp's thinking in combination with the current repository code and implementation to think about what the solution to the task is.
 - Be careful not to be too AI in your tone.
-- Pay attention to choosing the appropriate labels and types. And select the latest Milestone
+- Pay attention to choosing the appropriate labels and types. And select the latest Milestone(OR v0.1)
 - Assign tasks. If it is a simple UI-related task, assign it to @Neo-Neooo, and if it is a complex task, assign it to @cubxxw.
 - No need for my confirmation. Just execute directly
 
