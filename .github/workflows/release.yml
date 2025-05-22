@@ -15,10 +15,15 @@ jobs:
         with:
           fetch-depth: 0  # 获取完整历史以生成正确的 changelog
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.9.0
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: lts/*
           cache: 'pnpm'
 
       - name: Setup Python
