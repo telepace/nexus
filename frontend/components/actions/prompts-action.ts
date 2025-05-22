@@ -392,6 +392,11 @@ export async function addPrompt(formData: FormData) {
     const tag_ids = tagIdsValue ? JSON.parse(tagIdsValue) : [];
     const inputVarsValue = formData.get("input_vars") as string;
     const input_vars = inputVarsValue ? JSON.parse(inputVarsValue) : [];
+    const team_id = formData.get("team_id") as string || null;
+    
+    // 元数据支持
+    const metaDataValue = formData.get("meta_data") as string;
+    const meta_data = metaDataValue ? JSON.parse(metaDataValue) : {};
 
     const { data, error } = await createPrompt({
       headers: {
@@ -405,6 +410,8 @@ export async function addPrompt(formData: FormData) {
         visibility: visibility as any,
         tag_ids,
         input_vars,
+        team_id,
+        meta_data,
       },
     });
 
@@ -459,6 +466,11 @@ export async function updatePromptAction(id: string, formData: FormData) {
     const input_vars = inputVarsValue ? JSON.parse(inputVarsValue) : [];
     const createVersionValue = formData.get("create_version");
     const create_version = createVersionValue === "true";
+    const team_id = formData.get("team_id") as string || null;
+    
+    // 元数据支持
+    const metaDataValue = formData.get("meta_data") as string;
+    const meta_data = metaDataValue ? JSON.parse(metaDataValue) : null;
 
     const { error } = await updatePrompt({
       headers: {
@@ -478,6 +490,8 @@ export async function updatePromptAction(id: string, formData: FormData) {
         visibility: visibility as any,
         tag_ids,
         input_vars,
+        team_id,
+        meta_data,
       },
     });
 

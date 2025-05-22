@@ -98,6 +98,21 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
       formData.append("visibility", values.visibility);
       formData.append("tag_ids", JSON.stringify(values.tag_ids || []));
       formData.append("input_vars", JSON.stringify(inputVars));
+      
+      // 如果选择了team可见性但没有team_id，使用当前用户的默认团队
+      if (values.visibility === "team") {
+        // 这里可以添加获取用户默认团队的逻辑
+        // 暂时使用固定值或为null
+        const defaultTeamId = prompt?.team_id || ""; 
+        formData.append("team_id", defaultTeamId);
+      }
+      
+      // 添加元数据
+      const metaData = {
+        version_notes: "", // 可以从表单中获取
+        last_edited_by: "", // 可以从用户状态中获取
+      };
+      formData.append("meta_data", JSON.stringify(metaData));
 
       if (prompt) {
         // 如果是编辑，则调用更新API
@@ -230,11 +245,9 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="选择提示词类型" />
-                      </SelectTrigger>
-                    </FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择提示词类型" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="simple">简单提示词</SelectItem>
                       <SelectItem value="chat">聊天提示词</SelectItem>
@@ -261,11 +274,9 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="选择可见性" />
-                      </SelectTrigger>
-                    </FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择可见性" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="public">公开</SelectItem>
                       <SelectItem value="private">私有</SelectItem>
