@@ -34,4 +34,4 @@ jobs:
         run: |
           docker compose --project-name $STACK_NAME down --remove-orphans
           docker compose --project-name $STACK_NAME build
-          docker compose --project-name $STACK_NAME up -d
+          docker compose --project-name $STACK_NAME up -d || (echo "Deployment failed, cleaning up..." && docker compose --project-name $STACK_NAME down --remove-orphans && exit 1)

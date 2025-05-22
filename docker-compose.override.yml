@@ -109,12 +109,12 @@ services:
     build:
       context: ./frontend
       args:
-        - VITE_API_URL=${BACKEND_API_URL:-http://localhost:8000}
+        - NEXT_PUBLIC_API_URL=${BACKEND_API_URL:-http://localhost:8000}
         - NODE_ENV=production
     environment:
-      - VITE_API_URL=${BACKEND_API_URL:-http://localhost:8000}
+      - NEXT_PUBLIC_API_URL=${BACKEND_API_URL:-http://localhost:8000}
       - HOSTNAME=0.0.0.0
-      - PORT=3000
+      - PORT=${FRONTEND_PORT:-3000}
       - HOST=0.0.0.0
       - NODE_ENV=production
     # 移除自定义command，使用Dockerfile中的启动命令
