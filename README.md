@@ -4,6 +4,8 @@
 
 ![nexus](https://img.shields.io/badge/nexus-AI-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.104.0-green)
+![nodejs](https://img.shields.io/badge/nodejs-20.0.0-green)
+![python](https://img.shields.io/badge/python-3.10.11-green)
 ![Next.js](https://img.shields.io/badge/Next.js-15.1.0-blue)
 ![React](https://img.shields.io/badge/React-19.1.0-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-blue)
