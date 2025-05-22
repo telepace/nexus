@@ -14,6 +14,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          clean: false
+
+      - name: Clean __pycache__ files
+        run: |
+          find . -type d -name "__pycache__" -exec rm -rf {} +
 
       - name: Show current user and docker access
         run: |
