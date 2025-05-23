@@ -53,7 +53,6 @@ def db() -> Generator[Session, None, None]:
     from app.core.db import engine
 
     # 确保测试用的超级用户密码为 "adminadmin"，满足至少8个字符的要求
-    original_password = settings.FIRST_SUPERUSER_PASSWORD
     settings.FIRST_SUPERUSER_PASSWORD = "adminadmin"
 
     # 创建测试用的数据库会话
@@ -68,8 +67,7 @@ def db() -> Generator[Session, None, None]:
         session.execute(statement)
         session.commit()
 
-    # 恢复原始密码设置
-    settings.FIRST_SUPERUSER_PASSWORD = original_password
+    # 注意：不再恢复原始密码设置，因为这会导致测试中的认证失败
 
 
 @pytest.fixture(scope="module")
