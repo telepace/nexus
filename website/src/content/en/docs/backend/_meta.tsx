@@ -1,6 +1,8 @@
-import { Metadata } from 'nextra'
+import type { MetaRecord } from 'nextra' // Changed to MetaRecord
 
-const meta: Metadata = {
+// Using MetaRecord as it's used in other _meta.tsx files
+// and seems more appropriate for defining file-based metadata.
+const meta: MetaRecord = {
   'index': {
     title: 'Backend',
   },

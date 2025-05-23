@@ -25,10 +25,12 @@
   --card-foreground: hsl(0 0% 3.9%);
   --popover: hsl(0 0% 100%);
   --popover-foreground: hsl(0 0% 3.9%);
-  --primary: hsl(221.2, 83.2%, 53.3%);
+  --primary: hsl(221.2, 75%, 48%); /* Adjusted Primary Blue */
   --primary-foreground: hsl(0 0% 98%);
   --secondary: hsl(210, 40%, 96.1%);
   --secondary-foreground: hsl(222.2, 47.4%, 11.2%);
+  --accent-cta: hsl(24, 96%, 53%); /* Vibrant Orange CTA */
+  --accent-cta-foreground: hsl(0, 0%, 100%); /* White */
   --muted: hsl(0 0% 96.1%);
   --muted-foreground: hsl(215.4, 16.3%, 46.9%);
   --accent: hsl(0 0% 96.1%);
@@ -52,14 +54,16 @@
   --card-foreground: hsl(0 0% 98%);
   --popover: hsl(0 0% 3.9%);
   --popover-foreground: hsl(0 0% 98%);
-  --primary: hsl(217.2, 91.2%, 59.8%);
-  --primary-foreground: hsl(222.2, 47.4%, 11.2%);
+  --primary: hsl(221.2, 70%, 55%); /* Adjusted Primary Blue for Dark Mode */
+  --primary-foreground: hsl(222.2, 47.4%, 11.2%); 
   --secondary: hsl(217.2, 32.6%, 17.5%);
   --secondary-foreground: hsl(210, 40%, 98%);
   --muted: hsl(217.2, 32.6%, 17.5%);
   --muted-foreground: hsl(215, 20.2%, 65.1%);
-  --accent: hsl(0 0% 14.9%);
+  --accent: hsl(0 0% 14.9%); /* This is the existing general accent, not the new CTA accent */
   --accent-foreground: hsl(0 0% 98%);
+  --accent-cta: hsl(24, 90%, 60%); /* Vibrant Orange CTA for Dark Mode */
+  --accent-cta-foreground: hsl(0, 0%, 100%); /* White */
   --destructive: hsl(0 62.8% 30.6%);
   --destructive-foreground: hsl(0 0% 98%);
   --border: hsl(0 0% 14.9%);
@@ -74,7 +78,6 @@
   body {
     @apply bg-background text-foreground;
     /* 移除任何可能导致水合问题的过渡效果 */
-    font-family: 'sans-serif', 'Arial', 'Microsoft Yahei';
     text-rendering: optimizeLegibility;
     overflow-x: hidden;
   }

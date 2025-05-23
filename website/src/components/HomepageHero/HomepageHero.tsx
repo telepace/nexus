@@ -55,7 +55,10 @@ export const HomepageHero: React.FC<HomepageHeroProps> = ({
             transition={{ duration: 0.5, delay: 0.4 }}
           >
             <Link href={`/${lang}/docs/getting-started`}>
-              <Button size="lg" className="w-full sm:w-auto px-8 py-3 text-lg">
+              <Button 
+                size="lg" 
+                className="w-full sm:w-auto px-8 py-3 text-lg bg-accent-cta text-accent-cta-foreground hover:bg-accent-cta/90"
+              >
                 {cta}
               </Button>
             </Link>

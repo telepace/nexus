@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useTheme } from 'next-themes'
 
 /**
  * This function is used to fix the Nextra style hydration issue.

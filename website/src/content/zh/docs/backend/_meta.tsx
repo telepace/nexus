@@ -1,6 +1,6 @@
-import { Metadata } from 'nextra'
+import type { MetaRecord } from 'nextra'
 
-const meta: Metadata = {
+const meta: MetaRecord = {
   'index': {
     title: '后端',
   },

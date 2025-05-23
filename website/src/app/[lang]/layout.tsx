@@ -30,6 +30,7 @@ export default async function RootLayout({ children, params }: Props) {
   await getDictionary(lang)
 
   return (
+    // The className for font handling is now managed by the root layout: website/src/app/layout.tsx
     <html
       lang={lang}
       dir={getDirection(lang)}

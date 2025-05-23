@@ -1,6 +1,6 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
-import type { NextraThemeLayoutProps } from 'nextra'
+import type NextraThemeLayoutProps from 'nextra' // Changed to default import
 
 // 自定义导航配置
 const config = {
