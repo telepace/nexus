@@ -94,7 +94,7 @@ export function AppearanceForm() {
               onClick={() => setTheme("system")}
             >
               <CardContent className="p-4 flex flex-col items-center">
-                <div className="h-24 w-full rounded bg-gradient-to-r from-[#F8FAFC] to-gray-900 border mb-4 flex items-center justify-center">
+                <div className="h-24 w-full rounded bg-linear-to-r from-[#F8FAFC] to-gray-900 border mb-4 flex items-center justify-center">
                   <Monitor className="h-8 w-8" />
                 </div>
                 <span className="font-medium">System</span>

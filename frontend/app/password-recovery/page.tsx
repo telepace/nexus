@@ -62,7 +62,7 @@ export default function Page() {
   const errors = stateData?.errors;
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 px-4">
+    <div className="w-full min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 px-4">
       {/* Wrap useSearchParams in Suspense */}
       <Suspense fallback={null}>
         <SearchParamsHandler setInitialEmail={setInitialEmail} />

@@ -88,7 +88,7 @@ export const TopNavigation: FC<TopNavigationProps> = ({
               id="global-search"
               type="text"
               placeholder="搜索您的内容库…"
-              className="pl-10 pr-3 py-2 w-full rounded-md border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-sm placeholder:text-gray-400 transition"
+              className="pl-10 pr-3 py-2 w-full rounded-md border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary outline-hidden text-sm placeholder:text-gray-400 transition"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}

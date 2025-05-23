@@ -66,7 +66,7 @@ function PromptCards({ prompts }: { prompts: PromptData[] }) {
               </DropdownMenu>
             </div>
 
-            <p className="text-sm text-muted-foreground mb-3 flex-grow">
+            <p className="text-sm text-muted-foreground mb-3 grow">
               {prompt.description || "无描述"}
             </p>
 

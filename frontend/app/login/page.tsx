@@ -146,7 +146,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 p-4 relative overflow-hidden">
+    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-linear-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 p-4 relative overflow-hidden">
       {/* Wrap useSearchParams in Suspense */}
       <Suspense fallback={null}>
         <SearchParamsHandler setEmail={setEmail} />
@@ -169,7 +169,7 @@ export default function LoginPage() {
         <div className="absolute bottom-0 right-0 w-1/3 h-1/3 bg-indigo-50 dark:bg-indigo-900/10 rounded-full blur-3xl opacity-30 translate-x-1/2 translate-y-1/2"></div>
 
         {/* Tech grid lines */}
-        <div className="absolute inset-0 bg-grid-slate-200/50 dark:bg-grid-slate-700/20 bg-[length:30px_30px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_50%,#000_20%,transparent_100%)]"></div>
+        <div className="absolute inset-0 bg-grid-slate-200/50 dark:bg-grid-slate-700/20 bg-size-[30px_30px] mask-[radial-gradient(ellipse_80%_80%_at_50%_50%,#000_20%,transparent_100%)]"></div>
       </div>
 
       <div className="w-full max-w-md mb-8 relative z-10">
@@ -184,12 +184,12 @@ export default function LoginPage() {
               className="relative z-10 transform transition-transform hover:scale-110"
             />
           </div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
             登录
           </h1>
         </div>
 
-        <Card className="w-full rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm transition-all duration-300 hover:shadow-blue-100 dark:hover:shadow-blue-900/20">
+        <Card className="w-full rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xs transition-all duration-300 hover:shadow-blue-100 dark:hover:shadow-blue-900/20">
           <CardContent className="pt-6 px-6">
             <Button
               variant="outline"
@@ -197,7 +197,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => initiateGoogleLogin()}
             >
-              <div className="absolute inset-0 w-0 bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/30 dark:to-transparent transition-all duration-500 group-hover:w-full"></div>
+              <div className="absolute inset-0 w-0 bg-linear-to-r from-blue-50 to-transparent dark:from-blue-900/30 dark:to-transparent transition-all duration-500 group-hover:w-full"></div>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -252,7 +252,7 @@ export default function LoginPage() {
                   邮箱
                 </Label>
                 <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                  <div className="absolute -inset-0.5 bg-linear-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition duration-500"></div>
                   <Input
                     id="email"
                     type="email"
@@ -280,7 +280,7 @@ export default function LoginPage() {
                   </Link>
                 </div>
                 <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                  <div className="absolute -inset-0.5 bg-linear-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition duration-500"></div>
                   <Input
                     id="password"
                     type="password"
@@ -294,11 +294,11 @@ export default function LoginPage() {
               </div>
 
               <div className="relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
+                <div className="absolute -inset-0.5 bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition duration-300"></div>
                 <Button
                   type="submit"
                   disabled={isLoggingIn}
-                  className="relative w-full h-11 bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 dark:from-slate-50 dark:to-white dark:text-slate-800 transition-all duration-300"
+                  className="relative w-full h-11 bg-linear-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 dark:from-slate-50 dark:to-white dark:text-slate-800 transition-all duration-300"
                 >
                   {isLoggingIn ? "登录中..." : "登录"}
                 </Button>

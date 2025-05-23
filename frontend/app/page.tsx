@@ -39,14 +39,14 @@ export default function Home() {
 
         {/* Link to Setup */}
         <Link href="/setup">
-          <Button className="px-8 py-4 text-xl font-semibold rounded-full shadow-lg bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 focus:ring-4 focus:ring-blue-300">
+          <Button className="px-8 py-4 text-xl font-semibold rounded-full shadow-lg bg-linear-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 focus:ring-4 focus:ring-blue-300">
             开始设置
           </Button>
         </Link>
 
         {/* Link to Prompts */}
         <Link href="/prompts">
-          <Button className="px-8 py-4 text-xl font-semibold rounded-full shadow-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 focus:ring-4 focus:ring-green-300 mt-4">
+          <Button className="px-8 py-4 text-xl font-semibold rounded-full shadow-lg bg-linear-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 focus:ring-4 focus:ring-green-300 mt-4">
             探索 Prompt
           </Button>
         </Link>

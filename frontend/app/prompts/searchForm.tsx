@@ -77,7 +77,7 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
   return (
     <div>
       <form onSubmit={handleSubmit} className="flex gap-2 items-center mb-4">
-        <div className="relative flex-grow">
+        <div className="relative grow">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"

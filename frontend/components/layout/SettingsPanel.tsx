@@ -140,7 +140,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
                 <Separator />
                 <div className="grid gap-6">
                   <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-                    <div className="h-24 w-24 relative rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
+                    <div className="h-24 w-24 relative rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden shrink-0">
                       <Image
                         src="/images/vinta.png"
                         alt="Profile"
