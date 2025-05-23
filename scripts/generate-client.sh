@@ -15,6 +15,10 @@ echo "📍 Script directory: $SCRIPT_DIR"
 echo "📍 Project root: $PROJECT_ROOT"
 echo "📍 Current directory: $(pwd)"
 
+# Enter the backend directory first
+cd "$PROJECT_ROOT/backend"
+echo "📍 Changed to backend directory: $(pwd)"
+
 # 显示Python环境信息
 echo "🐍 Python environment:"
 which python || echo "Python command not found"
@@ -22,50 +26,46 @@ python --version || echo "Python version command failed"
 echo "🔍 Python path: $PYTHONPATH"
 echo "🔍 Python executable: $(which python)"
 
-# 在进入backend目录之前，确保安装必要的依赖
-echo "📦 Installing required dependencies..."
-python -m pip install --no-cache-dir sentry_sdk posthog || {
-  echo "⚠️ Warning: Failed to install dependencies with python -m pip"
-  echo "⚠️ Trying with pip directly..."
-  pip install --no-cache-dir sentry_sdk posthog || {
-    echo "❌ Failed to install dependencies"
+# 使用 uv 安装必要的依赖
+echo "📦 Installing required dependencies with uv..."
+uv add --dev sentry_sdk posthog || {
+  echo "⚠️ Warning: Failed to install dependencies with uv add"
+  echo "⚠️ Trying to sync dependencies..."
+  uv sync || {
+    echo "❌ Failed to sync dependencies"
     exit 1
   }
 }
 
-# Enter the backend directory and generate OpenAPI JSON
-cd "$PROJECT_ROOT/backend"
-echo "📍 Changed to backend directory: $(pwd)"
-
 # 检查依赖项是否安装
 echo "📦 Checking for required dependencies..."
-python -c "import sys; print('Python version:', sys.version); print('Path:', sys.path)" || {
+uv run python -c "import sys; print('Python version:', sys.version); print('Path:', sys.path)" || {
   echo "❌ Python is not available"
   exit 1
 }
 
 # 列出已安装的包
 echo "📦 Installed packages:"
-pip list | grep sentry || echo "sentry_sdk not found in pip list"
-pip list | grep posthog || echo "posthog not found in pip list"
+uv run python -c "import importlib.util; print('sentry_sdk:', importlib.util.find_spec('sentry_sdk') is not None)"
+uv run python -c "import importlib.util; print('posthog:', importlib.util.find_spec('posthog') is not None)"
 
 # 检查是否安装了sentry_sdk
-python -c "import sentry_sdk; print('sentry_sdk installed successfully')" || {
+uv run python -c "import sentry_sdk; print('sentry_sdk installed successfully')" || {
   echo "❌ sentry_sdk is not installed or not accessible"
-  echo "🔍 Attempting again with explicit pip install..."
-  python -m pip install --verbose --no-cache-dir sentry_sdk
-  python -c "import sentry_sdk; print('sentry_sdk installed successfully')" || {
+  echo "🔍 Attempting again with explicit uv add..."
+  uv add --dev sentry_sdk
+  uv run python -c "import sentry_sdk; print('sentry_sdk installed successfully')" || {
     echo "❌ Still cannot import sentry_sdk after reinstall"
     exit 1
   }
 }
 
 # 检查是否安装了posthog
-python -c "import posthog; print('posthog imported successfully')" || {
+uv run python -c "import posthog; print('posthog imported successfully')" || {
   echo "❌ posthog is not installed or not accessible"
-  echo "🔍 Attempting again with explicit pip install..."
-  python -m pip install --verbose --no-cache-dir posthog
-  python -c "import posthog; print('posthog imported successfully')" || {
+  echo "🔍 Attempting again with explicit uv add..."
+  uv add --dev posthog
+  uv run python -c "import posthog; print('posthog imported successfully')" || {
     echo "❌ Still cannot import posthog after reinstall"
     exit 1
   }
@@ -75,7 +75,7 @@ echo "✅ Dependencies check passed"
 
 # 生成OpenAPI JSON
 echo "📝 Generating OpenAPI JSON..."
-python -c "import app.main; import json; print(json.dumps(app.main.app.openapi()))" > "$PROJECT_ROOT/openapi.json" 2> generate-client.log || {
+uv run python -c "import app.main; import json; print(json.dumps(app.main.app.openapi()))" > "$PROJECT_ROOT/openapi.json" 2> generate-client.log || {
   echo "❌ Failed to generate OpenAPI specification"
   cat generate-client.log
   exit 1
