@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UsersUploadAvatarData, UsersUploadAvatarResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class GoogleOauthService {
     /**
@@ -832,6 +832,26 @@ export class UsersService {
             path: {
                 user_id: data.userId
             },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Upload Avatar
+     * Upload user avatar.
+     * @param data The data for the request.
+     * @param data.formData
+     * @returns UserPublic Successful Response
+     * @throws ApiError
+     */
+    public static uploadAvatar(data: UsersUploadAvatarData): CancelablePromise<UsersUploadAvatarResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/users/me/avatar',
+            formData: data.formData,
+            mediaType: 'multipart/form-data',
             errors: {
                 422: 'Validation Error'
             }

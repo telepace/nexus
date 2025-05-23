@@ -16,6 +16,7 @@ class UserBase(SQLModel):
     is_active: bool = True
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
+    avatar_url: str | None = Field(default=None, max_length=1024)
 
 
 # Properties to receive via API on creation
@@ -38,6 +39,7 @@ class UserUpdate(UserBase):
 class UserUpdateMe(SQLModel):
     full_name: str | None = Field(default=None, max_length=255)
     email: str | None = Field(default=None, max_length=255)
+    avatar_url: str | None = Field(default=None, max_length=1024)
 
 
 class UpdatePassword(SQLModel):
