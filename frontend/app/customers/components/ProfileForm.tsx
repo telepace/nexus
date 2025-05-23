@@ -6,7 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Upload, Edit2, RefreshCw, Palette, User as UserIcon } from "lucide-react";
+import {
+  Upload,
+  Edit2,
+  RefreshCw,
+  Palette,
+  User as UserIcon,
+} from "lucide-react";
 import NiceAvatar, { genConfig } from "react-nice-avatar";
 
 interface ProfileFormProps {
@@ -32,9 +38,11 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
   const [email, setEmail] = useState(user.email || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailError, setEmailError] = useState("");
-  const [animeAvatarConfig, setAnimeAvatarConfig] = useState(user.anime_avatar_config || null);
-  const [avatarType, setAvatarType] = useState<'traditional' | 'anime'>(
-    user.anime_avatar_config ? 'anime' : 'traditional'
+  const [animeAvatarConfig, setAnimeAvatarConfig] = useState(
+    user.anime_avatar_config || null,
+  );
+  const [avatarType, setAvatarType] = useState<"traditional" | "anime">(
+    user.anime_avatar_config ? "anime" : "traditional",
   );
 
   const handleEdit = () => {
@@ -106,7 +114,7 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
   const handleGenerateAnimeAvatar = () => {
     const newConfig = genConfig();
     setAnimeAvatarConfig(newConfig);
-    setAvatarType('anime');
+    setAvatarType("anime");
   };
 
   /**
@@ -122,7 +130,7 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
    */
   const handleUseTraditionalAvatar = () => {
     setAnimeAvatarConfig(null);
-    setAvatarType('traditional');
+    setAvatarType("traditional");
   };
 
   // Get the initials from user's full name or fallback to 'U'
@@ -144,11 +152,11 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
    * Otherwise, it renders a default Avatar component with an image or fallback text based on user data.
    */
   const renderAvatar = () => {
-    if (avatarType === 'anime' && animeAvatarConfig) {
+    if (avatarType === "anime" && animeAvatarConfig) {
       return (
         <div className="h-32 w-32 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-          <NiceAvatar 
-            style={{ width: '128px', height: '128px' }}
+          <NiceAvatar
+            style={{ width: "128px", height: "128px" }}
             {...animeAvatarConfig}
           />
         </div>
@@ -161,9 +169,7 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
           src={user.avatar_url || ""}
           alt={user.full_name || "User"}
         />
-        <AvatarFallback className="text-2xl">
-          {getInitials()}
-        </AvatarFallback>
+        <AvatarFallback className="text-2xl">{getInitials()}</AvatarFallback>
       </Avatar>
     );
   };
@@ -172,21 +178,21 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
    * Renders avatar buttons based on the avatar type and configuration.
    */
   const renderAvatarButtons = () => {
-    if (avatarType === 'anime' && animeAvatarConfig) {
+    if (avatarType === "anime" && animeAvatarConfig) {
       return (
         <div className="mt-4 space-y-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleRandomizeAvatar}
             className="w-full"
           >
             <RefreshCw className="mr-2 h-4 w-4" />
             Randomize Avatar
           </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleUseTraditionalAvatar}
             className="w-full"
           >
@@ -199,8 +205,8 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
 
     return (
       <div className="mt-4 space-y-2">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size="sm"
           onClick={handleGenerateAnimeAvatar}
           className="w-full"

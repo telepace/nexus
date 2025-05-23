@@ -46,11 +46,11 @@ jobs:
       - name: Install dependencies
         run: docker compose --project-name $STACK_NAME run --rm backend uv pip install -e .
       - name: Migrate DB
-        run: docker compose --project-name $STACK_NAME run --rm backend uv run bash scripts/prestart.sh
+        run: docker compose --project-name $STACK_NAME --env-file ../.env run --rm backend uv run bash scripts/prestart.sh
         working-directory: backend
 
       - name: Run tests
-        run: docker compose --project-name $STACK_NAME run --rm backend uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
+        run: docker compose --project-name $STACK_NAME --env-file ../.env run --rm backend uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
         working-directory: backend
       - run: docker compose --project-name $STACK_NAME down -v --remove-orphans
       - name: Store coverage files

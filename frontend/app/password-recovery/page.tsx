@@ -43,7 +43,6 @@ function SearchParamsHandler({
 }
 
 export default function Page() {
-  // @ts-ignore -- 忽略类型错误，useActionState 在 Next.js 中具有特殊处理
   const [state, dispatch] = useActionState(passwordReset, undefined);
   const router = useRouter();
   const { user, isLoading } = useAuth();

@@ -1,10 +1,10 @@
 "use client";
 
-import React from 'react';
-import { formatDate, formatRelativeTime, formatTimeDistance } from '@/lib/date';
-import { useTimeZone } from '@/lib/time-zone-context';
+import React from "react";
+import { formatDate, formatRelativeTime, formatTimeDistance } from "@/lib/date";
+import { useTimeZone } from "@/lib/time-zone-context";
 
-export type DateFormat = 'absolute' | 'relative' | 'distance';
+export type DateFormat = "absolute" | "relative" | "distance";
 
 interface DateDisplayProps {
   date: string | Date | number;
@@ -20,13 +20,13 @@ interface DateDisplayProps {
  */
 export function DateDisplay({
   date,
-  format = 'absolute',
+  format = "absolute",
   showTimeZone = false,
   customFormat,
-  className = '',
+  className = "",
 }: DateDisplayProps) {
   const { timeZone } = useTimeZone();
-  
+
   if (!date) {
     return null;
   }
@@ -34,19 +34,18 @@ export function DateDisplay({
   let formattedDate: string;
 
   switch (format) {
-    case 'relative':
+    case "relative":
       formattedDate = formatRelativeTime(date, undefined, { timeZone });
       break;
-    case 'distance':
+    case "distance":
       formattedDate = formatTimeDistance(date, undefined, { timeZone });
       break;
-    case 'absolute':
+    case "absolute":
     default:
-      formattedDate = formatDate(
-        date,
-        customFormat || 'yyyy-MM-dd HH:mm:ss',
-        { timeZone, showTimeZone }
-      );
+      formattedDate = formatDate(date, customFormat || "yyyy-MM-dd HH:mm:ss", {
+        timeZone,
+        showTimeZone,
+      });
       break;
   }
 
@@ -55,4 +54,4 @@ export function DateDisplay({
       {formattedDate}
     </time>
   );
-} 
+}

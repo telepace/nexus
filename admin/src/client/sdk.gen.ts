@@ -435,7 +435,7 @@ export class PromptsService {
      * 创建新的提示词
      * @param data The data for the request.
      * @param data.requestBody
-     * @returns Prompt Successful Response
+     * @returns PromptReadWithTags Successful Response
      * @throws ApiError
      */
     public static createPrompt(data: PromptsCreatePromptData): CancelablePromise<PromptsCreatePromptResponse> {
@@ -509,7 +509,7 @@ export class PromptsService {
      * @param data.promptId
      * @param data.requestBody
      * @param data.createVersion
-     * @returns Prompt Successful Response
+     * @returns PromptReadWithTags Successful Response
      * @throws ApiError
      */
     public static updatePrompt(data: PromptsUpdatePromptData): CancelablePromise<PromptsUpdatePromptResponse> {

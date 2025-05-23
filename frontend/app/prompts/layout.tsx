@@ -6,9 +6,5 @@ export default function PromptsLayout({
 }: {
   children: ReactNode;
 }) {
-  return (
-    <MainLayout pageTitle="Prompt Hub" currentPath="/prompts">
-      {children}
-    </MainLayout>
-  );
+  return <MainLayout pageTitle="Prompt Hub">{children}</MainLayout>;
 }

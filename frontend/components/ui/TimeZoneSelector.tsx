@@ -1,9 +1,15 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
-import { Label } from './label';
-import { TIME_ZONES, TimeZone, getBrowserTimeZone } from '../../lib/date';
+import { useState, useEffect } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./select";
+import { Label } from "./label";
+import { TIME_ZONES, TimeZone, getBrowserTimeZone } from "../../lib/date";
 
 interface TimeZoneSelectorProps {
   value?: TimeZone;
@@ -11,8 +17,14 @@ interface TimeZoneSelectorProps {
   label?: string;
 }
 
-export function TimeZoneSelector({ value, onChange, label = 'Time Zone' }: TimeZoneSelectorProps) {
-  const [selectedTimeZone, setSelectedTimeZone] = useState<TimeZone>(value || getBrowserTimeZone());
+export function TimeZoneSelector({
+  value,
+  onChange,
+  label = "Time Zone",
+}: TimeZoneSelectorProps) {
+  const [selectedTimeZone, setSelectedTimeZone] = useState<TimeZone>(
+    value || getBrowserTimeZone(),
+  );
 
   useEffect(() => {
     if (value) {
@@ -45,4 +57,4 @@ export function TimeZoneSelector({ value, onChange, label = 'Time Zone' }: TimeZ
       </Select>
     </div>
   );
-} 
+}
