@@ -4,19 +4,19 @@ export default {
     type: 'page',
     display: 'hidden',
     theme: {
-      layout: 'full'
-    }
+      layout: 'full',
+    },
   },
   docs: {
     title: 'Documentation',
-    type: 'page'
+    type: 'page',
   },
   blog: {
     title: 'Blog',
-    type: 'page'
+    type: 'page',
   },
   examples: {
     title: 'Examples',
-    type: 'page'
-  }
-} 
+    type: 'page',
+  },
+}

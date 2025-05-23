@@ -7,4 +7,4 @@ export default {
     title: '项目结构',
     type: 'page',
   },
-} 
+}

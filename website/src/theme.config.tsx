@@ -1,19 +1,19 @@
-import React from 'react'
 import { useParams } from 'next/navigation'
+import React from 'react'
 import NextraLink from './components/NextraLink'
 
 // Complete Nextra theme configuration
 const config = {
   // Customize to use our link component
   components: {
-    a: NextraLink
+    a: NextraLink,
   },
   // Configure project information
   docsRepositoryBase: 'https://github.com/telepace/nexus',
   // Handle metadata in the Head tag
   useNextSeoProps() {
     return {
-      titleTemplate: '%s – nexus'
+      titleTemplate: '%s – nexus',
     }
   },
   // Preferred icon
@@ -22,7 +22,7 @@ const config = {
   logo: () => {
     const params = useParams()
     const lang = params?.lang || 'zh'
-    
+
     return (
       <span className="font-bold text-xl">
         nexus
@@ -31,12 +31,12 @@ const config = {
   },
   // Search function configuration
   search: {
-    placeholder: 'Search documents...'
+    placeholder: 'Search documents...',
   },
   // Footer configuration
   footer: {
-    text: `© ${new Date().getFullYear()} nexus - Built with Nextra`
-  }
+    text: `© ${new Date().getFullYear()} nexus - Built with Nextra`,
+  },
 }
 
-export default config 
+export default config

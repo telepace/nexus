@@ -2,7 +2,11 @@ const themeConfig = {
   footer: (
     <div className="mt-8 border-t border-gray-200 pt-8 dark:border-gray-800">
       <p className="text-center text-sm">
-        © {new Date().getFullYear()} nexus. All rights reserved.
+        ©
+        {' '}
+        {new Date().getFullYear()}
+        {' '}
+        nexus. All rights reserved.
       </p>
     </div>
   ),
@@ -35,4 +39,4 @@ const themeConfig = {
   darkMode: true,
 }
 
-export default themeConfig 
+export default themeConfig

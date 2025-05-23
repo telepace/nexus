@@ -1,10 +1,10 @@
 export default {
   index: {
     title: 'Getting Started',
-    type: 'page'
+    type: 'page',
   },
   'project-structure': {
     title: 'Project Structure',
-    type: 'page'
-  }
-} 
+    type: 'page',
+  },
+}

@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
+import { NextraContentWrapper } from '@/app/[lang]/_components/NextraStyleFix'
 import { getDictionary } from '@/app/_dictionaries/dictionaries'
 import { HomepageHero } from '@/components/HomepageHero/HomepageHero'
 import { notFound, redirect } from 'next/navigation'
 import { generateStaticParamsFor, importPage } from 'nextra/pages'
-import { NextraContentWrapper } from '@/app/[lang]/_components/NextraStyleFix'
 
 export const generateStaticParams = generateStaticParamsFor('mdxPath')
 

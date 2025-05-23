@@ -6,6 +6,6 @@ export default {
     title: '使用FastAPI构建API客户端',
   },
   'getting-started-with-nexus': {
-    title: 'nexus 入门指南'
+    title: 'nexus 入门指南',
   },
 }

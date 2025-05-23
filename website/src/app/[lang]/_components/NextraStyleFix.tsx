@@ -20,16 +20,16 @@ export function NextraStyleFix() {
     const handleStyleFix = () => {
       // Find and remove style tags containing body transition
       document.querySelectorAll('style').forEach(styleEl => {
-        if (styleEl.textContent?.includes('body {transition:') || 
-            styleEl.textContent?.includes('body[unresolved]')) {
+        if (styleEl.textContent?.includes('body {transition:')
+          || styleEl.textContent?.includes('body[unresolved]')) {
           styleEl.remove()
         }
       })
     }
-    
+
     // Execute cleanup
     handleStyleFix()
-    
+
     // For dynamically loaded styles, an observer can be set
     const observer = new MutationObserver((mutations) => {
       mutations.forEach(mutation => {
@@ -38,15 +38,15 @@ export function NextraStyleFix() {
         }
       })
     })
-    
-    observer.observe(document.head, { 
+
+    observer.observe(document.head, {
       childList: true,
-      subtree: true 
+      subtree: true,
     })
-    
+
     return () => observer.disconnect()
   }, [])
-  
+
   return null
 }
 
@@ -60,8 +60,8 @@ export function NextraStyleFix() {
  * @returns {JSX.Element} A JSX element representing the styled and laid-out content container.
  */
 export const NextraContentWrapper: React.FC<{
-  children: React.ReactNode,
-  toc?: any,
+  children: React.ReactNode
+  toc?: any
   metadata?: any
 }> = ({ children, toc, metadata }) => {
   const { theme } = useTheme()
@@ -75,4 +75,4 @@ export const NextraContentWrapper: React.FC<{
       </article>
     </div>
   )
-} 
+}

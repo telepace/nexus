@@ -1,46 +1,46 @@
 export default {
   index: {
     title: 'Introduction',
-    type: 'page'
+    type: 'page',
   },
   'getting-started': {
     title: 'Getting Started',
-    type: 'page'
+    type: 'page',
   },
   'features-and-release-notes': {
     title: 'Features & Releases',
-    type: 'page'
+    type: 'page',
   },
-  'i18n': {
+  i18n: {
     title: 'Internationalization',
-    type: 'page'
+    type: 'page',
   },
   backend: {
     title: 'Backend Development',
-    type: 'page'
+    type: 'page',
   },
   frontend: {
     title: 'Frontend Development',
-    type: 'page'
+    type: 'page',
   },
   'docker-deployment': {
     title: 'Docker & Deployment',
-    type: 'page'
+    type: 'page',
   },
   'template-ui': {
     title: 'Template UI System',
-    type: 'page'
+    type: 'page',
   },
   'ai-integration': {
     title: 'AI Integration',
-    type: 'page'
+    type: 'page',
   },
   'best-practices': {
     title: 'Best Practices',
-    type: 'page'
+    type: 'page',
   },
   examples: {
     title: 'Examples',
-    type: 'page'
-  }
-} 
+    type: 'page',
+  },
+}

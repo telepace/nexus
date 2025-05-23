@@ -4,19 +4,19 @@ export default {
     type: 'page',
     display: 'hidden',
     theme: {
-      layout: 'full'
-    }
+      layout: 'full',
+    },
   },
   docs: {
     title: '文档',
-    type: 'page'
+    type: 'page',
   },
   blog: {
     title: '博客',
-    type: 'page'
+    type: 'page',
   },
   examples: {
     title: '示例',
-    type: 'page'
-  }
-} 
+    type: 'page',
+  },
+}

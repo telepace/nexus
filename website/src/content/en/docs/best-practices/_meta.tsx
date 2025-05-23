@@ -5,4 +5,3 @@ export default {
   'api-testing': 'API Testing Strategies',
   'extension-guide': 'Secondary Development Guide',
 } satisfies MetaRecord
-

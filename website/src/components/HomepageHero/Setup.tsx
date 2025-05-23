@@ -7,9 +7,9 @@ import { FlipWords } from '@/components/ui/flip-words'
 import { LinkPreview } from '@/components/ui/link-preview'
 import { useLocale } from '@/hooks'
 import clsx from 'clsx'
+import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { motion } from 'framer-motion'
 
 interface Props {
 }
@@ -149,15 +149,15 @@ export function SetupHero(props: Props) {
                 <span className="ml-[6px] icon-[mingcute--github-line]"></span>
               </Link>
             </Button>
-            
+
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ 
-                type: "spring", 
-                stiffness: 300, 
+              transition={{
+                type: 'spring',
+                stiffness: 300,
                 damping: 20,
-                delay: 0.3
+                delay: 0.3,
               }}
               className="max-sm:w-[100%]"
             >
@@ -167,7 +167,7 @@ export function SetupHero(props: Props) {
                   variant="outline"
                   className="font-bold group relative overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 text-white hover:text-white dark:from-blue-600 dark:to-purple-700"
                 >
-                  <motion.span 
+                  <motion.span
                     className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-700 opacity-0 dark:from-blue-400 dark:to-purple-500"
                     initial={{ opacity: 0 }}
                     whileHover={{ opacity: 0.7 }}
@@ -175,10 +175,10 @@ export function SetupHero(props: Props) {
                   />
                   <span className="relative z-10 flex items-center">
                     {lang === 'zh' ? '博客' : 'Blog'}
-                    <motion.span 
+                    <motion.span
                       className="ml-[6px] icon-[mingcute--quill-pen-line]"
                       whileHover={{ rotate: 15 }}
-                      transition={{ type: "spring", stiffness: 500 }}
+                      transition={{ type: 'spring', stiffness: 500 }}
                     />
                   </span>
                 </Button>

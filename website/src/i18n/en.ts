@@ -10,7 +10,7 @@ export default {
   lastUpdated: 'Last updated on:',
 
   getStarted: 'Get Started',
-  
+
   blog: {
     title: 'Blog',
     description: 'Latest articles, tutorials and updates',

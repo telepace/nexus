@@ -1,7 +1,7 @@
-import { Metadata } from 'nextra'
+import type { Metadata } from 'nextra'
 
 const meta: Metadata = {
-  'index': {
+  index: {
     title: 'Backend',
   },
   'fastapi-models-and-database': {
@@ -15,4 +15,4 @@ const meta: Metadata = {
   },
 }
 
-export default meta 
+export default meta

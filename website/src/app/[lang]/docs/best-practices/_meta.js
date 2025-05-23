@@ -1,6 +1,6 @@
 export default {
   index: {
-    title: "Best Practices",
-    type: "page",
+    title: 'Best Practices',
+    type: 'page',
   },
 }

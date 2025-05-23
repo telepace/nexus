@@ -1,6 +1,6 @@
 export default {
   index: {
-    title: "Docker & Deployment",
-    type: "page",
+    title: 'Docker & Deployment',
+    type: 'page',
   },
 }

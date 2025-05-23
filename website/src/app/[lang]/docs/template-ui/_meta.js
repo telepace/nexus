@@ -1,6 +1,6 @@
 export default {
   index: {
-    title: "Template UI System",
-    type: "page",
+    title: 'Template UI System',
+    type: 'page',
   },
 }

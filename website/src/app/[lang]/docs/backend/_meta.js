@@ -1,6 +1,6 @@
 export default {
   index: {
-    title: "Backend Development",
-    type: "page",
+    title: 'Backend Development',
+    type: 'page',
   },
-} 
+}

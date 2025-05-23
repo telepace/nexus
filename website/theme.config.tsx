@@ -17,7 +17,7 @@ const config = {
   docsRepositoryBase: 'https://github.com/telepace/nexus',
   useNextSeoProps() {
     return {
-      titleTemplate: '%s – nexus'
+      titleTemplate: '%s – nexus',
     }
   },
   logo,
@@ -26,7 +26,7 @@ const config = {
     const { asPath } = useRouter()
     const { frontMatter } = config
     const title = frontMatter?.title || 'nexus'
-    
+
     const socialCard = asPath === '/' || !title
       ? 'https://nextra.site/og.jpeg'
       : `https://nextra.site/api/og?title=${title}`
@@ -43,7 +43,7 @@ const config = {
         <meta name="twitter:image" content={socialCard} />
         <meta name="twitter:site:domain" content="quickforgeai.com" />
         <meta name="twitter:url" content="https://quickforgeai.com" />
-        <meta name="og:title" content={title ? title + ' – nexus' : 'nexus'} />
+        <meta name="og:title" content={title ? `${title} – nexus` : 'nexus'} />
         <meta name="og:image" content={socialCard} />
         <meta name="apple-mobile-web-app-title" content="nexus" />
         <link rel="icon" href="/favicon.ico" type="image/x-icon" />
@@ -51,19 +51,23 @@ const config = {
     )
   },
   editLink: {
-    text: '编辑此页面 →'
+    text: '编辑此页面 →',
   },
   feedback: {
-    content: '问题反馈'
+    content: '问题反馈',
   },
   footer: {
     text: (
       <div className="flex w-full flex-col items-center sm:items-start">
         <p className="mt-6 text-xs">
-          © {new Date().getFullYear()} nexus. All rights reserved.
+          ©
+          {' '}
+          {new Date().getFullYear()}
+          {' '}
+          nexus. All rights reserved.
         </p>
       </div>
-    )
+    ),
   },
   i18n: [
     { locale: 'en', text: 'English' },
@@ -92,8 +96,8 @@ const config = {
       <p>
         使用最新 Nextra + Next.js 15 构建 🎉
       </p>
-    )
-  }
+    ),
+  },
 } satisfies PageTheme
 
-export default config 
+export default config
