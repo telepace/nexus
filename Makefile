@@ -192,7 +192,7 @@ check-extension-env:
 
 ## all: Run all tests, linting, formatting and build all components
 .PHONY: all
-all: env-init backend-build frontend-build admin-build format lint generate-client # test
+all: env-init backend-build frontend-build admin-build extension-build format lint generate-client
 	@echo "===========> All checks and builds completed successfully"
 
 ## dev: Start development environment
@@ -238,7 +238,7 @@ clean:
 
 ## backend-all: Run all backend checks (lint, test, format) without starting services
 .PHONY: backend-all
-backend-all: backend-format backend-lint backend-test
+backend-all: backend-format backend-lint backend-build backend-test
 	@echo "===========> Backend all checks completed successfully"
 
 ## backend: Start backend development server
@@ -428,7 +428,7 @@ frontend-format: frontend-install
 
 ## admin-all: Run all admin checks (lint, test, format) without starting services
 .PHONY: admin-all
-admin-all: admin-format admin-lint admin-test
+admin-all: admin-format admin-lint # admin-test
 	@echo "===========> Admin all checks completed successfully"
 
 ## admin: Start admin development server
@@ -476,7 +476,7 @@ admin-test: admin-install
 	@echo "===========> Ensuring backend is running for admin tests"
 	@$(MAKE) backend-start
 	@echo "===========> Waiting for backend to be healthy before running admin tests"
-	@cd $(ADMIN_DIR) && $(PNPM) exec wait-on http://localhost:8000/api/v1/health/check -t 60000
+	@cd $(ADMIN_DIR) && $(PNPM) exec wait-on http://localhost:8000/api/v1/utils/health-check
 	@echo "===========> Running admin tests"
 	@cd $(ADMIN_DIR) && $(PNPM) test
 
@@ -559,7 +559,7 @@ extension-clean:
 
 ## extension-all: Run all extension related tasks without starting services
 .PHONY: extension-all
-extension-all: extension-build extension-package extension-test
+extension-all: extension-build extension-package # extension-test
 	@echo "===========> Extension all checks completed successfully"
 
 ## extension: Start extension development

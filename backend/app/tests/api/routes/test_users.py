@@ -194,7 +194,7 @@ def test_update_password_me(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:
     # 使用固定的测试密码字符串，而不是从 settings 获取
-    admin_password = "adminadmin"  # 用与 conftest.py 中设置相同的密码
+    admin_password = "telepace"  # 用与 conftest.py 中设置相同的密码
     new_password = random_lower_string()
     data = {
         "current_password": admin_password,

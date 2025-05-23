@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     FRONTEND_HOST: str = "http://localhost:5173"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
+    # Static files directory
+    STATIC_DIR: str = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "../../static"
+    )
+
     # Flag to indicate we're running tests
     TESTING: bool = os.environ.get("TESTING", "").lower() == "true"
     # We also check for TEST_MODE for compatibility
@@ -219,6 +224,27 @@ class Settings(BaseSettings):
         logger.info(f"Configured Google OAuth redirect_uri: {redirect_uri}")
         logger.info("Make sure this matches your Google Console configuration")
         return redirect_uri
+
+    # 静态文件URL前缀
+    STATIC_URL: str = "/static"
+
+    # 存储服务配置
+    STORAGE_BACKEND: str = "local"  # 可选值: local, s3, r2
+
+    # S3 配置
+    S3_ACCESS_KEY_ID: str = ""
+    S3_SECRET_ACCESS_KEY: str = ""
+    S3_REGION: str = "us-east-1"
+    S3_BUCKET: str = ""
+    S3_PUBLIC_URL: str = ""
+    S3_ENDPOINT_URL: str | None = None
+
+    # Cloudflare R2 配置
+    R2_ACCOUNT_ID: str = ""
+    R2_ACCESS_KEY_ID: str = ""
+    R2_SECRET_ACCESS_KEY: str = ""
+    R2_BUCKET: str = ""
+    R2_PUBLIC_URL: str = ""
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         """Check if the provided secret value is "nexus" and raise a warning or error."""

@@ -51,8 +51,7 @@ docker compose stop frontend
 And then start the local frontend development server:
 
 ```bash
-cd frontend
-npm run dev
+make frontend
 ```
 
 Or you could stop the `backend` Docker Compose service:
@@ -64,8 +63,7 @@ docker compose stop backend
 And then you can run the local development server for the backend:
 
 ```bash
-cd backend
-fastapi dev app/main.py
+make backend
 ```
 
 ## Docker Compose in `localhost.nip.io`

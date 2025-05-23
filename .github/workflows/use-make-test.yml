@@ -10,7 +10,7 @@ on:
       - synchronize
 
 jobs:
-  lint-backend:
+  make-all-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -39,5 +39,13 @@ jobs:
         run: pnpm install --dir extension
         if: hashFiles('extension/package.json') != ''
         
+      - name: Set up backend venv and install dependencies
+        run: |
+          cd backend
+          uv venv .venv
+          source .venv/bin/activate
+          uv sync
+          cd ..
+      
       - name: Make all
         run: make all

@@ -300,7 +300,7 @@ def teardown_test_db() -> None:
         # 不抛出异常，避免测试因清理问题而失败
 
 
-def test_database_connection() -> bool:
+def test_database_connection():
     """测试与测试数据库的连接，用于单元测试。"""
     test_db_url = get_test_db_url()
 
@@ -313,7 +313,7 @@ def test_database_connection() -> bool:
     elif importlib.util.find_spec("psycopg2"):
         driver_name = "postgresql+psycopg2"
     else:
-        return False  # 如果两个驱动都不可用，则连接失败
+        raise AssertionError("无法找到数据库驱动程序（psycopg 或 psycopg2）")
 
     # 确保 URL 使用正确的驱动前缀
     if "postgresql+" in test_db_url:
@@ -328,7 +328,7 @@ def test_database_connection() -> bool:
     try:
         with engine.connect() as conn:
             result = conn.execute(text("SELECT 1")).scalar()
-            return result == 1
+            assert result == 1, "数据库连接测试未返回预期值"
     except Exception as e:
         logger.warning(f"Database connection test failed: {e}")
-        return False
+        raise AssertionError(f"数据库连接测试失败: {e}")
