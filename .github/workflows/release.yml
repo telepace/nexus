@@ -66,8 +66,8 @@ jobs:
       - name: Build Backend
         run: |
           cd backend
-          uv pip install -e .
-          uv pip install build wheel
+          uv pip install -e . --system
+          uv pip install build wheel --system
           python -m build
           mkdir -p ../dist
           cp dist/*.whl ../dist/
@@ -118,3 +118,13 @@ jobs:
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
           draft: false
           prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
+
+      # - name: Publish to Chrome Web Store
+      #   uses: frogcat/chrome-webstore-upload@v1
+      #   with:
+      #     extension-id: ${{ secrets.EXTENSION_ID }}
+      #     client-id: ${{ secrets.CLIENT_ID }}
+      #     client-secret: ${{ secrets.CLIENT_SECRET }}
+      #     refresh-token: ${{ secrets.REFRESH_TOKEN }}
+      #     zip-path: ./extension.zip
+      #     publish: true  # 自动发布到商店
