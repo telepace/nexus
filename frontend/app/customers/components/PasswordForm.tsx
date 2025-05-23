@@ -81,8 +81,23 @@ export function PasswordForm() {
           Authorization: `Bearer ${document.cookie.split("accessToken=")[1]?.split(";")[0]}`,
         },
         body: JSON.stringify({
-          current_password: encryptPassword(formData.current_password),
-          new_password: encryptPassword(formData.new_password),
+        body: JSON.stringify({
+          current_password: (() => {
+            try {
+              return encryptPassword(formData.current_password);
+            } catch (error) {
+              console.error("Failed to encrypt current password:", error);
+              throw new Error("Password encryption failed. Please try again.");
+            }
+          })(),
+          new_password: (() => {
+            try {
+              return encryptPassword(formData.new_password);
+            } catch (error) {
+              console.error("Failed to encrypt new password:", error);
+              throw new Error("Password encryption failed. Please try again.");
+            }
+          })(),
         }),
       });
 
