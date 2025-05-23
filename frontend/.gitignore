@@ -41,3 +41,4 @@ next-env.d.ts
 test-results.json
 
 playwright-report/
+package-lock.json
