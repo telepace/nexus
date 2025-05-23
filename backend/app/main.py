@@ -17,12 +17,14 @@ except ImportError:
     SENTRY_AVAILABLE = False
 
 import logging
+import os
 import traceback
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
+from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -98,6 +100,16 @@ if POSTHOG_AVAILABLE and settings.posthog_enabled:
 app.add_middleware(ApiResponseMiddleware)
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# 挂载静态文件目录
+if os.path.exists(settings.STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=settings.STATIC_DIR), name="static")
+    logger.info(f"静态文件目录已挂载: {settings.STATIC_DIR}")
+else:
+    logger.warning(f"静态文件目录不存在: {settings.STATIC_DIR}")
+    os.makedirs(settings.STATIC_DIR, exist_ok=True)
+    app.mount("/static", StaticFiles(directory=settings.STATIC_DIR), name="static")
+    logger.info(f"已创建并挂载静态文件目录: {settings.STATIC_DIR}")
 
 
 # 异常处理器

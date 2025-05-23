@@ -110,10 +110,7 @@ describe("Register Page", () => {
     (register as jest.Mock).mockResolvedValueOnce({
       errors: {
         email: ["请输入有效的电子邮件地址"],
-        password: [
-          "密码必须包含至少一个大写字母",
-          "密码必须包含至少一个特殊字符",
-        ],
+        password: ["密码至少需要8个字符"],
       },
     });
 
@@ -134,12 +131,7 @@ describe("Register Page", () => {
     expect(
       await screen.findByText("请输入有效的电子邮件地址"),
     ).toBeInTheDocument();
-    expect(
-      await screen.findByText("密码必须包含至少一个大写字母"),
-    ).toBeInTheDocument();
-    expect(
-      await screen.findByText("密码必须包含至少一个特殊字符"),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("密码至少需要8个字符")).toBeInTheDocument();
   });
 
   it("renders Google login button", () => {

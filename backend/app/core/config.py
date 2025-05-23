@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     FRONTEND_HOST: str = "http://localhost:5173"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
+    # Static files directory
+    STATIC_DIR: str = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "../../static"
+    )
+
     # Flag to indicate we're running tests
     TESTING: bool = os.environ.get("TESTING", "").lower() == "true"
     # We also check for TEST_MODE for compatibility

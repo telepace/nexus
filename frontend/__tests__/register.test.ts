@@ -67,10 +67,7 @@ describe("register action", () => {
     expect(result).toEqual({
       errors: {
         email: ["Invalid email"],
-        password: [
-          "Password should contain at least one uppercase letter.",
-          "Password should contain at least one special character.",
-        ],
+        password: ["Password should be at least 8 characters."],
       },
     });
     expect(registerUser).not.toHaveBeenCalled();

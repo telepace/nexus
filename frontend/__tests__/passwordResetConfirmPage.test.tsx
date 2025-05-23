@@ -1,17 +1,10 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import React from "react";
 import { act } from "react";
 
 import Page from "@/app/password-recovery/confirm/page";
-import { passwordResetConfirm } from "@/components/actions/password-reset-action";
 import { useSearchParams, notFound, useRouter } from "next/navigation";
-import { ReactNode } from "react";
-
-// 创建自定义 render 函数处理 App Router 上下文
-const customRender = (ui: ReactNode) => {
-  return render(ui);
-};
 
 jest.mock("next/navigation", () => ({
   ...jest.requireActual("next/navigation"),
@@ -34,8 +27,8 @@ jest.mock("@/lib/auth", () => ({
 
 jest.mock("next/image", () => ({
   __esModule: true,
-  default: (props: any) => {
-    return <img {...props} />;
+  default: (props: unknown) => {
+    return <img {...(props as object)} />;
   },
 }));
 
@@ -57,15 +50,14 @@ describe("Password Reset Confirm Page", () => {
 
     render(<Page />);
 
-    // 直接使用getByPlaceholderText查找密码输入框
     expect(
-      screen.getByPlaceholderText("至少8个字符，包含大写字母和特殊字符"),
+      screen.getByPlaceholderText("At least 8 characters"),
     ).toBeInTheDocument();
     expect(
-      screen.getByPlaceholderText("再次输入相同的密码"),
+      screen.getByPlaceholderText("Enter the same password again"),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /重置密码/i }),
+      screen.getByRole("button", { name: /Reset Password/i }),
     ).toBeInTheDocument();
   });
 
@@ -90,7 +82,7 @@ describe("Password Reset Confirm Page", () => {
     jest
       .spyOn(React, "useActionState")
       .mockImplementation(() => [
-        { server_validation_error: "密码重置失败" },
+        { server_validation_error: "Password reset failed" },
         jest.fn(),
         false,
       ]);
@@ -102,7 +94,7 @@ describe("Password Reset Confirm Page", () => {
 
     render(<Page />);
 
-    expect(screen.getByText("密码重置失败")).toBeInTheDocument();
+    expect(screen.getByText("Password reset failed")).toBeInTheDocument();
   });
 
   it("displays validation errors if password is invalid and don't match", async () => {
@@ -115,8 +107,8 @@ describe("Password Reset Confirm Page", () => {
     jest.spyOn(React, "useActionState").mockImplementation(() => [
       {
         errors: {
-          password: ["密码至少需要8个字符"],
-          passwordConfirm: ["密码不匹配"],
+          password: ["Password must be at least 8 characters"],
+          passwordConfirm: ["Passwords don't match"],
         },
       },
       jest.fn(),
@@ -125,8 +117,10 @@ describe("Password Reset Confirm Page", () => {
 
     render(<Page />);
 
-    expect(screen.getByText("密码至少需要8个字符")).toBeInTheDocument();
-    expect(screen.getByText("密码不匹配")).toBeInTheDocument();
+    expect(
+      screen.getByText("Password must be at least 8 characters"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Passwords don't match")).toBeInTheDocument();
   });
 
   it("redirects to login page after successful password reset", async () => {
@@ -139,7 +133,7 @@ describe("Password Reset Confirm Page", () => {
     jest
       .spyOn(React, "useActionState")
       .mockImplementation(() => [
-        { message: "密码已成功重置！正在跳转到登录页面..." },
+        { message: "Password successfully reset! Redirecting to login..." },
         jest.fn(),
         false,
       ]);
@@ -155,9 +149,10 @@ describe("Password Reset Confirm Page", () => {
 
     render(<Page />);
 
-    // 使用getAllByText来处理可能有多个匹配的情况
     expect(
-      screen.getAllByText("密码已成功重置！正在跳转到登录页面...")[0],
+      screen.getAllByText(
+        "Password successfully reset! Redirecting to login...",
+      )[0],
     ).toBeInTheDocument();
 
     // Advance timers to trigger redirect
