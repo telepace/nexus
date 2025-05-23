@@ -72,16 +72,20 @@ const ChangePassword = () => {
   })
 
   const onSubmit: SubmitHandler<UpdatePasswordForm> = async (data) => {
-    // data contains current_password, new_password, and confirm_password
-    // We only need to send current_password and new_password to the backend, encrypted.
-    const encryptedCurrentPassword = encryptPassword(data.current_password);
-    const encryptedNewPassword = encryptPassword(data.new_password);
+  const onSubmit: SubmitHandler<UpdatePasswordForm> = async (data) => {
+    try {
+      // Encrypt passwords before sending to backend
+      const encryptedCurrentPassword = encryptPassword(data.current_password);
+      const encryptedNewPassword = encryptPassword(data.new_password);
 
-    mutation.mutate({
-      current_password: encryptedCurrentPassword,
-      new_password: encryptedNewPassword,
-      // confirm_password is not part of the UpdatePassword type for the backend
-    });
+      mutation.mutate({
+        current_password: encryptedCurrentPassword,
+        new_password: encryptedNewPassword,
+      });
+    } catch (error) {
+      console.error("Password encryption failed:", error);
+      showErrorToast("Failed to encrypt password. Please try again.");
+    }
   };
 
   return (
