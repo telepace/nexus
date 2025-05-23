@@ -42,7 +42,7 @@ ADMIN_IMG ?= nexus/admin:$(VERSION)
 
 # Tool settings
 PYTHON := python
-UV := uv
+UV := $(HOME)/.cargo/bin/uv # Set to absolute path for UV
 PYTEST := pytest
 PYTEST_ARGS := -v
 PNPM := pnpm
@@ -58,7 +58,7 @@ EXTENSION_DIR := $(ROOT_DIR)/extension
 
 # Check if tools are installed
 PNPM_EXISTS := $(shell command -v pnpm 2> /dev/null)
-UV_EXISTS := $(shell command -v uv 2> /dev/null)
+# UV_EXISTS is removed, check-uv handles it.
 DOPPLER_EXISTS := $(shell command -v doppler 2> /dev/null)
 
 # ==============================================================================
@@ -458,9 +458,11 @@ admin-preview: admin-build
 ## admin-test: Run admin tests
 .PHONY: admin-test
 admin-test: admin-install
+	@echo "===========> Ensuring backend is running for admin tests"
+	@$(MAKE) backend-start
+	@echo "===========> Waiting for backend to be healthy before running admin tests"
+	@cd $(ADMIN_DIR) && $(PNPM) exec wait-on http://localhost:8000/api/v1/health/check -t 60000
 	@echo "===========> Running admin tests"
-	@echo "===========> Tests temporarily skipped due to network issues"
-	@echo "===========> Consider running tests manually when network is stable"
 	@cd $(ADMIN_DIR) && $(PNPM) test
 
 ## admin-test-ui: Run admin tests with UI
@@ -728,10 +730,45 @@ endif
 
 .PHONY: check-uv
 check-uv:
-ifndef UV_EXISTS
-	@echo "===========> Installing uv"
-	@curl -sSf https://astral.sh/uv/install.sh | sh
-endif
+	@echo "===========> Checking for uv..."
+	@source "$(HOME)/.cargo/env" || true; \
+	if [ -x "$(UV)" ]; then \
+		echo "===========> uv found at $(UV)"; \
+	else \
+		echo "===========> uv not found at $(UV) or not executable. Attempting installation..."; \
+		curl -sSf https://astral.sh/uv/install.sh | sh; \
+		echo "===========> Sourcing $(HOME)/.cargo/env to update PATH..."; \
+		source "$(HOME)/.cargo/env" || true; \
+		if [ -x "$(UV)" ]; then \
+			echo "===========> uv installed successfully to $(UV)"; \
+		else \
+			echo "===========> ERROR: uv installation failed or uv not found at $(UV) after attempting install and PATH update."; \
+			echo "===========> Please check installation script output. Attempting 'command -v uv' as a fallback check..."; \
+			if command -v uv > /dev/null; then \
+				echo "===========> FALLBACK SUCCESS: 'command -v uv' found uv. Makefile will attempt to proceed."; \
+				echo "===========> Note: $(UV) was not executable, which might indicate a PATH or installation issue."; \
+			else \
+				echo "===========> FALLBACK FAILED: 'command -v uv' also did not find uv. This is a critical error."; \
+				echo "===========> Please install uv manually: https://github.com/astral-sh/uv"; \
+				exit 1; \
+			fi; \
+		fi; \
+	fi; \
+	echo "===========> Final verification: Attempting to run '$(UV) --version'"; \
+	if "$(UV)" --version > /dev/null; then \
+		echo "===========> '$(UV) --version' successful. uv is ready."; \
+	else \
+		echo "===========> ERROR: '$(UV) --version' failed. uv is not correctly set up even if found."; \
+		echo "===========> Trying 'command -v uv' one last time..."; \
+		if command -v uv > /dev/null; then \
+			echo "===========> 'command -v uv' found uv. There might be an issue with how $(UV) is defined or used."; \
+			(command -v uv) --version; \
+		else \
+			echo "===========> 'command -v uv' also failed. uv is definitely not available."; \
+			exit 1; \
+		fi; \
+	fi
+
 
 # ==============================================================================
 # DEPLOYMENT TARGETS
