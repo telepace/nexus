@@ -313,7 +313,7 @@ def test_database_connection():
     elif importlib.util.find_spec("psycopg2"):
         driver_name = "postgresql+psycopg2"
     else:
-        assert False, "无法找到数据库驱动程序（psycopg 或 psycopg2）"
+        raise AssertionError("无法找到数据库驱动程序（psycopg 或 psycopg2）")
 
     # 确保 URL 使用正确的驱动前缀
     if "postgresql+" in test_db_url:
@@ -331,4 +331,4 @@ def test_database_connection():
             assert result == 1, "数据库连接测试未返回预期值"
     except Exception as e:
         logger.warning(f"Database connection test failed: {e}")
-        assert False, f"数据库连接测试失败: {e}"
+        raise AssertionError(f"数据库连接测试失败: {e}")

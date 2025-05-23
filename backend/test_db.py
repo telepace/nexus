@@ -16,7 +16,7 @@ def test_database_connection():
             assert result.fetchone() is None, "应该已经获取了结果"
     except Exception as e:
         print(f"数据库连接失败: {e}")
-        assert False, f"数据库连接失败: {e}"
+        raise AssertionError(f"数据库连接失败: {e}")
 
 if __name__ == "__main__":
     test_database_connection() 

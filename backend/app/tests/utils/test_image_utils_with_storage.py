@@ -79,7 +79,7 @@ async def test_get_default_avatar_with_storage(mock_get_storage: MagicMock) -> N
 @patch("app.utils.image_utils.get_storage_service")
 @patch("app.utils.image_utils.httpx.AsyncClient")
 async def test_get_github_avatar_with_storage(
-    mock_client: MagicMock, mock_get_storage: MagicMock
+    _mock_client: MagicMock, mock_get_storage: MagicMock
 ) -> None:
     """测试使用存储服务获取GitHub头像"""
     # 准备模拟存储服务
@@ -90,22 +90,21 @@ async def test_get_github_avatar_with_storage(
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.content = b"test image content"
-    
+
     # 创建一个更简单的测试方法，跳过异步上下文管理器
     # 直接修改测试函数以模拟AvatarGenerator.get_github_avatar的行为
-    
+
     # 准备测试数据
-    email = "test@example.com"
     file_path = "avatars/test_github.png"
-    
+
     # 直接模拟上传文件和返回BytesIO
     result = BytesIO(mock_response.content)
     mock_storage.upload_file(mock_response.content, file_path)
-    
+
     # 验证结果
     assert isinstance(result, BytesIO)
     assert result.getvalue() == b"test image content"
-    
+
     # 验证文件已上传到模拟存储
     assert file_path in mock_storage.files
     assert mock_storage.files[file_path] == b"test image content"
