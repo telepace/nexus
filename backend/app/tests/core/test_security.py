@@ -30,20 +30,19 @@ def test_decrypt_password_success(mock_settings_key):
     decrypted_password = decrypt_password(encrypted_password_b64)
     assert decrypted_password == plain_password
 
+# In backend/app/tests/core/test_security.py
+
 def test_decrypt_password_invalid_token(mock_settings_key):
     """Test decryption with an invalid token (malformed base64 or not Fernet encrypted)."""
     invalid_encrypted_password = "this is not a valid fernet token"
-    
+
     with pytest.raises(HTTPException) as exc_info:
         decrypt_password(invalid_encrypted_password)
-    
-    assert exc_info.value.status_code == 400
-    # The detail message might vary slightly depending on the exact failure point
-    # For an invalid base64 token for Fernet, it often results in "Invalid password encryption format or key."
-    # or "Could not process password." if it's a different kind of structural issue.
-    assert "Invalid password encryption format or key." in exc_info.value.detail or \
-           "Could not process password." in exc_info.value.detail
 
+    assert exc_info.value.status_code == 400
+-    assert "Invalid password encryption format or key." in exc_info.value.detail or \
+-           "Could not process password." in exc_info.value.detail
++    assert exc_info.value.detail == "Invalid password encryption format or key."
 
 def test_decrypt_password_incorrect_key_type(mock_settings_key):
     """Test decryption with a token encrypted by a different key (simulated)."""
