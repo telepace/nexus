@@ -76,8 +76,8 @@ async def test_default_avatar_flow():
     # 获取默认头像
     url, img_data = await AvatarGenerator.get_default_avatar(email, user_id)
 
-    # 验证URL格式正确
-    assert url == f"/static/avatars/{user_id}.png"
+    # 验证URL内容有效（或者包含正确的文件名）
+    assert user_id in url, f"URL should contain user_id: {url}"
 
     # 验证返回的是BytesIO对象
     assert isinstance(img_data, BytesIO)
@@ -86,8 +86,9 @@ async def test_default_avatar_flow():
     img = Image.open(img_data)
     assert img.size == (200, 200)  # 验证尺寸正确
 
-    # 验证文件是否已保存
+    # 验证文件是否已保存（仅当使用本地存储时适用）
     from app.core.config import settings
 
-    file_path = os.path.join(settings.STATIC_DIR, "avatars", f"{user_id}.png")
-    assert os.path.exists(file_path)
+    if settings.STORAGE_BACKEND == "local":
+        file_path = os.path.join(settings.STATIC_DIR, "avatars", f"{user_id}.png")
+        assert os.path.exists(file_path), f"File {file_path} should exist"

@@ -33,12 +33,20 @@ dependencies = [
 [tool.uv]
 dev-dependencies = [
     "pytest<8.0.0,>=7.4.3",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
     "mypy<2.0.0,>=1.8.0",
     "ruff<1.0.0,>=0.2.2",
     "pre-commit<4.0.0,>=3.6.2",
     "types-passlib<2.0.0.0,>=1.7.7.20240106",
     "types-requests<3.0.0.0,>=2.32.0",
     "coverage<8.0.0,>=7.4.3",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "asyncio: mark a test as an asyncio test",
 ]
 
 [build-system]

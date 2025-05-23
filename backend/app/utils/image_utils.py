@@ -19,6 +19,7 @@ import httpx
 from PIL import Image, ImageDraw, ImageFont
 
 from app.core.config import settings
+from app.utils.storage import get_storage_service
 
 logger = logging.getLogger(__name__)
 
@@ -56,13 +57,13 @@ class AvatarGenerator:
 
     @staticmethod
     async def generate_random_avatar(
-        text: str, save_path: str | None = None
+        text: str, file_path: str | None = None
     ) -> BytesIO:
         """生成一个基于文本的简单随机头像
 
         Args:
             text: 用于生成头像的文本（通常是用户名或邮箱）
-            save_path: 可选的保存路径
+            file_path: 可选的保存路径
 
         Returns:
             BytesIO: 图片数据缓冲区
@@ -85,11 +86,21 @@ class AvatarGenerator:
             font_size = 100
             font = ImageFont.truetype("arial.ttf", font_size)
         except OSError:
-            font = ImageFont.load_default()
+            # 使用默认字体
+            font = ImageFont.load_default()  # type: ignore
             font_size = 80
 
         # 计算文本位置使其居中
-        text_width, text_height = draw.textsize(display_text, font=font)
+        # PIL 2.x 使用 textsize，3.x 使用 textbbox 或 getbbox
+        try:
+            # 新版PIL
+            left, top, right, bottom = draw.textbbox((0, 0), display_text, font=font)
+            text_width = right - left
+            text_height = bottom - top
+        except AttributeError:
+            # 旧版PIL
+            text_width, text_height = draw.textsize(display_text, font=font)  # type: ignore
+
         position = (
             (AVATAR_SIZE[0] - text_width) / 2,
             (AVATAR_SIZE[1] - text_height) / 2 - font_size / 10,
@@ -99,10 +110,13 @@ class AvatarGenerator:
         text_color = "white"
         draw.text(position, display_text, fill=text_color, font=font)
 
-        # 保存文件（如果提供了路径）
-        if save_path:
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            img.save(save_path)
+        # 如果提供了路径并且使用存储服务，则保存到存储服务
+        if file_path:
+            storage = get_storage_service()
+            img_byte_array = BytesIO()
+            img.save(img_byte_array, format="PNG")
+            img_byte_array.seek(0)
+            storage.upload_file(img_byte_array, file_path)
 
         # 返回图片数据
         img_byte_array = BytesIO()
@@ -112,13 +126,13 @@ class AvatarGenerator:
 
     @staticmethod
     async def get_github_avatar(
-        email: str, save_path: str | None = None
+        email: str, file_path: str | None = None
     ) -> BytesIO | None:
         """通过GitHub API获取用户头像
 
         Args:
             email: 用户邮箱
-            save_path: 可选的保存路径
+            file_path: 可选的保存路径
 
         Returns:
             BytesIO: 图片数据缓冲区，获取失败时返回None
@@ -133,11 +147,10 @@ class AvatarGenerator:
                 if response.status_code == 200:
                     img_data = BytesIO(response.content)
 
-                    # 保存文件（如果提供了路径）
-                    if save_path:
-                        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-                        with open(save_path, "wb") as f:
-                            f.write(response.content)
+                    # 如果提供了路径，使用存储服务保存
+                    if file_path:
+                        storage = get_storage_service()
+                        storage.upload_file(response.content, file_path)
 
                     return img_data
         except Exception as e:
@@ -146,11 +159,11 @@ class AvatarGenerator:
         return None
 
     @staticmethod
-    async def get_picsum_avatar(save_path: str | None = None) -> BytesIO | None:
+    async def get_picsum_avatar(file_path: str | None = None) -> BytesIO | None:
         """从Lorem Picsum获取随机图片作为头像
 
         Args:
-            save_path: 可选的保存路径
+            file_path: 可选的保存路径
 
         Returns:
             BytesIO: 图片数据缓冲区，获取失败时返回None
@@ -176,17 +189,20 @@ class AvatarGenerator:
                         img = img.crop((left, top, right, bottom))
 
                         # 调整大小
-                        img = img.resize(AVATAR_SIZE, Image.LANCZOS)
+                        img = img.resize(AVATAR_SIZE, Image.Resampling.LANCZOS)
 
                         # 保存结果
                         output = BytesIO()
                         img.save(output, format="PNG")
                         output.seek(0)
 
-                        # 如果提供了保存路径，保存到文件
-                        if save_path:
-                            os.makedirs(os.path.dirname(save_path), exist_ok=True)
-                            img.save(save_path)
+                        # 如果提供了保存路径，保存到存储服务
+                        if file_path:
+                            storage = get_storage_service()
+                            img_byte_array = BytesIO()
+                            img.save(img_byte_array, format="PNG")
+                            img_byte_array.seek(0)
+                            storage.upload_file(img_byte_array, file_path)
 
                         return output
         except Exception as e:
@@ -195,11 +211,11 @@ class AvatarGenerator:
         return None
 
     @staticmethod
-    def get_local_avatar(save_path: str | None = None) -> BytesIO | None:
+    def get_local_avatar(file_path: str | None = None) -> BytesIO | None:
         """从本地预设头像库中随机选择一个头像
 
         Args:
-            save_path: 可选的保存路径
+            file_path: 可选的保存路径
 
         Returns:
             BytesIO: 图片数据缓冲区，获取失败时返回None
@@ -225,17 +241,20 @@ class AvatarGenerator:
 
                 # 读取图片
                 img = Image.open(avatar_file)
-                img = img.resize(AVATAR_SIZE, Image.LANCZOS)
+                img = img.resize(AVATAR_SIZE, Image.Resampling.LANCZOS)  # type: ignore
 
                 # 输出到 BytesIO
                 output = BytesIO()
                 img.save(output, format="PNG")
                 output.seek(0)
 
-                # 如果提供了保存路径，保存到文件
-                if save_path:
-                    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-                    img.save(save_path)
+                # 如果提供了保存路径，使用存储服务保存
+                if file_path:
+                    storage = get_storage_service()
+                    img_byte_array = BytesIO()
+                    img.save(img_byte_array, format="PNG")
+                    img_byte_array.seek(0)
+                    storage.upload_file(img_byte_array, file_path)
 
                 return output
         except Exception as e:
@@ -271,28 +290,28 @@ class AvatarGenerator:
         Returns:
             Tuple[str, BytesIO]: (相对URL路径, 图片数据缓冲区)
         """
-        # 确保上传目录存在
-        upload_dir = os.path.join(settings.STATIC_DIR, "avatars")
-        os.makedirs(upload_dir, exist_ok=True)
+        # 获取存储服务
+        storage = get_storage_service()
 
-        # 生成文件名
+        # 生成文件路径
         file_name = f"{user_id}.png"
-        save_path = os.path.join(upload_dir, file_name)
-        relative_url = f"/static/avatars/{file_name}"
+        file_path = f"avatars/{file_name}"  # 存储在avatars目录下
 
         # 尝试获取GitHub头像
-        img_data = await AvatarGenerator.get_github_avatar(email, save_path)
+        img_data = await AvatarGenerator.get_github_avatar(email, file_path)
 
         # 如果GitHub头像失败，尝试Lorem Picsum
         if img_data is None:
-            img_data = await AvatarGenerator.get_picsum_avatar(save_path)
+            img_data = await AvatarGenerator.get_picsum_avatar(file_path)
 
         # 如果外部API都失败，使用本地预设
         if img_data is None:
-            img_data = AvatarGenerator.get_local_avatar(save_path)
+            img_data = AvatarGenerator.get_local_avatar(file_path)
 
         # 如果还是失败，生成一个简单的随机头像
         if img_data is None:
-            img_data = await AvatarGenerator.generate_random_avatar(email, save_path)
+            img_data = await AvatarGenerator.generate_random_avatar(email, file_path)
 
-        return relative_url, img_data
+        # 获取文件URL
+        file_url = storage.get_file_url(file_path)
+        return file_url, img_data

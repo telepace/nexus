@@ -319,10 +319,8 @@ def create_user_oauth(*, session: Session, obj_in: Any) -> Any:
     Create a new user for OAuth authentication (without password)
     """
     # 动态导入User
-    import asyncio
 
     from app.models import User
-    from app.utils.image_utils import AvatarGenerator
 
     db_obj = User.model_validate(obj_in)
     session.add(db_obj)
@@ -337,7 +335,7 @@ def create_user_oauth(*, session: Session, obj_in: Any) -> Any:
         session.add(db_obj)
         session.commit()
         session.refresh(db_obj)
-        
+
         # 异步生成头像的操作可以在后台进行
         # 这里我们不再阻塞当前流程
 

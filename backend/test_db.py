@@ -13,10 +13,10 @@ def test_database_connection():
         with engine.connect() as conn:
             result = conn.execute(text("SELECT 1"))
             print(f"数据库连接成功: {result.fetchone()}")
-            return True
+            assert result.fetchone() is None, "应该已经获取了结果"
     except Exception as e:
         print(f"数据库连接失败: {e}")
-        return False
+        assert False, f"数据库连接失败: {e}"
 
 if __name__ == "__main__":
     test_database_connection() 
