@@ -29,6 +29,17 @@ interface AddContentModalProps {
 
 type ContentType = "url" | "text" | "file" | null;
 
+/**
+ * Add Content Modal component.
+ *
+ * This component provides a modal interface for users to add content in various forms such as URLs, text, or files.
+ * It manages state for content type, input values, file selections, loading status, and error messages.
+ * The component handles events like content changes, pasting, dragging, and form submission.
+ * It also includes validation logic to determine the content type based on user input.
+ *
+ * @param open - A boolean indicating whether the modal is open or closed.
+ * @param onClose - A callback function to handle closing the modal.
+ */
 export const AddContentModal: FC<AddContentModalProps> = ({
   open,
   onClose,
@@ -43,6 +54,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 检测URL的简单正则表达式
+  /**
+   * Checks if the provided text is a valid URL.
+   */
   const isURL = (text: string) => {
     try {
       new URL(text);
@@ -113,12 +127,22 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   };
 
   // 处理拖放区域点击
+  /**
+   * Sets content type to "text" if it is currently undefined or null.
+   */
   const handleDropAreaClick = () => {
     if (!contentType) {
       setContentType("text");
     }
   };
 
+  /**
+   * Handles the addition of content through an asynchronous process.
+   *
+   * This function sets loading state, simulates an API request to add content,
+   * and handles errors by setting an error message. It also resets the form and closes
+   * a modal window upon successful completion or failure.
+   */
   const handleAddContent = async () => {
     setIsLoading(true);
     setError("");
