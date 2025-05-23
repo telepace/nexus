@@ -20,10 +20,13 @@ interface Props {
 }
 
 /**
- * The main layout component for the application that handles rendering the root HTML structure.
+ * Renders the root HTML layout for the application with localization and theming support.
  *
- * @param {Props} props - The properties passed to the RootLayout component.
- * @returns {JSX.Element} - A React JSX element representing the root HTML structure with localized content.
+ * Wraps the application content in a localized `<html>` structure, setting language and direction attributes, and provides theming context at the root level.
+ *
+ * @param children - The React nodes to display within the layout.
+ * @param params - A promise resolving to an object containing the current language key.
+ * @returns The root JSX layout element with localization and theming applied.
  */
 export default async function RootLayout({ children, params }: Props) {
   const { lang } = await params

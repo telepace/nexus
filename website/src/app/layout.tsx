@@ -12,6 +12,15 @@ interface Props {
   children: ReactNode
 }
 
+/**
+ * Root layout component that applies global styles, font settings, and structure for the application.
+ *
+ * Wraps all pages with the Inter font, English language, left-to-right direction, and a minimal HTML scaffold.
+ *
+ * @param children - The content to render within the layout.
+ *
+ * @remark If themed components are used on the not-found page, a ThemeProvider may be required.
+ */
 export default function RootLayout({ children }: Props) {
   return (
     <html lang="en" dir="ltr" className={`${inter.variable} font-sans`} suppressHydrationWarning>
