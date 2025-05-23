@@ -6,6 +6,7 @@ import { registerUser } from "@/app/clientService";
 
 import { registerSchema } from "@/lib/definitions";
 import { getErrorMessage } from "@/lib/utils";
+import { encryptPassword } from "../../lib/encryption";
 
 export async function register(prevState: unknown, formData: FormData) {
   const validatedFields = registerSchema.safeParse({
@@ -20,12 +21,15 @@ export async function register(prevState: unknown, formData: FormData) {
     };
   }
 
-  const { email, password, full_name } = validatedFields.data;
+  // const { email, password, full_name } = validatedFields.data;
+  const { email, password: plainPassword, full_name } = validatedFields.data; // Rename
+  const encryptedPassword = encryptPassword(plainPassword);
 
   const input = {
     body: {
       email,
-      password,
+      // password,
+      password: encryptedPassword, // Use encrypted password
       full_name,
     },
   };

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { encryptPassword } from "../../../lib/encryption"; // Adjusted path
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Eye, EyeOff } from "lucide-react";
@@ -80,8 +81,8 @@ export function PasswordForm() {
           Authorization: `Bearer ${document.cookie.split("accessToken=")[1]?.split(";")[0]}`,
         },
         body: JSON.stringify({
-          current_password: formData.current_password,
-          new_password: formData.new_password,
+          current_password: encryptPassword(formData.current_password),
+          new_password: encryptPassword(formData.new_password),
         }),
       });
 

@@ -6,6 +6,7 @@ import { authJwtLogin } from "@/app/clientService";
 import { redirect } from "next/navigation";
 import { loginSchema } from "@/lib/definitions";
 import { getErrorMessage } from "@/lib/utils";
+import { encryptPassword } from "../../lib/encryption";
 
 export async function login(prevState: unknown, formData: FormData) {
   const validatedFields = loginSchema.safeParse({
@@ -19,12 +20,15 @@ export async function login(prevState: unknown, formData: FormData) {
     };
   }
 
-  const { username, password } = validatedFields.data;
+  // const { username, password } = validatedFields.data;
+  const { username, password: plainPassword } = validatedFields.data; // Rename to plainPassword for clarity
+  const encryptedPassword = encryptPassword(plainPassword);
 
   const input = {
     body: {
       username,
-      password,
+      // password,
+      password: encryptedPassword, // Use encrypted password
       // 确保发送需要的参数
       grant_type: "password",
       scope: "",

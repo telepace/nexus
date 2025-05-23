@@ -26,6 +26,7 @@ dependencies = [
     "posthog<3.0.0,>=2.4.0",
     "yarl>=1.9.0,<2.0.0",
     "itsdangerous>=2.2.0",
+    "cryptography>=42.0.8", # Added for symmetric encryption
 ]
 
 [tool.uv]

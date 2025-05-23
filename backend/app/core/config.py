@@ -12,9 +12,11 @@ from pydantic import (
     PostgresDsn,
     computed_field,
     model_validator,
+    field_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
+from cryptography.fernet import Fernet
 from yarl import URL
 
 # Set up logger
@@ -51,6 +53,22 @@ class Settings(BaseSettings):
     TESTING: bool = os.environ.get("TESTING", "").lower() == "true"
     # We also check for TEST_MODE for compatibility
     TEST_MODE: bool = os.environ.get("TEST_MODE", "").lower() == "true"
+
+    APP_SYMMETRIC_ENCRYPTION_KEY: str
+
+    # Optional: Add a validator if Fernet key format is strict
+    @field_validator("APP_SYMMETRIC_ENCRYPTION_KEY")
+    def validate_symmetric_key(cls, v: str) -> str:
+        if not v:
+            raise ValueError("APP_SYMMETRIC_ENCRYPTION_KEY must be set")
+        # Add more specific validation if needed, e.g., for Fernet key format/length
+        # For Fernet, it must be a URL-safe base64-encoded 32-byte key.
+        # Example basic check (not exhaustive for Fernet format):
+        try:
+            Fernet(v.encode()) # Attempt to initialize Fernet to check key validity
+        except Exception as e:
+            raise ValueError(f"APP_SYMMETRIC_ENCRYPTION_KEY is not a valid Fernet key: {e}")
+        return v
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)

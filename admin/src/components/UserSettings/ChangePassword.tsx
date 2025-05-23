@@ -8,11 +8,12 @@ import {
   OpenAPI,
   type UpdatePassword,
   UsersService,
-} from "@/client"
-import { request } from "@/client/core/request"
-import useCustomToast from "@/hooks/useCustomToast"
-import { confirmPasswordRules, handleError, passwordRules } from "@/utils"
-import { PasswordInput } from "../ui/password-input"
+} from "@/client";
+import { request } from "@/client/core/request";
+import useCustomToast from "@/hooks/useCustomToast";
+import { confirmPasswordRules, handleError, passwordRules } from "@/utils";
+import { PasswordInput } from "../ui/password-input";
+import { encryptPassword } from "@/utils/encryption"; // Added import
 
 interface UpdatePasswordForm extends UpdatePassword {
   confirm_password: string
@@ -71,8 +72,17 @@ const ChangePassword = () => {
   })
 
   const onSubmit: SubmitHandler<UpdatePasswordForm> = async (data) => {
-    mutation.mutate(data)
-  }
+    // data contains current_password, new_password, and confirm_password
+    // We only need to send current_password and new_password to the backend, encrypted.
+    const encryptedCurrentPassword = encryptPassword(data.current_password);
+    const encryptedNewPassword = encryptPassword(data.new_password);
+
+    mutation.mutate({
+      current_password: encryptedCurrentPassword,
+      new_password: encryptedNewPassword,
+      // confirm_password is not part of the UpdatePassword type for the backend
+    });
+  };
 
   return (
     <>
