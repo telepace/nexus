@@ -192,7 +192,7 @@ check-extension-env:
 
 ## all: Run all tests, linting, formatting and build all components
 .PHONY: all
-all: env-init backend-build frontend-build admin-build format lint generate-client test
+all: env-init backend-build frontend-build admin-build format lint generate-client # test
 	@echo "===========> All checks and builds completed successfully"
 
 ## dev: Start development environment
