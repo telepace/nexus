@@ -130,11 +130,15 @@ jobs:
         merge-multiple: true
     - name: List downloaded artifacts (debug)
       run: |
-        ls -la frontend/all-blob-reports || echo "Directory does not exist"
+        tree -L 2frontend/all-blob-reports
         find frontend -name "*.zip" -o -name "*.blob" || echo "No blob files found"
     - name: Merge into HTML Report
       run: |
         mkdir -p playwright-report
+        if [ ! -d "./all-blob-reports" ]; then
+          echo "No blob reports to merge, skipping."
+          exit 0
+        fi
         npx playwright merge-reports --reporter html ./all-blob-reports
       working-directory: frontend
     - name: Upload HTML report
