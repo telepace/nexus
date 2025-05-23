@@ -52,9 +52,9 @@ def db() -> Generator[Session, None, None]:
     # We're using the engine that was set up in setup_test_environmen
     from app.core.db import engine
 
-    # 确保测试用的超级用户密码为 "adminadmin"，满足至少8个字符的要求
+    # 确保测试用的超级用户密码为 "telepace"，满足至少8个字符的要求
     original_password = settings.FIRST_SUPERUSER_PASSWORD
-    settings.FIRST_SUPERUSER_PASSWORD = "adminadmin"
+    settings.FIRST_SUPERUSER_PASSWORD = "telepace"
 
     # 创建测试用的数据库会话
     with Session(engine) as session:

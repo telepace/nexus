@@ -331,13 +331,15 @@ def create_user_oauth(*, session: Session, obj_in: Any) -> Any:
 
     # 如果没有头像URL，为用户生成默认头像
     if not db_obj.avatar_url:
-        avatar_url, _ = asyncio.run(
-            AvatarGenerator.get_default_avatar(db_obj.email, str(db_obj.id))
-        )
+        # 生成一个默认的头像URL路径，不进行异步操作
+        avatar_url = f"/static/avatars/{db_obj.id}.png"
         db_obj.avatar_url = avatar_url
         session.add(db_obj)
         session.commit()
         session.refresh(db_obj)
+        
+        # 异步生成头像的操作可以在后台进行
+        # 这里我们不再阻塞当前流程
 
     return db_obj
 

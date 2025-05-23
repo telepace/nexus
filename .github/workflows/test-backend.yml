@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
-  pull_request_target:
+  pull_request:
     types:
       - opened
       - synchronize
+      - reopened
+      - ready_for_review
 jobs:
   test-backend:
     runs-on: ubuntu-latest
@@ -36,6 +38,7 @@ jobs:
         run: |
           doppler setup --silent --project nexus --config stg
           doppler secrets download --no-file --format env > .env
+          cp .env backend/.env
           STACK_NAME=$(doppler run -- printenv STACK_NAME)
           echo "STACK_NAME=$STACK_NAME" >> $GITHUB_ENV
         env:
@@ -46,11 +49,11 @@ jobs:
       - name: Install dependencies
         run: docker compose --project-name $STACK_NAME run --rm backend uv pip install -e .
       - name: Migrate DB
-        run: docker compose --project-name $STACK_NAME --env-file ../.env run --rm backend uv run bash scripts/prestart.sh
+        run: docker compose --project-name $STACK_NAME run --rm backend uv run bash scripts/prestart.sh
         working-directory: backend
 
       - name: Run tests
-        run: docker compose --project-name $STACK_NAME --env-file ../.env run --rm backend uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
+        run: docker compose --project-name $STACK_NAME run --rm backend uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
         working-directory: backend
       - run: docker compose --project-name $STACK_NAME down -v --remove-orphans
       - name: Store coverage files
