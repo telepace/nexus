@@ -207,7 +207,7 @@ lint: backend-lint frontend-lint admin-lint
 
 ## test: Run tests for all components
 .PHONY: test
-test: backend-test frontend-test admin-test extension-test-unit #website-test 
+test: backend-test frontend-test frontend-test-e2e admin-test extension-test-unit #website-test 
 	@echo "===========> All tests completed successfully"
 
 ## format: Format code in all components
@@ -383,6 +383,16 @@ frontend-test: frontend-install
 		echo "===========> Running frontend tests"; \
 		cd $(FRONTEND_DIR) && NODE_ENV=test $(PNPM) test -- --passWithNoTests || true; \
 		echo "===========> Note: Some tests may have failed, but we're continuing with the build process"; \
+	else \
+		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
+	fi
+
+## frontend-test-e2e: Run frontend e2e tests
+.PHONY: frontend-test-e2e
+frontend-test-e2e: frontend-install
+	@echo "===========> Running frontend e2e tests"
+	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
+		cd $(FRONTEND_DIR) && $(PNPM) run test:e2e; \
 	else \
 		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
 	fi

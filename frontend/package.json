@@ -10,6 +10,8 @@
     "generate-client": "openapi-ts",
     "test": "jest",
     "coverage": "jest --coverage",
+    "test:e2e": "playwright test -c playwright.config.ts",
+    "test:e2e:ui": "playwright test -c playwright.config.ts --ui",
     "prettier": "prettier --write '**/*.{js,jsx,ts,tsx,json,css,html}'",
     "format": "biome format --write .",
     "tsc": "tsc"
@@ -51,6 +53,7 @@
     "@biomejs/biome": "^1.9.4",
     "@eslint/js": "^9.18.0",
     "@hey-api/openapi-ts": "^0.60.1",
+    "@playwright/test": "^1.45.3",
     "@next/eslint-plugin-next": "^15.1.4",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^14.3.1",
