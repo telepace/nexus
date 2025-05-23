@@ -8,6 +8,9 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 
+/**
+ * Home component that redirects authenticated users to the dashboard and displays a welcome page with links to setup, prompts, and GitHub repository.
+ */
 export default function Home() {
   // 使用客户端Auth Hook
   const { user, isLoading } = useAuth();
