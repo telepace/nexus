@@ -8,3 +8,4 @@ htmlcov
 .venv
 state
 static
+package-lock.json
