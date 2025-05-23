@@ -402,8 +402,7 @@ frontend-test-e2e: frontend-install
 frontend-lint: frontend-install
 	@echo "===========> Running frontend linters"
 	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
-		cd $(FRONTEND_DIR) && $(PNPM) run lint || true; \
-		echo "===========> Note: Lint errors found but continuing with build process"; \
+		cd $(FRONTEND_DIR) && $(PNPM) run lint; \
 	else \
 		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
 	fi

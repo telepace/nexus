@@ -17,7 +17,6 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -42,26 +41,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   const [error, setError] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const isUrl = (text: string) => {
-    try {
-      new URL(text);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  const handleTextChange = (value: string) => {
-    setContent(value);
-
-    // 自动检测是否为URL
-    if (isUrl(value)) {
-      setContentType("url");
-    } else {
-      setContentType("text");
-    }
-  };
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,7 +84,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
       // 清空表单并关闭模态窗口
       resetForm();
       onClose();
-    } catch (err) {
+    } catch {
       setError("添加内容时发生错误，请重试。");
     } finally {
       setIsLoading(false);

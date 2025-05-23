@@ -4,7 +4,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, FormEvent } from "react";
 import { useAuth } from "@/lib/auth";
 import { passwordResetConfirm } from "@/components/actions/password-reset-action";
-import { SubmitButton } from "@/components/ui/submitButton";
 import Image from "next/image";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -12,8 +11,15 @@ import { Suspense } from "react";
 import { FieldError, FormError } from "@/components/ui/FormError";
 import Link from "next/link";
 
+interface PasswordResetState {
+  message?: string;
+  server_validation_error?: string;
+  errors?: Record<string, string[]>;
+  success?: boolean;
+}
+
 function ResetPasswordForm() {
-  const [state, setState] = useState<any>(null);
+  const [state, setState] = useState<PasswordResetState | null>(null);
   const [isPending, setIsPending] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -49,7 +55,7 @@ function ResetPasswordForm() {
     try {
       const result = await passwordResetConfirm(undefined, formData);
       setState(result);
-    } catch (error) {
+    } catch {
       setState({ server_validation_error: "提交失败，请重试" });
     } finally {
       setIsPending(false);

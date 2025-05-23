@@ -18,8 +18,12 @@ describe("SettingsPanel", () => {
     expect(screen.getByText("设置")).toBeInTheDocument();
 
     // 检查默认选中的“个人资料”选项卡内容
-    expect(screen.getByRole("tab", { name: /个人资料/i, selected: true })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /个人资料/i, level: 3 })).toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", { name: /个人资料/i, selected: true }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /个人资料/i, level: 3 }),
+    ).toBeInTheDocument();
     // "偏好设置" and "关于 Nexus" tabs/sections don't exist in the current component.
   });
 

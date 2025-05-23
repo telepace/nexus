@@ -1,29 +1,12 @@
 "use client";
 
 import { FC, useState } from "react";
-import {
-  X,
-  User,
-  Lock,
-  Eye,
-  Bell,
-  Shield,
-  ChevronRight,
-  Globe,
-} from "lucide-react";
+import { X, User, Lock, Eye, Bell, Shield, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "next-themes";
 import { TimeZoneSelector } from "@/components/ui/TimeZoneSelector";
@@ -66,7 +49,7 @@ interface SettingsPanelProps {
 
 export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
   const [activeTab, setActiveTab] = useState("profile");
-  const { theme, setTheme } = useTheme();
+  useTheme();
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,
@@ -77,20 +60,11 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
     return <div className="hidden" />;
   }
 
-  const handleThemeChange = (value: string) => {
-    setTheme(value as "light" | "dark" | "system");
-  };
-
   const handleNotificationChange = (key: keyof typeof notifications) => {
     setNotifications((prev) => ({
       ...prev,
       [key]: !prev[key],
     }));
-  };
-
-  const handleLanguageChange = (value: string) => {
-    // TODO: implement language change logic, e.g., update i18n or localStorage
-    console.log("Language changed to:", value);
   };
 
   return (

@@ -17,6 +17,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getAuthToken, requireAuth } from "@/lib/server-auth-bridge";
+import type { PromptType, Visibility } from "@/app/openapi-client/types.gen";
 
 // 定义Prompt和Tag数据类型
 export interface TagData {
@@ -402,7 +403,7 @@ export async function addPrompt(formData: FormData) {
 
     // 元数据支持
     const metaDataValue = formData.get("meta_data") as string;
-    const meta_data = metaDataValue ? JSON.parse(metaDataValue) : {};
+    const meta_data = metaDataValue ? JSON.parse(metaDataValue) : null;
 
     const { data, error } = await createPrompt({
       headers: {
@@ -412,8 +413,8 @@ export async function addPrompt(formData: FormData) {
         name,
         description,
         content,
-        type: type as any,
-        visibility: visibility as any,
+        type: type as PromptType,
+        visibility: visibility as Visibility,
         tag_ids,
         input_vars,
         team_id,
@@ -492,8 +493,8 @@ export async function updatePromptAction(id: string, formData: FormData) {
         name,
         description,
         content,
-        type: type as any,
-        visibility: visibility as any,
+        type: type as PromptType,
+        visibility: visibility as Visibility,
         tag_ids,
         input_vars,
         team_id,

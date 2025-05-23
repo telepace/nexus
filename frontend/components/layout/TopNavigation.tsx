@@ -1,14 +1,7 @@
 "use client";
 
 import { FC, useState, useEffect } from "react";
-import {
-  Search,
-  PlusCircle,
-  Settings,
-  User,
-  LogOut,
-  Command,
-} from "lucide-react";
+import { PlusCircle, Settings, User, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";

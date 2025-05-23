@@ -58,6 +58,9 @@ jobs:
           pip install .
         working-directory: backend
 
+      - name: Run Format
+        run: make format
+
       - name: Generate Client
         run: |
           make generate-client || {

@@ -9,13 +9,11 @@ import { AddContentModal } from "@/components/layout/AddContentModal";
 export interface MainLayoutProps {
   children: React.ReactNode;
   pageTitle?: string;
-  currentPath?: string;
 }
 
 export default function MainLayout({
   children,
   pageTitle = "Dashboard",
-  currentPath = "/dashboard",
 }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
