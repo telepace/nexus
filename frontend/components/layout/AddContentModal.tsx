@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState, useRef, useCallback } from "react";
+import { FC, useState, useRef, useCallback, useEffect } from "react";
 import {
   X,
   Upload,
@@ -42,6 +42,51 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // 检测URL的简单正则表达式
+  const isURL = (text: string) => {
+    try {
+      new URL(text);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // 处理内容变化
+  const handleContentChange = useCallback(
+    (value: string) => {
+      setContent(value);
+      if (isURL(value)) {
+        setContentType("url");
+      } else if (value.trim() && contentType !== "text") {
+        setContentType("text");
+      }
+    },
+    [contentType],
+  );
+
+  // 处理粘贴事件
+  const handlePaste = useCallback(
+    (e: ClipboardEvent) => {
+      e.preventDefault();
+      const pastedText = e.clipboardData?.getData("text") || "";
+      if (pastedText.trim()) {
+        handleContentChange(pastedText.trim());
+      }
+    },
+    [handleContentChange],
+  );
+
+  // 监听粘贴事件
+  useEffect(() => {
+    if (open) {
+      document.addEventListener("paste", handlePaste);
+      return () => {
+        document.removeEventListener("paste", handlePaste);
+      };
+    }
+  }, [open, handlePaste]);
+
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
@@ -65,6 +110,13 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+  };
+
+  // 处理拖放区域点击
+  const handleDropAreaClick = () => {
+    if (!contentType) {
+      setContentType("text");
+    }
   };
 
   const handleAddContent = async () => {
@@ -109,7 +161,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={onClose}>
+    <AlertDialog open={open}>
       <AlertDialogContent className="max-w-2xl">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-xl">添加新内容</AlertDialogTitle>
@@ -117,7 +169,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
             variant="ghost"
             size="icon"
             className="absolute right-2 top-2"
-            onClick={onClose}
+            onClick={handleCancel}
             aria-label="关闭"
           >
             <X className="h-4 w-4" />
@@ -128,7 +180,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           {/* 主拖放区域 */}
           <div
             data-testid="drop-area"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleDropAreaClick}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             className={`
@@ -150,12 +202,15 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                   <Upload className="h-5 w-5" />
                 </div>
                 <p className="text-center text-gray-500 dark:text-gray-400 mb-4">
-                  🔗 粘贴链接、✍️ 输入文本，或 📂 拖拽文件至此
+                  粘贴链接、输入文本，或拖拽文件至此
                 </p>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
                 >
                   点击选择本地文件
                 </Button>
@@ -180,8 +235,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                     <Label htmlFor="url">URL</Label>
                     <Input
                       id="url"
+                      role="textbox"
                       value={content}
-                      onChange={(e) => setContent(e.target.value)}
+                      onChange={(e) => handleContentChange(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -203,10 +259,11 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                   <Label htmlFor="text-content">文本内容</Label>
                   <Textarea
                     id="text-content"
+                    role="textbox"
                     placeholder="输入您想要添加的文本"
                     className="min-h-[100px]"
                     value={content}
-                    onChange={(e) => setContent(e.target.value)}
+                    onChange={(e) => handleContentChange(e.target.value)}
                   />
                 </div>
               </div>

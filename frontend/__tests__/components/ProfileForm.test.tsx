@@ -156,8 +156,8 @@ describe("ProfileForm", () => {
     render(<ProfileForm user={mockUser} onSubmit={mockOnSubmit} />);
 
     expect(screen.getByText("My Profile")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("John Doe")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("john@example.com")).toBeInTheDocument();
+    expect(screen.getByText("John Doe")).toBeInTheDocument();
+    expect(screen.getByText("john@example.com")).toBeInTheDocument();
   });
 
   it('shows "Generate Anime Avatar" button when no anime config exists', () => {
