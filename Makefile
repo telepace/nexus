@@ -42,7 +42,7 @@ ADMIN_IMG ?= nexus/admin:$(VERSION)
 
 # Tool settings
 PYTHON := python
-UV := $(HOME)/.cargo/bin/uv # Set to absolute path for UV
+UV := $(shell command -v uv) # Use command -v to find uv dynamically
 PYTEST := pytest
 PYTEST_ARGS := -v
 PNPM := pnpm
