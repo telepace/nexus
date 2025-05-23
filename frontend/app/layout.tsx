@@ -29,9 +29,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TimeZoneProvider>
-            {children}
-          </TimeZoneProvider>
+          <TimeZoneProvider>{children}</TimeZoneProvider>
         </ThemeProvider>
       </body>
     </html>

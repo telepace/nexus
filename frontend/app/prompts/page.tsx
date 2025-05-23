@@ -87,9 +87,9 @@ function PromptCards({ prompts }: { prompts: PromptData[] }) {
               <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
                 <div className="flex items-center">
                   <Clock className="h-3 w-3 mr-1" />
-                  <DateDisplay 
-                    date={prompt.updated_at} 
-                    format="distance" 
+                  <DateDisplay
+                    date={prompt.updated_at}
+                    format="distance"
                     className="text-xs"
                   />
                 </div>
@@ -105,7 +105,7 @@ function PromptCards({ prompts }: { prompts: PromptData[] }) {
 
 // Prompts 顶级页面组件，增加错误边界和Suspense
 export default async function PromptsPage({
-  searchParams
+  searchParams,
 }: {
   searchParams?: {
     query?: string;

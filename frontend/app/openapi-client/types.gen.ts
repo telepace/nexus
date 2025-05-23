@@ -509,7 +509,7 @@ export type PromptsCreatePromptData = {
   body: PromptCreate;
 };
 
-export type PromptsCreatePromptResponse = Prompt;
+export type PromptsCreatePromptResponse = PromptReadWithTags;
 
 export type PromptsCreatePromptError = HTTPValidationError;
 
@@ -548,7 +548,7 @@ export type PromptsUpdatePromptData = {
   };
 };
 
-export type PromptsUpdatePromptResponse = Prompt;
+export type PromptsUpdatePromptResponse = PromptReadWithTags;
 
 export type PromptsUpdatePromptError = HTTPValidationError;
 

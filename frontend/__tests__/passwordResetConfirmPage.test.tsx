@@ -92,7 +92,7 @@ describe("Password Reset Confirm Page", () => {
       .mockImplementation(() => [
         { server_validation_error: "密码重置失败" },
         jest.fn(),
-        false
+        false,
       ]);
 
     // Mock router
@@ -120,7 +120,7 @@ describe("Password Reset Confirm Page", () => {
         },
       },
       jest.fn(),
-      false
+      false,
     ]);
 
     render(<Page />);
@@ -141,7 +141,7 @@ describe("Password Reset Confirm Page", () => {
       .mockImplementation(() => [
         { message: "密码已成功重置！正在跳转到登录页面..." },
         jest.fn(),
-        false
+        false,
       ]);
 
     const mockPush = jest.fn();

@@ -73,6 +73,112 @@ const SelectContent = React.forwardRef<
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
       ref={ref}
+// Select component implementation compatible with shadcn/ui style
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { ChevronDown } from "lucide-react";
+
+// 创建SelectContext来共享select状态
+const SelectContext = React.createContext<{
+  value: string;
+  onChange: (value: string) => void;
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}>({
+  value: "",
+  onChange: () => {},
+  open: false,
+  setOpen: () => {},
+});
+
+type SelectProps = {
+  children: React.ReactNode;
+  onValueChange?: (value: string) => void;
+  defaultValue?: string;
+} & Omit<React.HTMLAttributes<HTMLDivElement>, "onChange">;
+
+export function Select({
+  children,
+  onValueChange,
+  defaultValue = "",
+  ...props
+}: SelectProps) {
+  const [value, setValue] = React.useState(defaultValue);
+  const [open, setOpen] = React.useState(false);
+
+  const handleChange = React.useCallback(
+    (newValue: string) => {
+      setValue(newValue);
+      if (onValueChange) {
+        onValueChange(newValue);
+      }
+      setOpen(false);
+    },
+    [onValueChange],
+  );
+
+  return (
+    <SelectContext.Provider
+      value={{ value, onChange: handleChange, open, setOpen }}
+    >
+      <div className="relative w-full" {...props}>
+        {children}
+      </div>
+    </SelectContext.Provider>
+  );
+}
+
+type SelectTriggerProps = React.HTMLAttributes<HTMLDivElement> & {
+  className?: string;
+};
+
+export function SelectTrigger({
+  className,
+  children,
+  ...props
+}: SelectTriggerProps) {
+  const { open, setOpen } = React.useContext(SelectContext);
+
+  return (
+    <div
+      className={cn(
+        "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        className,
+      )}
+      onClick={() => setOpen(!open)}
+      {...props}
+    >
+      {children}
+      <ChevronDown className="h-4 w-4 opacity-50" />
+    </div>
+  );
+}
+
+export function SelectValue({
+  placeholder,
+  className,
+  ...props
+}: { placeholder?: string } & React.HTMLAttributes<HTMLSpanElement>) {
+  const { value } = React.useContext(SelectContext);
+
+  return (
+    <span className={cn("flex-grow truncate", className)} {...props}>
+      {value || placeholder}
+    </span>
+  );
+}
+
+export function SelectContent({
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const { open } = React.useContext(SelectContext);
+
+  if (!open) return null;
+
+  return (
+    <div
       className={cn(
         "relative z-50 max-h-[--radix-select-content-available-height] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-select-content-transform-origin]",
         position === "popper" &&

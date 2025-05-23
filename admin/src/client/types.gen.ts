@@ -359,7 +359,7 @@ export type PromptsCreatePromptData = {
     requestBody: PromptCreate;
 };
 
-export type PromptsCreatePromptResponse = (Prompt);
+export type PromptsCreatePromptResponse = (PromptReadWithTags);
 
 export type PromptsReadPromptsData = {
     limit?: number;
@@ -384,7 +384,7 @@ export type PromptsUpdatePromptData = {
     requestBody: PromptUpdate;
 };
 
-export type PromptsUpdatePromptResponse = (Prompt);
+export type PromptsUpdatePromptResponse = (PromptReadWithTags);
 
 export type PromptsDeletePromptData = {
     promptId: string;

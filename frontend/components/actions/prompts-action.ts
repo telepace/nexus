@@ -191,7 +191,8 @@ export const fetchPrompts = async (options?: {
       Array.isArray((data as Record<string, unknown>).data)
     ) {
       // 使用类型断言将数据转换为 PromptData[]
-      result = (data as Record<string, unknown>).data as unknown as PromptData[];
+      result = (data as Record<string, unknown>)
+        .data as unknown as PromptData[];
     } else {
       console.warn(`[${requestId}] 意外的 API 响应格式:`, data);
       result = { error: "API返回了意外的数据格式", status: 400 };
@@ -397,8 +398,8 @@ export async function addPrompt(formData: FormData) {
     const tag_ids = tagIdsValue ? JSON.parse(tagIdsValue) : [];
     const inputVarsValue = formData.get("input_vars") as string;
     const input_vars = inputVarsValue ? JSON.parse(inputVarsValue) : [];
-    const team_id = formData.get("team_id") as string || null;
-    
+    const team_id = (formData.get("team_id") as string) || null;
+
     // 元数据支持
     const metaDataValue = formData.get("meta_data") as string;
     const meta_data = metaDataValue ? JSON.parse(metaDataValue) : {};
@@ -471,8 +472,8 @@ export async function updatePromptAction(id: string, formData: FormData) {
     const input_vars = inputVarsValue ? JSON.parse(inputVarsValue) : [];
     const createVersionValue = formData.get("create_version");
     const create_version = createVersionValue === "true";
-    const team_id = formData.get("team_id") as string || null;
-    
+    const team_id = (formData.get("team_id") as string) || null;
+
     // 元数据支持
     const metaDataValue = formData.get("meta_data") as string;
     const meta_data = metaDataValue ? JSON.parse(metaDataValue) : null;
@@ -799,7 +800,4 @@ export async function removeTag(id: string) {
 }
 
 // 导出类型
-export type {
-  PromptVersionData,
-  ApiErrorResponse,
-};
+export type { PromptVersionData, ApiErrorResponse };

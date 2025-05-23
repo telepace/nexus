@@ -44,7 +44,9 @@ export default function CreateItemPage() {
                 className="w-full border-gray-300 dark:border-gray-600"
               />
               {(state as any).errors?.title && (
-                <p className="text-red-500 text-sm">{(state as any).errors.title}</p>
+                <p className="text-red-500 text-sm">
+                  {(state as any).errors.title}
+                </p>
               )}
             </div>
 
