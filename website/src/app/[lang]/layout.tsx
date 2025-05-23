@@ -26,7 +26,7 @@ interface Props {
  * @returns {JSX.Element} - A React JSX element representing the root HTML structure with localized content.
  */
 export default async function RootLayout({ children, params }: Props) {
-  const { lang } = await params
+  const { lang } = await params; // Reverted to await params
   await getDictionary(lang)
 
   return (
