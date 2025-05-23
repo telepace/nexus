@@ -5,7 +5,7 @@ alwaysApply: false
 ---
 ## 🎨 Design System Guidelines (Tailwind v3 + shadcn/ui)
 
-This document spells out **exactly how to author UI code** in this project. Treat it as a contract: if your PR diverges, fix the code or update the spec—never both.
+This document spells out **exactly how to author UI code** in this project. Treat it as a contract.
 
 ---
 
@@ -72,11 +72,12 @@ This document spells out **exactly how to author UI code** in this project. Trea
 
 ```other
 /components
-  /AlertDialog
-    AlertDialog.tsx
-    AlertDialog.test.tsx
-    AlertDialog.stories.tsx
-    index.ts          (re‑export)
+    /ui
+        /AlertDialog
+            AlertDialog.tsx
+            AlertDialog.test.tsx
+            AlertDialog.stories.tsx
+            index.ts          (re‑export)
 ```
 
 - Component folder = PascalCase.
@@ -92,12 +93,3 @@ This document spells out **exactly how to author UI code** in this project. Trea
 3. Passes unit tests + Storybook visual check.
 4. Meets a11y rules (axe-core).
 5. Bundle size unchanged or justified.
-
----
-
-### 10 · When in Doubt
-
-- **Ask before inventing.** Small upfront alignment saves big refactors later.
-- Keep this doc living—propose PRs to evolve guidelines with the codebase.
-
-Happy shipping.
