@@ -14,6 +14,18 @@ interface ProfileFormProps {
   onSubmit: (data: Partial<User>) => Promise<void>;
 }
 
+/**
+ * ProfileForm component for managing user profile information and avatars.
+ *
+ * This component renders a form for editing user profiles, including fields for full name and email.
+ * It also provides options to switch between traditional and anime avatars, with functionalities to generate,
+ * randomize, or use a traditional avatar. The component manages state for editing mode, form inputs,
+ * validation errors, and avatar configurations. It handles form submission by validating the email and
+ * calling the onSubmit prop with updated user data.
+ *
+ * @param user - The user object containing initial profile information.
+ * @param onSubmit - A callback function to handle form submission with updated user data.
+ */
 export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState(user.full_name || "");
@@ -50,6 +62,15 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
     return true;
   };
 
+  /**
+   * Handles form submission by validating email, preparing user data,
+   * and submitting it to an external handler.
+   *
+   * The function prevents default form behavior, checks if the email is valid,
+   * sets a submitting state, constructs user data including optional anime avatar config,
+   * submits the data using `onSubmit`, toggles editing mode on success,
+   * logs errors on failure, and ensures the submitting state is reset.
+   */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -79,17 +100,26 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
     }
   };
 
+  /**
+   * Generates an anime avatar configuration and sets the avatar type to 'anime'.
+   */
   const handleGenerateAnimeAvatar = () => {
     const newConfig = genConfig();
     setAnimeAvatarConfig(newConfig);
     setAvatarType('anime');
   };
 
+  /**
+   * Generates a new configuration and sets it as the anime avatar configuration.
+   */
   const handleRandomizeAvatar = () => {
     const newConfig = genConfig();
     setAnimeAvatarConfig(newConfig);
   };
 
+  /**
+   * Sets avatar type to traditional and clears anime avatar configuration.
+   */
   const handleUseTraditionalAvatar = () => {
     setAnimeAvatarConfig(null);
     setAvatarType('traditional');
@@ -106,6 +136,13 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
       .substring(0, 2);
   };
 
+  /**
+   * Renders an avatar based on the type and configuration provided.
+   *
+   * This function checks if the avatarType is 'anime' and if there is a valid animeAvatarConfig.
+   * If both conditions are met, it renders a NiceAvatar component with specific styling and config.
+   * Otherwise, it renders a default Avatar component with an image or fallback text based on user data.
+   */
   const renderAvatar = () => {
     if (avatarType === 'anime' && animeAvatarConfig) {
       return (
@@ -131,6 +168,9 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
     );
   };
 
+  /**
+   * Renders avatar buttons based on the avatar type and configuration.
+   */
   const renderAvatarButtons = () => {
     if (avatarType === 'anime' && animeAvatarConfig) {
       return (
