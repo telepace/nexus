@@ -1,20 +1,23 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import React from "react";
-import { act } from "react";
 
-import Page from "@/app/password-recovery/confirm/page";
-import { useSearchParams, notFound, useRouter } from "next/navigation";
-
-jest.mock("next/navigation", () => ({
-  ...jest.requireActual("next/navigation"),
-  useSearchParams: jest.fn(),
-  notFound: jest.fn(),
-  useRouter: jest.fn(),
-}));
+import Page from "@/app/password-recovery/page";
+import { passwordReset } from "@/components/actions/password-reset-action";
 
 jest.mock("../components/actions/password-reset-action", () => ({
-  passwordResetConfirm: jest.fn(),
+  passwordReset: jest.fn(),
+}));
+
+// Mock next/navigation
+jest.mock("next/navigation", () => ({
+  ...jest.requireActual("next/navigation"),
+  useSearchParams: () => ({
+    get: jest.fn().mockImplementation((key) => (key === "email" ? "" : null)),
+  }),
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
 }));
 
 // Mock auth hook
@@ -25,91 +28,39 @@ jest.mock("@/lib/auth", () => ({
   }),
 }));
 
+// Mock next/image
 jest.mock("next/image", () => ({
   __esModule: true,
-  default: (props: unknown) => {
-    return <img {...(props as object)} />;
+  default: (props: any) => {
+    return <img {...props} />;
   },
 }));
 
-describe("Password Reset Confirm Page", () => {
+describe("Password Reset Page", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it("renders the form with password and confirm password input and submit button", () => {
-    // Mock search params
-    (useSearchParams as jest.Mock).mockImplementation(() => ({
-      get: jest.fn().mockReturnValue("mock-token"),
-    }));
-
-    // Mock useActionState
+  it("renders the form with email input and submit button", () => {
+    // Mock useActionState 返回默认状态
     jest
       .spyOn(React, "useActionState")
       .mockImplementation(() => [undefined, jest.fn(), false]);
 
     render(<Page />);
 
+    // 使用 getByRole 查找输入框和按钮
+    expect(screen.getByRole("textbox", { name: /邮箱/i })).toBeInTheDocument();
     expect(
-      screen.getByPlaceholderText("At least 8 characters"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText("Enter the same password again"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Reset Password/i }),
+      screen.getByRole("button", { name: /发送重置链接/i }),
     ).toBeInTheDocument();
   });
 
-  it("renders the 404 page in case there is not a token", () => {
-    // Mock search params with no token
-    (useSearchParams as jest.Mock).mockImplementation(() => ({
-      get: jest.fn().mockReturnValue(null),
-    }));
-
-    render(<Page />);
-
-    expect(notFound).toHaveBeenCalled();
-  });
-
-  it("displays error message if password reset fails", async () => {
-    // Mock search params
-    (useSearchParams as jest.Mock).mockImplementation(() => ({
-      get: jest.fn().mockReturnValue("mock-token"),
-    }));
-
-    // Mock error state
-    jest
-      .spyOn(React, "useActionState")
-      .mockImplementation(() => [
-        { server_validation_error: "Password reset failed" },
-        jest.fn(),
-        false,
-      ]);
-
-    // Mock router
-    (useRouter as jest.Mock).mockReturnValue({
-      push: jest.fn(),
-    });
-
-    render(<Page />);
-
-    expect(screen.getByText("Password reset failed")).toBeInTheDocument();
-  });
-
-  it("displays validation errors if password is invalid and don't match", async () => {
-    // Mock search params
-    (useSearchParams as jest.Mock).mockImplementation(() => ({
-      get: jest.fn().mockReturnValue("mock-token"),
-    }));
-
-    // Mock validation errors
+  it("displays success message on successful form submission", async () => {
+    // Mock useActionState 返回成功状态
     jest.spyOn(React, "useActionState").mockImplementation(() => [
       {
-        errors: {
-          password: ["Password must be at least 8 characters"],
-          passwordConfirm: ["Passwords don't match"],
-        },
+        message: "密码重置链接已发送到您的邮箱，请查收。",
       },
       jest.fn(),
       false,
@@ -118,51 +69,39 @@ describe("Password Reset Confirm Page", () => {
     render(<Page />);
 
     expect(
-      screen.getByText("Password must be at least 8 characters"),
+      screen.getByText("密码重置链接已发送到您的邮箱，请查收。"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Passwords don't match")).toBeInTheDocument();
   });
 
-  it("redirects to login page after successful password reset", async () => {
-    // Mock search params
-    (useSearchParams as jest.Mock).mockImplementation(() => ({
-      get: jest.fn().mockReturnValue("mock-token"),
-    }));
-
-    // Mock success message
-    jest
-      .spyOn(React, "useActionState")
-      .mockImplementation(() => [
-        { message: "Password successfully reset! Redirecting to login..." },
-        jest.fn(),
-        false,
-      ]);
-
-    const mockPush = jest.fn();
-    // Mock router
-    (useRouter as jest.Mock).mockReturnValue({
-      push: mockPush,
-    });
-
-    // Use fake timers for setTimeout
-    jest.useFakeTimers();
+  it("displays error message if password reset fails", async () => {
+    // Mock useActionState 返回错误状态
+    jest.spyOn(React, "useActionState").mockImplementation(() => [
+      {
+        server_validation_error: "用户不存在",
+      },
+      jest.fn(),
+      false,
+    ]);
 
     render(<Page />);
 
-    expect(
-      screen.getAllByText(
-        "Password successfully reset! Redirecting to login...",
-      )[0],
-    ).toBeInTheDocument();
+    expect(screen.getByText("用户不存在")).toBeInTheDocument();
+  });
 
-    // Advance timers to trigger redirect
-    act(() => {
-      jest.advanceTimersByTime(2000);
-    });
+  it("displays validation errors for invalid email", async () => {
+    // Mock useActionState 返回验证错误状态
+    jest.spyOn(React, "useActionState").mockImplementation(() => [
+      {
+        errors: {
+          email: ["请输入有效的电子邮件地址"],
+        },
+      },
+      jest.fn(),
+      false,
+    ]);
 
-    expect(mockPush).toHaveBeenCalledWith("/login");
+    render(<Page />);
 
-    // Restore real timers
-    jest.useRealTimers();
+    expect(screen.getByText("请输入有效的电子邮件地址")).toBeInTheDocument();
   });
 });

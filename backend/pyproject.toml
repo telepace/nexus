@@ -17,17 +17,19 @@ dependencies = [
     "psycopg[binary]<4.0.0,>=3.1.13",
     "psycopg2-binary<3.0.0,>=2.9.9",
     # 添加 psycopg2 作为备用驱动
+    "psycopg2-binary<3.0.0,>=2.9.9", # 添加 psycopg2 作为备用驱动
     "sqlmodel<1.0.0,>=0.0.21",
     # Pin bcrypt until passlib supports the latest
     "bcrypt==4.0.1",
     "pydantic-settings<3.0.0,>=2.2.1",
-    "sentry-sdk[fastapi]<2.0.0,>=1.40.6",
+    "sentry-sdk[fastapi]>=1.40.6,<2.0.0",
     "pyjwt<3.0.0,>=2.8.0",
     "supabase<2.0.0,>=1.2.0",
-    "posthog<3.0.0,>=2.4.0",
+    "posthog>=2.4.0,<3.0.0",
     "yarl>=1.9.0,<2.0.0",
     "itsdangerous>=2.2.0",
     "pillow>=11.2.1",
+    "httptools>=0.6.4",
 ]
 
 [tool.uv]
@@ -41,6 +43,13 @@ dev-dependencies = [
     "types-passlib<2.0.0.0,>=1.7.7.20240106",
     "types-requests<3.0.0.0,>=2.32.0",
     "coverage<8.0.0,>=7.4.3",
+    "pip>=25.1.1",
+
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "asyncio: mark a test as an asyncio test",
 ]
 
 [tool.pytest.ini_options]
