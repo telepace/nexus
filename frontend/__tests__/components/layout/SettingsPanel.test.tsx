@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { SettingsPanel } from "@/components/layout/SettingsPanel";
-import { TimeZoneProvider } from "@/lib/time-zone-context";
+// import { TimeZoneProvider } from "@/lib/time-zone-context";
 
 // Mock next/navigation
 jest.mock("next/navigation", () => ({
