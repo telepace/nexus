@@ -123,7 +123,10 @@ def get_items(
 def create_user(*, session: Session, user_create: Any) -> Any:
     """创建新用户"""
     # 动态导入User和UserCreate
+    import asyncio
+
     from app.models import User
+    from app.utils.image_utils import AvatarGenerator
 
     # 添加这个检查，确保 is_superuser 字段被正确设置
     is_superuser = getattr(user_create, "is_superuser", False)
@@ -138,6 +141,16 @@ def create_user(*, session: Session, user_create: Any) -> Any:
     try:
         session.commit()
         session.refresh(user)
+
+        # 为用户生成默认头像
+        avatar_url, _ = asyncio.run(
+            AvatarGenerator.get_default_avatar(user.email, str(user.id))
+        )
+        user.avatar_url = avatar_url
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+
         return user
     except IntegrityError:
         session.rollback()
@@ -306,12 +319,26 @@ def create_user_oauth(*, session: Session, obj_in: Any) -> Any:
     Create a new user for OAuth authentication (without password)
     """
     # 动态导入User
+    import asyncio
+
     from app.models import User
+    from app.utils.image_utils import AvatarGenerator
 
     db_obj = User.model_validate(obj_in)
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)
+
+    # 如果没有头像URL，为用户生成默认头像
+    if not db_obj.avatar_url:
+        avatar_url, _ = asyncio.run(
+            AvatarGenerator.get_default_avatar(db_obj.email, str(db_obj.id))
+        )
+        db_obj.avatar_url = avatar_url
+        session.add(db_obj)
+        session.commit()
+        session.refresh(db_obj)
+
     return db_obj
 
 
