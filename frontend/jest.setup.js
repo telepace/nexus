@@ -192,10 +192,8 @@ jest.mock("react", () => {
     ...actualReact,
     useActionState: jest.fn(() => [null, jest.fn()]),
     act: (callback) => {
-      if (typeof callback === "function") {
-        return callback();
-      }
-      return Promise.resolve();
+      // Ensure to use actualReact.act for proper execution
+      return actualReact.act(callback);
     },
     cache: (fn) => fn,
     experimental_useOptimistic: jest.fn(() => [null, jest.fn()]),
@@ -242,33 +240,4 @@ afterEach(() => {
   jest.clearAllMocks();
   delete global.mockSearchParams;
   delete global.mockPathname;
-});
-
-// Add mock for React act function
-jest.mock("react", () => {
-  const originalReact = jest.requireActual("react");
-  return {
-    ...originalReact,
-    act: (callback) => {
-      if (typeof callback === "function") {
-        return callback();
-      }
-      return Promise.resolve();
-    },
-    cache: (fn) => fn,
-  };
-});
-
-// Add mock for react-dom act function
-jest.mock("react-dom/test-utils", () => {
-  const originalTestUtils = jest.requireActual("react-dom/test-utils");
-  return {
-    ...originalTestUtils,
-    act: (callback) => {
-      if (typeof callback === "function") {
-        return callback();
-      }
-      return Promise.resolve();
-    },
-  };
 });
