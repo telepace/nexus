@@ -42,21 +42,21 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // URL detection function
-  const isValidURL = (str: string): boolean => {
+  // 检测URL的简单正则表达式
+  const isURL = (text: string) => {
     try {
-      new URL(str);
+      new URL(text);
       return true;
     } catch {
       return false;
     }
   };
 
-  // Handle content change and auto-detect type
-  const handleContentChange = useCallback((newContent: string) => {
-    setContent(newContent);
-    if (newContent.trim()) {
-      if (isValidURL(newContent.trim())) {
+  // 处理内容变化
+  const handleContentChange = (value: string) => {
+    setContent(value);
+    if (value.trim()) {
+      if (isURL(value.trim())) {
         setContentType("url");
       } else {
         setContentType("text");
@@ -64,28 +64,26 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     } else {
       setContentType(null);
     }
+  };
+
+  // 处理粘贴事件
+  const handlePaste = useCallback((e: ClipboardEvent) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData?.getData("text") || "";
+    if (pastedText.trim()) {
+      handleContentChange(pastedText.trim());
+    }
   }, []);
 
-  // Handle paste events
+  // 监听粘贴事件
   useEffect(() => {
-    const handlePaste = (e: ClipboardEvent) => {
-      if (!open) return;
-      
-      const pastedText = e.clipboardData?.getData("text");
-      if (pastedText) {
-        e.preventDefault();
-        handleContentChange(pastedText);
-      }
-    };
-
     if (open) {
       document.addEventListener("paste", handlePaste);
+      return () => {
+        document.removeEventListener("paste", handlePaste);
+      };
     }
-
-    return () => {
-      document.removeEventListener("paste", handlePaste);
-    };
-  }, [open, handleContentChange]);
+  }, [open, handlePaste]);
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,13 +110,8 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     e.preventDefault();
   };
 
-  // Handle drop area click - activate text input mode
-  const handleDropAreaClick = (e: React.MouseEvent) => {
-    // Only activate text mode if clicking the area itself, not the file button
-    if ((e.target as HTMLElement).closest('button')) {
-      return;
-    }
-    e.stopPropagation();
+  // 处理拖放区域点击
+  const handleDropAreaClick = () => {
     if (!contentType) {
       setContentType("text");
     }
@@ -166,7 +159,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={onClose}>
+    <AlertDialog open={open}>
       <AlertDialogContent className="max-w-2xl">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-xl">添加新内容</AlertDialogTitle>
@@ -174,7 +167,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
             variant="ghost"
             size="icon"
             className="absolute right-2 top-2"
-            onClick={onClose}
+            onClick={handleCancel}
             aria-label="关闭"
           >
             <X className="h-4 w-4" />
@@ -207,12 +200,15 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                   <Upload className="h-5 w-5" />
                 </div>
                 <p className="text-center text-gray-500 dark:text-gray-400 mb-4">
-                  🔗 粘贴链接、✍️ 输入文本，或 📂 拖拽文件至此
+                  粘贴链接、输入文本，或拖拽文件至此
                 </p>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
                 >
                   点击选择本地文件
                 </Button>

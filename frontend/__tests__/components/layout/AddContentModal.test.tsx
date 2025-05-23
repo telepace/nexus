@@ -7,7 +7,7 @@ describe("AddContentModal", () => {
     const { container } = render(
       <AddContentModal open={false} onClose={jest.fn()} />,
     );
-    expect(container.querySelector('[role="dialog"]')).not.toBeInTheDocument();
+    expect(container.querySelector('[role="alertdialog"]')).not.toBeInTheDocument();
   });
 
   it("应该在打开状态下正确渲染", () => {
@@ -42,7 +42,7 @@ describe("AddContentModal", () => {
   it("应该能输入文本内容", async () => {
     render(<AddContentModal open={true} onClose={jest.fn()} />);
 
-    // 模拟粘贴文本
+    // 点击拖放区域激活文本输入
     const dropArea = screen.getByTestId("drop-area");
     fireEvent.click(dropArea);
 
@@ -57,11 +57,11 @@ describe("AddContentModal", () => {
   it("应该能处理URL输入", async () => {
     render(<AddContentModal open={true} onClose={jest.fn()} />);
 
-    // 模拟粘贴URL
+    // 点击拖放区域激活文本输入
     const dropArea = screen.getByTestId("drop-area");
     fireEvent.click(dropArea);
 
-    // 输入URL
+    // 等待输入框出现并输入URL
     const textInput = await screen.findByRole("textbox");
     fireEvent.change(textInput, { target: { value: "https://example.com" } });
 
