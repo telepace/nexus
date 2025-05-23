@@ -25,8 +25,8 @@ describe("Dashboard Layout Navigation", () => {
   it("should render Prompt Hub navigation link in sidebar", () => {
     render(<DashboardLayout>{<div>Test</div>}</DashboardLayout>);
 
-    // 验证导航侧边栏中是否存在Prompt Hub链接
-    const promptLink = screen.getByRole("link", { name: "Prompt Hub" });
+    // 验证导航侧边栏中是否存在Prompts链接
+    const promptLink = screen.getByRole("link", { name: "Prompts" });
     expect(promptLink).toBeInTheDocument();
     expect(promptLink.getAttribute("href")).toBe("/prompts");
   });

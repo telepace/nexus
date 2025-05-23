@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState, useRef, useCallback } from "react";
+import { FC, useState, useRef, useCallback, useEffect } from "react";
 import {
   X,
   Upload,
@@ -42,6 +42,51 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // URL detection function
+  const isValidURL = (str: string): boolean => {
+    try {
+      new URL(str);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // Handle content change and auto-detect type
+  const handleContentChange = useCallback((newContent: string) => {
+    setContent(newContent);
+    if (newContent.trim()) {
+      if (isValidURL(newContent.trim())) {
+        setContentType("url");
+      } else {
+        setContentType("text");
+      }
+    } else {
+      setContentType(null);
+    }
+  }, []);
+
+  // Handle paste events
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      if (!open) return;
+      
+      const pastedText = e.clipboardData?.getData("text");
+      if (pastedText) {
+        e.preventDefault();
+        handleContentChange(pastedText);
+      }
+    };
+
+    if (open) {
+      document.addEventListener("paste", handlePaste);
+    }
+
+    return () => {
+      document.removeEventListener("paste", handlePaste);
+    };
+  }, [open, handleContentChange]);
+
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
@@ -65,6 +110,18 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+  };
+
+  // Handle drop area click - activate text input mode
+  const handleDropAreaClick = (e: React.MouseEvent) => {
+    // Only activate text mode if clicking the area itself, not the file button
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    e.stopPropagation();
+    if (!contentType) {
+      setContentType("text");
+    }
   };
 
   const handleAddContent = async () => {
@@ -128,7 +185,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           {/* 主拖放区域 */}
           <div
             data-testid="drop-area"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleDropAreaClick}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             className={`
@@ -180,8 +237,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                     <Label htmlFor="url">URL</Label>
                     <Input
                       id="url"
+                      role="textbox"
                       value={content}
-                      onChange={(e) => setContent(e.target.value)}
+                      onChange={(e) => handleContentChange(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -203,10 +261,11 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                   <Label htmlFor="text-content">文本内容</Label>
                   <Textarea
                     id="text-content"
+                    role="textbox"
                     placeholder="输入您想要添加的文本"
                     className="min-h-[100px]"
                     value={content}
-                    onChange={(e) => setContent(e.target.value)}
+                    onChange={(e) => handleContentChange(e.target.value)}
                   />
                 </div>
               </div>
