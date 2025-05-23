@@ -53,7 +53,10 @@ describe("SettingsPanel", () => {
 
     // 验证默认选中的个人资料标签
     expect(screen.getByRole("tab", { name: /个人资料/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /个人资料/i })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: /个人资料/i })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
 
     // 验证其他可能的标签存在
     expect(screen.getByRole("tab", { name: /密码/i })).toBeInTheDocument();
@@ -61,7 +64,7 @@ describe("SettingsPanel", () => {
     // 简单验证标签点击不会出错
     const passwordTab = screen.getByRole("tab", { name: /密码/i });
     fireEvent.click(passwordTab);
-    
+
     // 验证密码标签仍然存在（基本功能测试）
     expect(passwordTab).toBeInTheDocument();
   });

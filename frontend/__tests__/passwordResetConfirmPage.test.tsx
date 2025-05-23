@@ -98,13 +98,15 @@ describe("Password Reset Confirm Page", () => {
 
     // Mock passwordResetConfirm to return error
     (passwordResetConfirm as jest.Mock).mockResolvedValue({
-      server_validation_error: "密码重置失败"
+      server_validation_error: "密码重置失败",
     });
 
     render(<Page />);
 
     // 填写表单并提交
-    const passwordInput = screen.getByPlaceholderText("至少8个字符，包含大写字母和特殊字符");
+    const passwordInput = screen.getByPlaceholderText(
+      "至少8个字符，包含大写字母和特殊字符",
+    );
     const confirmInput = screen.getByPlaceholderText("再次输入相同的密码");
     const submitButton = screen.getByRole("button", { name: /重置密码/i });
 
@@ -114,7 +116,9 @@ describe("Password Reset Confirm Page", () => {
 
     // 等待错误消息出现
     await waitFor(() => {
-      expect(screen.getByTestId("form-error")).toHaveTextContent("密码重置失败");
+      expect(screen.getByTestId("form-error")).toHaveTextContent(
+        "密码重置失败",
+      );
     });
   });
 
@@ -134,13 +138,15 @@ describe("Password Reset Confirm Page", () => {
       errors: {
         password: ["密码至少需要8个字符"],
         passwordConfirm: ["密码不匹配"],
-      }
+      },
     });
 
     render(<Page />);
 
     // 填写表单并提交
-    const passwordInput = screen.getByPlaceholderText("至少8个字符，包含大写字母和特殊字符");
+    const passwordInput = screen.getByPlaceholderText(
+      "至少8个字符，包含大写字母和特殊字符",
+    );
     const confirmInput = screen.getByPlaceholderText("再次输入相同的密码");
     const submitButton = screen.getByRole("button", { name: /重置密码/i });
 
@@ -150,8 +156,12 @@ describe("Password Reset Confirm Page", () => {
 
     // 等待验证错误出现
     await waitFor(() => {
-      expect(screen.getByTestId("field-error-password-0")).toHaveTextContent("密码至少需要8个字符");
-      expect(screen.getByTestId("field-error-passwordConfirm-0")).toHaveTextContent("密码不匹配");
+      expect(screen.getByTestId("field-error-password-0")).toHaveTextContent(
+        "密码至少需要8个字符",
+      );
+      expect(
+        screen.getByTestId("field-error-passwordConfirm-0"),
+      ).toHaveTextContent("密码不匹配");
     });
   });
 
@@ -169,7 +179,7 @@ describe("Password Reset Confirm Page", () => {
 
     // Mock passwordResetConfirm to return success
     (passwordResetConfirm as jest.Mock).mockResolvedValue({
-      message: "密码已成功重置！正在跳转到登录页面..."
+      message: "密码已成功重置！正在跳转到登录页面...",
     });
 
     // Use fake timers for setTimeout
@@ -178,7 +188,9 @@ describe("Password Reset Confirm Page", () => {
     render(<Page />);
 
     // 填写表单并提交
-    const passwordInput = screen.getByPlaceholderText("至少8个字符，包含大写字母和特殊字符");
+    const passwordInput = screen.getByPlaceholderText(
+      "至少8个字符，包含大写字母和特殊字符",
+    );
     const confirmInput = screen.getByPlaceholderText("再次输入相同的密码");
     const submitButton = screen.getByRole("button", { name: /重置密码/i });
 
@@ -188,7 +200,9 @@ describe("Password Reset Confirm Page", () => {
 
     // 等待成功消息出现
     await waitFor(() => {
-      expect(screen.getByTestId("success-message")).toHaveTextContent("密码已成功重置！正在跳转到登录页面...");
+      expect(screen.getByTestId("success-message")).toHaveTextContent(
+        "密码已成功重置！正在跳转到登录页面...",
+      );
     });
 
     // Advance timers to trigger redirect

@@ -53,27 +53,29 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   };
 
   // 处理内容变化
-  const handleContentChange = (value: string) => {
-    setContent(value);
-    if (value.trim()) {
-      if (isURL(value.trim())) {
+  const handleContentChange = useCallback(
+    (value: string) => {
+      setContent(value);
+      if (isURL(value)) {
         setContentType("url");
-      } else {
+      } else if (value.trim() && contentType !== "text") {
         setContentType("text");
       }
-    } else {
-      setContentType(null);
-    }
-  };
+    },
+    [contentType],
+  );
 
   // 处理粘贴事件
-  const handlePaste = useCallback((e: ClipboardEvent) => {
-    e.preventDefault();
-    const pastedText = e.clipboardData?.getData("text") || "";
-    if (pastedText.trim()) {
-      handleContentChange(pastedText.trim());
-    }
-  }, []);
+  const handlePaste = useCallback(
+    (e: ClipboardEvent) => {
+      e.preventDefault();
+      const pastedText = e.clipboardData?.getData("text") || "";
+      if (pastedText.trim()) {
+        handleContentChange(pastedText.trim());
+      }
+    },
+    [handleContentChange],
+  );
 
   // 监听粘贴事件
   useEffect(() => {

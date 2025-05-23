@@ -1,12 +1,14 @@
 from sqlalchemy import create_engine, text
+
 from app.core.config import settings
+
 
 def test_database_connection():
     """Test database connection"""
     # 将 MultiHostUrl 转换为字符串
     db_url = str(settings.SQLALCHEMY_DATABASE_URI)
     print(f"尝试连接数据库: {db_url}")
-    
+
     try:
         # 创建引擎并尝试连接
         engine = create_engine(db_url)
@@ -19,4 +21,4 @@ def test_database_connection():
         return False
 
 if __name__ == "__main__":
-    test_database_connection() 
+    test_database_connection()

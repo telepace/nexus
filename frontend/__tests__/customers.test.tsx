@@ -137,7 +137,9 @@ describe("Customers Page", () => {
     });
 
     // Simply verify the click operation completed without error
-    expect(screen.getByRole("tab", { name: /appearance/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", { name: /appearance/i }),
+    ).toBeInTheDocument();
   });
 
   it("switches to notifications tab", async () => {
@@ -150,7 +152,9 @@ describe("Customers Page", () => {
     });
 
     // Simply verify the click operation completed without error
-    expect(screen.getByRole("tab", { name: /notifications/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", { name: /notifications/i }),
+    ).toBeInTheDocument();
   });
 
   it("switches to privacy tab", async () => {

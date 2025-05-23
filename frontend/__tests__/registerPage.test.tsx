@@ -49,12 +49,10 @@ describe("Register Page", () => {
 
     // 验证姓名字段
     expect(screen.getByLabelText(/姓名/i)).toBeInTheDocument();
-    // 验证邮箱字段  
+    // 验证邮箱字段
     expect(screen.getByLabelText(/邮箱/i)).toBeInTheDocument();
     // 验证注册按钮
-    expect(
-      screen.getByRole("button", { name: /^注册$/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^注册$/i })).toBeInTheDocument();
   });
 
   // 跳过因为 fetch 调用的测试 - 该测试需要更深入的修复

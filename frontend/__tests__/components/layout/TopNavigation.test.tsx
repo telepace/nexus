@@ -21,9 +21,7 @@ describe("TopNavigation", () => {
     expect(screen.getByAltText("Nexus Logo")).toBeInTheDocument();
 
     // 检查搜索框
-    expect(
-      screen.getByPlaceholderText("搜索您的内容库…"),
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("搜索您的内容库…")).toBeInTheDocument();
 
     // 检查添加内容按钮
     expect(
@@ -82,10 +80,10 @@ describe("TopNavigation", () => {
     // 验证按钮存在且可点击
     expect(userMenuButton).toBeInTheDocument();
     expect(userMenuButton).toHaveAttribute("type", "button");
-    
+
     // 点击菜单按钮（验证不会抛出错误）
     fireEvent.click(userMenuButton);
-    
+
     // 验证按钮仍然存在（基本功能测试）
     expect(userMenuButton).toBeInTheDocument();
   });

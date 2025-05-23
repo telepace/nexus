@@ -7,7 +7,9 @@ describe("AddContentModal", () => {
     const { container } = render(
       <AddContentModal open={false} onClose={jest.fn()} />,
     );
-    expect(container.querySelector('[role="alertdialog"]')).not.toBeInTheDocument();
+    expect(
+      container.querySelector('[role="alertdialog"]'),
+    ).not.toBeInTheDocument();
   });
 
   it("应该在打开状态下正确渲染", () => {
