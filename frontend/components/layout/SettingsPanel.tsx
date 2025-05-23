@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useTheme } from "next-themes";
 import { TimeZoneSelector } from "@/components/ui/TimeZoneSelector";
 import { useTimeZone } from "../../lib/time-zone-context";
+import Image from "next/image";
 
 // 添加时区设置组件
 const TimeZoneSettings = () => {
@@ -140,10 +141,12 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
                 <div className="grid gap-6">
                   <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
                     <div className="h-24 w-24 relative rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
-                      <img
+                      <Image
                         src="/images/vinta.png"
                         alt="Profile"
                         className="object-cover w-full h-full"
+                        width={96}
+                        height={96}
                       />
                       <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                         <Button variant="secondary" size="sm">

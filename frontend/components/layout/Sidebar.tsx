@@ -18,6 +18,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -55,10 +56,12 @@ export const Sidebar: FC<SidebarProps> = ({ collapsed, onToggleCollapse }) => {
       <div className="flex items-center justify-between mb-8">
         <Link href="/" className="flex items-center gap-2">
           <div className="relative h-8 w-8 overflow-hidden rounded-full">
-            <img
+            <Image
               src="/images/vinta.png"
               alt="Nexus Logo"
               className="object-cover"
+              width={32}
+              height={32}
             />
           </div>
           {!collapsed && (

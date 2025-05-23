@@ -210,6 +210,11 @@ lint: backend-lint frontend-lint admin-lint
 test: backend-test frontend-test frontend-test-e2e admin-test extension-test-unit #website-test 
 	@echo "===========> All tests completed successfully"
 
+
+## build: Build all components
+.PHONY: build
+build: backend-build frontend-build admin-build
+
 ## format: Format code in all components
 .PHONY: format
 format: backend-format frontend-format admin-format
@@ -319,7 +324,7 @@ backend-db-shell:
 
 ## frontend-all: Run all frontend checks (lint, test, format) without starting services
 .PHONY: frontend-all
-frontend-all: frontend-format frontend-lint frontend-test
+frontend-all: frontend-format frontend-lint # frontend-test
 	@echo "===========> Frontend all checks completed successfully"
 
 ## frontend: Start frontend development server

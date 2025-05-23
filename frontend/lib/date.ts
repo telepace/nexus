@@ -27,7 +27,7 @@ export const getBrowserTimeZone = (): TimeZone => {
     const timezone = Intl.DateTimeFormat().resolvedOptions()
       .timeZone as TimeZone;
     return TIME_ZONES[timezone] ? timezone : "UTC";
-  } catch (error) {
+  } catch {
     return "UTC"; // 默认使用UTC
   }
 };
