@@ -21,7 +21,7 @@ function GoogleAuthCallbackContent() {
       setStatus("登录失败，正在跳转到登录页面...");
       setTimeout(() => {
         router.push(
-          `/login?error=${error}&message=${errorMessage || "Authentication failed"}`
+          `/login?error=${error}&message=${errorMessage || "Authentication failed"}`,
         );
       }, 1500);
       return;
@@ -40,13 +40,13 @@ function GoogleAuthCallbackContent() {
     // 直接设置cookie，不依赖于 useAuth
     try {
       console.log("Setting token from Google login");
-      
+
       // 设置cookie
       const cookieValue = `accessToken=${token};path=/;max-age=${60 * 60 * 24 * 7}`;
       document.cookie = cookieValue;
-      
+
       setStatus("登录成功，正在跳转到仪表盘...");
-      
+
       // 跳转到仪表盘
       setTimeout(() => {
         console.log("Navigating to dashboard after Google login");
@@ -72,11 +72,13 @@ function GoogleAuthCallbackContent() {
 // 主页面组件，使用 Suspense 包装处理组件
 export default function GoogleAuthCallback() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen flex-col items-center justify-center">
-        <h1 className="text-2xl font-bold">加载中...</h1>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen flex-col items-center justify-center">
+          <h1 className="text-2xl font-bold">加载中...</h1>
+        </div>
+      }
+    >
       <GoogleAuthCallbackContent />
     </Suspense>
   );

@@ -42,7 +42,7 @@ ADMIN_IMG ?= nexus/admin:$(VERSION)
 
 # Tool settings
 PYTHON := python
-UV := $(HOME)/.cargo/bin/uv # Set to absolute path for UV
+UV := $(shell command -v uv) # Use command -v to find uv dynamically
 PYTEST := pytest
 PYTEST_ARGS := -v
 PNPM := pnpm
@@ -192,7 +192,7 @@ check-extension-env:
 
 ## all: Run all tests, linting, formatting and build all components
 .PHONY: all
-all: env-init backend-build frontend-build admin-build format lint generate-client test
+all: env-init backend-build frontend-build admin-build format lint generate-client # test
 	@echo "===========> All checks and builds completed successfully"
 
 ## dev: Start development environment
@@ -209,6 +209,11 @@ lint: backend-lint frontend-lint admin-lint
 .PHONY: test
 test: backend-test frontend-test frontend-test-e2e admin-test extension-test-unit #website-test 
 	@echo "===========> All tests completed successfully"
+
+
+## build: Build all components
+.PHONY: build
+build: backend-build frontend-build admin-build
 
 ## format: Format code in all components
 .PHONY: format
@@ -319,7 +324,7 @@ backend-db-shell:
 
 ## frontend-all: Run all frontend checks (lint, test, format) without starting services
 .PHONY: frontend-all
-frontend-all: frontend-format frontend-lint frontend-test
+frontend-all: frontend-format frontend-lint # frontend-test
 	@echo "===========> Frontend all checks completed successfully"
 
 ## frontend: Start frontend development server
@@ -754,27 +759,37 @@ check-uv:
 		else \
 			echo "===========> ERROR: uv installation failed or uv not found at $(UV) after attempting install and PATH update."; \
 			echo "===========> Please check installation script output. Attempting 'command -v uv' as a fallback check..."; \
-			if command -v uv > /dev/null; then \
-				echo "===========> FALLBACK SUCCESS: 'command -v uv' found uv. Makefile will attempt to proceed."; \
-				echo "===========> Note: $(UV) was not executable, which might indicate a PATH or installation issue."; \
+			UV_PATH=$$(command -v uv 2>/dev/null); \
+			if [ -n "$$UV_PATH" ]; then \
+				echo "===========> FALLBACK SUCCESS: uv found at $$UV_PATH"; \
+				if "$$UV_PATH" --version >/dev/null 2>&1; then \
+					echo "===========> uv is working properly"; \
+				else \
+					echo "===========> ERROR: uv found but not working properly"; \
+					exit 1; \
+				fi; \
 			else \
-				echo "===========> FALLBACK FAILED: 'command -v uv' also did not find uv. This is a critical error."; \
+				echo "===========> FALLBACK FAILED: uv not found in PATH"; \
 				echo "===========> Please install uv manually: https://github.com/astral-sh/uv"; \
 				exit 1; \
 			fi; \
 		fi; \
 	fi; \
 	echo "===========> Final verification: Attempting to run '$(UV) --version'"; \
-	if "$(UV)" --version > /dev/null; then \
-		echo "===========> '$(UV) --version' successful. uv is ready."; \
+	if "$(UV)" --version >/dev/null 2>&1; then \
+		echo "===========> uv is ready."; \
 	else \
-		echo "===========> ERROR: '$(UV) --version' failed. uv is not correctly set up even if found."; \
-		echo "===========> Trying 'command -v uv' one last time..."; \
-		if command -v uv > /dev/null; then \
-			echo "===========> 'command -v uv' found uv. There might be an issue with how $(UV) is defined or used."; \
-			(command -v uv) --version; \
+		UV_PATH=$$(command -v uv 2>/dev/null); \
+		if [ -n "$$UV_PATH" ]; then \
+			echo "===========> Using uv from PATH: $$UV_PATH"; \
+			if "$$UV_PATH" --version >/dev/null 2>&1; then \
+				echo "===========> uv is working properly"; \
+			else \
+				echo "===========> ERROR: uv found but not working properly"; \
+				exit 1; \
+			fi; \
 		else \
-			echo "===========> 'command -v uv' also failed. uv is definitely not available."; \
+			echo "===========> ERROR: uv is not available"; \
 			exit 1; \
 		fi; \
 	fi

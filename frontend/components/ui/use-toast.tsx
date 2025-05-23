@@ -19,7 +19,7 @@ const toastVariants = cva(
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 );
 
 // Toast components
@@ -33,7 +33,7 @@ const ToastViewport = React.forwardRef<
     ref={ref}
     className={cn(
       "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]",
-      className
+      className,
     )}
     {...props}
   />
@@ -63,7 +63,7 @@ const ToastAction = React.forwardRef<
     ref={ref}
     className={cn(
       "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium transition-colors hover:bg-secondary focus:outline-none focus:ring-1 focus:ring-ring disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-muted/40 group-[.destructive]:hover:border-destructive/30 group-[.destructive]:hover:bg-destructive group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive",
-      className
+      className,
     )}
     {...props}
   />
@@ -78,7 +78,7 @@ const ToastClose = React.forwardRef<
     ref={ref}
     className={cn(
       "absolute right-1 top-1 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-1 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
-      className
+      className,
     )}
     toast-close=""
     {...props}
@@ -134,13 +134,6 @@ interface State {
   toasts: ToastType[];
 }
 
-const actionTypes = {
-  ADD_TOAST: "ADD_TOAST",
-  UPDATE_TOAST: "UPDATE_TOAST",
-  DISMISS_TOAST: "DISMISS_TOAST",
-  REMOVE_TOAST: "REMOVE_TOAST",
-} as const;
-
 let count = 0;
 
 function genId() {
@@ -148,25 +141,23 @@ function genId() {
   return count.toString();
 }
 
-type ActionType = typeof actionTypes;
-
 type Action =
   | {
-      type: ActionType["ADD_TOAST"];
+      type: "ADD_TOAST";
       toast: ToastType;
     }
   | {
-      type: ActionType["UPDATE_TOAST"];
+      type: "UPDATE_TOAST";
       toast: Partial<ToastType>;
     }
   | {
-      type: ActionType["DISMISS_TOAST"];
+      type: "DISMISS_TOAST";
       toastId?: ToastType["id"];
     }
   | {
-      type: ActionType["REMOVE_TOAST"];
+      type: "REMOVE_TOAST";
       toastId?: ToastType["id"];
-    }
+    };
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
@@ -198,7 +189,7 @@ export const reducer = (state: State, action: Action): State => {
       return {
         ...state,
         toasts: state.toasts.map((t) =>
-          t.id === action.toast.id ? { ...t, ...action.toast } : t
+          t.id === action.toast.id ? { ...t, ...action.toast } : t,
         ),
       };
 
@@ -221,7 +212,7 @@ export const reducer = (state: State, action: Action): State => {
                 ...t,
                 open: false,
               }
-            : t
+            : t,
         ),
       };
     }

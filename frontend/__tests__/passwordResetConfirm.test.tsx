@@ -43,7 +43,9 @@ describe("Password Reset Confirm Page", () => {
   // 在每个测试前设置全局mockReturnValue
   beforeEach(() => {
     // Mock useActionState
-    jest.spyOn(React, "useActionState").mockReturnValue([undefined, jest.fn(), false]);
+    jest
+      .spyOn(React, "useActionState")
+      .mockReturnValue([undefined, jest.fn(), false]);
   });
 
   afterEach(() => {
@@ -91,7 +93,7 @@ describe("Password Reset Confirm Page", () => {
       .mockReturnValue([
         { server_validation_error: "密码重置失败" },
         jest.fn(),
-        false
+        false,
       ]);
 
     // Mock router
@@ -119,7 +121,7 @@ describe("Password Reset Confirm Page", () => {
         },
       },
       jest.fn(),
-      false
+      false,
     ]);
 
     render(<Page />);
@@ -143,7 +145,7 @@ describe("Password Reset Confirm Page", () => {
       .mockReturnValue([
         { message: "密码已成功重置！正在跳转到登录页面..." },
         jest.fn(),
-        false
+        false,
       ]);
 
     const mockPush = jest.fn();

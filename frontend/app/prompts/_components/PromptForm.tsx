@@ -98,15 +98,15 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
       formData.append("visibility", values.visibility);
       formData.append("tag_ids", JSON.stringify(values.tag_ids || []));
       formData.append("input_vars", JSON.stringify(inputVars));
-      
+
       // 如果选择了team可见性但没有team_id，使用当前用户的默认团队
       if (values.visibility === "team") {
         // 这里可以添加获取用户默认团队的逻辑
         // 暂时使用固定值或为null
-        const defaultTeamId = prompt?.team_id || ""; 
+        const defaultTeamId = prompt?.team_id || "";
         formData.append("team_id", defaultTeamId);
       }
-      
+
       // 添加元数据
       const metaData = {
         version_notes: "", // 可以从表单中获取
