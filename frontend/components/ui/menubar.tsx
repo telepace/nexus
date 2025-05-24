@@ -6,6 +6,9 @@ import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Renders a styled menubar component.
+ */
 function Menubar({
   className,
   ...props
@@ -22,24 +25,36 @@ function Menubar({
   );
 }
 
+/**
+ * Wraps MenubarPrimitive.Menu with a specific data-slot attribute.
+ */
 function MenubarMenu({
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.Menu>) {
   return <MenubarPrimitive.Menu data-slot="menubar-menu" {...props} />;
 }
 
+/**
+ * Renders a menubar group with additional data attributes.
+ */
 function MenubarGroup({
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.Group>) {
   return <MenubarPrimitive.Group data-slot="menubar-group" {...props} />;
 }
 
+/**
+ * Renders a portal component with a menubar-specific slot attribute.
+ */
 function MenubarPortal({
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.Portal>) {
   return <MenubarPrimitive.Portal data-slot="menubar-portal" {...props} />;
 }
 
+/**
+ * Wraps MenubarPrimitive.RadioGroup with a custom slot attribute.
+ */
 function MenubarRadioGroup({
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.RadioGroup>) {
@@ -48,6 +63,9 @@ function MenubarRadioGroup({
   );
 }
 
+/**
+ * Renders a menubar trigger with specified styling and props.
+ */
 function MenubarTrigger({
   className,
   ...props
@@ -64,6 +82,9 @@ function MenubarTrigger({
   );
 }
 
+/**
+ * Renders a menu bar content component with specified alignment and styling options.
+ */
 function MenubarContent({
   className,
   align = "start",
@@ -88,6 +109,9 @@ function MenubarContent({
   );
 }
 
+/**
+ * Renders a menubar item with customizable styles and variants.
+ */
 function MenubarItem({
   className,
   inset,
@@ -111,6 +135,9 @@ function MenubarItem({
   );
 }
 
+/**
+ * Renders a checkbox item with custom styles and structure for a menubar.
+ */
 function MenubarCheckboxItem({
   className,
   children,
@@ -137,6 +164,9 @@ function MenubarCheckboxItem({
   );
 }
 
+/**
+ * Renders a radio item within a menubar with custom styling and an icon indicator.
+ */
 function MenubarRadioItem({
   className,
   children,
@@ -161,6 +191,9 @@ function MenubarRadioItem({
   );
 }
 
+/**
+ * Renders a menu bar label with optional inset styling.
+ */
 function MenubarLabel({
   className,
   inset,
@@ -181,6 +214,9 @@ function MenubarLabel({
   );
 }
 
+/**
+ * Renders a separator in a menubar with customizable class names and properties.
+ */
 function MenubarSeparator({
   className,
   ...props
@@ -194,6 +230,9 @@ function MenubarSeparator({
   );
 }
 
+/**
+ * Renders a menubar shortcut with optional custom styles and props.
+ */
 function MenubarShortcut({
   className,
   ...props
@@ -210,12 +249,18 @@ function MenubarShortcut({
   );
 }
 
+/**
+ * Renders a sub menu bar with additional slot data.
+ */
 function MenubarSub({
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.Sub>) {
   return <MenubarPrimitive.Sub data-slot="menubar-sub" {...props} />;
 }
 
+/**
+ * Renders a menu bar sub trigger with optional inset styling and children content.
+ */
 function MenubarSubTrigger({
   className,
   inset,
@@ -240,6 +285,9 @@ function MenubarSubTrigger({
   );
 }
 
+/**
+ * Renders a styled sub-content component for a menubar with animations and positioning.
+ */
 function MenubarSubContent({
   className,
   ...props

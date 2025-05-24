@@ -5,8 +5,8 @@ const withNextra = createWithNextra({
   defaultShowCopyCode: true,
   staticImage: true,
   unstable_shouldAddLocaleToLinks: false,
+  contentDirBasePath: '/content'
 })
-
 
 /**
  * @type {import("next").NextConfig}
@@ -21,6 +21,7 @@ export default withNextra({
   },
   reactStrictMode: true,
   cleanDistDir: true,
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
   i18n: {
     locales: ['zh', 'en'],
     defaultLocale: 'zh',

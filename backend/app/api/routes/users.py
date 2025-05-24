@@ -1,8 +1,7 @@
-import os
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import col, delete, func, select
 
 from app import crud
@@ -231,53 +230,3 @@ def delete_user(
     session.delete(user)
     session.commit()
     return Message(message="User deleted successfully")
-
-
-@router.post("/me/avatar", response_model=UserPublic)
-async def upload_avatar(
-    *,
-    session: SessionDep,
-    current_user: CurrentUser,
-    avatar: UploadFile = File(...),
-) -> Any:
-    """
-    Upload user avatar.
-    """
-    # Validate file type
-    if not avatar.content_type or not avatar.content_type.startswith("image/"):
-        raise HTTPException(
-            status_code=400,
-            detail="File must be an image",
-        )
-
-    # Read file contents
-    contents = await avatar.read()
-
-    # Validate file size (limit to 2MB)
-    if len(contents) > 2 * 1024 * 1024:
-        raise HTTPException(
-            status_code=400,
-            detail="File size must be less than 2MB",
-        )
-
-    # Create upload directory if it doesn't exist
-    upload_dir = os.path.join(settings.STATIC_DIR, "avatars")
-    os.makedirs(upload_dir, exist_ok=True)
-
-    # Generate unique filename
-    file_extension = os.path.splitext(avatar.filename)[1] if avatar.filename else ".jpg"
-    file_name = f"{current_user.id}{file_extension}"
-    file_path = os.path.join(upload_dir, file_name)
-
-    # Save file
-    with open(file_path, "wb") as f:
-        f.write(contents)
-
-    # Update user avatar URL
-    avatar_url = f"/static/avatars/{file_name}"
-    current_user.avatar_url = avatar_url
-    session.add(current_user)
-    session.commit()
-    session.refresh(current_user)
-
-    return current_user

@@ -2,6 +2,9 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Renders an input component with custom styling and props.
+ */
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <input

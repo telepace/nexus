@@ -5,6 +5,9 @@ import * as ProgressPrimitive from "@radix-ui/react-progress";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Renders a progress bar component with an indicator.
+ */
 function Progress({
   className,
   value,

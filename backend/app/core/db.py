@@ -19,14 +19,18 @@ engine = create_db_engine()
 # for more details: https://github.com/fastapi/full-stack-fastapi-template/issues/28
 
 
-def print_db_connection_info() -> None:
-    """Print database connection information.
-
-    This function retrieves and logs the database connection details, ensuring that sensitive information such as passwords
-    is obscured for security reasons. It also provides additional configuration details specific to different database
+def print_db_connection_info(db_url: str | None = None) -> None:
+    """Prints database connection information.
+    
+    This function retrieves and logs the database connection details, ensuring that
+    sensitive information such as passwords is obscured for security reasons. It
+    also provides additional configuration details specific to different database
     types, such as Supabase.
+    
+    Args:
+        db_url: Optional database URL to use instead of settings.SQLALCHEMY_DATABASE_URI
     """
-    url = str(settings.SQLALCHEMY_DATABASE_URI)
+    url = db_url or str(settings.SQLALCHEMY_DATABASE_URI)
 
     # Hide password information for security
     safe_url = url
@@ -54,18 +58,10 @@ def print_db_connection_info() -> None:
     logger.info("-" * 50)
 
 
-def init_db(session: Session) -> None:
+def init_db(session: Session, db_url: str | None = None) -> None:
     # Print database connection information
-    """Initialize the database by setting up initial data.
-
-    This function performs several tasks to initialize the database: 1. Prints the database connection information. 2.
-    Checks if a superuser with the email specified in settings exists. 3. If the superuser does not exist, it creates a new
-    superuser with the credentials provided in settings.
-
-    Args:
-        session (Session): The database session to use for operations.
-    """
-    print_db_connection_info()
+    """Initialize the database by setting up initial data."""
+    print_db_connection_info(db_url)
 
     # Tables should be created with Alembic migrations
     # But if you don't want to use migrations, create

@@ -13,6 +13,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+/**
+ * Renders a Command component with specified class name and other props.
+ */
 function Command({
   className,
   ...props
@@ -29,6 +32,9 @@ function Command({
   );
 }
 
+/**
+ * Renders a dialog with a command palette interface.
+ */
 function CommandDialog({
   title = "Command Palette",
   description = "Search for a command to run...",
@@ -53,6 +59,9 @@ function CommandDialog({
   );
 }
 
+/**
+ * Renders a command input component with a search icon and custom styles.
+ */
 function CommandInput({
   className,
   ...props
@@ -75,6 +84,9 @@ function CommandInput({
   );
 }
 
+/**
+ * Renders a command list with optional styling and props.
+ */
 function CommandList({
   className,
   ...props
@@ -91,6 +103,9 @@ function CommandList({
   );
 }
 
+/**
+ * Renders an empty state for a command component with default styling and data attributes.
+ */
 function CommandEmpty({
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.Empty>) {
@@ -103,6 +118,9 @@ function CommandEmpty({
   );
 }
 
+/**
+ * Renders a command group with styling and props.
+ */
 function CommandGroup({
   className,
   ...props
@@ -119,6 +137,9 @@ function CommandGroup({
   );
 }
 
+/**
+ * Renders a command separator with optional custom class names and props.
+ */
 function CommandSeparator({
   className,
   ...props
@@ -132,6 +153,9 @@ function CommandSeparator({
   );
 }
 
+/**
+ * Renders a command item with styling and props.
+ */
 function CommandItem({
   className,
   ...props
@@ -148,6 +172,9 @@ function CommandItem({
   );
 }
 
+/**
+ * Renders a command shortcut with additional styling and props.
+ */
 function CommandShortcut({
   className,
   ...props

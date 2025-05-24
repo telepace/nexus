@@ -32,7 +32,7 @@ async def test_api_response_middleware_success_json_response(
     original_content = {"key": "value"}
     original_response = JSONResponse(content=original_content, status_code=200, headers={"X-Test": "TestValue"})
     mock_call_next.return_value = original_response
-    
+
     middleware = ApiResponseMiddleware(app=AsyncMock())
 
     # Act
@@ -43,7 +43,7 @@ async def test_api_response_middleware_success_json_response(
     assert isinstance(response, JSONResponse)
     assert response.status_code == 200
     assert response.headers["X-Test"] == "TestValue"
-    
+
     response_body = json.loads(response.body.decode())
     expected_api_response = ApiResponse[Any](data=original_content, meta={}, error=None).model_dump()
     assert response_body == expected_api_response
@@ -57,7 +57,7 @@ async def test_api_response_middleware_error_json_response_with_detail(
     original_content = {"detail": "Something went wrong"}
     original_response = JSONResponse(content=original_content, status_code=400)
     mock_call_next.return_value = original_response
-    
+
     middleware = ApiResponseMiddleware(app=AsyncMock())
 
     # Act
@@ -79,7 +79,7 @@ async def test_api_response_middleware_error_json_response_no_detail(
     original_content = {"error_key": "Some error"}
     original_response = JSONResponse(content=original_content, status_code=500)
     mock_call_next.return_value = original_response
-    
+
     middleware = ApiResponseMiddleware(app=AsyncMock())
 
     # Act
@@ -101,7 +101,7 @@ async def test_api_response_middleware_non_json_response(
     mock_request.url.path = "/api/v1/test"
     original_response = Response(content="Not JSON", status_code=200)
     mock_call_next.return_value = original_response
-    
+
     middleware = ApiResponseMiddleware(app=AsyncMock())
 
     # Act
@@ -119,7 +119,7 @@ async def test_api_response_middleware_non_api_path(
     original_content = {"key": "value"}
     original_response = JSONResponse(content=original_content, status_code=200)
     mock_call_next.return_value = original_response
-    
+
     middleware = ApiResponseMiddleware(app=AsyncMock())
 
     # Act
@@ -138,7 +138,7 @@ async def test_api_response_middleware_already_formatted_response(
     original_content = ApiResponse[Any](data={"key": "value"}, meta={}, error=None).model_dump()
     original_response = JSONResponse(content=original_content, status_code=200)
     mock_call_next.return_value = original_response
-    
+
     middleware = ApiResponseMiddleware(app=AsyncMock())
 
     # Act
@@ -155,7 +155,7 @@ async def test_api_response_middleware_bytes_body_success(
     mock_request.url.path = "/api/v1/bytes"
     original_data = {"message": "hello from bytes"}
     bytes_content = json.dumps(original_data).encode('utf-8')
-    
+
     # For JSONResponse, content should be a serializable type, not bytes directly.
     # The middleware handles when response.body is bytes (which happens after render)
     # So we mock the response.body attribute after call_next
@@ -196,7 +196,7 @@ async def test_api_response_middleware_memoryview_body_success(
         resp.body = memoryview_content # Simulate rendered body as memoryview
         resp.headers['content-length'] = str(len(memoryview_content))
         return resp
-    
+
     mock_call_next.side_effect = call_next_effect
     middleware = ApiResponseMiddleware(app=AsyncMock())
 
@@ -272,10 +272,10 @@ async def test_api_response_middleware_error_json_response_string_content(
     # Arrange
     mock_request.url.path = "/api/v1/error_string"
     original_content = "Just a string error" # Simulate an error that's just a string
-    
+
     async def call_next_effect(request):
         # To simulate this, the JSONResponse content would be a string
-        resp = JSONResponse(content=original_content, status_code=403) 
+        resp = JSONResponse(content=original_content, status_code=403)
         # The body would be the JSON representation of that string
         resp.body = json.dumps(original_content).encode('utf-8')
         resp.headers['content-length'] = str(len(resp.body))

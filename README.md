@@ -153,7 +153,7 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 # Required security settings
 SECRET_KEY=your-generated-secret-key
-FIRST_SUPERUSER=admin@example.com
+FIRST_SUPERUSER=admin@telepace.cc
 FIRST_SUPERUSER_PASSWORD=your-secure-password
 POSTGRES_PASSWORD=your-db-password
 

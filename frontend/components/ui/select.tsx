@@ -6,24 +6,36 @@ import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Renders a select component with additional props.
+ */
 function Select({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Root>) {
   return <SelectPrimitive.Root data-slot="select" {...props} />;
 }
 
+/**
+ * Renders a Select Group component with additional data attributes.
+ */
 function SelectGroup({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Group>) {
   return <SelectPrimitive.Group data-slot="select-group" {...props} />;
 }
 
+/**
+ * Renders a select value component with an additional slot attribute.
+ */
 function SelectValue({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Value>) {
   return <SelectPrimitive.Value data-slot="select-value" {...props} />;
 }
 
+/**
+ * Renders a styled select trigger component with an icon.
+ */
 function SelectTrigger({
   className,
   size = "default",
@@ -50,6 +62,9 @@ function SelectTrigger({
   );
 }
 
+/**
+ * Renders a select content component with optional positioning and custom class names.
+ */
 function SelectContent({
   className,
   children,
@@ -85,6 +100,9 @@ function SelectContent({
   );
 }
 
+/**
+ * Renders a styled label for a select component.
+ */
 function SelectLabel({
   className,
   ...props
@@ -98,6 +116,9 @@ function SelectLabel({
   );
 }
 
+/**
+ * Renders a styled select item with an indicator and text content.
+ */
 function SelectItem({
   className,
   children,
@@ -122,6 +143,9 @@ function SelectItem({
   );
 }
 
+/**
+ * Renders a separator component with custom styles and props.
+ */
 function SelectSeparator({
   className,
   ...props
@@ -135,6 +159,9 @@ function SelectSeparator({
   );
 }
 
+/**
+ * Renders a styled scroll up button for a select component.
+ */
 function SelectScrollUpButton({
   className,
   ...props
@@ -153,6 +180,9 @@ function SelectScrollUpButton({
   );
 }
 
+/**
+ * Renders a styled scroll down button for a select component.
+ */
 function SelectScrollDownButton({
   className,
   ...props
