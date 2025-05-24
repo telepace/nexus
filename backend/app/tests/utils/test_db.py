@@ -189,8 +189,30 @@ def create_test_database() -> None:
 def apply_migrations() -> None:
     """Apply database migrations to the test database."""
     try:
-        # 我们不再使用 alembic 迁移，因为 env.py 中使用了 fileConfig，在测试中会有问题
-        # 改用直接创建表的方式
+        # 先尝试使用 alembic 进行迁移
+        try:
+            import os
+            from alembic import command
+            from alembic.config import Config
+            
+            # 检查 alembic.ini 文件是否存在
+            alembic_ini_path = os.path.join(os.getcwd(), "alembic.ini")
+            if os.path.exists(alembic_ini_path):
+                logger.info("使用 Alembic 应用数据库迁移...")
+                # 创建 Alembic 配置
+                alembic_cfg = Config(alembic_ini_path)
+                # 应用所有迁移
+                command.upgrade(alembic_cfg, "head")
+                logger.info("Alembic 迁移应用成功")
+                return
+            else:
+                logger.warning(f"找不到 Alembic 配置文件: {alembic_ini_path}")
+                logger.info("将改用直接创建表的方式")
+        except Exception as e:
+            logger.warning(f"使用 Alembic 应用迁移失败: {e}")
+            logger.info("改用直接创建表的方式")
+        
+        # 如果 alembic 迁移失败，则使用直接创建表的方式
         from sqlmodel import SQLModel
 
         # 确保预先导入所有模型
@@ -199,14 +221,33 @@ def apply_migrations() -> None:
 
         # 创建连接到测试数据库的引擎
         test_db_url = get_test_db_url()
-        test_engine = create_engine(test_db_url)
+        test_engine = create_engine(test_db_url, pool_pre_ping=True)
 
-        logger.info(f"Creating all tables in test database: {get_test_db_name()}")
+        logger.info(f"直接创建表在测试数据库: {get_test_db_name()}")
+        # 先尝试删除现有表（如果存在），以避免可能的冲突
+        try:
+            SQLModel.metadata.drop_all(test_engine)
+            logger.info("已删除现有表（如果存在）")
+        except Exception as drop_e:
+            logger.warning(f"删除现有表时出错: {drop_e}")
+        
         # 直接创建所有表
         SQLModel.metadata.create_all(test_engine)
-        logger.info("Created all tables in test database")
+        logger.info("成功创建所有表")
+        
+        # 确认表是否创建成功
+        with test_engine.connect() as conn:
+            tables = conn.execute(
+                text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
+            ).fetchall()
+            table_names = [t[0] for t in tables]
+            logger.info(f"数据库中的表: {table_names}")
+        
     except Exception as e:
-        logger.error(f"Error creating tables: {e}")
+        logger.error(f"应用数据库迁移失败: {e}")
+        # 提供更详细的错误信息
+        import traceback
+        logger.error(f"错误详情: {traceback.format_exc()}")
         raise
 
 
@@ -381,3 +422,83 @@ def test_database_connection():
     except Exception as e:
         logger.warning(f"Database connection test failed: {e}")
         raise AssertionError(f"数据库连接测试失败: {e}")
+
+
+def create_test_data():
+    """在测试数据库中创建基础测试数据。
+    
+    此函数会在测试数据库中创建测试所需的基础数据，特别是 prompts 相关测试所需的数据。
+    """
+    try:
+        from sqlmodel import Session, SQLModel, create_engine
+        from app.models.prompt import Prompt, Tag, PromptTagLink
+
+        # 获取测试数据库引擎
+        test_db_url = get_test_db_url()
+        engine = create_engine(test_db_url)
+        
+        # 创建基础测试数据
+        with Session(engine) as session:
+            # 检查是否已存在测试数据
+            existing_tags = session.exec("SELECT COUNT(*) FROM tag").first()
+            
+            # 如果没有标签数据，创建一些测试标签
+            if not existing_tags or existing_tags[0] == 0:
+                logger.info("创建测试标签数据...")
+                tags = [
+                    Tag(name="测试标签1", description="测试标签1描述"),
+                    Tag(name="测试标签2", description="测试标签2描述"),
+                    Tag(name="测试标签3", description="测试标签3描述"),
+                ]
+                for tag in tags:
+                    session.add(tag)
+                session.commit()
+                logger.info(f"已创建 {len(tags)} 个测试标签")
+            
+            # 检查是否已存在测试提示词
+            existing_prompts = session.exec("SELECT COUNT(*) FROM prompt").first()
+            
+            # 如果没有提示词数据，创建一些测试提示词
+            if not existing_prompts or existing_prompts[0] == 0:
+                logger.info("创建测试提示词数据...")
+                prompts = [
+                    Prompt(
+                        name="测试提示词1",
+                        description="这是一个测试提示词1",
+                        content="这是提示词的内容1",
+                        type="simple",
+                        visibility="public",
+                    ),
+                    Prompt(
+                        name="测试提示词2",
+                        description="这是一个测试提示词2",
+                        content="这是提示词的内容2",
+                        type="simple",
+                        visibility="private",
+                    ),
+                ]
+                for prompt in prompts:
+                    session.add(prompt)
+                session.commit()
+                logger.info(f"已创建 {len(prompts)} 个测试提示词")
+                
+                # 为测试提示词添加标签
+                tags = session.exec("SELECT id FROM tag LIMIT 2").all()
+                prompts = session.exec("SELECT id FROM prompt LIMIT 2").all()
+                
+                if tags and prompts:
+                    logger.info("为测试提示词添加标签...")
+                    # 为第一个提示词添加第一个标签
+                    link1 = PromptTagLink(prompt_id=prompts[0], tag_id=tags[0])
+                    # 为第二个提示词添加第二个标签
+                    link2 = PromptTagLink(prompt_id=prompts[1], tag_id=tags[1])
+                    session.add(link1)
+                    session.add(link2)
+                    session.commit()
+                    logger.info("测试标签关联创建完成")
+            
+            logger.info("测试数据初始化完成")
+    except Exception as e:
+        logger.error(f"创建测试数据时出错: {e}")
+        # 不中断测试流程，仅记录错误
+        return

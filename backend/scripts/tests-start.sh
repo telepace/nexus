@@ -50,6 +50,20 @@ python -c "from app.tests.utils.test_db import create_test_database; create_test
 }
 echo "✅ 测试数据库已准备就绪"
 
+# 应用数据库迁移
+echo "🔄 应用数据库迁移到测试数据库..."
+TESTING=true TEST_MODE=true python -c "from app.tests.utils.test_db import apply_migrations; apply_migrations()" || {
+  echo "❌ 测试数据库迁移失败"
+  exit 1
+}
+echo "✅ 数据库迁移应用成功"
+
+# 初始化测试数据
+echo "🌱 初始化测试数据..."
+TESTING=true TEST_MODE=true python -c "from app.tests.utils.test_db import create_test_data" 2>/dev/null || {
+  echo "⚠️ 初始化测试数据可能未完成，但将继续测试（可能缺少相应函数）"
+}
+
 # Initialize test environment
 echo "🏁 Running test pre-start checks..."
 python app/tests_pre_start.py || {

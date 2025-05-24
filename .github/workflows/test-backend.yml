@@ -49,7 +49,15 @@ jobs:
       - name: Install dependencies
         run: docker compose --project-name $STACK_NAME run --rm backend uv pip install -e .
       - name: Prepare test database
-        run: docker compose --project-name $STACK_NAME run --rm -e TESTING=true -e TEST_MODE=true backend uv run python app/tests_pre_start.py
+        run: |
+          echo "正在创建和初始化测试数据库..."
+          docker compose --project-name $STACK_NAME run --rm -e TESTING=true -e TEST_MODE=true -e CI=true backend uv run python -c "from app.tests.utils.test_db import create_test_database; create_test_database()"
+          echo "正在应用数据库迁移..."
+          docker compose --project-name $STACK_NAME run --rm -e TESTING=true -e TEST_MODE=true -e CI=true backend uv run python -c "from app.tests.utils.test_db import apply_migrations; apply_migrations()"
+          echo "正在初始化测试数据..."
+          docker compose --project-name $STACK_NAME run --rm -e TESTING=true -e TEST_MODE=true -e CI=true backend uv run python -c "from app.tests.utils.test_db import create_test_data; create_test_data()"
+          echo "运行预启动检查..."
+          docker compose --project-name $STACK_NAME run --rm -e TESTING=true -e TEST_MODE=true -e CI=true backend uv run python app/tests_pre_start.py
         working-directory: backend
       - name: Run tests
         run: docker compose --project-name $STACK_NAME run --rm -e TESTING=true -e TEST_MODE=true backend uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
