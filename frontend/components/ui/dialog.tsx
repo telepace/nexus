@@ -6,30 +6,45 @@ import { XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Renders a dialog component with the provided props.
+ */
 function Dialog({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
 
+/**
+ * Renders a dialog trigger component with additional slot data.
+ */
 function DialogTrigger({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
+/**
+ * Renders a dialog portal with additional data attributes.
+ */
 function DialogPortal({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
 }
 
+/**
+ * Renders a Dialog close button with additional data attributes.
+ */
 function DialogClose({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Close>) {
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
+/**
+ * Renders a dialog overlay with specified styles and props.
+ */
 function DialogOverlay({
   className,
   ...props
@@ -46,6 +61,9 @@ function DialogOverlay({
   );
 }
 
+/**
+ * Renders a dialog content component with portal and overlay.
+ */
 function DialogContent({
   className,
   children,
@@ -72,6 +90,9 @@ function DialogContent({
   );
 }
 
+/**
+ * Renders a dialog header component with customizable class names and additional props.
+ */
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -82,6 +103,9 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+/**
+ * Renders a footer component with dialog-specific styling and props.
+ */
 function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -95,6 +119,9 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+/**
+ * Renders a dialog title with custom styles and props.
+ */
 function DialogTitle({
   className,
   ...props
@@ -108,6 +135,9 @@ function DialogTitle({
   );
 }
 
+/**
+ * Renders a dialog description with optional custom class names and props.
+ */
 function DialogDescription({
   className,
   ...props
