@@ -241,7 +241,7 @@ class Settings(BaseSettings):
         return redirect_uri
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
-        """Check if the provided secret value is "nexus" and raise a warning or error."""
+        """Check if the provided secret value is 'nexus' and raise a warning or error."""
         if value == "nexus":
             message = (
                 f'The value of {var_name} is "nexus", '

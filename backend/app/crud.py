@@ -121,8 +121,8 @@ def get_items(
 
 
 def create_user(*, session: Session, user_create: Any) -> Any:
-    """创建新用户"""
     # 动态导入User和UserCreate
+    """Creates a new user in the database."""
     from app.models import User
 
     # 添加这个检查，确保 is_superuser 字段被正确设置
@@ -278,10 +278,8 @@ def add_token_to_blacklist(
 
 
 def is_token_blacklisted(*, session: Session, token: str) -> bool:
-    """
-    Check if a token is in the blacklist.
-    """
     # 动态导入TokenBlacklist
+    """Check if a token is in the blacklist."""
     from app.models import TokenBlacklist
     
     statement = select(TokenBlacklist).where(TokenBlacklist.token == token)
@@ -290,11 +288,9 @@ def is_token_blacklisted(*, session: Session, token: str) -> bool:
 
 
 def clean_expired_tokens(*, session: Session) -> int:
-    """
-    Remove expired tokens from the blacklist.
-    Returns the number of tokens removed.
-    """
     # 动态导入TokenBlacklist
+    """Remove expired tokens from the blacklist and return the count of removed
+    tokens."""
     from app.models import TokenBlacklist
     
     now = datetime.utcnow()
@@ -312,10 +308,8 @@ def clean_expired_tokens(*, session: Session) -> int:
 
 
 def create_user_oauth(*, session: Session, obj_in: Any) -> Any:
-    """
-    Create a new user for OAuth authentication (without password)
-    """
     # 动态导入User
+    """Create a new user for OAuth authentication without a password."""
     from app.models import User
 
     db_obj = User.model_validate(obj_in)
