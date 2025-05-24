@@ -98,7 +98,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: blob-report-${{ matrix.shardIndex }}
-        path: frontend/blob-report
+        path: admin/blob-report
         include-hidden-files: true
         retention-days: 1
 
@@ -121,31 +121,32 @@ jobs:
         cache: 'pnpm'
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
-      working-directory: frontend
+      working-directory: admin
     - name: Download blob reports from GitHub Actions Artifacts
       uses: actions/download-artifact@v4
       with:
-        path: frontend/all-blob-reports
+        path: admin/all-blob-reports
         pattern: blob-report-*
         merge-multiple: true
     - name: List downloaded artifacts (debug)
       run: |
-        tree -L 2frontend/all-blob-reports
-        find frontend -name "*.zip" -o -name "*.blob" || echo "No blob files found"
+        tree -L 2 admin/all-blob-reports || echo "tree command not available"
+        find admin -name "*.zip" -o -name "*.blob" || echo "No blob files found"
+        ls -la admin/all-blob-reports/ || echo "No all-blob-reports directory"
     - name: Merge into HTML Report
       run: |
         mkdir -p playwright-report
-        if [ ! -d "./all-blob-reports" ]; then
+        if [ ! -d "./all-blob-reports" ] || [ -z "$(ls -A ./all-blob-reports 2>/dev/null)" ]; then
           echo "No blob reports to merge, skipping."
           exit 0
         fi
         npx playwright merge-reports --reporter html ./all-blob-reports
-      working-directory: frontend
+      working-directory: admin
     - name: Upload HTML report
       uses: actions/upload-artifact@v4
       with:
         name: html-report--attempt-${{ github.run_attempt }}
-        path: frontend/playwright-report
+        path: admin/playwright-report
         retention-days: 30
         include-hidden-files: true
 
