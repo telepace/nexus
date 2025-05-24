@@ -42,7 +42,7 @@ ADMIN_IMG ?= nexus/admin:$(VERSION)
 
 # Tool settings
 PYTHON := python
-UV := $(HOME)/.cargo/bin/uv
+UV := $(shell command -v uv 2>/dev/null || echo "$(HOME)/.cargo/bin/uv")
 PYTEST := pytest
 PYTEST_ARGS := -v
 PNPM := pnpm

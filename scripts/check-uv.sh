@@ -5,11 +5,16 @@ UV_PATH="${HOME}/.cargo/bin/uv"
 
 # 检查 uv 是否已安装并可执行
 check_uv_installed() {
-    if [ -x "$UV_PATH" ]; then
+    # 首先检查PATH中是否有uv
+    if command -v uv >/dev/null 2>&1; then
+        echo "===========> uv found in PATH: $(which uv)"
+        return 0
+    # 然后检查特定路径
+    elif [ -x "$UV_PATH" ]; then
         echo "===========> uv found at $UV_PATH"
         return 0
     else
-        echo "===========> uv not found at $UV_PATH or not executable."
+        echo "===========> uv not found in PATH or at $UV_PATH"
         return 1
     fi
 }
@@ -26,7 +31,7 @@ install_uv() {
 
     # 验证安装是否成功
     if check_uv_installed; then
-        echo "===========> uv installed successfully to $UV_PATH"
+        echo "===========> uv installed successfully"
     else
         echo "===========> ERROR: uv installation failed."
         exit 1
@@ -41,7 +46,7 @@ main() {
 
     # 最终验证
     echo "===========> Verifying uv version..."
-    if "$UV_PATH" --version; then
+    if command -v uv >/dev/null 2>&1 && uv --version; then
         echo "===========> uv is ready."
     else
         echo "===========> ERROR: uv is not working correctly."
