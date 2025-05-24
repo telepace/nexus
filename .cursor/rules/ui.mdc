@@ -5,15 +5,14 @@ alwaysApply: false
 ---
 ## 🎨 Design System Guidelines (Tailwind v3 + shadcn/ui)
 
-This document spells out **exactly how to author UI code** in this project. Treat it as a contract: if your PR diverges, fix the code or update the spec—never both.
+This document spells out **exactly how to author UI code** in this project. Treat it as a contract.
 
 ---
 
 ### 1 · Source of Truth
 
-- **Tokens live in two files only**
-    - `globals.css` – declarative CSS variables (`--primary`, `--radius`, etc.).
-    - `tailwind.config.js` – maps those variables to Tailwind design‑tokens (colors, fonts, spacing…).
+- **Tokens live in `globals.css` only**
+    - `globals.css` – declarative CSS variables (`--primary`, `--radius`, etc.).maps those variables to Tailwind design‑tokens (colors, fonts, spacing…).
 - **Do not redefine, shadow, or inline‑override** any values found there.
 - Dark‑mode is controlled by the `.dark` class—respect it; no `prefers-color-scheme` hacks.
 
@@ -22,7 +21,7 @@ This document spells out **exactly how to author UI code** in this project. Trea
 ### 2 · Component Workflow
 
 1. **Look before you code**
-    - Scan `/components/**` for an existing component that already does the job.
+    - Scan `/components/ui/**` for an existing component that already does the job.
     - If it exists, **reuse**—extend only through props or composition.
 1. **When creating a new component**
     - Export as a **named functional component** (`export function AlertDialog() { … }`).
@@ -72,11 +71,12 @@ This document spells out **exactly how to author UI code** in this project. Trea
 
 ```other
 /components
-  /AlertDialog
-    AlertDialog.tsx
-    AlertDialog.test.tsx
-    AlertDialog.stories.tsx
-    index.ts          (re‑export)
+    /ui
+        /AlertDialog
+            AlertDialog.tsx
+            AlertDialog.test.tsx
+            AlertDialog.stories.tsx
+            index.ts          (re‑export)
 ```
 
 - Component folder = PascalCase.
@@ -92,12 +92,3 @@ This document spells out **exactly how to author UI code** in this project. Trea
 3. Passes unit tests + Storybook visual check.
 4. Meets a11y rules (axe-core).
 5. Bundle size unchanged or justified.
-
----
-
-### 10 · When in Doubt
-
-- **Ask before inventing.** Small upfront alignment saves big refactors later.
-- Keep this doc living—propose PRs to evolve guidelines with the codebase.
-
-Happy shipping.

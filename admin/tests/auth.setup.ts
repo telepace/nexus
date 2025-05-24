@@ -50,7 +50,10 @@ setup("authenticate", async ({ page }) => {
 
   try {
     // 使用更灵活的等待方式 - 等待URL变化或含有dashboard的URL
-    await expect(page).toHaveURL(/dashboard/, { timeout: 15000 })
+    await expect(page).toHaveURL("/", { timeout: 15000 })
+    await expect(
+      page.getByText("Welcome back, nice to see you again!"),
+    ).toBeVisible({ timeout: 10000 })
     console.log(`Navigation completed to: ${page.url()}`)
 
     // 保存身份验证状态

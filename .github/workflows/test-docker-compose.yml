@@ -42,13 +42,13 @@ jobs:
           docker compose up -d --wait backend frontend admin pgadmin
 
       - name: Test backend is up
-        run: curl http://localhost:8000/api/v1/utils/health-check
+        run: curl http://localhost:8001/api/v1/health
 
       - name: Test frontend is up
-        run: curl http://localhost:5173
+        run: nc -z localhost 5174 && echo "Frontend port is open"
 
       - name: Test admin is up
-        run: curl http://localhost:3000
+        run: nc -z localhost 3001 && echo "Admin port is open"
 
       - name: Clean up
         run: docker compose down -v --remove-orphans

@@ -17,11 +17,6 @@ import { DeleteTagButton } from "./_components/DeleteTagButton";
 // 导入类型
 import type { TagData } from "@/components/actions/prompts-action";
 
-// 扩展 TagData 类型，添加运行时类型安全
-function hasCreatedAt(tag: any): tag is TagData & { created_at: string } {
-  return typeof tag.created_at === 'string';
-}
-
 export const metadata = {
   title: "标签管理",
   description: "管理提示词标签",

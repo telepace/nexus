@@ -33,6 +33,10 @@ export type Body_login_login_access_token = {
     client_secret?: (string | null);
 };
 
+export type Body_users_upload_avatar = {
+    avatar: (Blob | File);
+};
+
 export type GoogleCallbackRequest = {
     token: string;
     user_info: {
@@ -198,6 +202,7 @@ export type UserCreate = {
     is_active?: boolean;
     is_superuser?: boolean;
     full_name?: (string | null);
+    avatar_url?: (string | null);
     password: string;
 };
 
@@ -206,6 +211,7 @@ export type UserPublic = {
     is_active?: boolean;
     is_superuser?: boolean;
     full_name?: (string | null);
+    avatar_url?: (string | null);
     id: string;
 };
 
@@ -225,12 +231,14 @@ export type UserUpdate = {
     is_active?: boolean;
     is_superuser?: boolean;
     full_name?: (string | null);
+    avatar_url?: (string | null);
     password?: (string | null);
 };
 
 export type UserUpdateMe = {
     full_name?: (string | null);
     email?: (string | null);
+    avatar_url?: (string | null);
 };
 
 export type ValidationError = {
@@ -359,7 +367,7 @@ export type PromptsCreatePromptData = {
     requestBody: PromptCreate;
 };
 
-export type PromptsCreatePromptResponse = (Prompt);
+export type PromptsCreatePromptResponse = (PromptReadWithTags);
 
 export type PromptsReadPromptsData = {
     limit?: number;
@@ -384,7 +392,7 @@ export type PromptsUpdatePromptData = {
     requestBody: PromptUpdate;
 };
 
-export type PromptsUpdatePromptResponse = (Prompt);
+export type PromptsUpdatePromptResponse = (PromptReadWithTags);
 
 export type PromptsDeletePromptData = {
     promptId: string;
@@ -471,6 +479,12 @@ export type UsersDeleteUserData = {
 };
 
 export type UsersDeleteUserResponse = (Message);
+
+export type UsersUploadAvatarData = {
+    formData: Body_users_upload_avatar;
+};
+
+export type UsersUploadAvatarResponse = (UserPublic);
 
 export type UtilsTestEmailData = {
     emailTo: string;

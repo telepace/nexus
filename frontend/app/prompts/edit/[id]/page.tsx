@@ -1,4 +1,8 @@
-import { fetchPrompt, fetchTags } from "@/components/actions/prompts-action";
+import {
+  fetchPrompt,
+  fetchTags,
+  PromptData,
+} from "@/components/actions/prompts-action";
 import { getAuthState } from "@/lib/server-auth-bridge";
 import { PromptForm } from "../../_components/PromptForm";
 import { Suspense } from "react";
@@ -34,9 +38,9 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 
 // 主页面组件
 export default async function EditPromptPage({
-  params
-}: { 
-  params: { id: string } 
+  params,
+}: {
+  params: { id: string };
 }) {
   // 获取认证状态
   const authState = await getAuthState();
@@ -153,7 +157,7 @@ async function EditPromptContent({ id }: { id: string }) {
             </div>
           </div>
 
-          <PromptForm tags={tagsResponse} prompt={promptData as any} />
+          <PromptForm tags={tagsResponse} prompt={promptData as PromptData} />
         </div>
       </div>
     );

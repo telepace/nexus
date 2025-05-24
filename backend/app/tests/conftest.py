@@ -24,6 +24,10 @@ def setup_test_environment() -> Generator[None, None, None]:
 
     After all tests, it cleans up the test database.
     """
+    # 确保测试用的超级用户密码为 "telepace"，满足至少8个字符的要求
+    # 在这里设置密码，确保在任何其他fixture运行之前就设置好
+    settings.FIRST_SUPERUSER_PASSWORD = "telepace"
+
     # Create test database, apply migrations (or create tables directly), and get the test engine
     test_engine = setup_test_db()
 
@@ -52,9 +56,8 @@ def db() -> Generator[Session, None, None]:
     # We're using the engine that was set up in setup_test_environmen
     from app.core.db import engine
 
-    # 确保测试用的超级用户密码为 "adminadmin"，满足至少8个字符的要求
-    original_password = settings.FIRST_SUPERUSER_PASSWORD
-    settings.FIRST_SUPERUSER_PASSWORD = "adminadmin"
+    # 确保测试用的超级用户密码为 "telepace"，满足至少8个字符的要求
+    settings.FIRST_SUPERUSER_PASSWORD = "telepace"
 
     # 创建测试用的数据库会话
     with Session(engine) as session:
@@ -67,9 +70,6 @@ def db() -> Generator[Session, None, None]:
         statement = delete(User)
         session.execute(statement)
         session.commit()
-
-    # 恢复原始密码设置
-    settings.FIRST_SUPERUSER_PASSWORD = original_password
 
 
 @pytest.fixture(scope="module")

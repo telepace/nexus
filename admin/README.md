@@ -36,7 +36,7 @@ nvm use
 * Within the `frontend` directory, install the necessary NPM packages:
 
 ```bash
-npm install
+pnpm install
 ```
 
 * And start the live server with the following `npm` script:

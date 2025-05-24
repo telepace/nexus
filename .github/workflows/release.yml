@@ -126,5 +126,5 @@ jobs:
       #     client-id: ${{ secrets.CLIENT_ID }}
       #     client-secret: ${{ secrets.CLIENT_SECRET }}
       #     refresh-token: ${{ secrets.REFRESH_TOKEN }}
-      #     zip-path: ./extension.zip
-      #     publish: true  # 自动发布到商店
+      #     zip-path: ./dist/extension-${{ env.VERSION }}.zip
+      #     publish: true

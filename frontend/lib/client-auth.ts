@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { AvatarFullConfig } from "react-nice-avatar";
 
 // Types for user data
 export interface User {
@@ -12,6 +13,7 @@ export interface User {
   is_superuser: boolean;
   created_at: string;
   avatar_url?: string;
+  anime_avatar_config?: AvatarFullConfig;
   token?: string;
 }
 

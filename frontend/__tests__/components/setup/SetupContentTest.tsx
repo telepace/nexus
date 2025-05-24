@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth";
 // 模拟useSearchParams hook的实现
 let mockSearchParams = new (class {
   params: Record<string, string>;
-  
+
   constructor() {
     this.params = {
       plugin_id: "test-plugin-id",
@@ -71,7 +71,7 @@ describe("SetupContent", () => {
   beforeEach(() => {
     mockSearchParams = new (class {
       params: Record<string, string>;
-      
+
       constructor() {
         this.params = {
           plugin_id: "test-plugin-id",
