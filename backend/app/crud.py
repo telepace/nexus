@@ -6,7 +6,7 @@ from typing import Any, Protocol, TypeVar
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
-from app.core.security import get_password_hash, verify_password
+from app.core.security import get_password_hash, verify_password, decrypt_password
 from app.models import Item, TokenBlacklist, User
 
 
@@ -128,9 +128,10 @@ def create_user(*, session: Session, user_create: Any) -> Any:
     # 添加这个检查，确保 is_superuser 字段被正确设置
     is_superuser = getattr(user_create, "is_superuser", False)
 
+    plain_password = decrypt_password(user_create.password)
     user = User(
         email=user_create.email,
-        hashed_password=get_password_hash(user_create.password),
+        hashed_password=get_password_hash(plain_password),
         full_name=user_create.full_name,
         is_superuser=is_superuser,
     )
@@ -157,7 +158,8 @@ def authenticate(*, session: Session, email: str, password: str) -> Any | None:
     user = get_user_by_email(session=session, email=email)
     if not user or not user.hashed_password:
         return None
-    if not verify_password(password, user.hashed_password):
+    plain_password = decrypt_password(password)
+    if not verify_password(plain_password, user.hashed_password):
         return None
     return user
 

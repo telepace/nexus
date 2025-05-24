@@ -355,6 +355,48 @@ git merge --continue
 
 Built with ❤️ for AI entrepreneurs and freelancers. Happy coding!
 
+## Enhanced Password Security
+
+To provide an additional layer of protection for user credentials, especially during transit, this project implements client-side symmetric encryption for passwords on top of standard HTTPS.
+
+### Mechanism Overview
+
+1.  **Client-Side Encryption:** Before a password is submitted during login, registration, or password update, it is encrypted directly in the user's browser (both in the main frontend and the admin panel) using AES (Advanced Encryption Standard).
+2.  **Secure Transmission:** This encrypted password, not the plain text password, is then sent to the backend over HTTPS.
+3.  **Backend Decryption:** The backend decrypts the received password using the shared symmetric key.
+4.  **Standard Hashing:** After decryption, the backend proceeds with the standard secure password hashing process (bcrypt) before storing or verifying the password.
+
+This approach ensures that the plain text password is never transmitted directly from the client to the server, offering defense in depth.
+
+### Key Management
+
+The AES encryption and decryption process relies on a shared symmetric key. This key must be securely generated and kept secret. It is configured using environment variables across the different parts of the application:
+
+*   **Backend (Python/FastAPI):**
+    *   Variable: `APP_SYMMETRIC_ENCRYPTION_KEY`
+    *   Location: `backend/.env.example` (and your `.env` file)
+*   **Frontend (Next.js):**
+    *   Variable: `NEXT_PUBLIC_APP_SYMMETRIC_ENCRYPTION_KEY`
+    *   Location: `frontend/.env.example` (and your `.env` file)
+*   **Admin Panel (Vite):**
+    *   Variable: `VITE_APP_SYMMETRIC_ENCRYPTION_KEY`
+    *   Location: `admin/.env.example` (and your `.env` file)
+
+**Important:**
+*   All three variables must hold the **same key value** for the encryption/decryption to work correctly.
+*   The key should be a strong, unique, and randomly generated value. For compatibility with the backend's Fernet library, it must be a URL-safe base64-encoded 32-byte key. You can generate such a key using Python:
+    ```python
+    from cryptography.fernet import Fernet
+    key = Fernet.generate_key()
+    print(key.decode())
+    ```
+*   Store these keys securely and never commit them directly to your version control system (except in the `.env.example` files as placeholders).
+
+### Libraries Used
+
+*   **Frontend/Admin Panel:** `crypto-js` is utilized for AES encryption on the client-side.
+*   **Backend:** The `cryptography` library (specifically its Fernet implementation) is used for AES decryption.
+
 ## Development
 
 See the [development guide](development.md) for instructions on setting up the development environment.

@@ -11,7 +11,7 @@ from app.api.deps import (
     get_current_active_superuser,
 )
 from app.core.config import settings
-from app.core.security import get_password_hash, verify_password
+from app.core.security import get_password_hash, verify_password, decrypt_password
 from app.models import (
     Item,
     Message,
@@ -106,13 +106,17 @@ def update_password_me(
     """
     if not current_user.hashed_password:
         raise HTTPException(status_code=400, detail="User has no password set")
-    if not verify_password(body.current_password, current_user.hashed_password):
+
+    decrypted_current_password = decrypt_password(body.current_password)
+    if not verify_password(decrypted_current_password, current_user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect password")
-    if body.current_password == body.new_password:
+
+    decrypted_new_password = decrypt_password(body.new_password)
+    if decrypted_current_password == decrypted_new_password:
         raise HTTPException(
             status_code=400, detail="New password cannot be the same as the current one"
         )
-    hashed_password = get_password_hash(body.new_password)
+    hashed_password = get_password_hash(decrypted_new_password)
     current_user.hashed_password = hashed_password
     session.add(current_user)
     session.commit()
