@@ -5,12 +5,18 @@ import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Renders a hover card component with a data-slot attribute.
+ */
 function HoverCard({
   ...props
 }: React.ComponentProps<typeof HoverCardPrimitive.Root>) {
   return <HoverCardPrimitive.Root data-slot="hover-card" {...props} />;
 }
 
+/**
+ * Renders a hover card trigger component with additional data attributes.
+ */
 function HoverCardTrigger({
   ...props
 }: React.ComponentProps<typeof HoverCardPrimitive.Trigger>) {
@@ -19,6 +25,9 @@ function HoverCardTrigger({
   );
 }
 
+/**
+ * Renders a hover card content with customizable alignment and side offset.
+ */
 function HoverCardContent({
   className,
   align = "center",
