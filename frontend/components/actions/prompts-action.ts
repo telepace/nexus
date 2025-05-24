@@ -424,9 +424,46 @@ export async function addPrompt(formData: FormData) {
 
     if (error) {
       console.error("创建prompt出错:", error);
-      return {
-        error: typeof error === "string" ? error : JSON.stringify(error),
-      };
+      // Attempt to parse FastAPI-style validation errors
+      // Assuming error structure is { status: number, body: { detail: [{ loc: [any, string], msg: string }] } }
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "status" in error &&
+        (error as any).status === 422 &&
+        "body" in error &&
+        typeof (error as any).body === "object" &&
+        (error as any).body !== null &&
+        "detail" in (error as any).body &&
+        Array.isArray((error as any).body.detail)
+      ) {
+        const fieldErrors = (error as any).body.detail.reduce(
+          (acc: Record<string, string>, errDetail: any) => {
+            if (
+              errDetail.loc &&
+              errDetail.loc.length > 1 &&
+              typeof errDetail.loc[1] === "string" &&
+              typeof errDetail.msg === "string"
+            ) {
+              acc[errDetail.loc[1]] = errDetail.msg;
+            }
+            return acc;
+          },
+          {},
+        );
+        if (Object.keys(fieldErrors).length > 0) {
+          return {
+            fieldErrors,
+            genericError: "Validation failed. Please check the fields.",
+          };
+        }
+      }
+      // Fallback for other errors or if parsing fails
+      const errorMessage =
+        typeof (error as any)?.message === "string"
+          ? (error as any).message
+          : JSON.stringify(error);
+      return { genericError: errorMessage };
     }
 
     // 清除缓存以便重新加载
@@ -442,9 +479,12 @@ export async function addPrompt(formData: FormData) {
     }
 
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("创建prompt出错:", error);
-    return { error: "创建prompt失败" };
+    // Fallback for unexpected errors during the try block execution
+    const errorMessage =
+      typeof error?.message === "string" ? error.message : "创建prompt失败";
+    return { genericError: errorMessage };
   }
 }
 
