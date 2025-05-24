@@ -6,6 +6,17 @@ import { cn } from '@/lib/utils'
 import { AnimatePresence, motion } from 'framer-motion'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
+/**
+ * A React component that flips through a list of words with animation effects.
+ *
+ * The `FlipWords` component uses React hooks such as `useState`, `useEffect`, and `useCallback`
+ * to manage the current word, animation state, and animation triggers. It leverages Framer Motion for smooth transitions
+ * between words. The component also adapts its exit animations based on screen size using a custom hook.
+ *
+ * @param words - An array of strings representing the words to flip through.
+ * @param duration - Optional duration in milliseconds for each word's display time, defaulting to 3000ms.
+ * @param className - Optional additional CSS class name(s) to apply to the component.
+ */
 export const FlipWords = ({
   words,
   duration = 3000,
