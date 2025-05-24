@@ -7,21 +7,24 @@ import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 
 /**
  * Home component that redirects authenticated users to the dashboard and displays a welcome page with links to setup, prompts, and GitHub repository.
  */
 export default function Home() {
-  // 使用客户端Auth Hook
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
+  useAuthRedirect(); // Handles redirection if user is already authenticated
 
-  // 如果已登录，重定向到仪表盘
-  useEffect(() => {
-    if (user && !isLoading) {
-      router.push("/dashboard");
-    }
-  }, [user, isLoading, router]);
+  // 使用客户端Auth Hook
+  // const { user, isLoading } = useAuth(); // user and isLoading from useAuth are used by useAuthRedirect
+  // const router = useRouter(); // router from next/navigation is used by useAuthRedirect
+
+  // The useEffect for redirecting logged-in users is now handled by useAuthRedirect.
+  // useEffect(() => {
+  //   if (user && !isLoading) {
+  //     router.push("/dashboard");
+  //   }
+  // }, [user, isLoading, router]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-8">

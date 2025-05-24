@@ -8,15 +8,17 @@ export default async function SetupPage() {
 
   // 未登录直接跳转到登录页
   if (!authState.isAuthenticated) {
-    redirect("/login?redirect=/setup");
+    redirect("/login?callbackUrl=/setup"); // Corrected query parameter name
   }
 
   // 如果已登录且已完成设置，重定向到仪表盘
-  // 这里可以根据实际情况添加一个检查用户是否已完成设置的逻辑
-  if (authState.isAuthenticated && false /* 已完成设置的条件 */) {
+  // User is authenticated if we reach here.
+  // Now check if setup is complete.
+  if (authState.user?.is_setup_complete === true) {
     redirect("/dashboard");
   }
 
+  // If user is authenticated AND setup is not complete, they stay on this page.
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-8">
       <div className="w-full max-w-4xl text-center mb-8">
