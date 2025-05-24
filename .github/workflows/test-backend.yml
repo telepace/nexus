@@ -78,7 +78,13 @@ jobs:
           export FIRST_SUPERUSER=admin@telepace.cc
           docker compose --project-name $STACK_NAME run --rm backend uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
         working-directory: backend
+<<<<<<< HEAD
         timeout-minutes: 20
+=======
+        env:
+          TESTING: "true"
+          TEST_MODE: "true"
+>>>>>>> 0a834ae (chore: update test-backend workflow to enable testing environment variables)
       - run: docker compose --project-name $STACK_NAME down -v --remove-orphans
       - name: Store coverage files
         uses: actions/upload-artifact@v4
