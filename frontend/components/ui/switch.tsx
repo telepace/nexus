@@ -5,6 +5,9 @@ import * as SwitchPrimitive from "@radix-ui/react-switch";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * A custom switch component styled with Tailwind CSS utility classes.
+ */
 function Switch({
   className,
   ...props

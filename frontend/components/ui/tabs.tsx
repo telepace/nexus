@@ -5,6 +5,9 @@ import * as TabsPrimitive from "@radix-ui/react-tabs";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Wraps TabsPrimitive.Root with additional styling and data attributes.
+ */
 function Tabs({
   className,
   ...props
@@ -18,6 +21,9 @@ function Tabs({
   );
 }
 
+/**
+ * Renders a styled list of tabs.
+ */
 function TabsList({
   className,
   ...props
@@ -34,6 +40,9 @@ function TabsList({
   );
 }
 
+/**
+ * Renders a tab trigger component with styling and props.
+ */
 function TabsTrigger({
   className,
   ...props
@@ -50,6 +59,9 @@ function TabsTrigger({
   );
 }
 
+/**
+ * Renders a tabs content component with optional custom class names and props.
+ */
 function TabsContent({
   className,
   ...props

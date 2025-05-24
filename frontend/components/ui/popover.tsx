@@ -5,18 +5,27 @@ import * as PopoverPrimitive from "@radix-ui/react-popover";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Wraps the PopoverPrimitive.Root component with a data-slot attribute.
+ */
 function Popover({
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Root>) {
   return <PopoverPrimitive.Root data-slot="popover" {...props} />;
 }
 
+/**
+ * Renders a trigger element for a popover component with additional data attributes.
+ */
 function PopoverTrigger({
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
   return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />;
 }
 
+/**
+ * Renders a popover content component with customizable alignment and side offset.
+ */
 function PopoverContent({
   className,
   align = "center",
@@ -39,6 +48,9 @@ function PopoverContent({
   );
 }
 
+/**
+ * Wraps PopoverPrimitive.Anchor with a specific data attribute.
+ */
 function PopoverAnchor({
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {

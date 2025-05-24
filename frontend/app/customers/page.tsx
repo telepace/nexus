@@ -19,6 +19,15 @@ interface DebugInfo {
   timestamp?: string;
 }
 
+/**
+ * Renders a customer profile page with user settings and tabs.
+ *
+ * This component handles user authentication, profile editing, and displays various settings sections
+ * such as profile, password, appearance, notifications, and privacy. It manages state for loading,
+ * error handling, and form submissions. The component also includes debugging information in development mode.
+ *
+ * @returns A React element representing the customer profile page.
+ */
 export default function CustomersPage() {
   const { user, isLoading, error, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");

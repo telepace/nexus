@@ -5,30 +5,45 @@ import { Drawer as DrawerPrimitive } from "vaul";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Wraps a DrawerPrimitive.Root with a 'data-slot' attribute.
+ */
 function Drawer({
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
   return <DrawerPrimitive.Root data-slot="drawer" {...props} />;
 }
 
+/**
+ * Renders a trigger component for a drawer.
+ */
 function DrawerTrigger({
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Trigger>) {
   return <DrawerPrimitive.Trigger data-slot="drawer-trigger" {...props} />;
 }
 
+/**
+ * Wraps the DrawerPrimitive.Portal component with a specific data attribute.
+ */
 function DrawerPortal({
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Portal>) {
   return <DrawerPrimitive.Portal data-slot="drawer-portal" {...props} />;
 }
 
+/**
+ * Renders a drawer close button with additional data attributes.
+ */
 function DrawerClose({
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Close>) {
   return <DrawerPrimitive.Close data-slot="drawer-close" {...props} />;
 }
 
+/**
+ * Renders a drawer overlay with animation and styling.
+ */
 function DrawerOverlay({
   className,
   ...props
@@ -45,6 +60,9 @@ function DrawerOverlay({
   );
 }
 
+/**
+ * Renders a drawer content component with an overlay and specific styling based on direction.
+ */
 function DrawerContent({
   className,
   children,
@@ -72,6 +90,9 @@ function DrawerContent({
   );
 }
 
+/**
+ * Renders a drawer header component with optional custom class and props.
+ */
 function DrawerHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -82,6 +103,9 @@ function DrawerHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+/**
+ * Renders a footer for a drawer component with customizable class names and props.
+ */
 function DrawerFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -92,6 +116,9 @@ function DrawerFooter({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+/**
+ * Renders a styled DrawerTitle component with additional props.
+ */
 function DrawerTitle({
   className,
   ...props
@@ -105,6 +132,9 @@ function DrawerTitle({
   );
 }
 
+/**
+ * Renders a DrawerDescription component with optional className and additional props.
+ */
 function DrawerDescription({
   className,
   ...props

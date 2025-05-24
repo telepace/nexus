@@ -5,6 +5,9 @@ import * as SeparatorPrimitive from "@radix-ui/react-separator";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Renders a separator component with customizable orientation and styling.
+ */
 function Separator({
   className,
   orientation = "horizontal",

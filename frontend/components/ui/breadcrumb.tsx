@@ -4,10 +4,16 @@ import { ChevronRight, MoreHorizontal } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Renders a breadcrumb navigation element.
+ */
 function Breadcrumb({ ...props }: React.ComponentProps<"nav">) {
   return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />;
 }
 
+/**
+ * Renders a breadcrumb list component with styling and additional props.
+ */
 function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
   return (
     <ol
@@ -21,6 +27,9 @@ function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
   );
 }
 
+/**
+ * Renders a breadcrumb item as an inline-flex list item with optional custom classes and props.
+ */
 function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
   return (
     <li
@@ -31,6 +40,9 @@ function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
   );
 }
 
+/**
+ * Renders a breadcrumb link component using either an <a> tag or a Slot component based on the asChild prop.
+ */
 function BreadcrumbLink({
   asChild,
   className,
@@ -49,6 +61,9 @@ function BreadcrumbLink({
   );
 }
 
+/**
+ * Renders a breadcrumb page element with specific ARIA attributes and styling.
+ */
 function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
@@ -62,6 +77,9 @@ function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
   );
 }
 
+/**
+ * Renders a breadcrumb separator as an `li` element with optional custom content.
+ */
 function BreadcrumbSeparator({
   children,
   className,
@@ -80,6 +98,9 @@ function BreadcrumbSeparator({
   );
 }
 
+/**
+ * Renders a breadcrumb ellipsis component with an icon and hidden text.
+ */
 function BreadcrumbEllipsis({
   className,
   ...props

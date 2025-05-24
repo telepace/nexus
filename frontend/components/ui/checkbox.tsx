@@ -6,6 +6,9 @@ import { CheckIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Renders a styled checkbox component with an indicator.
+ */
 function Checkbox({
   className,
   ...props
