@@ -11,13 +11,16 @@ alwaysApply: false
     owner: telepace
     
     repo: nexus
+
+    milestone: v0.1
     
     (i.e., https://github.com/telepace/nexus)
 
-- The language chosen for raising an issue: Chinese-
+- The language chosen for raising an issue: Chinese
+- Your task might be for other ais to read or solve, so try to understand the project information as much as possible and provide sufficient and important context
 - Before writing the issue content, use mcp's thinking in combination with the current repository code and implementation to think about what the solution to the task is.
 - Be careful not to be too AI in your tone.
-- Pay attention to choosing the appropriate labels and types. And select the latest Milestone(OR v0.1)
+- Pay attention to choosing the appropriate labels and types.
 - Assign tasks. If it is a simple UI-related task, assign it to @Neo-Neooo, and if it is a complex task, deployment, cicd, assign it to @cubxxw. If both the front-end and back-end are involved, it only needs to be assigned to @cubxxw
 - If possible, describe the design drawings or architecture drawings using mermaid code blocks as much as possible
 - No need for my confirmation. Just execute directly
