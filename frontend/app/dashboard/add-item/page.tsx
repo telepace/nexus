@@ -6,10 +6,22 @@ import { addItem } from "@/components/actions/items-action";
 import { useActionState } from "react";
 import { SubmitButton } from "@/components/ui/submitButton";
 
-const initialState = { message: "" };
+interface FormState {
+  message?: string;
+  errors?: {
+    title?: string[];
+    description?: string[];
+  };
+  success?: boolean;
+}
+
+const initialState: FormState = {};
 
 export default function CreateItemPage() {
   const [state, dispatch] = useActionState(addItem, initialState);
+
+  // 使用类型断言
+  const stateData = state as FormState;
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">
@@ -43,8 +55,10 @@ export default function CreateItemPage() {
                 required
                 className="w-full border-gray-300 dark:border-gray-600"
               />
-              {(state as any).errors?.title && (
-                <p className="text-red-500 text-sm">{(state as any).errors.title}</p>
+              {stateData.errors?.title && (
+                <p className="text-red-500 text-sm">
+                  {stateData.errors.title.join(", ")}
+                </p>
               )}
             </div>
 
@@ -62,9 +76,9 @@ export default function CreateItemPage() {
                 placeholder="Description of the item"
                 className="w-full border-gray-300 dark:border-gray-600"
               />
-              {(state as any).errors?.description && (
+              {stateData.errors?.description && (
                 <p className="text-red-500 text-sm">
-                  {(state as any).errors.description}
+                  {stateData.errors.description.join(", ")}
                 </p>
               )}
             </div>
@@ -72,11 +86,11 @@ export default function CreateItemPage() {
 
           <SubmitButton text="Create Item" />
 
-          {(state as any).message && (
+          {stateData.message && (
             <div
-              className={`mt-2 text-center text-sm ${(state as any).success ? "text-green-500" : "text-red-500"}`}
+              className={`mt-2 text-center text-sm ${stateData.success ? "text-green-500" : "text-red-500"}`}
             >
-              <p>{(state as any).message}</p>
+              <p>{stateData.message}</p>
             </div>
           )}
         </form>

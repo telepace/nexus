@@ -72,7 +72,7 @@ describe("Password Reset Page", () => {
         message: "密码重置链接已发送到您的邮箱，请查收。",
       },
       jest.fn(),
-      false
+      false,
     ]);
 
     render(<Page />);
@@ -91,7 +91,7 @@ describe("Password Reset Page", () => {
         server_validation_error: "用户不存在",
       },
       jest.fn(),
-      false
+      false,
     ]);
 
     render(<Page />);
@@ -110,7 +110,7 @@ describe("Password Reset Page", () => {
         },
       },
       jest.fn(),
-      false
+      false,
     ]);
 
     render(<Page />);

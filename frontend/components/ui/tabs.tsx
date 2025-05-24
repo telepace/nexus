@@ -38,8 +38,16 @@ const TabsContext = React.createContext<{
   onValueChange: () => {},
 });
 
-function Tabs({ value, defaultValue, onValueChange, children, className }: TabsProps) {
-  const [selectedValue, setSelectedValue] = React.useState(value || defaultValue || "");
+function Tabs({
+  value,
+  defaultValue,
+  onValueChange,
+  children,
+  className,
+}: TabsProps) {
+  const [selectedValue, setSelectedValue] = React.useState(
+    value || defaultValue || "",
+  );
 
   const handleValueChange = (newValue: string) => {
     setSelectedValue(newValue);

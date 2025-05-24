@@ -34,19 +34,22 @@ def init_test_db() -> None:
         test_db_url = get_test_db_url()
         test_engine = create_engine(test_db_url, pool_pre_ping=True)
 
-        logger.info(f"Initializing test database with initial data...")
-        
+        logger.info("Initializing test database with initial data...")
+
         # Ensure FIRST_SUPERUSER_PASSWORD is set to a valid value for testing
-        if not settings.FIRST_SUPERUSER_PASSWORD or len(settings.FIRST_SUPERUSER_PASSWORD) < 8:
+        if (
+            not settings.FIRST_SUPERUSER_PASSWORD
+            or len(settings.FIRST_SUPERUSER_PASSWORD) < 8
+        ):
             settings.FIRST_SUPERUSER_PASSWORD = "telepace"
             logger.info("Set test superuser password to default value")
 
         # Create session and initialize database
         with Session(test_engine) as session:
             init_db(session)
-            
+
         logger.info("✅ Test database initialized successfully with initial data")
-        
+
     except Exception as e:
         logger.error(f"❌ Failed to initialize test database: {e}")
         raise
@@ -60,4 +63,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main() 
+    main()

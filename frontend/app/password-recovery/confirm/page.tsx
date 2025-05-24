@@ -4,7 +4,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, FormEvent } from "react";
 import { useAuth } from "@/lib/auth";
 import { passwordResetConfirm } from "@/components/actions/password-reset-action";
-import { SubmitButton } from "@/components/ui/submitButton";
 import Image from "next/image";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -12,8 +11,17 @@ import { Suspense } from "react";
 import { FieldError, FormError } from "@/components/ui/FormError";
 import Link from "next/link";
 
+interface ResetPasswordState {
+  message?: string;
+  server_validation_error?: string;
+  errors?: {
+    password?: string;
+    passwordConfirm?: string;
+  };
+}
+
 function ResetPasswordForm() {
-  const [state, setState] = useState<any>(null);
+  const [state, setState] = useState<ResetPasswordState | null>(null);
   const [isPending, setIsPending] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -40,16 +48,16 @@ function ResetPasswordForm() {
   if (!token) {
     return <div>无效的令牌</div>;
   }
-  
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsPending(true);
-    
+
     const formData = new FormData(e.currentTarget);
     try {
       const result = await passwordResetConfirm(undefined, formData);
       setState(result);
-    } catch (error) {
+    } catch {
       setState({ server_validation_error: "提交失败，请重试" });
     } finally {
       setIsPending(false);
@@ -137,8 +145,8 @@ function ResetPasswordForm() {
               {!success && (
                 <div className="relative group mt-2">
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-300" />
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     className="relative inline-flex items-center justify-center w-full h-10 px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-600 rounded-md shadow-sm hover:bg-blue-700 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50"
                     disabled={isPending}
                   >

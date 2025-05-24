@@ -1,7 +1,12 @@
 "use client";
 
 import { FC, useState, useEffect } from "react";
-import { Search, PlusCircle, Settings, User, LogOut, Command } from "lucide-react";
+import {
+  PlusCircle,
+  Settings,
+  User,
+  LogOut,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -30,14 +35,14 @@ export const TopNavigation: FC<TopNavigationProps> = ({
   // 监听 cmd+k 快捷键
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        document.getElementById('global-search')?.focus();
+        document.getElementById("global-search")?.focus();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -52,26 +57,31 @@ export const TopNavigation: FC<TopNavigationProps> = ({
     <div className="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 z-10 flex items-center justify-between px-4 md:px-6">
       <div className="flex items-center">
         <div className="flex items-center mr-8">
-          <img 
-            src="/images/vinta.png" 
-            alt="Nexus Logo" 
+          <img
+            src="/images/vinta.png"
+            alt="Nexus Logo"
             className="h-8 w-8 mr-2"
           />
           <span className="text-lg font-semibold text-gray-900 dark:text-white">
             Nexus
           </span>
         </div>
-        
-        <form 
-          onSubmit={handleSearch} 
-          className="relative w-[260px]"
-        >
-          <div className={cn(
-            "flex items-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-gray-500 dark:text-gray-400 transition-all",
-            isSearchFocused && "ring-2 ring-primary/50 border-primary/50"
-          )}>
+
+        <form onSubmit={handleSearch} className="relative w-[260px]">
+          <div
+            className={cn(
+              "flex items-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-gray-500 dark:text-gray-400 transition-all",
+              isSearchFocused && "ring-2 ring-primary/50 border-primary/50",
+            )}
+          >
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <circle cx="8" cy="8" r="7" />
                 <line x1="13" y1="13" x2="17" y2="17" />
               </svg>
@@ -92,16 +102,16 @@ export const TopNavigation: FC<TopNavigationProps> = ({
           </div>
         </form>
       </div>
-      
+
       <div className="flex items-center space-x-4">
-        <Button 
+        <Button
           onClick={onAddContentClick}
           className="bg-primary hover:bg-primary/90 text-white"
         >
           <PlusCircle className="h-4 w-4 mr-2" />
           <span>添加内容</span>
         </Button>
-        
+
         <Button
           variant="ghost"
           size="icon"
@@ -110,19 +120,16 @@ export const TopNavigation: FC<TopNavigationProps> = ({
         >
           <Settings className="h-5 w-5" />
         </Button>
-        
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="rounded-full"
               data-testid="user-menu"
             >
-              <Avatar 
-                className="h-8 w-8" 
-                data-testid="user-avatar"
-              >
+              <Avatar className="h-8 w-8" data-testid="user-avatar">
                 <AvatarFallback className="bg-primary/10 text-primary">
                   U
                 </AvatarFallback>
@@ -133,7 +140,9 @@ export const TopNavigation: FC<TopNavigationProps> = ({
             <div className="flex items-center justify-start gap-2 p-2">
               <div className="flex flex-col space-y-1 leading-none">
                 <p className="font-medium">用户名</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">user@example.com</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  user@example.com
+                </p>
               </div>
             </div>
             <DropdownMenuSeparator />
@@ -161,4 +170,4 @@ export const TopNavigation: FC<TopNavigationProps> = ({
       </div>
     </div>
   );
-}; 
+};

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { TimeZone, getBrowserTimeZone } from './date';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { TimeZone, getBrowserTimeZone } from "./date";
 
 // 创建本地存储的键名
-const TIME_ZONE_STORAGE_KEY = 'nexus-time-zone';
+const TIME_ZONE_STORAGE_KEY = "nexus-time-zone";
 
 // 定义上下文类型
 interface TimeZoneContextType {
@@ -15,10 +15,14 @@ interface TimeZoneContextType {
 }
 
 // 创建上下文
-const TimeZoneContext = createContext<TimeZoneContextType | undefined>(undefined);
+const TimeZoneContext = createContext<TimeZoneContextType | undefined>(
+  undefined,
+);
 
 // 创建提供者组件
-export const TimeZoneProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const TimeZoneProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   // 初始化状态
   const [timeZone, setTimeZoneState] = useState<TimeZone>(getBrowserTimeZone());
   const [isAutoTimeZone, setIsAutoTimeZone] = useState<boolean>(true);
@@ -29,17 +33,17 @@ export const TimeZoneProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const storedSettings = localStorage.getItem(TIME_ZONE_STORAGE_KEY);
       if (storedSettings) {
         const { timeZone, isAutoTimeZone } = JSON.parse(storedSettings);
-        
+
         if (isAutoTimeZone) {
           setTimeZoneState(getBrowserTimeZone());
         } else if (timeZone) {
           setTimeZoneState(timeZone);
         }
-        
+
         setIsAutoTimeZone(isAutoTimeZone);
       }
     } catch (error) {
-      console.error('Failed to load time zone settings:', error);
+      console.error("Failed to load time zone settings:", error);
     }
   }, []);
 
@@ -52,7 +56,7 @@ export const TimeZoneProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // 设置是否自动检测时区并保存到本地存储
   const setAutoTimeZone = (isAuto: boolean) => {
     setIsAutoTimeZone(isAuto);
-    
+
     // 如果启用自动检测，则使用浏览器时区
     if (isAuto) {
       const browserTimeZone = getBrowserTimeZone();
@@ -68,10 +72,10 @@ export const TimeZoneProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       localStorage.setItem(
         TIME_ZONE_STORAGE_KEY,
-        JSON.stringify({ timeZone, isAutoTimeZone: isAuto })
+        JSON.stringify({ timeZone, isAutoTimeZone: isAuto }),
       );
     } catch (error) {
-      console.error('Failed to save time zone settings:', error);
+      console.error("Failed to save time zone settings:", error);
     }
   };
 
@@ -94,7 +98,7 @@ export const TimeZoneProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 export const useTimeZone = (): TimeZoneContextType => {
   const context = useContext(TimeZoneContext);
   if (context === undefined) {
-    throw new Error('useTimeZone must be used within a TimeZoneProvider');
+    throw new Error("useTimeZone must be used within a TimeZoneProvider");
   }
   return context;
-}; 
+};

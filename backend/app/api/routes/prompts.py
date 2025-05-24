@@ -164,7 +164,9 @@ def delete_tag(
 
 
 # ===== 提示词 CRUD 操作 =====
-@router.post("/", response_model=PromptReadWithTags, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=PromptReadWithTags, status_code=status.HTTP_201_CREATED
+)
 def create_prompt(
     *,
     db: Session = Depends(get_db),
@@ -368,7 +370,7 @@ def update_prompt(
             # 清除现有关系
             prompt.tags = []
             db.flush()
-            
+
             # 添加新标签
             for tag_id in tag_ids:
                 tag = db.get(Tag, tag_id)

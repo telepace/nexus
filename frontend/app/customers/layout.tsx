@@ -7,7 +7,7 @@ export default function CustomersLayout({
   children: ReactNode;
 }) {
   return (
-    <MainLayout pageTitle="Customers" currentPath="/customers">
+    <MainLayout pageTitle="Customers">
       {children}
     </MainLayout>
   );

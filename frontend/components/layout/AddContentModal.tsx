@@ -1,7 +1,13 @@
 "use client";
 
 import { FC, useState, useRef, useCallback } from "react";
-import { X, Upload, Link as LinkIcon, FileText, AlertCircle } from "lucide-react";
+import {
+  X,
+  Upload,
+  Link as LinkIcon,
+  FileText,
+  AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +17,6 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -24,47 +29,33 @@ interface AddContentModalProps {
 
 type ContentType = "url" | "text" | "file" | null;
 
-export const AddContentModal: FC<AddContentModalProps> = ({ open, onClose }) => {
+export const AddContentModal: FC<AddContentModalProps> = ({
+  open,
+  onClose,
+}) => {
   const [contentType, setContentType] = useState<ContentType>(null);
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isUrl = (text: string) => {
-    try {
-      new URL(text);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  const handleTextChange = (value: string) => {
-    setContent(value);
-    
-    // 自动检测是否为URL
-    if (isUrl(value)) {
-      setContentType("url");
-    } else {
-      setContentType("text");
-    }
-  };
-
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const filesArray = Array.from(e.target.files);
-      setSelectedFiles(filesArray);
-      setContentType("file");
-    }
-  }, []);
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0) {
+        const filesArray = Array.from(e.target.files);
+        setSelectedFiles(filesArray);
+        setContentType("file");
+      }
+    },
+    [],
+  );
 
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const filesArray = Array.from(e.dataTransfer.files);
       setSelectedFiles(filesArray);
@@ -79,21 +70,21 @@ export const AddContentModal: FC<AddContentModalProps> = ({ open, onClose }) => 
   const handleAddContent = async () => {
     setIsLoading(true);
     setError("");
-    
+
     try {
       // 此处实现添加内容的逻辑
       console.log("Adding content:", {
         type: contentType,
-        content: contentType === "file" ? selectedFiles : content
+        content: contentType === "file" ? selectedFiles : content,
       });
-      
+
       // 模拟API请求
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // 清空表单并关闭模态窗口
       resetForm();
       onClose();
-    } catch (err) {
+    } catch {
       setError("添加内容时发生错误，请重试。");
     } finally {
       setIsLoading(false);
@@ -132,7 +123,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({ open, onClose }) => 
             <X className="h-4 w-4" />
           </Button>
         </AlertDialogHeader>
-        
+
         <div className="space-y-6 py-4">
           {/* 主拖放区域 */}
           <div
@@ -144,9 +135,11 @@ export const AddContentModal: FC<AddContentModalProps> = ({ open, onClose }) => 
               flex flex-col items-center justify-center p-8 
               border-2 border-dashed rounded-lg
               transition-colors cursor-pointer
-              ${selectedFiles.length || content 
-                ? "border-primary/50 bg-primary/5" 
-                : "border-gray-300 hover:border-primary/50 hover:bg-gray-100/50 dark:border-gray-600 dark:hover:bg-gray-800/50"}
+              ${
+                selectedFiles.length || content
+                  ? "border-primary/50 bg-primary/5"
+                  : "border-gray-300 hover:border-primary/50 hover:bg-gray-100/50 dark:border-gray-600 dark:hover:bg-gray-800/50"
+              }
             `}
           >
             {!contentType && (
@@ -159,7 +152,11 @@ export const AddContentModal: FC<AddContentModalProps> = ({ open, onClose }) => 
                 <p className="text-center text-gray-500 dark:text-gray-400 mb-4">
                   🔗 粘贴链接、✍️ 输入文本，或 📂 拖拽文件至此
                 </p>
-                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                >
                   点击选择本地文件
                 </Button>
                 <input
@@ -221,7 +218,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({ open, onClose }) => 
                   <Label>已选择的文件</Label>
                   <div className="space-y-2">
                     {selectedFiles.map((file, index) => (
-                      <div 
+                      <div
                         key={index}
                         className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700"
                       >
@@ -235,9 +232,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({ open, onClose }) => 
                       </div>
                     ))}
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="mt-2"
                     onClick={() => fileInputRef.current?.click()}
                   >
@@ -263,10 +260,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({ open, onClose }) => 
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel 
-            onClick={handleCancel}
-            disabled={isLoading}
-          >
+          <AlertDialogCancel onClick={handleCancel} disabled={isLoading}>
             取消
           </AlertDialogCancel>
           <AlertDialogAction
@@ -280,4 +274,4 @@ export const AddContentModal: FC<AddContentModalProps> = ({ open, onClose }) => 
       </AlertDialogContent>
     </AlertDialog>
   );
-}; 
+};
