@@ -75,7 +75,7 @@ jobs:
           export TESTING=true
           export TEST_MODE=true
           export FIRST_SUPERUSER_PASSWORD=telepace
-          export FIRST_SUPERUSER=admin@telepace.com
+          export FIRST_SUPERUSER=admin@example.com
           docker compose --project-name $STACK_NAME run --rm backend uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
         working-directory: backend
         timeout-minutes: 20

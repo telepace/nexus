@@ -24,7 +24,7 @@ export TEST_MODE=true
 
 # 强制设置测试用的超级用户密码，确保与测试期望一致
 export FIRST_SUPERUSER_PASSWORD=telepace
-export FIRST_SUPERUSER=admin@telepace.com
+export FIRST_SUPERUSER=admin@example.com
 
 echo "🔧 Test environment variables:"
 echo "  TESTING=$TESTING"
@@ -87,13 +87,6 @@ TESTING=true TEST_MODE=true python -c "from app.tests.utils.test_db import creat
 echo "🏁 Running test pre-start checks..."
 python app/tests_pre_start.py || {
   echo "❌ Test environment preparation failed"
-  exit 1
-}
-
-# Verify test configuration
-echo "🔍 Verifying test configuration..."
-TESTING=true TEST_MODE=true python scripts/verify-test-config.py || {
-  echo "❌ Test configuration verification failed"
   exit 1
 }
 

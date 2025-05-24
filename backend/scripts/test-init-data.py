@@ -30,12 +30,6 @@ def init_test_db() -> None:
         # Import test database utilities
         from app.tests.utils.test_db import get_test_db_url
 
-        # Create engine for test database
-        test_db_url = get_test_db_url()
-        test_engine = create_engine(test_db_url, pool_pre_ping=True)
-
-        logger.info("Initializing test database with initial data...")
-
         # Force set test superuser password to a known value for testing
         # This ensures consistency between test database initialization and test expectations
         test_password = "telepace"
@@ -48,7 +42,14 @@ def init_test_db() -> None:
         logger.info(f"Set test superuser password to: {test_password}")
         logger.info(f"Original password was: {original_password}")
 
-        # Create session and initialize database
+        # Create engine for test database
+        test_db_url = get_test_db_url()
+        test_engine = create_engine(test_db_url, pool_pre_ping=True)
+
+        logger.info("Initializing test database with initial data...")
+        logger.info(f"Using test database URL: {test_db_url}")
+
+        # Create session and initialize database with test engine
         with Session(test_engine) as session:
             init_db(session)
 
