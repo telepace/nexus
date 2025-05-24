@@ -33,10 +33,6 @@ export type Body_login_login_access_token = {
   client_secret?: string | null;
 };
 
-export type Body_users_upload_avatar = {
-  avatar: Blob | File;
-};
-
 export type GoogleCallbackRequest = {
   token: string;
   user_info: {
@@ -238,7 +234,6 @@ export type UserUpdate = {
 export type UserUpdateMe = {
   full_name?: string | null;
   email?: string | null;
-  avatar_url?: string | null;
 };
 
 export type ValidationError = {
@@ -378,14 +373,6 @@ export type UsersDeleteUserData = {
 export type UsersDeleteUserResponse = Message;
 
 export type UsersDeleteUserError = HTTPValidationError;
-
-export type UsersUploadAvatarData = {
-  body: Body_users_upload_avatar;
-};
-
-export type UsersUploadAvatarResponse = UserPublic;
-
-export type UsersUploadAvatarError = HTTPValidationError;
 
 export type UtilsTestEmailData = {
   query: {

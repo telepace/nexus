@@ -38,9 +38,7 @@ export default async function RootLayout({ children, params }: Props) {
       <head />
       <body suppressHydrationWarning>
         <ThemeProvider>
-          <div className="nextra-container main">
-            {children}
-          </div>
+          {children}
         </ThemeProvider>
       </body>
     </html>

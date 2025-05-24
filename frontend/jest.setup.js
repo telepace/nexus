@@ -118,6 +118,9 @@ console.error = (...args) => {
     args[0] &&
     typeof args[0] === "string" &&
     (args[0].includes("LOGIN_BAD_CREDENTIALS") ||
+      args[0].includes("Login API error:") ||
+      args[0].includes("Login error:") ||
+      args[0].includes("Registration error:") ||
       args[0].includes(
         "Warning: An update to Root inside a test was not wrapped in act",
       ) ||
@@ -126,7 +129,7 @@ console.error = (...args) => {
         "act(...) is not supported in production builds of React",
       ))
   ) {
-    return; // Suppress expected login credential errors and act warnings
+    return; // Suppress expected login credential errors, registration errors and act warnings
   }
   originalConsoleError(...args);
 };

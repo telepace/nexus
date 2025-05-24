@@ -49,6 +49,21 @@ target_metadata = SQLModel.metadata
 
 
 def get_url():
+    # Check if we're in testing mode
+    """Returns the appropriate database URL based on environment settings."""
+    testing_env = os.environ.get("TESTING", "").lower() == "true"
+    test_mode_env = os.environ.get("TEST_MODE", "").lower() == "true"
+    
+    if testing_env and test_mode_env:
+        # Import test database utilities to get test database URL
+        try:
+            from app.tests.utils.test_db import get_test_db_url
+            test_url = get_test_db_url()
+            logger.info(f"Using test database URL for migrations: {test_url}")
+            return test_url
+        except ImportError:
+            logger.warning("Could not import test database utilities, falling back to main database")
+    
     return str(settings.SQLALCHEMY_DATABASE_URI)
 
 

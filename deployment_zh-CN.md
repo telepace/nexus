@@ -84,7 +84,7 @@ export DOMAIN=fastapi-project.example.com
 * 创建一个环境变量，用于Let's Encrypt的邮箱，例如：
 
 ```bash
-export EMAIL=admin@example.com
+export EMAIL=admin@telepace.cc
 ```
 
 **注意**：您需要设置一个不同的邮箱，`@example.com`的邮箱不会起作用。

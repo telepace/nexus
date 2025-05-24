@@ -47,11 +47,6 @@ class Settings(BaseSettings):
     FRONTEND_HOST: str = "http://localhost:5173"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
-    # Static files directory
-    STATIC_DIR: str = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "../../static"
-    )
-
     # Flag to indicate we're running tests
     TESTING: bool = os.environ.get("TESTING", "").lower() == "true"
     # We also check for TEST_MODE for compatibility
@@ -196,7 +191,7 @@ class Settings(BaseSettings):
         return bool(self.SMTP_HOST and self.EMAILS_FROM_EMAIL)
 
     EMAIL_TEST_USER: EmailStr = "test@example.com"
-    FIRST_SUPERUSER: EmailStr = "admin@example.com"
+    FIRST_SUPERUSER: EmailStr = "admin@telepace.cc"
     FIRST_SUPERUSER_PASSWORD: str = "telepace"
 
     # PostHog Configuration
@@ -215,6 +210,26 @@ class Settings(BaseSettings):
     # 后端 API URL 配置，可通过环境变量覆盖
     BACKEND_API_URL: str = "http://localhost:8000"
 
+    # Static files configuration
+    STATIC_DIR: str = "static"
+    STATIC_URL: str | None = "/static"
+    STORAGE_BACKEND: str = "local"
+
+    # S3 Storage Configuration
+    S3_ACCESS_KEY_ID: str | None = None
+    S3_SECRET_ACCESS_KEY: str | None = None
+    S3_REGION: str = "us-east-1"
+    S3_BUCKET: str | None = None
+    S3_PUBLIC_URL: str | None = None
+    S3_ENDPOINT_URL: str | None = None
+
+    # Cloudflare R2 Storage Configuration
+    R2_ACCOUNT_ID: str | None = None
+    R2_ACCESS_KEY_ID: str | None = None
+    R2_SECRET_ACCESS_KEY: str | None = None
+    R2_BUCKET: str | None = None
+    R2_PUBLIC_URL: str | None = None
+
     @property
     def google_oauth_redirect_uri(self) -> str:
         """Generate Google OAuth redirect URI pointing to backend API."""
@@ -225,29 +240,8 @@ class Settings(BaseSettings):
         logger.info("Make sure this matches your Google Console configuration")
         return redirect_uri
 
-    # 静态文件URL前缀
-    STATIC_URL: str = "/static"
-
-    # 存储服务配置
-    STORAGE_BACKEND: str = "local"  # 可选值: local, s3, r2
-
-    # S3 配置
-    S3_ACCESS_KEY_ID: str = ""
-    S3_SECRET_ACCESS_KEY: str = ""
-    S3_REGION: str = "us-east-1"
-    S3_BUCKET: str = ""
-    S3_PUBLIC_URL: str = ""
-    S3_ENDPOINT_URL: str | None = None
-
-    # Cloudflare R2 配置
-    R2_ACCOUNT_ID: str = ""
-    R2_ACCESS_KEY_ID: str = ""
-    R2_SECRET_ACCESS_KEY: str = ""
-    R2_BUCKET: str = ""
-    R2_PUBLIC_URL: str = ""
-
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
-        """Check if the provided secret value is "nexus" and raise a warning or error."""
+        """Check if the provided secret value is 'nexus' and raise a warning or error."""
         if value == "nexus":
             message = (
                 f'The value of {var_name} is "nexus", '
