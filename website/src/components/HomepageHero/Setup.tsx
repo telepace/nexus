@@ -13,8 +13,6 @@ import { useParams } from 'next/navigation'
 
 /**
  * Renders the hero section of the application with various UI components.
- *
- * @returns {JSX.Element} - A JSX element representing the hero section.
  */
 export function SetupHero() {
   const { t, currentLocale } = useLocale()

@@ -4,18 +4,19 @@
 import { useEffect } from 'react'
 
 /**
- * This function is used to fix the Nextra style hydration issue.
- * It achieves this by removing style elements that may cause conflicts during client-side rendering.
+ * Fixes Nextra style hydration issues by removing conflicting style elements.
  *
- * @returns {null} - This function does not return any value, always returns null.
+ * This function addresses potential conflicts during client-side rendering by identifying
+ * and removing `<style>` tags that contain specific patterns in their text content.
+ * It also sets up a MutationObserver to dynamically handle styles added after initial load.
  */
 export function NextraStyleFix() {
   useEffect(() => {
     // Handle potential style conflicts
     /**
-     * Handles the removal of specific style tags from the document.
+     * Handles the removal of specific `<style>` tags from the document.
      *
-     * This function searches for all `<style>` elements in the document and removes those
+     * This function searches through all `<style>` elements in the document and removes those
      * that contain either 'body {transition:' or 'body[unresolved]' in their text content.
      */
     const handleStyleFix = () => {
@@ -53,13 +54,6 @@ export function NextraStyleFix() {
 
 /**
  * A React functional component that wraps content with specific styling and layout for documentation purposes.
- *
- * @param {object} props - The component's properties.
- * @param {React.ReactNode} props.children - The child components or elements to be rendered within the wrapper.
- * @param {any} [props.toc] - An optional table of contents data, which can be used to render a sidebar or other navigational elements. (Note: renamed to _toc in code due to being unused)
- * @param {any} [props.metadata] - Optional metadata related to the content. (Note: renamed to _metadata in code due to being unused)
- *
- * @returns {JSX.Element} A JSX element representing the styled and laid-out content container.
  */
 export const NextraContentWrapper: React.FC<{
   children: React.ReactNode
