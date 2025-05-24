@@ -35,7 +35,7 @@ async def _forward_request_to_litellm(
     stream: bool = False
 ):
     try:
-        url = f"{settings.LITELLM_PROXY_URL}{endpoint_path}"
+        url = urljoin(settings.LITELLM_PROXY_URL, endpoint_path)
         
         if stream:
             req = client.build_request(method, url, json=data, headers=headers)
