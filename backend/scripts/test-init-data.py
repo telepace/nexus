@@ -51,7 +51,7 @@ def init_test_db() -> None:
 
         # Create session and initialize database with test engine
         with Session(test_engine) as session:
-            init_db(session)
+            init_db(session, test_db_url)
 
         logger.info("✅ Test database initialized successfully with initial data")
 

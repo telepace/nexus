@@ -9,7 +9,7 @@ from app.core.config import settings
 from app.core.db import init_db
 from app.main import app
 from app.models import Item, User
-from app.tests.utils.test_db import setup_test_db, teardown_test_db
+from app.tests.utils.test_db import setup_test_db, teardown_test_db, get_test_db_url
 from app.tests.utils.user import authentication_token_from_email
 from app.tests.utils.utils import get_superuser_token_headers
 
@@ -62,13 +62,15 @@ def db() -> Generator[Session, None, None]:
     # We're using the engine that was set up in setup_test_environmen
     from app.core.db import engine
 
-    # 确保测试用的超级用户密码为 "adminadmin"，满足至少8个字符的要求
+    # 确保测试用的超级用户密码为 "telepace"，与测试脚本保持一致
     original_password = settings.FIRST_SUPERUSER_PASSWORD
-    settings.FIRST_SUPERUSER_PASSWORD = "adminadmin"
+    settings.FIRST_SUPERUSER_PASSWORD = "telepace"
 
     # 创建测试用的数据库会话
     with Session(engine) as session:
-        init_db(session)
+        # Get test database URL for proper logging
+        test_db_url = get_test_db_url()
+        init_db(session, test_db_url)
         yield session
         # Clean up test data, but don't drop the database ye
         # (that will happen in teardown_test_db)
