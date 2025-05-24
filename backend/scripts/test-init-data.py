@@ -36,13 +36,17 @@ def init_test_db() -> None:
 
         logger.info("Initializing test database with initial data...")
 
-        # Ensure FIRST_SUPERUSER_PASSWORD is set to a valid value for testing
-        if (
-            not settings.FIRST_SUPERUSER_PASSWORD
-            or len(settings.FIRST_SUPERUSER_PASSWORD) < 8
-        ):
-            settings.FIRST_SUPERUSER_PASSWORD = "telepace"
-            logger.info("Set test superuser password to default value")
+        # Force set test superuser password to a known value for testing
+        # This ensures consistency between test database initialization and test expectations
+        test_password = "telepace"
+        original_password = settings.FIRST_SUPERUSER_PASSWORD
+        settings.FIRST_SUPERUSER_PASSWORD = test_password
+        
+        # Also set environment variable to ensure consistency
+        os.environ["FIRST_SUPERUSER_PASSWORD"] = test_password
+        
+        logger.info(f"Set test superuser password to: {test_password}")
+        logger.info(f"Original password was: {original_password}")
 
         # Create session and initialize database
         with Session(test_engine) as session:

@@ -22,7 +22,15 @@ CI_ENV=${CI:-false}
 export TESTING=true
 export TEST_MODE=true
 
+# 强制设置测试用的超级用户密码，确保与测试期望一致
+export FIRST_SUPERUSER_PASSWORD=telepace
+export FIRST_SUPERUSER=admin@telepace.com
 
+echo "🔧 Test environment variables:"
+echo "  TESTING=$TESTING"
+echo "  TEST_MODE=$TEST_MODE"
+echo "  FIRST_SUPERUSER=$FIRST_SUPERUSER"
+echo "  FIRST_SUPERUSER_PASSWORD=***"
 
 # 检查环境变量是否已正确设置
 if [ "$TESTING" != "true" ] || [ "$TEST_MODE" != "true" ]; then
@@ -79,6 +87,13 @@ TESTING=true TEST_MODE=true python -c "from app.tests.utils.test_db import creat
 echo "🏁 Running test pre-start checks..."
 python app/tests_pre_start.py || {
   echo "❌ Test environment preparation failed"
+  exit 1
+}
+
+# Verify test configuration
+echo "🔍 Verifying test configuration..."
+TESTING=true TEST_MODE=true python scripts/verify-test-config.py || {
+  echo "❌ Test configuration verification failed"
   exit 1
 }
 
