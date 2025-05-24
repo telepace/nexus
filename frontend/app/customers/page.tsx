@@ -164,7 +164,7 @@ export default function CustomersPage() {
   if (!user) {
     return (
       <div className="container mx-auto py-8">
-        <Alert variant="warning">
+        <Alert variant="destructive">
           <AlertDescription>
             You are not logged in. Please login to view this page.
           </AlertDescription>
@@ -184,7 +184,7 @@ export default function CustomersPage() {
       <h1 className="text-3xl font-bold mb-6">User Settings</h1>
 
       {updateSuccess && (
-        <Alert variant="success">
+        <Alert variant="default">
           <AlertDescription>
             Your profile has been updated successfully.
           </AlertDescription>
