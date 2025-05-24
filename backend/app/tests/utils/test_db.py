@@ -127,12 +127,43 @@ def create_test_database() -> None:
 
     except Exception as e:
         logger.error(f"Error creating test database: {e}")
+        # 输出更详细的诊断信息
+        logger.error("测试数据库创建失败，正在输出详细诊断信息...")
+        
+        # 尝试检查数据库服务器连接
+        try:
+            logger.info("尝试连接到默认数据库检查服务可用性...")
+            with psycopg.connect(conn_str) as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT version()")
+                    version = cur.fetchone()[0]
+                    logger.info(f"数据库服务器连接正常，版本: {version}")
+                    
+                    # 检查用户权限
+                    cur.execute("SELECT current_user")
+                    current_user = cur.fetchone()[0]
+                    logger.info(f"当前数据库用户: {current_user}")
+                    
+                    # 检查是否有创建数据库的权限
+                    cur.execute("SELECT rolcreatedb FROM pg_roles WHERE rolname = current_user")
+                    can_create_db = cur.fetchone()[0]
+                    if can_create_db:
+                        logger.info("当前用户有创建数据库的权限")
+                    else:
+                        logger.error("当前用户没有创建数据库的权限，请确保数据库用户有 CREATEDB 权限")
+        except Exception as conn_err:
+            logger.error(f"连接到数据库服务器失败: {conn_err}")
+            logger.error("请检查数据库服务器是否运行以及连接参数是否正确")
+
+        # 打印连接信息（隐藏密码）
+        masked_conn_str = conn_str.replace(settings.POSTGRES_PASSWORD, "********")
+        logger.info(f"连接字符串（密码已隐藏）: {masked_conn_str}")
+        logger.info(f"测试数据库名称: {test_db_name}")
+        logger.info(f"数据库服务器: {settings.POSTGRES_SERVER}:{settings.POSTGRES_PORT}")
+        logger.info(f"数据库用户: {settings.POSTGRES_USER}")
+        
         # 修改错误处理逻辑，不尝试使用可能是生产数据库的连接
         logger.error("测试数据库创建失败，测试无法继续。请检查数据库连接和权限设置。")
-        # 打印更详细的错误信息以帮助调试
-        logger.warning(
-            f"Connection string (password hidden): {conn_str.replace(settings.POSTGRES_PASSWORD, '********')}"
-        )
         # 直接抛出异常，不尝试恢复或回退
         raise RuntimeError(f"无法创建测试数据库 {test_db_name}：{str(e)}")
 

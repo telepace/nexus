@@ -48,10 +48,9 @@ jobs:
       - run: docker compose --project-name $STACK_NAME up -d db mailcatcher
       - name: Install dependencies
         run: docker compose --project-name $STACK_NAME run --rm backend uv pip install -e .
-      - name: Migrate DB
-        run: docker compose --project-name $STACK_NAME run --rm -e TESTING=true -e TEST_MODE=true backend uv run bash scripts/prestart.sh
+      - name: Prepare test database
+        run: docker compose --project-name $STACK_NAME run --rm -e TESTING=true -e TEST_MODE=true backend uv run python app/tests_pre_start.py
         working-directory: backend
-
       - name: Run tests
         run: docker compose --project-name $STACK_NAME run --rm -e TESTING=true -e TEST_MODE=true backend uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
         working-directory: backend

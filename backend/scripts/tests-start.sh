@@ -42,6 +42,14 @@ echo "⚠️  测试数据库名称: app_test"
 # Print database information
 echo "🗄️  Using dedicated test database for testing"
 
+# 确保测试数据库存在
+echo "🔍 检查测试数据库是否已创建..."
+python -c "from app.tests.utils.test_db import create_test_database; create_test_database()" || {
+  echo "❌ 测试数据库创建失败，请检查数据库连接和权限"
+  exit 1
+}
+echo "✅ 测试数据库已准备就绪"
+
 # Initialize test environment
 echo "🏁 Running test pre-start checks..."
 python app/tests_pre_start.py || {
