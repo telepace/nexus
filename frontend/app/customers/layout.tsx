@@ -6,9 +6,5 @@ export default function CustomersLayout({
 }: {
   children: ReactNode;
 }) {
-  return (
-    <MainLayout pageTitle="Customers">
-      {children}
-    </MainLayout>
-  );
+  return <MainLayout pageTitle="Customers">{children}</MainLayout>;
 }

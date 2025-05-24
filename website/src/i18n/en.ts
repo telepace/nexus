@@ -1,7 +1,7 @@
 export default {
   systemTitle: '🚀 My Nextra Starter',
   banner: {
-    title: 'Meet Your AI Reading Companion',
+    title: '👋 Hey there! Welcome to the Next.js Starter.',
     more: 'Check it out',
   },
 
@@ -9,35 +9,7 @@ export default {
   featureSupport: `🔥 Now with {{feature}} support!`,
   lastUpdated: 'Last updated on:',
 
-  getStarted: 'Start Reading Smarter',
-
-  home: {
-    hero: {
-      title: 'Meet Your AI Reading Companion',
-      subtitle: 'Unlock deeper understanding and conquer information overload. Our AI-powered tool helps you read smarter, learn faster, and rediscover the joy of knowledge.',
-      cta: 'Start Reading Smarter',
-    },
-    featuresSection: {
-      title: 'Core Features',
-      feature1_title: 'Smart Content Segmentation',
-      feature1_description: 'From PDFs and web articles to lengthy books, our AI intelligently structures content for optimal reading and analysis. It supports various formats and breaks down large texts into manageable, understandable segments.',
-      feature2_title: 'AI-Powered Reading Tools', // Changed for clarity and directness
-      feature2_description: 'Go beyond passive reading. Summarize complex articles, translate languages in real-time, ask questions, and dive deep into specific sections with powerful, configurable AI commands.',
-      feature3_title: 'Personalized AI Assistance',
-      feature3_description: 'Customize AI prompts and processing workflows to match your unique needs and preferences, creating a truly personal reading experience that helps you learn and explore effectively.',
-    },
-    howItWorksSection: {
-      title: 'Simple Steps to Smarter Reading',
-      step1_title: '1. Input Your Content',
-      step1_description: 'Easily import documents, paste web URLs, or directly input text. Our platform supports a wide range of formats to get you started quickly.',
-      step2_title: '2. AI-Powered Processing',
-      step2_description: 'Our intelligent system analyzes and segments your content, structuring it for optimal interaction and understanding. Complex information becomes clear and accessible.',
-      step3_title: '3. Engage & Discover',
-      step3_description: 'Read efficiently, summarize key points, translate languages, ask clarifying questions, and explore related topics with our suite of AI tools. Your personalized feed helps you focus.',
-      step4_title: '4. Capture & Organize',
-      step4_description: 'Save important insights, summaries, and notes to your personal Notebook. Keep your knowledge organized and accessible for future reference and learning.',
-    },
-  },
+  getStarted: 'Get Started',
   
   blog: {
     title: 'Blog',

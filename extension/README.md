@@ -93,7 +93,7 @@ e2e 测试框架： https://github.com/puppeteer/puppeteer
 
 ```bash
 cd extension
-npm install
+pnpm install
 ```
 
 ### 开发模式

@@ -1,7 +1,7 @@
 export default {
   systemTitle: '🚀 Nextra 启动模板',
   banner: {
-    title: '认识你的 AI 阅读助手',
+    title: '👋 嘿，欢迎来到 nexus!',
     more: '了解详情',
   },
 
@@ -9,35 +9,7 @@ export default {
   featureSupport: `🔥 现在支持 {{feature}}！`,
   lastUpdated: '最后更新于:',
 
-  getStarted: '开始智能阅读',
-
-  home: {
-    hero: {
-      title: '认识你的 AI 阅读助手',
-      subtitle: '解锁更深层次的理解，克服信息过载。我们的人工智能工具可帮助您更智能地阅读，更快地学习，并重新发现知识的乐趣。',
-      cta: '开始智能阅读',
-    },
-    featuresSection: {
-      title: '核心功能',
-      feature1_title: '智能内容分段',
-      feature1_description: '从 PDF、网页文章到长篇书籍，我们的人工智能都能智能地构建内容结构，以实现最佳阅读和分析。它支持各种格式，并将大段文本分解成易于管理和理解的部分。',
-      feature2_title: 'AI 阅读工具', // Changed for clarity and consistency with English
-      feature2_description: '超越被动阅读。总结复杂文章、实时翻译语言、提出问题，并通过强大且可配置的 AI 命令深入研究特定部分。',
-      feature3_title: '个性化 AI 辅助',
-      feature3_description: '自定义 AI 提示和处理工作流程，以匹配您独特的需求和偏好，创造真正个性化的阅读体验，帮助您有效地学习和探索。',
-    },
-    howItWorksSection: {
-      title: '智能阅读轻松几步',
-      step1_title: '1. 输入您的内容',
-      step1_description: '轻松导入文档、粘贴网页链接或直接输入文本。我们的平台支持多种格式，让您快速开始。',
-      step2_title: '2. AI 驱动处理',
-      step2_description: '我们的智能系统会分析和分段您的内容，构建结构以便于最佳互动和理解。复杂信息变得清晰易懂。',
-      step3_title: '3. 互动与发现',
-      step3_description: '通过我们的人工智能工具套件，高效阅读、总结要点、实时翻译、提出问题并探索相关主题。您的个性化信息流帮助您保持专注。',
-      step4_title: '4. 捕获与整理',
-      step4_description: '将重要的见解、摘要和笔记保存到您的个人笔记本中。让您的知识井井有条，便于将来参考和学习。',
-    },
-  },
+  getStarted: '开始使用',
   
   blog: {
     title: '博客',

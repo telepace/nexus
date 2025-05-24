@@ -1,4 +1,8 @@
-import { fetchPrompt, fetchTags } from "@/components/actions/prompts-action";
+import {
+  fetchPrompt,
+  fetchTags,
+  PromptData,
+} from "@/components/actions/prompts-action";
 import { getAuthState } from "@/lib/server-auth-bridge";
 import { PromptForm } from "../../_components/PromptForm";
 import { Suspense } from "react";
@@ -153,7 +157,7 @@ async function EditPromptContent({ id }: { id: string }) {
             </div>
           </div>
 
-          <PromptForm tags={tagsResponse} prompt={promptData} />
+          <PromptForm tags={tagsResponse} prompt={promptData as PromptData} />
         </div>
       </div>
     );

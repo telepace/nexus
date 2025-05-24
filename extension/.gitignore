@@ -40,3 +40,4 @@ dist/
 
 # Source maps
 *.js.map
+package-lock.json

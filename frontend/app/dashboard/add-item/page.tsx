@@ -6,22 +6,20 @@ import { addItem } from "@/components/actions/items-action";
 import { useActionState } from "react";
 import { SubmitButton } from "@/components/ui/submitButton";
 
-interface FormState {
+interface ItemState {
   message?: string;
-  errors?: {
-    title?: string[];
-    description?: string[];
-  };
   success?: boolean;
+  errors?: {
+    title?: string;
+    description?: string;
+    [key: string]: string | undefined;
+  };
 }
 
-const initialState: FormState = {};
+const initialState = { message: "" };
 
 export default function CreateItemPage() {
   const [state, dispatch] = useActionState(addItem, initialState);
-
-  // 使用类型断言
-  const stateData = state as FormState;
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">
@@ -55,9 +53,9 @@ export default function CreateItemPage() {
                 required
                 className="w-full border-gray-300 dark:border-gray-600"
               />
-              {stateData.errors?.title && (
+              {(state as ItemState).errors?.title && (
                 <p className="text-red-500 text-sm">
-                  {stateData.errors.title.join(", ")}
+                  {(state as ItemState).errors.title}
                 </p>
               )}
             </div>
@@ -76,9 +74,9 @@ export default function CreateItemPage() {
                 placeholder="Description of the item"
                 className="w-full border-gray-300 dark:border-gray-600"
               />
-              {stateData.errors?.description && (
+              {(state as ItemState).errors?.description && (
                 <p className="text-red-500 text-sm">
-                  {stateData.errors.description.join(", ")}
+                  {(state as ItemState).errors.description}
                 </p>
               )}
             </div>
@@ -86,11 +84,11 @@ export default function CreateItemPage() {
 
           <SubmitButton text="Create Item" />
 
-          {stateData.message && (
+          {(state as ItemState).message && (
             <div
-              className={`mt-2 text-center text-sm ${stateData.success ? "text-green-500" : "text-red-500"}`}
+              className={`mt-2 text-center text-sm ${(state as ItemState).success ? "text-green-500" : "text-red-500"}`}
             >
-              <p>{stateData.message}</p>
+              <p>{(state as ItemState).message}</p>
             </div>
           )}
         </form>

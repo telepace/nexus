@@ -1,19 +1,10 @@
 name: Docker Build and Push
 
 on:
-  schedule:
-    - cron: '30 2 * * *'
   push:
-    branches:
-      - release-*
     tags:
       - 'v*.*.*'
-      - 'v*.*.*-*'
-    paths:
-      - 'backend/**'
-      - 'admin/**'
-      - 'frontend/**'
-      - '.github/workflows/docker-build.yml'
+      # - 'v*.*.*-*'
   workflow_dispatch:
     inputs:
       environment:

@@ -20,20 +20,16 @@ interface Props {
 }
 
 /**
- * Renders the root HTML layout for the application with localization and theming support.
+ * The main layout component for the application that handles rendering the root HTML structure.
  *
- * Wraps the application content in a localized `<html>` structure, setting language and direction attributes, and provides theming context at the root level.
- *
- * @param children - The React nodes to display within the layout.
- * @param params - A promise resolving to an object containing the current language key.
- * @returns The root JSX layout element with localization and theming applied.
+ * @param {Props} props - The properties passed to the RootLayout component.
+ * @returns {JSX.Element} - A React JSX element representing the root HTML structure with localized content.
  */
 export default async function RootLayout({ children, params }: Props) {
   const { lang } = await params
   await getDictionary(lang)
 
   return (
-    // The className for font handling is now managed by the root layout: website/src/app/layout.tsx
     <html
       lang={lang}
       dir={getDirection(lang)}
@@ -42,9 +38,7 @@ export default async function RootLayout({ children, params }: Props) {
       <head />
       <body suppressHydrationWarning>
         <ThemeProvider>
-          <div className="nextra-container main">
-            {children}
-          </div>
+          {children}
         </ThemeProvider>
       </body>
     </html>

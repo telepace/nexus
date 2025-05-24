@@ -43,7 +43,6 @@ function SearchParamsHandler({
 }
 
 export default function Page() {
-  // @ts-expect-error -- useActionState 在 Next.js 中具有特殊处理，类型定义可能不完全匹配
   const [state, dispatch] = useActionState(passwordReset, undefined);
   const router = useRouter();
   const { user, isLoading } = useAuth();

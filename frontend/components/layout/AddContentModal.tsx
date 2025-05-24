@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState, useRef, useCallback } from "react";
+import { FC, useState, useRef, useCallback, useEffect } from "react";
 import {
   X,
   Upload,
@@ -29,6 +29,17 @@ interface AddContentModalProps {
 
 type ContentType = "url" | "text" | "file" | null;
 
+/**
+ * Add Content Modal component.
+ *
+ * This component provides a modal interface for users to add content in various forms such as URLs, text, or files.
+ * It manages state for content type, input values, file selections, loading status, and error messages.
+ * The component handles events like content changes, pasting, dragging, and form submission.
+ * It also includes validation logic to determine the content type based on user input.
+ *
+ * @param open - A boolean indicating whether the modal is open or closed.
+ * @param onClose - A callback function to handle closing the modal.
+ */
 export const AddContentModal: FC<AddContentModalProps> = ({
   open,
   onClose,
@@ -41,6 +52,54 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   const [error, setError] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 检测URL的简单正则表达式
+  /**
+   * Checks if the provided text is a valid URL.
+   */
+  const isURL = (text: string) => {
+    try {
+      new URL(text);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // 处理内容变化
+  const handleContentChange = useCallback(
+    (value: string) => {
+      setContent(value);
+      if (isURL(value)) {
+        setContentType("url");
+      } else if (value.trim() && contentType !== "text") {
+        setContentType("text");
+      }
+    },
+    [contentType],
+  );
+
+  // 处理粘贴事件
+  const handlePaste = useCallback(
+    (e: ClipboardEvent) => {
+      e.preventDefault();
+      const pastedText = e.clipboardData?.getData("text") || "";
+      if (pastedText.trim()) {
+        handleContentChange(pastedText.trim());
+      }
+    },
+    [handleContentChange],
+  );
+
+  // 监听粘贴事件
+  useEffect(() => {
+    if (open) {
+      document.addEventListener("paste", handlePaste);
+      return () => {
+        document.removeEventListener("paste", handlePaste);
+      };
+    }
+  }, [open, handlePaste]);
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,6 +126,23 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     e.preventDefault();
   };
 
+  // 处理拖放区域点击
+  /**
+   * Sets content type to "text" if it is currently undefined or null.
+   */
+  const handleDropAreaClick = () => {
+    if (!contentType) {
+      setContentType("text");
+    }
+  };
+
+  /**
+   * Handles the addition of content through an asynchronous process.
+   *
+   * This function sets loading state, simulates an API request to add content,
+   * and handles errors by setting an error message. It also resets the form and closes
+   * a modal window upon successful completion or failure.
+   */
   const handleAddContent = async () => {
     setIsLoading(true);
     setError("");
@@ -109,7 +185,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={onClose}>
+    <AlertDialog open={open}>
       <AlertDialogContent className="max-w-2xl">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-xl">添加新内容</AlertDialogTitle>
@@ -117,7 +193,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
             variant="ghost"
             size="icon"
             className="absolute right-2 top-2"
-            onClick={onClose}
+            onClick={handleCancel}
             aria-label="关闭"
           >
             <X className="h-4 w-4" />
@@ -128,7 +204,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           {/* 主拖放区域 */}
           <div
             data-testid="drop-area"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleDropAreaClick}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             className={`
@@ -150,12 +226,15 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                   <Upload className="h-5 w-5" />
                 </div>
                 <p className="text-center text-gray-500 dark:text-gray-400 mb-4">
-                  🔗 粘贴链接、✍️ 输入文本，或 📂 拖拽文件至此
+                  粘贴链接、输入文本，或拖拽文件至此
                 </p>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
                 >
                   点击选择本地文件
                 </Button>
@@ -180,8 +259,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                     <Label htmlFor="url">URL</Label>
                     <Input
                       id="url"
+                      role="textbox"
                       value={content}
-                      onChange={(e) => setContent(e.target.value)}
+                      onChange={(e) => handleContentChange(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -203,10 +283,11 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                   <Label htmlFor="text-content">文本内容</Label>
                   <Textarea
                     id="text-content"
+                    role="textbox"
                     placeholder="输入您想要添加的文本"
                     className="min-h-[100px]"
                     value={content}
-                    onChange={(e) => setContent(e.target.value)}
+                    onChange={(e) => handleContentChange(e.target.value)}
                   />
                 </div>
               </div>

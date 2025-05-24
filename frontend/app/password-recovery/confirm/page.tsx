@@ -11,31 +11,29 @@ import { Suspense } from "react";
 import { FieldError, FormError } from "@/components/ui/FormError";
 import Link from "next/link";
 
-interface ResetPasswordState {
+interface PasswordResetState {
   message?: string;
   server_validation_error?: string;
-  errors?: {
-    password?: string;
-    passwordConfirm?: string;
-  };
+  errors?: Record<string, string[]>;
+  success?: boolean;
 }
 
 function ResetPasswordForm() {
-  const [state, setState] = useState<ResetPasswordState | null>(null);
+  const [state, setState] = useState<PasswordResetState | null>(null);
   const [isPending, setIsPending] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams?.get("token");
   const { user, isLoading } = useAuth();
 
-  // 用户已登录时重定向到首页
+  // Redirect to dashboard if user is already logged in
   useEffect(() => {
     if (user && !isLoading) {
       router.push("/dashboard");
     }
   }, [user, isLoading, router]);
 
-  // 重置成功后的重定向逻辑
+  // Redirect after successful password reset
   useEffect(() => {
     if (state?.message) {
       const timer = setTimeout(() => {
@@ -46,7 +44,7 @@ function ResetPasswordForm() {
   }, [state?.message, router]);
 
   if (!token) {
-    return <div>无效的令牌</div>;
+    return <div>Invalid token</div>;
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -58,7 +56,9 @@ function ResetPasswordForm() {
       const result = await passwordResetConfirm(undefined, formData);
       setState(result);
     } catch {
-      setState({ server_validation_error: "提交失败，请重试" });
+      setState({
+        server_validation_error: "Submission failed, please try again",
+      });
     } finally {
       setIsPending(false);
     }
@@ -91,24 +91,24 @@ function ResetPasswordForm() {
                 />
               </div>
               <h3 className="tracking-tight text-2xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
-                重置您的密码
+                Reset Your Password
               </h3>
               <p className="text-sm text-center text-slate-600 dark:text-slate-400">
-                请输入新密码并确认。
+                Please enter and confirm your new password.
               </p>
             </div>
             <div className="p-6 grid gap-4 pt-2">
               {serverError && <FormError state={state} />}
 
               <div className="grid gap-2">
-                <Label htmlFor="password">密码</Label>
+                <Label htmlFor="password">Password</Label>
                 <div className="relative group">
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500" />
                   <Input
                     id="password"
                     name="password"
                     type="password"
-                    placeholder="至少8个字符，包含大写字母和特殊字符"
+                    placeholder="至少8个字符"
                     required
                   />
                 </div>
@@ -118,14 +118,14 @@ function ResetPasswordForm() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="passwordConfirm">确认密码</Label>
+                <Label htmlFor="passwordConfirm">Confirm Password</Label>
                 <div className="relative group">
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500" />
                   <Input
                     id="passwordConfirm"
                     name="passwordConfirm"
                     type="password"
-                    placeholder="再次输入相同的密码"
+                    placeholder="Enter the same password again"
                     required
                   />
                 </div>
@@ -150,7 +150,7 @@ function ResetPasswordForm() {
                     className="relative inline-flex items-center justify-center w-full h-10 px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-600 rounded-md shadow-sm hover:bg-blue-700 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50"
                     disabled={isPending}
                   >
-                    {isPending ? "处理中..." : "重置密码"}
+                    {isPending ? "Processing..." : "Reset Password"}
                   </button>
                 </div>
               )}
@@ -169,7 +169,7 @@ function ResetPasswordForm() {
                   href="/login"
                   className="font-medium text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300"
                 >
-                  返回登录
+                  Back to Login
                 </Link>
               </div>
             </div>

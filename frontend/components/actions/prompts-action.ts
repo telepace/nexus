@@ -12,13 +12,12 @@ import {
   deleteTag,
   readPromptVersions,
   duplicatePrompt,
-  type PromptType,
-  type Visibility,
 } from "@/app/clientService";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getAuthToken, requireAuth } from "@/lib/server-auth-bridge";
+import type { PromptType, Visibility } from "@/app/openapi-client/types.gen";
 
 // 定义Prompt和Tag数据类型
 export interface TagData {
@@ -404,7 +403,7 @@ export async function addPrompt(formData: FormData) {
 
     // 元数据支持
     const metaDataValue = formData.get("meta_data") as string;
-    const meta_data = metaDataValue ? JSON.parse(metaDataValue) : {};
+    const meta_data = metaDataValue ? JSON.parse(metaDataValue) : null;
 
     const { data, error } = await createPrompt({
       headers: {

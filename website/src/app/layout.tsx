@@ -1,34 +1,23 @@
-import type { ReactNode } from 'react'
-import { Inter } from 'next/font/google'
-import './[lang]/styles/index.css' // Assuming this path is valid for global styles from a root layout
+import type { ReactNode } from 'react';
 
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-sans',
-})
-
-interface Props {
-  children: ReactNode
+interface RootLayoutProps {
+  children: ReactNode;
 }
 
-/**
- * Root layout component that applies global styles, font settings, and structure for the application.
- *
- * Wraps all pages with the Inter font, English language, left-to-right direction, and a minimal HTML scaffold.
- *
- * @param children - The content to render within the layout.
- *
- * @remark If themed components are used on the not-found page, a ThemeProvider may be required.
- */
-export default function RootLayout({ children }: Props) {
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" dir="ltr" className={`${inter.variable} font-sans`} suppressHydrationWarning>
-      <head />
+    // The lang and dir attributes will be handled by the nested [lang]/layout.tsx
+    // This root layout is primarily to satisfy Next.js's requirement.
+    // It should not include <html> or <body> if those are in [lang]/layout.tsx.
+    // However, to be safe and ensure not-found.tsx can use it if needed at the root level,
+    // let's make it a complete document for now, and it can be refined if it conflicts
+    // with [lang]/layout.tsx. A simpler version might just be <>{children}</>.
+    // For now, let's assume [lang]/layout.tsx are true root layouts for their paths.
+    // So, this root layout should be extremely simple.
+    <html suppressHydrationWarning>
       <body>
-        {/* Minimal wrapper, ThemeProvider might be needed if not-found page uses themed components */}
         {children}
       </body>
     </html>
-  )
+  );
 }

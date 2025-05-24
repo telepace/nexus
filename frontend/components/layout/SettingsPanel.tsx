@@ -1,23 +1,18 @@
 "use client";
 
-import React, { FC, useState } from "react";
-import {
-  X,
-  User,
-  Lock,
-  Eye,
-  Bell,
-  Shield,
-  ChevronRight,
-} from "lucide-react";
+import { FC, useState, useRef, ChangeEvent } from "react";
+import { X, User, Lock, Eye, Bell, Shield, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { useTheme } from "next-themes";
 import { TimeZoneSelector } from "@/components/ui/TimeZoneSelector";
 import { useTimeZone } from "../../lib/time-zone-context";
+import Image from "next/image";
+import { toast } from "@/components/ui/use-toast";
 
 // 添加时区设置组件
 const TimeZoneSettings = () => {
@@ -56,6 +51,10 @@ interface SettingsPanelProps {
 
 export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
   const [activeTab, setActiveTab] = useState("profile");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarSrc, setAvatarSrc] = useState("/images/vinta.png");
+  const [isUploading, setIsUploading] = useState(false);
+  useTheme();
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,
@@ -71,6 +70,91 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
       ...prev,
       [key]: !prev[key],
     }));
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 验证文件类型
+    if (!file.type.match("image.*")) {
+      toast({
+        title: "文件类型错误",
+        description: "请选择图片文件",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // 验证文件大小（限制为 2MB）
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "文件过大",
+        description: "头像图片不能超过 2MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    // 创建一个本地预览
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64Image = e.target?.result as string;
+      setAvatarSrc(base64Image);
+
+      // 上传到服务器
+      const uploadAvatar = async () => {
+        try {
+          // 创建FormData对象
+          const formData = new FormData();
+          formData.append("avatar", file);
+
+          // 发送请求到服务器
+          const response = await fetch("/api/v1/users/me/avatar", {
+            method: "POST",
+            body: formData,
+            credentials: "include",
+          });
+
+          if (!response.ok) {
+            throw new Error("上传失败");
+          }
+
+          toast({
+            title: "头像已更新",
+            description: "您的头像已成功更换并保存到服务器",
+          });
+        } catch (error) {
+          console.error("上传头像失败:", error);
+          toast({
+            title: "上传失败",
+            description: "头像无法保存到服务器，请稍后重试",
+            variant: "destructive",
+          });
+        } finally {
+          setIsUploading(false);
+        }
+      };
+
+      uploadAvatar();
+    };
+
+    reader.onerror = () => {
+      setIsUploading(false);
+      toast({
+        title: "上传失败",
+        description: "头像更新失败，请重试",
+        variant: "destructive",
+      });
+    };
+
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -146,15 +230,29 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
                 <div className="grid gap-6">
                   <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
                     <div className="h-24 w-24 relative rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
-                      <img
-                        src="/images/vinta.png"
+                      <Image
+                        src={avatarSrc}
                         alt="Profile"
                         className="object-cover w-full h-full"
+                        width={96}
+                        height={96}
                       />
                       <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                        <Button variant="secondary" size="sm">
-                          更换
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={handleAvatarClick}
+                          disabled={isUploading}
+                        >
+                          {isUploading ? "上传中..." : "更换"}
                         </Button>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                          accept="image/*"
+                          className="hidden"
+                        />
                       </div>
                     </div>
                     <div className="flex-1 space-y-4">

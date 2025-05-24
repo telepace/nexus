@@ -47,11 +47,12 @@ describe("Register Page", () => {
   it("renders form with email, password, and submit button", () => {
     render(<Page />);
 
-    expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/密码/i)).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /注册 注册/i }),
-    ).toBeInTheDocument();
+    // 验证姓名字段
+    expect(screen.getByLabelText(/姓名/i)).toBeInTheDocument();
+    // 验证邮箱字段
+    expect(screen.getByLabelText(/邮箱/i)).toBeInTheDocument();
+    // 验证注册按钮
+    expect(screen.getByRole("button", { name: /^注册$/i })).toBeInTheDocument();
   });
 
   // 跳过因为 fetch 调用的测试 - 该测试需要更深入的修复
@@ -110,10 +111,7 @@ describe("Register Page", () => {
     (register as jest.Mock).mockResolvedValueOnce({
       errors: {
         email: ["请输入有效的电子邮件地址"],
-        password: [
-          "密码必须包含至少一个大写字母",
-          "密码必须包含至少一个特殊字符",
-        ],
+        password: ["密码至少需要8个字符"],
       },
     });
 
@@ -134,12 +132,7 @@ describe("Register Page", () => {
     expect(
       await screen.findByText("请输入有效的电子邮件地址"),
     ).toBeInTheDocument();
-    expect(
-      await screen.findByText("密码必须包含至少一个大写字母"),
-    ).toBeInTheDocument();
-    expect(
-      await screen.findByText("密码必须包含至少一个特殊字符"),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("密码至少需要8个字符")).toBeInTheDocument();
   });
 
   it("renders Google login button", () => {

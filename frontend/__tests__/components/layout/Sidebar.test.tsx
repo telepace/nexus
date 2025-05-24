@@ -28,9 +28,9 @@ describe("Sidebar", () => {
   it("应该正确渲染折叠状态的侧边栏", () => {
     render(<Sidebar collapsed={true} onToggleCollapse={jest.fn()} />);
 
-    // 在折叠状态下，文本内容应该隐藏，只有图标可见
-    expect(screen.queryByText("Dashboard")).not.toBeVisible();
-    expect(screen.queryByText("Prompts")).not.toBeVisible();
+    // 在折叠状态下，文本内容不会渲染到DOM中
+    expect(screen.queryByText("Dashboard")).not.toBeInTheDocument();
+    expect(screen.queryByText("Prompts")).not.toBeInTheDocument();
 
     // 但图标应该仍然可见
     expect(screen.getByLabelText("Dashboard")).toBeInTheDocument();

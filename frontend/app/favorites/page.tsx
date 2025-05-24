@@ -85,7 +85,7 @@ export default function FavoritesPage() {
   };
 
   return (
-    <MainLayout pageTitle="收藏" currentPath="/favorites">
+    <MainLayout pageTitle="收藏">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">

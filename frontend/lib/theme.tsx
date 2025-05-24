@@ -28,6 +28,10 @@ export function ThemeProvider({
   children,
   defaultTheme = "system",
   storageKey = "nexus-theme",
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  attribute,
+  enableSystem,
+  /* eslint-enable @typescript-eslint/no-unused-vars */
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(

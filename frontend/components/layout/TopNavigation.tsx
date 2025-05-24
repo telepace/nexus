@@ -1,15 +1,10 @@
 "use client";
 
 import { FC, useState, useEffect } from "react";
-import {
-  PlusCircle,
-  Settings,
-  User,
-  LogOut,
-} from "lucide-react";
+import { PlusCircle, Settings, User, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +14,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { logout } from "@/components/actions/logout-action";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
+import { useAuth } from "@/lib/auth";
 
 interface TopNavigationProps {
   onSettingsClick: () => void;
@@ -31,6 +28,7 @@ export const TopNavigation: FC<TopNavigationProps> = ({
 }) => {
   const [searchValue, setSearchValue] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const { user } = useAuth();
 
   // 监听 cmd+k 快捷键
   useEffect(() => {
@@ -57,9 +55,11 @@ export const TopNavigation: FC<TopNavigationProps> = ({
     <div className="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 z-10 flex items-center justify-between px-4 md:px-6">
       <div className="flex items-center">
         <div className="flex items-center mr-8">
-          <img
+          <Image
             src="/images/vinta.png"
             alt="Nexus Logo"
+            width={32}
+            height={32}
             className="h-8 w-8 mr-2"
           />
           <span className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -130,8 +130,18 @@ export const TopNavigation: FC<TopNavigationProps> = ({
               data-testid="user-menu"
             >
               <Avatar className="h-8 w-8" data-testid="user-avatar">
+                {user?.avatar_url ? (
+                  <AvatarImage
+                    src={`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}${user.avatar_url}`}
+                    alt={user.full_name || user.email}
+                  />
+                ) : null}
                 <AvatarFallback className="bg-primary/10 text-primary">
-                  U
+                  {user?.full_name
+                    ? user.full_name[0].toUpperCase()
+                    : user?.email
+                      ? user.email[0].toUpperCase()
+                      : "U"}
                 </AvatarFallback>
               </Avatar>
             </Button>
@@ -139,9 +149,9 @@ export const TopNavigation: FC<TopNavigationProps> = ({
           <DropdownMenuContent align="end" className="w-56">
             <div className="flex items-center justify-start gap-2 p-2">
               <div className="flex flex-col space-y-1 leading-none">
-                <p className="font-medium">用户名</p>
+                <p className="font-medium">{user?.full_name || "用户"}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  user@example.com
+                  {user?.email || "user@example.com"}
                 </p>
               </div>
             </div>
