@@ -24,7 +24,7 @@ export TEST_MODE=true
 
 # 强制设置测试用的超级用户密码，确保与测试期望一致
 export FIRST_SUPERUSER_PASSWORD=telepace
-export FIRST_SUPERUSER=admin@example.com
+export FIRST_SUPERUSER=admin@telepace.cc
 
 echo "🔧 Test environment variables:"
 echo "  TESTING=$TESTING"

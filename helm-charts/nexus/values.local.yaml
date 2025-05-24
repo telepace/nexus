@@ -18,7 +18,7 @@ global:
     
     BACKEND_CORS_ORIGINS: '["http://localhost", "https://localhost", "http://localhost:8080", "https://localhost:8080", "http://dashboard.localhost.localdomain", "https://dashboard.localhost.localdomain"]'
     
-    FIRST_SUPERUSER: admin@example.com
+    FIRST_SUPERUSER: admin@telepace.cc
     FIRST_SUPERUSER_PASSWORD: "${ADMIN_PASSWORD}"
 
 backend:

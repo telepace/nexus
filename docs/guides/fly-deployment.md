@@ -31,7 +31,7 @@ cd backend
 
 ```bash
 fly secrets set SECRET_KEY="your-secure-secret-key" \
-  FIRST_SUPERUSER="admin@example.com" \
+  FIRST_SUPERUSER="admin@telepace.cc" \
   FIRST_SUPERUSER_PASSWORD="secure-admin-password" \
   SMTP_HOST="your-smtp-host" \
   SMTP_USER="your-smtp-user" \

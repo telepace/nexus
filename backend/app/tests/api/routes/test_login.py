@@ -49,7 +49,7 @@ def test_recovery_password(
 ) -> None:
     with (
         patch("app.core.config.settings.SMTP_HOST", "smtp.example.com"),
-        patch("app.core.config.settings.SMTP_USER", "admin@example.com"),
+        patch("app.core.config.settings.SMTP_USER", "admin@telepace.cc"),
     ):
         email = "test@example.com"
         r = client.post(

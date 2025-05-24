@@ -6,17 +6,18 @@ Debug script to check test database superuser.
 import os
 import logging
 from sqlmodel import Session, select
+from sqlalchemy import create_engine
 
 # Set test environment
 os.environ["TESTING"] = "true"
 os.environ["TEST_MODE"] = "true"
 os.environ["FIRST_SUPERUSER_PASSWORD"] = "telepace"
-os.environ["FIRST_SUPERUSER"] = "admin@example.com"
+os.environ["FIRST_SUPERUSER"] = "admin@telepace.cc"
 
 from app.core.config import settings
 from app.core.security import verify_password
 from app.models import User
-from app.tests.utils.test_db import setup_test_db
+from app.tests.utils.test_db import get_test_db_url
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -27,8 +28,9 @@ def debug_test_user():
     logger.info(f"FIRST_SUPERUSER: {settings.FIRST_SUPERUSER}")
     logger.info(f"FIRST_SUPERUSER_PASSWORD: {settings.FIRST_SUPERUSER_PASSWORD}")
     
-    # Setup test database
-    test_engine = setup_test_db()
+    # Connect to existing test database (don't recreate it)
+    test_db_url = get_test_db_url()
+    test_engine = create_engine(test_db_url, pool_pre_ping=True)
     
     with Session(test_engine) as session:
         user = session.exec(
