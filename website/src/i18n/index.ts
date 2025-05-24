@@ -15,13 +15,6 @@ export interface I18nLangAsyncProps {
 export type AllLocales = typeof i18nConfig[I18nLangKeys]
 
 
-type DeepKeys<T> = {
-  [K in keyof T & (string | number)]: T[K] extends object
-    ? `${K & string | number}.${DeepKeys<T[K]>}`
-    : `${K & string | number}`
-}[keyof T & (string | number)]
-
-
 export type NestedKeyOf<ObjectType extends object> = {
   [Key in keyof ObjectType & (string | number)]: ObjectType[Key] extends object
     ? `${Key}` | `${Key}.${NestedKeyOf<ObjectType[Key]>}`

@@ -1,16 +1,16 @@
-'use client';
+'use client'
 
-import React from 'react';
-import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { PanelParticles } from '@/components/PanelParticles/PanelParticles';
+import { PanelParticles } from '@/components/PanelParticles/PanelParticles'
+import { Button } from '@/components/ui/button'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import React from 'react'
 
 interface HomepageHeroProps {
-  title: string;
-  subtitle: string;
-  cta: string;
-  lang: string;
+  title: string
+  subtitle: string
+  cta: string
+  lang: string
 }
 
 /**
@@ -28,11 +28,11 @@ export const HomepageHero: React.FC<HomepageHeroProps> = ({
       <div className="absolute inset-0 z-0">
         <PanelParticles />
       </div>
-      
+
       {/* Content */}
       <div className="container relative z-10 px-4 py-16 sm:px-6 sm:py-24">
         <div className="text-center">
-          <motion.h1 
+          <motion.h1
             className="text-4xl font-extrabold tracking-tight text-primary sm:text-5xl md:text-6xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -40,7 +40,7 @@ export const HomepageHero: React.FC<HomepageHeroProps> = ({
           >
             {title}
           </motion.h1>
-          <motion.p 
+          <motion.p
             className="mt-6 max-w-2xl mx-auto text-xl text-foreground/80"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -48,7 +48,7 @@ export const HomepageHero: React.FC<HomepageHeroProps> = ({
           >
             {subtitle}
           </motion.p>
-          <motion.div 
+          <motion.div
             className="mt-10 max-w-sm mx-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -63,5 +63,5 @@ export const HomepageHero: React.FC<HomepageHeroProps> = ({
         </div>
       </div>
     </section>
-  );
-}; 
+  )
+}

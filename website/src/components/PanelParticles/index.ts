@@ -1,1 +1,1 @@
-export * from './PanelParticles'; 
+export * from './PanelParticles'

@@ -19,11 +19,12 @@ export const generateStaticParams = generateStaticParamsFor('mdxPath')
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const params = await props.params
   const mdxPath = params.mdxPath || ['index']
-  
+
   try {
     const { metadata } = await importPage(mdxPath, params.lang)
     return metadata || { title: 'Page', description: 'Page description' }
-  } catch (error) {
+  }
+  catch {
     return { title: 'Not Found', description: 'Page not found' }
   }
 }
@@ -59,9 +60,10 @@ export default async function Page(props: PageProps) {
   try {
     const result = await importPage(mdxPath, params.lang)
     const { default: MDXContent } = result
-    
+
     return <MDXContent {...props} params={params} />
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Error loading page:', error)
     notFound()
   }

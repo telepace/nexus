@@ -1,30 +1,30 @@
 interface Dictionary {
   metadata: {
     home: {
-      title: string;
-      description: string;
-    };
-  };
+      title: string
+      description: string
+    }
+  }
   home: {
     hero: {
-      title: string;
-      subtitle: string;
-      cta: string;
-    };
+      title: string
+      subtitle: string
+      cta: string
+    }
     features: {
-      title: string;
+      title: string
       items: Array<{
-        title: string;
-        description: string;
-      }>;
-    };
-  };
+        title: string
+        description: string
+      }>
+    }
+  }
   navigation: {
-    home: string;
-    docs: string;
-    blog: string;
-    github: string;
-  };
+    home: string
+    docs: string
+    blog: string
+    github: string
+  }
 }
 
 const en: Dictionary = {
@@ -64,7 +64,7 @@ const en: Dictionary = {
     blog: 'Blog',
     github: 'GitHub',
   },
-};
+}
 
 const zh: Dictionary = {
   metadata: {
@@ -103,12 +103,12 @@ const zh: Dictionary = {
     blog: '博客',
     github: 'GitHub',
   },
-};
+}
 
 const dictionaries = {
   en,
   zh,
-};
+}
 
 /**
  * Retrieves the dictionary for a given locale.
@@ -118,5 +118,5 @@ const dictionaries = {
  * @throws Will throw an error if the dictionaries object is not properly defined or accessible.
  */
 export async function getDictionary(locale: string): Promise<Dictionary> {
-  return dictionaries[locale as keyof typeof dictionaries] || dictionaries.en;
-} 
+  return dictionaries[locale as keyof typeof dictionaries] || dictionaries.en
+}

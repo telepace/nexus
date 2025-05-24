@@ -15,4 +15,4 @@ const ClientMDXWrapper: React.FC<{ children: React.ReactNode }> = ({ children })
   return <div className="mdx-client-wrapper">{children}</div>
 }
 
-export default ClientMDXWrapper 
+export default ClientMDXWrapper
