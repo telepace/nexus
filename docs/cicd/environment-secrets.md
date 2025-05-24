@@ -15,7 +15,7 @@ GitHub Secrets 是一种安全存储敏感信息的机制，如 API 密钥、密
 | Secret 名称 | 描述 | 示例 |
 |------------|------|------|
 | `SECRET_KEY` | 用于加密的密钥 | `a-random-secure-string` |
-| `FIRST_SUPERUSER` | 初始超级用户的邮箱 | `admin@example.com` |
+| `FIRST_SUPERUSER` | 初始超级用户的邮箱 | `admin@telepace.cc` |
 | `FIRST_SUPERUSER_PASSWORD` | 初始超级用户的密码 | `secure-password` |
 | `SMTP_HOST` | SMTP 服务器地址 | `smtp.gmail.com` |
 | `SMTP_USER` | SMTP 用户名 | `your-email@gmail.com` |
@@ -98,7 +98,7 @@ env:
 
 ```
 SECRET_KEY=dev-secret-key
-FIRST_SUPERUSER=admin@example.com
+FIRST_SUPERUSER=admin@telepace.cc
 FIRST_SUPERUSER_PASSWORD=admin
 SMTP_HOST=localhost
 SMTP_USER=test

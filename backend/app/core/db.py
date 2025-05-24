@@ -19,14 +19,17 @@ engine = create_db_engine()
 # for more details: https://github.com/fastapi/full-stack-fastapi-template/issues/28
 
 
-def print_db_connection_info() -> None:
+def print_db_connection_info(db_url: str | None = None) -> None:
     """Print database connection information.
 
     This function retrieves and logs the database connection details, ensuring that sensitive information such as passwords
     is obscured for security reasons. It also provides additional configuration details specific to different database
     types, such as Supabase.
+    
+    Args:
+        db_url: Optional database URL to use instead of settings.SQLALCHEMY_DATABASE_URI
     """
-    url = str(settings.SQLALCHEMY_DATABASE_URI)
+    url = db_url or str(settings.SQLALCHEMY_DATABASE_URI)
 
     # Hide password information for security
     safe_url = url
@@ -54,7 +57,7 @@ def print_db_connection_info() -> None:
     logger.info("-" * 50)
 
 
-def init_db(session: Session) -> None:
+def init_db(session: Session, db_url: str | None = None) -> None:
     # Print database connection information
     """Initialize the database by setting up initial data.
 
@@ -64,8 +67,9 @@ def init_db(session: Session) -> None:
 
     Args:
         session (Session): The database session to use for operations.
+        db_url (str | None): Optional database URL for logging purposes (used in tests)
     """
-    print_db_connection_info()
+    print_db_connection_info(db_url)
 
     # Tables should be created with Alembic migrations
     # But if you don't want to use migrations, create

@@ -11,9 +11,8 @@ This document spells out **exactly how to author UI code** in this project. Trea
 
 ### 1 · Source of Truth
 
-- **Tokens live in two files only**
-    - `globals.css` – declarative CSS variables (`--primary`, `--radius`, etc.).
-    - `tailwind.config.js` – maps those variables to Tailwind design‑tokens (colors, fonts, spacing…).
+- **Tokens live in `globals.css` only**
+    - `globals.css` – declarative CSS variables (`--primary`, `--radius`, etc.).maps those variables to Tailwind design‑tokens (colors, fonts, spacing…).
 - **Do not redefine, shadow, or inline‑override** any values found there.
 - Dark‑mode is controlled by the `.dark` class—respect it; no `prefers-color-scheme` hacks.
 
@@ -22,7 +21,7 @@ This document spells out **exactly how to author UI code** in this project. Trea
 ### 2 · Component Workflow
 
 1. **Look before you code**
-    - Scan `/components/**` for an existing component that already does the job.
+    - Scan `/components/ui/**` for an existing component that already does the job.
     - If it exists, **reuse**—extend only through props or composition.
 1. **When creating a new component**
     - Export as a **named functional component** (`export function AlertDialog() { … }`).

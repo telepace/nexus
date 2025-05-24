@@ -4,9 +4,8 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import Column, Integer, desc
-from sqlalchemy import func as sa_func
-from sqlmodel import Session, col, func, or_, select
+from sqlalchemy import desc
+from sqlmodel import Session, func, or_, select
 
 from app.api.deps import get_current_user, get_db
 from app.models.prompt import (
@@ -235,35 +234,36 @@ def read_prompts(
         # 如果指定了标签，添加标签过滤
         if tag_ids:
             # 使用子查询获取包含所有指定标签的提示词ID
-            prompt_ids = (
+            subquery = (
                 select(PromptTagLink.prompt_id)
-                .where(col(PromptTagLink.tag_id).in_(tag_ids))
-                .group_by(col(PromptTagLink.prompt_id))
-                .having(func.count(col(PromptTagLink.tag_id)) == len(tag_ids))
+                .where(PromptTagLink.tag_id.in_(tag_ids))
+                .group_by(PromptTagLink.prompt_id)
+                .having(func.count(PromptTagLink.tag_id) == len(tag_ids))
+                .scalar_subquery()
             )
-            query = query.where(col(Prompt.id).in_(prompt_ids.scalar_subquery()))
+            query = query.where(Prompt.id.in_(subquery))
 
         # 如果指定了搜索关键词，添加搜索过滤
         if search:
             search_filter = or_(
-                col(Prompt.name).contains(search),
-                col(Prompt.description).contains(search)
+                Prompt.name.contains(search),
+                Prompt.description.contains(search)
                 if Prompt.description is not None
                 else False,
-                col(Prompt.content).contains(search),
+                Prompt.content.contains(search),
             )
             query = query.where(search_filter)
 
         # 添加排序
         if sort == "created_at":
-            order_col = col(Prompt.created_at)
+            order_col = Prompt.created_at
             query = query.order_by(desc(order_col) if order == "desc" else order_col)
         elif sort == "updated_at":
-            order_col = col(Prompt.updated_at)
+            order_col = Prompt.updated_at
             query = query.order_by(desc(order_col) if order == "desc" else order_col)
         else:
             # 默认按创建时间排序
-            query = query.order_by(desc(col(Prompt.created_at)))
+            query = query.order_by(desc(Prompt.created_at))
 
         # 执行查询
         prompts = db.exec(query).all()
@@ -347,14 +347,12 @@ def update_prompt(
             old_content = prompt.content
             old_input_vars = prompt.input_vars
             # 2. 查询最大版本号
-            max_version = (
-                db.exec(
-                    select(sa_func.max(PromptVersion.version)).where(
-                        PromptVersion.prompt_id == prompt.id
-                    )
-                ).first()
-                or 0
-            )
+            max_version_result = db.exec(
+                select(func.max(PromptVersion.version)).where(
+                    PromptVersion.prompt_id == prompt.id
+                )
+            ).first()
+            max_version = max_version_result if max_version_result is not None else 0
             # 3. 用旧内容和新版本号创建 PromptVersion
             version = PromptVersion(
                 prompt_id=prompt.id,
@@ -451,7 +449,7 @@ def read_prompt_versions(
         query = (
             select(PromptVersion)
             .where(PromptVersion.prompt_id == prompt_id)
-            .order_by(Column("version", Integer).desc())
+            .order_by(PromptVersion.version.desc())
         )
         versions = db.exec(query).all()
         return versions
@@ -485,14 +483,12 @@ def create_prompt_version(
             raise HTTPException(status_code=403, detail="Not enough permissions")
 
         # 获取当前最大版本号
-        max_version = (
-            db.exec(
-                select(sa_func.max(PromptVersion.version)).where(
-                    PromptVersion.prompt_id == prompt_id
-                )
-            ).first()
-            or 0
-        )
+        max_version_result = db.exec(
+            select(func.max(PromptVersion.version)).where(
+                PromptVersion.prompt_id == prompt_id
+            )
+        ).first()
+        max_version = max_version_result if max_version_result is not None else 0
 
         # 创建新版本
         version = PromptVersion(
@@ -571,6 +567,9 @@ def duplicate_prompt(
         if not _check_prompt_access(original, current_user):
             raise HTTPException(status_code=403, detail="Not enough permissions")
 
+        # 确保加载原始提示词的标签
+        db.refresh(original, ["tags"])
+
         # 创建新的提示词副本
         duplicate_data = original.model_dump(
             exclude={
@@ -590,14 +589,13 @@ def duplicate_prompt(
 
         # 创建新提示词
         duplicate = Prompt(**duplicate_data, created_by=current_user.id)
+        db.add(duplicate)
+        db.flush()  # 获取新提示词 ID
 
-        # 复制标签
+        # 复制标签关系
         if original.tags:
             for tag in original.tags:
                 duplicate.tags.append(tag)
-
-        db.add(duplicate)
-        db.flush()  # 获取新提示词 ID
 
         # 创建初始版本
         version = PromptVersion(
@@ -611,7 +609,7 @@ def duplicate_prompt(
         db.add(version)
 
         db.commit()
-        db.refresh(duplicate)
+        db.refresh(duplicate, ["tags"])  # 确保加载标签关系
 
         return duplicate
     except HTTPException:

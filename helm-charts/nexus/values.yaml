@@ -154,7 +154,7 @@ global:
     BACKEND_CORS_ORIGINS: '["http://localhost", "https://localhost", "http://localhost:8080", "https://localhost:8080", "http://dashboard.example.com", "https://dashboard.example.com"]'
     
     # 超级用户设置
-    FIRST_SUPERUSER: admin@example.com
+    FIRST_SUPERUSER: admin@telepace.cc
     FIRST_SUPERUSER_PASSWORD: ""
     
     # 邮件设置

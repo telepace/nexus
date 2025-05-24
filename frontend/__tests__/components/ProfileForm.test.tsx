@@ -98,12 +98,33 @@ jest.mock("@/components/ui/avatar", () => ({
 // Mock react-nice-avatar
 jest.mock("react-nice-avatar", () => ({
   __esModule: true,
-  default: function MockNiceAvatar({ config, ...props }: any) {
+  default: function MockNiceAvatar({ config, style, ...otherProps }: any) {
+    // Extract avatar config properties that shouldn't be passed to DOM
+    const {
+      sex,
+      faceColor,
+      earSize,
+      eyeStyle,
+      noseStyle,
+      mouthStyle,
+      shirtStyle,
+      glassesStyle,
+      hairColor,
+      hairStyle,
+      hatStyle,
+      hatColor,
+      eyeBrowStyle,
+      shirtColor,
+      bgColor,
+      ...domSafeProps
+    } = otherProps;
+
     return (
       <div
         data-testid="nice-avatar"
         data-config={JSON.stringify(config)}
-        {...props}
+        style={style}
+        {...domSafeProps}
       >
         MockNiceAvatar
       </div>

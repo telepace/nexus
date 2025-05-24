@@ -5,7 +5,6 @@ import {
   createConfig,
   type OptionsLegacyParser,
   urlSearchParamsBodySerializer,
-  formDataBodySerializer,
 } from "@hey-api/client-axios";
 import type {
   HealthGetHealthApiError,
@@ -54,9 +53,6 @@ import type {
   UsersDeleteUserData,
   UsersDeleteUserError,
   UsersDeleteUserResponse,
-  UsersUploadAvatarData,
-  UsersUploadAvatarError,
-  UsersUploadAvatarResponse,
   UtilsTestEmailData,
   UtilsTestEmailError,
   UtilsTestEmailResponse,
@@ -430,28 +426,6 @@ export const usersDeleteUser = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/api/v1/users/{user_id}",
-  });
-};
-
-/**
- * Upload Avatar
- * Upload user avatar.
- */
-export const usersUploadAvatar = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<UsersUploadAvatarData, ThrowOnError>,
-) => {
-  return (options?.client ?? client).post<
-    UsersUploadAvatarResponse,
-    UsersUploadAvatarError,
-    ThrowOnError
-  >({
-    ...options,
-    ...formDataBodySerializer,
-    headers: {
-      "Content-Type": null,
-      ...options?.headers,
-    },
-    url: "/api/v1/users/me/avatar",
   });
 };
 
