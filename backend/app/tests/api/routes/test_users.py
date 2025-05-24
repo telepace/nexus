@@ -193,8 +193,8 @@ def test_update_user_me(
 def test_update_password_me(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:
-    # 使用固定的测试密码字符串，而不是从 settings 获取
-    admin_password = "adminadmin"  # 用与 conftest.py 中设置相同的密码
+    # 使用 settings 中的密码，确保与实际数据库中的密码一致
+    admin_password = settings.FIRST_SUPERUSER_PASSWORD  # 使用配置中的密码
     new_password = random_lower_string()
     data = {
         "current_password": admin_password,
@@ -210,6 +210,8 @@ def test_update_password_me(
     assert updated_user is not None
 
     # 验证新密码是否已设置 - 验证密码哈希
+    # 刷新数据库会话以确保看到最新的数据
+    db.commit()
     user_query = select(User).where(User.email == settings.FIRST_SUPERUSER)
     user_db = db.exec(user_query).first()
     assert user_db
@@ -219,7 +221,7 @@ def test_update_password_me(
     # 使用新密码更新回预设密码
     data = {
         "current_password": new_password,
-        "new_password": admin_password,  # 使用相同的固定字符串
+        "new_password": admin_password,  # 使用相同的配置密码
     }
     r = client.patch(
         f"{settings.API_V1_STR}/users/me/password",
