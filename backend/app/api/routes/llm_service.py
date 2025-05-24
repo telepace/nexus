@@ -18,6 +18,7 @@ router = APIRouter()
 
 # Helper function to prepare headers for LiteLLM
 def _get_litellm_headers(api_key: str | None = None) -> dict:
+    """Prepare headers for LiteLLM, including authorization if an API key is provided."""
     headers = {"Content-Type": "application/json"}
     if api_key: # If a specific API key is provided in the request
         headers["Authorization"] = f"Bearer {api_key}"
@@ -35,6 +36,22 @@ async def _forward_request_to_litellm(
     headers: dict | None = None,
     stream: bool = False
 ):
+    """Asynchronously forwards a request to the LiteLLM proxy.
+    
+    This function constructs the full URL by joining the base URL from settings
+    with the provided endpoint path. It handles both streaming and non-streaming
+    requests. If an HTTP status error occurs, it parses the response to extract an
+    appropriate error message and raises an HTTPException. Network errors are
+    caught and raised as a 503 Service Unavailable exception.
+    
+    Args:
+        client (httpx.AsyncClient): The asynchronous HTTP client to use for making requests.
+        method (str): The HTTP method to use (e.g., 'GET', 'POST').
+        endpoint_path (str): The path of the endpoint to which the request is sent.
+        data (dict | None?): JSON data to be sent in the request body. Defaults to None.
+        headers (dict | None?): Headers to include with the request. Defaults to None.
+        stream (bool?): If True, the response will be streamed. Defaults to False.
+    """
     try:
         # Ensure proper URL joining without double slashes
         base_url = str(settings.LITELLM_PROXY_URL).rstrip('/')
@@ -72,6 +89,7 @@ async def _forward_request_to_litellm(
 async def create_completion(
     request_data: CompletionRequest = Body(...),
 ):
+    """Handles creation of completions based on request data."""
     async with httpx.AsyncClient(timeout=300.0) as client: # Increased timeout for LLMs
         litellm_endpoint = "/chat/completions" # Common LiteLLM endpoint for chat models
         
@@ -87,6 +105,7 @@ async def create_completion(
                 )
 
                 async def event_generator():
+                    """Generates decoded chunks from a response stream."""
                     async for chunk in response_stream.aiter_bytes():
                         if chunk:
                             # LiteLLM streaming chunks are typically SSE formatted like:
@@ -141,6 +160,7 @@ async def create_completion(
 async def create_embedding(
     request_data: EmbeddingRequest = Body(...),
 ):
+    """Handles the creation of embeddings by forwarding a request to LiteLLM."""
     async with httpx.AsyncClient(timeout=60.0) as client: # Standard timeout for embeddings
         litellm_endpoint = "/embeddings" # Common LiteLLM endpoint
         payload = request_data.model_dump(exclude_none=True)
