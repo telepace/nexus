@@ -50,6 +50,7 @@ target_metadata = SQLModel.metadata
 
 def get_url():
     # Check if we're in testing mode
+    """Returns the appropriate database URL based on environment settings."""
     testing_env = os.environ.get("TESTING", "").lower() == "true"
     test_mode_env = os.environ.get("TEST_MODE", "").lower() == "true"
     
