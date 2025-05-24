@@ -70,6 +70,7 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str = "nexus"
     SENTRY_DSN: HttpUrl | None = None
+    LITELLM_PROXY_URL: HttpUrl = "http://litellm:4000"
 
     # Database configuration
     DATABASE_TYPE: Literal["postgres", "supabase"] = "postgres"
