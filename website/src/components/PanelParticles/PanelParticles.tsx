@@ -14,8 +14,11 @@ interface Particle {
 
 /**
  * A React functional component that renders a canvas with animated particles.
- * The particles bounce off the edges of the canvas and are connected by lines if they are close enough.
- * The particle colors and line opacities adjust based on the current theme (dark or light).
+ *
+ * This component initializes a canvas and draws particles that bounce off the edges of the canvas.
+ * Particles are connected by lines if they are within a certain distance, and their colors and line opacities
+ * adjust based on the current theme (dark or light). The canvas resizes to match its parent element's dimensions,
+ * and an animation loop continuously updates and renders the particles.
  *
  * @returns {JSX.Element} A React element containing the canvas.
  */
@@ -36,11 +39,7 @@ export const PanelParticles: React.FC = () => {
 
     // Set canvas dimensions to match parent
     /**
-     * Resizes the canvas element to match its parent's dimensions.
-     *
-     * This function retrieves the parent element of the canvas and sets the canvas's width and height
-     * to be equal to the client width and height of the parent, respectively. If the canvas does not have a parent,
-     * this function has no effect.
+     * Resizes the canvas to match its parent's dimensions.
      */
     const resizeCanvas = () => {
       const parent = canvas.parentElement
@@ -70,11 +69,11 @@ export const PanelParticles: React.FC = () => {
 
     // Animation loop
     /**
-     * Animate function to update and render particles on the canvas.
+     * Handles the animation of particles on the canvas.
      *
-     * This function clears the canvas, updates the position of each particle,
-     * handles edge collisions, draws the particles, and connects nearby particles with lines.
-     * It then calls itself recursively using `requestAnimationFrame` for continuous animation.
+     * This function clears the canvas, updates the position and checks for edge collisions
+     * of each particle, draws them, and connects nearby particles with lines. It then recursively
+     * calls itself using `requestAnimationFrame` to maintain continuous animation.
      */
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
