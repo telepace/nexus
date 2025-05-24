@@ -29,6 +29,9 @@ export const StackItem = ({
   )
 }
 
+/**
+ * Renders the homepage hero section with tech stack, features, and FAQs.
+ */
 export default function HomepageHero() {
   const { t } = useLocale()
 
