@@ -1,75 +1,281 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* stylelint-disable at-rule-no-unknown */
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Tailwind v4 自定义变体定义 */
+@variant dark (&:is(.dark *));
+
+/* =============================================================================
+ * CSS 自定义属性定义 - 基础变量系统
+ * ============================================================================= */
 
 :root {
-  /* Semantic colors for light mode */
-  --background: oklch(0.985 0 0); /* neutral-50 */
-  --foreground: oklch(0.145 0 0); /* neutral-950 */
-  --card: oklch(0.985 0 0); /* neutral-50 */
-  --card-foreground: oklch(0.145 0 0); /* neutral-950 */
-  --popover: oklch(0.985 0 0); /* neutral-50 */
-  --popover-foreground: oklch(0.145 0 0); /* neutral-950 */
-  --primary: oklch(0.205 0 0); /* neutral-900 */
-  --primary-foreground: oklch(0.985 0 0); /* neutral-50 */
-  --secondary: oklch(0.97 0 0); /* neutral-100 */
-  --secondary-foreground: oklch(0.205 0 0); /* neutral-900 */
-  --muted: oklch(0.97 0 0); /* neutral-100 */
-  --muted-foreground: oklch(0.556 0 0); /* neutral-500 */
-  --accent: oklch(0.97 0 0); /* neutral-100 */
-  --accent-foreground: oklch(0.205 0 0); /* neutral-900 */
-  --destructive: oklch(0.577 0.245 27.325); /* custom red for light mode */
-  --destructive-foreground: oklch(0.985 0 0); /* neutral-50 */
-  --border: oklch(0.922 0 0); /* neutral-200 */
-  --input: oklch(0.922 0 0); /* neutral-200 */
-  --ring: oklch(0.708 0 0); /* neutral-400 */
+  /* Base neutral colors using OKLCH for better color consistency */
+  --neutral-50: oklch(0.985 0 0);
+  --neutral-100: oklch(0.97 0 0);
+  --neutral-200: oklch(0.922 0 0);
+  --neutral-300: oklch(0.87 0 0);
+  --neutral-400: oklch(0.708 0 0);
+  --neutral-500: oklch(0.556 0 0);
+  --neutral-600: oklch(0.439 0 0);
+  --neutral-700: oklch(0.371 0 0);
+  --neutral-800: oklch(0.269 0 0);
+  --neutral-900: oklch(0.205 0 0);
+  --neutral-950: oklch(0.145 0 0);
 
-  /* Chart colors (keeping existing values for now) */
-  --chart-1: 12 76% 61%;
-  --chart-2: 173 58% 39%;
-  --chart-3: 197 37% 24%;
-  --chart-4: 43 74% 66%;
-  --chart-5: 27 87% 67%;
+  /* Light mode semantic colors */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+
+  /* Chart colors for light mode */
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+
+  /* Sidebar colors for light mode */
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 
   /* Border radius base value */
-  --radius: 0.5rem;
-
-  /* Font family CSS variables */
-  --font-sans:
-    "Geist Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
-    Consolas, "Liberation Mono", "Courier New", monospace;
+  --radius: 0.625rem;
 }
 
 .dark {
-  /* Semantic colors for dark mode */
-  --background: oklch(0.145 0 0); /* neutral-950 */
-  --foreground: oklch(0.985 0 0); /* neutral-50 */
-  --card: oklch(0.205 0 0); /* neutral-900 */
-  --card-foreground: oklch(0.985 0 0); /* neutral-50 */
-  --popover: oklch(0.205 0 0); /* neutral-900 */
-  --popover-foreground: oklch(0.985 0 0); /* neutral-50 */
-  --primary: oklch(0.922 0 0); /* neutral-200 */
-  --primary-foreground: oklch(0.205 0 0); /* neutral-900 */
-  --secondary: oklch(0.269 0 0); /* neutral-800 */
-  --secondary-foreground: oklch(0.985 0 0); /* neutral-50 */
-  --muted: oklch(0.269 0 0); /* neutral-800 */
-  --muted-foreground: oklch(0.708 0 0); /* neutral-400 */
-  --accent: oklch(0.269 0 0); /* neutral-800 */
-  --accent-foreground: oklch(0.985 0 0); /* neutral-50 */
-  --destructive: oklch(0.704 0.191 22.216); /* custom red for dark mode */
-  --destructive-foreground: oklch(0.145 0 0); /* neutral-950 */
-  --border: oklch(1 0 0 / 0.1); /* white at 10% opacity */
-  --input: oklch(1 0 0 / 0.15); /* white at 15% opacity */
-  --ring: oklch(0.556 0 0); /* neutral-500 */
+  /* Dark mode semantic colors */
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.145 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
 
-  /* Chart colors (keeping existing values for now) */
-  --chart-1: 220 70% 50%;
-  --chart-2: 160 60% 45%;
-  --chart-3: 30 80% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
+  /* Chart colors for dark mode */
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+
+  /* Sidebar colors for dark mode */
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
 }
+
+/* =============================================================================
+ * TAILWIND V4 主题配置 - @theme inline 是推荐的方式
+ * ============================================================================= */
+
+@theme inline {
+  /* Font families - Tailwind v4 推荐在这里定义字体族 */
+  --font-family-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Font sizes */
+  --font-size-xs: 0.75rem;
+  --line-height-xs: 1rem;
+  --font-size-sm: 0.875rem;
+  --line-height-sm: 1.25rem;
+  --font-size-base: 1rem;
+  --line-height-base: 1.5rem;
+  --font-size-lg: 1.125rem;
+  --line-height-lg: 1.75rem;
+  --font-size-xl: 1.25rem;
+  --line-height-xl: 1.75rem;
+  --font-size-2xl: 1.5rem;
+  --line-height-2xl: 2rem;
+  --font-size-3xl: 1.875rem;
+  --line-height-3xl: 2.25rem;
+  --font-size-4xl: 2.25rem;
+  --line-height-4xl: 2.5rem;
+  --font-size-5xl: 3rem;
+  --line-height-5xl: 1;
+  --font-size-6xl: 3.75rem;
+  --line-height-6xl: 1;
+  --font-size-7xl: 4.5rem;
+  --line-height-7xl: 1;
+  --font-size-8xl: 6rem;
+  --line-height-8xl: 1;
+  --font-size-9xl: 8rem;
+  --line-height-9xl: 1;
+
+  /* Font weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
+
+  /* Spacing system - Tailwind v4 核心间距系统 */
+  --spacing-px: 1px;
+  --spacing-0: 0px;
+  --spacing-0.5: 0.125rem;
+  --spacing-1: 0.25rem;
+  --spacing-1.5: 0.375rem;
+  --spacing-2: 0.5rem;
+  --spacing-2.5: 0.625rem;
+  --spacing-3: 0.75rem;
+  --spacing-3.5: 0.875rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-7: 1.75rem;
+  --spacing-8: 2rem;
+  --spacing-9: 2.25rem;
+  --spacing-10: 2.5rem;
+  --spacing-11: 2.75rem;
+  --spacing-12: 3rem;
+  --spacing-14: 3.5rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
+  --spacing-28: 7rem;
+  --spacing-32: 8rem;
+  --spacing-36: 9rem;
+  --spacing-40: 10rem;
+  --spacing-44: 11rem;
+  --spacing-48: 12rem;
+  --spacing-52: 13rem;
+  --spacing-56: 14rem;
+  --spacing-60: 15rem;
+  --spacing-64: 16rem;
+  --spacing-72: 18rem;
+  --spacing-80: 20rem;
+  --spacing-96: 24rem;
+
+  /* Border radius - 映射基础变量 */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+
+  /* Transition durations */
+  --transition-duration-75: 75ms;
+  --transition-duration-100: 100ms;
+  --transition-duration-150: 150ms;
+  --transition-duration-200: 200ms;
+  --transition-duration-300: 300ms;
+  --transition-duration-500: 500ms;
+  --transition-duration-700: 700ms;
+  --transition-duration-1000: 1000ms;
+
+  /* Animations */
+  --animate-spin: spin 1s linear infinite;
+  --animate-ping: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-bounce: bounce 1s infinite;
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  /* Breakpoints */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  /* =============================================================================
+   * SHADCN/UI 颜色令牌映射 - 驱动 Tailwind 工具类生成
+   * ============================================================================= */
+
+  /* 基础语义颜色 - 映射到 bg-*, text-*, border-* 等工具类 */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Chart colors */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Sidebar colors */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* =============================================================================
+ * BASE STYLES
+ * ============================================================================= */
 
 @layer base {
   * {
@@ -77,114 +283,124 @@
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-sans);
+    @apply bg-background text-foreground font-sans antialiased;
   }
 
-  /* Text styles based on design tokens */
+  /* Typography utilities */
   .text-lead {
-    @apply text-xl text-muted-foreground;
+    @apply text-xl text-muted-foreground leading-7;
   }
 
   .text-large {
-    @apply text-lg font-semibold;
+    @apply text-lg font-semibold leading-7;
   }
 
   .text-small {
-    @apply text-sm font-medium;
+    @apply text-sm font-medium leading-5;
   }
 
   .text-muted {
-    @apply text-sm text-muted-foreground;
-  }
-  :root {
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-  .dark {
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    @apply text-sm text-muted-foreground leading-5;
   }
 }
+
+/* =============================================================================
+ * COMPONENT LAYER - 语义化组件样式
+ * ============================================================================= */
 
 @layer components {
-  /* Semantic spacing utilities */
-  .space-xs {
-    @apply space-y-1;
-  }
-  .space-sm {
-    @apply space-y-2;
-  }
-  .space-md {
-    @apply space-y-4;
-  }
-  .space-lg {
-    @apply space-y-6;
-  }
-  .space-xl {
-    @apply space-y-8;
-  }
+  /* Spacing utilities */
+  .space-xs { @apply space-y-1; }
+  .space-sm { @apply space-y-2; }
+  .space-md { @apply space-y-4; }
+  .space-lg { @apply space-y-6; }
+  .space-xl { @apply space-y-8; }
 
   /* Elevation utilities */
-  .elevation-low {
-    @apply shadow-sm;
-  }
-  .elevation-medium {
-    @apply shadow-md;
-  }
-  .elevation-high {
-    @apply shadow-lg;
-  }
-  .elevation-highest {
-    @apply shadow-2xl;
+  .elevation-low { @apply shadow-sm; }
+  .elevation-medium { @apply shadow-md; }
+  .elevation-high { @apply shadow-lg; }
+  .elevation-highest { @apply shadow-2xl; }
+
+  /* Interactive states */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
 }
 
+/* =============================================================================
+ * UTILITY LAYER - 工具样式
+ * ============================================================================= */
+
 @layer utilities {
-  /* Grid background utilities (keeping existing) */
+  /* Grid background utilities */
   .bg-grid-slate-200\/50 {
-    background-image: linear-gradient(
-        to right,
-        rgba(226, 232, 240, 0.5) 1px,
-        transparent 1px
-      ),
+    background-image: 
+      linear-gradient(to right, rgba(226, 232, 240, 0.5) 1px, transparent 1px),
       linear-gradient(to bottom, rgba(226, 232, 240, 0.5) 1px, transparent 1px);
+    background-size: 20px 20px;
   }
 
   .bg-grid-slate-700\/20 {
-    background-image: linear-gradient(
-        to right,
-        rgba(51, 65, 85, 0.2) 1px,
-        transparent 1px
-      ), linear-gradient(to bottom, rgba(51, 65, 85, 0.2) 1px, transparent 1px);
+    background-image: 
+      linear-gradient(to right, rgba(51, 65, 85, 0.2) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(51, 65, 85, 0.2) 1px, transparent 1px);
+    background-size: 20px 20px;
   }
 
   /* Animation utilities */
-  .animate-ultrafast {
-    @apply transition-all duration-[50ms];
+  .animate-ultrafast { @apply transition-all duration-75; }
+  .animate-fast { @apply transition-all duration-100; }
+  .animate-base { @apply transition-all duration-200; }
+  .animate-slow { @apply transition-all duration-300; }
+  .animate-ultraslow { @apply transition-all duration-500; }
+}
+
+/* =============================================================================
+ * KEYFRAME ANIMATIONS
+ * ============================================================================= */
+
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
   }
-  .animate-fast {
-    @apply transition-all duration-[100ms];
+}
+
+@keyframes pulse {
+  50% { opacity: 0.5; }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
   }
-  .animate-base {
-    @apply transition-all duration-200;
+  50% {
+    transform: none;
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
   }
-  .animate-slow {
-    @apply transition-all duration-300;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-  .animate-ultraslow {
-    @apply transition-all duration-500;
+  body {
+    @apply bg-background text-foreground;
   }
 }

@@ -1,57 +1,49 @@
-import { type ClassValue, clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-/**
- * 合并类名工具函数
- * 结合clsx和tailwind-merge，用于处理条件类名和合并tailwind类
- */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-type ErrorWithDetail = {
-  detail?: string | { reason: string } | Array<{ msg: string }>;
+/**
+ * Type for objects that might have error properties
+ */
+interface ErrorLike {
+  detail?: string;
   message?: string;
-};
+}
 
+/**
+ * Extract error message from error object
+ * @param error - Error object that may contain detail, message, or be a string
+ * @returns Formatted error message string
+ */
 export function getErrorMessage(error: unknown): string {
-  let errorMessage = "An unknown error occurred";
-
   if (typeof error === "string") {
     return error;
   }
 
-  // 处理验证错误
   if (error && typeof error === "object") {
-    const typedError = error as ErrorWithDetail;
+    const errorObj = error as ErrorLike;
 
-    if ("detail" in typedError) {
-      if (typeof typedError.detail === "string") {
-        // 如果detail是字符串，直接使用
-        errorMessage = typedError.detail;
-      } else if (Array.isArray(typedError.detail)) {
-        // 如果detail是数组（HTTPValidationError的情况）
-        const firstError = typedError.detail[0];
-        if (
-          firstError &&
-          typeof firstError === "object" &&
-          "msg" in firstError
-        ) {
-          errorMessage = firstError.msg;
-        }
-      } else if (
-        typeof typedError.detail === "object" &&
-        typedError.detail &&
-        "reason" in typedError.detail
-      ) {
-        // 如果detail是一个带reason的对象
-        errorMessage = typedError.detail.reason;
-      }
-    } else if ("message" in typedError) {
-      // 如果有message字段
-      errorMessage = typedError.message ?? "Unknown error message";
+    // Type guard for objects with detail property
+    if ("detail" in error && typeof errorObj.detail === "string") {
+      return errorObj.detail;
+    }
+
+    // Type guard for objects with message property
+    if ("message" in error && typeof errorObj.message === "string") {
+      return errorObj.message;
+    }
+
+    // If error is an object but doesn't have detail or message,
+    // try to stringify it or return a generic message
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return "An error occurred";
     }
   }
 
-  return errorMessage;
+  return "An unknown error occurred";
 }
