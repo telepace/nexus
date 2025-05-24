@@ -1,7 +1,7 @@
 'use client'
 
+// Added missing import
 import { useEffect } from 'react'
-import { useTheme } from 'next-themes' // Added missing import
 
 /**
  * This function is used to fix the Nextra style hydration issue.
@@ -21,16 +21,16 @@ export function NextraStyleFix() {
     const handleStyleFix = () => {
       // Find and remove style tags containing body transition
       document.querySelectorAll('style').forEach(styleEl => {
-        if (styleEl.textContent?.includes('body {transition:') || 
-            styleEl.textContent?.includes('body[unresolved]')) {
+        if (styleEl.textContent?.includes('body {transition:')
+          || styleEl.textContent?.includes('body[unresolved]')) {
           styleEl.remove()
         }
       })
     }
-    
+
     // Execute cleanup
     handleStyleFix()
-    
+
     // For dynamically loaded styles, an observer can be set
     const observer = new MutationObserver((mutations) => {
       mutations.forEach(mutation => {
@@ -39,33 +39,34 @@ export function NextraStyleFix() {
         }
       })
     })
-    
-    observer.observe(document.head, { 
+
+    observer.observe(document.head, {
       childList: true,
-      subtree: true 
+      subtree: true,
     })
-    
+
     return () => observer.disconnect()
   }, [])
-  
+
   return null
 }
 
 /**
  * A React functional component that wraps content with specific styling and layout for documentation purposes.
  *
- * @param {React.ReactNode} children - The child components or elements to be rendered within the wrapper.
- * @param {any} [toc] - An optional table of contents data, which can be used to render a sidebar or other navigational elements.
- * @param {any} [metadata] - Optional metadata related to the content, which could include author information, creation date, etc.
+ * @param {object} props - The component's properties.
+ * @param {React.ReactNode} props.children - The child components or elements to be rendered within the wrapper.
+ * @param {any} [props.toc] - An optional table of contents data, which can be used to render a sidebar or other navigational elements. (Note: renamed to _toc in code due to being unused)
+ * @param {any} [props.metadata] - Optional metadata related to the content. (Note: renamed to _metadata in code due to being unused)
  *
  * @returns {JSX.Element} A JSX element representing the styled and laid-out content container.
  */
 export const NextraContentWrapper: React.FC<{
-  children: React.ReactNode,
-  toc?: any,
+  children: React.ReactNode
+  toc?: any
   metadata?: any
-}> = ({ children, toc, metadata }) => {
-  const { theme } = useTheme()
+}> = ({ children, toc: _toc, metadata: _metadata }) => { // _toc and _metadata are the actual prop names available here
+  // const { theme } = useTheme(); // Removed as it's unused
 
   return (
     <div className="nextra-content-container nx-mx-auto nx-max-w-[90rem]">
@@ -76,4 +77,4 @@ export const NextraContentWrapper: React.FC<{
       </article>
     </div>
   )
-} 
+}

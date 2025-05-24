@@ -5,7 +5,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { HoverEffect } from '@/components/ui/card-hover-effect'
 import { useLocale } from '@/hooks'
 import { cn } from '@/lib/utils'
-import { useTheme } from 'nextra-theme-docs'
 import { useMemo } from 'react'
 import Marquee from 'react-fast-marquee'
 import { Section } from './Section'
@@ -36,7 +35,7 @@ export default function HomepageHero() {
   const featureList = t('featureList')
   const faqs = t('faqs')
 
-  const { resolvedTheme } = useTheme()
+  // const { resolvedTheme } = useTheme(); // Removed as it's unused
 
   const processedFeatureList = useMemo(() => {
     const icons = [

@@ -1,4 +1,6 @@
 import type { Config } from 'tailwindcss'
+import tailwindcssTypography from '@tailwindcss/typography'
+import tailwindcssAnimate from 'tailwindcss-animate'
 
 const config: Config = {
   darkMode: 'class',
@@ -7,14 +9,14 @@ const config: Config = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
     './src/content/**/*.{js,ts,jsx,tsx,mdx}',
-    './theme.config.tsx' // Added as it's a theme configuration file at root
+    './theme.config.tsx', // Added as it's a theme configuration file at root
   ],
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: '2rem',
       screens: {
-        "2xl": "1400px",
+        '2xl': '1400px',
       },
     },
     extend: {
@@ -74,24 +76,24 @@ const config: Config = {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
-        'heartbeat': {
+        heartbeat: {
           '0%,100%': { transform: 'scale(.75)' },
           '20%': { transform: 'scale(1)' },
           '40%': { transform: 'scale(.75)' },
           '60%': { transform: 'scale(1)' },
           '80%': { transform: 'scale(.75)' },
-        }
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'heartbeat': 'heartbeat 1.5s infinite ease-in-out',
+        heartbeat: 'heartbeat 1.5s infinite ease-in-out',
       },
     },
   },
   plugins: [
-    require('tailwindcss-animate'),
-    require('@tailwindcss/typography')
+    tailwindcssAnimate,
+    tailwindcssTypography,
   ],
 }
 

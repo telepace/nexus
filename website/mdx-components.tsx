@@ -1,8 +1,8 @@
 import { useMDXComponents as getDocsMDXComponents } from 'nextra-theme-docs'
 
-export function useMDXComponents(components = {}) {
+export function getMDXComponents(components = {}) {
   return {
     ...getDocsMDXComponents(components),
     // Add custom components here
   }
-} 
+}

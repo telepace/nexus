@@ -21,16 +21,16 @@ export default function App({ Component, pageProps }: AppProps) {
      */
     const cleanupStyles = () => {
       document.querySelectorAll('style').forEach(style => {
-        if (style.textContent?.includes('body {transition:') ||
-            style.textContent?.includes('body[unresolved]')) {
+        if (style.textContent?.includes('body {transition:')
+          || style.textContent?.includes('body[unresolved]')) {
           style.remove()
         }
       })
     }
-    
+
     // Execute cleanup
     cleanupStyles()
-    
+
     // Set up an observer to continuously monitor style injections
     const observer = new MutationObserver(mutations => {
       mutations.forEach(mutation => {
@@ -39,12 +39,12 @@ export default function App({ Component, pageProps }: AppProps) {
         }
       })
     })
-    
-    observer.observe(document.head, { 
+
+    observer.observe(document.head, {
       childList: true,
-      subtree: true 
+      subtree: true,
     })
-    
+
     return () => observer.disconnect()
   }, [])
 
@@ -53,4 +53,4 @@ export default function App({ Component, pageProps }: AppProps) {
       <Component {...pageProps} />
     </ThemeProvider>
   )
-} 
+}

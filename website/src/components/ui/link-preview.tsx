@@ -58,7 +58,7 @@ export const LinkPreview = ({
   const [isMounted, setIsMounted] = React.useState(false)
 
   React.useEffect(() => {
-    setIsMounted(true)
+    setIsMounted(() => true) // Using functional update, removed unused prevState
   }, [])
 
   const springConfig = { stiffness: 100, damping: 15 }
