@@ -3,10 +3,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { useFormState, useFormStatus } from "react-dom";
 import { X, Trash, Plus as PlusIcon } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,152 +18,102 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "@/components/ui/use-toast";
-import {
-  addPrompt,
-  updatePromptAction,
-  type TagData,
-  type InputVariable,
-  type PromptData,
-} from "@/components/actions/prompts-action";
 import { Switch } from "@/components/ui/switch";
+import type {
+  TagData,
+  InputVariable,
+  PromptData,
+} from "@/components/actions/prompts-action";
 
-// 创建输入变量的表单schema
-const inputVarSchema = z.object({
-  name: z.string().min(1, { message: "变量名称必填" }),
-  description: z.string().optional(),
-  required: z.boolean().default(false),
-});
+// Define the expected shape of the state from useFormState
+interface FormState {
+  fieldErrors?: Record<string, string> | null;
+  genericError?: string | null;
+  success?: boolean;
+  message?: string; // For success messages or other general messages
+  redirectUrl?: string; // For redirecting after successful submission
+  data?: any; // To potentially pass back created/updated entity ID for redirection
+}
 
-// 创建提示词表单schema
-const promptFormSchema = z.object({
-  name: z.string().min(1, { message: "名称必填" }),
-  description: z.string().optional(),
-  content: z.string().min(1, { message: "内容必填" }),
-  type: z.string().min(1, { message: "类型必填" }),
-  visibility: z.string().min(1, { message: "可见性必填" }),
-  tag_ids: z.array(z.string()).optional(),
-  input_vars: z.array(inputVarSchema).optional(),
-  create_version: z.boolean().default(false),
-});
+const initialState: FormState = {
+  fieldErrors: null,
+  genericError: null,
+  success: false,
+  message: null,
+  redirectUrl: null,
+};
 
 interface PromptFormProps {
   tags: TagData[];
   prompt?: PromptData;
+  actionToCall: (prevState: FormState, formData: FormData) => Promise<FormState>;
 }
 
-export function PromptForm({ tags, prompt }: PromptFormProps) {
+function SubmitButton({ isEditing }: { isEditing: boolean }) {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" disabled={pending} aria-disabled={pending}>
+      {pending
+        ? isEditing
+          ? "更新中..."
+          : "创建中..."
+        : isEditing
+          ? "更新提示词"
+          : "创建提示词"}
+    </Button>
+  );
+}
+
+export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
   const router = useRouter();
-  const [submitting, setSubmitting] = useState(false);
+  const [state, formAction] = useFormState(actionToCall, initialState);
+
+  const { fieldErrors, genericError, success, message, redirectUrl, data } = state || {};
+
   const [inputVars, setInputVars] = useState<InputVariable[]>(
     prompt?.input_vars || [],
   );
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
+    prompt?.tags?.map((tag) => tag.id) || [],
+  );
+  const [currentVisibility, setCurrentVisibility] = useState<string>(
+    prompt?.visibility || "public",
+  );
 
-  // 初始化表单
-  const form = useForm<z.infer<typeof promptFormSchema>>({
-    resolver: zodResolver(promptFormSchema),
-    defaultValues: {
-      name: prompt?.name || "",
-      description: prompt?.description || "",
-      content: prompt?.content || "",
-      type: prompt?.type || "simple",
-      visibility: prompt?.visibility || "public",
-      tag_ids: prompt?.tags?.map((tag) => tag.id) || [],
-      input_vars: prompt?.input_vars || [],
-      create_version: false,
-    },
-  });
 
-  // 表单提交处理
-  const onSubmit = async (values: z.infer<typeof promptFormSchema>) => {
-    try {
-      setSubmitting(true);
-
-      // 将表单数据准备为FormData
-      const formData = new FormData();
-      formData.append("name", values.name);
-      formData.append("description", values.description || "");
-      formData.append("content", values.content);
-      formData.append("type", values.type);
-      formData.append("visibility", values.visibility);
-      formData.append("tag_ids", JSON.stringify(values.tag_ids || []));
-      formData.append("input_vars", JSON.stringify(inputVars));
-
-      // 如果选择了team可见性但没有team_id，使用当前用户的默认团队
-      if (values.visibility === "team") {
-        // 这里可以添加获取用户默认团队的逻辑
-        // 暂时使用固定值或为null
-        const defaultTeamId = prompt?.team_id || "";
-        formData.append("team_id", defaultTeamId);
-      }
-
-      // 添加元数据
-      const metaData = {
-        version_notes: "", // 可以从表单中获取
-        last_edited_by: "", // 可以从用户状态中获取
-      };
-      formData.append("meta_data", JSON.stringify(metaData));
-
-      if (prompt) {
-        // 如果是编辑，则调用更新API
-        formData.append(
-          "create_version",
-          values.create_version ? "true" : "false",
-        );
-        const result = await updatePromptAction(prompt.id, formData);
-
-        if (result.error) {
-          toast({
-            title: "更新失败",
-            description: result.error,
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "更新成功",
-            description: "提示词已更新",
-          });
-          router.push(`/prompts/${prompt.id}`);
-        }
-      } else {
-        // 如果是创建，则调用创建API
-        const result = await addPrompt(formData);
-
-        if (result.error) {
-          toast({
-            title: "创建失败",
-            description: result.error,
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "创建成功",
-            description: "提示词已创建",
-          });
-          // 创建成功后的重定向由API处理
-        }
-      }
-    } catch (error) {
+  useEffect(() => {
+    if (success) {
       toast({
-        title: prompt ? "更新出错" : "创建出错",
-        description: error instanceof Error ? error.message : "未知错误",
+        title: prompt ? "更新成功" : "创建成功",
+        description: message || (prompt ? "提示词已更新" : "提示词已创建"),
+      });
+      if (redirectUrl) {
+        router.push(redirectUrl);
+      } else if (!prompt && data?.id) {
+        router.push(`/prompts/${data.id}`);
+      } else if (prompt) {
+        // No specific redirectUrl from action, stay or refresh based on needs
+        // For now, router.push to the same prompt page to reflect potential updates
+        router.push(`/prompts/${prompt.id}`);
+        router.refresh(); // Ensure data is re-fetched if staying on the same page after update
+      }
+    } else if (genericError) {
+      toast({
+        title: prompt ? "更新失败" : "创建失败",
+        description: genericError,
         variant: "destructive",
       });
-    } finally {
-      setSubmitting(false);
+    } else if (fieldErrors && Object.keys(fieldErrors).length > 0) {
+      toast({
+        title: "验证错误",
+        description: "请检查表单中的错误信息。",
+        variant: "destructive",
+      });
     }
-  };
+  }, [success, message, genericError, fieldErrors, redirectUrl, router, prompt, data?.id]);
 
-  // 添加输入变量
   const addInputVar = () => {
     setInputVars([
       ...inputVars,
@@ -172,12 +121,10 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
     ]);
   };
 
-  // 移除输入变量
   const removeInputVar = (index: number) => {
     setInputVars(inputVars.filter((_, i) => i !== index));
   };
 
-  // 更新输入变量
   const updateInputVar = (
     index: number,
     field: keyof InputVariable,
@@ -188,324 +135,353 @@ export function PromptForm({ tags, prompt }: PromptFormProps) {
     setInputVars(updatedVars);
   };
 
-  // 监听输入变量变化，同步到表单
-  useEffect(() => {
-    form.setValue("input_vars", inputVars);
-  }, [inputVars, form]);
+  const handleTagClick = (tagId: string) => {
+    setSelectedTagIds((prev) =>
+      prev.includes(tagId)
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId],
+    );
+  };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 gap-6">
-          {/* 基本信息 */}
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
+    <form action={formAction} className="space-y-8">
+      {/* Hidden input for prompt ID if editing */}
+      {prompt && <input type="hidden" name="id" value={prompt.id} />}
+      {/* Hidden input for team_id, meta_data if needed */}
+      {currentVisibility === "team" && (
+         <input type="hidden" name="team_id" value={prompt?.team_id || ""} /> // Assuming default team_id is handled by server or context
+      )}
+      <input type="hidden" name="meta_data" value={JSON.stringify({ version_notes: "", last_edited_by: "" })} />
+
+
+      {genericError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{genericError}</AlertDescription>
+        </Alert>
+      )}
+
+      <div className="grid grid-cols-1 gap-6">
+        {/* 基本信息 */}
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="name">名称</Label>
+            <Input
+              id="name"
               name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>名称</FormLabel>
-                  <FormControl>
-                    <Input placeholder="输入提示词名称" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              placeholder="输入提示词名称"
+              defaultValue={prompt?.name || ""}
+              state={fieldErrors?.name ? "error" : "default"}
+              aria-describedby="name-error"
             />
+            {fieldErrors?.name && (
+              <p id="name-error" className="text-sm text-destructive mt-1">
+                {fieldErrors.name}
+              </p>
+            )}
+          </div>
 
-            <FormField
-              control={form.control}
+          <div>
+            <Label htmlFor="description">描述</Label>
+            <Textarea
+              id="description"
               name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>描述</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="输入提示词描述（可选）"
-                      rows={3}
-                      {...field}
-                      value={field.value || ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              placeholder="输入提示词描述（可选）"
+              rows={3}
+              defaultValue={prompt?.description || ""}
+              className={fieldErrors?.description ? "border-destructive" : ""}
+              aria-describedby="description-error"
             />
+            {fieldErrors?.description && (
+              <p
+                id="description-error"
+                className="text-sm text-destructive mt-1"
+              >
+                {fieldErrors.description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* 类型和可见性 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="type">类型</Label>
+            <Select name="type" defaultValue={prompt?.type || "simple"}>
+              <SelectTrigger
+                className={fieldErrors?.type ? "border-destructive" : ""}
+                aria-describedby="type-error"
+              >
+                <SelectValue placeholder="选择提示词类型" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="simple">简单提示词</SelectItem>
+                <SelectItem value="chat">聊天提示词</SelectItem>
+                <SelectItem value="template">模板提示词</SelectItem>
+                <SelectItem value="system">系统提示词</SelectItem>
+                <SelectItem value="function">函数提示词</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground mt-1">
+              提示词的类型决定了它的用途和格式
+            </p>
+            {fieldErrors?.type && (
+              <p id="type-error" className="text-sm text-destructive mt-1">
+                {fieldErrors.type}
+              </p>
+            )}
           </div>
 
-          {/* 类型和可见性 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>类型</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择提示词类型" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="simple">简单提示词</SelectItem>
-                      <SelectItem value="chat">聊天提示词</SelectItem>
-                      <SelectItem value="template">模板提示词</SelectItem>
-                      <SelectItem value="system">系统提示词</SelectItem>
-                      <SelectItem value="function">函数提示词</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    提示词的类型决定了它的用途和格式
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
+          <div>
+            <Label htmlFor="visibility">可见性</Label>
+            <Select
               name="visibility"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>可见性</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择可见性" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="public">公开</SelectItem>
-                      <SelectItem value="private">私有</SelectItem>
-                      <SelectItem value="team">团队</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    控制谁可以查看和使用此提示词
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              defaultValue={currentVisibility}
+              onValueChange={setCurrentVisibility}
+            >
+              <SelectTrigger
+                className={fieldErrors?.visibility ? "border-destructive" : ""}
+                aria-describedby="visibility-error"
+              >
+                <SelectValue placeholder="选择可见性" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="public">公开</SelectItem>
+                <SelectItem value="private">私有</SelectItem>
+                <SelectItem value="team">团队</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground mt-1">
+              控制谁可以查看和使用此提示词
+            </p>
+            {fieldErrors?.visibility && (
+              <p
+                id="visibility-error"
+                className="text-sm text-destructive mt-1"
+              >
+                {fieldErrors.visibility}
+              </p>
+            )}
           </div>
+        </div>
 
-          {/* 标签选择 */}
-          <FormField
-            control={form.control}
+        {/* 标签选择 */}
+        <div>
+          <Label>标签</Label>
+          <input
+            type="hidden"
             name="tag_ids"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>标签</FormLabel>
-                <div className="space-y-2">
-                  <div className="flex flex-wrap gap-2">
-                    {tags.map((tag) => (
-                      <div
-                        key={tag.id}
-                        className={`flex items-center px-3 py-1 rounded-full text-sm cursor-pointer 
-                                  ${
-                                    field.value?.includes(tag.id)
-                                      ? `bg-primary text-primary-foreground`
-                                      : `bg-muted hover:bg-muted/80`
-                                  }`}
-                        style={
-                          field.value?.includes(tag.id)
-                            ? {}
-                            : {
-                                borderColor: tag.color || "#888",
-                                color: tag.color || "#888",
-                                backgroundColor: tag.color
-                                  ? `${tag.color}10`
-                                  : "transparent",
-                              }
+            value={JSON.stringify(selectedTagIds)}
+          />
+          <div className="space-y-2 mt-1">
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <div
+                  key={tag.id}
+                  className={`flex items-center px-3 py-1 rounded-full text-sm cursor-pointer 
+                            ${
+                              selectedTagIds.includes(tag.id)
+                                ? `bg-primary text-primary-foreground`
+                                : `bg-muted hover:bg-muted/80`
+                            }`}
+                  style={
+                    selectedTagIds.includes(tag.id)
+                      ? {}
+                      : {
+                          borderColor: tag.color || "#888",
+                          color: tag.color || "#888",
+                          backgroundColor: tag.color
+                            ? `${tag.color}10`
+                            : "transparent",
                         }
-                        onClick={() => {
-                          const currentValues = field.value || [];
-                          const newValues = currentValues.includes(tag.id)
-                            ? currentValues.filter((id) => id !== tag.id)
-                            : [...currentValues, tag.id];
-                          field.onChange(newValues);
-                        }}
-                      >
-                        {tag.name}
-                        {field.value?.includes(tag.id) && (
-                          <X className="ml-1 h-3 w-3" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  {tags.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      暂无可用标签，请先创建标签
-                    </p>
+                  }
+                  onClick={() => handleTagClick(tag.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTagClick(tag.id);}}
+                  role="checkbox"
+                  aria-checked={selectedTagIds.includes(tag.id)}
+                  tabIndex={0}
+                >
+                  {tag.name}
+                  {selectedTagIds.includes(tag.id) && (
+                    <X className="ml-1 h-3 w-3" />
                   )}
                 </div>
-                <FormDescription>选择标签帮助分类和查找提示词</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* 提示词内容 */}
-          <FormField
-            control={form.control}
-            name="content"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>提示词内容</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="输入提示词内容"
-                    rows={10}
-                    className="font-mono text-sm"
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  提示词的主体内容，可以包含文本、指令和输入变量
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* 输入变量 */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <FormLabel>输入变量</FormLabel>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addInputVar}
-              >
-                <PlusIcon className="h-4 w-4 mr-1" />
-                添加变量
-              </Button>
+              ))}
             </div>
-
-            <div className="space-y-4">
-              {inputVars.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  没有输入变量，点击"添加变量"按钮添加
-                </p>
-              ) : (
-                inputVars.map((variable, index) => (
-                  <Card key={index} className="p-4">
-                    <CardContent className="p-0 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-medium">
-                          变量 #{index + 1}
-                        </h4>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeInputVar(index)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                          <Label htmlFor={`var-name-${index}`}>变量名</Label>
-                          <Input
-                            id={`var-name-${index}`}
-                            value={variable.name}
-                            onChange={(e) =>
-                              updateInputVar(index, "name", e.target.value)
-                            }
-                            placeholder="变量名称，如: user_input"
-                            className="mt-1"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor={`var-desc-${index}`}>描述</Label>
-                          <Input
-                            id={`var-desc-${index}`}
-                            value={variable.description || ""}
-                            onChange={(e) =>
-                              updateInputVar(
-                                index,
-                                "description",
-                                e.target.value,
-                              )
-                            }
-                            placeholder="变量描述，可选"
-                            className="mt-1"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id={`var-required-${index}`}
-                          checked={variable.required || false}
-                          onCheckedChange={(checked) =>
-                            updateInputVar(index, "required", checked)
-                          }
-                        />
-                        <Label htmlFor={`var-required-${index}`}>必填</Label>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
+            {tags.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                暂无可用标签，请先创建标签
+              </p>
+            )}
           </div>
-
-          {/* 创建版本选项 - 仅在编辑模式显示 */}
-          {prompt && (
-            <FormField
-              control={form.control}
-              name="create_version"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between space-x-3 space-y-0 rounded-md border p-4">
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>创建新版本</FormLabel>
-                    <FormDescription>
-                      启用此选项将创建一个新版本而不是覆盖当前版本
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          )}
-
-          <div className="text-sm text-muted-foreground mb-2 p-3 bg-muted rounded-md">
-            <p>
-              提示: 您可以使用 <code>{"{{变量名}}"}</code> 语法在内容中插入变量,
-              例如 <code>{"{{user_input}}"}</code>
+          <p className="text-sm text-muted-foreground mt-1">
+            选择标签帮助分类和查找提示词
+          </p>
+          {fieldErrors?.tag_ids && (
+            <p className="text-sm text-destructive mt-1">
+              {fieldErrors.tag_ids}
             </p>
+          )}
+        </div>
+
+        {/* 提示词内容 */}
+        <div>
+          <Label htmlFor="content">提示词内容</Label>
+          <Textarea
+            id="content"
+            name="content"
+            placeholder="输入提示词内容"
+            rows={10}
+            className={`font-mono text-sm ${fieldErrors?.content ? "border-destructive" : ""}`}
+            defaultValue={prompt?.content || ""}
+            aria-describedby="content-error"
+          />
+          <p className="text-sm text-muted-foreground mt-1">
+            提示词的主体内容，可以包含文本、指令和输入变量
+          </p>
+          {fieldErrors?.content && (
+            <p id="content-error" className="text-sm text-destructive mt-1">
+              {fieldErrors.content}
+            </p>
+          )}
+        </div>
+
+        {/* 输入变量 */}
+        <input
+          type="hidden"
+          name="input_vars"
+          value={JSON.stringify(inputVars)}
+        />
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label>输入变量</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addInputVar}
+            >
+              <PlusIcon className="h-4 w-4 mr-1" />
+              添加变量
+            </Button>
+          </div>
+
+          <div className="space-y-4">
+            {inputVars.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                没有输入变量，点击"添加变量"按钮添加
+              </p>
+            ) : (
+              inputVars.map((variable, index) => (
+                <Card key={index} className="p-4">
+                  <CardContent className="p-0 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium">变量 #{index + 1}</h4>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeInputVar(index)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        aria-label={`Remove variable ${index + 1}`}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor={`var-name-${index}`}>变量名</Label>
+                        <Input
+                          id={`var-name-${index}`}
+                          value={variable.name}
+                          onChange={(e) =>
+                            updateInputVar(index, "name", e.target.value)
+                          }
+                          placeholder="变量名称，如: user_input"
+                          className="mt-1"
+                          // Example for deep field error: state={fieldErrors?.[`input_vars[${index}].name`] ? "error" : "default"}
+                        />
+                         {/* Example for deep field error: {fieldErrors?.[`input_vars[${index}].name`] && <p className="text-sm text-destructive mt-1">{fieldErrors[`input_vars[${index}].name`]}</p>} */}
+                      </div>
+
+                      <div>
+                        <Label htmlFor={`var-desc-${index}`}>描述</Label>
+                        <Input
+                          id={`var-desc-${index}`}
+                          value={variable.description || ""}
+                          onChange={(e) =>
+                            updateInputVar(
+                              index,
+                              "description",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="变量描述，可选"
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id={`var-required-${index}`}
+                        checked={variable.required || false}
+                        onCheckedChange={(checked) =>
+                          updateInputVar(index, "required", checked)
+                        }
+                      />
+                      <Label htmlFor={`var-required-${index}`}>必填</Label>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+            {fieldErrors?.input_vars && (
+              <p className="text-sm text-destructive mt-1">
+                {/* This will show generic error for input_vars array if backend sends it like that */}
+                {typeof fieldErrors.input_vars === 'string' ? fieldErrors.input_vars : "输入变量存在错误"}
+              </p>
+            )}
           </div>
         </div>
 
-        {/* 表单按钮 */}
-        <div className="flex justify-end space-x-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-            disabled={submitting}
-          >
-            取消
-          </Button>
-          <Button type="submit" disabled={submitting}>
-            {submitting ? "提交中..." : prompt ? "更新提示词" : "创建提示词"}
-          </Button>
+        {/* 创建版本选项 - 仅在编辑模式显示 */}
+        {prompt && (
+          <div className="flex flex-row items-center justify-between space-x-3 space-y-0 rounded-md border p-4">
+            <div className="space-y-1 leading-none">
+              <Label htmlFor="create_version">创建新版本</Label>
+              <p className="text-sm text-muted-foreground">
+                启用此选项将创建一个新版本而不是覆盖当前版本
+              </p>
+            </div>
+            <Switch
+              id="create_version"
+              name="create_version"
+              // value="true" // The presence of name="create_version" and its checked state handles this for FormData
+              // defaultChecked={false} // Or manage with state if needed for more complex logic
+            />
+          </div>
+        )}
+
+        <div className="text-sm text-muted-foreground mb-2 p-3 bg-muted rounded-md">
+          <p>
+            提示: 您可以使用 <code>{"{{变量名}}"}</code> 语法在内容中插入变量,
+            例如 <code>{"{{user_input}}"}</code>
+          </p>
         </div>
-      </form>
-    </Form>
+      </div>
+
+      {/* 表单按钮 */}
+      <div className="flex justify-end space-x-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.back()}
+        >
+          取消
+        </Button>
+        <SubmitButton isEditing={!!prompt} />
+      </div>
+    </form>
   );
 }
