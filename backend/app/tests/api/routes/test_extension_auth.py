@@ -6,10 +6,10 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from jwt.exceptions import InvalidTokenError
 
-from app.core.config import settings
-from app.core import security 
+from app.api.deps import get_db
 from app.api.routes.extension_auth import router as extension_auth_router
-from app.api.deps import get_db 
+from app.core import security
+from app.core.config import settings
 
 # Define UserPublic and Token structures for mocking
 EXAMPLE_USER_PUBLIC_DICT = {
@@ -32,19 +32,19 @@ def app_for_extension_auth():
 
 @patch("app.models.UserPublic")
 @patch("app.models.User")
-@patch("app.api.deps.get_db") 
+@patch("app.api.deps.get_db")
 @patch("app.api.routes.extension_auth.jwt")
 def test_check_status_auth_header_valid_user(
-    mock_jwt: MagicMock, 
-    mock_get_db_patch: MagicMock, 
-    MockUserModel: MagicMock, 
-    MockUserPublicModel: MagicMock, 
-    app_for_extension_auth: FastAPI, 
+    mock_jwt: MagicMock,
+    mock_get_db_patch: MagicMock,
+    MockUserModel: MagicMock,
+    MockUserPublicModel: MagicMock,
+    app_for_extension_auth: FastAPI,
     mock_db_session_fixture: MagicMock
 ):
     mock_get_db_patch.return_value = mock_db_session_fixture
     app_for_extension_auth.dependency_overrides[get_db] = lambda: mock_db_session_fixture
-    
+
     user_id = "testuser1"
     mock_user_instance = MagicMock()
     mock_user_instance.id = user_id
@@ -56,7 +56,7 @@ def test_check_status_auth_header_valid_user(
     mock_user_public_dict = EXAMPLE_USER_PUBLIC_DICT.copy()
     mock_user_public_dict.update({"id": user_id, "email": "test@example.com", "full_name": "Test User"})
     MockUserPublicModel.model_validate.return_value = mock_user_public_dict
-        
+
     mock_jwt.decode.return_value = {"sub": user_id}
     mock_db_session_fixture.get.return_value = mock_user_instance
 
@@ -65,14 +65,14 @@ def test_check_status_auth_header_valid_user(
             f"{settings.API_V1_STR}/extension/auth/status",
             headers={"Authorization": "Bearer validtoken"}
         )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["authenticated"] is True
     assert data["user"] == mock_user_public_dict
     mock_jwt.decode.assert_called_once_with("validtoken", settings.SECRET_KEY, algorithms=[security.ALGORITHM])
     mock_db_session_fixture.get.assert_called_once_with(MockUserModel, user_id)
-    
+
     del app_for_extension_auth.dependency_overrides[get_db]
 
 
@@ -81,7 +81,7 @@ def test_check_status_auth_header_valid_user(
 @patch("app.api.deps.get_db")
 @patch("app.api.routes.extension_auth.jwt")
 def test_check_status_cookie_valid_user(
-    mock_jwt: MagicMock, mock_get_db_patch: MagicMock, MockUserModel: MagicMock, MockUserPublicModel: MagicMock, 
+    mock_jwt: MagicMock, mock_get_db_patch: MagicMock, MockUserModel: MagicMock, MockUserPublicModel: MagicMock,
     app_for_extension_auth: FastAPI, mock_db_session_fixture: MagicMock
 ):
     mock_get_db_patch.return_value = mock_db_session_fixture
@@ -96,10 +96,10 @@ def test_check_status_cookie_valid_user(
     mock_user_public_dict = EXAMPLE_USER_PUBLIC_DICT.copy()
     mock_user_public_dict.update({"id": user_id, "email": "cookieuser@example.com", "full_name": "Cookie User"})
     MockUserPublicModel.model_validate.return_value = mock_user_public_dict
-    
+
     mock_jwt.decode.return_value = {"sub": user_id}
     mock_db_session_fixture.get.return_value = mock_user_instance
-        
+
     app_for_extension_auth.dependency_overrides[get_db] = lambda: mock_db_session_fixture
     with TestClient(app_for_extension_auth) as client:
         response = client.get(
@@ -130,7 +130,7 @@ def test_check_status_no_token(mock_get_db_patch: MagicMock, app_for_extension_a
 def test_check_status_invalid_header_token(mock_jwt: MagicMock, mock_get_db_patch: MagicMock, app_for_extension_auth: FastAPI, mock_db_session_fixture: MagicMock):
     mock_get_db_patch.return_value = mock_db_session_fixture
     mock_jwt.decode.side_effect = InvalidTokenError("Invalid header token")
-    
+
     app_for_extension_auth.dependency_overrides[get_db] = lambda: mock_db_session_fixture
     with TestClient(app_for_extension_auth) as client:
         response = client.get(
@@ -138,7 +138,7 @@ def test_check_status_invalid_header_token(mock_jwt: MagicMock, mock_get_db_patc
             headers={"Authorization": "Bearer invalidtoken"}
         )
     del app_for_extension_auth.dependency_overrides[get_db]
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["authenticated"] is False
@@ -169,8 +169,8 @@ def test_check_status_invalid_cookie_token(mock_jwt: MagicMock, mock_get_db_patc
 def test_check_status_user_not_found_header(mock_jwt: MagicMock, mock_get_db_patch: MagicMock, MockUserModel: MagicMock, app_for_extension_auth: FastAPI, mock_db_session_fixture: MagicMock):
     mock_get_db_patch.return_value = mock_db_session_fixture
     mock_jwt.decode.return_value = {"sub": "nonexistentuser"}
-    mock_db_session_fixture.get.return_value = None 
-    
+    mock_db_session_fixture.get.return_value = None
+
     app_for_extension_auth.dependency_overrides[get_db] = lambda: mock_db_session_fixture
     with TestClient(app_for_extension_auth) as client:
         response = client.get(
@@ -193,7 +193,7 @@ def test_check_status_user_inactive_header(mock_jwt: MagicMock, mock_get_db_patc
     mock_user_inactive.is_active = False
     mock_jwt.decode.return_value = {"sub": "inactiveuser"}
     mock_db_session_fixture.get.return_value = mock_user_inactive
-    
+
     app_for_extension_auth.dependency_overrides[get_db] = lambda: mock_db_session_fixture
     with TestClient(app_for_extension_auth) as client:
         response = client.get(
@@ -219,7 +219,7 @@ def test_check_status_general_exception_on_decode(mock_jwt: MagicMock, mock_get_
             headers={"Authorization": "Bearer sometoken"}
         )
     del app_for_extension_auth.dependency_overrides[get_db]
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["authenticated"] is False
@@ -227,18 +227,18 @@ def test_check_status_general_exception_on_decode(mock_jwt: MagicMock, mock_get_
 
 # --- Tests for POST /extension/auth/token ---
 
-@patch("app.models.User") 
+@patch("app.models.User")
 # @patch("app.models.Token") # Removed this patch to use the actual Token model
 @patch("app.api.deps.get_db")
 @patch("app.api.routes.extension_auth.security.create_access_token")
 @patch("app.api.routes.extension_auth.jwt")
 def test_get_extension_token_success(
-    mock_jwt: MagicMock, 
-    mock_create_access_token: MagicMock, 
-    mock_get_db_patch: MagicMock, 
+    mock_jwt: MagicMock,
+    mock_create_access_token: MagicMock,
+    mock_get_db_patch: MagicMock,
     # MockTokenModel: MagicMock, # Removed
     MockUserModel: MagicMock,
-    app_for_extension_auth: FastAPI, 
+    app_for_extension_auth: FastAPI,
     mock_db_session_fixture: MagicMock
 ):
     mock_get_db_patch.return_value = mock_db_session_fixture
@@ -251,7 +251,7 @@ def test_get_extension_token_success(
     mock_create_access_token.return_value = new_ext_token
     mock_jwt.decode.return_value = {"sub": user_id}
     mock_db_session_fixture.get.return_value = mock_user_instance
-        
+
     app_for_extension_auth.dependency_overrides[get_db] = lambda: mock_db_session_fixture
     with TestClient(app_for_extension_auth) as client:
         response = client.post(
@@ -259,7 +259,7 @@ def test_get_extension_token_success(
             cookies={"accessToken": "validwebcookietoken"}
         )
     del app_for_extension_auth.dependency_overrides[get_db]
-    
+
     assert response.status_code == 200
     # The actual app.models.Token has a default token_type="bearer"
     assert response.json() == {"access_token": new_ext_token, "token_type": "bearer"}
@@ -285,7 +285,7 @@ def test_get_extension_token_no_cookie(mock_get_db_patch: MagicMock, app_for_ext
 def test_get_extension_token_invalid_cookie(mock_jwt: MagicMock, mock_get_db_patch: MagicMock, app_for_extension_auth: FastAPI, mock_db_session_fixture: MagicMock):
     mock_get_db_patch.return_value = mock_db_session_fixture
     mock_jwt.decode.side_effect = InvalidTokenError("Cookie token is bad")
-    
+
     app_for_extension_auth.dependency_overrides[get_db] = lambda: mock_db_session_fixture
     with TestClient(app_for_extension_auth) as client:
         response = client.post(
@@ -300,13 +300,13 @@ def test_get_extension_token_invalid_cookie(mock_jwt: MagicMock, mock_get_db_pat
 @patch("app.api.deps.get_db")
 @patch("app.api.routes.extension_auth.jwt")
 def test_get_extension_token_user_not_found(
-    mock_jwt: MagicMock, mock_get_db_patch: MagicMock, MockUserModel: MagicMock, 
+    mock_jwt: MagicMock, mock_get_db_patch: MagicMock, MockUserModel: MagicMock,
     app_for_extension_auth: FastAPI, mock_db_session_fixture: MagicMock
 ):
     mock_get_db_patch.return_value = mock_db_session_fixture
     mock_jwt.decode.return_value = {"sub": "ghostuser"}
-    mock_db_session_fixture.get.return_value = None 
-    
+    mock_db_session_fixture.get.return_value = None
+
     app_for_extension_auth.dependency_overrides[get_db] = lambda: mock_db_session_fixture
     with TestClient(app_for_extension_auth) as client:
         response = client.post(
@@ -315,7 +315,7 @@ def test_get_extension_token_user_not_found(
         )
     del app_for_extension_auth.dependency_overrides[get_db]
     assert response.status_code == 401
-    assert "未找到有效的网页会话" in response.json()["detail"] 
+    assert "未找到有效的网页会话" in response.json()["detail"]
     mock_db_session_fixture.get.assert_called_with(MockUserModel, "ghostuser")
 
 
@@ -323,7 +323,7 @@ def test_get_extension_token_user_not_found(
 @patch("app.api.deps.get_db")
 @patch("app.api.routes.extension_auth.jwt")
 def test_get_extension_token_user_inactive(
-    mock_jwt: MagicMock, mock_get_db_patch: MagicMock, MockUserModel: MagicMock, 
+    mock_jwt: MagicMock, mock_get_db_patch: MagicMock, MockUserModel: MagicMock,
     app_for_extension_auth: FastAPI, mock_db_session_fixture: MagicMock
 ):
     mock_get_db_patch.return_value = mock_db_session_fixture
@@ -343,7 +343,7 @@ def test_get_extension_token_user_inactive(
         )
     del app_for_extension_auth.dependency_overrides[get_db]
     assert response.status_code == 401
-    assert "未找到有效的网页会话" in response.json()["detail"] 
+    assert "未找到有效的网页会话" in response.json()["detail"]
     mock_db_session_fixture.get.assert_called_with(MockUserModel, user_id)
 
 @patch("app.models.User")

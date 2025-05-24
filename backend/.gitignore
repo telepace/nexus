@@ -6,6 +6,5 @@ app.egg-info
 htmlcov
 .cache
 .venv
-state
-static
-package-lock.json
+static/
+playwright-report

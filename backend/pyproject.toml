@@ -15,38 +15,31 @@ dependencies = [
     "alembic<2.0.0,>=1.12.1",
     "httpx>=0.24.0,<0.25.0",
     "psycopg[binary]<4.0.0,>=3.1.13",
-    "psycopg2-binary<3.0.0,>=2.9.9",
+    "psycopg2-binary<3.0.0,>=2.9.9",  # 添加 psycopg2 作为备用驱动
     "sqlmodel<1.0.0,>=0.0.21",
+    # Pin bcrypt until passlib supports the latest
     "bcrypt==4.0.1",
     "pydantic-settings<3.0.0,>=2.2.1",
-    "sentry-sdk[fastapi]>=1.40.6,<2.0.0",
+    "sentry-sdk[fastapi]<2.0.0,>=1.40.6",
     "pyjwt<3.0.0,>=2.8.0",
     "supabase<2.0.0,>=1.2.0",
-    "posthog>=2.4.0,<3.0.0",
+    "posthog<3.0.0,>=2.4.0",
     "yarl>=1.9.0,<2.0.0",
     "itsdangerous>=2.2.0",
-    "pillow>=11.2.1",
-    "httptools>=0.6.4",
+    "pillow<11.0.0,>=10.0.0",
 ]
 
 [tool.uv]
 dev-dependencies = [
     "pytest<8.0.0,>=7.4.3",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.1.0",
+    "pytest-asyncio<1.0.0,>=0.21.0",
     "mypy<2.0.0,>=1.8.0",
     "ruff<1.0.0,>=0.2.2",
     "pre-commit<4.0.0,>=3.6.2",
     "types-passlib<2.0.0.0,>=1.7.7.20240106",
     "types-requests<3.0.0.0,>=2.32.0",
     "coverage<8.0.0,>=7.4.3",
-    "pip>=25.1.1",
-]
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-markers = [
-    "asyncio: mark a test as an asyncio test",
+    "pytest-timeout>=2.4.0",
 ]
 
 [build-system]
@@ -60,6 +53,7 @@ ignore_missing_imports = true
 disallow_untyped_defs = false 
 disallow_incomplete_defs = false
 
+# 忽略 supabase 模块的类型检查错误
 [[tool.mypy.overrides]]
 module = "supabase"
 ignore_missing_imports = true
@@ -91,4 +85,5 @@ ignore = [
 ]
 
 [tool.ruff.lint.pyupgrade]
+# Preserve types, even if a file imports `from __future__ import annotations`.
 keep-runtime-typing = true

@@ -84,7 +84,7 @@ export DOMAIN=fastapi-project.example.com
 * Create an environment variable with the email for Let's Encrypt, e.g.:
 
 ```bash
-export EMAIL=admin@example.com
+export EMAIL=admin@telepace.cc
 ```
 
 **Note**: you need to set a different email, an email `@example.com` won't work.

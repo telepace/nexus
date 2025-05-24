@@ -123,10 +123,7 @@ def get_items(
 def create_user(*, session: Session, user_create: Any) -> Any:
     """创建新用户"""
     # 动态导入User和UserCreate
-    import asyncio
-
     from app.models import User
-    from app.utils.image_utils import AvatarGenerator
 
     # 添加这个检查，确保 is_superuser 字段被正确设置
     is_superuser = getattr(user_create, "is_superuser", False)
@@ -141,16 +138,6 @@ def create_user(*, session: Session, user_create: Any) -> Any:
     try:
         session.commit()
         session.refresh(user)
-
-        # 为用户生成默认头像
-        avatar_url, _ = asyncio.run(
-            AvatarGenerator.get_default_avatar(user.email, str(user.id))
-        )
-        user.avatar_url = avatar_url
-        session.add(user)
-        session.commit()
-        session.refresh(user)
-
         return user
     except IntegrityError:
         session.rollback()
@@ -294,6 +281,9 @@ def is_token_blacklisted(*, session: Session, token: str) -> bool:
     """
     Check if a token is in the blacklist.
     """
+    # 动态导入TokenBlacklist
+    from app.models import TokenBlacklist
+    
     statement = select(TokenBlacklist).where(TokenBlacklist.token == token)
     blacklisted = session.exec(statement).first()
     return blacklisted is not None
@@ -304,14 +294,21 @@ def clean_expired_tokens(*, session: Session) -> int:
     Remove expired tokens from the blacklist.
     Returns the number of tokens removed.
     """
+    # 动态导入TokenBlacklist
+    from app.models import TokenBlacklist
+    
     now = datetime.utcnow()
-    statement = select(TokenBlacklist).where(TokenBlacklist.expires_at < now)
-    expired_tokens = session.exec(statement).all()
-    count = len(expired_tokens)
-    for token in expired_tokens:
-        session.delete(token)
-    session.commit()
-    return count
+    try:
+        statement = select(TokenBlacklist).where(TokenBlacklist.expires_at < now)
+        expired_tokens = session.exec(statement).all()
+        count = len(expired_tokens)
+        for token in expired_tokens:
+            session.delete(token)
+        session.commit()
+        return count
+    except Exception as e:
+        session.rollback()
+        raise e
 
 
 def create_user_oauth(*, session: Session, obj_in: Any) -> Any:
@@ -319,26 +316,12 @@ def create_user_oauth(*, session: Session, obj_in: Any) -> Any:
     Create a new user for OAuth authentication (without password)
     """
     # 动态导入User
-
     from app.models import User
 
     db_obj = User.model_validate(obj_in)
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)
-
-    # 如果没有头像URL，为用户生成默认头像
-    if not db_obj.avatar_url:
-        # 生成一个默认的头像URL路径，不进行异步操作
-        avatar_url = f"/static/avatars/{db_obj.id}.png"
-        db_obj.avatar_url = avatar_url
-        session.add(db_obj)
-        session.commit()
-        session.refresh(db_obj)
-
-        # 异步生成头像的操作可以在后台进行
-        # 这里我们不再阻塞当前流程
-
     return db_obj
 
 
