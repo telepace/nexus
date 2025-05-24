@@ -19,6 +19,9 @@ const alertVariants = cva(
   },
 );
 
+/**
+ * Renders an alert component with a specified variant and additional props.
+ */
 function Alert({
   className,
   variant,
@@ -34,6 +37,9 @@ function Alert({
   );
 }
 
+/**
+ * Renders an alert title with optional additional props and class name.
+ */
 function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -47,6 +53,9 @@ function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+/**
+ * Renders an alert description component with additional styling and props.
+ */
 function AlertDescription({
   className,
   ...props
