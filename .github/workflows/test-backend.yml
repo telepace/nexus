@@ -66,10 +66,11 @@ jobs:
       - name: Install dependencies
         run: docker compose --project-name $STACK_NAME run --rm backend uv pip install -e .
       - name: Migrate DB
-        run: docker compose --project-name $STACK_NAME run --rm backend uv run bash scripts/prestart.sh
+        run: docker compose --project-name $STACK_NAME run --rm -e TESTING=true -e TEST_MODE=true backend uv run bash scripts/prestart.sh
         working-directory: backend
 
       - name: Run tests
+<<<<<<< HEAD
         run: |
           # Set test environment variables to ensure consistency
           export TESTING=true
@@ -78,7 +79,17 @@ jobs:
           export FIRST_SUPERUSER=admin@telepace.cc
           docker compose --project-name $STACK_NAME run --rm backend uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
         working-directory: backend
+<<<<<<< HEAD
         timeout-minutes: 20
+=======
+        env:
+          TESTING: "true"
+          TEST_MODE: "true"
+>>>>>>> 0a834ae (chore: update test-backend workflow to enable testing environment variables)
+=======
+        run: docker compose --project-name $STACK_NAME run --rm -e TESTING=true -e TEST_MODE=true backend uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
+        working-directory: backend
+>>>>>>> 1d6b4c6 (chore: improve test scripts for CI environment detection)
       - run: docker compose --project-name $STACK_NAME down -v --remove-orphans
       - name: Store coverage files
         uses: actions/upload-artifact@v4
