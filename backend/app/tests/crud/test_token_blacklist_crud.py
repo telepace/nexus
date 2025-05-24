@@ -108,7 +108,7 @@ def test_check_token_in_blacklist_not_found(MockAppModelsTB:MagicMock, mock_sele
 
 
 @patch("app.crud.select") 
-@patch("app.crud.TokenBlacklist") # is_token_blacklisted uses TokenBlacklist from crud's global scope (if imported there)
+@patch("app.models.TokenBlacklist") # is_token_blacklisted uses TokenBlacklist from crud's global scope (if imported there)
                                  # Re-checking crud.py: is_token_blacklisted does NOT dynamically import.
                                  # It relies on a module-level TokenBlacklist (which isn't there).
                                  # This means is_token_blacklisted will likely fail unless TokenBlacklist is imported at module level in crud.py
