@@ -1,6 +1,7 @@
 import httpx
 from fastapi import APIRouter, HTTPException, Body
 from fastapi.responses import StreamingResponse
+from urllib.parse import urljoin
 # sse_starlette.sse.EventSourceResponse is not available, will use StreamingResponse
 import json 
 
@@ -35,7 +36,10 @@ async def _forward_request_to_litellm(
     stream: bool = False
 ):
     try:
-        url = urljoin(settings.LITELLM_PROXY_URL, endpoint_path)
+        # Ensure proper URL joining without double slashes
+        base_url = str(settings.LITELLM_PROXY_URL).rstrip('/')
+        endpoint_path = endpoint_path.lstrip('/')
+        url = f"{base_url}/{endpoint_path}"
         
         if stream:
             req = client.build_request(method, url, json=data, headers=headers)
