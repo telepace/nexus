@@ -6,6 +6,9 @@ import * as ResizablePrimitive from "react-resizable-panels";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Wraps a ResizablePrimitive.PanelGroup with additional styling and data attributes.
+ */
 function ResizablePanelGroup({
   className,
   ...props
@@ -22,12 +25,18 @@ function ResizablePanelGroup({
   );
 }
 
+/**
+ * Renders a resizable panel component with additional data attributes.
+ */
 function ResizablePanel({
   ...props
 }: React.ComponentProps<typeof ResizablePrimitive.Panel>) {
   return <ResizablePrimitive.Panel data-slot="resizable-panel" {...props} />;
 }
 
+/**
+ * Renders a resizable handle with optional grip icon.
+ */
 function ResizableHandle({
   withHandle,
   className,
