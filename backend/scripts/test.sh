@@ -18,6 +18,36 @@ export TESTING=true
 # Enter backend directory
 cd "$BACKEND_DIR"
 
+# Check if we're in CI environment
+if [ "${CI:-false}" = "true" ]; then
+    echo "🤖 Running in CI environment"
+    echo "📊 System resources:"
+    echo "  Memory: $(free -h | grep '^Mem:' | awk '{print $2}' || echo 'N/A')"
+    echo "  CPU cores: $(nproc || echo 'N/A')"
+    echo "  Disk space: $(df -h . | tail -1 | awk '{print $4}' || echo 'N/A')"
+fi
+
+# Test database connectivity
+echo "🔍 Testing database connectivity..."
+python -c "
+import os
+import sys
+from sqlalchemy import create_engine, text
+from app.core.config import settings
+
+try:
+    engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
+    with engine.connect() as conn:
+        result = conn.execute(text('SELECT 1'))
+        print('✅ Database connection successful')
+except Exception as e:
+    print(f'❌ Database connection failed: {e}')
+    sys.exit(1)
+" || {
+    echo "❌ Database connectivity check failed"
+    exit 1
+}
+
 # Set default title for coverage report
 TITLE="${@:-coverage}"
 
