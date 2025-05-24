@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,6 +55,7 @@ function CallbackUrlHandler({
 }
 
 export default function LoginPage() {
+  useAuthRedirect(); // Handles redirection if user is already authenticated
   const { login, user, isLoading } = useAuth();
   const router = useRouter();
   const [callbackUrl, setCallbackUrl] = useState("/setup");
@@ -66,28 +68,9 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [debugInfo, setDebugInfo] = useState("");
 
-  // 添加登录状态检查
-  useEffect(() => {
-    // 只有在加载完成且用户存在时才重定向
-    if (!isLoading && user) {
-      console.log("[LoginPage] 用户已登录，检查是否需要重定向到扩展");
-
-      // 如果存在扩展回调URL，则重定向到扩展
-      if (extensionCallback) {
-        // 构建带有token的URL，以便扩展获取认证信息
-        const redirectUrl = `${extensionCallback}?token=${encodeURIComponent(user.token || "")}`;
-        console.log("[LoginPage] 重定向到扩展:", redirectUrl);
-        window.location.href = redirectUrl;
-        return;
-      }
-
-      // 否则重定向到常规回调URL
-      console.log("[LoginPage] 重定向到:", callbackUrl);
-      router.push(callbackUrl);
-    }
-  }, [isLoading, user, router, callbackUrl, extensionCallback]);
-
   // 如果正在检查登录状态，显示加载提示
+  // Note: useAuthRedirect handles redirection if user is already logged in.
+  // The isLoading check here is for rendering the loading UI, not for redirection.
   if (isLoading) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center"></div>

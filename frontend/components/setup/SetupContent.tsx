@@ -14,7 +14,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { ExtensionLauncher } from "./ExtensionLauncher";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/auth"; // useAuth provides user and updateUser
+import { getCookie } from "@/lib/client-auth"; // To get accessToken if needed, though user.token is preferred
 import {
   getExtensionPluginId,
   saveTokenToExtension,
@@ -176,7 +177,7 @@ const StepComponents = [WelcomeStep, PreferencesStep];
 export function SetupContent() {
   const [currentStep, setCurrentStep] = useState(0);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth(); // Destructure updateUser from useAuth
   const searchParamsObj = useSearchParams();
   const [extensionPluginId, setExtensionPluginId] = useState<string | null>(
     null,
@@ -219,40 +220,90 @@ export function SetupContent() {
   // 在完成设置时向扩展发送Token
   const handleFinish = async () => {
     if (tokenSent) return; // Prevent duplicate execution
+
+    // 1. Persist setup completion status
+    try {
+      console.log("[SetupContent] Attempting to mark setup as complete via API.");
+      const token = user?.token || getCookie("accessToken");
+
+      if (!token) {
+        toast({
+          title: "Authentication Error",
+          description: "User token not found. Cannot complete setup.",
+          variant: "destructive",
+        });
+        return; // Stop if no token
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const response = await fetch(`${apiUrl}/api/v1/users/me`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ is_setup_complete: true }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to mark setup as complete.");
+      }
+
+      console.log("[SetupContent] Setup successfully marked as complete via API.");
+      // Update local auth state
+      await updateUser({ is_setup_complete: true }); 
+      toast({
+        title: "Setup Complete",
+        description: "Your setup preferences have been saved.",
+        variant: "default",
+      });
+
+    } catch (error) {
+      console.error("[SetupContent] Error marking setup as complete:", error);
+      toast({
+        title: "Error Completing Setup",
+        description: error instanceof Error ? error.message : "An unknown error occurred.",
+        variant: "destructive",
+      });
+      return; // Do not proceed if API call fails
+    }
+
+    // 2. Existing logic for extension token sending (if applicable)
     if (user?.token && extensionPluginId) {
       try {
-        console.log("Setup页面尝试向扩展发送Token");
-        const success = await saveTokenToExtension(
-          user.token,
-          extensionPluginId,
-        );
+        console.log("[SetupContent] Setup page attempting to send Token to extension");
+        const success = await saveTokenToExtension(user.token, extensionPluginId);
 
         if (success) {
-          setTokenSent(true);
+          setTokenSent(true); // Mark token as sent
           toast({
-            title: "扩展配置成功",
-            description: "Nexus扩展已完成设置",
+            title: "Extension Configured",
+            description: "Nexus extension has been set up.",
             variant: "default",
           });
 
-          // 如果有回调URL，则重定向
+          // If there's an extension callback, redirect there
           if (extensionCallback) {
+            console.log(`[SetupContent] Redirecting to extension callback: ${extensionCallback}`);
             window.location.href = `${extensionCallback}?token=${encodeURIComponent(user.token)}`;
-            return;
+            return; // Important to return after redirection
           }
         } else {
           toast({
-            title: "扩展配置失败",
-            description: "无法将Token发送至扩展",
+            title: "Extension Configuration Failed",
+            description: "Could not send Token to the extension.",
             variant: "destructive",
           });
         }
       } catch (error) {
-        console.error("发送Token到扩展时出错:", error);
+        console.error("[SetupContent] Error sending Token to extension:", error);
+        // Non-critical, so proceed to dashboard redirection
       }
     }
 
-    // 如果没有扩展或发送失败，则正常重定向到仪表盘
+    // 3. Redirect to dashboard (if not redirected to extension callback)
+    console.log("[SetupContent] Redirecting to /dashboard");
     router.push("/dashboard");
   };
 
