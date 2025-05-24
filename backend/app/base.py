@@ -39,7 +39,6 @@ class UserUpdate(UserBase):
 class UserUpdateMe(SQLModel):
     full_name: str | None = Field(default=None, max_length=255)
     email: str | None = Field(default=None, max_length=255)
-    avatar_url: str | None = Field(default=None, max_length=1024)
 
 
 class UpdatePassword(SQLModel):
@@ -54,6 +53,7 @@ class User(UserBase, table=True):
     google_id: str | None = Field(
         default=None, sa_column=Column(String(255), unique=True, index=True)
     )
+    avatar_url: str | None = Field(default=None, max_length=1024)
     items: list["Item"] = Relationship(
         back_populates="owner",
         sa_relationship_kwargs={

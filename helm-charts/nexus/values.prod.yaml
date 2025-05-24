@@ -18,7 +18,7 @@ global:
     
     BACKEND_CORS_ORIGINS: '["https://dashboard.quickforge.example.com", "https://api.quickforge.example.com"]'
     
-    FIRST_SUPERUSER: admin@example.com
+    FIRST_SUPERUSER: admin@telepace.cc
     FIRST_SUPERUSER_PASSWORD: "CHANGE_ME"
     
     SMTP_HOST: "smtp.example.com"

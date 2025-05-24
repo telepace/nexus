@@ -338,7 +338,7 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 # 必需的安全设置
 SECRET_KEY=你生成的密钥
-FIRST_SUPERUSER=admin@example.com
+FIRST_SUPERUSER=admin@telepace.cc
 FIRST_SUPERUSER_PASSWORD=你的安全密码
 POSTGRES_PASSWORD=你的数据库密码
 

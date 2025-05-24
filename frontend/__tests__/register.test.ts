@@ -60,7 +60,7 @@ describe("register action", () => {
   it("should return an validation error if the form is invalid", async () => {
     const formData = new FormData();
     formData.set("email", "email");
-    formData.set("password", "invalid_password");
+    formData.set("password", "123"); // Use a password that's actually too short
 
     const result = await register({}, formData);
 

@@ -9,7 +9,7 @@ from app.core.config import settings
 from app.core.db import init_db
 from app.main import app
 from app.models import Item, User
-from app.tests.utils.test_db import setup_test_db, teardown_test_db
+from app.tests.utils.test_db import setup_test_db, teardown_test_db, get_test_db_url
 from app.tests.utils.user import authentication_token_from_email
 from app.tests.utils.utils import get_superuser_token_headers
 
@@ -24,10 +24,6 @@ def setup_test_environment() -> Generator[None, None, None]:
 
     After all tests, it cleans up the test database.
     """
-    # 确保测试用的超级用户密码为 "telepace"，满足至少8个字符的要求
-    # 在这里设置密码，确保在任何其他fixture运行之前就设置好
-    settings.FIRST_SUPERUSER_PASSWORD = "telepace"
-
     # Create test database, apply migrations (or create tables directly), and get the test engine
     test_engine = setup_test_db()
 
@@ -37,11 +33,21 @@ def setup_test_environment() -> Generator[None, None, None]:
     original_engine = app.core.db.engine
     app.core.db.engine = test_engine
 
-    yield
-
-    # After all tests, restore the original engine and clean up the test database
-    app.core.db.engine = original_engine
-    teardown_test_db()
+    try:
+        yield
+    except KeyboardInterrupt:
+        print("\n⚠️  Tests interrupted by user. Cleaning up...")
+        # 继续执行清理，不重新抛出异常
+    finally:
+        # After all tests, restore the original engine and clean up the test database
+        app.core.db.engine = original_engine
+        try:
+            teardown_test_db()
+        except KeyboardInterrupt:
+            print("\n⚠️  Database cleanup interrupted. This is normal during test interruption.")
+        except Exception as e:
+            print(f"\n⚠️  Error during database cleanup: {e}")
+            # 不抛出异常，避免掩盖原始错误
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -56,12 +62,15 @@ def db() -> Generator[Session, None, None]:
     # We're using the engine that was set up in setup_test_environmen
     from app.core.db import engine
 
-    # 确保测试用的超级用户密码为 "telepace"，满足至少8个字符的要求
+    # 确保测试用的超级用户密码为 "telepace"，与测试脚本保持一致
+    original_password = settings.FIRST_SUPERUSER_PASSWORD
     settings.FIRST_SUPERUSER_PASSWORD = "telepace"
 
     # 创建测试用的数据库会话
     with Session(engine) as session:
-        init_db(session)
+        # Get test database URL for proper logging
+        test_db_url = get_test_db_url()
+        init_db(session, test_db_url)
         yield session
         # Clean up test data, but don't drop the database ye
         # (that will happen in teardown_test_db)
@@ -70,6 +79,9 @@ def db() -> Generator[Session, None, None]:
         statement = delete(User)
         session.execute(statement)
         session.commit()
+
+    # 恢复原始密码设置
+    settings.FIRST_SUPERUSER_PASSWORD = original_password
 
 
 @pytest.fixture(scope="module")
