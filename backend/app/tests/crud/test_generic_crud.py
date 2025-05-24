@@ -64,20 +64,20 @@ def test_generic_get_by_id_not_found(mock_db_session: MagicMock):
     assert result is None
 
 @patch("app.crud.select") 
-def test_generic_get_multi(mock_select_crud: MagicMock, mock_db_session: MagicMock):
-    mock_query_obj = MagicMock() 
-    mock_select_crud.return_value = mock_query_obj
-    mock_instances = [MockDbModel(id=uuid.uuid4()), MockDbModel(id=uuid.uuid4())]
-    mock_db_session.exec.return_value.all.return_value = mock_instances
+ def test_generic_get_multi(mock_select_crud: MagicMock, mock_db_session: MagicMock):
+     mock_query_obj = MagicMock() 
+     mock_select_crud.return_value = mock_query_obj
+     mock_instances = [MockDbModel(id=uuid.uuid4()), MockDbModel(id=uuid.uuid4())]
+     mock_db_session.exec.return_value.all.return_value = mock_instances
 
-    results = crud.get_multi(session=mock_db_session, model=MockDbModel, skip=0, limit=10)
+     results = crud.get_multi(session=mock_db_session, model=MockDbModel, skip=0, limit=10)
 
-    mock_select_crud.assert_called_once_with(MockDbModel)
-    mock_query_obj.offset.assert_called_once_with(0)
-    mock_query_obj.offset.return_value.limit.assert_called_once_with(10)
-    mock_db_session.exec.assert_called_once_with(mock_query_obj.offset.return_value.limit.return_value)
-    assert results == mock_instances
-
+     mock_select_crud.assert_called_once_with(MockDbModel)
+     mock_query_obj.offset.assert_called_once_with(0)
+     mock_query_obj.offset.return_value.limit.assert_called_once_with(10)
+     mock_db_session.exec.assert_called_once_with(mock_query_obj.offset.return_value.limit.return_value)
++    mock_db_session.exec.return_value.all.assert_called_once_with()
+     assert results == mock_instances
 @patch("app.crud.select")
 def test_generic_get_multi_with_skip_limit(mock_select_crud: MagicMock, mock_db_session: MagicMock):
     mock_query_obj = MagicMock()
