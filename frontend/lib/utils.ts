@@ -1,6 +1,9 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+/**
+ * Combines class values using clsx and twMerge.
+ */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -14,9 +17,14 @@ interface ErrorLike {
 }
 
 /**
- * Extract error message from error object
- * @param error - Error object that may contain detail, message, or be a string
- * @returns Formatted error message string
+ * Extracts an error message from an error object or string.
+ *
+ * This function checks if the input is a string and returns it directly.
+ * If the input is an object, it attempts to retrieve the error message from the `detail` or `message` property.
+ * If these properties are not present, it tries to stringify the object. If stringification fails, it returns a generic error message.
+ *
+ * @param error - The error object or string from which to extract the message.
+ * @returns A formatted error message string.
  */
 export function getErrorMessage(error: unknown): string {
   if (typeof error === "string") {
