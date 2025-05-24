@@ -192,8 +192,8 @@ check-extension-env:
 
 ## all: Run all tests, linting, formatting and build all components
 .PHONY: all
-all: env-init backend-build frontend-build admin-build format lint generate-client test
-	@echo "===========> All checks and builds completed successfully"
+all: env-init backend-build frontend-build admin-build generate-client
+	@echo "===========> All builds completed successfully"
 
 ## dev: Start development environment
 .PHONY: dev
@@ -751,4 +751,4 @@ helm-install:
 .PHONY: helm-upgrade
 helm-upgrade:
 	@echo "===========> Upgrading Helm chart"
-	@helm upgrade nexus $(ROOT_DIR)/helm-charts/nexus
+	@helm upgrade nexus $(ROOT_DIR)/helm-charts/nexus	

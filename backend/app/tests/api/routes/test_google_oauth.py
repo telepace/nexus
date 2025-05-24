@@ -1,17 +1,15 @@
-import secrets
-from datetime import timedelta
 from unittest.mock import MagicMock, patch
-from urllib.parse import urlencode, parse_qs, urlparse, unquote
+from urllib.parse import parse_qs, unquote, urlparse
 
 import pytest
-import requests 
+import requests
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.core.config import settings as app_settings 
-from app.core import security
-from app.api.routes.google_oauth import router as google_oauth_router, GoogleCallbackRequest
-from app.api.deps import get_db 
+from app.api.deps import get_db
+from app.api.routes.google_oauth import GoogleCallbackRequest
+from app.api.routes.google_oauth import router as google_oauth_router
+from app.core.config import settings as app_settings
 
 EXAMPLE_GOOGLE_USER_INFO = {
     "sub": "google_user_123",
@@ -44,14 +42,14 @@ def client(app_for_google_oauth_module: FastAPI, mock_db_session_fixture: MagicM
 
 
 # --- Tests for GET /login/google ---
-@patch("app.api.routes.google_oauth.settings") 
+@patch("app.api.routes.google_oauth.settings")
 @patch("secrets.token_urlsafe", return_value="test_state_token")
 @patch("starlette.requests.Request.session", new_callable=MagicMock)
 def test_google_login_success(mock_starlette_session: MagicMock, mock_token_urlsafe: MagicMock, mock_route_settings: MagicMock, client: TestClient):
     mock_route_settings.GOOGLE_CLIENT_ID = "test_client_id"
     mock_route_settings.GOOGLE_CLIENT_SECRET = "test_client_secret"
     mock_route_settings.google_oauth_redirect_uri = "http://localhost/callback"
-    mock_route_settings.FRONTEND_HOST = app_settings.FRONTEND_HOST 
+    mock_route_settings.FRONTEND_HOST = app_settings.FRONTEND_HOST
     mock_route_settings.API_V1_STR = app_settings.API_V1_STR
 
     response = client.get(f"{app_settings.API_V1_STR}/login/google", follow_redirects=False)
@@ -69,7 +67,7 @@ def test_google_login_success_with_extension_callback(mock_starlette_session: Ma
     mock_route_settings.GOOGLE_CLIENT_ID = "test_client_id"; mock_route_settings.GOOGLE_CLIENT_SECRET = "test_client_secret"
     mock_route_settings.google_oauth_redirect_uri = "http://localhost/callback"; mock_route_settings.FRONTEND_HOST = app_settings.FRONTEND_HOST
     mock_route_settings.API_V1_STR = app_settings.API_V1_STR
-        
+
     response = client.get(
         f"{app_settings.API_V1_STR}/login/google?extension_callback=myextension://callback",
         follow_redirects=False
@@ -79,24 +77,24 @@ def test_google_login_success_with_extension_callback(mock_starlette_session: Ma
     mock_starlette_session.__setitem__.assert_any_call("extension_callback", "myextension://callback")
 
 @patch("app.api.routes.google_oauth.settings")
-@patch("starlette.requests.Request.session", new_callable=MagicMock) 
+@patch("starlette.requests.Request.session", new_callable=MagicMock)
 def test_google_login_oauth_not_configured(mock_starlette_session: MagicMock, mock_route_settings: MagicMock, client: TestClient):
     mock_route_settings.GOOGLE_CLIENT_ID = None; mock_route_settings.GOOGLE_CLIENT_SECRET = "test_secret"
     mock_route_settings.FRONTEND_HOST = app_settings.FRONTEND_HOST; mock_route_settings.API_V1_STR = app_settings.API_V1_STR
 
     response = client.get(f"{app_settings.API_V1_STR}/login/google", follow_redirects=False)
-    assert response.status_code == 307 
+    assert response.status_code == 307
     assert response.headers["location"] == f"{app_settings.FRONTEND_HOST}/login?error=oauth_config_error"
 
 # --- Tests for GET /login/google/callback ---
 
-@patch("app.models.User") 
+@patch("app.models.User")
 @patch("app.api.routes.google_oauth.crud")
 @patch("app.api.routes.google_oauth.create_access_token")
-@patch("app.api.routes.google_oauth.requests") 
-@patch("app.api.routes.google_oauth.settings") 
+@patch("app.api.routes.google_oauth.requests")
+@patch("app.api.routes.google_oauth.settings")
 def test_google_callback_success_new_user(
-    mock_route_settings: MagicMock, mock_requests_module: MagicMock, mock_create_access_token: MagicMock, 
+    mock_route_settings: MagicMock, mock_requests_module: MagicMock, mock_create_access_token: MagicMock,
     mock_crud_module: MagicMock, MockUserModel: MagicMock,
     client: TestClient, mock_db_session_fixture: MagicMock
 ):
@@ -107,10 +105,10 @@ def test_google_callback_success_new_user(
     mock_user_info_resp = MagicMock(); current_google_user_info = EXAMPLE_GOOGLE_USER_INFO.copy()
     mock_user_info_resp.json.return_value = current_google_user_info
     mock_requests_module.post.return_value = mock_token_response; mock_requests_module.get.return_value = mock_user_info_resp
-    
-    mock_crud_module.get_user_by_email.return_value = None 
+
+    mock_crud_module.get_user_by_email.return_value = None
     new_user_instance = MagicMock(id="new_user_id_123", email=current_google_user_info["email"], google_id=current_google_user_info["sub"])
-    MockUserModel.return_value = new_user_instance 
+    MockUserModel.return_value = new_user_instance
     mock_crud_module.create_user_oauth.return_value = new_user_instance
     new_app_token = "app_access_token_for_new_user"; mock_create_access_token.return_value = new_app_token
 
@@ -128,9 +126,9 @@ def test_google_callback_success_new_user(
 @patch("app.api.routes.google_oauth.crud")
 @patch("app.api.routes.google_oauth.create_access_token")
 @patch("app.api.routes.google_oauth.requests")
-@patch("app.api.routes.google_oauth.settings") 
+@patch("app.api.routes.google_oauth.settings")
 def test_google_callback_success_existing_user_no_google_id(
-    mock_route_settings: MagicMock, mock_requests: MagicMock, mock_create_access_token: MagicMock, 
+    mock_route_settings: MagicMock, mock_requests: MagicMock, mock_create_access_token: MagicMock,
     mock_crud: MagicMock, MockUserModel: MagicMock,
     client: TestClient, mock_db_session_fixture: MagicMock
 ):
@@ -154,7 +152,7 @@ def test_google_callback_success_existing_user_no_google_id(
 @patch("app.api.routes.google_oauth.requests")
 @patch("app.api.routes.google_oauth.settings")
 def test_google_callback_success_existing_user_with_google_id(
-    mock_route_settings: MagicMock, mock_requests: MagicMock, mock_create_access_token: MagicMock, 
+    mock_route_settings: MagicMock, mock_requests: MagicMock, mock_create_access_token: MagicMock,
     mock_crud: MagicMock, MockUserModel: MagicMock, client: TestClient, mock_db_session_fixture: MagicMock
 ):
     mock_route_settings.configure_mock(**app_settings.model_dump(exclude_none=True)); mock_route_settings.GOOGLE_CLIENT_ID = "test_cid"; mock_route_settings.GOOGLE_CLIENT_SECRET = "test_csec"; mock_route_settings.google_oauth_redirect_uri = "http://cb.uri"
@@ -177,7 +175,7 @@ def test_google_callback_success_existing_user_with_google_id(
 @patch("app.api.routes.google_oauth.requests")
 @patch("app.api.routes.google_oauth.settings")
 def test_google_callback_with_extension_redirect(
-    mock_route_settings: MagicMock, mock_requests: MagicMock, mock_create_access_token: MagicMock, 
+    mock_route_settings: MagicMock, mock_requests: MagicMock, mock_create_access_token: MagicMock,
     mock_crud: MagicMock, MockUserModel: MagicMock, client: TestClient, mock_db_session_fixture: MagicMock
 ):
     mock_route_settings.configure_mock(**app_settings.model_dump(exclude_none=True)); mock_route_settings.GOOGLE_CLIENT_ID = "test_cid"; mock_route_settings.GOOGLE_CLIENT_SECRET = "test_csec"; mock_route_settings.google_oauth_redirect_uri = "http://cb.uri"
@@ -255,29 +253,29 @@ def test_google_callback_user_info_fails(mock_requests: MagicMock, mock_route_se
 @patch("app.api.routes.google_oauth.crud") # Patched here
 @patch("app.api.deps.get_db")
 @patch("app.api.routes.google_oauth.create_access_token")
-@patch("app.api.routes.google_oauth.requests") 
+@patch("app.api.routes.google_oauth.requests")
 @patch("app.api.routes.google_oauth.settings")
 def test_old_google_callback_api_success_new_user(
-    mock_route_settings: MagicMock, mock_requests: MagicMock, mock_create_access_token: MagicMock, 
+    mock_route_settings: MagicMock, mock_requests: MagicMock, mock_create_access_token: MagicMock,
     mock_get_db_patch: MagicMock, mock_crud: MagicMock, # mock_crud is now a param
     MockUserModel: MagicMock, MockUserPublicModel: MagicMock,
     client: TestClient, mock_db_session_fixture: MagicMock
 ):
     mock_route_settings.configure_mock(**app_settings.model_dump(exclude_none=True)); mock_route_settings.ACCESS_TOKEN_EXPIRE_MINUTES = app_settings.ACCESS_TOKEN_EXPIRE_MINUTES
     mock_get_db_patch.return_value = mock_db_session_fixture
-    
+
     google_token = "frontend_google_token"; user_info_from_frontend = EXAMPLE_GOOGLE_USER_INFO.copy()
     mock_user_info_response = MagicMock(); mock_user_info_response.json.return_value = user_info_from_frontend
     mock_requests.get.return_value = mock_user_info_response
-    
-    mock_crud.get_user_by_email.return_value = None 
-    new_user_instance = MagicMock(id="new_user_via_old_cb"); MockUserModel.return_value = new_user_instance 
+
+    mock_crud.get_user_by_email.return_value = None
+    new_user_instance = MagicMock(id="new_user_via_old_cb"); MockUserModel.return_value = new_user_instance
     mock_crud.create_user_oauth.return_value = new_user_instance
     new_app_token = "app_token_old_cb"; mock_create_access_token.return_value = new_app_token
 
     request_data_model = GoogleCallbackRequest(token=google_token, user_info=user_info_from_frontend)
     response = client.post(f"{app_settings.API_V1_STR}/auth/google-callback", json=request_data_model.model_dump())
-    
+
     assert response.status_code == 200
     assert response.json() == {"access_token": new_app_token, "token_type": "bearer"}
 
@@ -291,18 +289,18 @@ def test_old_google_callback_api_user_info_mismatch(
 ):
     mock_route_settings.configure_mock(**app_settings.model_dump(exclude_none=True))
     mock_get_db_patch.return_value = mock_db_session_fixture
-    
+
     google_token = "frontend_token_mismatch"; user_info_from_frontend = {"sub": "frontend_sub_123", "email": "test@example.com"}
     verified_user_info = EXAMPLE_GOOGLE_USER_INFO.copy(); verified_user_info["sub"] = "google_verified_sub_456"
     mock_user_info_response = MagicMock(); mock_user_info_response.json.return_value = verified_user_info
     mock_requests.get.return_value = mock_user_info_response
-        
+
     request_data_model = GoogleCallbackRequest(token=google_token, user_info=user_info_from_frontend)
     response = client.post(f"{app_settings.API_V1_STR}/auth/google-callback", json=request_data_model.model_dump())
-        
+
     # This endpoint has a broad try-except that converts all exceptions to 500 if not handled explicitly
     # The HTTPException(400) for "User info verification failed" is caught by this.
-    assert response.status_code == 500 
+    assert response.status_code == 500
     assert "User info verification failed" in response.json()["detail"]
     assert "Google OAuth error: 400: User info verification failed" in response.json()["detail"]
 
@@ -317,10 +315,10 @@ def test_old_google_callback_api_google_verification_fails(
     mock_route_settings.configure_mock(**app_settings.model_dump(exclude_none=True))
     mock_get_db_patch.return_value = mock_db_session_fixture
     mock_requests.get.side_effect = requests.exceptions.HTTPError("Google verification failed")
-            
+
     request_data_model = GoogleCallbackRequest(token="anytoken", user_info={"sub":"any", "email":"any@any.com"})
     response = client.post(f"{app_settings.API_V1_STR}/auth/google-callback", json=request_data_model.model_dump())
-        
+
     assert response.status_code == 500
     assert "Google OAuth error: Google verification failed" in response.json()["detail"]
 
@@ -330,25 +328,25 @@ def test_old_google_callback_api_google_verification_fails(
 @patch("app.api.routes.google_oauth.requests")
 @patch("app.api.routes.google_oauth.settings")
 def test_old_google_callback_user_creation_path_exception(
-    mock_route_settings: MagicMock, mock_requests: MagicMock, 
+    mock_route_settings: MagicMock, mock_requests: MagicMock,
     mock_get_db_patch: MagicMock, mock_crud: MagicMock, MockUserModel: MagicMock,
     client: TestClient, mock_db_session_fixture: MagicMock
 ):
     mock_route_settings.configure_mock(**app_settings.model_dump(exclude_none=True))
     mock_get_db_patch.return_value = mock_db_session_fixture
-    
+
     google_token = "token_user_create_exception"
     user_info = EXAMPLE_GOOGLE_USER_INFO.copy()
-    
+
     mock_user_info_response = MagicMock()
     mock_user_info_response.json.return_value = user_info
     mock_requests.get.return_value = mock_user_info_response
-    
+
     mock_crud.get_user_by_email.return_value = None # New user
     mock_crud.create_user_oauth.side_effect = Exception("DB creation error") # Simulate error during user creation
-            
+
     request_data_model = GoogleCallbackRequest(token=google_token, user_info=user_info)
     response = client.post(f"{app_settings.API_V1_STR}/auth/google-callback", json=request_data_model.model_dump())
-        
+
     assert response.status_code == 500
     assert "Google OAuth error: DB creation error" in response.json()["detail"]

@@ -83,6 +83,7 @@
     "@typescript-eslint/eslint-plugin": "^8.20.0",
     "chokidar": "^4.0.1",
     "chokidar-cli": "^3.0.0",
+    "detect-libc": "^2.0.4",
     "eslint": "^9.18.0",
     "eslint-config-next": "15.0.3",
     "eslint-config-prettier": "^10.0.1",

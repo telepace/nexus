@@ -6,6 +6,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import RequestResponseEndpoint
 
 from app.api.middlewares.posthog import PostHogMiddleware
+
 # from app.core.config import settings # Will mock it where used
 
 
@@ -36,7 +37,7 @@ async def test_posthog_middleware_api_request_posthog_enabled_with_user(
         mock_settings.posthog_enabled = True
         mock_settings.API_V1_STR = "/api/v1"
         mock_request.url.path = "/api/v1/test"
-        
+
         user_mock = MagicMock()
         user_mock.id = "test_user_id"
         mock_request.state.user = user_mock # Set user for this specific test
@@ -44,7 +45,7 @@ async def test_posthog_middleware_api_request_posthog_enabled_with_user(
         response_mock = MagicMock(spec=Response)
         response_mock.status_code = 200
         mock_call_next.return_value = response_mock
-        
+
         middleware = PostHogMiddleware(app=AsyncMock())
 
         start_time = time.time()
@@ -61,7 +62,7 @@ async def test_posthog_middleware_api_request_posthog_enabled_with_user(
                 "path": "/api/v1/test",
                 "method": "GET",
                 "status_code": 200,
-                "duration_ms": pytest.approx(100, abs=10), 
+                "duration_ms": pytest.approx(100, abs=10),
             },
         )
 
@@ -79,7 +80,7 @@ async def test_posthog_middleware_api_request_posthog_enabled_anonymous_user(
         response_mock = MagicMock(spec=Response)
         response_mock.status_code = 200
         mock_call_next.return_value = response_mock
-        
+
         middleware = PostHogMiddleware(app=AsyncMock())
 
         start_time = time.time()
@@ -96,7 +97,7 @@ async def test_posthog_middleware_api_request_posthog_enabled_anonymous_user(
                 "path": "/api/v1/test",
                 "method": "GET",
                 "status_code": 200,
-                "duration_ms": pytest.approx(200, abs=10), 
+                "duration_ms": pytest.approx(200, abs=10),
             },
         )
 
@@ -108,11 +109,11 @@ async def test_posthog_middleware_non_api_request_posthog_enabled(
     with patch("app.api.middlewares.posthog.settings") as mock_settings:
         mock_settings.posthog_enabled = True
         mock_settings.API_V1_STR = "/api/v1"
-        mock_request.url.path = "/non_api/test" 
+        mock_request.url.path = "/non_api/test"
 
         response_mock = MagicMock(spec=Response)
         mock_call_next.return_value = response_mock
-        
+
         middleware = PostHogMiddleware(app=AsyncMock())
 
         # Act
@@ -128,13 +129,13 @@ async def test_posthog_middleware_api_request_posthog_disabled(
 ):
     # Arrange
     with patch("app.api.middlewares.posthog.settings") as mock_settings:
-        mock_settings.posthog_enabled = False 
+        mock_settings.posthog_enabled = False
         mock_settings.API_V1_STR = "/api/v1"
         mock_request.url.path = "/api/v1/test"
 
         response_mock = MagicMock(spec=Response)
         mock_call_next.return_value = response_mock
-        
+
         middleware = PostHogMiddleware(app=AsyncMock())
 
         # Act
@@ -153,7 +154,7 @@ async def test_posthog_middleware_user_id_extraction_no_user_id_attr(
         mock_settings.posthog_enabled = True
         mock_settings.API_V1_STR = "/api/v1"
         mock_request.url.path = "/api/v1/test"
-        
+
         user_mock = MagicMock(spec=object) # Use a spec that doesn't have 'id' by default
         # Ensure 'id' is not present
         if hasattr(user_mock, 'id'):
@@ -164,7 +165,7 @@ async def test_posthog_middleware_user_id_extraction_no_user_id_attr(
         response_mock = MagicMock(spec=Response)
         response_mock.status_code = 200
         mock_call_next.return_value = response_mock
-        
+
         middleware = PostHogMiddleware(app=AsyncMock())
 
         start_time = time.time()
@@ -175,7 +176,7 @@ async def test_posthog_middleware_user_id_extraction_no_user_id_attr(
         # Assert
         mock_posthog_tracker.capture_event.assert_called_once_with(
             event_name="api_request",
-            user_id="anonymous", 
+            user_id="anonymous",
             properties={
                 "path": "/api/v1/test",
                 "method": "GET",
@@ -193,7 +194,7 @@ async def test_posthog_middleware_user_id_extraction_exception(
         mock_settings.posthog_enabled = True
         mock_settings.API_V1_STR = "/api/v1"
         mock_request.url.path = "/api/v1/test"
-        
+
         # Configure request.state to raise an exception when .user is accessed
         # This is a bit tricky; we need to mock the 'state' object itself
         # to control how 'user' is accessed from it.
@@ -208,7 +209,7 @@ async def test_posthog_middleware_user_id_extraction_exception(
         response_mock = MagicMock(spec=Response)
         response_mock.status_code = 200
         mock_call_next.return_value = response_mock
-        
+
         middleware = PostHogMiddleware(app=AsyncMock())
 
         start_time = time.time()
@@ -219,7 +220,7 @@ async def test_posthog_middleware_user_id_extraction_exception(
         # Assert
         mock_posthog_tracker.capture_event.assert_called_once_with(
             event_name="api_request",
-            user_id="anonymous", 
+            user_id="anonymous",
             properties={
                 "path": "/api/v1/test",
                 "method": "GET",
