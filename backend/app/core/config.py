@@ -99,14 +99,22 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
-        # Check if we're running in test mode and modify database name if needed
-        postgres_db = self.POSTGRES_DB
+        # 检查是否处于测试模式
+        is_testing = self.TESTING or self.TEST_MODE
 
-        # Log information about test status
-        if self.TESTING or self.TEST_MODE:
+        # 明确区分测试和生产数据库
+        if is_testing:
             logger.info("Test mode detected. Using test database configuration.")
-            # Note: We don't modify the database name here
-            # That will be handled by the test_db.py utilities
+            # 确保使用测试数据库
+            postgres_db = (
+                f"{self.POSTGRES_DB}_test"
+                if not self.POSTGRES_DB.endswith("_test")
+                else self.POSTGRES_DB
+            )
+            logger.info(f"Using test database: {postgres_db}")
+        else:
+            postgres_db = self.POSTGRES_DB
+            logger.info(f"Using production database: {postgres_db}")
 
         # Return different connection URI based on database type
         """Returns the SQLAlchemy database URI based on the configured database type.

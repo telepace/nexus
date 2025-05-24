@@ -15,9 +15,20 @@ echo "🔧 Preparing test environment..."
 # Enter backend directory
 cd "$BACKEND_DIR"
 
-# Set testing environment variable to enable test database mode
+# 检查环境变量是否已正确设置
+if [ "$TESTING" != "true" ] || [ "$TEST_MODE" != "true" ]; then
+  echo "❌ 错误：必须同时设置 TESTING=true 和 TEST_MODE=true 环境变量才能运行测试"
+  echo "当前环境变量：TESTING=$TESTING, TEST_MODE=$TEST_MODE"
+  exit 1
+fi
+
+# 确保设置测试环境变量
 export TESTING=true
 export TEST_MODE=true
+
+# 打印警告信息
+echo "⚠️  警告：测试将使用独立的测试数据库，任何数据将在测试后被删除"
+echo "⚠️  测试数据库名称: app_test"
 
 # Print database information
 echo "🗄️  Using dedicated test database for testing"
@@ -32,7 +43,7 @@ python app/tests_pre_start.py || {
 # Run the test script
 echo "🧪 Running tests..."
 # Pass the testing flag to the test script
-TESTING=true bash "$SCRIPT_DIR/test.sh" "$@" || {
+TESTING=true TEST_MODE=true bash "$SCRIPT_DIR/test.sh" "$@" || {
   echo "❌ Tests failed"
   exit 1
 }

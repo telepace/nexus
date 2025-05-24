@@ -1,0 +1,57 @@
+---
+description: This rule defines mandatory and recommended standards for database schema design, naming, and usage in Cursor projects. It ensures consistency, maintainability, and best practices for collaboration and automation in database operations.
+globs: 
+alwaysApply: false
+---
+### Naming Conventions
+
+#### Object Naming
+
+- [REQUIRED] Before the design, you must use the `API Document` of mcp to view and understand the existing table structure
+- [REQUIRED] You can use the `sequential thinking` of MCP to think and reason deeply based on the existing code or the existing table structure
+- [REQUIRED] Names must not exceed 30 characters, must start with a letter, and cannot start or end with an underscore `_`.
+- [REQUIRED] Only lowercase letters, numbers, and underscores allowed: `a-z`, `0-9`, `_`.
+- [REQUIRED] No uppercase, special symbols, reserved words, Chinese characters, or spaces.
+
+#### Table Naming
+
+- [REQUIRED] Use singular form; reflect module and join relationships (e.g., `user`, `user_login`).
+- [REQUIRED] Specify charset as `utf8` or `utf8mb4`.
+- [REQUIRED] Specify storage engine and add a comment.
+- [REQUIRED] Primary key must be named `id`, type `int` or `bigint`, `auto_increment`.
+- [RECOMMENDED] Core tables should have `create_time` and `update_time` fields.
+- [RECOMMENDED] All fields should be `NOT NULL` with default values as needed.
+- [RECOMMENDED] Split large fields (`blob`/`text`) into separate tables.
+- [RECOMMENDED] Frequently joined fields may be duplicated to reduce join queries.
+- [REQUIRED] Temp tables start with `tmp_`, backup tables with `bak_`.
+- [REQUIRED] ALTER TABLE on large tables requires DBA review and should be done during off-peak hours.
+
+#### Field Naming
+
+- [REQUIRED] Follow object naming rules, avoid reserved words and table-name collisions.
+- [REQUIRED] Foreign key fields must be named as `xxx_id` (e.g., `blog_id`) but do NOT use foreign key constraints; treat as normal fields only.
+- [RECOMMENDED] Keep field names short and clear, avoid abbreviations.
+
+#### Database Naming
+
+- [REQUIRED] Use lowercase and underscores; no dots.
+- [REQUIRED] Format: `xxx_systemcode_businessname` (e.g., `telepace_pay_gateway`).
+- [REQUIRED] Use singular; for sharding, use incremental numbers or time suffix.
+- [REQUIRED] Specify charset as `utf8` or `utf8mb4` when creating the database.
+
+### Design Conventions
+
+- [REQUIRED] All names lowercase, no spaces, use underscores, no numeric prefixes, max 32 characters.
+- [REQUIRED] Avoid prefixes.
+- [REQUIRED] Identical columns across tables must have the same name and type.
+- [REQUIRED] Do NOT use foreign key constraints; only use foreign key fields (e.g., `xxx_id`).
+- [RECOMMENDED] B-tree index fields should not exceed 2000 bytes; use function or token indexes if needed.
+- [RECOMMENDED] For frequently updated tables, set `fillfactor=85`.
+- [RECOMMENDED] Use partial indexes for fixed-condition queries.
+- [REQUIRED] Always use a database connection pool at the application layer.
+- [RECOMMENDED] For linear-correlated data, use BRIN index.
+- [RECOMMENDED] For unstable structures, consider using `jsonb` fields.
+
+### Postgres JSON Field Usage
+
+- [RECOMMENDED] Use `json`/`jsonb` fields for flexible or dynamic data, especially when schema changes are frequent or hard to predict.

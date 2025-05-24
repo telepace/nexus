@@ -192,7 +192,13 @@ check-extension-env:
 
 ## all: Run all tests, linting, formatting and build all components
 .PHONY: all
-all: env-init backend-build frontend-build admin-build extension-build format lint generate-client
+all: env-init
+	@echo "===========> WARNING: This command will run tests that create and use a test database"
+	@echo "===========> It will not affect your production database, but please be aware of the testing process"
+	@echo "===========> If you only want to build components without testing, use 'make build' instead"
+	@echo "===========> Press Ctrl+C to cancel or wait 5 seconds to continue..."
+	@sleep 5
+	@$(MAKE) backend-build frontend-build admin-build extension-build format lint generate-client
 	@echo "===========> All checks and builds completed successfully"
 
 ## dev: Start development environment
@@ -280,9 +286,12 @@ backend-install: check-uv
 .PHONY: backend-test
 backend-test: backend-install
 	@echo "===========> Running backend tests with coverage"
-	@source $(BACKEND_DIR)/.venv/bin/activate && \
+	@echo "===========> WARNING: This will create and use a test database named app_test"
+	@echo "===========> All data in the test database will be lost"
+	@export TESTING=true TEST_MODE=true && \
+	source $(BACKEND_DIR)/.venv/bin/activate && \
 	cd $(BACKEND_DIR) && \
-	bash scripts/tests-start.sh
+	TESTING=true TEST_MODE=true bash scripts/tests-start.sh
 
 ## backend-lint: Run backend linters
 .PHONY: backend-lint

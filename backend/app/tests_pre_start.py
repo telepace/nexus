@@ -43,13 +43,20 @@ def init(db_engine: Engine) -> None:
 def main() -> None:
     logger.info("Initializing service")
 
-    # Check if we're running in test mode and should use test database
-    is_testing = False
-    testing_env = os.environ.get("TESTING", "")
-    try:
-        is_testing = bool(strtobool(testing_env))
-    except Exception:
-        is_testing = False
+    # 更严格地检查测试环境变量
+    testing_env = os.environ.get("TESTING", "").lower()
+    test_mode_env = os.environ.get("TEST_MODE", "").lower()
+
+    # 只有当明确设置为 "true" 时才视为测试模式
+    is_testing = testing_env == "true" and test_mode_env == "true"
+
+    if is_testing:
+        logger.info("测试模式已激活：TESTING=true, TEST_MODE=true")
+    else:
+        logger.warning(
+            f"当前环境变量：TESTING={testing_env}, TEST_MODE={test_mode_env}"
+        )
+        logger.warning("需要同时设置 TESTING=true 和 TEST_MODE=true 才能使用测试数据库")
 
     if is_testing:
         # 从 sqlmodel 导入 create_engine 而不是 sqlalchemy，确保使用 psycopg
@@ -58,7 +65,6 @@ def main() -> None:
         from app.tests.utils.test_db import (
             create_test_database,
             get_test_db_url,
-            setup_test_db,
         )
 
         logger.info("Test mode detected. Using test database configuration.")
@@ -69,17 +75,16 @@ def main() -> None:
             create_test_database()
         except Exception as e:
             logger.error(f"Failed to create test database: {e}")
-            # 如果失败，尝试使用 setup_test_db，它会尝试重新创建
-            logger.info("Trying alternative setup approach...")
-            test_engine = setup_test_db()
-            init(test_engine)
-            return
+            logger.error("无法继续测试，请确保数据库配置正确且有足够权限")
+            # 不再尝试备用方案，直接退出
+            raise
 
         # 创建数据库引擎并进行连接测试
         test_engine = create_engine(get_test_db_url())
         init(test_engine)
     else:
         # Use the default engine for normal operation
+        logger.info("非测试模式，使用正常数据库连接")
         init(engine)
 
     logger.info("Service finished initializing")

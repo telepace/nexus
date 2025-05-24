@@ -31,7 +31,12 @@ DEFAULT_DB = "postgres"  # Default database to connect when creating test DB
 
 def get_test_db_name() -> str:
     """Get the name of the test database, based on the main DB name with a suffix."""
-    return f"{settings.POSTGRES_DB}{TEST_DB_SUFFIX}"
+    base_db_name = settings.POSTGRES_DB
+    # 确保不会重复添加 _test 后缀
+    if base_db_name.endswith(TEST_DB_SUFFIX):
+        logger.warning(f"数据库名称 '{base_db_name}' 已包含测试后缀，不再重复添加")
+        return base_db_name
+    return f"{base_db_name}{TEST_DB_SUFFIX}"
 
 
 def get_test_db_url() -> str:
@@ -72,6 +77,12 @@ def create_test_database() -> None:
     """Create the test database if it does not exist."""
     test_db_name = get_test_db_name()
     conn_str = get_connection_string()
+
+    # 安全检查：确保数据库名称包含 _test 后缀
+    if not test_db_name.endswith(TEST_DB_SUFFIX):
+        error_msg = f"安全错误：尝试操作非测试数据库 {test_db_name}，测试数据库名必须以 {TEST_DB_SUFFIX} 结尾"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     logger.info(f"Checking if test database {test_db_name} exists")
 
@@ -116,32 +127,14 @@ def create_test_database() -> None:
 
     except Exception as e:
         logger.error(f"Error creating test database: {e}")
-        # 如果连接失败或数据库已存在的错误，尝试修复
-        try:
-            # 打印更详细的错误信息以帮助调试
-            logger.warning(f"Attempting to recover from error: {str(e)}")
-            logger.warning(
-                f"Connection string (password hidden): {conn_str.replace(settings.POSTGRES_PASSWORD, '********')}"
-            )
-
-            # 重新尝试创建
-            with psycopg.connect(conn_str) as conn:
-                conn.autocommit = True
-                with conn.cursor() as cur:
-                    # 强制删除数据库（如果存在）
-                    cur.execute(f"DROP DATABASE IF EXISTS {test_db_name}")
-                    # 创建数据库
-                    cur.execute(f"CREATE DATABASE {test_db_name}")
-                    # 设置所有者
-                    cur.execute(
-                        f"GRANT ALL PRIVILEGES ON DATABASE {test_db_name} TO {settings.POSTGRES_USER}"
-                    )
-                    logger.info(
-                        f"Successfully recovered and created test database {test_db_name}"
-                    )
-        except Exception as recovery_error:
-            logger.error(f"Recovery attempt failed: {recovery_error}")
-            raise
+        # 修改错误处理逻辑，不尝试使用可能是生产数据库的连接
+        logger.error("测试数据库创建失败，测试无法继续。请检查数据库连接和权限设置。")
+        # 打印更详细的错误信息以帮助调试
+        logger.warning(
+            f"Connection string (password hidden): {conn_str.replace(settings.POSTGRES_PASSWORD, '********')}"
+        )
+        # 直接抛出异常，不尝试恢复或回退
+        raise RuntimeError(f"无法创建测试数据库 {test_db_name}：{str(e)}")
 
 
 def apply_migrations() -> None:
@@ -272,6 +265,12 @@ def teardown_test_db() -> None:
     test_db_name = get_test_db_name()
     conn_str = get_connection_string()
 
+    # 安全检查：确保只删除测试数据库
+    if not test_db_name.endswith(TEST_DB_SUFFIX):
+        error_msg = f"安全错误：尝试删除非测试数据库 {test_db_name}，操作已阻止"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
     try:
         # 使用 psycopg 直接连接
         with psycopg.connect(conn_str) as conn:
@@ -297,7 +296,8 @@ def teardown_test_db() -> None:
 
     except Exception as e:
         logger.warning(f"Error during test database cleanup: {e}")
-        # 不抛出异常，避免测试因清理问题而失败
+        # 清理失败不阻止测试完成，但应记录详细日志
+        logger.error(f"测试数据库 {test_db_name} 清理失败：{str(e)}")
 
 
 def test_database_connection():
