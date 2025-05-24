@@ -281,6 +281,9 @@ def is_token_blacklisted(*, session: Session, token: str) -> bool:
     """
     Check if a token is in the blacklist.
     """
+    # 动态导入TokenBlacklist
+    from app.models import TokenBlacklist
+    
     statement = select(TokenBlacklist).where(TokenBlacklist.token == token)
     blacklisted = session.exec(statement).first()
     return blacklisted is not None
@@ -291,14 +294,21 @@ def clean_expired_tokens(*, session: Session) -> int:
     Remove expired tokens from the blacklist.
     Returns the number of tokens removed.
     """
+    # 动态导入TokenBlacklist
+    from app.models import TokenBlacklist
+    
     now = datetime.utcnow()
-    statement = select(TokenBlacklist).where(TokenBlacklist.expires_at < now)
-    expired_tokens = session.exec(statement).all()
-    count = len(expired_tokens)
-    for token in expired_tokens:
-        session.delete(token)
-    session.commit()
-    return count
+    try:
+        statement = select(TokenBlacklist).where(TokenBlacklist.expires_at < now)
+        expired_tokens = session.exec(statement).all()
+        count = len(expired_tokens)
+        for token in expired_tokens:
+            session.delete(token)
+        session.commit()
+        return count
+    except Exception as e:
+        session.rollback()
+        raise e
 
 
 def create_user_oauth(*, session: Session, obj_in: Any) -> Any:

@@ -109,15 +109,6 @@ def test_check_token_in_blacklist_not_found(MockAppModelsTB:MagicMock, mock_sele
 
 
 @patch("app.crud.select")
-@patch("app.models.TokenBlacklist") # is_token_blacklisted uses TokenBlacklist from crud's global scope (if imported there)
-                                 # Re-checking crud.py: is_token_blacklisted does NOT dynamically import.
-                                 # It relies on a module-level TokenBlacklist (which isn't there).
-                                 # This means is_token_blacklisted will likely fail unless TokenBlacklist is imported at module level in crud.py
-                                 # For now, assume it meant to dynamically import, or patch app.models.TokenBlacklist
-                                 # and hope select() gets that one.
-                                 # The current crud.py's is_token_blacklisted will fail with NameError for TokenBlacklist.
-                                 # Assuming it should be `from app.models import TokenBlacklist` implicitly.
-                                 # So, patching app.models.TokenBlacklist is the consistent way.
 @patch("app.models.TokenBlacklist")
 def test_is_token_blacklisted_found(MockAppModelsTB:MagicMock, mock_select_crud: MagicMock, mock_db_session: MagicMock, sample_token_data: dict):
     mock_query_obj = MagicMock()
@@ -128,9 +119,7 @@ def test_is_token_blacklisted_found(MockAppModelsTB:MagicMock, mock_select_crud:
 
     assert is_blacklisted is True
     mock_select_crud.assert_called_once_with(MockAppModelsTB)
-    # Check the where clause on the query object
-    # args, _ = mock_query_obj.where.call_args
-    # assert args[0].right.value == sample_token_data["token"]
+    mock_query_obj.where.assert_called_once()
 
 
 @patch("app.crud.select")
@@ -149,6 +138,10 @@ def test_clean_expired_tokens_none_expired(MockAppModelsTB:MagicMock, mock_selec
     mock_query_obj = MagicMock()
     mock_select_crud.return_value = mock_query_obj
     mock_db_session.exec.return_value.all.return_value = []
+    
+    # Mock the expires_at attribute to support comparison
+    MockAppModelsTB.expires_at = MagicMock()
+    MockAppModelsTB.expires_at.__lt__ = MagicMock(return_value=True)
 
     with patch("app.crud.datetime") as mock_datetime:
         mock_datetime.utcnow.return_value = datetime(2023, 1, 1, 12, 0, 0)
@@ -168,6 +161,10 @@ def test_clean_expired_tokens_some_expired(MockAppModelsTB:MagicMock, mock_selec
     mock_expired_token1 = MagicMock()
     mock_expired_token2 = MagicMock()
     mock_db_session.exec.return_value.all.return_value = [mock_expired_token1, mock_expired_token2]
+    
+    # Mock the expires_at attribute to support comparison
+    MockAppModelsTB.expires_at = MagicMock()
+    MockAppModelsTB.expires_at.__lt__ = MagicMock(return_value=True)
 
     with patch("app.crud.datetime") as mock_datetime:
         mock_datetime.utcnow.return_value = datetime(2023, 1, 1, 12, 0, 0)

@@ -33,11 +33,21 @@ def setup_test_environment() -> Generator[None, None, None]:
     original_engine = app.core.db.engine
     app.core.db.engine = test_engine
 
-    yield
-
-    # After all tests, restore the original engine and clean up the test database
-    app.core.db.engine = original_engine
-    teardown_test_db()
+    try:
+        yield
+    except KeyboardInterrupt:
+        print("\n⚠️  Tests interrupted by user. Cleaning up...")
+        # 继续执行清理，不重新抛出异常
+    finally:
+        # After all tests, restore the original engine and clean up the test database
+        app.core.db.engine = original_engine
+        try:
+            teardown_test_db()
+        except KeyboardInterrupt:
+            print("\n⚠️  Database cleanup interrupted. This is normal during test interruption.")
+        except Exception as e:
+            print(f"\n⚠️  Error during database cleanup: {e}")
+            # 不抛出异常，避免掩盖原始错误
 
 
 @pytest.fixture(scope="session", autouse=True)

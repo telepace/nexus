@@ -210,6 +210,26 @@ class Settings(BaseSettings):
     # 后端 API URL 配置，可通过环境变量覆盖
     BACKEND_API_URL: str = "http://localhost:8000"
 
+    # Static files configuration
+    STATIC_DIR: str = "static"
+    STATIC_URL: str | None = "/static"
+    STORAGE_BACKEND: str = "local"
+
+    # S3 Storage Configuration
+    S3_ACCESS_KEY_ID: str | None = None
+    S3_SECRET_ACCESS_KEY: str | None = None
+    S3_REGION: str = "us-east-1"
+    S3_BUCKET: str | None = None
+    S3_PUBLIC_URL: str | None = None
+    S3_ENDPOINT_URL: str | None = None
+
+    # Cloudflare R2 Storage Configuration
+    R2_ACCOUNT_ID: str | None = None
+    R2_ACCESS_KEY_ID: str | None = None
+    R2_SECRET_ACCESS_KEY: str | None = None
+    R2_BUCKET: str | None = None
+    R2_PUBLIC_URL: str | None = None
+
     @property
     def google_oauth_redirect_uri(self) -> str:
         """Generate Google OAuth redirect URI pointing to backend API."""

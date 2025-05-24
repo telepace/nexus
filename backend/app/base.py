@@ -16,6 +16,7 @@ class UserBase(SQLModel):
     is_active: bool = True
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
+    avatar_url: str | None = Field(default=None, max_length=1024)
 
 
 # Properties to receive via API on creation
@@ -52,6 +53,7 @@ class User(UserBase, table=True):
     google_id: str | None = Field(
         default=None, sa_column=Column(String(255), unique=True, index=True)
     )
+    avatar_url: str | None = Field(default=None, max_length=1024)
     items: list["Item"] = Relationship(
         back_populates="owner",
         sa_relationship_kwargs={
