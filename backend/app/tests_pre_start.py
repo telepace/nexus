@@ -52,9 +52,10 @@ def main() -> None:
 
     if is_testing:
         logger.info("测试模式已激活：TESTING=true, TEST_MODE=true")
-        
+
         # 主动创建测试数据库
         from app.tests.utils.test_db import create_test_database, get_test_db_url
+
         try:
             logger.info("尝试创建测试数据库...")
             create_test_database()
@@ -62,10 +63,10 @@ def main() -> None:
         except Exception as e:
             logger.error(f"创建测试数据库失败: {e}")
             logger.error("将尝试继续测试流程...")
-        
+
         # 从 sqlmodel 导入 create_engine
         from sqlmodel import create_engine
-        
+
         # 创建测试数据库引擎并进行连接测试
         test_engine = create_engine(get_test_db_url())
         init(test_engine)
@@ -74,7 +75,7 @@ def main() -> None:
             f"当前环境变量：TESTING={testing_env}, TEST_MODE={test_mode_env}"
         )
         logger.warning("需要同时设置 TESTING=true 和 TEST_MODE=true 才能使用测试数据库")
-        
+
         # 使用正常数据库连接
         logger.info("非测试模式，使用正常数据库连接")
         init(engine)
