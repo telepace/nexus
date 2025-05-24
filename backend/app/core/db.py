@@ -20,10 +20,11 @@ engine = create_db_engine()
 
 
 def print_db_connection_info(db_url: str | None = None) -> None:
-    """Print database connection information.
-
-    This function retrieves and logs the database connection details, ensuring that sensitive information such as passwords
-    is obscured for security reasons. It also provides additional configuration details specific to different database
+    """Prints database connection information.
+    
+    This function retrieves and logs the database connection details, ensuring that
+    sensitive information such as passwords is obscured for security reasons. It
+    also provides additional configuration details specific to different database
     types, such as Supabase.
     
     Args:
@@ -59,16 +60,7 @@ def print_db_connection_info(db_url: str | None = None) -> None:
 
 def init_db(session: Session, db_url: str | None = None) -> None:
     # Print database connection information
-    """Initialize the database by setting up initial data.
-
-    This function performs several tasks to initialize the database: 1. Prints the database connection information. 2.
-    Checks if a superuser with the email specified in settings exists. 3. If the superuser does not exist, it creates a new
-    superuser with the credentials provided in settings.
-
-    Args:
-        session (Session): The database session to use for operations.
-        db_url (str | None): Optional database URL for logging purposes (used in tests)
-    """
+    """Initialize the database by setting up initial data."""
     print_db_connection_info(db_url)
 
     # Tables should be created with Alembic migrations

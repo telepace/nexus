@@ -226,7 +226,29 @@ def read_prompts(
     sort: str | None = None,
     order: str = "desc",
 ) -> list[Prompt]:
-    """获取提示词列表"""
+    """Read and return a list of prompts based on specified filters and sorting.
+    
+    The function constructs a query to retrieve prompts from the database, applying
+    optional filters for tag IDs, search terms, and sorting by creation or update
+    time. It also handles pagination through skip and limit parameters. Tags are
+    manually loaded for each prompt after querying.
+    
+    Args:
+        db (Session): Database session.
+        _current_user (Any): Current user information (dependency).
+        skip (int?): Number of records to skip. Defaults to 0.
+        limit (int?): Maximum number of records to return. Defaults to 100.
+        tag_ids (list[UUID] | None?): List of UUIDs for tags to filter prompts by.
+        search (str | None?): Search term to filter prompts by name, description, or content.
+        sort (str | None?): Field to sort the results by ('created_at' or 'updated_at'). Defaults to None.
+        order (str?): Order of sorting ('asc' or 'desc'). Defaults to "desc".
+    
+    Returns:
+        list[Prompt]: List of prompts matching the filters and sorted as specified.
+    
+    Raises:
+        HTTPException: If an error occurs during database query execution.
+    """
     try:
         # 构建基础查询
         query = select(Prompt)
@@ -314,7 +336,27 @@ def update_prompt(
     current_user: Any = Depends(get_current_user),
     create_version: bool = False,
 ):
-    """更新提示词"""
+    """Update a prompt by its ID.
+    
+    This function updates the prompt in the database with new data provided. It
+    checks for permissions, updates other fields, and handles version creation if
+    specified. It also manages tag relationships by updating or clearing them as
+    needed.
+    
+    Args:
+        db (Session): The database session.
+        prompt_id (UUID): The ID of the prompt to update.
+        prompt_in (PromptUpdate): The data containing the new values for the prompt.
+        current_user (Any): The current user making the request.
+        create_version (bool): A flag indicating whether to create a new version.
+    
+    Returns:
+        PromptReadWithTags: The updated prompt with tags included.
+    
+    Raises:
+        HTTPException: If the prompt is not found, the user lacks permissions,
+            or an error occurs during the update process.
+    """
     try:
         prompt = db.get(Prompt, prompt_id)
         if not prompt:
@@ -434,7 +476,20 @@ def read_prompt_versions(
     prompt_id: UUID,
     current_user: Any = Depends(get_current_user),
 ):
-    """获取提示词的版本历史"""
+    """Retrieves the version history of a given prompt.
+    
+    This function fetches the version history for a specified prompt by its ID. It
+    first retrieves the prompt from the database and checks if it exists. Then, it
+    verifies the user's permissions to access the prompt. If both steps are
+    successful, it queries the database to get all versions of the prompt, sorted
+    in descending order by version number. If any errors occur during this process,
+    appropriate HTTP exceptions are raised.
+    
+    Args:
+        db (Session): The database session.
+        prompt_id (UUID): The ID of the prompt for which to retrieve version history.
+        current_user (Any): The current authenticated user.
+    """
     try:
         # 获取提示词
         prompt = db.get(Prompt, prompt_id)
@@ -471,7 +526,14 @@ def create_prompt_version(
     version_in: PromptVersionCreate,
     current_user: Any = Depends(get_current_user),
 ) -> PromptVersion:
-    """创建新版本"""
+    """Creates a new version of a prompt.
+    
+    This function retrieves the prompt by its ID, checks for access permissions,
+    determines the maximum existing version number, and then creates a new version
+    with incremented version number, content, change notes, creation time, and
+    creator ID. It handles exceptions by logging errors and raising HTTP
+    exceptions.
+    """
     try:
         # 获取提示词
         prompt = db.get(Prompt, prompt_id)
@@ -556,7 +618,19 @@ def duplicate_prompt(
     prompt_id: UUID,
     current_user: Any = Depends(get_current_user),
 ):
-    """复制提示词"""
+    """Duplicates a prompt based on the provided prompt ID.
+    
+    This function retrieves the original prompt, checks for access permissions,
+    creates a new duplicate with updated attributes such as name and visibility,
+    copies associated tags, and initializes a new version for the duplicated
+    prompt. If any errors occur during the process, it rolls back the database
+    transaction and raises an appropriate HTTP exception.
+    
+    Args:
+        db (Session): The database session dependency.
+        prompt_id (UUID): The ID of the original prompt to be duplicated.
+        current_user (Any): The current user making the request.
+    """
     try:
         # 获取原始提示词
         original = db.get(Prompt, prompt_id)
