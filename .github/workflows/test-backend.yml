@@ -55,6 +55,9 @@ jobs:
       - name: Run tests
         run: docker compose --project-name $STACK_NAME run --rm backend uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
         working-directory: backend
+        env:
+          TESTING: "true"
+          TEST_MODE: "true"
       - run: docker compose --project-name $STACK_NAME down -v --remove-orphans
       - name: Store coverage files
         uses: actions/upload-artifact@v4
