@@ -43,43 +43,41 @@ def init(db_engine: Engine) -> None:
 def main() -> None:
     logger.info("Initializing service")
 
-    # Check if we're running in test mode and should use test database
-    is_testing = False
-    testing_env = os.environ.get("TESTING", "")
-    try:
-        is_testing = bool(strtobool(testing_env))
-    except Exception:
-        is_testing = False
+    # 更严格地检查测试环境变量
+    testing_env = os.environ.get("TESTING", "").lower()
+    test_mode_env = os.environ.get("TEST_MODE", "").lower()
+
+    # 只有当明确设置为 "true" 时才视为测试模式
+    is_testing = testing_env == "true" and test_mode_env == "true"
 
     if is_testing:
-        # 从 sqlmodel 导入 create_engine 而不是 sqlalchemy，确保使用 psycopg
-        from sqlmodel import create_engine
+        logger.info("测试模式已激活：TESTING=true, TEST_MODE=true")
 
-        from app.tests.utils.test_db import (
-            create_test_database,
-            get_test_db_url,
-            setup_test_db,
-        )
+        # 不要重新创建测试数据库，只是检查连接
+        # 测试数据库应该已经在 tests-start.sh 中创建和初始化了
+        from app.tests.utils.test_db import get_test_db_url
 
-        logger.info("Test mode detected. Using test database configuration.")
-
-        # 首先创建测试数据库
         try:
-            logger.info("Creating test database if it doesn't exist...")
-            create_test_database()
-        except Exception as e:
-            logger.error(f"Failed to create test database: {e}")
-            # 如果失败，尝试使用 setup_test_db，它会尝试重新创建
-            logger.info("Trying alternative setup approach...")
-            test_engine = setup_test_db()
-            init(test_engine)
-            return
+            # 从 sqlmodel 导入 create_engine
+            from sqlmodel import create_engine
 
-        # 创建数据库引擎并进行连接测试
-        test_engine = create_engine(get_test_db_url())
-        init(test_engine)
+            # 创建测试数据库引擎并进行连接测试
+            test_engine = create_engine(get_test_db_url())
+            logger.info("连接到现有的测试数据库进行验证...")
+            init(test_engine)
+            logger.info("测试数据库连接验证成功！")
+        except Exception as e:
+            logger.error(f"测试数据库连接失败: {e}")
+            logger.error("请确保测试数据库已正确创建和初始化")
+            raise
     else:
-        # Use the default engine for normal operation
+        logger.warning(
+            f"当前环境变量：TESTING={testing_env}, TEST_MODE={test_mode_env}"
+        )
+        logger.warning("需要同时设置 TESTING=true 和 TEST_MODE=true 才能使用测试数据库")
+
+        # 使用正常数据库连接
+        logger.info("非测试模式，使用正常数据库连接")
         init(engine)
 
     logger.info("Service finished initializing")
