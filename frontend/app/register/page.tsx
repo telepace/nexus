@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, Suspense, useEffect } from "react";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,7 +33,14 @@ function SearchParamsHandler({
   return null;
 }
 
-export default function Page() {
+// Component that handles auth redirect with Suspense
+function AuthRedirectHandler() {
+  useAuthRedirect(); // Handles redirection if user is already authenticated
+  return null;
+}
+
+// Main register content component
+function RegisterContent() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -41,16 +49,9 @@ export default function Page() {
 
   const [state, dispatch] = useActionState(register, undefined);
 
-  // 添加登录状态检查
-  useEffect(() => {
-    // 只有在加载完成且用户存在时才重定向
-    if (!isLoading && user) {
-      console.log("[RegisterPage] 用户已登录，重定向到仪表盘");
-      router.push("/dashboard");
-    }
-  }, [isLoading, user, router]);
-
   // 如果正在检查登录状态，显示加载提示
+  // Note: useAuthRedirect handles redirection if user is already logged in.
+  // The isLoading check here is for rendering the loading UI, not for redirection.
   if (isLoading) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center"></div>
@@ -239,5 +240,17 @@ export default function Page() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <>
+      {/* Wrap useSearchParams usage in Suspense */}
+      <Suspense fallback={null}>
+        <AuthRedirectHandler />
+      </Suspense>
+      <RegisterContent />
+    </>
   );
 }

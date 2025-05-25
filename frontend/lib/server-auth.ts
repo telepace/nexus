@@ -15,6 +15,7 @@ export interface User {
   is_superuser: boolean;
   created_at: string;
   avatar_url?: string;
+  is_setup_complete?: boolean;
   [key: string]: unknown; // 允许其他可能的字段
 }
 
@@ -40,6 +41,7 @@ const convertToUser = (userPublic: UserPublic): User => {
     is_active: userPublic.is_active || false,
     is_superuser: userPublic.is_superuser || false,
     created_at: new Date().toISOString(), // API没有返回created_at，使用当前时间
+    is_setup_complete: userPublic.is_setup_complete,
   };
 
   // 如果userPublic包含其他字段，将它们添加到user对象
@@ -77,6 +79,7 @@ const getAuthStateTest = async (): Promise<AuthState> => {
       is_active: true,
       is_superuser: false,
       created_at: new Date().toISOString(),
+      is_setup_complete: true,
     },
     isAuthenticated: true,
     error: null,
