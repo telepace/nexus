@@ -47,7 +47,12 @@ describe("login action", () => {
     expect(mockSet).toHaveBeenCalledWith(
       "accessToken",
       "1245token",
-      expect.anything(),
+      {
+        httpOnly: true,
+        secure: false, // process.env.NODE_ENV is 'test' during jest runs
+        maxAge: 60 * 60 * 24 * 7, // 604800
+        path: "/",
+      },
     );
   });
 

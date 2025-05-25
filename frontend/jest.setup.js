@@ -1,6 +1,61 @@
 import "@testing-library/jest-dom";
 import React from "react";
 
+// Keep a reference to the original window.location object
+const originalLocation = window.location;
+
+beforeAll(() => {
+  delete window.location;
+  window.location = Object.defineProperties(
+    {},
+    {
+      ...Object.getOwnPropertyDescriptors(originalLocation),
+      href: {
+        configurable: true,
+        writable: true, // Ensure it's writable
+        value: 'http://localhost', // Initial mock value
+      },
+      assign: {
+        configurable: true,
+        value: jest.fn(),
+      },
+      replace: {
+        configurable: true,
+        value: jest.fn(),
+      },
+      pathname: {
+        configurable: true,
+        writable: true,
+        value: '/',
+      },
+      search: {
+        configurable: true,
+        writable: true,
+        value: '',
+      },
+    },
+  );
+});
+
+afterAll(() => {
+  // Restore the original window.location object
+  window.location = originalLocation;
+});
+
+beforeEach(() => {
+  // Clear mock calls between tests
+  if (window.location.assign.mockClear) {
+    window.location.assign.mockClear();
+  }
+  if (window.location.replace.mockClear) {
+    window.location.replace.mockClear();
+  }
+  // Reset href to its initial mock value or a specific default for each test if needed
+  window.location.href = 'http://localhost';
+  window.location.pathname = '/';
+  window.location.search = '';
+});
+
 // Add fetch mock for tests
 global.fetch = jest.fn().mockImplementation((input, init) => {
   // Basic mock data
@@ -80,32 +135,32 @@ jest.mock("framer-motion", () => {
 
 // Mock next/navigation
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({
+  useRouter: jest.fn(() => ({
     push: jest.fn(),
     replace: jest.fn(),
     back: jest.fn(),
     forward: jest.fn(),
     refresh: jest.fn(),
     prefetch: jest.fn(),
-    pathname: "/test-path",
-  }),
-  useSearchParams: () => ({
+    pathname: "/test-path", // Default pathname
+  })),
+  useSearchParams: jest.fn(() => ({
     get: jest.fn((param) => {
-      // 根据参数名返回适当的值
+      // Provide some default mocked values, useful for tests that might rely on them
+      if (param === "plugin_id") return "mocked_plugin_id_from_global_setup";
+      if (param === "extension_callback") return "mocked_callback_from_global_setup";
       if (param === "step") return "1";
-      if (param === "plugin_id") return null;
-      if (param === "extension_callback") return null;
-      return null;
+      return null; // Default for other params
     }),
     getAll: jest.fn(() => []),
-    has: jest.fn(() => false),
+    has: jest.fn((param) => ["plugin_id", "extension_callback", "step"].includes(param)), // Adjust 'has'
     forEach: jest.fn(),
     entries: jest.fn(() => [].entries()),
-    keys: jest.fn(() => [].keys()),
-    values: jest.fn(() => [].values()),
-    toString: jest.fn(() => ""),
-  }),
-  usePathname: () => "/",
+    keys: jest.fn(() => Object.keys({plugin_id: "mock", extension_callback: "mock", step: "1"})), // Mock common methods
+    values: jest.fn(() => Object.values({plugin_id: "mock", extension_callback: "mock", step: "1"})), // Mock common methods
+    toString: jest.fn(() => "plugin_id=mocked_plugin_id_from_global_setup&extension_callback=mocked_callback_from_global_setup&step=1"), // Mock common methods
+  })),
+  usePathname: jest.fn(() => "/mocked-path-from-global-setup"), // Ensure usePathname is also a function
   redirect: jest.fn(),
   notFound: jest.fn(),
 }));
@@ -191,9 +246,22 @@ jest.mock("next/headers", () => ({
 // Mock React's useActionState
 jest.mock("react", () => {
   const actualReact = jest.requireActual("react");
+  const mockDispatch = jest.fn();
   return {
     ...actualReact,
-    useActionState: jest.fn(() => [null, jest.fn()]),
+    // useActionState: jest.fn(() => [null, jest.fn()]), // Original problematic mock
+    useActionState: jest.fn((action, initialState) => {
+      // The dispatch function returned by useActionState, when called, should invoke the action.
+      // We also need a way to simulate the state update if tests depend on it,
+      // but for now, just calling the action is the priority.
+      const dispatch = jest.fn(async (...args) => {
+        // Call the actual action function that was passed to useActionState
+        if (typeof action === 'function') {
+          return action(...args);
+        }
+      });
+      return [initialState, dispatch]; // Return initial state and our spy dispatch
+    }),
     act: (callback) => {
       // Ensure to use actualReact.act for proper execution
       return actualReact.act(callback);

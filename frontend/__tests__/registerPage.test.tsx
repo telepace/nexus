@@ -55,33 +55,47 @@ describe("Register Page", () => {
     expect(screen.getByRole("button", { name: /^注册$/i })).toBeInTheDocument();
   });
 
-  // 跳过因为 fetch 调用的测试 - 该测试需要更深入的修复
-  it.skip("calls register function when form is submitted", async () => {
+  // Unskip this test and fix assertions
+  it("calls register server action with form data when submitted", async () => {
     render(<Page />);
 
-    // 填写表单
+    const nameInput = screen.getByLabelText(/姓名/i);
+    const emailInput = screen.getByLabelText(/邮箱/i); // Using getByLabelText for better accessibility
+    const passwordInput = screen.getByLabelText(/密码/i);
+    const submitButton = screen.getByRole("button", { name: /^注册$/i }); // Corrected selector
+
+    // Fill out the form
     await act(async () => {
-      fireEvent.change(screen.getByPlaceholderText(/email/i), {
-        target: { value: "test@example.com" },
-      });
-      fireEvent.change(screen.getByLabelText(/密码/i), {
-        target: { value: "Password123!" },
-      });
+      fireEvent.change(nameInput, { target: { value: "Test User" } });
+      fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "Password123!" } });
     });
 
-    // 提交表单
+    // Submit the form
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /注册 注册/i }));
+      fireEvent.click(submitButton);
     });
 
-    // 验证 register 函数被调用
-    expect(register).toHaveBeenCalled();
+    // Verify the register server action (mocked) was called
+    expect(register).toHaveBeenCalledTimes(1);
 
-    // 验证 fetch 被调用
-    expect(global.fetch).toHaveBeenCalled();
+    // Verify it was called with the correct FormData or an object matching it.
+    // Server actions receive FormData. We can check the structure.
+    expect(register).toHaveBeenCalledWith(
+      expect.any(FormData), // Or expect.anything() if details are complex or less important for this test
+    );
+
+    // If you need to check specific form data values:
+    const lastCallArgs = (register as jest.Mock).mock.calls[0][0] as FormData;
+    expect(lastCallArgs.get("full_name")).toBe("Test User");
+    expect(lastCallArgs.get("email")).toBe("test@example.com");
+    expect(lastCallArgs.get("password")).toBe("Password123!");
+
+    // DO NOT expect global.fetch to have been called directly by component logic
+    // expect(global.fetch).toHaveBeenCalled(); // This was the incorrect expectation
   });
 
-  // 跳过失败的测试
+  // Keep other skipped tests as they are, focus on the fetch issue first
   it.skip("displays server validation error", async () => {
     // 模拟服务器验证错误
     (register as jest.Mock).mockResolvedValueOnce({
@@ -92,20 +106,16 @@ describe("Register Page", () => {
 
     // 填写表单并提交
     await act(async () => {
-      fireEvent.change(screen.getByPlaceholderText(/email/i), {
-        target: { value: "already@exists.com" },
-      });
-      fireEvent.change(screen.getByLabelText(/密码/i), {
-        target: { value: "Password123!" },
-      });
-      fireEvent.click(screen.getByRole("button", { name: /注册 注册/i }));
+      fireEvent.change(screen.getByLabelText(/邮箱/i), { target: { value: "already@exists.com" } });
+      fireEvent.change(screen.getByLabelText(/密码/i), { target: { value: "Password123!" } });
+      fireEvent.click(screen.getByRole("button", { name: /^注册$/i })); // Corrected selector
     });
 
     // 验证错误消息显示
     expect(await screen.findByText("User already exists")).toBeInTheDocument();
   });
 
-  // 跳过失败的测试
+  // Keep other skipped tests as they are
   it.skip("displays form validation errors", async () => {
     // 模拟表单验证错误
     (register as jest.Mock).mockResolvedValueOnce({
@@ -119,13 +129,9 @@ describe("Register Page", () => {
 
     // 填写表单并提交
     await act(async () => {
-      fireEvent.change(screen.getByPlaceholderText(/email/i), {
-        target: { value: "invalid@email.com" },
-      });
-      fireEvent.change(screen.getByLabelText(/密码/i), {
-        target: { value: "password" },
-      });
-      fireEvent.click(screen.getByRole("button", { name: /注册 注册/i }));
+      fireEvent.change(screen.getByLabelText(/邮箱/i), { target: { value: "invalid@email.com" } });
+      fireEvent.change(screen.getByLabelText(/密码/i), { target: { value: "password" } });
+      fireEvent.click(screen.getByRole("button", { name: /^注册$/i })); // Corrected selector
     });
 
     // 验证错误消息显示

@@ -24,6 +24,22 @@ type LinkPreviewProps = {
   | { isStatic?: false, imageSrc?: never }
 )
 
+/**
+ * Generates a link preview component with optional static image support and interactive hover effects.
+ *
+ * The component uses Microlink API to generate screenshots of URLs if `isStatic` is false.
+ * It includes an animated hover card that displays the preview image when the user hovers over the link.
+ * The animation effect is subtle, moving the preview slightly based on cursor position.
+ *
+ * @param children - Content to be displayed as the clickable link.
+ * @param url - The URL for which the preview is generated.
+ * @param className - Additional CSS classes to apply to the trigger element.
+ * @param width - Width of the preview image (default is 200).
+ * @param height - Height of the preview image (default is 125).
+ * @param quality - Quality of the preview image (default is 50).
+ * @param isStatic - Indicates if a static image should be used instead of generating a screenshot.
+ * @param imageSrc - Source URL for the static image if `isStatic` is true.
+ */
 export const LinkPreview = ({
   children,
   url,
@@ -58,7 +74,7 @@ export const LinkPreview = ({
   const [isMounted, setIsMounted] = React.useState(false)
 
   React.useEffect(() => {
-    setIsMounted(true)
+    setIsMounted(() => true) // Using functional update, removed unused prevState
   }, [])
 
   const springConfig = { stiffness: 100, damping: 15 }
