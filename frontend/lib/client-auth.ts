@@ -15,6 +15,7 @@ export interface User {
   avatar_url?: string;
   anime_avatar_config?: AvatarFullConfig;
   token?: string;
+  is_setup_complete?: boolean;
 }
 
 // Type for auth context
