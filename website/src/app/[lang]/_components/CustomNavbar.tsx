@@ -8,16 +8,14 @@ import { Navbar } from 'nextra-theme-docs'
 const repo = 'https://github.com/telepace/nexus'
 
 /**
- * Represents a custom navigation bar component that utilizes localization and theme toggles.
+ * Renders a custom navigation bar with localization and theme toggles.
  *
- * @param {Object} props - The properties for the CustomNavbar component.
- * @param {string} props.lang - The language code used to determine the link for the logo.
- *
- * @returns {JSX.Element} A React JSX element representing the navigation bar.
+ * @param {object} props - Component properties.
+ * @param {string} props.lang - Language code for logo link.
  */
 export function CustomNavbar({ lang }: { lang: string }) {
   const { t } = useLocale()
-  
+
   return (
     <Navbar
       logo={(
@@ -32,4 +30,4 @@ export function CustomNavbar({ lang }: { lang: string }) {
       </>
     </Navbar>
   )
-} 
+}

@@ -1,9 +1,12 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from 'react'
 
 interface RootLayoutProps {
-  children: ReactNode;
+  children: ReactNode
 }
 
+/**
+ * Renders the root layout with HTML and body tags containing children components.
+ */
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     // The lang and dir attributes will be handled by the nested [lang]/layout.tsx
@@ -19,5 +22,5 @@ export default function RootLayout({ children }: RootLayoutProps) {
         {children}
       </body>
     </html>
-  );
+  )
 }

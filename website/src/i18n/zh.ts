@@ -10,7 +10,7 @@ export default {
   lastUpdated: '最后更新于:',
 
   getStarted: '开始使用',
-  
+
   blog: {
     title: '博客',
     description: '最新文章、教程和更新',

@@ -17,6 +17,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -199,6 +200,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
             <X className="h-4 w-4" />
           </Button>
         </AlertDialogHeader>
+        <AlertDialogDescription>
+          Use this modal to add new content by pasting a URL, typing text, or uploading a file.
+        </AlertDialogDescription>
 
         <div className="space-y-6 py-4">
           {/* 主拖放区域 */}
