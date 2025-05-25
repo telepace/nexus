@@ -6,7 +6,12 @@ import { useAuth } from '@/lib/client-auth';
 
 /**
  * Custom hook to handle redirection based on authentication status and setup completion.
- * This hook is intended for use in client-side components.
+ * This hook checks if the user is authenticated and redirects accordingly:
+ * - If authenticated and setup is complete, it redirects to a callback URL or /dashboard.
+ * - If authenticated but setup is incomplete, it redirects to /setup.
+ * - It does nothing for unauthenticated users as they should be redirected by middleware.
+ *
+ * @returns This hook does not return anything; its purpose is to perform side effects (redirection).
  */
 export function useAuthRedirect() {
   const { user, isLoading } = useAuth();
