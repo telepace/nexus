@@ -18,7 +18,7 @@
     "test": "playwright test",
     "test:debug": "playwright test --debug",
     "test:ui": "playwright test --ui",
-    "test:e2e": "playwright test tests/e2e",
+    "test:e2e": "playwright test",
     "test:coverage": "playwright test --coverage",
     "build:tailwind": "tailwindcss -i ./styles/globals.css -o ./styles/tailwind.css",
     "dev:with-tailwind": "concurrently \"npm run build:tailwind -- --watch\" \"npm run dev:local\"",
