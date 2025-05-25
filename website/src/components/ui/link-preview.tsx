@@ -58,8 +58,16 @@ export const LinkPreview = ({
   const [isMounted, setIsMounted] = React.useState(false)
 
   React.useEffect(() => {
-    setIsMounted(() => true) // Using functional update, removed unused prevState
-  }, [])
+    let isMounted = true
+    // Set the state to true when the component mounts
+    if (isMounted) {
+      setIsMounted(true)
+    }
+
+    return () => {
+      isMounted = false
+    }
+  }, []) // Empty dependency array means this effect runs once on mount and cleans up on unmount
 
   const springConfig = { stiffness: 100, damping: 15 }
   const x = useMotionValue(0)
