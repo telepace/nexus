@@ -14,7 +14,7 @@ interface HomepageHeroProps {
 }
 
 /**
- * Interface representing the props for the Homepage Hero component.
+ * Renders a homepage hero section with title, subtitle, and call-to-action button.
  */
 export const HomepageHero: React.FC<HomepageHeroProps> = ({
   title,

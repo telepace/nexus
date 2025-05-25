@@ -7,8 +7,6 @@ const repo = 'https://github.com/telepace/nexus'
 
 /**
  * Renders a custom banner component with localized text and an external link.
- *
- * @returns {JSX.Element} A JSX element representing the custom banner.
  */
 export function CustomBanner() {
   const { t } = useLocale()

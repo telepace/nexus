@@ -111,11 +111,7 @@ const dictionaries = {
 }
 
 /**
- * Retrieves the dictionary for a given locale.
- *
- * @param {string} locale - The locale string for which to retrieve the dictionary.
- * @returns {Promise<Dictionary>} A promise that resolves to the dictionary object corresponding to the locale, or the default English dictionary if the locale is not found.
- * @throws Will throw an error if the dictionaries object is not properly defined or accessible.
+ * Retrieves the dictionary for a given locale, defaulting to English if not found.
  */
 export async function getDictionary(locale: string): Promise<Dictionary> {
   return dictionaries[locale as keyof typeof dictionaries] || dictionaries.en
