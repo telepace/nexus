@@ -840,5 +840,42 @@ export async function removeTag(id: string) {
   }
 }
 
+// 创建Prompt的包装函数，适配 PromptForm 的接口
+export async function addPromptAction(prevState: any, formData: FormData) {
+  try {
+    const result = await addPrompt(formData);
+    return result;
+  } catch (error) {
+    console.error("addPromptAction error:", error);
+    return { 
+      genericError: typeof error === 'string' ? error : "创建提示词失败" 
+    };
+  }
+}
+
+// 更新Prompt的包装函数，适配 PromptForm 的接口
+export async function updatePromptFormAction(prevState: any, formData: FormData) {
+  try {
+    const id = formData.get("id") as string;
+    if (!id) {
+      return { genericError: "缺少提示词ID" };
+    }
+    
+    const result = await updatePromptAction(id, formData);
+    
+    // 转换返回格式以匹配 FormState 接口
+    if (result.error) {
+      return { genericError: result.error };
+    }
+    
+    return { success: true, message: "提示词更新成功" };
+  } catch (error) {
+    console.error("updatePromptFormAction error:", error);
+    return { 
+      genericError: typeof error === 'string' ? error : "更新提示词失败" 
+    };
+  }
+}
+
 // 导出类型
 export type { PromptVersionData, ApiErrorResponse };
