@@ -123,7 +123,7 @@ const config: Config = {
   // resetModules: false,
 
   // A path to a custom resolver
-  resolver: "<rootDir>/jest.resolver.js",
+  // resolver: "<rootDir>/jest.resolver.js",
 
   // Automatically restore mock state and implementation before every test
   // restoreMocks: false,
@@ -162,18 +162,16 @@ const config: Config = {
   // testLocationInResults: false,
 
   // The glob patterns Jest uses to detect test files
-  // testMatch: [
-  //   "**/__tests__/**/*.[jt]s?(x)",
-  //   "**/?(*.)+(spec|test).[tj]s?(x)"
-  // ],
+  testMatch: [
+    "**/__tests__/**/*.[jt]s?(x)",
+    "**/?(*.)+(spec|test).[tj]s?(x)"
+  ],
 
   // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
   testPathIgnorePatterns: [
     "/node_modules/",
     "/.next/",
-    "/.next/types/",
     "/tests/e2e/", // 排除Playwright e2e测试
-    ".*\\.spec\\.ts$", // 排除Playwright测试文件
   ],
 
   // The regexp pattern or array of patterns that Jest uses to detect test files

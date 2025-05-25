@@ -1,6 +1,61 @@
 import "@testing-library/jest-dom";
 import React from "react";
 
+// Keep a reference to the original window.location object
+const originalLocation = window.location;
+
+beforeAll(() => {
+  delete window.location;
+  window.location = Object.defineProperties(
+    {},
+    {
+      ...Object.getOwnPropertyDescriptors(originalLocation),
+      href: {
+        configurable: true,
+        writable: true, // Ensure it's writable
+        value: 'http://localhost', // Initial mock value
+      },
+      assign: {
+        configurable: true,
+        value: jest.fn(),
+      },
+      replace: {
+        configurable: true,
+        value: jest.fn(),
+      },
+      pathname: {
+        configurable: true,
+        writable: true,
+        value: '/',
+      },
+      search: {
+        configurable: true,
+        writable: true,
+        value: '',
+      },
+    },
+  );
+});
+
+afterAll(() => {
+  // Restore the original window.location object
+  window.location = originalLocation;
+});
+
+beforeEach(() => {
+  // Clear mock calls between tests
+  if (window.location.assign.mockClear) {
+    window.location.assign.mockClear();
+  }
+  if (window.location.replace.mockClear) {
+    window.location.replace.mockClear();
+  }
+  // Reset href to its initial mock value or a specific default for each test if needed
+  window.location.href = 'http://localhost';
+  window.location.pathname = '/';
+  window.location.search = '';
+});
+
 // Add fetch mock for tests
 global.fetch = jest.fn().mockImplementation((input, init) => {
   // Basic mock data
