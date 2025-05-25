@@ -5,24 +5,18 @@ import Link from "next/link";
 import { FaGithub } from "react-icons/fa";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useAuth } from "@/lib/auth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 
-/**
- * Home component that redirects authenticated users to the dashboard and displays a welcome page with links to setup, prompts, and GitHub repository.
- */
-export default function Home() {
-  // 使用客户端Auth Hook
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
+// Component that handles auth redirect with Suspense
+function AuthRedirectHandler() {
+  useAuthRedirect(); // Handles redirection if user is already authenticated
+  return null;
+}
 
-  // 如果已登录，重定向到仪表盘
-  useEffect(() => {
-    if (user && !isLoading) {
-      router.push("/dashboard");
-    }
-  }, [user, isLoading, router]);
-
+// Main content component
+function HomeContent() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-8">
       <div className="text-center max-w-2xl">
@@ -77,5 +71,20 @@ export default function Home() {
         </div>
       </div>
     </main>
+  );
+}
+
+/**
+ * Home component that redirects authenticated users to the dashboard and displays a welcome page with links to setup, prompts, and GitHub repository.
+ */
+export default function Home() {
+  return (
+    <>
+      {/* Wrap useSearchParams usage in Suspense */}
+      <Suspense fallback={null}>
+        <AuthRedirectHandler />
+      </Suspense>
+      <HomeContent />
+    </>
   );
 }
