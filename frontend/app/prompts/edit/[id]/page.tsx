@@ -2,6 +2,7 @@ import {
   fetchPrompt,
   fetchTags,
   PromptData,
+  updatePromptFormAction,
 } from "@/components/actions/prompts-action";
 import { getAuthState } from "@/lib/server-auth-bridge";
 import { PromptForm } from "../../_components/PromptForm";
@@ -157,7 +158,7 @@ async function EditPromptContent({ id }: { id: string }) {
             </div>
           </div>
 
-          <PromptForm tags={tagsResponse} prompt={promptData as PromptData} />
+          <PromptForm tags={tagsResponse} prompt={promptData as PromptData} actionToCall={updatePromptFormAction} />
         </div>
       </div>
     );
