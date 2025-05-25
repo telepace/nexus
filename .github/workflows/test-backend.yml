@@ -9,11 +9,12 @@ on:
       - opened
       - synchronize
       - reopened
-      - ready_for_review
+      - ready_for_review # Useful to avoid running on draft PRs
+
 jobs:
   test-backend:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 30 # Overall job timeout
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,77 +24,121 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install uv
+      - name: Install uv (Python Package Installer)
         uses: astral-sh/setup-uv@v6
         with:
-          version: "0.4.15"
-          enable-cache: true
+          version: "0.4.15" # Pin uv version for consistency
+          # enable-cache: true is the default and recommended
 
-      - name: Copy example env file
+      - name: Copy example .env file (as a fallback)
         run: cp .env.example .env
+        # This ensures .env exists; Doppler will overwrite it.
 
       - name: Install Doppler CLI
         uses: dopplerhq/cli-action@v3
 
-      - name: Setup Doppler
+      - name: Setup Doppler and Fetch Secrets
         run: |
+          set -e # Exit immediately if a command exits with a non-zero status
           doppler setup --silent --project nexus --config stg
+          # Download secrets and overwrite the .env file
           doppler secrets download --no-file --format env > .env
+          # Copy the populated .env file to the backend directory
           cp .env backend/.env
-          STACK_NAME=$(doppler run -- printenv STACK_NAME)
-          echo "STACK_NAME=$STACK_NAME" >> $GITHUB_ENV
+          # Get STACK_NAME from Doppler and set it as a GitHub Actions environment variable
+          # This STACK_NAME is used to namespace Docker Compose projects
+          STACK_NAME_VALUE=$(doppler run -- printenv STACK_NAME)
+          echo "STACK_NAME=${STACK_NAME_VALUE}" >> $GITHUB_ENV
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN_STAGING }}
 
-      - run: docker compose --project-name $STACK_NAME down -v --remove-orphans
-      - run: docker compose --project-name $STACK_NAME up -d db mailcatcher
-      
-      # Wait for database to be fully ready
-      - name: Wait for database
+      - name: Docker Compose Down (Cleanup Previous Run)
         run: |
-          echo "Waiting for database to be ready..."
+          set -e
+          docker compose --project-name "${STACK_NAME}" down -v --remove-orphans
+        # Ensures a clean environment, especially for self-hosted runners
+
+      - name: Docker Compose Up (Start Services)
+        run: |
+          set -e
+          docker compose --project-name "${STACK_NAME}" up -d db mailcatcher
+        # Starts database and mailcatcher in detached mode
+
+      - name: Wait for Database
+        run: |
+          set -e
+          # Source .env file to get POSTGRES_USER and POSTGRES_DB if set by Doppler
+          if [ -f .env ]; then
+            echo "Sourcing .env file for database credentials..."
+            set -a # Automatically export all variables during sourcing
+            source .env
+            set +a
+          fi
+
+          DB_USER="${POSTGRES_USER:-postgres}" # Use Doppler-provided or default
+          DB_NAME="${POSTGRES_DB:-app}"       # Use Doppler-provided or default
+          
+          echo "Waiting for database ($DB_NAME as $DB_USER) to be ready..."
           for i in {1..30}; do
-            if docker compose --project-name $STACK_NAME exec -T db pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-app}; then
+            # Use -q for quiet mode, it will only output on error
+            if docker compose --project-name "${STACK_NAME}" exec -T db pg_isready -U "$DB_USER" -d "$DB_NAME" -q; then
               echo "Database is ready!"
               break
             fi
-            echo "Waiting for database... ($i/30)"
+            echo "Waiting for database... (attempt $i/30)"
             sleep 2
+            if [ $i -eq 30 ]; then
+              echo "Database not ready after 30 attempts."
+              echo "Showing database logs:"
+              docker compose --project-name "${STACK_NAME}" logs db
+              exit 1
+            fi
           done
-          # Additional wait to ensure database is fully initialized
+          # Additional brief wait to ensure all database initialization scripts might have completed
+          echo "Additional wait for 5 seconds for full DB initialization..."
           sleep 5
-          
-      - name: Install dependencies
-        run: docker compose --project-name $STACK_NAME run --rm backend uv pip install -e .
-      - name: Migrate DB
-        run: docker compose --project-name $STACK_NAME run --rm -e TESTING=true -e TEST_MODE=true backend uv run bash scripts/prestart.sh
-        working-directory: backend
+        shell: bash # Explicitly use bash for script features
 
-      - name: Run tests
-<<<<<<< HEAD
+      - name: Install Backend Dependencies
         run: |
-          # Set test environment variables to ensure consistency
-          export TESTING=true
-          export TEST_MODE=true
-          export FIRST_SUPERUSER_PASSWORD=telepace
-          export FIRST_SUPERUSER=admin@telepace.cc
-          docker compose --project-name $STACK_NAME run --rm backend uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
+          set -e
+          docker compose --project-name "${STACK_NAME}" run --rm backend uv pip install -e .
+        # Installs dependencies defined in the project's setup files using uv
+
+      - name: Migrate Database
+        run: |
+          set -e
+          docker compose --project-name "${STACK_NAME}" run --rm \
+            -e TESTING=true \
+            -e TEST_MODE=true \
+            backend uv run bash scripts/prestart.sh
         working-directory: backend
-<<<<<<< HEAD
-        timeout-minutes: 20
-=======
-        env:
-          TESTING: "true"
-          TEST_MODE: "true"
->>>>>>> 0a834ae (chore: update test-backend workflow to enable testing environment variables)
-=======
-        run: docker compose --project-name $STACK_NAME run --rm -e TESTING=true -e TEST_MODE=true backend uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
+        # Runs database migrations; TESTING and TEST_MODE env vars are passed if needed by the script
+
+      - name: Run Backend Tests
+        run: |
+          set -e
+          # Pass TESTING and TEST_MODE explicitly to the container for the test run.
+          # Assumes FIRST_SUPERUSER and FIRST_SUPERUSER_PASSWORD are handled via backend/.env (populated by Doppler)
+          # if they are needed by the tests.
+          docker compose --project-name "${STACK_NAME}" run --rm \
+            -e TESTING=true \
+            -e TEST_MODE=true \
+            backend uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
         working-directory: backend
->>>>>>> 1d6b4c6 (chore: improve test scripts for CI environment detection)
-      - run: docker compose --project-name $STACK_NAME down -v --remove-orphans
-      - name: Store coverage files
+        timeout-minutes: 20 # Timeout for the test execution step
+
+      - name: Docker Compose Down (Cleanup After Run)
+        if: always() # Ensures cleanup even if previous steps fail
+        run: |
+          set -e
+          echo "Cleaning up Docker containers..."
+          docker compose --project-name "${STACK_NAME}" down -v --remove-orphans
+
+      - name: Store Coverage Files
+        if: success() # Only upload if tests succeed (or always() if you want coverage on failure too)
         uses: actions/upload-artifact@v4
         with:
           name: coverage-html
           path: backend/htmlcov
-          include-hidden-files: true
+          # include-hidden-files: true # Uncomment if your coverage report might contain hidden files/dirs
