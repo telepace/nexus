@@ -10,12 +10,18 @@ import { useAuth } from "@/lib/auth";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 
 // Component that handles auth redirect with Suspense
+/**
+ * Component that handles authentication redirects and returns null.
+ */
 function AuthRedirectHandler() {
   useAuthRedirect(); // Handles redirection if user is already authenticated
   return null;
 }
 
 // Main content component
+/**
+ * Renders the main content page with introductory text and links to setup, prompts, and dashboard.
+ */
 function HomeContent() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-8">
@@ -75,7 +81,7 @@ function HomeContent() {
 }
 
 /**
- * Home component that redirects authenticated users to the dashboard and displays a welcome page with links to setup, prompts, and GitHub repository.
+ * Home component that handles authentication redirection and displays home content.
  */
 export default function Home() {
   return (
