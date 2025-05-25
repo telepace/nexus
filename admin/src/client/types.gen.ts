@@ -208,6 +208,7 @@ export type UserPublic = {
     is_superuser?: boolean;
     full_name?: (string | null);
     avatar_url?: (string | null);
+    is_setup_complete?: boolean;
     id: string;
 };
 
@@ -234,6 +235,7 @@ export type UserUpdate = {
 export type UserUpdateMe = {
     full_name?: (string | null);
     email?: (string | null);
+    is_setup_complete?: (boolean | null);
 };
 
 export type ValidationError = {
