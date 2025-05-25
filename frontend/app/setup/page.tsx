@@ -2,6 +2,14 @@ import { SetupContent } from "@/components/setup/SetupContent";
 import { getAuthState } from "@/lib/server-auth";
 import { redirect } from "next/navigation";
 
+/**
+ * Handles the setup page logic, including user authentication and redirection.
+ *
+ * This function first checks the user's authentication status. If the user is not authenticated,
+ * it redirects them to the login page with a callback URL pointing back to the setup page.
+ * If the user is authenticated but has already completed the setup, they are redirected to the dashboard.
+ * Otherwise, the setup page content is rendered for the user to complete their setup.
+ */
 export default async function SetupPage() {
   // 检查用户登录状态
   const authState = await getAuthState();

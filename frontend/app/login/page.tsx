@@ -30,6 +30,9 @@ function SearchParamsHandler({
 }
 
 // CallbackUrlHandler component to handle callback URL
+/**
+ * Handles setting callback URLs from query parameters.
+ */
 function CallbackUrlHandler({
   setCallbackUrl,
   setExtensionCallback,
@@ -55,12 +58,24 @@ function CallbackUrlHandler({
 }
 
 // Component that handles auth redirect with Suspense
+/**
+ * Handles redirection logic for authenticated users.
+ */
 function AuthRedirectHandler() {
   useAuthRedirect(); // Handles redirection if user is already authenticated
   return null;
 }
 
 // Main login content component
+/**
+ * Login component for user authentication.
+ *
+ * This component provides a login form where users can enter their email and password to authenticate.
+ * It also includes options for logging in with Google, resetting the password, and registering a new account.
+ * The component handles form submission, manages loading states during login attempts, and displays error messages if needed.
+ *
+ * @returns {JSX.Element} - The rendered Login component.
+ */
 function LoginContent() {
   const { login, user, isLoading } = useAuth();
   const router = useRouter();
@@ -340,6 +355,9 @@ function LoginContent() {
   );
 }
 
+/**
+ * Renders the login page with authentication handling and login content.
+ */
 export default function LoginPage() {
   return (
     <>

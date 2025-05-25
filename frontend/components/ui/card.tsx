@@ -2,21 +2,20 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-/**
- * Renders a card component with default styling and additional props.
- */
-function Card({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="card"
-      className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
+const Card = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-xl border bg-card text-card-foreground shadow transition-shadow duration-150 hover:shadow-md",
+      className,
+    )}
+    {...props}
+  />
+));
+Card.displayName = "Card";
 
 /**
  * Renders a card header component with custom class names and additional props.
