@@ -72,7 +72,6 @@ const ChangePassword = () => {
   })
 
   const onSubmit: SubmitHandler<UpdatePasswordForm> = async (data) => {
-  const onSubmit: SubmitHandler<UpdatePasswordForm> = async (data) => {
     try {
       // Encrypt passwords before sending to backend
       const encryptedCurrentPassword = encryptPassword(data.current_password);
@@ -132,4 +131,5 @@ const ChangePassword = () => {
     </>
   )
 }
+
 export default ChangePassword

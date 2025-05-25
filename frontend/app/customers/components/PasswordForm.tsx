@@ -81,7 +81,6 @@ export function PasswordForm() {
           Authorization: `Bearer ${document.cookie.split("accessToken=")[1]?.split(";")[0]}`,
         },
         body: JSON.stringify({
-        body: JSON.stringify({
           current_password: (() => {
             try {
               return encryptPassword(formData.current_password);
