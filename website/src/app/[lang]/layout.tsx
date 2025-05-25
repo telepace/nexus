@@ -10,7 +10,7 @@ export const metadata = {
   metadataBase: new URL('https://nextjs-nextra-starter-green.vercel.app'),
   icons: [
     { rel: 'icon', url: '/favicon.ico' },
-    { rel: 'icon', url: '/img/favicon.svg', type: 'image/svg+xml' }
+    { rel: 'icon', url: '/img/favicon.svg', type: 'image/svg+xml' },
   ],
 } satisfies Metadata
 

@@ -7,12 +7,14 @@ type LocalizedValue<T, K extends LocaleKeys> = PathValue<T, K> extends string
   ? string
   : PathValue<T, K>
 
-interface ServerLocaleParams {
-  params: {
-    lang?: string
-  }
-}
-
+/**
+ * Initializes localization for the server using the specified language key.
+ *
+ * This function sets up a localization context by defining a translation function `t`.
+ * It retrieves localized values based on the provided language key and optional data.
+ *
+ * @param lang - The language key to initialize the locale with.
+ */
 export async function useServerLocale(lang: I18nLangKeys) {
   // 从参数中获取当前语言
   const currentLocale = lang

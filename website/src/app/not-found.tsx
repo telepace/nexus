@@ -2,11 +2,6 @@ import Link from 'next/link'
 
 /**
  * A React functional component that renders a 404 Not Found page.
- *
- * This component displays a user-friendly message indicating that the requested page could not be found.
- * It provides options for users to navigate back to the home page or browse the documentation.
- *
- * @returns {JSX.Element} The JSX element representing the 404 Not Found page.
  */
 export default function NotFound() {
   return (
@@ -19,13 +14,13 @@ export default function NotFound() {
         抱歉，您请求的页面不存在。请检查URL是否正确，或返回首页。
       </p>
       <div className="flex space-x-4">
-        <Link 
+        <Link
           href="/"
           className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors"
         >
           返回首页
         </Link>
-        <Link 
+        <Link
           href="/zh/docs"
           className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded transition-colors dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
         >
@@ -34,4 +29,4 @@ export default function NotFound() {
       </div>
     </div>
   )
-} 
+}

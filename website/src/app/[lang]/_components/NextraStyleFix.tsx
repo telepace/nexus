@@ -1,36 +1,37 @@
 'use client'
 
+// Added missing import
 import { useEffect } from 'react'
-import { useTheme } from 'next-themes' // Added missing import
 
 /**
- * This function is used to fix the Nextra style hydration issue.
- * It achieves this by removing style elements that may cause conflicts during client-side rendering.
+ * Fixes Nextra style hydration issues by removing conflicting style elements.
  *
- * @returns {null} - This function does not return any value, always returns null.
+ * This function addresses potential conflicts during client-side rendering by identifying
+ * and removing `<style>` tags that contain specific patterns in their text content.
+ * It also sets up a MutationObserver to dynamically handle styles added after initial load.
  */
 export function NextraStyleFix() {
   useEffect(() => {
     // Handle potential style conflicts
     /**
-     * Handles the removal of specific style tags from the document.
+     * Handles the removal of specific `<style>` tags from the document.
      *
-     * This function searches for all `<style>` elements in the document and removes those
+     * This function searches through all `<style>` elements in the document and removes those
      * that contain either 'body {transition:' or 'body[unresolved]' in their text content.
      */
     const handleStyleFix = () => {
       // Find and remove style tags containing body transition
       document.querySelectorAll('style').forEach(styleEl => {
-        if (styleEl.textContent?.includes('body {transition:') || 
-            styleEl.textContent?.includes('body[unresolved]')) {
+        if (styleEl.textContent?.includes('body {transition:')
+          || styleEl.textContent?.includes('body[unresolved]')) {
           styleEl.remove()
         }
       })
     }
-    
+
     // Execute cleanup
     handleStyleFix()
-    
+
     // For dynamically loaded styles, an observer can be set
     const observer = new MutationObserver((mutations) => {
       mutations.forEach(mutation => {
@@ -39,33 +40,27 @@ export function NextraStyleFix() {
         }
       })
     })
-    
-    observer.observe(document.head, { 
+
+    observer.observe(document.head, {
       childList: true,
-      subtree: true 
+      subtree: true,
     })
-    
+
     return () => observer.disconnect()
   }, [])
-  
+
   return null
 }
 
 /**
  * A React functional component that wraps content with specific styling and layout for documentation purposes.
- *
- * @param {React.ReactNode} children - The child components or elements to be rendered within the wrapper.
- * @param {any} [toc] - An optional table of contents data, which can be used to render a sidebar or other navigational elements.
- * @param {any} [metadata] - Optional metadata related to the content, which could include author information, creation date, etc.
- *
- * @returns {JSX.Element} A JSX element representing the styled and laid-out content container.
  */
 export const NextraContentWrapper: React.FC<{
-  children: React.ReactNode,
-  toc?: any,
+  children: React.ReactNode
+  toc?: any
   metadata?: any
-}> = ({ children, toc, metadata }) => {
-  const { theme } = useTheme()
+}> = ({ children, toc: _toc, metadata: _metadata }) => { // _toc and _metadata are the actual prop names available here
+  // const { theme } = useTheme(); // Removed as it's unused
 
   return (
     <div className="nextra-content-container nx-mx-auto nx-max-w-[90rem]">
@@ -76,4 +71,4 @@ export const NextraContentWrapper: React.FC<{
       </article>
     </div>
   )
-} 
+}

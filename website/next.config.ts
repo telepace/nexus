@@ -1,11 +1,11 @@
+import path from 'node:path'
 import createWithNextra from 'nextra'
-import path from 'path'
 
 const withNextra = createWithNextra({
   defaultShowCopyCode: true,
   staticImage: true,
   unstable_shouldAddLocaleToLinks: false,
-  contentDirBasePath: '/content'
+  contentDirBasePath: '/content',
 })
 
 /**
@@ -38,9 +38,9 @@ export default withNextra({
   },
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000', 'localhost:3001', 'localhost:3002', 'localhost:3003', 'localhost:3004', 'localhost:3005', 'localhost:3006', 'localhost:3007']
+      allowedOrigins: ['localhost:3000', 'localhost:3001', 'localhost:3002', 'localhost:3003', 'localhost:3004', 'localhost:3005', 'localhost:3006', 'localhost:3007'],
     },
     scrollRestoration: true,
-    esmExternals: true
-  }
+    esmExternals: true,
+  },
 })
