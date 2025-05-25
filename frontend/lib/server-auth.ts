@@ -32,6 +32,16 @@ let authStateCache: AuthState | null = null;
 const AUTH_CACHE_TTL = 5000; // 5秒
 
 // 将UserPublic转换为User类型
+/**
+ * Converts a UserPublic object to a User object.
+ *
+ * This function creates a base User object using properties from the UserPublic object.
+ * It then iterates over any additional fields in the UserPublic object that are not
+ * explicitly mapped and adds them to the User object if they exist and are not undefined.
+ * The `created_at` field is set to the current ISO string since it's not provided by the API.
+ *
+ * @param userPublic - The source UserPublic object containing public user information.
+ */
 const convertToUser = (userPublic: UserPublic): User => {
   // 创建基本User对象
   const user: User = {
@@ -70,6 +80,9 @@ export const getAuthToken = isTestEnv
     });
 
 // 测试环境使用的简单函数版本
+/**
+ * Returns a mock authentication state object.
+ */
 const getAuthStateTest = async (): Promise<AuthState> => {
   return {
     user: {

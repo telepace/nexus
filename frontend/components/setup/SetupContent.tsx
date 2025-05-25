@@ -174,6 +174,18 @@ const CompleteStep = ({ fromExtension, onFinish }: CompleteStepProps) => (
 
 const StepComponents = [WelcomeStep, PreferencesStep];
 
+/**
+ * Handles the setup process for a user, including fetching and processing extension plugin IDs,
+ * sending tokens to extensions, and updating user setup status via API.
+ *
+ * This function manages multiple steps in the setup process:
+ * 1. Fetches or retrieves `plugin_id` from URL parameters or extensions.
+ * 2. Marks the setup as complete on the server by updating user data.
+ * 3. Sends a token to an extension if necessary and redirects based on callback URLs.
+ * 4. Redirects to the dashboard after completing all steps.
+ *
+ * @returns A React component that renders the setup process UI.
+ */
 export function SetupContent() {
   const [currentStep, setCurrentStep] = useState(0);
   const router = useRouter();
@@ -218,6 +230,16 @@ export function SetupContent() {
   }, [searchParamsObj]);
 
   // 在完成设置时向扩展发送Token
+  /**
+   * Handles the completion of the setup process by marking it as complete via API and sending a token to an extension if applicable.
+   *
+   * The function performs several steps: it first checks if the setup has already been marked as complete to prevent duplicate execution.
+   * It then attempts to mark the user's setup as complete by making an API call. If successful, it updates the local authentication state.
+   * Next, if a user token and extension plugin ID are available, it sends the token to the extension and handles any success or failure scenarios.
+   * Finally, if not redirected elsewhere, it redirects the user to the dashboard.
+   *
+   * @returns void
+   */
   const handleFinish = async () => {
     if (tokenSent) return; // Prevent duplicate execution
 

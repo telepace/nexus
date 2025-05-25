@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { readUserMe } from "@/app/clientService";
 
+/**
+ * Middleware function to handle authentication and user setup redirection.
+ *
+ * This middleware checks for an access token in cookies, validates its effectiveness,
+ * and redirects users based on their setup completion status. It logs various steps
+ * and handles errors by redirecting to the login page.
+ *
+ * @param request - The Next.js request object containing the URL and cookies.
+ * @returns A NextResponse object representing either a redirection or the original request.
+ */
 export async function middleware(request: NextRequest) {
   console.log("[Middleware] 处理路径:", request.nextUrl.pathname);
 

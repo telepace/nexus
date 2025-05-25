@@ -34,12 +34,24 @@ function SearchParamsHandler({
 }
 
 // Component that handles auth redirect with Suspense
+/**
+ * Handles authentication redirection and returns null.
+ */
 function AuthRedirectHandler() {
   useAuthRedirect(); // Handles redirection if user is already authenticated
   return null;
 }
 
 // Main register content component
+/**
+ * Registers a new user by handling form submissions and dispatching actions.
+ *
+ * The function uses React hooks to manage state, including user authentication status,
+ * form field values (email, password, full name), and action state for registration.
+ * It renders a loading screen if the user authentication status is being checked.
+ * Handles form submission by saving current input values and dispatching the form data
+ * for registration. Provides visual feedback using gradients and animations.
+ */
 function RegisterContent() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
@@ -243,6 +255,9 @@ function RegisterContent() {
   );
 }
 
+/**
+ * Renders a page with authentication handling and registration content.
+ */
 export default function Page() {
   return (
     <>

@@ -902,8 +902,7 @@ export const promptsDuplicatePrompt = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create Completion
- * Handles creation of completions based on request data.
+ * Sends a POST request to create an LLM completion based on the provided options.
  */
 export const llmCreateCompletion = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<LlmCreateCompletionData, ThrowOnError>,
@@ -919,8 +918,7 @@ export const llmCreateCompletion = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create Embedding
- * Handles the creation of embeddings by forwarding a request to LiteLLM.
+ * Creates embeddings by forwarding a request to LiteLLM.
  */
 export const llmCreateEmbedding = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<LlmCreateEmbeddingData, ThrowOnError>,
