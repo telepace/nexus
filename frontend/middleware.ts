@@ -33,6 +33,24 @@ export async function middleware(request: NextRequest) {
     }
 
     console.log("[Middleware] 验证成功, 用户:", data?.email);
+
+    const { pathname, search } = request.nextUrl;
+
+    // Scenario 1: Setup not complete
+    if (data.is_setup_complete === false && pathname !== "/setup") {
+      console.log("[Middleware] Setup not complete, redirecting to /setup");
+      const setupRedirectUrl = new URL("/setup", request.url);
+      // Preserve original intended path as callbackUrl for after setup
+      setupRedirectUrl.searchParams.set("callbackUrl", pathname + search);
+      return NextResponse.redirect(setupRedirectUrl);
+    }
+
+    // Scenario 2: Setup complete but user is on setup page
+    if (data.is_setup_complete === true && pathname === "/setup") {
+      console.log("[Middleware] Setup complete, redirecting from /setup to /dashboard");
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
     const response = NextResponse.next();
     return response;
   } catch (e) {
@@ -42,5 +60,11 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/customers/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/customers/:path*",
+    "/setup",
+    "/favorites/:path*",
+    "/prompts/:path*",
+  ],
 };
