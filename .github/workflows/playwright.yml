@@ -77,6 +77,7 @@ jobs:
     - run: uv run bash scripts/generate-client.sh
       env:
         VIRTUAL_ENV: backend/.venv
+        APP_SYMMETRIC_ENCRYPTION_KEY: 'Buhzb09HgEg-4C7oUsZqykAH_-yfXEONu9sogno3a2s='
     - name: Install Doppler CLI
       uses: dopplerhq/cli-action@v3
     - name: Setup Doppler and env
