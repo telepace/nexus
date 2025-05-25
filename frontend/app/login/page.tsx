@@ -38,7 +38,7 @@ function CallbackUrlHandler({
   setExtensionCallback: (url: string | null) => void;
 }) {
   const searchParams = useSearchParams();
-  const callbackUrlFromQuery = searchParams.get("callbackUrl") || "/dashboard";
+  const callbackUrlFromQuery = searchParams.get("callbackUrl") || "/setup";
   const extensionCallbackUrl = searchParams.get("extension_callback");
 
   useEffect(() => {
@@ -54,8 +54,14 @@ function CallbackUrlHandler({
   return null;
 }
 
-export default function LoginPage() {
+// Component that handles auth redirect with Suspense
+function AuthRedirectHandler() {
   useAuthRedirect(); // Handles redirection if user is already authenticated
+  return null;
+}
+
+// Main login content component
+function LoginContent() {
   const { login, user, isLoading } = useAuth();
   const router = useRouter();
   const [callbackUrl, setCallbackUrl] = useState("/setup");
@@ -331,5 +337,17 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <>
+      {/* Wrap useSearchParams usage in Suspense */}
+      <Suspense fallback={null}>
+        <AuthRedirectHandler />
+      </Suspense>
+      <LoginContent />
+    </>
   );
 }

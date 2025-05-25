@@ -33,6 +33,51 @@ export type Body_login_login_access_token = {
     client_secret?: (string | null);
 };
 
+export type CompletionRequest = {
+    model?: (string | null);
+    messages: Array<LLMMessage>;
+    temperature?: (number | null);
+    max_tokens?: (number | null);
+    stream?: (boolean | null);
+    top_p?: (number | null);
+    stop?: (string | Array<(string)> | null);
+    presence_penalty?: (number | null);
+    frequency_penalty?: (number | null);
+    logit_bias?: ({
+    [key: string]: unknown;
+} | null);
+    user?: (string | null);
+    metadata?: ({
+    [key: string]: unknown;
+} | null);
+    api_key?: (string | null);
+};
+
+export type EmbeddingData = {
+    object: string;
+    embedding: Array<(number)>;
+    index: number;
+};
+
+export type EmbeddingRequest = {
+    input: (string | Array<(string)>);
+    model: string;
+    user?: (string | null);
+    api_key?: (string | null);
+};
+
+export type EmbeddingResponse = {
+    object: string;
+    data: Array<EmbeddingData>;
+    model: string;
+    usage: EmbeddingUsage;
+};
+
+export type EmbeddingUsage = {
+    prompt_tokens: number;
+    total_tokens: number;
+};
+
 export type GoogleCallbackRequest = {
     token: string;
     user_info: {
@@ -58,6 +103,11 @@ export type ItemCreate = {
 export type ItemUpdate = {
     title?: (string | null);
     description?: (string | null);
+};
+
+export type LLMMessage = {
+    role: string;
+    content: string;
 };
 
 export type Message = {
@@ -199,6 +249,7 @@ export type UserCreate = {
     is_superuser?: boolean;
     full_name?: (string | null);
     avatar_url?: (string | null);
+    is_setup_complete?: boolean;
     password: string;
 };
 
@@ -229,6 +280,7 @@ export type UserUpdate = {
     is_superuser?: boolean;
     full_name?: (string | null);
     avatar_url?: (string | null);
+    is_setup_complete?: boolean;
     password?: (string | null);
 };
 
@@ -299,6 +351,18 @@ export type ItemsDeleteItemData = {
 };
 
 export type ItemsDeleteItemResponse = (ApiResponse_NoneType_);
+
+export type LlmCreateCompletionData = {
+    requestBody: CompletionRequest;
+};
+
+export type LlmCreateCompletionResponse = (unknown);
+
+export type LlmCreateEmbeddingData = {
+    requestBody: EmbeddingRequest;
+};
+
+export type LlmCreateEmbeddingResponse = (EmbeddingResponse);
 
 export type LoginLoginAccessTokenData = {
     formData: Body_login_login_access_token;

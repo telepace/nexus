@@ -33,8 +33,14 @@ function SearchParamsHandler({
   return null;
 }
 
-export default function Page() {
+// Component that handles auth redirect with Suspense
+function AuthRedirectHandler() {
   useAuthRedirect(); // Handles redirection if user is already authenticated
+  return null;
+}
+
+// Main register content component
+function RegisterContent() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -234,5 +240,17 @@ export default function Page() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <>
+      {/* Wrap useSearchParams usage in Suspense */}
+      <Suspense fallback={null}>
+        <AuthRedirectHandler />
+      </Suspense>
+      <RegisterContent />
+    </>
   );
 }
