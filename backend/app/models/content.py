@@ -3,13 +3,14 @@ from datetime import datetime
 
 from sqlalchemy import CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import foreign
 from sqlmodel import JSON, Column, Field, Relationship, SQLModel
 
 
 class ContentItemBase(SQLModel):
     """Base model for content items, containing common fields."""
 
-    user_id: uuid.UUID = Field(foreign_key="user.id", index=True)
+    user_id: uuid.UUID = Field(index=True)
     type: str = Field(
         sa_column_args=[
             CheckConstraint("type IN ('url', 'pdf', 'docx', 'text', 'plugin')")
@@ -47,15 +48,34 @@ class ContentItem(ContentItemBase, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
 
-    assets: list["ContentAsset"] = Relationship(back_populates="content_item")
-    processing_jobs: list["ProcessingJob"] = Relationship(back_populates="content_item")
+    assets: list["ContentAsset"] = Relationship(
+        back_populates="content_item",
+        sa_relationship_kwargs={
+            "primaryjoin": "ContentItem.id == foreign(ContentAsset.content_item_id)"
+        }
+    )
+    processing_jobs: list["ProcessingJob"] = Relationship(
+        back_populates="content_item",
+        sa_relationship_kwargs={
+            "primaryjoin": "ContentItem.id == foreign(ProcessingJob.content_item_id)"
+        }
+    )
     ai_conversations: list["AIConversation"] = Relationship(
-        back_populates="content_item"
+        back_populates="content_item",
+        sa_relationship_kwargs={
+            "primaryjoin": "ContentItem.id == foreign(AIConversation.content_item_id)"
+        }
+    )
+    chunks: list["ContentChunk"] = Relationship(
+        back_populates="content_item",
+        sa_relationship_kwargs={
+            "primaryjoin": "ContentItem.id == foreign(ContentChunk.content_item_id)"
+        }
     )
 
 
 class ContentAssetBase(SQLModel):
-    content_item_id: uuid.UUID = Field(foreign_key="contentitem.id", index=True)
+    content_item_id: uuid.UUID = Field(index=True)
     type: str = Field(
         sa_column_args=[
             CheckConstraint(
@@ -87,13 +107,18 @@ class ContentAsset(ContentAssetBase, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
 
-    content_item: ContentItem | None = Relationship(back_populates="assets")
+    content_item: ContentItem | None = Relationship(
+        back_populates="assets",
+        sa_relationship_kwargs={
+            "primaryjoin": "foreign(ContentAsset.content_item_id) == ContentItem.id"
+        }
+    )
 
 
 class ProcessingJobBase(SQLModel):
     """Base model for tracking processing jobs performed on content items."""
 
-    content_item_id: uuid.UUID = Field(foreign_key="contentitem.id", index=True)
+    content_item_id: uuid.UUID = Field(index=True)
     processor_name: str = Field(
         max_length=100, index=True
     )  # e.g., 'summarizer', 'vectorizer', 'ocr'
@@ -125,15 +150,20 @@ class ProcessingJob(ProcessingJobBase, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
 
-    content_item: ContentItem | None = Relationship(back_populates="processing_jobs")
+    content_item: ContentItem | None = Relationship(
+        back_populates="processing_jobs",
+        sa_relationship_kwargs={
+            "primaryjoin": "foreign(ProcessingJob.content_item_id) == ContentItem.id"
+        }
+    )
 
 
 class AIConversationBase(SQLModel):
     """Base model for AI conversations, which may or may not be linked to a specific ContentItem."""
 
-    user_id: uuid.UUID = Field(foreign_key="user.id", index=True)
+    user_id: uuid.UUID = Field(index=True)
     content_item_id: uuid.UUID | None = Field(
-        default=None, foreign_key="contentitem.id", index=True
+        default=None, index=True
     )  # Optional link to a content item
     title: str | None = Field(default=None, max_length=255)
     ai_model_name: str = Field(max_length=100)  # e.g., 'gpt-4', 'claude-2'
@@ -155,7 +185,45 @@ class AIConversation(AIConversationBase, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
 
-    content_item: ContentItem | None = Relationship(back_populates="ai_conversations")
+    content_item: ContentItem | None = Relationship(
+        back_populates="ai_conversations",
+        sa_relationship_kwargs={
+            "primaryjoin": "foreign(AIConversation.content_item_id) == ContentItem.id"
+        }
+    )
+
+
+class ContentChunkBase(SQLModel):
+    """Base model for content chunks, storing segmented content for efficient rendering."""
+    
+    content_item_id: uuid.UUID = Field(index=True)
+    chunk_index: int = Field(index=True)  # Order of the chunk in the content
+    chunk_content: str = Field()  # The actual content segment
+    chunk_type: str = Field(
+        default="paragraph",
+        sa_column_args=[
+            CheckConstraint("chunk_type IN ('heading', 'paragraph', 'code_block', 'table', 'list')")
+        ],
+        max_length=50,
+        index=True,
+    )
+    word_count: int = Field(default=0)  # Number of words in this chunk
+    char_count: int = Field(default=0)  # Number of characters in this chunk
+    meta_info: str | None = Field(default=None, sa_column=Column(JSON))  # Additional metadata
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+
+
+class ContentChunk(ContentChunkBase, table=True):
+    """Represents a segment of content for efficient loading and rendering."""
+    
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
+    
+    content_item: ContentItem | None = Relationship(
+        back_populates="chunks",
+        sa_relationship_kwargs={
+            "primaryjoin": "foreign(ContentChunk.content_item_id) == ContentItem.id"
+        }
+    )
 
 
 # Ensure User model is defined elsewhere and imported if needed for relationships

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, memo, lazy, Suspense } from "react";
+import { useEffect, useState, memo, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
 import { LLMAnalysisPanel } from "@/components/ui/llm-analysis-panel";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
 
 interface ContentDetail {
   id: string;
@@ -33,38 +35,79 @@ interface ContentDetail {
 }
 
 // 懒加载的原始内容组件
-const LazyOriginalContent = memo(({ 
-  content, 
-  sourceUri 
-}: { 
-  content: ContentDetail; 
-  sourceUri?: string | null; 
-}) => {
-  const [isLoading, setIsLoading] = useState(true);
+const LazyOriginalContent = memo(
+  ({
+    content,
+    sourceUri,
+  }: {
+    content: ContentDetail;
+    sourceUri?: string | null;
+  }) => {
+    const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // 模拟加载延迟，避免立即渲染重型内容
-    const timer = setTimeout(() => setIsLoading(false), 100);
-    return () => clearTimeout(timer);
-  }, []);
+    useEffect(() => {
+      // 模拟加载延迟，避免立即渲染重型内容
+      const timer = setTimeout(() => setIsLoading(false), 100);
+      return () => clearTimeout(timer);
+    }, []);
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <p className="text-sm">Loading original content...</p>
+    if (isLoading) {
+      return (
+        <div className="flex justify-center items-center h-64">
+          <div className="flex items-center space-x-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <p className="text-sm">Loading original content...</p>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (content.type === "pdf" && sourceUri) {
-    return (
-      <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between mb-4 p-2 bg-muted rounded">
-          <span className="text-sm font-medium">PDF Document</span>
-          <div className="flex gap-2">
+    if (content.type === "pdf" && sourceUri) {
+      return (
+        <div className="h-full flex flex-col">
+          <div className="flex items-center justify-between mb-4 p-2 bg-muted rounded">
+            <span className="text-sm font-medium">PDF Document</span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(sourceUri, "_blank")}
+              >
+                <ExternalLink className="h-4 w-4 mr-1" />
+                Open Original
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const link = document.createElement("a");
+                  link.href = sourceUri;
+                  link.download = content.title || "document.pdf";
+                  link.click();
+                }}
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Download
+              </Button>
+            </div>
+          </div>
+          <div className="flex-1 border rounded">
+            <iframe
+              src={`${sourceUri}#toolbar=1&navpanes=1&scrollbar=1`}
+              className="w-full h-full"
+              title="PDF Viewer"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      );
+    }
+
+    if (content.type === "url" && sourceUri) {
+      return (
+        <div className="h-full flex flex-col">
+          <div className="flex items-center justify-between mb-4 p-2 bg-muted rounded">
+            <span className="text-sm font-medium">Web Page</span>
             <Button
               variant="outline"
               size="sm"
@@ -73,126 +116,168 @@ const LazyOriginalContent = memo(({
               <ExternalLink className="h-4 w-4 mr-1" />
               Open Original
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const link = document.createElement("a");
-                link.href = sourceUri;
-                link.download = content.title || "document.pdf";
-                link.click();
-              }}
-            >
-              <Download className="h-4 w-4 mr-1" />
-              Download
-            </Button>
+          </div>
+          <div className="flex-1 border rounded">
+            <iframe
+              src={sourceUri}
+              className="w-full h-full"
+              title="Web Page"
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              loading="lazy"
+            />
           </div>
         </div>
-        <div className="flex-1 border rounded">
-          <iframe
-            src={`${sourceUri}#toolbar=1&navpanes=1&scrollbar=1`}
-            className="w-full h-full"
-            title="PDF Viewer"
-            loading="lazy"
-          />
-        </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (content.type === "url" && sourceUri) {
+    // 默认文本渲染
     return (
-      <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between mb-4 p-2 bg-muted rounded">
-          <span className="text-sm font-medium">Web Page</span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open(sourceUri, "_blank")}
-          >
-            <ExternalLink className="h-4 w-4 mr-1" />
-            Open Original
-          </Button>
-        </div>
-        <div className="flex-1 border rounded">
-          <iframe
-            src={sourceUri}
-            className="w-full h-full"
-            title="Web Page"
-            sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-            loading="lazy"
-          />
+      <div className="prose prose-sm max-w-none dark:prose-invert h-full overflow-auto">
+        <div className="whitespace-pre-wrap text-sm leading-relaxed">
+          {content.content_text || "Original content not available"}
         </div>
       </div>
     );
-  }
-
-  // 默认文本渲染
-  return (
-    <div className="prose prose-sm max-w-none dark:prose-invert h-full overflow-auto">
-      <div className="whitespace-pre-wrap text-sm leading-relaxed">
-        {content.content_text || "Original content not available"}
-      </div>
-    </div>
-  );
-});
+  },
+);
 
 LazyOriginalContent.displayName = "LazyOriginalContent";
 
 // 优化的内容渲染器
-const ContentRenderer = memo(({
-  content,
-  type,
-  sourceUri,
-}: {
-  content: ContentDetail;
-  type: "original" | "processed";
-  sourceUri?: string | null;
-}) => {
-  if (type === "original") {
-    return (
-      <Suspense
-        fallback={
-          <div className="flex justify-center items-center h-64">
-            <div className="flex items-center space-x-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <p className="text-sm">Loading original content...</p>
+const ContentRenderer = memo(
+  ({
+    content,
+    type,
+    sourceUri,
+    markdownContent,
+    contentId,
+  }: {
+    content: ContentDetail;
+    type: "original" | "processed";
+    sourceUri?: string | null;
+    markdownContent?: string | null;
+    contentId?: string;
+  }) => {
+    if (type === "original") {
+      return (
+        <Suspense
+          fallback={
+            <div className="flex justify-center items-center h-64">
+              <div className="flex items-center space-x-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <p className="text-sm">Loading original content...</p>
+              </div>
+            </div>
+          }
+        >
+          <LazyOriginalContent content={content} sourceUri={sourceUri} />
+        </Suspense>
+      );
+    }
+
+    // Processed content - 优先使用虚拟滚动渲染
+    if (type === "processed" && contentId && content.processing_status === "completed") {
+      return (
+        <div className="relative h-full">
+          {/* 渲染模式切换 */}
+          <div className="absolute top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur-sm border-b">
+            <div className="flex items-center justify-between p-3">
+              <span className="text-sm font-medium">Processed Content</span>
+              <span className="text-xs text-muted-foreground">
+                Optimized rendering enabled
+              </span>
             </div>
           </div>
-        }
-      >
-        <LazyOriginalContent content={content} sourceUri={sourceUri} />
-      </Suspense>
-    );
-  }
+          
+          {/* 虚拟滚动渲染器 - 使用绝对定位 */}
+          <div className="absolute top-[60px] left-0 right-0 bottom-0">
+            <VirtualScrollRenderer 
+              contentId={contentId}
+              className="w-full h-full"
+              chunkSize={15}
+              maxVisibleChunks={50}
+            />
+          </div>
+        </div>
+      );
+    }
 
-  // Processed content - 立即渲染
-  return (
-    <div className="prose prose-sm max-w-none dark:prose-invert h-full overflow-auto">
-      <div className="whitespace-pre-wrap text-sm leading-relaxed">
-        {content.processed_content || "Processed content not available"}
+    // 回退到传统渲染（向后兼容）
+    const contentToRender = markdownContent || content.processed_content || content.content_text;
+    
+    if (!contentToRender) {
+      return (
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+            <p className="text-sm text-gray-600">
+              {content.processing_status === 'completed' 
+                ? 'Processed content not available' 
+                : `Content is being processed. Status: ${content.processing_status}`
+              }
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // 传统 markdown 渲染（作为回退）
+    return (
+      <div className="relative h-full">
+        <div className="absolute top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur-sm border-b">
+          <div className="flex items-center justify-between p-3">
+            <span className="text-sm font-medium">Processed Content</span>
+            <span className="text-xs text-muted-foreground">
+              Legacy rendering mode
+            </span>
+          </div>
+        </div>
+        
+        <div className="absolute top-[60px] left-0 right-0 bottom-0 overflow-auto">
+          {markdownContent || (contentToRender.includes('#') || contentToRender.includes('**')) ? (
+            <MarkdownRenderer 
+              content={contentToRender}
+              className="prose prose-sm max-w-none dark:prose-invert p-4"
+            />
+          ) : (
+            <div className="prose prose-sm max-w-none dark:prose-invert p-4">
+              <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                {contentToRender}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  },
+);
 
 ContentRenderer.displayName = "ContentRenderer";
 
 interface ReaderContentProps {
-  contentId: string;
+  params: Promise<{ id: string }>;
 }
 
-export const ReaderContent = ({ contentId }: ReaderContentProps) => {
+export const ReaderContent = ({ params }: ReaderContentProps) => {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
 
   const [content, setContent] = useState<ContentDetail | null>(null);
+  const [markdownContent, setMarkdownContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("processed"); // 默认选择processed
+  const [contentId, setContentId] = useState<string | null>(null);
+
+  // 解析参数
+  useEffect(() => {
+    params.then(({ id }) => {
+      setContentId(id);
+    });
+  }, [params]);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || !contentId) return;
 
     if (!user) {
       router.push("/login");
@@ -237,6 +322,31 @@ export const ReaderContent = ({ contentId }: ReaderContentProps) => {
 
         const contentData = await contentResponse.json();
         setContent(contentData);
+
+        // 如果内容已处理完成，尝试获取 markdown 内容
+        if (contentData.processing_status === 'completed') {
+          try {
+            const markdownResponse = await fetch(
+              `${apiUrl}/api/v1/content/${contentId}/markdown`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+              },
+            );
+
+            if (markdownResponse.ok) {
+              const markdownData = await markdownResponse.json();
+              setMarkdownContent(markdownData.markdown_content);
+            } else {
+              console.warn('Failed to fetch markdown content:', markdownResponse.status);
+            }
+          } catch (markdownError) {
+            console.warn('Error fetching markdown content:', markdownError);
+            // 不设置错误，因为这不是致命错误
+          }
+        }
       } catch (e: unknown) {
         console.error("Error fetching content:", e);
         if (e instanceof Error) {
@@ -252,7 +362,7 @@ export const ReaderContent = ({ contentId }: ReaderContentProps) => {
     fetchContentDetail();
   }, [contentId, user, authLoading, router]);
 
-  if (authLoading || loading) {
+  if (authLoading || loading || !contentId) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="flex items-center space-x-2">
@@ -286,9 +396,9 @@ export const ReaderContent = ({ contentId }: ReaderContentProps) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 h-screen overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-6 py-4 border-b">
         <div className="flex items-center space-x-4">
           <Button
             variant="ghost"
@@ -322,15 +432,10 @@ export const ReaderContent = ({ contentId }: ReaderContentProps) => {
 
       {/* Main Content */}
       <div
-        className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]"
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-140px)] px-6"
         data-testid="reader-layout"
       >
-        {/* Left Panel - LLM Analysis */}
-        <div className="lg:col-span-1" data-testid="llm-panel">
-          <LLMAnalysisPanel contentId={contentId} />
-        </div>
-
-        {/* Right Panel - Content Reading Area */}
+        {/* Left Panel - Content Reading Area */}
         <div className="lg:col-span-2 space-y-4" data-testid="content-panel">
           <Card className="h-full flex flex-col">
             <CardHeader className="pb-3">
@@ -339,7 +444,7 @@ export const ReaderContent = ({ contentId }: ReaderContentProps) => {
                 Content
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden">
+            <CardContent className="flex-1">
               <Tabs
                 value={activeTab}
                 onValueChange={setActiveTab}
@@ -352,26 +457,37 @@ export const ReaderContent = ({ contentId }: ReaderContentProps) => {
 
                 <TabsContent
                   value="processed"
-                  className="flex-1 mt-4 overflow-hidden"
+                  className="flex-1 mt-4"
                 >
-                  <ContentRenderer content={content} type="processed" />
+                  <ContentRenderer 
+                    content={content} 
+                    type="processed" 
+                    markdownContent={markdownContent}
+                    contentId={contentId}
+                  />
                 </TabsContent>
 
                 <TabsContent
                   value="original"
-                  className="flex-1 mt-4 overflow-hidden"
+                  className="flex-1 mt-4"
                 >
                   <ContentRenderer
                     content={content}
                     type="original"
                     sourceUri={content.source_uri}
+                    markdownContent={markdownContent}
                   />
                 </TabsContent>
               </Tabs>
             </CardContent>
           </Card>
         </div>
+
+        {/* Right Panel - LLM Analysis */}
+        <div className="lg:col-span-1" data-testid="llm-panel">
+          <LLMAnalysisPanel contentId={contentId} />
+        </div>
       </div>
     </div>
   );
-}; 
+};

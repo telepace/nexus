@@ -191,6 +191,7 @@ jest.mock("next/navigation", () => ({
   usePathname() {
     return "/";
   },
+  redirect: jest.fn(),
 }));
 
 // Add fetch mock for tests
@@ -386,3 +387,16 @@ afterEach(() => {
   delete (global as any).mockSearchParams;
   delete (global as any).mockPathname;
 });
+
+// Mock react-markdown and related packages
+jest.mock('react-markdown', () => {
+  const React = require('react')
+  return function ReactMarkdown({ children }: { children: string }) {
+    return React.createElement('div', { 'data-testid': 'react-markdown' }, children)
+  }
+})
+
+jest.mock('remark-gfm', () => () => {})
+jest.mock('remark-breaks', () => () => {})
+jest.mock('rehype-highlight', () => () => {})
+jest.mock('rehype-raw', () => () => {})

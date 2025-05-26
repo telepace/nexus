@@ -91,5 +91,29 @@ class LocalStorageService(StorageService):
         Returns:
             bool: 文件存在返回True，否则返回False
         """
-        full_path = os.path.join(self.base_dir, file_path)
-        return os.path.exists(full_path) and os.path.isfile(full_path)
+        target_path = os.path.join(self.base_dir, file_path)
+        return os.path.exists(target_path)
+
+    def download_file(self, file_path: str) -> bytes:
+        """从本地存储下载文件
+
+        Args:
+            file_path: 相对文件路径
+
+        Returns:
+            bytes: 文件内容
+
+        Raises:
+            FileNotFoundError: 如果文件不存在
+            Exception: 其他读取错误
+        """
+        target_path = os.path.join(self.base_dir, file_path)
+        
+        if not os.path.exists(target_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+        
+        try:
+            with open(target_path, "rb") as f:
+                return f.read()
+        except Exception as e:
+            raise Exception(f"Failed to read file {file_path}: {str(e)}")

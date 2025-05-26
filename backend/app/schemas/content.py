@@ -11,12 +11,12 @@ class ContentItemBaseSchema(SQLModel):
     source_uri: str | None = None
     title: str | None = None
     summary: str | None = None
-    user_id: uuid.UUID  # Assuming user_id is always required for a content item
 
 
 class ContentItemCreate(ContentItemBaseSchema):
     # Add any fields specific to creation that are not in base or are optional in base but required here
     content_text: str | None = None
+    # user_id is set from authentication, not from client request
 
 
 class ContentItemUpdate(SQLModel):
@@ -32,6 +32,7 @@ class ContentItemUpdate(SQLModel):
 
 class ContentItemPublic(ContentItemBaseSchema):
     id: uuid.UUID
+    user_id: uuid.UUID  # Include user_id in public response for reference
     processing_status: str
     content_text: str | None = None
     created_at: datetime

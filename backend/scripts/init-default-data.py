@@ -40,6 +40,8 @@ def main() -> None:
             "📝 基础提示词: 4个 (总结全文、提取核心要点、用大白话解释、生成讨论问题)"
         )
         logger.info("🏷️  基础标签: 4个 (文章分析、内容理解、学习辅助、思维拓展)")
+        logger.info("📄 测试内容: 3个 (PDF论文、维基百科文章、技术文档)")
+        logger.info("💬 测试对话: 2个 (内容相关对话、独立咨询对话)")
 
     except Exception as e:
         logger.error(f"❌ 初始化失败: {e}")

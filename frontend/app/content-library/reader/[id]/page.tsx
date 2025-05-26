@@ -9,11 +9,9 @@ interface ReaderPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function ReaderPage({ params }: ReaderPageProps) {
-  const { id } = await params;
-  
+export default function ReaderPage({ params }: ReaderPageProps) {
   return (
-    <MainLayout pageTitle="Reader">
+    <MainLayout>
       <Suspense
         fallback={
           <div className="flex justify-center items-center h-64">
@@ -24,7 +22,7 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
           </div>
         }
       >
-        <ReaderContent contentId={id} />
+        <ReaderContent params={params} />
       </Suspense>
     </MainLayout>
   );

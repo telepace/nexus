@@ -26,33 +26,33 @@ interface LLMAnalysisCardProps {
   onCopy?: (content: string) => void;
 }
 
-const getAnalysisIcon = (type: LLMAnalysis['type']) => {
+const getAnalysisIcon = (type: LLMAnalysis["type"]) => {
   switch (type) {
-    case 'summary':
-      return '📝';
-    case 'key_points':
-      return '🎯';
-    case 'questions':
-      return '❓';
-    case 'insights':
-      return '💡';
+    case "summary":
+      return "📝";
+    case "key_points":
+      return "🎯";
+    case "questions":
+      return "❓";
+    case "insights":
+      return "💡";
     default:
-      return '🤖';
+      return "🤖";
   }
 };
 
-const getAnalysisColor = (type: LLMAnalysis['type']) => {
+const getAnalysisColor = (type: LLMAnalysis["type"]) => {
   switch (type) {
-    case 'summary':
-      return 'bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800';
-    case 'key_points':
-      return 'bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800';
-    case 'questions':
-      return 'bg-purple-50 border-purple-200 dark:bg-purple-950 dark:border-purple-800';
-    case 'insights':
-      return 'bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800';
+    case "summary":
+      return "bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800";
+    case "key_points":
+      return "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800";
+    case "questions":
+      return "bg-purple-50 border-purple-200 dark:bg-purple-950 dark:border-purple-800";
+    case "insights":
+      return "bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800";
     default:
-      return 'bg-gray-50 border-gray-200 dark:bg-gray-950 dark:border-gray-800';
+      return "bg-gray-50 border-gray-200 dark:bg-gray-950 dark:border-gray-800";
   }
 };
 
@@ -76,7 +76,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
       className={cn(
         "transition-all duration-200 hover:shadow-md",
         getAnalysisColor(analysis.type),
-        analysis.isExpanded ? "shadow-sm" : ""
+        analysis.isExpanded ? "shadow-sm" : "",
       )}
     >
       <CardHeader className="pb-3">
@@ -95,12 +95,12 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
             <span className="text-lg">{getAnalysisIcon(analysis.type)}</span>
             <span className="font-medium text-sm">{analysis.title}</span>
           </Button>
-          
+
           <div className="flex items-center gap-1">
             {analysis.isLoading && (
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             )}
-            
+
             {!analysis.isLoading && !analysis.error && (
               <>
                 <Button
@@ -112,7 +112,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
                 >
                   <Copy className="h-3 w-3" />
                 </Button>
-                
+
                 {onRegenerate && (
                   <Button
                     variant="ghost"
@@ -126,7 +126,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
                 )}
               </>
             )}
-            
+
             <Button
               variant="ghost"
               size="sm"
@@ -138,7 +138,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
             </Button>
           </div>
         </div>
-        
+
         {/* 时间戳和状态 */}
         <div className="flex items-center gap-2 mt-1">
           <span className="text-xs text-muted-foreground">
@@ -147,7 +147,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
               locale: zhCN,
             })}
           </span>
-          
+
           {analysis.error && (
             <Badge variant="destructive" className="text-xs">
               <AlertCircle className="h-3 w-3 mr-1" />
@@ -192,7 +192,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
                   {analysis.content}
                 </div>
               </div>
-              
+
               {/* 使用的prompt */}
               {analysis.prompt && (
                 <details className="mt-4">
@@ -210,4 +210,4 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
       )}
     </Card>
   );
-}; 
+};

@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState, useRef, useCallback, useEffect } from "react";
+import { FC, useState, useRef, useCallback, useEffect, useMemo } from "react";
 import {
   X,
   Upload,
@@ -24,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
+import { useAuth, getCookie } from "@/lib/auth";
 
 interface AddContentModalProps {
   open: boolean;
@@ -56,10 +56,13 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Move useAuth to component top level
+  const { user } = useAuth();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 检测URL的正则表达式
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const urlRegex = useMemo(() => /(https?:\/\/[^\s]+)/g, []);
 
   /**
    * Checks if the provided text is a valid URL.
@@ -76,37 +79,40 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   /**
    * 从文本中提取所有URL
    */
-  const extractUrls = (text: string): string[] => {
-    // 支持多种分割符：空格、分号、逗号、换行符
-    const separators = /[\s;,\n\r]+/;
-    const parts = text.split(separators).filter(part => part.trim());
-    
-    const urls: string[] = [];
-    
-    // 检查每个部分是否为有效URL
-    parts.forEach(part => {
-      const trimmed = part.trim();
-      if (trimmed && isURL(trimmed)) {
-        urls.push(trimmed);
-      }
-    });
+  const extractUrls = useCallback(
+    (text: string): string[] => {
+      // 支持多种分割符：空格、分号、逗号、换行符
+      const separators = /[\s;,\n\r]+/;
+      const parts = text.split(separators).filter((part) => part.trim());
 
-    // 同时使用正则表达式提取URL（防止遗漏）
-    const regexMatches = text.match(urlRegex) || [];
-    regexMatches.forEach(url => {
-      if (!urls.includes(url)) {
-        urls.push(url);
-      }
-    });
+      const urls: string[] = [];
 
-    return urls;
-  };
+      // 检查每个部分是否为有效URL
+      parts.forEach((part) => {
+        const trimmed = part.trim();
+        if (trimmed && isURL(trimmed)) {
+          urls.push(trimmed);
+        }
+      });
+
+      // 同时使用正则表达式提取URL（防止遗漏）
+      const regexMatches = text.match(urlRegex) || [];
+      regexMatches.forEach((url) => {
+        if (!urls.includes(url)) {
+          urls.push(url);
+        }
+      });
+
+      return urls;
+    },
+    [urlRegex],
+  );
 
   // 处理内容变化
   const handleContentChange = useCallback(
     (value: string) => {
       setContent(value);
-      
+
       if (!value.trim()) {
         setContentType(null);
         setDetectedUrls([]);
@@ -123,7 +129,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
         setContentType("text");
       }
     },
-    [contentType],
+    [contentType, extractUrls],
   );
 
   // 处理粘贴事件
@@ -152,7 +158,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
         const filesArray = Array.from(e.target.files);
-        setSelectedFiles(prev => [...prev, ...filesArray]);
+        setSelectedFiles((prev) => [...prev, ...filesArray]);
         setContentType("file");
       }
     },
@@ -164,7 +170,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const filesArray = Array.from(e.dataTransfer.files);
-      setSelectedFiles(prev => [...prev, ...filesArray]);
+      setSelectedFiles((prev) => [...prev, ...filesArray]);
       setContentType("file");
     }
   }, []);
@@ -175,7 +181,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
   // 移除文件
   const removeFile = useCallback((index: number) => {
-    setSelectedFiles(prev => {
+    setSelectedFiles((prev) => {
       const newFiles = prev.filter((_, i) => i !== index);
       if (newFiles.length === 0) {
         setContentType(null);
@@ -186,7 +192,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
   // 移除URL
   const removeUrl = useCallback((index: number) => {
-    setDetectedUrls(prev => {
+    setDetectedUrls((prev) => {
       const newUrls = prev.filter((_, i) => i !== index);
       if (newUrls.length === 0) {
         setContentType(null);
@@ -209,31 +215,124 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   /**
    * Handles the addition of content through an asynchronous process.
    *
-   * This function sets loading state, simulates an API request to add content,
-   * and handles errors by setting an error message. It also resets the form and closes
-   * a modal window upon successful completion or failure.
+   * This function creates content items by calling the backend API,
+   * handles different content types (text, URL, file), and manages
+   * error states and loading indicators.
    */
   const handleAddContent = async () => {
     setIsLoading(true);
     setError("");
 
     try {
-      // 此处实现添加内容的逻辑
-      console.log("Adding content:", {
-        type: contentType,
-        content: contentType === "file" ? selectedFiles : contentType === "url" ? detectedUrls : content,
-        urls: detectedUrls,
-        files: selectedFiles,
-      });
+      // Get token from user object or cookie (user is now available from component level)
+      const token = user?.token || getCookie("accessToken");
 
-      // 模拟API请求
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!token) {
+        setError("请先登录后再添加内容。");
+        return;
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+      if (contentType === "url" && detectedUrls.length > 0) {
+        // 处理URL类型内容
+        for (const url of detectedUrls) {
+          const contentData = {
+            type: "url",
+            source_uri: url,
+            title: title || `网页内容 - ${new URL(url).hostname}`,
+            summary: `从 ${url} 获取的网页内容`,
+          };
+
+          const response = await fetch(`${apiUrl}/api/v1/content/create`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(contentData),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `创建内容失败: ${response.status}`);
+          }
+
+          const createdItem = await response.json();
+          console.log("URL内容创建成功:", createdItem);
+
+          // 自动开始处理
+          const processResponse = await fetch(`${apiUrl}/api/v1/content/process/${createdItem.id || createdItem.data?.id}`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (processResponse.ok) {
+            console.log("内容处理已开始");
+          }
+        }
+      } else if (contentType === "text" && content.trim()) {
+        // 处理文本类型内容
+        const contentData = {
+          type: "text",
+          content_text: content,
+          title: title || "文本内容",
+          summary: content.length > 100 ? content.substring(0, 100) + "..." : content,
+        };
+
+        const response = await fetch(`${apiUrl}/api/v1/content/create`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(contentData),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `创建内容失败: ${response.status}`);
+        }
+
+        const createdItem = await response.json();
+        console.log("文本内容创建成功:", createdItem);
+
+        // 自动开始处理
+        const processResponse = await fetch(`${apiUrl}/api/v1/content/process/${createdItem.id || createdItem.data?.id}`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (processResponse.ok) {
+          console.log("内容处理已开始");
+        }
+      } else if (contentType === "file" && selectedFiles.length > 0) {
+        // 处理文件类型内容（暂时显示提示信息）
+        setError("文件上传功能正在开发中，敬请期待。");
+        return;
+      } else {
+        setError("请输入有效的内容。");
+        return;
+      }
 
       // 清空表单并关闭模态窗口
       resetForm();
       onClose();
-    } catch {
-      setError("添加内容时发生错误，请重试。");
+      
+      // 可以在这里触发页面刷新或者通知父组件更新内容列表
+      if (typeof window !== 'undefined') {
+        // 简单的页面刷新，实际项目中可以使用更优雅的状态管理
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("添加内容时发生错误:", error);
+      setError(error instanceof Error ? error.message : "添加内容时发生错误，请重试。");
     } finally {
       setIsLoading(false);
     }
@@ -333,7 +432,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                   <AlertCircle className="h-4 w-4 mr-2" />
                   <span>已识别 {detectedUrls.length} 个链接</span>
                 </div>
-                
+
                 {/* 显示检测到的URL */}
                 {detectedUrls.length > 0 && (
                   <div className="space-y-2">
@@ -425,7 +524,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                         <div className="flex items-center min-w-0 flex-1">
                           <FileText className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
-                            <span className="truncate text-sm block">{file.name}</span>
+                            <span className="truncate text-sm block">
+                              {file.name}
+                            </span>
                             <span className="text-xs text-gray-500 dark:text-gray-400">
                               {(file.size / 1024).toFixed(1)} KB
                             </span>
@@ -466,8 +567,12 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
           {/* 支持的格式信息 */}
           <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-            <p><strong>支持格式:</strong> PDF, Markdown, TXT, DOCX, URL, 纯文本</p>
-            <p><strong>链接分隔:</strong> 空格、分号(;)、逗号(,)、换行符</p>
+            <p>
+              <strong>支持格式:</strong> PDF, Markdown, TXT, DOCX, URL, 纯文本
+            </p>
+            <p>
+              <strong>链接分隔:</strong> 空格、分号(;)、逗号(,)、换行符
+            </p>
           </div>
 
           {/* 错误信息 */}
@@ -485,10 +590,17 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleAddContent}
-            disabled={isLoading || (!content && selectedFiles.length === 0 && detectedUrls.length === 0)}
+            disabled={
+              isLoading ||
+              (!content &&
+                selectedFiles.length === 0 &&
+                detectedUrls.length === 0)
+            }
             className="bg-primary hover:bg-primary/90"
           >
-            {isLoading ? "处理中..." : `添加${contentType === "url" ? ` (${detectedUrls.length}个链接)` : contentType === "file" ? ` (${selectedFiles.length}个文件)` : ""}`}
+            {isLoading
+              ? "处理中..."
+              : `添加${contentType === "url" ? ` (${detectedUrls.length}个链接)` : contentType === "file" ? ` (${selectedFiles.length}个文件)` : ""}`}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

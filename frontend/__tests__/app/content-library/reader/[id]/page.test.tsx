@@ -1,12 +1,11 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import ReaderPage from "@/app/content-library/reader/[id]/page";
 import { useAuth } from "@/lib/auth";
 
 // Mock dependencies
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
-  useParams: jest.fn(),
 }));
 
 jest.mock("@/lib/auth", () => ({
@@ -28,10 +27,26 @@ jest.mock("@/components/layout/MainLayout", () => {
   };
 });
 
+// Mock MarkdownRenderer
+jest.mock("@/components/ui/MarkdownRenderer", () => ({
+  MarkdownRenderer: ({ content }: { content: string }) => (
+    <div data-testid="markdown-renderer">{content}</div>
+  ),
+}));
+
+// Mock LLMAnalysisPanel
+jest.mock("@/components/ui/llm-analysis-panel", () => ({
+  LLMAnalysisPanel: ({ contentId }: { contentId: string }) => (
+    <div data-testid="mock-llm-analysis-panel">
+      <div>AI 分析</div>
+      <div>Content ID: {contentId}</div>
+    </div>
+  ),
+}));
+
 const mockPush = jest.fn();
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
-const mockUseParams = useParams as jest.MockedFunction<typeof useParams>;
 
 describe("ReaderPage", () => {
   beforeEach(() => {
@@ -43,10 +58,6 @@ describe("ReaderPage", () => {
       forward: jest.fn(),
       refresh: jest.fn(),
     } as any);
-
-    mockUseParams.mockReturnValue({
-      id: "1",
-    });
 
     mockUseAuth.mockReturnValue({
       user: {
@@ -66,16 +77,30 @@ describe("ReaderPage", () => {
       setCustomToken: jest.fn(),
     });
 
-    // Mock fetch for content details
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: () =>
-        Promise.resolve({
+    // Mock fetch for content details and markdown
+    global.fetch = jest.fn().mockImplementation((url: string) => {
+      if (url.includes('/markdown')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            id: "1",
+            title: "Test Document",
+            markdown_content: "# Test Markdown Content\n\nThis is a test.",
+            processing_status: "completed",
+            created_at: "2024-01-01T00:00:00Z",
+            updated_at: "2024-01-01T00:00:00Z",
+          }),
+        });
+      }
+      
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
           id: "1",
           type: "pdf",
           title: "Test Document",
           summary: "Test summary",
-          content: "Original content text...",
+          content_text: "Original content text...",
           processed_content: "Processed content text...",
           user_id: "1",
           processing_status: "completed",
@@ -83,6 +108,7 @@ describe("ReaderPage", () => {
           updated_at: "2024-01-01T00:00:00Z",
           source_uri: "https://example.com/doc.pdf",
         }),
+      });
     });
   });
 

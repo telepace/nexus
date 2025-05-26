@@ -6,9 +6,10 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, delete
 
 from app.core.config import settings
-from app.core.db import init_db
+from app.core.db import init_db, engine
 from app.main import app
 from app.models import Item, User
+from app.models.content import ContentItem, AIConversation, ProcessingJob, ContentAsset
 from app.tests.utils.test_db import get_test_db_url, setup_test_db, teardown_test_db
 from app.tests.utils.user import authentication_token_from_email
 from app.tests.utils.utils import get_superuser_token_headers
@@ -58,32 +59,32 @@ def db() -> Generator[Session, None, None]:
     Get a database session for testing.
 
     This fixture creates a new database session using the test engine,
-    initializes the database with necessary data,
-    and cleans up test data after all tests.
+    initializes the database with necessary data, and cleans up after tests.
     """
-    # We're using the engine that was set up in setup_test_environmen
-    from app.core.db import engine
-
-    # 确保测试用的超级用户密码为 "telepace"，与测试脚本保持一致
-    original_password = settings.FIRST_SUPERUSER_PASSWORD
-    settings.FIRST_SUPERUSER_PASSWORD = "telepace"
-
-    # 创建测试用的数据库会话
+    # Setup test database
+    setup_test_db()
+    
+    # Create session and initialize database
     with Session(engine) as session:
-        # Get test database URL for proper logging
-        test_db_url = get_test_db_url()
-        init_db(session, test_db_url)
+        # Initialize database with initial data
+        init_db(session)
         yield session
-        # Clean up test data, but don't drop the database ye
-        # (that will happen in teardown_test_db)
-        statement = delete(Item)
-        session.execute(statement)
-        statement = delete(User)
-        session.execute(statement)
+    
+    # Cleanup: Since foreign key constraints have been removed, 
+    # we can clean up tables in any order
+    with Session(engine) as session:
+        # Clean up all test data
+        session.exec(delete(Item))
+        session.exec(delete(User))
+        # Clean up content-related tables
+        session.exec(delete(AIConversation))
+        session.exec(delete(ProcessingJob))
+        session.exec(delete(ContentAsset))
+        session.exec(delete(ContentItem))
         session.commit()
-
-    # 恢复原始密码设置
-    settings.FIRST_SUPERUSER_PASSWORD = original_password
+    
+    # Teardown test database
+    teardown_test_db()
 
 
 @pytest.fixture(scope="module")

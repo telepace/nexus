@@ -232,6 +232,9 @@ class Settings(BaseSettings):
     R2_BUCKET: str | None = None
     R2_PUBLIC_URL: str | None = None
 
+    # Jina AI Configuration
+    JINA_API_KEY: str | None = None
+
     @property
     def google_oauth_redirect_uri(self) -> str:
         """Generate Google OAuth redirect URI pointing to backend API."""

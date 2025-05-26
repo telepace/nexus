@@ -37,7 +37,7 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
 
   // 过滤当前内容的分析
   const contentAnalyses = analyses.filter(
-    (analysis) => analysis.contentId === contentId
+    (analysis) => analysis.contentId === contentId,
   );
 
   // 清理错误状态
@@ -58,7 +58,7 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
         contentId,
         recommendation.prompt,
         recommendation.type,
-        recommendation.name
+        recommendation.name,
       );
     } catch (error) {
       console.error("生成分析失败:", error);
@@ -91,7 +91,7 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
         contentId,
         analysis.prompt,
         analysis.type,
-        analysis.title
+        analysis.title,
       );
     } catch (error) {
       console.error("重新生成分析失败:", error);
@@ -172,4 +172,4 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
       </ScrollArea>
     </div>
   );
-}; 
+};

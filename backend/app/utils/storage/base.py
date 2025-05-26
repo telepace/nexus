@@ -24,6 +24,22 @@ class StorageService(ABC):
         pass
 
     @abstractmethod
+    def download_file(self, file_path: str) -> bytes:
+        """从存储服务下载文件
+
+        Args:
+            file_path: 文件在存储中的路径，包括文件名
+
+        Returns:
+            bytes: 文件内容
+
+        Raises:
+            FileNotFoundError: 如果文件不存在
+            Exception: 其他下载错误
+        """
+        pass
+
+    @abstractmethod
     def get_file_url(self, file_path: str) -> str:
         """获取文件URL
 

@@ -3,7 +3,6 @@
 import { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles } from "lucide-react";
 import { PromptRecommendation } from "@/lib/stores/llm-analysis-store";
 
@@ -33,7 +32,7 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
           <p className="text-sm text-muted-foreground mb-4">
             选择一个分析类型来开始 AI 分析
           </p>
-          
+
           <div className="grid grid-cols-1 gap-2">
             {recommendations.map((recommendation) => (
               <Button
@@ -65,7 +64,7 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
               </Button>
             ))}
           </div>
-          
+
           {isGenerating && (
             <div className="mt-4 p-3 bg-muted/30 rounded-md">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -78,4 +77,4 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
       </CardContent>
     </Card>
   );
-}; 
+};

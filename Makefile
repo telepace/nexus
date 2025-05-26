@@ -392,6 +392,12 @@ backend-init-data:
 	@echo "===========> Initializing default data"
 	@cd $(BACKEND_DIR) && ./scripts/init-default-data.py
 
+## backend-create-test-data: Create additional test data for development and testing
+.PHONY: backend-create-test-data
+backend-create-test-data:
+	@echo "===========> Creating additional test data"
+	@cd $(BACKEND_DIR) && ./scripts/create-test-content.py
+
 ## backend-reinit-data: Backup existing data and reinitialize with defaults (requires confirmation)
 .PHONY: backend-reinit-data
 backend-reinit-data:
