@@ -9,7 +9,7 @@ from app.core.config import settings
 from app.core.db import init_db
 from app.main import app
 from app.models import Item, User
-from app.tests.utils.test_db import setup_test_db, teardown_test_db, get_test_db_url
+from app.tests.utils.test_db import get_test_db_url, setup_test_db, teardown_test_db
 from app.tests.utils.user import authentication_token_from_email
 from app.tests.utils.utils import get_superuser_token_headers
 
@@ -44,7 +44,9 @@ def setup_test_environment() -> Generator[None, None, None]:
         try:
             teardown_test_db()
         except KeyboardInterrupt:
-            print("\n⚠️  Database cleanup interrupted. This is normal during test interruption.")
+            print(
+                "\n⚠️  Database cleanup interrupted. This is normal during test interruption."
+            )
         except Exception as e:
             print(f"\n⚠️  Error during database cleanup: {e}")
             # 不抛出异常，避免掩盖原始错误

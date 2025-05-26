@@ -44,13 +44,33 @@ export type CompletionRequest = {
     presence_penalty?: (number | null);
     frequency_penalty?: (number | null);
     logit_bias?: ({
-    [key: string]: unknown;
+    [key: string]: (number);
 } | null);
     user?: (string | null);
     metadata?: ({
-    [key: string]: unknown;
+    [key: string]: (string);
 } | null);
     api_key?: (string | null);
+};
+
+export type ContentItemCreate = {
+    type: string;
+    source_uri?: (string | null);
+    title?: (string | null);
+    summary?: (string | null);
+    user_id: string;
+};
+
+export type ContentItemPublic = {
+    type: string;
+    source_uri?: (string | null);
+    title?: (string | null);
+    summary?: (string | null);
+    user_id: string;
+    id: string;
+    processing_status: string;
+    created_at: string;
+    updated_at: string;
 };
 
 export type EmbeddingData = {
@@ -297,6 +317,35 @@ export type ValidationError = {
 };
 
 export type Visibility = 'public' | 'private' | 'team';
+
+export type ContentCreateContentItemEndpointData = {
+    requestBody: ContentItemCreate;
+};
+
+export type ContentCreateContentItemEndpointResponse = (ContentItemPublic);
+
+export type ContentListContentItemsEndpointData = {
+    /**
+     * Maximum number of items to return.
+     */
+    limit?: number;
+    /**
+     * Number of items to skip for pagination.
+     */
+    skip?: number;
+    /**
+     * Optional User ID to filter items by.
+     */
+    userId?: (string | null);
+};
+
+export type ContentListContentItemsEndpointResponse = (Array<ContentItemPublic>);
+
+export type ContentGetContentItemEndpointData = {
+    id: string;
+};
+
+export type ContentGetContentItemEndpointResponse = (ContentItemPublic);
 
 export type GoogleOauthGoogleCallbackApiData = {
     requestBody: GoogleCallbackRequest;

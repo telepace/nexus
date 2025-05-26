@@ -15,6 +15,9 @@ echo "🚀 Preparing backend for startup..."
 # Enter backend directory
 cd "$BACKEND_DIR"
 
+# Set PYTHONPATH to include the backend directory
+export PYTHONPATH="$BACKEND_DIR:$PYTHONPATH"
+
 # Wait for the database to be ready
 echo "⏳ Waiting for database to be ready..."
 python app/backend_pre_start.py || {

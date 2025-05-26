@@ -25,7 +25,14 @@ from app.base import (
     UserUpdate,
     UserUpdateMe,
 )
-from app.models.prompt import Prompt, PromptTagLink, PromptVersion, Tag
+from app.models.prompt import (
+    Prompt,
+    PromptTagLink,
+    PromptType,
+    PromptVersion,
+    Tag,
+    Visibility,
+)
 
 # 定义__all__列表，包含所有导入的模型
 __all__ = [
@@ -53,4 +60,19 @@ __all__ = [
     "PromptTagLink",
     "PromptVersion",
     "Tag",
+    "PromptType",
+    "Visibility",
+    # Content aggregation models
+    "ContentItem",
+    "ContentAsset",
+    "ProcessingJob",
+    "AIConversation",
 ]
+
+# Import content aggregation models
+from .content import (
+    AIConversation,
+    ContentAsset,
+    ContentItem,
+    ProcessingJob,
+)

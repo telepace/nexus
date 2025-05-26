@@ -7,6 +7,8 @@ import {
   Link as LinkIcon,
   FileText,
   AlertCircle,
+  Trash2,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 
 interface AddContentModalProps {
   open: boolean;
@@ -49,12 +52,15 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [detectedUrls, setDetectedUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 检测URL的简单正则表达式
+  // 检测URL的正则表达式
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+
   /**
    * Checks if the provided text is a valid URL.
    */
@@ -67,11 +73,51 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     }
   };
 
+  /**
+   * 从文本中提取所有URL
+   */
+  const extractUrls = (text: string): string[] => {
+    // 支持多种分割符：空格、分号、逗号、换行符
+    const separators = /[\s;,\n\r]+/;
+    const parts = text.split(separators).filter(part => part.trim());
+    
+    const urls: string[] = [];
+    
+    // 检查每个部分是否为有效URL
+    parts.forEach(part => {
+      const trimmed = part.trim();
+      if (trimmed && isURL(trimmed)) {
+        urls.push(trimmed);
+      }
+    });
+
+    // 同时使用正则表达式提取URL（防止遗漏）
+    const regexMatches = text.match(urlRegex) || [];
+    regexMatches.forEach(url => {
+      if (!urls.includes(url)) {
+        urls.push(url);
+      }
+    });
+
+    return urls;
+  };
+
   // 处理内容变化
   const handleContentChange = useCallback(
     (value: string) => {
       setContent(value);
-      if (isURL(value)) {
+      
+      if (!value.trim()) {
+        setContentType(null);
+        setDetectedUrls([]);
+        return;
+      }
+
+      // 提取URL
+      const urls = extractUrls(value);
+      setDetectedUrls(urls);
+
+      if (urls.length > 0) {
         setContentType("url");
       } else if (value.trim() && contentType !== "text") {
         setContentType("text");
@@ -106,7 +152,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
         const filesArray = Array.from(e.target.files);
-        setSelectedFiles(filesArray);
+        setSelectedFiles(prev => [...prev, ...filesArray]);
         setContentType("file");
       }
     },
@@ -118,7 +164,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const filesArray = Array.from(e.dataTransfer.files);
-      setSelectedFiles(filesArray);
+      setSelectedFiles(prev => [...prev, ...filesArray]);
       setContentType("file");
     }
   }, []);
@@ -126,6 +172,29 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
+
+  // 移除文件
+  const removeFile = useCallback((index: number) => {
+    setSelectedFiles(prev => {
+      const newFiles = prev.filter((_, i) => i !== index);
+      if (newFiles.length === 0) {
+        setContentType(null);
+      }
+      return newFiles;
+    });
+  }, []);
+
+  // 移除URL
+  const removeUrl = useCallback((index: number) => {
+    setDetectedUrls(prev => {
+      const newUrls = prev.filter((_, i) => i !== index);
+      if (newUrls.length === 0) {
+        setContentType(null);
+        setContent("");
+      }
+      return newUrls;
+    });
+  }, []);
 
   // 处理拖放区域点击
   /**
@@ -152,7 +221,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
       // 此处实现添加内容的逻辑
       console.log("Adding content:", {
         type: contentType,
-        content: contentType === "file" ? selectedFiles : content,
+        content: contentType === "file" ? selectedFiles : contentType === "url" ? detectedUrls : content,
+        urls: detectedUrls,
+        files: selectedFiles,
       });
 
       // 模拟API请求
@@ -173,6 +244,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     setContent("");
     setTitle("");
     setSelectedFiles([]);
+    setDetectedUrls([]);
     setError("");
   };
 
@@ -201,7 +273,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           </Button>
         </AlertDialogHeader>
         <AlertDialogDescription>
-          Use this modal to add new content by pasting a URL, typing text, or uploading a file.
+          粘贴链接、输入文本或上传文件来添加新内容。支持多个链接同时添加。
         </AlertDialogDescription>
 
         <div className="space-y-6 py-4">
@@ -216,7 +288,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
               border-2 border-dashed rounded-lg
               transition-colors cursor-pointer
               ${
-                selectedFiles.length || content
+                selectedFiles.length || content || detectedUrls.length
                   ? "border-primary/50 bg-primary/5"
                   : "border-gray-300 hover:border-primary/50 hover:bg-gray-100/50 dark:border-gray-600 dark:hover:bg-gray-800/50"
               }
@@ -231,6 +303,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                 </div>
                 <p className="text-center text-gray-500 dark:text-gray-400 mb-4">
                   粘贴链接、输入文本，或拖拽文件至此
+                </p>
+                <p className="text-xs text-center text-gray-400 dark:text-gray-500 mb-4">
+                  支持多个链接，可用空格、分号、逗号或换行分隔
                 </p>
                 <Button
                   variant="outline"
@@ -256,14 +331,45 @@ export const AddContentModal: FC<AddContentModalProps> = ({
               <div className="w-full space-y-4">
                 <div className="bg-green-50 dark:bg-green-900/20 p-2 rounded text-green-600 dark:text-green-400 text-sm flex items-center">
                   <AlertCircle className="h-4 w-4 mr-2" />
-                  <span>已识别链接</span>
+                  <span>已识别 {detectedUrls.length} 个链接</span>
                 </div>
+                
+                {/* 显示检测到的URL */}
+                {detectedUrls.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>检测到的链接</Label>
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {detectedUrls.map((url, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700"
+                        >
+                          <div className="flex items-center min-w-0 flex-1">
+                            <LinkIcon className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                            <span className="truncate text-sm">{url}</span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeUrl(index)}
+                            className="ml-2 h-6 w-6 p-0 text-gray-500 hover:text-red-500"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="url">URL</Label>
-                    <Input
-                      id="url"
+                    <Label htmlFor="url-input">链接输入</Label>
+                    <Textarea
+                      id="url-input"
                       role="textbox"
+                      placeholder="粘贴一个或多个链接，支持空格、分号、逗号或换行分隔"
+                      className="min-h-[80px]"
                       value={content}
                       onChange={(e) => handleContentChange(e.target.value)}
                     />
@@ -272,7 +378,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                     <Label htmlFor="title">标题 (可选)</Label>
                     <Input
                       id="title"
-                      placeholder="为此链接添加标题"
+                      placeholder="为这些链接添加标题"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                     />
@@ -288,10 +394,19 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                   <Textarea
                     id="text-content"
                     role="textbox"
-                    placeholder="输入您想要添加的文本"
-                    className="min-h-[100px]"
+                    placeholder="输入您想要添加的文本内容"
+                    className="min-h-[120px]"
                     value={content}
                     onChange={(e) => handleContentChange(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="text-title">标题 (可选)</Label>
+                  <Input
+                    id="text-title"
+                    placeholder="为文本内容添加标题"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
                   />
                 </div>
               </div>
@@ -300,20 +415,31 @@ export const AddContentModal: FC<AddContentModalProps> = ({
             {contentType === "file" && (
               <div className="w-full space-y-4">
                 <div className="space-y-2">
-                  <Label>已选择的文件</Label>
-                  <div className="space-y-2">
+                  <Label>已选择的文件 ({selectedFiles.length})</Label>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
                     {selectedFiles.map((file, index) => (
                       <div
                         key={index}
                         className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700"
                       >
-                        <div className="flex items-center">
-                          <FileText className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
-                          <span className="truncate max-w-xs">{file.name}</span>
+                        <div className="flex items-center min-w-0 flex-1">
+                          <FileText className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <span className="truncate text-sm block">{file.name}</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {(file.size / 1024).toFixed(1)} KB
+                            </span>
+                          </div>
                         </div>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {(file.size / 1024).toFixed(1)} KB
-                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile(index)}
+                          className="ml-2 h-6 w-6 p-0 text-gray-500 hover:text-red-500"
+                          title="移除文件"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
                     ))}
                   </div>
@@ -323,17 +449,26 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                     className="mt-2"
                     onClick={() => fileInputRef.current?.click()}
                   >
+                    <Plus className="h-4 w-4 mr-2" />
                     添加更多文件
                   </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileSelect}
+                  />
                 </div>
               </div>
             )}
           </div>
 
           {/* 支持的格式信息 */}
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            支持格式: PDF, Markdown, TXT, DOCX, URL, 纯文本
-          </p>
+          <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+            <p><strong>支持格式:</strong> PDF, Markdown, TXT, DOCX, URL, 纯文本</p>
+            <p><strong>链接分隔:</strong> 空格、分号(;)、逗号(,)、换行符</p>
+          </div>
 
           {/* 错误信息 */}
           {error && (
@@ -350,10 +485,10 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleAddContent}
-            disabled={isLoading || (!content && selectedFiles.length === 0)}
+            disabled={isLoading || (!content && selectedFiles.length === 0 && detectedUrls.length === 0)}
             className="bg-primary hover:bg-primary/90"
           >
-            {isLoading ? "处理中..." : "添加"}
+            {isLoading ? "处理中..." : `添加${contentType === "url" ? ` (${detectedUrls.length}个链接)` : contentType === "file" ? ` (${selectedFiles.length}个文件)` : ""}`}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

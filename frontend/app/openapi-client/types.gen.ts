@@ -44,13 +44,33 @@ export type CompletionRequest = {
   presence_penalty?: number | null;
   frequency_penalty?: number | null;
   logit_bias?: {
-    [key: string]: unknown;
+    [key: string]: number;
   } | null;
   user?: string | null;
   metadata?: {
-    [key: string]: unknown;
+    [key: string]: string;
   } | null;
   api_key?: string | null;
+};
+
+export type ContentItemCreate = {
+  type: string;
+  source_uri?: string | null;
+  title?: string | null;
+  summary?: string | null;
+  user_id: string;
+};
+
+export type ContentItemPublic = {
+  type: string;
+  source_uri?: string | null;
+  title?: string | null;
+  summary?: string | null;
+  user_id: string;
+  id: string;
+  processing_status: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type EmbeddingData = {
@@ -676,6 +696,45 @@ export type LlmCreateEmbeddingData = {
 export type LlmCreateEmbeddingResponse = EmbeddingResponse;
 
 export type LlmCreateEmbeddingError = HTTPValidationError;
+
+export type ContentCreateContentItemEndpointData = {
+  body: ContentItemCreate;
+};
+
+export type ContentCreateContentItemEndpointResponse = ContentItemPublic;
+
+export type ContentCreateContentItemEndpointError = HTTPValidationError;
+
+export type ContentListContentItemsEndpointData = {
+  query?: {
+    /**
+     * Maximum number of items to return.
+     */
+    limit?: number;
+    /**
+     * Number of items to skip for pagination.
+     */
+    skip?: number;
+    /**
+     * Optional User ID to filter items by.
+     */
+    user_id?: string | null;
+  };
+};
+
+export type ContentListContentItemsEndpointResponse = Array<ContentItemPublic>;
+
+export type ContentListContentItemsEndpointError = HTTPValidationError;
+
+export type ContentGetContentItemEndpointData = {
+  path: {
+    id: string;
+  };
+};
+
+export type ContentGetContentItemEndpointResponse = ContentItemPublic;
+
+export type ContentGetContentItemEndpointError = HTTPValidationError;
 
 export type PrivateCreateUserData = {
   body: PrivateUserCreate;

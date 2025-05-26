@@ -7,6 +7,7 @@ import {
   List,
   MessageSquare,
   BookmarkIcon,
+  Layers, // Add Layers icon
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -43,6 +44,11 @@ export const Sidebar: FC<SidebarProps> = ({ collapsed, onToggleCollapse }) => {
       name: "Prompts",
       href: "/prompts",
       icon: <MessageSquare className="h-5 w-5" />,
+    },
+    {
+      name: "Content Library",
+      href: "/content-library",
+      icon: <Layers className="h-5 w-5" />,
     },
   ];
 

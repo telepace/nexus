@@ -127,6 +127,15 @@ import type {
   LlmCreateEmbeddingData,
   LlmCreateEmbeddingError,
   LlmCreateEmbeddingResponse,
+  ContentCreateContentItemEndpointData,
+  ContentCreateContentItemEndpointError,
+  ContentCreateContentItemEndpointResponse,
+  ContentListContentItemsEndpointData,
+  ContentListContentItemsEndpointError,
+  ContentListContentItemsEndpointResponse,
+  ContentGetContentItemEndpointData,
+  ContentGetContentItemEndpointError,
+  ContentGetContentItemEndpointResponse,
   PrivateCreateUserData,
   PrivateCreateUserError,
   PrivateCreateUserResponse,
@@ -902,7 +911,8 @@ export const promptsDuplicatePrompt = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Sends a POST request to create an LLM completion based on the provided options.
+ * Create Completion
+ * Handles creation of completions based on request data.
  */
 export const llmCreateCompletion = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<LlmCreateCompletionData, ThrowOnError>,
@@ -918,7 +928,8 @@ export const llmCreateCompletion = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Creates embeddings by forwarding a request to LiteLLM.
+ * Create Embedding
+ * Handles the creation of embeddings by forwarding a request to LiteLLM.
  */
 export const llmCreateEmbedding = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<LlmCreateEmbeddingData, ThrowOnError>,
@@ -930,6 +941,69 @@ export const llmCreateEmbedding = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/api/v1/llm/embeddings",
+  });
+};
+
+/**
+ * Create a New Content Item
+ * Uploads and creates a new content item in the system. Requires user authentication.
+ */
+export const contentCreateContentItemEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentCreateContentItemEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    ContentCreateContentItemEndpointResponse,
+    ContentCreateContentItemEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/create",
+  });
+};
+
+/**
+ * List Content Items
+ * Retrieves a list of content items, with optional pagination and user filtering.
+ */
+export const contentListContentItemsEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<
+    ContentListContentItemsEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentListContentItemsEndpointResponse,
+    ContentListContentItemsEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content",
+  });
+};
+
+/**
+ * Get a Specific Content Item
+ * Retrieves a single content item by its unique ID.
+ */
+export const contentGetContentItemEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<ContentGetContentItemEndpointData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetContentItemEndpointResponse,
+    ContentGetContentItemEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{id}",
   });
 };
 

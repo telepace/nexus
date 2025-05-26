@@ -138,6 +138,8 @@ web_modules/
 # Next.js build output
 .next
 out
+_output
+output
 
 # Nuxt.js build / generate output
 .nuxt
@@ -490,7 +492,8 @@ sketch
 # End of https://www.toptal.com/developers/gitignore/api/python,node,nextjs,react,jupyternotebooks,pycharm
 
 
-
 # Local development files
 .qodo
 .qodo/*_pagefind/
+
+intellidoc/

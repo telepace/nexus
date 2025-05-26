@@ -67,7 +67,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/start.sh ./start.sh
 COPY --from=builder /app/watcher.js ./watcher.js
-COPY --from=builder /app/next.config.js ./next.config.js
+COPY --from=builder /app/next.config.mjs ./next.config.mjs
 
 # Make scripts executable
 RUN chmod +x start.sh watcher.js

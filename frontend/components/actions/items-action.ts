@@ -279,7 +279,10 @@ export async function removeItem(id: string) {
   }
 }
 
-export async function addItem(prevState: {}, formData: FormData) {
+export async function addItem(
+  prevState: Record<string, never>,
+  formData: FormData,
+) {
   // 验证用户
   const user = await requireAuth();
   if (!user) {

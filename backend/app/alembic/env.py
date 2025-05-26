@@ -53,7 +53,7 @@ def get_url():
     """Returns the appropriate database URL based on environment settings."""
     testing_env = os.environ.get("TESTING", "").lower() == "true"
     test_mode_env = os.environ.get("TEST_MODE", "").lower() == "true"
-    
+
     if testing_env and test_mode_env:
         # Import test database utilities to get test database URL
         try:
@@ -63,14 +63,14 @@ def get_url():
             return test_url
         except ImportError:
             logger.warning("Could not import test database utilities, falling back to main database")
-    
+
     return str(settings.SQLALCHEMY_DATABASE_URI)
 
 
 def print_db_info():
     """Print database connection information"""
     url = get_url()
-    
+
     # Mask password information for security
     safe_url = url
     if "@" in url:
@@ -79,13 +79,13 @@ def print_db_info():
         if ":" in userpass_part:
             username = userpass_part.split("://")[1].split(":")[0]
             safe_url = url.replace(userpass_part, f"{url.split('://')[0]}://{username}:****")
-    
+
     # Print related configuration information
     logger.info("-" * 50)
     logger.info("Database Connection Information:")
     logger.info(f"Database URL: {safe_url}")
     logger.info(f"Database Type: {settings.DATABASE_TYPE}")
-    
+
     if settings.DATABASE_TYPE == "supabase":
         logger.info(f"Supabase Pool Mode: {settings.SUPABASE_DB_POOL_MODE}")
         logger.info(f"Supabase Host: {settings.SUPABASE_DB_HOST}")
@@ -97,14 +97,14 @@ def print_db_info():
         logger.info(f"Postgres Port: {settings.POSTGRES_PORT}")
         logger.info(f"Postgres User: {settings.POSTGRES_USER}")
         logger.info(f"Postgres Database: {settings.POSTGRES_DB}")
-    
+
     # Print connection arguments
     engine_args = get_engine_args()
     if engine_args and "connect_args" in engine_args:
         logger.info("Connection Arguments:")
         for key, value in engine_args["connect_args"].items():
             logger.info(f"  - {key}: {value}")
-    
+
     logger.info("-" * 50)
 
 
@@ -121,10 +121,10 @@ def run_migrations_offline():
 
     """
     url = get_url()
-    
+
     # Print database connection information
     print_db_info()
-    
+
     context.configure(
         url=url, target_metadata=target_metadata, literal_binds=True, compare_type=True
     )
@@ -142,19 +142,19 @@ def run_migrations_online():
     """
     # Print database connection information
     print_db_info()
-    
+
     configuration = config.get_section(config.config_ini_section)
     configuration["sqlalchemy.url"] = get_url()
-    
+
     # Get database engine specific arguments
     engine_args = get_engine_args()
-    
+
     # Create engine - directly pass connect_args instead of through configuration
     if engine_args and "connect_args" in engine_args:
         connect_args = engine_args["connect_args"]
     else:
         connect_args = {}
-    
+
     connectable = engine_from_config(
         configuration,
         prefix="sqlalchemy.",

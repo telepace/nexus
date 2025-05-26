@@ -245,7 +245,9 @@ export function SetupContent() {
 
     // 1. Persist setup completion status
     try {
-      console.log("[SetupContent] Attempting to mark setup as complete via API.");
+      console.log(
+        "[SetupContent] Attempting to mark setup as complete via API.",
+      );
       const token = user?.token || getCookie("accessToken");
 
       if (!token) {
@@ -269,23 +271,27 @@ export function SetupContent() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to mark setup as complete.");
+        throw new Error(
+          errorData.detail || "Failed to mark setup as complete.",
+        );
       }
 
-      console.log("[SetupContent] Setup successfully marked as complete via API.");
+      console.log(
+        "[SetupContent] Setup successfully marked as complete via API.",
+      );
       // Update local auth state
-      await updateUser({ is_setup_complete: true }); 
+      await updateUser({ is_setup_complete: true });
       toast({
         title: "Setup Complete",
         description: "Your setup preferences have been saved.",
         variant: "default",
       });
-
     } catch (error) {
       console.error("[SetupContent] Error marking setup as complete:", error);
       toast({
         title: "Error Completing Setup",
-        description: error instanceof Error ? error.message : "An unknown error occurred.",
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred.",
         variant: "destructive",
       });
       return; // Do not proceed if API call fails
@@ -294,8 +300,13 @@ export function SetupContent() {
     // 2. Existing logic for extension token sending (if applicable)
     if (user?.token && extensionPluginId) {
       try {
-        console.log("[SetupContent] Setup page attempting to send Token to extension");
-        const success = await saveTokenToExtension(user.token, extensionPluginId);
+        console.log(
+          "[SetupContent] Setup page attempting to send Token to extension",
+        );
+        const success = await saveTokenToExtension(
+          user.token,
+          extensionPluginId,
+        );
 
         if (success) {
           setTokenSent(true); // Mark token as sent
@@ -307,7 +318,9 @@ export function SetupContent() {
 
           // If there's an extension callback, redirect there
           if (extensionCallback) {
-            console.log(`[SetupContent] Redirecting to extension callback: ${extensionCallback}`);
+            console.log(
+              `[SetupContent] Redirecting to extension callback: ${extensionCallback}`,
+            );
             window.location.href = `${extensionCallback}?token=${encodeURIComponent(user.token)}`;
             return; // Important to return after redirection
           }
@@ -319,7 +332,10 @@ export function SetupContent() {
           });
         }
       } catch (error) {
-        console.error("[SetupContent] Error sending Token to extension:", error);
+        console.error(
+          "[SetupContent] Error sending Token to extension:",
+          error,
+        );
         // Non-critical, so proceed to dashboard redirection
       }
     }

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.routes import (
+    content,  # Add content router
     google_oauth,
     items,
     llm_service,
@@ -20,6 +21,9 @@ api_router.include_router(items.router)
 api_router.include_router(google_oauth.router)
 api_router.include_router(prompts.router, prefix="/prompts", tags=["prompts"])
 api_router.include_router(llm_service.router, prefix="/llm", tags=["llm"])
+api_router.include_router(
+    content.router, prefix="/content", tags=["content"]
+)  # Include content router
 
 
 if settings.ENVIRONMENT == "local":

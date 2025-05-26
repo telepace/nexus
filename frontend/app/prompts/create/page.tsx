@@ -1,4 +1,7 @@
-import { fetchTags, addPromptAction } from "@/components/actions/prompts-action";
+import {
+  fetchTags,
+  addPromptAction,
+} from "@/components/actions/prompts-action";
 import { getAuthState } from "@/lib/server-auth-bridge";
 import { PromptForm } from "../_components/PromptForm";
 import { Suspense } from "react";

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 
 import { register } from "@/components/actions/register-action";
@@ -53,8 +53,7 @@ function AuthRedirectHandler() {
  * for registration. Provides visual feedback using gradients and animations.
  */
 function RegisterContent() {
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
+  const { isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");

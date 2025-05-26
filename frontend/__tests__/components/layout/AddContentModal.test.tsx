@@ -48,8 +48,8 @@ describe("AddContentModal", () => {
     const dropArea = screen.getByTestId("drop-area");
     fireEvent.click(dropArea);
 
-    // 等待输入框出现
-    const textInput = await screen.findByRole("textbox");
+    // 等待输入框出现，使用更具体的选择器
+    const textInput = await screen.findByLabelText("文本内容");
     fireEvent.change(textInput, { target: { value: "测试内容文本" } });
 
     // 验证输入值
@@ -63,13 +63,13 @@ describe("AddContentModal", () => {
     const dropArea = screen.getByTestId("drop-area");
     fireEvent.click(dropArea);
 
-    // 等待输入框出现并输入URL
-    const textInput = await screen.findByRole("textbox");
+    // 等待输入框出现并输入URL，使用更具体的选择器
+    const textInput = await screen.findByLabelText("文本内容");
     fireEvent.change(textInput, { target: { value: "https://example.com" } });
 
     // 验证URL识别成功
     await waitFor(() => {
-      expect(screen.getByText(/已识别链接/i)).toBeInTheDocument();
+      expect(screen.getByText(/已识别.*链接/i)).toBeInTheDocument();
     });
   });
 

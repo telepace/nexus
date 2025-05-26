@@ -26,6 +26,10 @@ jobs:
         with:
           version: 8
       
+      # Install PyYAML for conflict detection
+      - name: Install Python dependencies
+        run: pip install pyyaml
+      
       # 分别安装各个目录的依赖
       - name: Install frontend dependencies
         run: pnpm install --dir frontend

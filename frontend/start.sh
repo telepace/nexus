@@ -30,6 +30,6 @@ else
   # 仅在开发模式下启动watcher
   echo "Starting watcher..."
   node watcher.js &
-  
+
   wait
 fi
