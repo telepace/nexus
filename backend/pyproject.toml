@@ -1,0 +1,105 @@
+[project]
+name = "app"
+version = "0.1.0"
+description = ""
+requires-python = ">=3.10,<4.0"
+dependencies = [
+    "fastapi[standard]<1.0.0,>=0.114.2",
+    "python-multipart<1.0.0,>=0.0.7",
+    "email-validator<3.0.0.0,>=2.1.0.post1",
+    "passlib[bcrypt]<2.0.0,>=1.7.4",
+    "tenacity<9.0.0,>=8.2.3",
+    "pydantic>2.0",
+    "emails<1.0,>=0.6",
+    "jinja2<4.0.0,>=3.1.4",
+    "alembic<2.0.0,>=1.12.1",
+    "httpx>=0.24.0,<0.25.0",
+    "psycopg[binary]<4.0.0,>=3.1.13",
+    "psycopg2-binary<3.0.0,>=2.9.9",
+    # 添加 psycopg2 作为备用驱动
+    "sqlmodel<1.0.0,>=0.0.21",
+    # Pin bcrypt until passlib supports the latest
+    "bcrypt==4.0.1",
+    "pydantic-settings<3.0.0,>=2.2.1",
+    "sentry-sdk[fastapi]<2.0.0,>=1.40.6",
+    "pyjwt<3.0.0,>=2.8.0",
+    "supabase<2.0.0,>=1.2.0",
+    "posthog<3.0.0,>=2.4.0",
+    "yarl>=1.9.0,<2.0.0",
+    "itsdangerous>=2.2.0",
+    "pillow<11.0.0,>=10.0.0",
+    "pyyaml>=6.0.0,<7.0.0",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest<8.0.0,>=7.4.3",
+    "pytest-asyncio<1.0.0,>=0.21.0",
+    "pytest-mock<4.0.0,>=3.12.0",
+    "mypy<2.0.0,>=1.8.0",
+    "ruff<1.0.0,>=0.2.2",
+    "pre-commit<4.0.0,>=3.6.2",
+    "types-passlib<2.0.0.0,>=1.7.7.20240106",
+    "types-requests<3.0.0.0,>=2.32.0",
+    "coverage<8.0.0,>=7.4.3",
+    "pytest-timeout>=2.4.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.mypy]
+strict = true
+exclude = ["venv", ".venv", "alembic"]
+ignore_missing_imports = true
+disallow_untyped_defs = false 
+disallow_incomplete_defs = false
+# 添加更多宽松设置来处理复杂的类型错误
+allow_untyped_calls = true
+allow_untyped_decorators = true
+warn_return_any = false
+warn_unused_ignores = false
+
+# 忽略 supabase 模块的类型检查错误
+[[tool.mypy.overrides]]
+module = "supabase"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "posthog"
+ignore_missing_imports = true
+
+# 对测试文件使用更宽松的类型检查
+[[tool.mypy.overrides]]
+module = "app.tests.*"
+allow_untyped_defs = true
+allow_untyped_calls = true
+allow_incomplete_defs = true
+disable_error_code = ["arg-type", "assignment", "attr-defined", "no-untyped-call", "var-annotated", "union-attr"]
+
+[tool.ruff]
+target-version = "py310"
+exclude = ["alembic"]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "ARG001", # unused arguments in functions
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "W191",  # indentation contains tabs
+    "B904",  # Allow raising exceptions without from e, for HTTPException
+]
+
+[tool.ruff.lint.pyupgrade]
+# Preserve types, even if a file imports `from __future__ import annotations`.
+keep-runtime-typing = true

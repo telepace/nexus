@@ -1,0 +1,488 @@
+# **Best Practices Guide for TDD and Cursor Integration**
+
+## **Introduction**
+
+This guide aims to provide a practical reference for developers, especially AI startups or teams conducting MVP (Minimum Viable Product) and prototype validation. We will explore how to effectively implement Test-Driven Development (TDD) or its adaptive variants in Python, React, and (optionally) Go technology stacks, and explain how to wisely utilize AI programming assistants (Cursor as an example) to balance development speed and software quality.
+
+## **1. Understanding TDD and Its Variants**
+
+### **1.1 Core Concepts of Test-Driven Development (TDD)**
+
+TDD is a software development process that relies on very short development cycles: first, developers write a **failed** automated test case (**red**) that defines the need for improvement or new functionality; then, they write **minimal code** to make the test pass (**green**); finally, they **refactor** the new code to meet acceptable standards (**refactor**).
+
+**TDD's three core laws:**
+
+1. **Law One**: No production code is allowed unless it is to make a failed unit test pass.
+2. **Law Two**: Only write unit test code that will fail (even if it's a compilation failure).
+3. **Law Three**: Only write production code that will pass the current failed unit test.
+
+This **red-green-refactor** cycle is the foundation of TDD.
+
+### **1.2 Behavior-Driven Development (BDD)**
+
+- **Concept**: BDD is an evolution of TDD, focusing more on describing system behavior from a user or business perspective. It often uses natural language (like Gherkin's Given-When-Then format) to write scenarios (specifications), which are both requirements documents and the basis for automated tests.
+- **Applicable Scenarios**: BDD can be used as a complement to TDD for defining high-level features, then implemented with TDD at the lower-level logic unit level when requirements are unclear or user experience is crucial.
+
+### **1.3 TDD Strategy Trade-offs in MVP Stage**
+
+Choosing the right test strategy is crucial in the fast-paced MVP stage.
+
+| **Strategy** | **Description** | **MVP Advantages (speed, quality, adaptability, foundation)** | **MVP Disadvantages (speed, quality, adaptability, technical debt)** | **Ideal Scenario/When to Use** |
+| --- | --- | --- | --- | --- |
+| **Strict TDD** | Applies strict red-green-refactor cycle to all production code. | High quality, strong foundation | Slow speed, low adaptability (if requirements change drastically) | Core logic complex and stable, high quality requirement, experienced TDD team. |
+| **Selective TDD** | Applies strict TDD only to core/complex/critical modules, other modules have lower test requirements. | Balances speed and quality, good foundation | May accumulate technical debt in non-core modules | Most practical choice for MVP, especially when core logic needs high quality assurance. |
+| **BDD Combined with TDD** | Uses user behavior scenario-driven development, usually combined with TDD to implement details. | High adaptability (requirements clarification), ensures user value | Initial setup may be slightly complex, still need to test implementation details | Unclear requirements or frequently changing, user experience is key verification point, requires cross-functional team collaboration. |
+| **Least/No Tests** | Writes almost no automated tests, relies on manual tests or basic checks. | Fastest speed | Low quality, weak foundation, high technical debt, difficult to maintain/extend | Quick idea validation **prototype** (not MVP), or code will be discarded, low quality requirement. |
+
+**Suggestion**: For most MVPs, **Selective TDD** or **BDD Combined with TDD** is a practical starting point. As the product matures and core logic stabilizes, you can gradually increase test coverage and TDD application range.
+
+### **1.4 Main Advantages of TDD**
+
+- **Design Driving**: TDD forces developers to think about their interfaces and usage before writing implementation code, which helps produce clearer, more usable APIs.
+- **Improved Code Quality**: Code developed through TDD tends to be modular, high cohesion, low coupling.
+- **Tests as Documentation**: Clear test cases are the best documentation of code functionality and usage.
+- **Confidence and Regression Protection**: Having a comprehensive suite of automated tests allows developers to confidently refactor or add new features without worrying about breaking existing functionality.
+- **Reduced Maintenance Costs**: Well-structured, test-covered code is easier to understand, modify, extend, and maintain.
+
+## **2. AI Programming Assistants and TDD**
+
+### **2.1 AI Tool Revolution in Software Development**
+
+Artificial Intelligence is profoundly changing software development. AI tools like OpenAI Codex, GitHub Copilot, Cursor, and others, utilize large language models (LLM) and machine learning technology to understand natural language requirements, generate code snippets, auto-complete, generate test cases, detect potential errors, and even suggest code improvements, helping in multiple stages of the development process.
+
+### **2.2 How AI Accelerates TDD Process**
+
+AI tools have potential to help in various stages of TDD:
+
+- **Test Generation (Assist Red Stage)**: AI can automatically generate unit test cases based on code or requirement description. This can reduce repetitive test writing, improve test coverage, and even help identify edge cases developers might overlook.
+- **Code Generation (Assist Green Stage)**: After writing a failed test, AI can generate minimal code to pass the test, shortening the "green" stage.
+- **Refactoring Assistance (Assist Refactor Stage)**: AI can analyze existing code, identify "code smells", suggest or automatically execute refactoring operations (like simplifying logic, applying patterns, eliminating repetition), while ensuring tests still pass.
+
+### **2.3 AI-Driven TDD Workflow**
+
+A workflow mode combining human and AI strengths:
+
+1. **Write Tests (Human Priority)**: Developers first write clear, specific **failed** test cases, defining expected code behavior. This is the key human input.
+2. **Generate Code (AI Assisted)**: Use these tests as input or prompt (prompt) to let generative AI (like Cursor) generate code that passes these tests.
+3. **Refactor (Human-AI Collaboration)**: Developers collaborate with AI to review and refactor the generated code to improve its design, readability, and maintainability, while ensuring all tests still pass.
+
+## **3. Best Practices for Specific Technology Stacks**
+
+### **3.1 Python Backend (pytest)**
+
+Pytest is a widely used testing framework in the Python community, known for its simplicity, flexibility, and power.
+
+- **Structure**:
+    - Test files are usually named `test_*.py` or `_test.py`.
+    - Test functions or methods start with `test_`.
+    - It's recommended to place test code in a separate `tests/` directory under the project root.
+- **Assertions**:
+    - It's recommended to use Python's built-in `assert` statement directly, pytest will provide detailed failure information (assertion introspection).
+    - Assertion Exceptions: Use `pytest.raises()` context manager.
+- **Fixtures (pytest core)**:
+    - Reusable functions for setting up test conditions (Arrange) and performing cleanup operations (Teardown).
+    - Provided to test functions via dependency injection, can define different scopes (`function`, `class`, `module`, `session`).
+    - More flexible and modular than `setUp/tearDown` in `unittest`.
+- **Parameterization (pytest)**:
+    - Use `@pytest.mark.parametrize` decorator to provide multiple sets of inputs and expected outputs for the same test function, effectively reducing duplicate code and covering various scenarios.
+- **Mocking**:
+    - Isolate test units to avoid external dependencies (database, API, file system, etc.).
+    - Use Python's built-in `unittest.mock` library (pytest compatible) or pytest's fixture mechanism to create mock objects.
+- **Test Independence and Speed**:
+    - Ensure each test can run independently, without depending on the order or state of other tests.
+    - Keep tests running fast to support the quick feedback loop of TDD.
+- **Descriptive Naming**:
+    - Use clear, descriptive names for test functions and fixtures to help understand test intent and failure reasons.
+
+**Code Example (TDD Process Annotation):**
+
+```
+# calculator.py
+class Calculator:
+    def add(self, a, b):
+        # Green (Passes test_add_positive_numbers):
+        # return a + b
+
+        # Green (Passes test_add_raises_type_error_for_non_numeric after adding type check):
+        if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+            raise TypeError("Inputs must be numeric")
+        return a + b
+
+    # Add other methods following TDD...
+
+# tests/test_calculator.py
+import pytest
+from calculator import Calculator # Assume calculator.py is in the parent directory or installed
+
+# Fixture to create a Calculator instance for tests
+@pytest.fixture
+def calculator_instance():
+    return Calculator()
+
+# Parameterized test for valid addition cases
+@pytest.mark.parametrize("a, b, expected", [
+    (1, 2, 3),          # Test case 1: Positive integers
+    (-1, -1, -2),       # Test case 2: Negative integers
+    (1.5, 2.5, 4.0),    # Test case 3: Floats
+    (0, 0, 0),          # Test case 4: Zeros
+    (-1, 1, 0),         # Test case 5: Mixed sign integers
+])
+def test_add_valid_numbers(calculator_instance, a, b, expected):
+    """
+    Test the add method with various valid numeric inputs.
+    Red: Write this test first. It will fail initially.
+    Green: Implement the minimal `add` logic in Calculator class to make these pass.
+    Refactor: Review the `add` implementation for clarity and efficiency.
+    """
+    assert calculator_instance.add(a, b) == expected
+
+# Test for non-numeric input raising TypeError
+@pytest.mark.parametrize("a, b", [
+    ("1", 2),         # Test case 1: String and integer
+    (1, "2"),         # Test case 2: Integer and string
+    ("a", "b"),       # Test case 3: Non-numeric strings
+    (None, 1),        # Test case 4: None input
+    ([1], 2),         # Test case 5: List input
+])
+def test_add_raises_type_error_for_non_numeric(calculator_instance, a, b):
+    """
+    Test that the add method raises TypeError for non-numeric inputs.
+    Red: Write this test after the valid cases. It will fail.
+    Green: Add type checking inside the `add` method to make this test pass.
+    Refactor: Ensure the type checking logic is robust and readable.
+    """
+    with pytest.raises(TypeError, match="Inputs must be numeric"):
+        calculator_instance.add(a, b)
+
+# Add more tests for other methods (subtract, multiply, divide etc.) following TDD
+
+```
+
+### **3.2 React Frontend (Jest & React Testing Library)**
+
+Jest and React Testing Library (RTL) are the de facto standard combination for testing React applications.
+
+- **Tool Collaboration**:
+    - **Jest**: Test runner, test framework (`describe`, `it`, `expect`), assertion library, Mocking library.
+    - **React Testing Library (RTL)**: Provides tools for rendering React components, querying, and interacting with them, **core concept is simulating real user interactions, focusing on behavior rather than implementation details**.
+- **Best Practices**:
+    - **Core Principle**: Test what users see and interact with. Avoid testing internal state or method implementation details. "The more the test looks like software usage, the more confidence it brings".
+    - **Query Elements**: Prioritize using RTL's semantic query methods of the `screen` object (like `getByRole`, `getByLabelText`, `getByPlaceholderText`, `getByText`, `getByDisplayValue`), unless absolutely necessary, use `getByTestId`.
+    - **Assertions**: Use Jest's `expect`, combined with custom matchers provided by `@testing-library/jest-dom` to write more expressive DOM assertions.
+    - **Structure**: Use `describe` to organize related tests, `test` or `it` to define individual test cases. Use `beforeEach`, `afterEach`, `beforeAll`, `afterAll` for setup and cleanup.
+    - **User Interactions**: Use `@testing-library/user-event` library to simulate user interactions (clicks, inputs, hovers, etc.), it's more realistic than `fireEvent`. Then assert expected UI changes after interactions.
+    - **Asynchronous Operations**: When dealing with asynchronous behaviors like API requests, use `async/await`, combined with RTL's `waitFor`, `findBy*` queries. Use Jest's Mocking capabilities (`jest.fn()`, `jest.mock()`) to mock API responses.
+    - **Test Custom Hooks**: You can use `@testing-library/react` (new version) or `@testing-library/react-hooks` (old version or standalone tests) to isolate test logic of custom Hooks.
+    - **Snapshot Testing**: Use cautiously. Suitable for small, purely display components that don't change often. Easily fails due to implementation detail changes, causing test fragility.
+
+**Code Example (TDD Process Annotation):**
+
+```
+// src/components/Counter.js
+import React, { useState, useCallback } from 'react';
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  // Use useCallback for stable function reference if passed down
+  const increment = useCallback(() => setCount(c => c + 1), []);
+  const decrement = useCallback(() => setCount(c => c - 1), []);
+
+  return (
+    <div className="p-4 border rounded shadow">
+      <h2 className="text-lg font-semibold mb-2">Counter</h2>
+      {/* Use aria-live to announce changes to screen readers */}
+      <p className="mb-4" aria-live="polite">Current Count: {count}</p>
+      <div className="space-x-2">
+        <button
+          onClick={decrement}
+          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
+          aria-label="Decrement count" // Good for accessibility
+        >
+          Decrement
+        </button>
+        <button
+          onClick={increment}
+          className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300"
+          aria-label="Increment count" // Good for accessibility
+        >
+          Increment
+        </button>
+      </div>
+    </div>
+  );
+}
+export default Counter;
+
+// src/components/Counter.test.js
+import React from 'react';
+// Import testing utilities
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event'; // For realistic user interactions
+import '@testing-library/jest-dom'; // For helpful DOM matchers
+
+// Import the component to test
+import Counter from './Counter';
+
+describe('Counter component', () => {
+  // Test case 1: Initial render
+  test('renders initial count of 0 and both buttons', () => {
+    // Red: Write this test first. It will fail because the component doesn't exist or render correctly yet.
+    render(<Counter />);
+
+    // Green: Create the basic Counter component structure to make this pass.
+    // Assert that the initial count "0" is displayed. Use regex for flexibility.
+    const countElement = screen.getByText(/Current Count: 0/i);
+    expect(countElement).toBeInTheDocument();
+
+    // Assert that the increment button is present (using accessible name/label).
+    const incrementButton = screen.getByRole('button', { name: /Increment count/i });
+    expect(incrementButton).toBeInTheDocument();
+
+    // Assert that the decrement button is present.
+    const decrementButton = screen.getByRole('button', { name: /Decrement count/i });
+    expect(decrementButton).toBeInTheDocument();
+
+    // Refactor: Review the component code for clarity, accessibility attributes, etc.
+  });
+
+  // Test case 2: Incrementing the count
+  test('increments count when increment button is clicked', async () => {
+    // Red: Write this test. It will fail as the click handler/state logic isn't implemented yet.
+    render(<Counter />);
+    const incrementButton = screen.getByRole('button', { name: /Increment count/i });
+
+    // Green: Add the state and the onClick handler to the increment button in the Counter component.
+    // Simulate a user clicking the button. Use userEvent for better simulation.
+    await userEvent.click(incrementButton);
+
+    // Assert that the count display updates to "1".
+    const countElement = screen.getByText(/Current Count: 1/i);
+    expect(countElement).toBeInTheDocument();
+
+    // Click again to ensure it increments further
+    await userEvent.click(incrementButton);
+    expect(screen.getByText(/Current Count: 2/i)).toBeInTheDocument();
+
+    // Refactor: Ensure the state update logic is correct and efficient.
+  });
+
+  // Test case 3: Decrementing the count
+  test('decrements count when decrement button is clicked', async () => {
+    // Red: Write this test. It will fail initially.
+    render(<Counter />);
+    const decrementButton = screen.getByRole('button', { name: /Decrement count/i });
+    const incrementButton = screen.getByRole('button', { name: /Increment count/i });
+
+    // Setup: Click increment once to start at 1, making decrement meaningful
+    await userEvent.click(incrementButton);
+    expect(screen.getByText(/Current Count: 1/i)).toBeInTheDocument();
+
+    // Green: Add the state and the onClick handler to the decrement button.
+    // Simulate a user clicking the decrement button.
+    await userEvent.click(decrementButton);
+
+    // Assert that the count display updates back to "0".
+    const countElement = screen.getByText(/Current Count: 0/i);
+    expect(countElement).toBeInTheDocument();
+
+    // Click again to test decrementing below zero if allowed (depends on requirements)
+    await userEvent.click(decrementButton);
+    expect(screen.getByText(/Current Count: -1/i)).toBeInTheDocument();
+
+    // Refactor: Ensure decrement logic is correct. Consider if count should go below zero.
+  });
+});
+
+```
+
+### **3.3 Go Service (Built-in testing package)**
+
+Go language has a powerful `testing` package that supports unit tests, benchmarking, and example code.
+
+- **Structure**:
+    - Test files are placed in the same directory as the code to be tested, named `_test.go`.
+    - Test functions start with `Test`, receive a `testing.T` type parameter, for example `func TestMyFunction(t *testing.T)`。
+- **Subtests**:
+    - Use `t.Run("subtest_name", func(t *testing.T) { ... })` to create subtests. This helps organize related test cases and provides clearer reporting in case of failure.
+- **Table-Driven Tests**:
+    - A common pattern where multiple sets of test inputs and expected outputs are defined in a struct slice, then iterate over the slice to run a subtest for each element. This makes adding new test cases very convenient.
+- **Assertions**:
+    - Go's `testing` package doesn't have a built-in rich assertion library. Usually use `if` statements for condition checks directly, and call `t.Errorf()` or `t.Fatalf()` to report errors when failed.
+    - `t.Errorf()` reports error and continues executing current test function.
+    - `t.Fatalf()` reports error and immediately stops current test function execution.
+- **Test Helpers**:
+    - You can extract repeated test setup or assertion logic logic into helper functions. Call `t.Helper()` to let test framework show the call location in error report instead of helper function internal.
+- **Mocking/Stubbing**:
+    - Usually implemented via interfaces and dependency injection. Define interfaces, let production code depend on interfaces, pass in mock or stub objects implementing the interfaces in tests. You can use third-party libraries like `gomock` or `testify/mock`, or manually implement.
+- **Concurrency Tests**:
+    - Use `t.Parallel()` to mark a subtest as able to run in parallel with other subtests, speeding up tests.
+
+**Code Example (TDD Process Annotation):**
+
+```
+// greetings/greetings.go
+package greetings
+
+import "fmt"
+
+// Hello returns a greeting for the named person.
+// It handles different languages.
+func Hello(name string, language string) (string, error) {
+    // Red: Start with a failing test for the basic "Hello, name" case.
+    // Green: Write minimal code: return fmt.Sprintf("Hello, %s", name), nil
+
+    // Red: Add test for empty name. Fails.
+    // Green: Add check for empty name.
+    if name == "" {
+        name = "World" // Default name
+    }
+
+    // Red: Add tests for Spanish and French. They fail.
+    // Green: Add language switching logic.
+    prefix := "Hello, " // Default prefix
+    switch language {
+    case "Spanish":
+        prefix = "Hola, "
+    case "French":
+        prefix = "Bonjour, "
+    case "": // Handle empty language string as default
+        // Use default prefix
+    default:
+        // Optional: Return an error or handle unsupported languages if needed
+        // For now, we default to English for unknown languages
+    }
+
+    // Refactor: Ensure the logic is clear and handles defaults correctly.
+    message := fmt.Sprintf("%s%s", prefix, name)
+    return message, nil // Currently no error conditions defined other than maybe unsupported lang
+}
+
+// greetings/greetings_test.go
+package greetings_test // Use _test package name for black-box testing
+
+import (
+	"greetings" // Import the package we are testing
+	"testing"
+)
+
+// TestHello function uses table-driven tests.
+func TestHello(t *testing.T) {
+    // Define test cases as a slice of structs.
+    testCases := []struct {
+        testName  string // Name for the subtest
+        inputName string // Input 'name' for Hello function
+        inputLang string // Input 'language' for Hello function
+        wantMsg   string // Expected message output
+        wantErr   bool   // Expected error status (currently always false)
+    }{
+        // Red: Define the first test case. Run `go test`. It fails.
+        // Green: Implement minimal Hello func in greetings.go to pass this.
+        {testName: "Saying hello to a person", inputName: "Alice", inputLang: "", wantMsg: "Hello, Alice", wantErr: false},
+
+        // Red: Add this test case. Run `go test`. It fails.
+        // Green: Add default name logic in greetings.go.
+        {testName: "Empty name defaults to World", inputName: "", inputLang: "", wantMsg: "Hello, World", wantErr: false},
+
+        // Red: Add Spanish test case. Run `go test`. It fails.
+        // Green: Add Spanish language logic in greetings.go.
+        {testName: "In Spanish", inputName: "Elodie", inputLang: "Spanish", wantMsg: "Hola, Elodie", wantErr: false},
+
+        // Red: Add French test case. Run `go test`. It fails.
+        // Green: Add French language logic in greetings.go.
+        {testName: "In French", inputName: "Pierre", inputLang: "French", wantMsg: "Bonjour, Pierre", wantErr: false},
+
+        // Optional: Add test for unsupported language if error handling is implemented
+        // {testName: "Unsupported language", inputName: "Hans", inputLang: "German", wantMsg: "", wantErr: true},
+    }
+
+    // Iterate over test cases and run them as subtests.
+    for _, tc := range testCases {
+        // Use t.Run to create a subtest for each case.
+        // This provides better organization and reporting.
+        t.Run(tc.testName, func(t *testing.T) {
+            // Call the function under test.
+            gotMsg, gotErr := greetings.Hello(tc.inputName, tc.inputLang)
+
+            // Check if error status matches expectation.
+            hasErr := (gotErr != nil)
+            if hasErr != tc.wantErr {
+                t.Fatalf("Hello(%q, %q) returned error status %v; wantErr %v (Error: %v)",
+                         tc.inputName, tc.inputLang, hasErr, tc.wantErr, gotErr)
+            }
+
+            // If no error was expected, check if the message matches.
+            if !tc.wantErr && gotMsg != tc.wantMsg {
+                t.Errorf("Hello(%q, %q) = %q; want %q",
+                         tc.inputName, tc.inputLang, gotMsg, tc.wantMsg)
+            }
+            // Refactor: After tests pass, review both test code and production code for clarity.
+        })
+    }
+}
+
+```
+
+## **4. Using Cursor Efficiently for TDD**
+
+Cursor, as an AI-centric code editor, provides various capabilities to help TDD process:
+
+### **4.1 Cursor's TDD Related Capabilities**
+
+- **Smart Code Generation and Completion**: Generate code based on context (including `@` mentioned files and documents).
+- **Codebase Understanding and Questioning**: Search codebase, answer questions about code logic.
+- **Refactoring and Smart Rewriting**: Refactor code based on instructions, improve structure or fix errors.
+- **Interactive Interface**: Chat/editor (Composer, `Cmd/Ctrl+L`) and inline editing (`Cmd/Ctrl+K`).
+- **Context Association**: Reference project files or external documents (`@Docs`) via `@` symbol, providing precise context.
+- **Terminal Command Execution**: Require Cursor to execute terminal commands in chat or instruction.
+- **Automated Testing and Repair ("Auto-debug / YOLO Mode")**: Allow AI to automatically run test commands and iterate code modifications until passing based on results.
+- **Documentation Integration**: Conveniently reference library documentation or add custom documentation.
+
+### **4.2 Practice Workflow: Human-AI Collaboration TDD**
+
+1. **Write Tests (Human Priority)**: Developers first write one or a few key **failed** tests, clearly defining expected behavior. This is the starting point of TDD and the key to setting clear goals for AI.
+2. **Prompt AI to Implement (Cursor)**:
+    - Select failed test or related code.
+    - Use Cursor chat (`Cmd/Ctrl+L`) or inline editing (`Cmd/Ctrl+K`).
+    - Clearly instruct AI to write production code to pass the test.
+    - **Key**: Use `@` to reference test file (`@my_test.py`), implementation file (`@my_code.py`) and any necessary context or documentation (`@pytestDocs`).
+    - Example Prompt: "Modify `@calculator.py`'s `add` method to handle non-numeric inputs and raise TypeError based on `@test_calculator.py`'s failed test `test_add_raises_type_error_for_non_numeric`."
+3. **Run Tests (Manual or Cursor)**:
+    - Manually run test commands (`pytest`, `npm test`, `go test`).
+    - Or instruct Cursor to run: "Run `pytest tests/` and tell me the result."
+4. **Iterative Repair (Manual or Cursor - Auto-debug)**:
+    - **Manual**: Based on test failure information, manually modify code or again prompt Cursor for specific modifications.
+    - **Cursor Auto-debug**: If test command is configured, Cursor can automatically run tests after code generation, and attempt auto-repair (use cautiously and always review results).
+5. **Human Review and Refactor**:
+    - **Extremely Important**: Once AI-generated code passes tests, developers **must** review it to ensure code quality, readability, efficiency, and design reasonableness.
+    - You can manually refactor or use Cursor to assist refactoring (e.g., select code block, prompt: "Refactor this code to improve readability and ensure `@test_file.py`'s tests still pass").
+6. **Incremental Development**: Add more test cases to cover edge cases or expand functionality, repeat steps 1-5.
+
+### **4.3 Creating Effective Cursor Prompts for TDD Tasks**
+
+- **Clear, Specific, Contextual**: Clearly define task goals, involved files/functions, expected behavior, and use `@` to reference all relevant context.
+- **Decompose Complex Tasks**: Break down large features into smaller, test-driven steps.
+- **Explicit TDD Intentions**: Clearly state in prompt to follow TDD steps, e.g.: "1. Write a pytest test `test_parse_data_invalid_input` for `@utils.py`'s `parse_data` function, handling invalid JSON input. 2. Modify `parse_data` function to pass this test."
+- **Choose Appropriate Interaction Mode**: Multi-file/complex task use chat (`Cmd/Ctrl+L`); Quick, local modification use inline editing (`Cmd/Ctrl+K`).
+- **Iterative Optimization Prompts**: If initial response is not satisfactory, adjust prompt, provide more information or ask in a different way.
+
+### **4.4 Using Cursor to Create, Implement, and Refactor**
+
+- **Create Tests**: Prompt Cursor to generate test skeleton or preliminary cases based on requirement or function signature. **Note**: Human review is crucial to ensure tests reflect real needs, not AI's guess about existing code.
+    - Example: "Generate Jest and RTL test skeletons for React component `@UserProfile.jsx`, covering basic rendering and click 'Edit' button scenarios. Use `@testing-library/react` and `@testing-library/user-event`."
+- **Implement Code (Green Stage)**: After writing failed tests, instruct Cursor to implement.
+    - Example: "Check failed test `TestCreateUser_MissingEmail` in `@api_handler_test.go`, modify `@api_handler.go`'s `CreateUser` function to pass."
+- **Refactor Code (Refactor Stage)**: Select code, instruct Cursor to refactor, and **emphasize keeping tests passing**.
+    - Example: "Refactor `@data_processor.py`'s `process` method into smaller, single-responsibility functions. Ensure all tests in `@test_data_processor.py` still pass."
+
+### **4.5 Collaborative Best Practices and Avoid AI Traps**
+
+- **Code Modularization**: Keep code modular, single-purpose, to help AI understand context, reduce accidental destruction.
+- **Record Decision Process**: Record key AI interactions, design decisions in commit information or design documentation for team understanding and AI subsequent interactions.
+- **Maintain Human Supervision**: **AI is a helper, not a substitute**. Must review AI-generated code and tests. For complex tasks, "watch" AI process, intervene timely. Be wary of AI "hallucinations" or errors.
+- **Tests are Final Standard**: In AI-assisted process, **human-written and reviewed tests** are the core mechanism and final standard to verify AI output correctness. Test quality directly determines AI-assisted development reliability.
+- **Human-AI Interaction is Iterative**: View AI interaction as continuous dialogue and guidance, not one-time command execution.
+
+## **5. Conclusion**
+
+TDD is a powerful practice that significantly improves code quality, maintainability, and developer confidence. In the MVP stage, you can apply TDD or BDD selectively based on project needs and risk. AI programming assistants (like Cursor) bring new possibilities to TDD process, accelerating test and code generation and refactoring. However, AI's effective utilization depends on clear guidance (through writing high-quality tests and precise prompts) and strict human review. By combining TDD principles with AI tool efficiency, teams can build more robust, reliable software systems while rapidly iterating.

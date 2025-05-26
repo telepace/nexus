@@ -1,0 +1,130 @@
+name: Auto Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史以生成正确的 changelog
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.9.0
+          run_install: false
+
+      # 缓存 pnpm 依赖
+      - name: Cache pnpm dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pnpm-store
+            **/node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.4.15"
+
+      # 准备环境文件
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      # 构建前端
+      - name: Build Frontend
+        run: |
+          cd frontend
+          pnpm install
+          pnpm run build
+          mkdir -p ../dist
+          tar -czf ../dist/frontend-${{ env.VERSION }}.tar.gz .next public
+
+      # 构建后端
+      - name: Build Backend
+        run: |
+          cd backend
+          uv pip install -e . --system
+          uv pip install build wheel --system
+          python -m build
+          mkdir -p ../dist
+          cp dist/*.whl ../dist/
+
+      # 构建扩展
+      - name: Build Extension
+        run: |
+          cd extension
+          pnpm install
+          pnpm run build:with-tailwind
+          pnpm run package
+          mkdir -p ../dist
+          cp build/chrome-mv3-prod.zip ../dist/extension-${{ env.VERSION }}.zip
+
+      # 构建管理面板
+      - name: Build Admin
+        run: |
+          cd admin
+          pnpm install
+          pnpm exec vite build
+          mkdir -p ../dist
+          tar -czf ../dist/admin-${{ env.VERSION }}.tar.gz dist
+
+      # 构建网站
+      - name: Build Website
+        run: |
+          cd website
+          pnpm install
+          pnpm run build
+          mkdir -p ../dist
+          tar -czf ../dist/website-${{ env.VERSION }}.tar.gz .next public
+
+      # 安装并生成 changelog
+      - name: Generate changelog
+        run: |
+          pnpm add -g conventional-changelog-cli
+          conventional-changelog -p angular -i CHANGELOG.md -s -r 0
+          echo "Generated changelog:"
+          cat CHANGELOG.md
+
+      # 创建 GitHub Release
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*"
+          generateReleaseNotes: true
+          bodyFile: "CHANGELOG.md"
+          token: ${{ secrets.BOT_GITHUB_TOKEN }}
+          draft: false
+          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
+
+      # - name: Publish to Chrome Web Store
+      #   uses: frogcat/chrome-webstore-upload@v1
+      #   with:
+      #     extension-id: ${{ secrets.EXTENSION_ID }}
+      #     client-id: ${{ secrets.CLIENT_ID }}
+      #     client-secret: ${{ secrets.CLIENT_SECRET }}
+      #     refresh-token: ${{ secrets.REFRESH_TOKEN }}
+      #     zip-path: ./dist/extension-${{ env.VERSION }}.zip
+      #     publish: true

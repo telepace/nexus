@@ -1,0 +1,25 @@
+name: Document Build and Deployment
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'website/**'
+      - '.github/workflows/deploy-docs.yml'
+  workflow_dispatch:
+
+jobs:
+  redirect-to-docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger docker-build workflow
+        run: |
+          echo "Document build has been migrated to the docker-build.yml workflow"
+          echo "Triggering docker-build workflow..."
+          
+      - name: Trigger workflow
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: docker-build.yml
+          token: ${{ secrets.GITHUB_TOKEN }} 

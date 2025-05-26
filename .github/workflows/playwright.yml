@@ -1,0 +1,166 @@
+name: Playwright Tests
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    types:
+    - opened
+    - synchronize
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: 'false'
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    # Set job outputs to values from filter step
+    outputs:
+      changed: ${{ steps.filter.outputs.changed }}
+    steps:
+    - uses: actions/checkout@v4
+    # For pull requests it's not necessary to checkout the code but for the main branch it is
+    - uses: dorny/paths-filter@v3
+      id: filter
+      with:
+        filters: |
+          changed:
+            - backend/**
+            - frontend/**
+            - .env
+            - docker-compose*.yml
+            - .github/workflows/playwright.yml
+  test-playwright:
+    needs:
+      - changes
+    if: ${{ needs.changes.outputs.changed == 'true' }}
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shardIndex: [1, 2, 3, 4]
+        shardTotal: [4]
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install pnpm
+      uses: pnpm/action-setup@v3
+      with:
+        version: 9.9.0
+    - name: Symlink pnpm-lock.yaml to root
+      run: ln -sf frontend/pnpm-lock.yaml pnpm-lock.yaml
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+        cache: 'pnpm'
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled == 'true' }}
+      with:
+        limit-access-to-actor: true
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "0.4.15"
+        enable-cache: true
+    - run: uv sync
+      working-directory: backend
+    - run: pnpm install --frozen-lockfile
+      working-directory: frontend
+    - run: uv run bash scripts/generate-client.sh
+      env:
+        VIRTUAL_ENV: backend/.venv
+    - name: Install Doppler CLI
+      uses: dopplerhq/cli-action@v3
+    - name: Setup Doppler and env
+      run: |
+        doppler setup --silent --project nexus --config stg
+        doppler secrets download --no-file --format env > .env
+        STACK_NAME=$(doppler run -- printenv STACK_NAME)
+        echo "STACK_NAME=$STACK_NAME" >> $GITHUB_ENV
+      env:
+        DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN_STAGING }}
+    - run: docker compose --project-name $STACK_NAME down --remove-orphans
+    - run: docker compose --project-name $STACK_NAME build
+    - run: docker compose --project-name $STACK_NAME up -d
+    - name: Run Playwright tests
+      run: docker compose --project-name $STACK_NAME run --rm playwright npx playwright test --fail-on-flaky-tests --trace=retain-on-failure --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+    - run: docker compose --project-name $STACK_NAME down --remove-orphans
+    - name: Upload blob report to GitHub Actions Artifacts
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: blob-report-${{ matrix.shardIndex }}
+        path: admin/blob-report
+        include-hidden-files: true
+        retention-days: 1
+
+  merge-playwright-reports:
+    needs:
+      - test-playwright
+      - changes
+    # Merge reports after playwright-tests, even if some shards have failed
+    if: ${{ !cancelled() && needs.changes.outputs.changed == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install pnpm
+      uses: pnpm/action-setup@v3
+      with:
+        version: 9.9.0
+    - name: Symlink pnpm-lock.yaml to root
+      run: ln -sf frontend/pnpm-lock.yaml pnpm-lock.yaml
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'pnpm'
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      working-directory: admin
+    - name: Download blob reports from GitHub Actions Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: admin/all-blob-reports
+        pattern: blob-report-*
+        merge-multiple: true
+    - name: List downloaded artifacts (debug)
+      run: |
+        tree -L 2 admin/all-blob-reports || echo "tree command not available"
+        find admin -name "*.zip" -o -name "*.blob" || echo "No blob files found"
+        ls -la admin/all-blob-reports/ || echo "No all-blob-reports directory"
+    - name: Merge into HTML Report
+      run: |
+        mkdir -p playwright-report
+        if [ ! -d "./all-blob-reports" ] || [ -z "$(ls -A ./all-blob-reports 2>/dev/null)" ]; then
+          echo "No blob reports to merge, skipping."
+          exit 0
+        fi
+        npx playwright merge-reports --reporter html ./all-blob-reports
+      working-directory: admin
+    - name: Upload HTML report
+      uses: actions/upload-artifact@v4
+      with:
+        name: html-report--attempt-${{ github.run_attempt }}
+        path: admin/playwright-report
+        retention-days: 30
+        include-hidden-files: true
+
+  # https://github.com/marketplace/actions/alls-green#why
+  all-green-playwright:  # This job does nothing and is only used for the branch protection
+    if: always()
+    needs:
+      - test-playwright
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
+          allowed-skips: test-playwright

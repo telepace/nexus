@@ -1,0 +1,28 @@
+---
+trigger: model_decision
+description: 
+globs: 
+---
+Design with Test-Driven Development + mcp sequential thinking + API documentation review.
+
+## Process
+
+1. **Write Tests First**
+   - Define expected behavior before implementation
+
+2. **Think Sequentially**
+   - Number each thought step
+   - Revise or branch when needed
+   - Generate and verify hypothesis
+
+3. **Check API Docs**
+   - Consult official documentation before API usage
+   - Validate understanding with test cases
+
+4. **Implement Minimally**
+   - Write code that passes tests
+   - Follow your sequential thought chain
+
+5. **Refactor & Validate**
+   - Clean up while maintaining passing tests
+   - Verify all requirements are met

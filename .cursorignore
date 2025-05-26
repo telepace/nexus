@@ -1,0 +1,46 @@
+# Ignore node_modules and dependency-related directories
+node_modules/
+website/node_modules/
+frontend/node_modules/
+vendor/
+dist/
+build/
+target/
+
+# Ignore IDE and editor cache files
+.vscode/
+.idea/
+*.swp
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+
+# Ignore test outputs, caches
+coverage/
+*.pyc
+__pycache__/
+.cache/
+.nyc_output/
+
+# Ignore databases and large data files
+*.sqlite
+*.db
+*.csv
+*.tsv
+*.parquet
+*.h5
+
+# Ignore specific AI assistant or build outputs
+.cursordb/
+.cursor-tmp/
+out/
+output/
+docs/generated/
+
+# If needed, you can un-ignore certain important files
+!important.config.js
+!.env.example

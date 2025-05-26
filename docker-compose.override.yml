@@ -1,0 +1,206 @@
+services:
+
+  # Local services are available on their ports, but also available on:
+  # http://api.localhost.nip.io: backend
+  # http://dashboard.localhost.nip.io: frontend
+  # etc. To enable it, update .env, set:
+  # DOMAIN=localhost.nip.io
+  proxy:
+    image: traefik:3.0
+    restart: "no"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "${TRAEFIK_HTTP_PORT:-80}:80"
+      - "${TRAEFIK_HTTPS_PORT:-443}:443"
+      - "8080:8080"
+    command:
+      - "--log.level=DEBUG"
+      - "--api=true"
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.http.address=:80"
+      - "--entrypoints.https.address=:443"
+      - "--certificatesresolvers.le.acme.tlschallenge=true"
+      - "--certificatesresolvers.le.acme.email=admin@telepace.cc"
+      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.le.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+    labels:
+      # Enable Traefik for this service, to make it available in the public network
+      - traefik.enable=true
+      - traefik.constraint-label=traefik-public
+      # Dummy https-redirect middleware that doesn't really redirect, only to
+      # allow running it locally - update to simply pass through
+      - traefik.http.middlewares.https-redirect.contenttype.autodetect=true
+      # Add dummy admin-auth middleware
+      - traefik.http.middlewares.admin-auth.basicauth.users=admin:$$apr1$$n9x05odk$$djn6puF2ZXh8B9.P8erHf0
+      # Add dummy certificates resolver "le" for development
+      - traefik.http.routers.development-http.rule=Host(`dummy.localhost`)
+      - traefik.http.middlewares.development-https.passtlscert.pem=dummy
+      - traefik.http.routers.development-https.service=noop@internal
+    networks:
+      - traefik-public
+      - default
+
+  db:
+    restart: "no"
+    ports:
+      - "${DB_PORT:-5432}:5432"
+
+  pgadmin:
+    restart: "no"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+
+  backend:
+    restart: "no"
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    build:
+      context: ./backend
+    # command: sleep infinity  # Infinite loop to keep container alive doing nothing
+    command:
+      - fastapi
+      - run
+      - --reload
+      - "app/main.py"
+    develop:
+      watch:
+        - path: ./backend
+          action: sync
+          target: /app
+          ignore:
+            - ./backend/.venv
+            - .venv
+        - path: ./backend/pyproject.toml
+          action: rebuild
+    # TODO: remove once coverage is done locally
+    volumes:
+      - ./backend/htmlcov:/app/htmlcov
+      - ./backend/app/alembic:/app/app/alembic
+    environment:
+      SMTP_HOST: "mailcatcher"
+      SMTP_PORT: "1025"
+      SMTP_TLS: "false"
+      EMAILS_FROM_EMAIL: "noreply@example.com"
+    networks:
+      - traefik-public
+      - default
+    labels:
+      - traefik.enable=true
+      - traefik.constraint-label=traefik-public
+      - traefik.http.routers.${STACK_NAME:-nexus}-backend-http.rule=Host(`api.${DOMAIN:-localhost.nip.io}`)
+      - traefik.http.routers.${STACK_NAME:-nexus}-backend-http.entrypoints=http
+      - traefik.http.routers.${STACK_NAME:-nexus}-backend-http.service=${STACK_NAME:-nexus}-backend
+      - traefik.http.services.${STACK_NAME:-nexus}-backend.loadbalancer.server.port=8000
+
+  mailcatcher:
+    image: schickling/mailcatcher
+    ports:
+      - "${MAILCATCHER_WEB_PORT:-1080}:1080"
+      - "${MAILCATCHER_SMTP_PORT:-1025}:1025"
+
+  frontend:
+    restart: "no"
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    build:
+      context: ./frontend
+      args:
+        - NEXT_PUBLIC_API_URL=${BACKEND_API_URL:-http://localhost:8000}
+        - NODE_ENV=production
+    environment:
+      - NEXT_PUBLIC_API_URL=${BACKEND_API_URL:-http://localhost:8000}
+      - HOSTNAME=0.0.0.0
+      - PORT=${FRONTEND_PORT:-3000}
+      - HOST=0.0.0.0
+      - NODE_ENV=production
+    # 移除自定义command，使用Dockerfile中的启动命令
+    # command: sh -c "pnpm run start"
+    networks:
+      - traefik-public
+      - default
+    labels:
+      - traefik.enable=true
+      - traefik.constraint-label=traefik-public
+      - traefik.http.routers.${STACK_NAME:-nexus}-frontend-http.rule=Host(`dashboard.${DOMAIN:-localhost.nip.io}`)
+      - traefik.http.routers.${STACK_NAME:-nexus}-frontend-http.entrypoints=http
+      - traefik.http.routers.${STACK_NAME:-nexus}-frontend-http.service=${STACK_NAME:-nexus}-frontend
+      - traefik.http.services.${STACK_NAME:-nexus}-frontend.loadbalancer.server.port=3000
+
+  admin:
+    restart: "no"
+    ports:
+      - "${ADMIN_PORT:-5173}:80"
+    build:
+      context: ./admin
+      args:
+        - VITE_API_URL=${BACKEND_API_URL:-http://localhost:8000}
+        - VITE_ADMIN_API_URL=${BACKEND_API_URL:-http://localhost:8000}
+        - NODE_ENV=development
+    environment:
+      - VITE_API_URL=${BACKEND_API_URL:-http://localhost:8000}
+      - VITE_ADMIN_API_URL=${BACKEND_API_URL:-http://localhost:8000}
+    volumes:
+      - ./admin/public:/usr/share/nginx/html
+    networks:
+      - traefik-public
+      - default
+    labels:
+      - traefik.enable=true
+      - traefik.constraint-label=traefik-public
+      - traefik.http.routers.${STACK_NAME:-nexus}-admin-http.rule=Host(`admin.${DOMAIN:-localhost.nip.io}`)
+      - traefik.http.routers.${STACK_NAME:-nexus}-admin-http.entrypoints=http
+      - traefik.http.routers.${STACK_NAME:-nexus}-admin-http.service=${STACK_NAME:-nexus}-admin
+      - traefik.http.services.${STACK_NAME:-nexus}-admin.loadbalancer.server.port=80
+
+  playwright:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile.playwright
+      args:
+        - VITE_API_URL=http://backend:8000
+        - NODE_ENV=production
+    ipc: host
+    depends_on:
+      - backend
+      - mailcatcher
+    env_file:
+      - .env
+    environment:
+      - VITE_API_URL=${PLAYWRIGHT_API_URL:-http://backend:8000}
+      - MAILCATCHER_HOST=${MAILCATCHER_HOST:-http://mailcatcher:1080}
+      # For the reports when run locally
+      - PLAYWRIGHT_HTML_HOST=0.0.0.0
+      - CI=${CI}
+    volumes:
+      - ./admin/blob-report:/app/blob-report
+      - ./admin/test-results:/app/test-results
+    ports:
+      - ${PLAYWRIGHT_PORT:-9323}:9323
+
+  redis:
+    restart: "no"
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+
+  litellm:
+    restart: "no"
+    ports:
+      - "${LITELLM_PORT:-4000}:4000"
+    volumes:
+      - ./litellm/config.yaml:${LITELLM_CONFIG_PATH:-/app/config.yaml}
+      - ./litellm/startup.sh:/startup.sh
+
+  prometheus:
+    restart: "no"
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+
+networks:
+  traefik-public:
+    # For local dev, don't expect an external Traefik network
+    external: false
+    name: nexus_traefik-public

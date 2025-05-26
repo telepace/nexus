@@ -1,0 +1,93 @@
+{
+  "manifest_version": 3,
+  "name": "Nexus AI",
+  "version": "0.2.0",
+  "description": "AI-powered assistant that helps you understand, save, and interact with web content.",
+  "author": "Nexus Team",
+  "action": {
+    "default_icon": {
+      "16": "assets/icon16.png",
+      "32": "assets/icon32.png",
+      "48": "assets/icon48.png",
+      "64": "assets/icon64.png",
+      "128": "assets/icon128.png"
+    },
+    "default_popup": "pages/popup.html"
+  },
+  "icons": {
+    "16": "assets/icon16.png",
+    "32": "assets/icon32.png",
+    "48": "assets/icon48.png",
+    "64": "assets/icon64.png",
+    "128": "assets/icon128.png"
+  },
+  "background": {
+    "service_worker": "static/background/index.js",
+    "type": "module"
+  },
+  "options_ui": {
+    "page": "pages/options.html",
+    "open_in_tab": true
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "permissions": [
+    "storage",
+    "sidePanel",
+    "scripting",
+    "unlimitedStorage",
+    "activeTab",
+    "contextMenus",
+    "notifications",
+    "identity"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content-scripts/content.js"],
+      "all_frames": false,
+      "run_at": "document_idle"
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://localhost:8000 https://* http://* ws://localhost:* wss://*;"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "pages/oauth-callback.html",
+        "pages/onboarding.html",
+        "assets/*",
+        "sidepanel.html",
+        "sidepanel.js",
+        "sidepanel/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+E",
+        "mac": "Command+Shift+E"
+      },
+      "description": "Open Nexus AI popup"
+    },
+    "open_side_panel": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Open Nexus AI side panel"
+    },
+    "clip_current_page": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+C",
+        "mac": "Command+Shift+C"
+      },
+      "description": "Clip current page"
+    }
+  }
+} 

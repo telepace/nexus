@@ -1,0 +1,91 @@
+# API Engineering Best Practices Guide with Apifox Integration
+
+## 1. Introduction
+
+This guide aims to provide a set of best engineering practices for combining Apifox (as an API design, documentation, and testing tool) with backend code repositories (such as Node.js, Python, Java, Go, etc.). The core objective is to ensure **design, documentation, implementation, and testing** of APIs maintain high consistency, maintainability, and collaboration efficiency throughout their lifecycle.
+With the rise of AI and MCP, the audience for APIs has expanded. Just as product design considers user experience, API design must consider the developer experience. Well-designed, standardized APIs are not only user-friendly and easy to integrate with other business systems but also easier for AI to process.
+
+## 2. Core Principle: Design-First Approach
+
+We recommend adopting a **design-first** approach, with **Apifox serving as the "Source of Truth" for API contracts**.
+
+* **Definition:** All API endpoints, request/response structures, data models, business error codes, etc., are first designed and defined in Apifox.
+* **Advantages:**
+    * Ensures design uniformity and forward thinking.
+    * Facilitates team review and early feedback.
+    * Establishes a clear foundation for subsequent development, testing, and documentation generation.
+
+## 3. Standard Workflow
+
+We recommend following this basic workflow:
+
+1.  **Design/Update API:** Create or modify API designs in Apifox.
+2.  **Review:** Team members review the designs in Apifox.
+3.  **Export Specifications:** Export the latest OpenAPI specification file from Apifox (YAML format recommended, e.g., `openapi.yaml`).
+4.  **Version Control:** Commit the exported `openapi.yaml` file to the same Git repository as the backend code.
+5.  **Implement Code:** Developers write or update backend code logic based on the Apifox design (and the `openapi.yaml` in the repository).
+6.  **Write Tests:**
+    * Write unit tests and integration tests in the code repository.
+    * Write contract tests and scenario test cases in Apifox.
+7.  **Submit and CI/CD:** Submit code and updated `openapi.yaml` file, triggering the CI/CD pipeline.
+8.  **Automated Validation:** CI/CD pipeline executes:
+    * Code repository tests (unit, integration).
+    * **Contract tests** (validating deployed services using `openapi.yaml`).
+    * Apifox automated tests (via Apifox CLI or API calls).
+9.  **Deployment:** After validation, deploy to the appropriate environment.
+10. **Update Documentation/SDK:** Automatically or manually update and publish API documentation and client SDKs.
+
+## 4. Key Practices in Detail
+
+### 4.1 Apifox as the "Source of Truth"
+
+* Always adhere to defining or modifying API structures in Apifox first.
+* Use Apifox's data models, environment management, global parameters, and other features to maintain design consistency.
+
+### 4.2 Export and Version Control OpenAPI Specifications
+
+* **Necessity:**
+    * **Version Consistency:** Precisely associate API definitions with code implementations in Git, facilitating history tracking and version switching.
+    * **Code Review:** API contract changes are clearly visible in PR/MR.
+    * **CI/CD Integration:** Provide input files for automated contract testing, code generation, etc.
+    * **Offline Access and Toolchain:** Support local tool processing of API definitions.
+* **Operation:**
+    * Regularly export OpenAPI 3.0 YAML files from Apifox.
+    * Store files in a fixed location in the code repository (e.g., `api-spec/` or `docs/api/`).
+    * Manage file changes through Git commits.
+
+### 4.3 Accelerate Development with Mock Server
+
+* Use Apifox's Mock functionality to provide simulated interfaces for frontend or clients before backend implementation is complete.
+* Ensure Mock responses conform to the data structures defined in Apifox.
+
+### 4.4 Use Code Generation Carefully
+
+* **Recommended:** Generate data models (DTOs/POJOs/Structs) to reduce boilerplate code.
+* **Caution:** Avoid generating complete business logic or Controller/Handler layer code to prevent increased maintenance complexity.
+* **Consider:** Generate client SDKs to facilitate API consumption.
+
+### 4.5 Comprehensive Automated Testing
+
+* **Code Repository Tests:** Unit tests, integration tests, covering business logic and internal interactions.
+* **Apifox Automated Tests:** Cover main functional scenarios and business processes of the API.
+* **Contract Tests (in CI/CD):** Use tools like Dredd, Schemathesis, etc., based on the `openapi.yaml` file in the code repository, to strictly verify whether the **actually running service** conforms to the API contract. This is a key defense against design-implementation divergence.
+
+### 4.6 Deep CI/CD Integration
+
+* Including the OpenAPI specification file in Git is a prerequisite for deep integration.
+* Automatically execute all types of tests mentioned above in the pipeline.
+* Automate API documentation building and publishing.
+* Automate client SDK generation and publishing (if needed).
+
+### 4.7 Documentation Management
+
+* Primarily rely on automatically generated documentation from Apifox, as it comes directly from the "Source of Truth."
+* Ensure descriptions and examples in Apifox are sufficiently clear.
+* Publish generated documentation to an easily accessible platform (such as an internal developer portal).
+
+### 4.8 Team Collaboration and Standards
+
+* Set up appropriate team roles and permissions in Apifox.
+* Establish clear API design change processes and review mechanisms.
+* Standardize naming conventions for API paths, parameters, model fields, etc., and maintain consistency in both Apifox and code.

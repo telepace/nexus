@@ -1,0 +1,13 @@
+---
+description: 
+globs: backend/app/**/*.py
+alwaysApply: false
+---
+- Organize routes in api/routes/, configs in core/config.py, and manage all sensitive settings via environment variables
+- Place ORM models in models/; use Alembic for migrations
+- Use HTTPOnly Cookie or Bearer Token for authentication; hash passwords with bcrypt
+- Ensure consistent API response format and centralized exception handling
+- Write tests with pytest to cover all routes and exception branches
+- Manage dependencies in pyproject.toml; use .venv/ for virtual environments
+- All code comments and docstrings must be in English using Google style
+- Keep README.md, Swagger docs, and API references up to date

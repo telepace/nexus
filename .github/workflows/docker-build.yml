@@ -1,0 +1,320 @@
+name: Docker Build and Push
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+      # - 'v*.*.*-*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'deployment environment (production/testing)'
+        required: true
+        default: 'testing'
+        type: choice
+        options:
+          - production
+          - testing
+
+jobs:
+  build-and-push-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Log in to AliYun Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: registry.cn-hangzhou.aliyuncs.com
+          username: ${{ secrets.ALIREGISTRY_USERNAME }}
+          password: ${{ secrets.ALIREGISTRY_TOKEN }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set environment suffix
+        id: env-suffix
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.environment }}" == "testing" ]]; then
+            echo "ENV_SUFFIX=-testing" >> $GITHUB_OUTPUT
+          else
+            echo "ENV_SUFFIX=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get Docker metadata for backend
+        id: metadata-backend
+        uses: docker/metadata-action@v5.7.0
+        with:
+          images: |
+            docker.io/${{ github.repository_owner }}/nexus-backend${{ steps.env-suffix.outputs.ENV_SUFFIX }}
+            registry.cn-hangzhou.aliyuncs.com/${{ github.repository_owner }}/nexus-backend${{ steps.env-suffix.outputs.ENV_SUFFIX }}
+            ghcr.io/${{ github.repository_owner }}/nexus-backend${{ steps.env-suffix.outputs.ENV_SUFFIX }}
+          tags: |
+            type=ref,event=tag
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern=v{{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
+
+      - name: Build backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.metadata-backend.outputs.tags }}
+          labels: ${{ steps.metadata-backend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+
+  build-and-push-admin:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Log in to AliYun Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: registry.cn-hangzhou.aliyuncs.com
+          username: ${{ secrets.ALIREGISTRY_USERNAME }}
+          password: ${{ secrets.ALIREGISTRY_TOKEN }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set environment variables
+        id: set-env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.environment }}" == "testing" ]]; then
+            echo "ENV_SUFFIX=-testing" >> $GITHUB_OUTPUT
+            echo "API_URL=http://127.0.0.1:8000" >> $GITHUB_OUTPUT
+          else
+            echo "ENV_SUFFIX=" >> $GITHUB_OUTPUT
+            echo "API_URL=https://api.${DOMAIN:-example.com}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get Docker metadata for admin
+        id: metadata-admin
+        uses: docker/metadata-action@v5.7.0
+        with:
+          images: |
+            docker.io/${{ github.repository_owner }}/nexus-admin${{ steps.set-env.outputs.ENV_SUFFIX }}
+            registry.cn-hangzhou.aliyuncs.com/${{ github.repository_owner }}/nexus-admin${{ steps.set-env.outputs.ENV_SUFFIX }}
+            ghcr.io/${{ github.repository_owner }}/nexus-admin${{ steps.set-env.outputs.ENV_SUFFIX }}
+          tags: |
+            type=ref,event=tag
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern=v{{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
+
+      - name: Build admin
+        uses: docker/build-push-action@v6
+        with:
+          context: ./admin
+          file: ./admin/Dockerfile
+          build-args: |
+            VITE_API_URL=${{ steps.set-env.outputs.API_URL }}
+            SKIP_TS_CHECK=true
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.metadata-admin.outputs.tags }}
+          labels: ${{ steps.metadata-admin.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+
+  build-and-push-playwright:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Log in to AliYun Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: registry.cn-hangzhou.aliyuncs.com
+          username: ${{ secrets.ALIREGISTRY_USERNAME }}
+          password: ${{ secrets.ALIREGISTRY_TOKEN }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set environment variables
+        id: set-env-playwright
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.environment }}" == "testing" ]]; then
+            echo "ENV_SUFFIX=-testing" >> $GITHUB_OUTPUT
+            echo "API_URL=http://127.0.0.1:8000" >> $GITHUB_OUTPUT
+          else
+            echo "ENV_SUFFIX=" >> $GITHUB_OUTPUT
+            echo "API_URL=https://api.${DOMAIN:-example.com}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get Docker metadata for playwright
+        id: metadata-playwright
+        uses: docker/metadata-action@v5.7.0
+        with:
+          images: |
+            docker.io/${{ github.repository_owner }}/nexus-playwright${{ steps.set-env-playwright.outputs.ENV_SUFFIX }}
+            registry.cn-hangzhou.aliyuncs.com/${{ github.repository_owner }}/nexus-playwright${{ steps.set-env-playwright.outputs.ENV_SUFFIX }}
+            ghcr.io/${{ github.repository_owner }}/nexus-playwright${{ steps.set-env-playwright.outputs.ENV_SUFFIX }}
+          tags: |
+            type=ref,event=tag
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern=v{{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
+
+      - name: Build playwright
+        uses: docker/build-push-action@v6
+        with:
+          context: ./admin
+          file: ./admin/Dockerfile.playwright
+          build-args: |
+            VITE_API_URL=${{ steps.set-env-playwright.outputs.API_URL }}
+            CI=true
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.metadata-playwright.outputs.tags }}
+          labels: ${{ steps.metadata-playwright.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+
+  build-and-push-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Log in to AliYun Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: registry.cn-hangzhou.aliyuncs.com
+          username: ${{ secrets.ALIREGISTRY_USERNAME }}
+          password: ${{ secrets.ALIREGISTRY_TOKEN }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set environment variables
+        id: set-env-frontend
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.environment }}" == "testing" ]]; then
+            echo "ENV_SUFFIX=-testing" >> $GITHUB_OUTPUT
+            echo "API_URL=http://127.0.0.1:8000" >> $GITHUB_OUTPUT
+          else
+            echo "ENV_SUFFIX=" >> $GITHUB_OUTPUT
+            echo "API_URL=https://api.${DOMAIN:-example.com}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get Docker metadata for frontend
+        id: metadata-frontend
+        uses: docker/metadata-action@v5.7.0
+        with:
+          images: |
+            docker.io/${{ github.repository_owner }}/nexus-frontend${{ steps.set-env-frontend.outputs.ENV_SUFFIX }}
+            registry.cn-hangzhou.aliyuncs.com/${{ github.repository_owner }}/nexus-frontend${{ steps.set-env-frontend.outputs.ENV_SUFFIX }}
+            ghcr.io/${{ github.repository_owner }}/nexus-frontend${{ steps.set-env-frontend.outputs.ENV_SUFFIX }}
+          tags: |
+            type=ref,event=tag
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern=v{{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
+
+      - name: Build frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ steps.set-env-frontend.outputs.API_URL }}
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.metadata-frontend.outputs.tags }}
+          labels: ${{ steps.metadata-frontend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true

@@ -1,0 +1,52 @@
+name: Website CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'website/**'
+  pull_request:
+    paths:
+      - 'website/**'
+
+jobs:
+  build_and_test:
+    name: Build and Test Website
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./website
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install pnpm
+      run: npm install -g pnpm
+
+    - name: Get pnpm store directory
+      id: pnpm-cache
+      run: |
+        echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_ENV
+
+    - name: Cache pnpm store
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('website/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+
+    - name: Install dependencies
+      run: pnpm install
+
+    - name: Run linter
+      run: pnpm run lint
+
+    - name: Build project
+      run: pnpm run build

@@ -1,0 +1,132 @@
+# .github/workflows/generate-client.yml
+name: Generate Client
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+
+jobs:
+  generate-client:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && github.head_ref || '' }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.9.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+        with:
+          enable-cache: true
+
+      - name: Install Frontend Dependencies
+        run: pnpm install
+        working-directory: frontend
+
+      - name: Install Admin Dependencies
+        run: pnpm install
+        working-directory: admin
+
+      - name: Install Backend Dependencies
+        run: |
+          uv sync
+          source .venv/bin/activate
+          pip install .
+        working-directory: backend
+
+      - name: Run Format
+        run: make format
+
+      - name: Generate Client
+        run: |
+          make generate-client || {
+            echo "❌ Failed to run generate-client.sh script."
+            exit 1
+          }
+        env:
+          ENVIRONMENT: production
+          SECRET_KEY: just-for-generating-client-openapi
+          POSTGRES_PASSWORD: just-for-generating-client-openapi
+          FIRST_SUPERUSER_PASSWORD: just-for-generating-client-openapi
+          SENTRY_DSN: ""
+          POSTHOG_API_KEY: ""
+          POSTHOG_HOST: ""
+          VIRTUAL_ENV: .venv
+
+      - name: Stage Generated Files
+        run: |
+          git add frontend/app/openapi-client
+          git add admin/src/client
+
+  auto-commit-push:
+    needs: generate-client
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Git User
+        run: |
+          git config --local user.email "3293172751ysy@gmail.com"
+          git config --local user.name "kubbot"
+          git remote set-url origin https://${{ secrets.BOT_GITHUB_TOKEN }}@github.com/${{ github.repository }}
+
+      - name: Check for Changes
+        id: check-changes
+        run: |
+          if ! git diff --staged --quiet; then
+            echo "changes_detected=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes_detected=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and Push Changes (Auto Green)
+        if: steps.check-changes.outputs.changes_detected == 'true'
+        run: |
+          git pull --rebase
+          local_time=$(date -u -d "$(date -u)" "+%Y-%m-%d %H:%M:%S" -d "8 hours")
+          git commit -a -s -m "ci: ✨ Autogenerate frontend & admin clients ($local_time) [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+
+      # 8. Handle Changes for Fork PRs (Warn, Don't Fail)
+      - name: Check for Uncommitted Changes (Fork PRs)
+        # Run only if it IS a PR from a fork
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          # Check if there are staged changes that were generated
+          if ! git diff --staged --quiet; then
+            echo "⚠️ Changes detected in generated client."
+            echo "➡️ Please run 'bash scripts/generate-client.sh' locally and commit the changes to this PR."
+            # Optionally, use GitHub annotations for better visibility in the PR
+            echo "::warning title=Generated Client Changes Detected::Please run 'bash scripts/generate-client.sh' locally and commit the changes to this PR."
+            # DO NOT exit 1 - Allow the workflow to continue
+          else
+            echo "✅ No changes detected in generated client."
+          fi

@@ -1,0 +1,58 @@
+# 忽略版本控制文件
+.git
+.gitignore
+.github
+
+# 忽略Node.js相关文件和目录
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 忽略构建输出目录（但在构建阶段需要复制）
+.next
+out
+build
+
+# 忽略测试文件和目录
+__tests__
+test-results
+coverage
+jest.config.js
+*.test.js
+*.test.ts
+*.test.tsx
+*.spec.js
+*.spec.ts
+*.spec.tsx
+
+# 忽略开发配置文件
+.eslintrc.js
+.eslintignore
+.prettierrc
+.prettierignore
+biome.json
+# 不排除 tsconfig.json，构建时需要
+# tsconfig.json
+next.config.js.bak
+
+# 忽略文档和其他不需要的文件
+README.md
+LICENSE
+*.md
+# 不排除 Dockerfile, 但它默认被排除在构建上下文外
+# Dockerfile
+.dockerignore
+
+# 忽略环境变量文件
+.env
+.env.*
+!.env.example
+
+# 忽略其他不需要的文件
+.DS_Store
+*.log
+*.bak
+*.tmp
+*.swp 
