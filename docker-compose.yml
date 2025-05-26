@@ -236,6 +236,7 @@ services:
       - default
     volumes:
       - ./litellm/config.yaml:${LITELLM_CONFIG_PATH:-/app/config.yaml}
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:telepace@db/litellm}
       - STORE_MODEL_IN_DB=${LITELLM_STORE_MODEL_IN_DB:-True}

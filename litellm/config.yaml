@@ -1,7 +1,7 @@
 # LiteLLM Configuration File
 general_settings:
   completion_model: gpt-3.5-turbo
-  database_url: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-telepace}@db:5432/${LITELLM_DB_NAME:-litellm}
+  database_url: "os.environ/DATABASE_URL"
   drop_params: false
   environment_variables:
     OPENAI_API_KEY: "os.environ/OPENAI_API_KEY"
