@@ -58,7 +58,7 @@ export type ContentItemCreate = {
   source_uri?: string | null;
   title?: string | null;
   summary?: string | null;
-  user_id: string;
+  content_text?: string | null;
 };
 
 export type ContentItemPublic = {
@@ -66,9 +66,10 @@ export type ContentItemPublic = {
   source_uri?: string | null;
   title?: string | null;
   summary?: string | null;
-  user_id: string;
   id: string;
+  user_id: string;
   processing_status: string;
+  content_text?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -157,6 +158,10 @@ export type Prompt = {
     [key: string]: unknown;
   } | null;
   version?: number;
+  /**
+   * 是否启用该提示词
+   */
+  enabled?: boolean;
   team_id?: string | null;
   id?: string;
   created_at?: string;
@@ -176,6 +181,10 @@ export type PromptCreate = {
     [key: string]: unknown;
   } | null;
   version?: number;
+  /**
+   * 是否启用该提示词
+   */
+  enabled?: boolean;
   team_id?: string | null;
   tag_ids?: Array<string> | null;
 };
@@ -191,6 +200,10 @@ export type PromptReadWithTags = {
     [key: string]: unknown;
   } | null;
   version?: number;
+  /**
+   * 是否启用该提示词
+   */
+  enabled?: boolean;
   team_id?: string | null;
   id: string;
   created_by: string;
@@ -213,6 +226,7 @@ export type PromptUpdate = {
   meta_data?: {
     [key: string]: unknown;
   } | null;
+  enabled?: boolean | null;
   tag_ids?: Array<string> | null;
 };
 
@@ -681,6 +695,16 @@ export type PromptsDuplicatePromptResponse = Prompt;
 
 export type PromptsDuplicatePromptError = HTTPValidationError;
 
+export type PromptsTogglePromptEnabledData = {
+  path: {
+    prompt_id: string;
+  };
+};
+
+export type PromptsTogglePromptEnabledResponse = PromptReadWithTags;
+
+export type PromptsTogglePromptEnabledError = HTTPValidationError;
+
 export type LlmCreateCompletionData = {
   body: CompletionRequest;
 };
@@ -705,6 +729,16 @@ export type ContentCreateContentItemEndpointResponse = ContentItemPublic;
 
 export type ContentCreateContentItemEndpointError = HTTPValidationError;
 
+export type ContentProcessContentItemEndpointData = {
+  path: {
+    id: string;
+  };
+};
+
+export type ContentProcessContentItemEndpointResponse = ContentItemPublic;
+
+export type ContentProcessContentItemEndpointError = HTTPValidationError;
+
 export type ContentListContentItemsEndpointData = {
   query?: {
     /**
@@ -715,10 +749,6 @@ export type ContentListContentItemsEndpointData = {
      * Number of items to skip for pagination.
      */
     skip?: number;
-    /**
-     * Optional User ID to filter items by.
-     */
-    user_id?: string | null;
   };
 };
 
@@ -735,6 +765,56 @@ export type ContentGetContentItemEndpointData = {
 export type ContentGetContentItemEndpointResponse = ContentItemPublic;
 
 export type ContentGetContentItemEndpointError = HTTPValidationError;
+
+export type ContentGetContentMarkdownEndpointData = {
+  path: {
+    id: string;
+  };
+};
+
+export type ContentGetContentMarkdownEndpointResponse = {
+  [key: string]: unknown;
+};
+
+export type ContentGetContentMarkdownEndpointError = HTTPValidationError;
+
+export type ContentGetSupportedProcessorsResponse = unknown;
+
+export type ContentGetSupportedProcessorsError = unknown;
+
+export type ContentGetContentChunksEndpointData = {
+  path: {
+    id: string;
+  };
+  query?: {
+    /**
+     * Page number (1-based)
+     */
+    page?: number;
+    /**
+     * Number of chunks per page
+     */
+    size?: number;
+  };
+};
+
+export type ContentGetContentChunksEndpointResponse = {
+  [key: string]: unknown;
+};
+
+export type ContentGetContentChunksEndpointError = HTTPValidationError;
+
+export type ContentGetContentChunksSummaryEndpointData = {
+  path: {
+    id: string;
+  };
+};
+
+export type ContentGetContentChunksSummaryEndpointResponse = {
+  [key: string]: unknown;
+};
+
+export type ContentGetContentChunksSummaryEndpointError = HTTPValidationError;
 
 export type PrivateCreateUserData = {
   body: PrivateUserCreate;

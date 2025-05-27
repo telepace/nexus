@@ -701,6 +701,51 @@ def duplicate_prompt(
         )
 
 
+# ===== 快速切换启用状态 =====
+@router.patch("/{prompt_id}/toggle-enabled", response_model=PromptReadWithTags)
+def toggle_prompt_enabled(
+    *,
+    db: Session = Depends(get_db),
+    prompt_id: UUID,
+    current_user: Any = Depends(get_current_user),
+):
+    """快速切换提示词的启用状态"""
+    try:
+        prompt = db.get(Prompt, prompt_id)
+        if not prompt:
+            raise HTTPException(status_code=404, detail="Prompt not found")
+
+        # 检查权限
+        if not _check_prompt_access(prompt, current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not enough permissions to modify this prompt",
+            )
+
+        # 切换启用状态
+        prompt.enabled = not prompt.enabled
+        prompt.updated_at = datetime.utcnow()
+
+        db.add(prompt)
+        db.commit()
+        db.refresh(prompt)
+        # 确保加载标签关系
+        db.refresh(prompt, ["tags"])
+
+        logger.info(f"Toggled prompt {prompt_id} enabled status to: {prompt.enabled}")
+        return PromptReadWithTags.model_validate(prompt)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"切换提示词启用状态失败: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"切换提示词启用状态失败: {str(e)}",
+        )
+
+
 # ===== 辅助函数 =====
 def _check_prompt_access(prompt: Prompt, user: Any) -> bool:
     """检查用户是否有权限访问提示词

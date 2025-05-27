@@ -140,9 +140,9 @@ class S3StorageService(StorageService):
         """
         try:
             response = self.client.get_object(Bucket=self.bucket, Key=file_path)
-            return response['Body'].read()
+            return response["Body"].read()
         except ClientError as e:
-            if e.response['Error']['Code'] == 'NoSuchKey':
+            if e.response["Error"]["Code"] == "NoSuchKey":
                 raise FileNotFoundError(f"File not found: {file_path}")
             else:
                 raise Exception(f"Failed to download file {file_path}: {str(e)}")
@@ -259,18 +259,23 @@ class MockS3Client:
         """
         if Key not in self.objects:
             raise ClientError(
-                {"Error": {"Code": "NoSuchKey", "Message": "The specified key does not exist."}}, 
-                "GetObject"
+                {
+                    "Error": {
+                        "Code": "NoSuchKey",
+                        "Message": "The specified key does not exist.",
+                    }
+                },
+                "GetObject",
             )
-        
+
         # 创建一个模拟的 Body 对象
         class MockBody:
             def __init__(self, data: bytes):
                 self.data = data
-            
+
             def read(self) -> bytes:
                 return self.data
-        
+
         return {
             "Body": MockBody(self.objects[Key]),
             "ContentLength": len(self.objects[Key]),

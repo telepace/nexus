@@ -26,6 +26,7 @@ import {
   promptsCreatePromptVersion as createPromptVersion,
   promptsReadPromptVersion as readPromptVersion,
   promptsDuplicatePrompt as duplicatePrompt,
+  promptsTogglePromptEnabled as togglePromptEnabledApi,
 } from "./openapi-client/sdk.gen";
 
 import type {
@@ -71,6 +72,7 @@ export {
   createPromptVersion,
   readPromptVersion,
   duplicatePrompt,
+  togglePromptEnabledApi,
 };
 
 // 确保配置被导入

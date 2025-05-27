@@ -389,14 +389,18 @@ afterEach(() => {
 });
 
 // Mock react-markdown and related packages
-jest.mock('react-markdown', () => {
-  const React = require('react')
+jest.mock("react-markdown", () => {
+  const React = require("react");
   return function ReactMarkdown({ children }: { children: string }) {
-    return React.createElement('div', { 'data-testid': 'react-markdown' }, children)
-  }
-})
+    return React.createElement(
+      "div",
+      { "data-testid": "react-markdown" },
+      children,
+    );
+  };
+});
 
-jest.mock('remark-gfm', () => () => {})
-jest.mock('remark-breaks', () => () => {})
-jest.mock('rehype-highlight', () => () => {})
-jest.mock('rehype-raw', () => () => {})
+jest.mock("remark-gfm", () => () => {});
+jest.mock("remark-breaks", () => () => {});
+jest.mock("rehype-highlight", () => () => {});
+jest.mock("rehype-raw", () => () => {});

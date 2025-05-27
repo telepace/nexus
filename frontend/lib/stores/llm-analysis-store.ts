@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import { promptsApi, Prompt } from "@/lib/api/services/prompts";
+import { getCookie } from "@/lib/auth";
 
 export interface LLMAnalysis {
   id: string;
@@ -7,6 +9,7 @@ export interface LLMAnalysis {
   title: string;
   content: string;
   prompt?: string;
+  promptId?: string;
   isExpanded: boolean;
   isLoading: boolean;
   error?: string;
@@ -28,6 +31,11 @@ interface LLMAnalysisState {
   isGenerating: boolean;
   error: string | null;
 
+  // Prompts data
+  enabledPrompts: Prompt[];
+  disabledPrompts: Prompt[];
+  isLoadingPrompts: boolean;
+
   // Actions
   addAnalysis: (analysis: Omit<LLMAnalysis, "id" | "created_at">) => void;
   updateAnalysis: (id: string, updates: Partial<LLMAnalysis>) => void;
@@ -37,12 +45,23 @@ interface LLMAnalysisState {
   setGenerating: (isGenerating: boolean) => void;
   setError: (error: string | null) => void;
 
+  // Prompts actions
+  loadPrompts: () => Promise<void>;
+
   // Generate analysis
   generateAnalysis: (
     contentId: string,
-    prompt: string,
-    type: LLMAnalysis["type"],
-    title: string,
+    systemPrompt: string,
+    userPrompt: string,
+    promptId?: string,
+    title?: string,
+  ) => Promise<void>;
+
+  // Execute analysis with content
+  executeAnalysisWithContent: (
+    contentId: string,
+    content: string,
+    selectedPrompt?: Prompt | null,
   ) => Promise<void>;
 }
 
@@ -88,6 +107,9 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
       analyses: [],
       isGenerating: false,
       error: null,
+      enabledPrompts: [],
+      disabledPrompts: [],
+      isLoadingPrompts: false,
 
       addAnalysis: (analysis) => {
         const newAnalysis: LLMAnalysis = {
@@ -137,15 +159,39 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
         set({ error });
       },
 
-      generateAnalysis: async (contentId, prompt, type, title) => {
+      loadPrompts: async () => {
+        set({ isLoadingPrompts: true, error: null });
+
+        try {
+          const [enabled, disabled] = await Promise.all([
+            promptsApi.getEnabledPrompts(),
+            promptsApi.getDisabledPrompts(),
+          ]);
+
+          set({
+            enabledPrompts: enabled,
+            disabledPrompts: disabled,
+            isLoadingPrompts: false,
+          });
+        } catch (error) {
+          console.error("加载 prompts 失败:", error);
+          set({
+            error: error instanceof Error ? error.message : "加载 prompts 失败",
+            isLoadingPrompts: false,
+          });
+        }
+      },
+
+      generateAnalysis: async (contentId, systemPrompt, userPrompt, promptId, title) => {
         const { addAnalysis, updateAnalysis, setGenerating, setError } = get();
 
         // 创建一个loading状态的分析
         const loadingAnalysis = {
-          type,
-          title,
+          type: "custom" as const,
+          title: title || "AI 分析",
           content: "",
-          prompt,
+          prompt: systemPrompt,
+          promptId,
           isExpanded: true,
           isLoading: true,
           contentId,
@@ -156,42 +202,166 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
         setError(null);
 
         try {
-          // 这里应该调用实际的API
-          // 暂时使用模拟数据
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+          // 获取认证token
+          const token = getCookie("accessToken");
+          if (!token) {
+            throw new Error("未找到认证令牌，请重新登录");
+          }
 
-          const mockContent = generateMockContent(type, title);
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+          
+          // 调用流式分析API
+          const response = await fetch(`${apiUrl}/api/v1/content/${contentId}/analyze`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              system_prompt: systemPrompt,
+              user_prompt: userPrompt,
+              model: "gpt-3.5-turbo",
+            }),
+          });
 
-          // 找到刚创建的分析并更新
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          // 处理流式响应
+          const reader = response.body?.getReader();
+          if (!reader) {
+            throw new Error("无法获取响应流");
+          }
+
+          const decoder = new TextDecoder();
+          let accumulatedContent = "";
+
+          // 找到刚创建的分析
           const currentAnalyses = get().analyses;
           const targetAnalysis = currentAnalyses.find(
-            (a) => a.contentId === contentId && a.isLoading && a.type === type,
+            (a) =>
+              a.contentId === contentId &&
+              a.isLoading &&
+              a.promptId === promptId,
           );
 
-          if (targetAnalysis) {
-            updateAnalysis(targetAnalysis.id, {
-              content: mockContent,
-              isLoading: false,
-            });
+          if (!targetAnalysis) {
+            throw new Error("无法找到目标分析");
           }
+
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              
+              if (done) break;
+
+              const chunk = decoder.decode(value, { stream: true });
+              const lines = chunk.split('\n');
+
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  const data = line.slice(6).trim();
+                  
+                  if (data === '[DONE]') {
+                    // 流结束
+                    updateAnalysis(targetAnalysis.id, {
+                      isLoading: false,
+                    });
+                    return;
+                  }
+
+                  try {
+                    const parsed = JSON.parse(data);
+                    
+                    // 检查是否是错误
+                    if (parsed.error) {
+                      throw new Error(parsed.message || "LLM 服务错误");
+                    }
+
+                    // 提取内容
+                    if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta) {
+                      const delta = parsed.choices[0].delta;
+                      if (delta.content) {
+                        accumulatedContent += delta.content;
+                        
+                        // 实时更新内容
+                        updateAnalysis(targetAnalysis.id, {
+                          content: accumulatedContent,
+                        });
+                      }
+                    }
+                  } catch (parseError) {
+                    // 检查是否是JSON解析错误还是业务错误
+                    if (parseError instanceof Error && parseError.message.includes("LLM 服务错误")) {
+                      // 这是业务错误，需要抛出
+                      throw parseError;
+                    }
+                    // 其他情况是JSON解析错误，可能是不完整的JSON，继续处理
+                    console.warn("解析流数据失败:", parseError);
+                  }
+                }
+              }
+            }
+          } finally {
+            reader.releaseLock();
+          }
+
+          // 确保最终状态正确
+          updateAnalysis(targetAnalysis.id, {
+            content: accumulatedContent || "分析完成，但未收到内容",
+            isLoading: false,
+          });
+
         } catch (error) {
           console.error("生成分析失败:", error);
           setError(error instanceof Error ? error.message : "生成分析失败");
 
-          // 移除失败的分析
+          // 更新失败的分析
           const currentAnalyses = get().analyses;
           const targetAnalysis = currentAnalyses.find(
-            (a) => a.contentId === contentId && a.isLoading && a.type === type,
+            (a) =>
+              a.contentId === contentId &&
+              a.isLoading &&
+              a.promptId === promptId,
           );
 
           if (targetAnalysis) {
             updateAnalysis(targetAnalysis.id, {
               isLoading: false,
-              error: "生成失败，请重试",
+              error: error instanceof Error ? error.message : "生成失败，请重试",
             });
           }
         } finally {
           setGenerating(false);
+        }
+      },
+
+      executeAnalysisWithContent: async (
+        contentId,
+        content,
+        selectedPrompt,
+      ) => {
+        const { generateAnalysis } = get();
+
+        if (selectedPrompt) {
+          // 使用选择的prompt
+          await generateAnalysis(
+            contentId,
+            selectedPrompt.content,
+            content,
+            selectedPrompt.id,
+            selectedPrompt.name,
+          );
+        } else {
+          // 直接使用内容作为自由对话
+          await generateAnalysis(
+            contentId,
+            "请分析以下内容：",
+            content,
+            undefined,
+            "自由对话",
+          );
         }
       },
     }),
@@ -201,7 +371,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
   ),
 );
 
-// 生成模拟内容的辅助函数
+// 生成模拟内容的辅助函数（保留用于回退）
 function generateMockContent(type: LLMAnalysis["type"], title: string): string {
   switch (type) {
     case "summary":

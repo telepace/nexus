@@ -12,6 +12,7 @@ import {
   deleteTag,
   readPromptVersions,
   duplicatePrompt,
+  togglePromptEnabledApi,
 } from "@/app/clientService";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -70,6 +71,7 @@ export interface PromptData {
   created_by: string;
   created_at: string;
   updated_at: string;
+  enabled?: boolean;
   tags?: TagData[];
   creator?: {
     id?: string;
@@ -424,6 +426,7 @@ export async function addPrompt(formData: FormData) {
     const inputVarsValue = formData.get("input_vars") as string;
     const input_vars = inputVarsValue ? JSON.parse(inputVarsValue) : [];
     const team_id = (formData.get("team_id") as string) || null;
+    const enabled = formData.get("enabled") === "on";
 
     // 元数据支持
     const metaDataValue = formData.get("meta_data") as string;
@@ -443,6 +446,7 @@ export async function addPrompt(formData: FormData) {
         input_vars,
         team_id,
         meta_data,
+        enabled,
       },
     });
 
@@ -538,6 +542,7 @@ export async function updatePromptAction(id: string, formData: FormData) {
     const createVersionValue = formData.get("create_version");
     const create_version = createVersionValue === "true";
     const team_id = (formData.get("team_id") as string) || null;
+    const enabled = formData.get("enabled") === "on";
 
     // 元数据支持
     const metaDataValue = formData.get("meta_data") as string;
@@ -563,6 +568,7 @@ export async function updatePromptAction(id: string, formData: FormData) {
         input_vars,
         team_id,
         meta_data,
+        enabled,
       },
     });
 
@@ -909,3 +915,47 @@ export async function updatePromptFormAction(
 
 // 导出类型
 export type { PromptVersionData, ApiErrorResponse };
+
+export async function togglePromptEnabled(id: string) {
+  // 验证用户
+  const user = await requireAuth();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const token = await getAuthToken();
+  if (!token) {
+    redirect("/login");
+  }
+
+  try {
+    const { data, error } = await togglePromptEnabledApi({
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      path: {
+        prompt_id: id,
+      },
+    });
+
+    if (error) {
+      console.error("切换prompt启用状态出错:", error);
+      return {
+        error: typeof error === "string" ? error : JSON.stringify(error),
+      };
+    }
+
+    // 清除缓存以便重新加载
+    promptsCache = null;
+    lastPromptsFetchTime = 0;
+
+    // 重新验证路径
+    revalidatePath(`/prompts/${id}`);
+    revalidatePath("/prompts");
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("切换prompt启用状态出错:", error);
+    return { error: "操作失败" };
+  }
+}

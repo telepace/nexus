@@ -176,7 +176,11 @@ const ContentRenderer = memo(
     }
 
     // Processed content - 优先使用虚拟滚动渲染
-    if (type === "processed" && contentId && content.processing_status === "completed") {
+    if (
+      type === "processed" &&
+      contentId &&
+      content.processing_status === "completed"
+    ) {
       return (
         <div className="relative h-full">
           {/* 渲染模式切换 */}
@@ -188,10 +192,10 @@ const ContentRenderer = memo(
               </span>
             </div>
           </div>
-          
+
           {/* 虚拟滚动渲染器 - 使用绝对定位 */}
           <div className="absolute top-[60px] left-0 right-0 bottom-0">
-            <VirtualScrollRenderer 
+            <VirtualScrollRenderer
               contentId={contentId}
               className="w-full h-full"
               chunkSize={15}
@@ -203,18 +207,18 @@ const ContentRenderer = memo(
     }
 
     // 回退到传统渲染（向后兼容）
-    const contentToRender = markdownContent || content.processed_content || content.content_text;
-    
+    const contentToRender =
+      markdownContent || content.processed_content || content.content_text;
+
     if (!contentToRender) {
       return (
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
             <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
             <p className="text-sm text-gray-600">
-              {content.processing_status === 'completed' 
-                ? 'Processed content not available' 
-                : `Content is being processed. Status: ${content.processing_status}`
-              }
+              {content.processing_status === "completed"
+                ? "Processed content not available"
+                : `Content is being processed. Status: ${content.processing_status}`}
             </p>
           </div>
         </div>
@@ -232,10 +236,12 @@ const ContentRenderer = memo(
             </span>
           </div>
         </div>
-        
+
         <div className="absolute top-[60px] left-0 right-0 bottom-0 overflow-auto">
-          {markdownContent || (contentToRender.includes('#') || contentToRender.includes('**')) ? (
-            <MarkdownRenderer 
+          {markdownContent ||
+          contentToRender.includes("#") ||
+          contentToRender.includes("**") ? (
+            <MarkdownRenderer
               content={contentToRender}
               className="prose prose-sm max-w-none dark:prose-invert p-4"
             />
@@ -324,7 +330,7 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
         setContent(contentData);
 
         // 如果内容已处理完成，尝试获取 markdown 内容
-        if (contentData.processing_status === 'completed') {
+        if (contentData.processing_status === "completed") {
           try {
             const markdownResponse = await fetch(
               `${apiUrl}/api/v1/content/${contentId}/markdown`,
@@ -340,10 +346,13 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
               const markdownData = await markdownResponse.json();
               setMarkdownContent(markdownData.markdown_content);
             } else {
-              console.warn('Failed to fetch markdown content:', markdownResponse.status);
+              console.warn(
+                "Failed to fetch markdown content:",
+                markdownResponse.status,
+              );
             }
           } catch (markdownError) {
-            console.warn('Error fetching markdown content:', markdownError);
+            console.warn("Error fetching markdown content:", markdownError);
             // 不设置错误，因为这不是致命错误
           }
         }
@@ -455,22 +464,16 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
                   <TabsTrigger value="original">Original</TabsTrigger>
                 </TabsList>
 
-                <TabsContent
-                  value="processed"
-                  className="flex-1 mt-4"
-                >
-                  <ContentRenderer 
-                    content={content} 
-                    type="processed" 
+                <TabsContent value="processed" className="flex-1 mt-4">
+                  <ContentRenderer
+                    content={content}
+                    type="processed"
                     markdownContent={markdownContent}
                     contentId={contentId}
                   />
                 </TabsContent>
 
-                <TabsContent
-                  value="original"
-                  className="flex-1 mt-4"
-                >
+                <TabsContent value="original" className="flex-1 mt-4">
                   <ContentRenderer
                     content={content}
                     type="original"
@@ -485,7 +488,10 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
 
         {/* Right Panel - LLM Analysis */}
         <div className="lg:col-span-1" data-testid="llm-panel">
-          <LLMAnalysisPanel contentId={contentId} />
+          <LLMAnalysisPanel 
+            contentId={contentId} 
+            contentText={content?.processed_content || content?.content_text || ""}
+          />
         </div>
       </div>
     </div>

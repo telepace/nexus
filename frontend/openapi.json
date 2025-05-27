@@ -1435,6 +1435,45 @@
         }
       }
     },
+    "/api/v1/prompts/{prompt_id}/toggle-enabled": {
+      "patch": {
+        "tags": ["prompts", "prompts"],
+        "summary": "Toggle Prompt Enabled",
+        "description": "\u5feb\u901f\u5207\u6362\u63d0\u793a\u8bcd\u7684\u542f\u7528\u72b6\u6001",
+        "operationId": "prompts-toggle_prompt_enabled",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Prompt Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PromptReadWithTags" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/llm/completions": {
       "post": {
         "tags": ["llm"],
@@ -1530,15 +1569,52 @@
               }
             }
           }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/api/v1/content/process/{id}": {
+      "post": {
+        "tags": ["content"],
+        "summary": "Process Content Item",
+        "description": "Process a content item to convert it to Markdown format using appropriate processor.",
+        "operationId": "content-process_content_item_endpoint",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ContentItemPublic" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
         }
       }
     },
-    "/api/v1/content": {
+    "/api/v1/content/": {
       "get": {
         "tags": ["content"],
         "summary": "List Content Items",
-        "description": "Retrieves a list of content items, with optional pagination and user filtering.",
+        "description": "Retrieves a list of content items for the authenticated user, with optional pagination.",
         "operationId": "content-list_content_items_endpoint",
+        "security": [{ "OAuth2PasswordBearer": [] }],
         "parameters": [
           {
             "name": "skip",
@@ -1566,20 +1642,6 @@
               "title": "Limit"
             },
             "description": "Maximum number of items to return."
-          },
-          {
-            "name": "user_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                { "type": "string", "format": "uuid" },
-                { "type": "null" }
-              ],
-              "description": "Optional User ID to filter items by.",
-              "title": "User Id"
-            },
-            "description": "Optional User ID to filter items by."
           }
         ],
         "responses": {
@@ -1610,8 +1672,9 @@
       "get": {
         "tags": ["content"],
         "summary": "Get a Specific Content Item",
-        "description": "Retrieves a single content item by its unique ID.",
+        "description": "Retrieves a single content item by its unique ID. User can only access their own content.",
         "operationId": "content-get_content_item_endpoint",
+        "security": [{ "OAuth2PasswordBearer": [] }],
         "parameters": [
           {
             "name": "id",
@@ -1626,6 +1689,161 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ContentItemPublic" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/content/{id}/markdown": {
+      "get": {
+        "tags": ["content"],
+        "summary": "Get Content Item as Markdown",
+        "description": "Retrieves the processed markdown content for a content item. Returns raw markdown text.",
+        "operationId": "content-get_content_markdown_endpoint",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Content-Get Content Markdown Endpoint"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/content/processors/supported": {
+      "get": {
+        "tags": ["content"],
+        "summary": "Get Supported Content Types",
+        "description": "Get list of supported content types and their processors.",
+        "operationId": "content-get_supported_processors",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    },
+    "/api/v1/content/{id}/chunks": {
+      "get": {
+        "tags": ["content"],
+        "summary": "Get Content Chunks",
+        "description": "Retrieves content chunks for efficient rendering with pagination support.",
+        "operationId": "content-get_content_chunks_endpoint",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number (1-based)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number (1-based)"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Number of chunks per page",
+              "default": 10,
+              "title": "Size"
+            },
+            "description": "Number of chunks per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Content-Get Content Chunks Endpoint"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/content/{id}/chunks/summary": {
+      "get": {
+        "tags": ["content"],
+        "summary": "Get Content Chunks Summary",
+        "description": "Get summary information about content chunks without the actual content.",
+        "operationId": "content-get_content_chunks_summary_endpoint",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Content-Get Content Chunks Summary Endpoint"
+                }
               }
             }
           },
@@ -1726,7 +1944,7 @@
         "properties": {
           "grant_type": {
             "anyOf": [
-              { "type": "string", "pattern": "password" },
+              { "type": "string", "pattern": "^password$" },
               { "type": "null" }
             ],
             "title": "Grant Type"
@@ -1841,10 +2059,13 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Summary"
           },
-          "user_id": { "type": "string", "format": "uuid", "title": "User Id" }
+          "content_text": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Content Text"
+          }
         },
         "type": "object",
-        "required": ["type", "user_id"],
+        "required": ["type"],
         "title": "ContentItemCreate"
       },
       "ContentItemPublic": {
@@ -1862,11 +2083,15 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Summary"
           },
-          "user_id": { "type": "string", "format": "uuid", "title": "User Id" },
           "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "user_id": { "type": "string", "format": "uuid", "title": "User Id" },
           "processing_status": {
             "type": "string",
             "title": "Processing Status"
+          },
+          "content_text": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Content Text"
           },
           "created_at": {
             "type": "string",
@@ -1882,8 +2107,8 @@
         "type": "object",
         "required": [
           "type",
-          "user_id",
           "id",
+          "user_id",
           "processing_status",
           "created_at",
           "updated_at"
@@ -2097,6 +2322,12 @@
             "title": "Meta Data"
           },
           "version": { "type": "integer", "title": "Version", "default": 1 },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "\u662f\u5426\u542f\u7528\u8be5\u63d0\u793a\u8bcd",
+            "default": false
+          },
           "team_id": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
@@ -2167,6 +2398,12 @@
             "title": "Meta Data"
           },
           "version": { "type": "integer", "title": "Version", "default": 1 },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "\u662f\u5426\u542f\u7528\u8be5\u63d0\u793a\u8bcd",
+            "default": false
+          },
           "team_id": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
@@ -2214,6 +2451,12 @@
             "title": "Meta Data"
           },
           "version": { "type": "integer", "title": "Version", "default": 1 },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "\u662f\u5426\u542f\u7528\u8be5\u63d0\u793a\u8bcd",
+            "default": false
+          },
           "team_id": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
@@ -2315,6 +2558,10 @@
           "meta_data": {
             "anyOf": [{ "type": "object" }, { "type": "null" }],
             "title": "Meta Data"
+          },
+          "enabled": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Enabled"
           },
           "tag_ids": {
             "anyOf": [

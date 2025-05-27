@@ -8,7 +8,6 @@ for testing the content library and reader functionality.
 
 import logging
 import sys
-import uuid
 from pathlib import Path
 
 # Add the backend directory to Python path
@@ -19,8 +18,8 @@ sys.path.insert(0, str(backend_dir))
 from sqlmodel import Session, select  # noqa: E402
 
 from app.core.db import engine  # noqa: E402
-from app.models.content import ContentItem  # noqa: E402
 from app.models import User  # noqa: E402
+from app.models.content import ContentItem  # noqa: E402
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -36,7 +35,7 @@ def main() -> None:
             admin_user = session.exec(
                 select(User).where(User.email == "admin@telepace.cc")
             ).first()
-            
+
             if not admin_user:
                 logger.error("❌ 未找到管理员用户，请先运行 make backend-init-data")
                 sys.exit(1)
@@ -381,14 +380,13 @@ AI在军事领域的应用引发了关于自主武器系统的伦理争议。
             for content_data in test_contents:
                 # Check if content already exists
                 existing_content = session.exec(
-                    select(ContentItem).where(ContentItem.title == content_data["title"])
-                ).first()
-                
-                if not existing_content:
-                    content_item = ContentItem(
-                        user_id=admin_user.id,
-                        **content_data
+                    select(ContentItem).where(
+                        ContentItem.title == content_data["title"]
                     )
+                ).first()
+
+                if not existing_content:
+                    content_item = ContentItem(user_id=admin_user.id, **content_data)
                     session.add(content_item)
                     logger.info(f"创建测试内容: {content_data['title']}")
                 else:
@@ -409,4 +407,4 @@ AI在军事领域的应用引发了关于自主武器系统的伦理争议。
 
 
 if __name__ == "__main__":
-    main() 
+    main()

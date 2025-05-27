@@ -255,6 +255,10 @@ services:
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-sk-lf}
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-pk-lf}
       - LANGFUSE_HOST=${LANGFUSE_HOST:-https://cloud.langfuse.com}
+      # - https_proxy=http://localhost:7890
+      # - http_proxy=http://localhost:7890
+      # - all_proxy=socks5://localhost:7890
+
     depends_on:
       db:
         condition: service_healthy

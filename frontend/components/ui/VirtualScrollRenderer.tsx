@@ -1,9 +1,19 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Loader2, AlertCircle } from 'lucide-react';
-import { MarkdownRenderer } from './MarkdownRenderer';
-import { contentApi, ContentChunk, ContentChunksResponse } from '@/lib/api/content';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
+import { Loader2, AlertCircle } from "lucide-react";
+import { MarkdownRenderer } from "./MarkdownRenderer";
+import {
+  contentApi,
+  ContentChunk,
+  ContentChunksResponse,
+} from "@/lib/api/content";
 
 interface ProgressiveRendererProps {
   contentId: string;
@@ -19,32 +29,38 @@ interface ChunkCache {
 // 防抖函数
 function useDebounce<T extends (...args: any[]) => void>(
   callback: T,
-  delay: number
+  delay: number,
 ): T {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  return useCallback((...args: any[]) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    timeoutRef.current = setTimeout(() => callback(...args), delay);
-  }, [callback, delay]) as T;
+
+  return useCallback(
+    (...args: any[]) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => callback(...args), delay);
+    },
+    [callback, delay],
+  ) as T;
 }
 
 // 节流函数
 function useThrottle<T extends (...args: any[]) => void>(
   callback: T,
-  delay: number
+  delay: number,
 ): T {
   const lastCallRef = useRef<number>(0);
-  
-  return useCallback((...args: any[]) => {
-    const now = Date.now();
-    if (now - lastCallRef.current >= delay) {
-      lastCallRef.current = now;
-      callback(...args);
-    }
-  }, [callback, delay]) as T;
+
+  return useCallback(
+    (...args: any[]) => {
+      const now = Date.now();
+      if (now - lastCallRef.current >= delay) {
+        lastCallRef.current = now;
+        callback(...args);
+      }
+    },
+    [callback, delay],
+  ) as T;
 }
 
 export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
@@ -62,7 +78,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [visibleStartIndex, setVisibleStartIndex] = useState(0);
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
   const loadTriggerRef = useRef<HTMLDivElement>(null);
   const topSentinelRef = useRef<HTMLDivElement>(null);
@@ -76,7 +92,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
     return chunks.map((chunk, index) => ({
       ...chunk,
       actualIndex: visibleStartIndex + index,
-      key: `${chunk.id}-${visibleStartIndex + index}`
+      key: `${chunk.id}-${visibleStartIndex + index}`,
     }));
   }, [chunks, visibleStartIndex]);
 
@@ -91,14 +107,14 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
     const scrollTop = target.scrollTop;
     const scrollHeight = target.scrollHeight;
     const clientHeight = target.clientHeight;
-    
+
     // 使用requestAnimationFrame优化滚动处理
     requestAnimationFrame(() => {
-      console.log('Scroll position:', {
+      console.log("Scroll position:", {
         scrollTop,
         scrollHeight,
         clientHeight,
-        remaining: scrollHeight - scrollTop - clientHeight
+        remaining: scrollHeight - scrollTop - clientHeight,
       });
     });
   }, 100);
@@ -118,9 +134,9 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
         }
       },
       {
-        rootMargin: '200px', // Start loading 200px before the trigger
-        threshold: 0.1
-      }
+        rootMargin: "200px", // Start loading 200px before the trigger
+        threshold: 0.1,
+      },
     );
 
     observer.observe(loadTriggerRef.current);
@@ -131,14 +147,18 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
   // Intersection Observer for DOM cleanup - 使用防抖优化
   const debouncedCleanup = useDebounce(() => {
     if (chunks && chunks.length > maxVisibleChunks) {
-      const chunksToRemove = Math.min(chunkSize, chunks.length - maxVisibleChunks);
-      setChunks(prev => prev.slice(chunksToRemove));
-      setVisibleStartIndex(prev => prev + chunksToRemove);
+      const chunksToRemove = Math.min(
+        chunkSize,
+        chunks.length - maxVisibleChunks,
+      );
+      setChunks((prev) => prev.slice(chunksToRemove));
+      setVisibleStartIndex((prev) => prev + chunksToRemove);
     }
   }, 500);
 
   useEffect(() => {
-    if (!topSentinelRef.current || !chunks || chunks.length <= maxVisibleChunks) return;
+    if (!topSentinelRef.current || !chunks || chunks.length <= maxVisibleChunks)
+      return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -148,9 +168,9 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
         }
       },
       {
-        rootMargin: '500px 0px 0px 0px',
-        threshold: 0
-      }
+        rootMargin: "500px 0px 0px 0px",
+        threshold: 0,
+      },
     );
 
     observer.observe(topSentinelRef.current);
@@ -175,7 +195,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
         if (page === 1) {
           setChunks(cachedChunks);
         } else {
-          setChunks(prev => [...prev, ...cachedChunks]);
+          setChunks((prev) => [...prev, ...cachedChunks]);
         }
         setCurrentPage(page);
         setLoading(false);
@@ -184,15 +204,15 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
       }
 
       const response: ContentChunksResponse = await contentApi.getContentChunks(
-        contentId, 
-        page, 
-        chunkSize
+        contentId,
+        page,
+        chunkSize,
       );
 
       // Update cache
-      setChunkCache(prev => ({
+      setChunkCache((prev) => ({
         ...prev,
-        [page]: response.chunks
+        [page]: response.chunks,
       }));
 
       // Update state
@@ -200,15 +220,14 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
         setChunks(response.chunks);
         setTotalChunks(response.pagination?.total_chunks || 0);
       } else {
-        setChunks(prev => [...prev, ...response.chunks]);
+        setChunks((prev) => [...prev, ...response.chunks]);
       }
 
       setHasMore(response.pagination?.has_next || false);
       setCurrentPage(page);
-
     } catch (err) {
-      console.error('Error loading chunks:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load content');
+      console.error("Error loading chunks:", err);
+      setError(err instanceof Error ? err.message : "Failed to load content");
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -237,7 +256,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
         <div className="text-center">
           <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
           <p className="text-red-600 mb-4">{error}</p>
-          <button 
+          <button
             onClick={retryLoad}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
           >
@@ -249,21 +268,27 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
   }
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className={`overflow-auto border border-gray-200 dark:border-gray-700 ${className}`}
-      style={{ 
-        height: '100%',
-        maxHeight: '100%',
-        position: 'relative',
-        willChange: 'scroll-position' // 优化滚动性能
+      style={{
+        height: "100%",
+        maxHeight: "100%",
+        position: "relative",
+        willChange: "scroll-position", // 优化滚动性能
       }}
       onScroll={handleScroll}
     >
       {/* Debug info */}
       <div className="sticky top-0 z-20 bg-blue-100 dark:bg-blue-900 text-xs p-2 border-b">
-        <div>Chunks loaded: {chunks?.length || 0} | Total: {totalChunks} | Has more: {hasMore ? 'Yes' : 'No'}</div>
-        <div>Current page: {currentPage} | Loading: {loading ? 'Yes' : 'No'} | Loading more: {loadingMore ? 'Yes' : 'No'}</div>
+        <div>
+          Chunks loaded: {chunks?.length || 0} | Total: {totalChunks} | Has
+          more: {hasMore ? "Yes" : "No"}
+        </div>
+        <div>
+          Current page: {currentPage} | Loading: {loading ? "Yes" : "No"} |
+          Loading more: {loadingMore ? "Yes" : "No"}
+        </div>
       </div>
 
       {/* Top sentinel for DOM cleanup */}
@@ -284,7 +309,10 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
 
       {/* Load trigger */}
       {hasMore && (
-        <div ref={loadTriggerRef} className="h-20 flex items-center justify-center bg-yellow-100 dark:bg-yellow-900">
+        <div
+          ref={loadTriggerRef}
+          className="h-20 flex items-center justify-center bg-yellow-100 dark:bg-yellow-900"
+        >
           {loadingMore ? (
             <div className="flex items-center space-x-2">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -306,7 +334,8 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
           </div>
           {visibleStartIndex > 0 && (
             <div className="text-xs text-gray-400 mt-2">
-              Showing chunks {visibleStartIndex + 1} - {visibleStartIndex + chunks.length} of {totalChunks}
+              Showing chunks {visibleStartIndex + 1} -{" "}
+              {visibleStartIndex + chunks.length} of {totalChunks}
             </div>
           )}
         </div>
@@ -316,7 +345,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
       {error && chunks && chunks.length > 0 && (
         <div className="text-center py-4 text-red-500 bg-red-100 dark:bg-red-900">
           <div className="text-sm mb-2">Failed to load more content</div>
-          <button 
+          <button
             onClick={() => loadChunks(currentPage + 1)}
             className="text-xs px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
           >
@@ -343,7 +372,7 @@ const ChunkItem = React.memo<{
       </span>
     </div>
     <div className="chunk-content">
-      <MarkdownRenderer 
+      <MarkdownRenderer
         content={chunk.content}
         className="prose prose-sm max-w-none dark:prose-invert"
       />
@@ -351,6 +380,6 @@ const ChunkItem = React.memo<{
   </div>
 ));
 
-ChunkItem.displayName = 'ChunkItem';
+ChunkItem.displayName = "ChunkItem";
 
-export default VirtualScrollRenderer; 
+export default VirtualScrollRenderer;

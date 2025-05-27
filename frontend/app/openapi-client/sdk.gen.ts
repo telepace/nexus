@@ -121,6 +121,9 @@ import type {
   PromptsDuplicatePromptData,
   PromptsDuplicatePromptError,
   PromptsDuplicatePromptResponse,
+  PromptsTogglePromptEnabledData,
+  PromptsTogglePromptEnabledError,
+  PromptsTogglePromptEnabledResponse,
   LlmCreateCompletionData,
   LlmCreateCompletionError,
   LlmCreateCompletionResponse,
@@ -130,12 +133,26 @@ import type {
   ContentCreateContentItemEndpointData,
   ContentCreateContentItemEndpointError,
   ContentCreateContentItemEndpointResponse,
+  ContentProcessContentItemEndpointData,
+  ContentProcessContentItemEndpointError,
+  ContentProcessContentItemEndpointResponse,
   ContentListContentItemsEndpointData,
   ContentListContentItemsEndpointError,
   ContentListContentItemsEndpointResponse,
   ContentGetContentItemEndpointData,
   ContentGetContentItemEndpointError,
   ContentGetContentItemEndpointResponse,
+  ContentGetContentMarkdownEndpointData,
+  ContentGetContentMarkdownEndpointError,
+  ContentGetContentMarkdownEndpointResponse,
+  ContentGetSupportedProcessorsError,
+  ContentGetSupportedProcessorsResponse,
+  ContentGetContentChunksEndpointData,
+  ContentGetContentChunksEndpointError,
+  ContentGetContentChunksEndpointResponse,
+  ContentGetContentChunksSummaryEndpointData,
+  ContentGetContentChunksSummaryEndpointError,
+  ContentGetContentChunksSummaryEndpointResponse,
   PrivateCreateUserData,
   PrivateCreateUserError,
   PrivateCreateUserResponse,
@@ -911,6 +928,25 @@ export const promptsDuplicatePrompt = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Toggle Prompt Enabled
+ * 快速切换提示词的启用状态
+ */
+export const promptsTogglePromptEnabled = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<PromptsTogglePromptEnabledData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).patch<
+    PromptsTogglePromptEnabledResponse,
+    PromptsTogglePromptEnabledError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/{prompt_id}/toggle-enabled",
+  });
+};
+
+/**
  * Create Completion
  * Handles creation of completions based on request data.
  */
@@ -967,8 +1003,30 @@ export const contentCreateContentItemEndpoint = <
 };
 
 /**
+ * Process Content Item
+ * Process a content item to convert it to Markdown format using appropriate processor.
+ */
+export const contentProcessContentItemEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentProcessContentItemEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    ContentProcessContentItemEndpointResponse,
+    ContentProcessContentItemEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/process/{id}",
+  });
+};
+
+/**
  * List Content Items
- * Retrieves a list of content items, with optional pagination and user filtering.
+ * Retrieves a list of content items for the authenticated user, with optional pagination.
  */
 export const contentListContentItemsEndpoint = <
   ThrowOnError extends boolean = false,
@@ -984,13 +1042,13 @@ export const contentListContentItemsEndpoint = <
     ThrowOnError
   >({
     ...options,
-    url: "/api/v1/content",
+    url: "/api/v1/content/",
   });
 };
 
 /**
  * Get a Specific Content Item
- * Retrieves a single content item by its unique ID.
+ * Retrieves a single content item by its unique ID. User can only access their own content.
  */
 export const contentGetContentItemEndpoint = <
   ThrowOnError extends boolean = false,
@@ -1004,6 +1062,91 @@ export const contentGetContentItemEndpoint = <
   >({
     ...options,
     url: "/api/v1/content/{id}",
+  });
+};
+
+/**
+ * Get Content Item as Markdown
+ * Retrieves the processed markdown content for a content item. Returns raw markdown text.
+ */
+export const contentGetContentMarkdownEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentGetContentMarkdownEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetContentMarkdownEndpointResponse,
+    ContentGetContentMarkdownEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{id}/markdown",
+  });
+};
+
+/**
+ * Get Supported Content Types
+ * Get list of supported content types and their processors.
+ */
+export const contentGetSupportedProcessors = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetSupportedProcessorsResponse,
+    ContentGetSupportedProcessorsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/processors/supported",
+  });
+};
+
+/**
+ * Get Content Chunks
+ * Retrieves content chunks for efficient rendering with pagination support.
+ */
+export const contentGetContentChunksEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentGetContentChunksEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetContentChunksEndpointResponse,
+    ContentGetContentChunksEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{id}/chunks",
+  });
+};
+
+/**
+ * Get Content Chunks Summary
+ * Get summary information about content chunks without the actual content.
+ */
+export const contentGetContentChunksSummaryEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentGetContentChunksSummaryEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetContentChunksSummaryEndpointResponse,
+    ContentGetContentChunksSummaryEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{id}/chunks/summary",
   });
 };
 

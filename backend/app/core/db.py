@@ -14,7 +14,7 @@ from app.models import (
     UserCreate,
     Visibility,
 )
-from app.models.content import ContentItem, AIConversation
+from app.models.content import AIConversation, ContentItem
 
 # Get the logger
 logger = logging.getLogger("app.db")
@@ -171,6 +171,7 @@ def init_db(session: Session, db_url: str | None = None) -> None:
 请提供简洁明了的摘要：""",
             "type": PromptType.TEMPLATE,
             "visibility": Visibility.PUBLIC,
+            "enabled": False,
             "input_vars": [
                 {"name": "content", "description": "文章内容", "required": True}
             ],
@@ -189,6 +190,7 @@ def init_db(session: Session, db_url: str | None = None) -> None:
 请提取核心要点：""",
             "type": PromptType.TEMPLATE,
             "visibility": Visibility.PUBLIC,
+            "enabled": False,
             "input_vars": [
                 {"name": "content", "description": "文章内容", "required": True}
             ],
@@ -207,6 +209,7 @@ def init_db(session: Session, db_url: str | None = None) -> None:
 请用大白话解释：""",
             "type": PromptType.TEMPLATE,
             "visibility": Visibility.PUBLIC,
+            "enabled": False,
             "input_vars": [
                 {"name": "content", "description": "需要解释的内容", "required": True}
             ],
@@ -231,10 +234,60 @@ def init_db(session: Session, db_url: str | None = None) -> None:
 请生成讨论问题：""",
             "type": PromptType.TEMPLATE,
             "visibility": Visibility.PUBLIC,
+            "enabled": False,
             "input_vars": [
                 {"name": "content", "description": "文章内容", "required": True}
             ],
             "tags": ["思维拓展", "学习辅助"],
+        },
+        # 新增启用的 prompt
+        {
+            "name": "生成摘要",
+            "description": "为内容生成简洁的摘要",
+            "content": "请为以下内容生成一个简洁明了的摘要，突出主要观点和关键信息：\n\n{content}",
+            "type": PromptType.TEMPLATE,
+            "visibility": Visibility.PUBLIC,
+            "enabled": True,
+            "input_vars": [
+                {"name": "content", "description": "内容", "required": True}
+            ],
+            "tags": ["文章分析", "内容理解"],
+        },
+        {
+            "name": "提取要点",
+            "description": "提取内容中的关键要点",
+            "content": "请从以下内容中提取关键要点，以清晰的列表形式呈现：\n\n{content}",
+            "type": PromptType.TEMPLATE,
+            "visibility": Visibility.PUBLIC,
+            "enabled": True,
+            "input_vars": [
+                {"name": "content", "description": "内容", "required": True}
+            ],
+            "tags": ["文章分析", "学习辅助"],
+        },
+        {
+            "name": "生成问题",
+            "description": "基于内容生成思考问题",
+            "content": "基于以下内容，生成一些深入思考的问题，帮助更好地理解和分析：\n\n{content}",
+            "type": PromptType.TEMPLATE,
+            "visibility": Visibility.PUBLIC,
+            "enabled": True,
+            "input_vars": [
+                {"name": "content", "description": "内容", "required": True}
+            ],
+            "tags": ["思维拓展", "学习辅助"],
+        },
+        {
+            "name": "深度洞察",
+            "description": "提供深度分析和洞察",
+            "content": "请对以下内容进行深度分析，提供有价值的洞察和观点：\n\n{content}",
+            "type": PromptType.TEMPLATE,
+            "visibility": Visibility.PUBLIC,
+            "enabled": True,
+            "input_vars": [
+                {"name": "content", "description": "内容", "required": True}
+            ],
+            "tags": ["文章分析", "思维拓展"],
         },
     ]
 
@@ -614,12 +667,9 @@ AI在军事领域的应用引发了关于自主武器系统的伦理争议。
         existing_content = session.exec(
             select(ContentItem).where(ContentItem.title == content_data["title"])
         ).first()
-        
+
         if not existing_content:
-            content_item = ContentItem(
-                user_id=user.id,
-                **content_data
-            )
+            content_item = ContentItem(user_id=user.id, **content_data)
             session.add(content_item)
             logger.info(f"Created test content: {content_data['title']}")
         else:
@@ -633,7 +683,7 @@ AI在军事领域的应用引发了关于自主武器系统的伦理争议。
     first_content = session.exec(
         select(ContentItem).where(ContentItem.user_id == user.id)
     ).first()
-    
+
     if first_content:
         test_conversations = [
             {
@@ -645,13 +695,13 @@ AI在军事领域的应用引发了关于自主武器系统的伦理争议。
                     {
                         "role": "user",
                         "content": "请帮我总结一下这篇关于Transformer的论文的核心要点",
-                        "timestamp": "2024-01-15T10:00:00Z"
+                        "timestamp": "2024-01-15T10:00:00Z",
                     },
                     {
-                        "role": "assistant", 
+                        "role": "assistant",
                         "content": "这篇论文的核心要点包括：\n\n1. **革命性架构**：Transformer完全基于注意力机制，摒弃了传统的循环和卷积结构\n\n2. **并行化优势**：相比RNN/LSTM，Transformer可以并行处理序列，大大提高训练效率\n\n3. **自注意力机制**：通过缩放点积注意力和多头注意力，模型能够捕获序列内部的长距离依赖关系\n\n4. **编码器-解码器结构**：每个都由6层相同的层堆叠而成，包含自注意力和前馈网络\n\n5. **性能突破**：在机器翻译任务上达到了新的SOTA，BLEU分数达到28.4\n\n这个架构后来成为了现代大语言模型的基础。",
-                        "timestamp": "2024-01-15T10:00:30Z"
-                    }
+                        "timestamp": "2024-01-15T10:00:30Z",
+                    },
                 ],
                 "summary": "讨论了Transformer论文的核心架构和创新点",
             },
@@ -664,16 +714,16 @@ AI在军事领域的应用引发了关于自主武器系统的伦理争议。
                     {
                         "role": "user",
                         "content": "我是一个编程初学者，想要学习深度学习，应该从哪里开始？",
-                        "timestamp": "2024-01-16T14:30:00Z"
+                        "timestamp": "2024-01-16T14:30:00Z",
                     },
                     {
                         "role": "assistant",
                         "content": "作为编程初学者学习深度学习，我建议按以下路径：\n\n**第一阶段：基础准备（2-3个月）**\n1. Python编程基础\n2. NumPy、Pandas数据处理\n3. Matplotlib数据可视化\n4. 线性代数和概率统计基础\n\n**第二阶段：机器学习入门（1-2个月）**\n1. 使用Scikit-learn学习经典算法\n2. 理解监督学习、无监督学习概念\n3. 实践几个小项目\n\n**第三阶段：深度学习（3-4个月）**\n1. 学习PyTorch或TensorFlow\n2. 理解神经网络、反向传播\n3. 实践CNN、RNN项目\n4. 学习Transformer架构\n\n**推荐资源：**\n- 吴恩达的机器学习课程\n- Fast.ai实用深度学习课程\n- 《深度学习》花书\n\n记住：多动手实践，从简单项目开始！",
-                        "timestamp": "2024-01-16T14:32:00Z"
-                    }
+                        "timestamp": "2024-01-16T14:32:00Z",
+                    },
                 ],
                 "summary": "为编程初学者制定深度学习学习路径",
-            }
+            },
         ]
 
         for conv_data in test_conversations:
@@ -681,12 +731,15 @@ AI在军事领域的应用引发了关于自主武器系统的伦理争议。
             existing_conv = session.exec(
                 select(AIConversation).where(AIConversation.title == conv_data["title"])
             ).first()
-            
+
             if not existing_conv:
                 # 将messages转换为JSON字符串
                 import json
-                conv_data["messages"] = json.dumps(conv_data["messages"], ensure_ascii=False)
-                
+
+                conv_data["messages"] = json.dumps(
+                    conv_data["messages"], ensure_ascii=False
+                )
+
                 conversation = AIConversation(**conv_data)
                 session.add(conversation)
                 logger.info(f"Created test conversation: {conv_data['title']}")

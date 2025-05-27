@@ -41,6 +41,7 @@ class ContentItemPublic(ContentItemBaseSchema):
 
 class ContentItemDetail(ContentItemPublic):
     """Extended schema for detailed content view with processed content."""
+
     processed_content: str | None = None
     meta_info: str | None = None
 

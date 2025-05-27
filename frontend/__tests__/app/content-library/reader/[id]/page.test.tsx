@@ -79,35 +79,37 @@ describe("ReaderPage", () => {
 
     // Mock fetch for content details and markdown
     global.fetch = jest.fn().mockImplementation((url: string) => {
-      if (url.includes('/markdown')) {
+      if (url.includes("/markdown")) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({
+          json: () =>
+            Promise.resolve({
+              id: "1",
+              title: "Test Document",
+              markdown_content: "# Test Markdown Content\n\nThis is a test.",
+              processing_status: "completed",
+              created_at: "2024-01-01T00:00:00Z",
+              updated_at: "2024-01-01T00:00:00Z",
+            }),
+        });
+      }
+
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
             id: "1",
+            type: "pdf",
             title: "Test Document",
-            markdown_content: "# Test Markdown Content\n\nThis is a test.",
+            summary: "Test summary",
+            content_text: "Original content text...",
+            processed_content: "Processed content text...",
+            user_id: "1",
             processing_status: "completed",
             created_at: "2024-01-01T00:00:00Z",
             updated_at: "2024-01-01T00:00:00Z",
+            source_uri: "https://example.com/doc.pdf",
           }),
-        });
-      }
-      
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({
-          id: "1",
-          type: "pdf",
-          title: "Test Document",
-          summary: "Test summary",
-          content_text: "Original content text...",
-          processed_content: "Processed content text...",
-          user_id: "1",
-          processing_status: "completed",
-          created_at: "2024-01-01T00:00:00Z",
-          updated_at: "2024-01-01T00:00:00Z",
-          source_uri: "https://example.com/doc.pdf",
-        }),
       });
     });
   });

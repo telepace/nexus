@@ -31,6 +31,7 @@ import { DateDisplay } from "@/components/ui/DateDisplay";
 // 导入删除按钮组件
 import { DeleteButton } from "./deleteButton";
 import { SearchForm } from "./searchForm";
+import { PromptToggle } from "./promptToggle";
 
 export const metadata = {
   title: "Prompt Hub",
@@ -69,6 +70,15 @@ function PromptCards({ prompts }: { prompts: PromptData[] }) {
             <p className="text-sm text-muted-foreground mb-3 flex-grow">
               {prompt.description || "无描述"}
             </p>
+
+            {/* 启用状态控件 */}
+            <div className="mb-3 pb-2 border-b">
+              <PromptToggle
+                promptId={prompt.id}
+                enabled={prompt.enabled ?? false}
+                promptName={prompt.name}
+              />
+            </div>
 
             <div className="mt-auto">
               <div className="flex flex-wrap gap-1 mb-2">

@@ -1,25 +1,33 @@
 import uuid
+import json
+from collections.abc import AsyncGenerator
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, status, BackgroundTasks
+import httpx
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status, Depends, Body
+from fastapi.responses import StreamingResponse
+from sqlmodel import Session
 
-from app.api.deps import CurrentUser, SessionDep  # Use proper dependencies
+from app.api.deps import CurrentUser, SessionDep, get_current_user, get_db
 from app.crud.crud_content import (
     create_content_item as crud_create_content_item,
-    get_content_item as crud_get_content_item,
-    get_content_items as crud_get_content_items,
-    update_content_item as crud_update_content_item,
-    delete_content_item as crud_delete_content_item,
     get_content_chunks,
     get_content_chunks_summary,
+    get_content_item as crud_get_content_item,
+    get_content_items as crud_get_content_items,
 )
 from app.models.content import (
     ContentItem,  # For converting ContentItemCreate to ContentItem model for CRUD
 )
+from app.base import User
 from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is just base + id and audit fields
     ContentItemCreate,
     ContentItemPublic,
+    ContentItemUpdate,
 )
+from app.schemas.llm import CompletionRequest, LLMMessage
 from app.utils.content_processors import ContentProcessorFactory
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -92,20 +100,17 @@ def process_content_item_endpoint(
     try:
         processor = ContentProcessorFactory.get_processor(item.type)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     # Process in background
     background_tasks.add_task(process_content_background, processor, item, session)
-    
+
     # Update status to processing
     item.processing_status = "processing"
     session.add(item)
     session.commit()
     session.refresh(item)
-    
+
     return item
 
 
@@ -211,21 +216,22 @@ def get_content_markdown_endpoint(
 
     # Start with content_text from database
     markdown_content = item.content_text or ""
-    
+
     # If content_text is empty or processing is completed, try to fetch from R2 storage
     if not markdown_content and item.processing_status == "completed":
         try:
             from app.utils.storage import get_storage_service
+
             storage_service = get_storage_service()
-            
+
             # Look for markdown file in content assets
             for asset in item.assets:  # 使用正确的关系名 'assets'
                 if asset.type == "processed_text":  # 使用正确的字段名 'type'
                     # Download markdown content from storage
                     try:
                         file_content = storage_service.download_file(asset.file_path)
-                        markdown_content = file_content.decode('utf-8')
-                        
+                        markdown_content = file_content.decode("utf-8")
+
                         # Update content_text in database for faster future access
                         item.content_text = markdown_content
                         session.add(item)
@@ -241,14 +247,14 @@ def get_content_markdown_endpoint(
         except Exception as e:
             # Log error but don't fail the request
             print(f"Failed to fetch markdown from storage: {e}")
-    
+
     # Check if we have any content to return
     if not markdown_content:
         # Provide different messages based on processing status
         if item.processing_status == "failed":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Content processing failed. Please try reprocessing the content.",
+                detail="Content processing failed. Please try reprocessing the content.",
             )
         elif item.processing_status in ["pending", "processing"]:
             raise HTTPException(
@@ -260,7 +266,7 @@ def get_content_markdown_endpoint(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"No markdown content available. Status: {item.processing_status}",
             )
-    
+
     return {
         "id": str(item.id),
         "title": item.title,
@@ -281,10 +287,8 @@ def get_supported_processors():
     Get list of supported content processors.
     """
     # New architecture supports all these types through ModernProcessor + MarkItDown
-    supported_types = [
-        "text", "url", "pdf", "docx", "xlsx", "pptx", "image", "audio"
-    ]
-    
+    supported_types = ["text", "url", "pdf", "docx", "xlsx", "pptx", "image", "audio"]
+
     return {
         "supported_types": supported_types,
         "processors": {
@@ -301,8 +305,8 @@ def get_supported_processors():
             "engine": "Microsoft MarkItDown",
             "storage": "Cloudflare R2",
             "extensible": True,
-            "supports_llm_integration": True
-        }
+            "supports_llm_integration": True,
+        },
     }
 
 
@@ -344,10 +348,10 @@ def get_content_chunks_endpoint(
 
     # Get chunks and total count
     chunks, total_count = get_content_chunks(session, id, page, size)
-    
+
     # Get summary information
     summary = get_content_chunks_summary(session, id)
-    
+
     # Calculate pagination info
     total_pages = (total_count + size - 1) // size  # Ceiling division
     has_next = page < total_pages
@@ -382,7 +386,7 @@ def get_content_chunks_endpoint(
             "processing_status": item.processing_status,
             "created_at": item.created_at.isoformat(),
             "updated_at": item.updated_at.isoformat(),
-        }
+        },
     }
 
 
@@ -414,7 +418,7 @@ def get_content_chunks_summary_endpoint(
         )
 
     summary = get_content_chunks_summary(session, id)
-    
+
     return {
         "content_id": str(id),
         "summary": summary,
@@ -423,8 +427,107 @@ def get_content_chunks_summary_endpoint(
             "processing_status": item.processing_status,
             "created_at": item.created_at.isoformat(),
             "updated_at": item.updated_at.isoformat(),
-        }
+        },
     }
+
+
+@router.post("/{content_id}/analyze")
+async def analyze_content_stream(
+    content_id: str,
+    system_prompt: str = Body(..., description="System prompt for analysis"),
+    user_prompt: str = Body(..., description="User prompt (content text)"),
+    model: str = Body(default="deepseek-v3-ensemble", description="Model to use"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Stream AI analysis of content using LiteLLM.
+    
+    Args:
+        content_id: ID of the content to analyze
+        system_prompt: System prompt (e.g., prompt template)
+        user_prompt: User prompt (the actual content text)
+        model: LLM model to use
+        current_user: Current authenticated user
+        db: Database session
+    
+    Returns:
+        StreamingResponse: Server-sent events with analysis chunks
+    """
+    # Verify content exists and user has access
+    content_item = crud_get_content_item(
+        session=db, id=uuid.UUID(content_id)
+    )
+    if not content_item or content_item.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Content not found")
+    
+    # Prepare LiteLLM request
+    completion_request = CompletionRequest(
+        model="github-llama-3-2-11b-vision",  # 暂时使用一个健康的模型进行测试
+        messages=[
+            LLMMessage(role="system", content=system_prompt),
+            LLMMessage(role="user", content=user_prompt),
+        ],
+        stream=True,
+        temperature=0.7,
+        max_tokens=2000,
+    )
+    
+    async def stream_analysis() -> AsyncGenerator[str, None]:
+        """Generate analysis stream from LiteLLM"""
+        try:
+            import aiohttp
+            
+            # Forward to LiteLLM proxy
+            litellm_url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
+            headers = {"Content-Type": "application/json"}
+            
+            # Add LiteLLM authentication if master key is configured
+            if settings.LITELLM_MASTER_KEY:
+                headers["Authorization"] = f"Bearer {settings.LITELLM_MASTER_KEY}"
+            
+            payload = completion_request.model_dump(exclude_none=True)
+            
+            # Make streaming request to LiteLLM using aiohttp
+            timeout = aiohttp.ClientTimeout(total=300.0)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.post(litellm_url, json=payload, headers=headers) as response:
+                    if response.status != 200:
+                        error_text = await response.text()
+                        error_data = {
+                            "error": True,
+                            "message": f"LiteLLM service error: HTTP {response.status}",
+                            "status_code": response.status,
+                            "details": error_text
+                        }
+                        yield f"data: {json.dumps(error_data)}\n\n"
+                        return
+                    
+                    # Stream the response
+                    async for chunk in response.content.iter_chunked(1024):
+                        if chunk:
+                            # Forward the chunk as-is (LiteLLM sends SSE format)
+                            yield chunk.decode('utf-8', errors='ignore')
+                        
+        except Exception as e:
+            # Handle unexpected errors
+            error_data = {
+                "error": True,
+                "message": f"Unexpected error: {str(e)}",
+                "status_code": 500
+            }
+            yield f"data: {json.dumps(error_data)}\n\n"
+    
+    return StreamingResponse(
+        stream_analysis(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Cache-Control",
+        },
+    )
 
 
 # Note: Update and Delete endpoints can be added later if needed

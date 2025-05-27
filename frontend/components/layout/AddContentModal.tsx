@@ -247,7 +247,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           const response = await fetch(`${apiUrl}/api/v1/content/create`, {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify(contentData),
@@ -255,20 +255,25 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
           if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || `创建内容失败: ${response.status}`);
+            throw new Error(
+              errorData.error || `创建内容失败: ${response.status}`,
+            );
           }
 
           const createdItem = await response.json();
           console.log("URL内容创建成功:", createdItem);
 
           // 自动开始处理
-          const processResponse = await fetch(`${apiUrl}/api/v1/content/process/${createdItem.id || createdItem.data?.id}`, {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${token}`,
-              "Content-Type": "application/json",
+          const processResponse = await fetch(
+            `${apiUrl}/api/v1/content/process/${createdItem.id || createdItem.data?.id}`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
             },
-          });
+          );
 
           if (processResponse.ok) {
             console.log("内容处理已开始");
@@ -280,13 +285,14 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           type: "text",
           content_text: content,
           title: title || "文本内容",
-          summary: content.length > 100 ? content.substring(0, 100) + "..." : content,
+          summary:
+            content.length > 100 ? content.substring(0, 100) + "..." : content,
         };
 
         const response = await fetch(`${apiUrl}/api/v1/content/create`, {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(contentData),
@@ -294,20 +300,25 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || `创建内容失败: ${response.status}`);
+          throw new Error(
+            errorData.error || `创建内容失败: ${response.status}`,
+          );
         }
 
         const createdItem = await response.json();
         console.log("文本内容创建成功:", createdItem);
 
         // 自动开始处理
-        const processResponse = await fetch(`${apiUrl}/api/v1/content/process/${createdItem.id || createdItem.data?.id}`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
+        const processResponse = await fetch(
+          `${apiUrl}/api/v1/content/process/${createdItem.id || createdItem.data?.id}`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           },
-        });
+        );
 
         if (processResponse.ok) {
           console.log("内容处理已开始");
@@ -324,15 +335,17 @@ export const AddContentModal: FC<AddContentModalProps> = ({
       // 清空表单并关闭模态窗口
       resetForm();
       onClose();
-      
+
       // 可以在这里触发页面刷新或者通知父组件更新内容列表
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         // 简单的页面刷新，实际项目中可以使用更优雅的状态管理
         window.location.reload();
       }
     } catch (error) {
       console.error("添加内容时发生错误:", error);
-      setError(error instanceof Error ? error.message : "添加内容时发生错误，请重试。");
+      setError(
+        error instanceof Error ? error.message : "添加内容时发生错误，请重试。",
+      );
     } finally {
       setIsLoading(false);
     }

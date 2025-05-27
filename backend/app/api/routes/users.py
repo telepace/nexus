@@ -24,7 +24,6 @@ from app.models import (
     UserUpdate,
     UserUpdateMe,
 )
-from app.models.content import ContentItem, AIConversation, ProcessingJob
 from app.utils import generate_new_account_email, send_email
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -137,11 +136,10 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
-    
+
     # Since foreign key constraints have been removed, we can delete the user directly
     # The application should handle cleanup of related records if needed
-    user_id = current_user.id
-    
+
     # Optional: Clean up related records (can be done asynchronously)
     # For now, we'll just delete the user since there are no FK constraints
     session.delete(current_user)

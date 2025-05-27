@@ -76,7 +76,7 @@ class CloudflareR2Service(S3StorageService):
             # 检查文件是否已关闭
             if file_data.closed:
                 raise ValueError("Cannot upload from closed BytesIO object")
-            
+
             current_pos = file_data.tell()
             file_data.seek(0)
 
@@ -87,7 +87,7 @@ class CloudflareR2Service(S3StorageService):
             self.client.upload_fileobj(
                 file_data, self.bucket, file_path, ExtraArgs=extra_args
             )
-            
+
             # 安全地恢复位置（只有在文件仍然打开时）
             if not file_data.closed:
                 file_data.seek(current_pos)

@@ -2,9 +2,9 @@ import uuid
 from collections.abc import Sequence
 from typing import Any
 
-from sqlmodel import Session, select, func
+from sqlmodel import Session, func, select
 
-from app.models.content import ContentAsset, ContentItem, ProcessingJob, ContentChunk
+from app.models.content import ContentAsset, ContentChunk, ContentItem
 
 # Placeholder schemas (can be replaced by actual schemas from app.schemas later)
 # For simplicity in this task, we'll use the main model types for creation/update inputs.
@@ -241,64 +241,59 @@ def delete_content_asset(session: Session, id: uuid.UUID) -> ContentAsset | None
 
 
 def get_content_chunks(
-    session: Session, 
-    content_item_id: uuid.UUID, 
-    page: int = 1, 
-    size: int = 10
+    session: Session, content_item_id: uuid.UUID, page: int = 1, size: int = 10
 ) -> tuple[list[ContentChunk], int]:
     """
     Get content chunks for a content item with pagination.
-    
+
     Args:
         session: Database session
         content_item_id: ID of the content item
         page: Page number (1-based)
         size: Number of chunks per page
-        
+
     Returns:
         Tuple of (chunks, total_count)
     """
     offset = (page - 1) * size
-    
+
     # Get total count
     total_count = session.exec(
-        select(func.count(ContentChunk.id))
+        select(func.count())
+        .select_from(ContentChunk)
         .where(ContentChunk.content_item_id == content_item_id)
     ).one()
-    
+
     # Get chunks for the page
     chunks = session.exec(
         select(ContentChunk)
         .where(ContentChunk.content_item_id == content_item_id)
-        .order_by(ContentChunk.chunk_index)
+        .order_by(ContentChunk.chunk_index)  # type: ignore[arg-type]
         .offset(offset)
         .limit(size)
     ).all()
-    
+
     return list(chunks), total_count
 
 
 def get_content_chunk_by_index(
-    session: Session, 
-    content_item_id: uuid.UUID, 
-    chunk_index: int
+    session: Session, content_item_id: uuid.UUID, chunk_index: int
 ) -> ContentChunk | None:
     """
     Get a specific content chunk by its index.
-    
+
     Args:
         session: Database session
         content_item_id: ID of the content item
         chunk_index: Index of the chunk
-        
+
     Returns:
         ContentChunk or None if not found
     """
     return session.exec(
-        select(ContentChunk)
-        .where(
+        select(ContentChunk).where(
             ContentChunk.content_item_id == content_item_id,
-            ContentChunk.chunk_index == chunk_index
+            ContentChunk.chunk_index == chunk_index,
         )
     ).first()
 
@@ -306,60 +301,57 @@ def get_content_chunk_by_index(
 def delete_content_chunks(session: Session, content_item_id: uuid.UUID) -> int:
     """
     Delete all content chunks for a content item.
-    
+
     Args:
         session: Database session
         content_item_id: ID of the content item
-        
+
     Returns:
         Number of deleted chunks
     """
     chunks = session.exec(
-        select(ContentChunk)
-        .where(ContentChunk.content_item_id == content_item_id)
+        select(ContentChunk).where(ContentChunk.content_item_id == content_item_id)
     ).all()
-    
+
     count = len(chunks)
     for chunk in chunks:
         session.delete(chunk)
-    
+
     return count
 
 
-def get_content_chunks_summary(session: Session, content_item_id: uuid.UUID) -> dict:
+def get_content_chunks_summary(
+    session: Session, content_item_id: uuid.UUID
+) -> dict[str, int]:
     """
     Get summary information about content chunks.
-    
+
     Args:
         session: Database session
         content_item_id: ID of the content item
-        
+
     Returns:
         Dictionary with chunk statistics
     """
-    result = session.exec(
+    result: Any = session.exec(
         select(
-            func.count(ContentChunk.id).label('total_chunks'),
-            func.sum(ContentChunk.word_count).label('total_words'),
-            func.sum(ContentChunk.char_count).label('total_chars'),
-            func.max(ContentChunk.chunk_index).label('max_index')
+            func.count().label("total_chunks"),
+            func.sum(ContentChunk.word_count).label("total_words"),
+            func.sum(ContentChunk.char_count).label("total_chars"),
+            func.max(ContentChunk.chunk_index).label("max_index"),
         )
+        .select_from(ContentChunk)
         .where(ContentChunk.content_item_id == content_item_id)
     ).first()
-    
+
     if not result:
-        return {
-            'total_chunks': 0,
-            'total_words': 0,
-            'total_chars': 0,
-            'max_index': -1
-        }
-    
+        return {"total_chunks": 0, "total_words": 0, "total_chars": 0, "max_index": -1}
+
     return {
-        'total_chunks': result.total_chunks or 0,
-        'total_words': result.total_words or 0,
-        'total_chars': result.total_chars or 0,
-        'max_index': result.max_index or -1
+        "total_chunks": result.total_chunks or 0,
+        "total_words": result.total_words or 0,
+        "total_chars": result.total_chars or 0,
+        "max_index": result.max_index or -1,
     }
 
 

@@ -75,7 +75,7 @@ async def _forward_request_to_litellm(
 
     except httpx.HTTPStatusError as e:
         # Forward the status code and detail from LiteLLM if possible
-        detail = e.response.text
+        detail = f"HTTP {e.response.status_code}: {e.response.reason_phrase or 'Unknown error'}"
         try:
             detail_json = e.response.json()
             if "detail" in detail_json:  # FastAPI-like error
@@ -85,7 +85,10 @@ async def _forward_request_to_litellm(
             ):  # OpenAI-like error
                 detail = detail_json["error"]["message"]
         except ValueError:
-            pass  # Use raw text if not JSON or expected structure
+            pass  # Use default detail if not JSON or expected structure
+        except Exception:
+            # 如果无法读取响应内容（如流式响应），使用默认错误信息
+            pass
         raise HTTPException(status_code=e.response.status_code, detail=detail)
     except httpx.RequestError as e:
         # Network error or other request issue
@@ -103,7 +106,7 @@ async def create_completion(
     """Handles creation of completions based on request data."""
     async with httpx.AsyncClient(timeout=300.0) as client:  # Increased timeout for LLMs
         litellm_endpoint = (
-            "/chat/completions"  # Common LiteLLM endpoint for chat models
+            "/v1/chat/completions"  # Common LiteLLM endpoint for chat models
         )
 
         payload = request_data.model_dump(exclude_none=True)

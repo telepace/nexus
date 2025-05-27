@@ -3,7 +3,6 @@ from datetime import datetime
 
 from sqlalchemy import CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import foreign
 from sqlmodel import JSON, Column, Field, Relationship, SQLModel
 
 
@@ -52,25 +51,25 @@ class ContentItem(ContentItemBase, table=True):
         back_populates="content_item",
         sa_relationship_kwargs={
             "primaryjoin": "ContentItem.id == foreign(ContentAsset.content_item_id)"
-        }
+        },
     )
     processing_jobs: list["ProcessingJob"] = Relationship(
         back_populates="content_item",
         sa_relationship_kwargs={
             "primaryjoin": "ContentItem.id == foreign(ProcessingJob.content_item_id)"
-        }
+        },
     )
     ai_conversations: list["AIConversation"] = Relationship(
         back_populates="content_item",
         sa_relationship_kwargs={
             "primaryjoin": "ContentItem.id == foreign(AIConversation.content_item_id)"
-        }
+        },
     )
     chunks: list["ContentChunk"] = Relationship(
         back_populates="content_item",
         sa_relationship_kwargs={
             "primaryjoin": "ContentItem.id == foreign(ContentChunk.content_item_id)"
-        }
+        },
     )
 
 
@@ -111,7 +110,7 @@ class ContentAsset(ContentAssetBase, table=True):
         back_populates="assets",
         sa_relationship_kwargs={
             "primaryjoin": "foreign(ContentAsset.content_item_id) == ContentItem.id"
-        }
+        },
     )
 
 
@@ -154,7 +153,7 @@ class ProcessingJob(ProcessingJobBase, table=True):
         back_populates="processing_jobs",
         sa_relationship_kwargs={
             "primaryjoin": "foreign(ProcessingJob.content_item_id) == ContentItem.id"
-        }
+        },
     )
 
 
@@ -189,40 +188,44 @@ class AIConversation(AIConversationBase, table=True):
         back_populates="ai_conversations",
         sa_relationship_kwargs={
             "primaryjoin": "foreign(AIConversation.content_item_id) == ContentItem.id"
-        }
+        },
     )
 
 
 class ContentChunkBase(SQLModel):
     """Base model for content chunks, storing segmented content for efficient rendering."""
-    
+
     content_item_id: uuid.UUID = Field(index=True)
     chunk_index: int = Field(index=True)  # Order of the chunk in the content
     chunk_content: str = Field()  # The actual content segment
     chunk_type: str = Field(
         default="paragraph",
         sa_column_args=[
-            CheckConstraint("chunk_type IN ('heading', 'paragraph', 'code_block', 'table', 'list')")
+            CheckConstraint(
+                "chunk_type IN ('heading', 'paragraph', 'code_block', 'table', 'list')"
+            )
         ],
         max_length=50,
         index=True,
     )
     word_count: int = Field(default=0)  # Number of words in this chunk
     char_count: int = Field(default=0)  # Number of characters in this chunk
-    meta_info: str | None = Field(default=None, sa_column=Column(JSON))  # Additional metadata
+    meta_info: str | None = Field(
+        default=None, sa_column=Column(JSON)
+    )  # Additional metadata
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
 
 class ContentChunk(ContentChunkBase, table=True):
     """Represents a segment of content for efficient loading and rendering."""
-    
+
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
-    
+
     content_item: ContentItem | None = Relationship(
         back_populates="chunks",
         sa_relationship_kwargs={
             "primaryjoin": "foreign(ContentChunk.content_item_id) == ContentItem.id"
-        }
+        },
     )
 
 

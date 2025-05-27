@@ -108,10 +108,10 @@ class LocalStorageService(StorageService):
             Exception: 其他读取错误
         """
         target_path = os.path.join(self.base_dir, file_path)
-        
+
         if not os.path.exists(target_path):
             raise FileNotFoundError(f"File not found: {file_path}")
-        
+
         try:
             with open(target_path, "rb") as f:
                 return f.read()

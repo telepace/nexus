@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from 'react';
-import VirtualScrollRenderer from '@/components/ui/VirtualScrollRenderer';
+import { useState } from "react";
+import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
 
 export default function TestScrollPage() {
-  const [testContentId, setTestContentId] = useState<string>('');
+  const [testContentId, setTestContentId] = useState<string>("");
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-4">滚动测试页面</h1>
-        
+
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">
             输入Content ID进行测试:
@@ -27,13 +27,17 @@ export default function TestScrollPage() {
         {testContentId && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
             <div className="p-4 border-b">
-              <h2 className="text-lg font-semibold">VirtualScrollRenderer 测试</h2>
-              <p className="text-sm text-gray-600">Content ID: {testContentId}</p>
+              <h2 className="text-lg font-semibold">
+                VirtualScrollRenderer 测试
+              </h2>
+              <p className="text-sm text-gray-600">
+                Content ID: {testContentId}
+              </p>
             </div>
-            
+
             {/* 固定高度的测试容器 */}
             <div className="h-[600px] p-4">
-              <VirtualScrollRenderer 
+              <VirtualScrollRenderer
                 contentId={testContentId}
                 className="w-full h-full"
                 chunkSize={10}
@@ -56,4 +60,4 @@ export default function TestScrollPage() {
       </div>
     </div>
   );
-} 
+}

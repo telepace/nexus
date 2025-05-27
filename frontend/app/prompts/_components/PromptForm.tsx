@@ -279,6 +279,21 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
           </div>
         </div>
 
+        {/* 启用状态 */}
+        <div className="flex flex-row items-center justify-between space-x-3 space-y-0 rounded-md border p-4">
+          <div className="space-y-1 leading-none">
+            <Label htmlFor="enabled">启用状态</Label>
+            <p className="text-sm text-muted-foreground">
+              启用后，此提示词将可以在系统中使用
+            </p>
+          </div>
+          <Switch
+            id="enabled"
+            name="enabled"
+            defaultChecked={prompt?.enabled || false}
+          />
+        </div>
+
         {/* 标签选择 */}
         <div>
           <Label>标签</Label>
