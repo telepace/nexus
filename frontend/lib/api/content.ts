@@ -45,7 +45,7 @@ export interface ContentChunk {
   type: string;
   word_count: number;
   char_count: number;
-  meta_info: any;
+  meta_info: Record<string, unknown>;
   created_at: string;
 }
 
@@ -95,7 +95,7 @@ export const contentApi = {
    * Get all content items for the current user
    */
   async getContentItems(): Promise<ContentItemPublic[]> {
-    const response = await client.get<ContentItemPublic[]>("/content/");
+    const response = await client.get<ContentItemPublic[]>("/api/v1/content/");
     return response;
   },
 
@@ -103,7 +103,9 @@ export const contentApi = {
    * Get a specific content item by ID
    */
   async getContentItem(id: string): Promise<ContentItemPublic> {
-    const response = await client.get<ContentItemPublic>(`/content/${id}`);
+    const response = await client.get<ContentItemPublic>(
+      `/api/v1/content/${id}`,
+    );
     return response;
   },
 
@@ -112,7 +114,7 @@ export const contentApi = {
    */
   async getContentMarkdown(id: string): Promise<MarkdownContent> {
     const response = await client.get<MarkdownContent>(
-      `/content/${id}/markdown`,
+      `/api/v1/content/${id}/markdown`,
     );
     return response;
   },
@@ -126,7 +128,7 @@ export const contentApi = {
     size: number = 10,
   ): Promise<ContentChunksResponse> {
     const response = await client.get<ContentChunksResponse>(
-      `/content/${id}/chunks?page=${page}&size=${size}`,
+      `/api/v1/content/${id}/chunks?page=${page}&size=${size}`,
     );
     return response;
   },
@@ -136,7 +138,7 @@ export const contentApi = {
    */
   async getContentChunksSummary(id: string): Promise<ContentChunksSummary> {
     const response = await client.get<ContentChunksSummary>(
-      `/content/${id}/chunks/summary`,
+      `/api/v1/content/${id}/chunks/summary`,
     );
     return response;
   },
@@ -152,7 +154,7 @@ export const contentApi = {
     content_text?: string;
   }): Promise<ContentItemPublic> {
     const response = await client.post<ContentItemPublic>(
-      "/content/create",
+      "/api/v1/content/create",
       data,
     );
     return response;
@@ -163,7 +165,7 @@ export const contentApi = {
    */
   async processContentItem(id: string): Promise<ContentItemPublic> {
     const response = await client.post<ContentItemPublic>(
-      `/content/process/${id}`,
+      `/api/v1/content/process/${id}`,
     );
     return response;
   },
@@ -190,7 +192,23 @@ export const contentApi = {
         extensible: boolean;
         supports_llm_integration: boolean;
       };
-    }>("/content/processors/supported");
+    }>("/api/v1/content/processors/supported");
+    return response;
+  },
+
+  async analyzeContent(
+    contentId: string,
+    systemPrompt: string,
+    userPrompt: string,
+  ): Promise<Record<string, unknown>> {
+    const response = await client.post<Record<string, unknown>>(
+      `/api/v1/content/${contentId}/analyze`,
+      {
+        system_prompt: systemPrompt,
+        user_prompt: userPrompt,
+        model: "gpt-3.5-turbo",
+      },
+    );
     return response;
   },
 };

@@ -15,10 +15,10 @@ export interface Prompt {
     description: string;
     required: boolean;
   }>;
-  meta_data: any;
+  meta_data: Record<string, unknown>;
   team_id: string | null;
   created_at: string;
-  embedding: any;
+  embedding: Record<string, unknown>;
   created_by: string;
 }
 
@@ -46,7 +46,7 @@ export const promptsApi = {
     if (params.enabled !== undefined)
       searchParams.append("enabled", params.enabled.toString());
 
-    const endpoint = `/prompts/?${searchParams.toString()}`;
+    const endpoint = `/api/v1/prompts/?${searchParams.toString()}`;
     return client.get<Prompt[]>(endpoint);
   },
 
@@ -60,9 +60,9 @@ export const promptsApi = {
 
   async executePrompt(
     promptId: string,
-    variables: Record<string, any>,
+    variables: Record<string, unknown>,
   ): Promise<string> {
-    const endpoint = `/prompts/${promptId}/execute`;
+    const endpoint = `/api/v1/prompts/${promptId}/execute`;
     const response = await client.post<{ result: string }>(endpoint, {
       variables,
     });

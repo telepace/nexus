@@ -488,9 +488,11 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
 
         {/* Right Panel - LLM Analysis */}
         <div className="lg:col-span-1" data-testid="llm-panel">
-          <LLMAnalysisPanel 
-            contentId={contentId} 
-            contentText={content?.processed_content || content?.content_text || ""}
+          <LLMAnalysisPanel
+            contentId={contentId}
+            contentText={
+              content?.processed_content || content?.content_text || ""
+            }
           />
         </div>
       </div>

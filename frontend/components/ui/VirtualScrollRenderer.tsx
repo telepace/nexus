@@ -27,14 +27,14 @@ interface ChunkCache {
 }
 
 // 防抖函数
-function useDebounce<T extends (...args: any[]) => void>(
+function useDebounce<T extends (...args: unknown[]) => void>(
   callback: T,
   delay: number,
 ): T {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   return useCallback(
-    (...args: any[]) => {
+    (...args: unknown[]) => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -45,14 +45,14 @@ function useDebounce<T extends (...args: any[]) => void>(
 }
 
 // 节流函数
-function useThrottle<T extends (...args: any[]) => void>(
+function useThrottle<T extends (...args: unknown[]) => void>(
   callback: T,
   delay: number,
 ): T {
   const lastCallRef = useRef<number>(0);
 
   return useCallback(
-    (...args: any[]) => {
+    (...args: unknown[]) => {
       const now = Date.now();
       if (now - lastCallRef.current >= delay) {
         lastCallRef.current = now;
@@ -82,7 +82,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const loadTriggerRef = useRef<HTMLDivElement>(null);
   const topSentinelRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null); // 暂时注释掉未使用的变量
 
   // 使用useMemo优化渲染的chunks
   const renderedChunks = useMemo(() => {
@@ -91,15 +91,71 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
     }
     return chunks.map((chunk, index) => ({
       ...chunk,
-      actualIndex: visibleStartIndex + index,
+      // actualIndex: visibleStartIndex + index, // 暂时注释掉未使用的属性
       key: `${chunk.id}-${visibleStartIndex + index}`,
     }));
   }, [chunks, visibleStartIndex]);
 
+  const loadChunks = useCallback(
+    async (page: number) => {
+      try {
+        if (page === 1) {
+          setLoading(true);
+          setError(null);
+          setChunks([]);
+          setVisibleStartIndex(0);
+        } else {
+          setLoadingMore(true);
+        }
+
+        // Check cache first
+        if (chunkCache[page]) {
+          const cachedChunks = chunkCache[page];
+          if (page === 1) {
+            setChunks(cachedChunks);
+          } else {
+            setChunks((prev) => [...prev, ...cachedChunks]);
+          }
+          setCurrentPage(page);
+          setLoading(false);
+          setLoadingMore(false);
+          return;
+        }
+
+        const response: ContentChunksResponse =
+          await contentApi.getContentChunks(contentId, page, chunkSize);
+
+        // Update cache
+        setChunkCache((prev) => ({
+          ...prev,
+          [page]: response.chunks,
+        }));
+
+        // Update state
+        if (page === 1) {
+          setChunks(response.chunks);
+          setTotalChunks(response.pagination?.total_chunks || 0);
+        } else {
+          setChunks((prev) => [...prev, ...response.chunks]);
+        }
+
+        setHasMore(response.pagination?.has_next || false);
+        setCurrentPage(page);
+      } catch (err) {
+        console.error("Error loading chunks:", err);
+        setError(err instanceof Error ? err.message : "Failed to load content");
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [contentId, chunkSize, chunkCache],
+  );
+
   // Load initial chunks
   useEffect(() => {
     loadChunks(1);
-  }, [contentId]);
+  }, [loadChunks]);
 
   // 优化的滚动处理
   const handleScroll = useThrottle((e: React.UIEvent<HTMLDivElement>) => {
@@ -142,7 +198,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
     observer.observe(loadTriggerRef.current);
 
     return () => observer.disconnect();
-  }, [hasMore, loadingMore, loading, currentPage]);
+  }, [hasMore, loadingMore, loading, currentPage, loadChunks]);
 
   // Intersection Observer for DOM cleanup - 使用防抖优化
   const debouncedCleanup = useDebounce(() => {
@@ -176,68 +232,12 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
     observer.observe(topSentinelRef.current);
 
     return () => observer.disconnect();
-  }, [chunks?.length, maxVisibleChunks, debouncedCleanup]);
-
-  const loadChunks = async (page: number) => {
-    try {
-      if (page === 1) {
-        setLoading(true);
-        setError(null);
-        setChunks([]);
-        setVisibleStartIndex(0);
-      } else {
-        setLoadingMore(true);
-      }
-
-      // Check cache first
-      if (chunkCache[page]) {
-        const cachedChunks = chunkCache[page];
-        if (page === 1) {
-          setChunks(cachedChunks);
-        } else {
-          setChunks((prev) => [...prev, ...cachedChunks]);
-        }
-        setCurrentPage(page);
-        setLoading(false);
-        setLoadingMore(false);
-        return;
-      }
-
-      const response: ContentChunksResponse = await contentApi.getContentChunks(
-        contentId,
-        page,
-        chunkSize,
-      );
-
-      // Update cache
-      setChunkCache((prev) => ({
-        ...prev,
-        [page]: response.chunks,
-      }));
-
-      // Update state
-      if (page === 1) {
-        setChunks(response.chunks);
-        setTotalChunks(response.pagination?.total_chunks || 0);
-      } else {
-        setChunks((prev) => [...prev, ...response.chunks]);
-      }
-
-      setHasMore(response.pagination?.has_next || false);
-      setCurrentPage(page);
-    } catch (err) {
-      console.error("Error loading chunks:", err);
-      setError(err instanceof Error ? err.message : "Failed to load content");
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  };
+  }, [chunks, debouncedCleanup, maxVisibleChunks]);
 
   const retryLoad = useCallback(() => {
     setError(null);
     loadChunks(1);
-  }, []);
+  }, [loadChunks]);
 
   if (loading && (!chunks || chunks.length === 0)) {
     return (
@@ -299,11 +299,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
       {/* Content chunks - 使用优化的渲染 */}
       <div className="space-y-0">
         {renderedChunks.map((chunk) => (
-          <ChunkItem
-            key={chunk.key}
-            chunk={chunk}
-            actualIndex={chunk.actualIndex}
-          />
+          <ChunkItem key={chunk.key} chunk={chunk} />
         ))}
       </div>
 
@@ -359,9 +355,8 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
 
 // 分离的Chunk组件，使用React.memo优化
 const ChunkItem = React.memo<{
-  chunk: ContentChunk & { actualIndex: number };
-  actualIndex: number;
-}>(({ chunk, actualIndex }) => (
+  chunk: ContentChunk & { key: string };
+}>(({ chunk }) => (
   <div className="chunk-item border-b border-gray-100 dark:border-gray-800 py-6 px-4 bg-white dark:bg-gray-900">
     <div className="chunk-header mb-3 text-xs text-gray-500 flex justify-between items-center">
       <span className="font-medium">

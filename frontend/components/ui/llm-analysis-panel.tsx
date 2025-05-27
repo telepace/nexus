@@ -30,6 +30,8 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
     enabledPrompts,
     disabledPrompts,
     isLoadingPrompts,
+    usedPromptIds,
+    showAllPrompts,
     toggleExpanded,
     removeAnalysis,
     clearAnalyses,
@@ -37,6 +39,9 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
     executeAnalysisWithContent,
     loadPrompts,
     setError,
+    toggleShowAllPrompts,
+    resetUsedPrompts,
+    getAvailablePrompts,
   } = useLLMAnalysisStore();
 
   const { toast } = useToast();
@@ -67,7 +72,7 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
     try {
       // 使用传入的内容文本或获取当前页面内容
       const content = contentText || "当前页面的内容...";
-      
+
       await generateAnalysis(
         contentId,
         prompt.content, // system prompt
@@ -189,10 +194,10 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col space-y-4 min-h-0">
-        {/* 分析结果列表 - 使用 flex-1 和 min-h-0 确保正确的滚动 */}
-        <div className="flex-1 min-h-0">
-          <ScrollArea className="h-full">
+      <CardContent className="flex-1 flex flex-col gap-4 min-h-0 overflow-hidden p-6">
+        {/* 分析结果列表 - 使用灵活的高度分配 */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full w-full">
             <div className="space-y-4 pr-4">
               {contentAnalyses.map((analysis) => (
                 <LLMAnalysisCard
@@ -207,29 +212,55 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
 
               {/* 空状态提示 */}
               {contentAnalyses.length === 0 && !isGenerating && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-sm">还没有 AI 分析</p>
-                  <p className="text-xs mt-1">
-                    选择下方的分析类型或使用对话框开始
-                  </p>
+                <div className="text-center py-12 text-muted-foreground">
+                  <Brain className="h-16 w-16 mx-auto mb-6 opacity-30" />
+                  <p className="text-lg font-medium mb-2">还没有 AI 分析</p>
+                  <p className="text-sm">选择下方的分析类型或使用对话框开始</p>
                 </div>
               )}
             </div>
           </ScrollArea>
         </div>
 
-        {/* 底部操作区域 - 固定在底部 */}
+        {/* 底部操作区域 - 自适应高度 */}
         <div className="flex-shrink-0 space-y-4">
           {/* 启用的 Prompt 推荐 */}
           {enabledPrompts.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">推荐分析</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <div className="border border-border rounded-lg bg-card">
+              <div className="p-4 border-b border-border">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-foreground">
+                    推荐分析
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    {usedPromptIds.size > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={resetUsedPrompts}
+                        className="text-xs text-muted-foreground hover:text-foreground h-7 px-2"
+                      >
+                        重置
+                      </Button>
+                    )}
+                    {usedPromptIds.size > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={toggleShowAllPrompts}
+                        className="text-xs text-muted-foreground hover:text-foreground h-7 px-2"
+                      >
+                        {showAllPrompts
+                          ? "隐藏已用"
+                          : `显示全部 (${usedPromptIds.size}个已隐藏)`}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="p-4">
                 <PromptRecommendations
-                  recommendations={enabledPrompts.map((prompt) => ({
+                  recommendations={getAvailablePrompts().map((prompt) => ({
                     id: prompt.id,
                     name: prompt.name,
                     description: prompt.description,
@@ -243,26 +274,27 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
                   }}
                   isGenerating={isGenerating}
                   disabled={isGenerating}
+                  usedPromptIds={usedPromptIds}
+                  showAllPrompts={showAllPrompts}
                 />
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {/* 对话框 */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">AI 对话</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className="border border-border rounded-lg bg-card">
+            <div className="p-4 border-b border-border">
+              <h3 className="text-sm font-medium text-foreground">AI 对话</h3>
+            </div>
+            <div className="p-4">
               <PromptCommandDialog
                 availablePrompts={disabledPrompts}
-                contentId={contentId}
                 isExecuting={isGenerating}
                 onPromptSelect={handlePromptSelect}
                 onExecute={handleExecute}
               />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

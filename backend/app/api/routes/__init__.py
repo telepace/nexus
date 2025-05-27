@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 
 from .extension_auth import router as extension_auth_router
+from .content import router as content_router
+from .llm_service import router as llm_service_router
 
 # from .github import router as github_router
 from .google_oauth import router as google_oauth_router
@@ -22,3 +24,5 @@ api_router.include_router(items_router, prefix="/items")
 api_router.include_router(google_oauth_router)
 api_router.include_router(extension_auth_router)
 api_router.include_router(prompts_router, prefix="/prompts")
+api_router.include_router(content_router, prefix="/content")
+api_router.include_router(llm_service_router, prefix="/llm")

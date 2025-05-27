@@ -2,7 +2,6 @@
 
 import { FC } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Sparkles } from "lucide-react";
 import { PromptRecommendation } from "@/lib/stores/llm-analysis-store";
 
@@ -11,6 +10,8 @@ interface PromptRecommendationsProps {
   onPromptClick: (recommendation: PromptRecommendation) => void;
   isGenerating?: boolean;
   disabled?: boolean;
+  usedPromptIds?: Set<string>;
+  showAllPrompts?: boolean;
 }
 
 export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
@@ -18,63 +19,86 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
   onPromptClick,
   isGenerating = false,
   disabled = false,
+  usedPromptIds = new Set(),
+  showAllPrompts = false,
 }) => {
+  const hasUsedPrompts = usedPromptIds.size > 0;
+  const availableCount = recommendations.filter(
+    (rec) => !usedPromptIds.has(rec.id),
+  ).length;
+
   return (
-    <Card className="border-dashed border-2 border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Sparkles className="h-4 w-4 text-primary" />
-          AI 分析推荐
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground mb-4">
-            选择一个分析类型来开始 AI 分析
-          </p>
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Sparkles className="h-4 w-4 text-primary" />
+        <span>选择一个分析类型来开始 AI 分析</span>
+        {hasUsedPrompts && !showAllPrompts && (
+          <span className="text-xs bg-muted px-2 py-1 rounded-full">
+            {availableCount} 可用
+          </span>
+        )}
+      </div>
 
-          <div className="grid grid-cols-1 gap-2">
-            {recommendations.map((recommendation) => (
-              <Button
-                key={recommendation.id}
-                variant="outline"
-                size="sm"
-                onClick={() => onPromptClick(recommendation)}
-                disabled={disabled || isGenerating}
-                className="justify-start h-auto p-3 text-left hover:bg-muted/50"
-              >
-                <div className="flex items-center gap-3 w-full">
-                  <span className="text-lg flex-shrink-0">
-                    {recommendation.icon}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-sm">
-                        {recommendation.name}
-                      </span>
-                      {isGenerating && (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {recommendation.description}
-                    </p>
-                  </div>
+      <div className="grid grid-cols-1 gap-3">
+        {recommendations.map((recommendation) => {
+          const isUsed = usedPromptIds.has(recommendation.id);
+          return (
+            <Button
+              key={recommendation.id}
+              variant={isUsed ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => onPromptClick(recommendation)}
+              disabled={disabled || isGenerating}
+              className={`justify-start h-auto p-4 text-left hover:bg-muted/50 transition-all duration-200 ${
+                isUsed ? "opacity-70 border-dashed" : "hover:border-primary/50"
+              }`}
+            >
+              <div className="flex items-center gap-3 w-full">
+                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <span className="text-lg">{recommendation.icon}</span>
                 </div>
-              </Button>
-            ))}
-          </div>
-
-          {isGenerating && (
-            <div className="mt-4 p-3 bg-muted/30 rounded-md">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>正在生成 AI 分析...</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium text-sm text-foreground">
+                      {recommendation.name}
+                    </span>
+                    {isUsed && (
+                      <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                        ✓ 已使用
+                      </span>
+                    )}
+                    {isGenerating && (
+                      <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {recommendation.description}
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            </Button>
+          );
+        })}
+      </div>
+
+      {recommendations.length === 0 && hasUsedPrompts && !showAllPrompts && (
+        <div className="text-center py-6 text-muted-foreground">
+          <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <p className="text-sm font-medium mb-1">所有推荐已使用</p>
+          <p className="text-xs">点击上方&ldquo;显示全部&rdquo;查看所有选项</p>
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      {isGenerating && (
+        <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+          <div className="flex items-center gap-2 text-sm text-primary">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="font-medium">正在生成 AI 分析...</span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };

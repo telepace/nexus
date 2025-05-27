@@ -10,7 +10,7 @@ import { Prompt } from "@/lib/api/services/prompts";
 
 interface PromptCommandDialogProps {
   availablePrompts: Prompt[];
-  contentId: string;
+  // contentId: string; // 暂时移除未使用的参数
   isExecuting: boolean;
   onPromptSelect: (prompt: Prompt) => void;
   onExecute: (message: string, selectedPrompt: Prompt | null) => void;
@@ -19,7 +19,7 @@ interface PromptCommandDialogProps {
 
 export function PromptCommandDialog({
   availablePrompts,
-  contentId,
+  // contentId, // 暂时移除未使用的参数
   isExecuting,
   onPromptSelect,
   onExecute,
