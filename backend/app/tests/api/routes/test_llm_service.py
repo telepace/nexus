@@ -70,7 +70,9 @@ def test_create_completion_successful():
         # The first positional argument should be the method, second should be the URL
         assert called_args[0] == "POST"  # method
         # Check that the URL contains the expected components (allowing for double slash issue)
-        expected_url = f"{str(settings.LITELLM_PROXY_URL).rstrip('/')}/v1/chat/completions"
+        expected_url = (
+            f"{str(settings.LITELLM_PROXY_URL).rstrip('/')}/v1/chat/completions"
+        )
         assert called_args[1] == expected_url  # url
         assert called_kwargs["json"]["model"] == "gpt-3.5-turbo"
 

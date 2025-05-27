@@ -74,13 +74,13 @@ def db() -> Generator[Session, None, None]:
     # we can clean up tables in any order
     with Session(engine) as session:
         # Clean up all test data
-        session.exec(delete(Item))
-        session.exec(delete(User))
+        session.execute(delete(Item))
+        session.execute(delete(User))
         # Clean up content-related tables
-        session.exec(delete(AIConversation))
-        session.exec(delete(ProcessingJob))
-        session.exec(delete(ContentAsset))
-        session.exec(delete(ContentItem))
+        session.execute(delete(AIConversation))
+        session.execute(delete(ProcessingJob))
+        session.execute(delete(ContentAsset))
+        session.execute(delete(ContentItem))
         session.commit()
 
     # Teardown test database

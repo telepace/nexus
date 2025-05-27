@@ -1,33 +1,45 @@
-import uuid
 import json
+import uuid
 from collections.abc import AsyncGenerator
 from typing import Any
 
-import httpx
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status, Depends, Body
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Body,
+    Depends,
+    HTTPException,
+    Query,
+    status,
+)
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session
 
 from app.api.deps import CurrentUser, SessionDep, get_current_user, get_db
+from app.base import User
+from app.core.config import settings
 from app.crud.crud_content import (
     create_content_item as crud_create_content_item,
+)
+from app.crud.crud_content import (
     get_content_chunks,
     get_content_chunks_summary,
+)
+from app.crud.crud_content import (
     get_content_item as crud_get_content_item,
+)
+from app.crud.crud_content import (
     get_content_items as crud_get_content_items,
 )
 from app.models.content import (
     ContentItem,  # For converting ContentItemCreate to ContentItem model for CRUD
 )
-from app.base import User
 from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is just base + id and audit fields
     ContentItemCreate,
     ContentItemPublic,
-    ContentItemUpdate,
 )
 from app.schemas.llm import CompletionRequest, LLMMessage
 from app.utils.content_processors import ContentProcessorFactory
-from app.core.config import settings
 
 router = APIRouter()
 
@@ -197,7 +209,7 @@ def get_content_markdown_endpoint(
     session: SessionDep,
     current_user: CurrentUser,
     id: uuid.UUID,
-) -> dict:
+) -> dict[str, Any]:
     """
     Get content item markdown content.
     """
@@ -229,15 +241,21 @@ def get_content_markdown_endpoint(
                 if asset.type == "processed_text":  # 使用正确的字段名 'type'
                     # Download markdown content from storage
                     try:
-                        file_content = storage_service.download_file(asset.file_path)
-                        markdown_content = file_content.decode("utf-8")
+                        if asset.file_path:  # 确保 file_path 不为空
+                            file_content = storage_service.download_file(
+                                asset.file_path
+                            )
+                            markdown_content = file_content.decode("utf-8")
 
-                        # Update content_text in database for faster future access
-                        item.content_text = markdown_content
-                        session.add(item)
-                        session.commit()
-                        session.refresh(item)
-                        break
+                            # Update content_text in database for faster future access
+                            item.content_text = markdown_content
+                            session.add(item)
+                            session.commit()
+                            session.refresh(item)
+                            break
+                        else:
+                            print(f"Asset file_path is None for asset: {asset.id}")
+                            continue
                     except FileNotFoundError:
                         print(f"Markdown file not found in storage: {asset.file_path}")
                         continue
@@ -322,7 +340,7 @@ def get_content_chunks_endpoint(
     id: uuid.UUID,
     page: int = Query(default=1, ge=1, description="Page number (1-based)"),
     size: int = Query(default=10, ge=1, le=50, description="Number of chunks per page"),
-) -> dict:
+) -> dict[str, Any]:
     """
     Get content chunks with pagination.
     """
@@ -400,7 +418,7 @@ def get_content_chunks_summary_endpoint(
     session: SessionDep,
     current_user: CurrentUser,
     id: uuid.UUID,
-) -> dict:
+) -> dict[str, Any]:
     """
     Get content chunks summary.
     """
@@ -436,31 +454,27 @@ async def analyze_content_stream(
     content_id: str,
     system_prompt: str = Body(..., description="System prompt for analysis"),
     user_prompt: str = Body(..., description="User prompt (content text)"),
-    model: str = Body(default="deepseek-v3-ensemble", description="Model to use"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
     Stream AI analysis of content using LiteLLM.
-    
+
     Args:
         content_id: ID of the content to analyze
         system_prompt: System prompt (e.g., prompt template)
         user_prompt: User prompt (the actual content text)
-        model: LLM model to use
         current_user: Current authenticated user
         db: Database session
-    
+
     Returns:
         StreamingResponse: Server-sent events with analysis chunks
     """
     # Verify content exists and user has access
-    content_item = crud_get_content_item(
-        session=db, id=uuid.UUID(content_id)
-    )
+    content_item = crud_get_content_item(session=db, id=uuid.UUID(content_id))
     if not content_item or content_item.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Content not found")
-    
+
     # Prepare LiteLLM request
     completion_request = CompletionRequest(
         model="github-llama-3-2-11b-vision",  # 暂时使用一个健康的模型进行测试
@@ -472,52 +486,54 @@ async def analyze_content_stream(
         temperature=0.7,
         max_tokens=2000,
     )
-    
+
     async def stream_analysis() -> AsyncGenerator[str, None]:
         """Generate analysis stream from LiteLLM"""
         try:
             import aiohttp
-            
+
             # Forward to LiteLLM proxy
             litellm_url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
             headers = {"Content-Type": "application/json"}
-            
+
             # Add LiteLLM authentication if master key is configured
             if settings.LITELLM_MASTER_KEY:
                 headers["Authorization"] = f"Bearer {settings.LITELLM_MASTER_KEY}"
-            
+
             payload = completion_request.model_dump(exclude_none=True)
-            
+
             # Make streaming request to LiteLLM using aiohttp
             timeout = aiohttp.ClientTimeout(total=300.0)
             async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.post(litellm_url, json=payload, headers=headers) as response:
+                async with session.post(
+                    litellm_url, json=payload, headers=headers
+                ) as response:
                     if response.status != 200:
                         error_text = await response.text()
                         error_data = {
                             "error": True,
                             "message": f"LiteLLM service error: HTTP {response.status}",
                             "status_code": response.status,
-                            "details": error_text
+                            "details": error_text,
                         }
                         yield f"data: {json.dumps(error_data)}\n\n"
                         return
-                    
+
                     # Stream the response
                     async for chunk in response.content.iter_chunked(1024):
                         if chunk:
                             # Forward the chunk as-is (LiteLLM sends SSE format)
-                            yield chunk.decode('utf-8', errors='ignore')
-                        
+                            yield chunk.decode("utf-8", errors="ignore")
+
         except Exception as e:
             # Handle unexpected errors
             error_data = {
                 "error": True,
                 "message": f"Unexpected error: {str(e)}",
-                "status_code": 500
+                "status_code": 500,
             }
             yield f"data: {json.dumps(error_data)}\n\n"
-    
+
     return StreamingResponse(
         stream_analysis(),
         media_type="text/event-stream",

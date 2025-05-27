@@ -297,7 +297,7 @@ def init_db(session: Session, db_url: str | None = None) -> None:
         ).first()
         if not existing_prompt:
             # 提取标签名称
-            tag_names = list(prompt_data.pop("tags", []))
+            tag_names = list(prompt_data.pop("tags", []))  # type: ignore
 
             # 创建提示词
             prompt = Prompt(**prompt_data, created_by=user.id)
@@ -665,15 +665,15 @@ AI在军事领域的应用引发了关于自主武器系统的伦理争议。
     for content_data in test_contents:
         # 检查内容是否已存在
         existing_content = session.exec(
-            select(ContentItem).where(ContentItem.title == content_data["title"])
+            select(ContentItem).where(ContentItem.title == content_data["title"])  # type: ignore
         ).first()
 
         if not existing_content:
-            content_item = ContentItem(user_id=user.id, **content_data)
+            content_item = ContentItem(user_id=user.id, **content_data)  # type: ignore
             session.add(content_item)
-            logger.info(f"Created test content: {content_data['title']}")
+            logger.info(f"Created test content: {content_data['title']}")  # type: ignore
         else:
-            logger.info(f"Test content already exists: {content_data['title']}")
+            logger.info(f"Test content already exists: {content_data['title']}")  # type: ignore
 
     # 刷新以获取创建的内容项ID
     session.flush()
@@ -729,22 +729,23 @@ AI在军事领域的应用引发了关于自主武器系统的伦理争议。
         for conv_data in test_conversations:
             # 检查对话是否已存在
             existing_conv = session.exec(
-                select(AIConversation).where(AIConversation.title == conv_data["title"])
+                select(AIConversation).where(AIConversation.title == conv_data["title"])  # type: ignore
             ).first()
 
             if not existing_conv:
                 # 将messages转换为JSON字符串
                 import json
 
-                conv_data["messages"] = json.dumps(
-                    conv_data["messages"], ensure_ascii=False
+                conv_data["messages"] = json.dumps(  # type: ignore
+                    conv_data["messages"],  # type: ignore
+                    ensure_ascii=False,
                 )
 
-                conversation = AIConversation(**conv_data)
+                conversation = AIConversation(**conv_data)  # type: ignore
                 session.add(conversation)
-                logger.info(f"Created test conversation: {conv_data['title']}")
+                logger.info(f"Created test conversation: {conv_data['title']}")  # type: ignore
             else:
-                logger.info(f"Test conversation already exists: {conv_data['title']}")
+                logger.info(f"Test conversation already exists: {conv_data['title']}")  # type: ignore
 
     # 提交所有更改
     session.commit()
