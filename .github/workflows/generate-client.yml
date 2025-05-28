@@ -76,7 +76,7 @@ jobs:
           POSTHOG_API_KEY: ""
           POSTHOG_HOST: ""
           VIRTUAL_ENV: .venv
-          APP_SYMMETRIC_ENCRYPTION_KEY: 'Buhzb09HgEg-4C7oUsZqykAH_-yfXEONu9sogno3a2s='
+          APP_SYMMETRIC_ENCRYPTION_KEY: ${{ secrets.APP_SYMMETRIC_ENCRYPTION_KEY }}
 
       - name: Stage Generated Files
         run: |
