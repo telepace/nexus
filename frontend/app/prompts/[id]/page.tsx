@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // 引入客户端组件
 import { DuplicateButton } from "../_components/DuplicateButton";
 import { CopyToClipboardButton } from "./CopyToClipboardButton";
+import { PromptToggle } from "../promptToggle";
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
   try {
@@ -176,7 +177,7 @@ async function PromptDetailContent({ id }: { id: string }) {
           </div>
 
           {/* 元数据信息 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <Card className="p-4">
               <div className="flex items-center text-sm">
                 <TagIcon className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -214,6 +215,19 @@ async function PromptDetailContent({ id }: { id: string }) {
                     locale: zhCN,
                   })}
                 </span>
+              </div>
+            </Card>
+
+            <Card className="p-4">
+              <div className="flex flex-col space-y-2">
+                <div className="flex items-center text-sm mb-1">
+                  <span className="font-medium">启用状态:</span>
+                </div>
+                <PromptToggle
+                  promptId={promptData.id}
+                  enabled={promptData.enabled ?? false}
+                  promptName={promptData.name}
+                />
               </div>
             </Card>
           </div>

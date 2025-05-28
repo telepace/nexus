@@ -1,51 +1,93 @@
-name: Use Make All Test
+name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    types:
-      - opened
-      - synchronize
+    types: [opened, synchronize]
 
 jobs:
-  make-all-test:
+  ci-pipeline:
+    name: Complete CI/CD Pipeline
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout
+      # ========== 代码检出 ==========
+      - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Set up Python
+        
+      # ========== 环境设置 ==========
+      - name: Setup Python 3.10
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-      - name: Install uv
+          
+      - name: Setup UV package manager
         uses: astral-sh/setup-uv@v5
-      - name: Install pnpm
+        
+      - name: Setup PNPM
         uses: pnpm/action-setup@v3
         with:
           version: 8
-      
-      # 分别安装各个目录的依赖
-      - name: Install frontend dependencies
-        run: pnpm install --dir frontend
-        if: hashFiles('frontend/package.json') != ''
-      
-      - name: Install admin dependencies
-        run: pnpm install --dir admin
-        if: hashFiles('admin/package.json') != ''
-      
-      - name: Install extension dependencies
-        run: pnpm install --dir extension
-        if: hashFiles('extension/package.json') != ''
+          
+      # ========== 基础依赖安装 ==========
+      - name: Install Python base dependencies
+        run: pip install pyyaml
         
-      - name: Set up backend venv and install dependencies
+      # ========== 前端依赖安装 ==========
+      - name: Install frontend dependencies
+        if: hashFiles('frontend/package.json') != ''
+        run: pnpm install --dir frontend
+        
+      - name: Install admin dependencies  
+        if: hashFiles('admin/package.json') != ''
+        run: pnpm install --dir admin
+        
+      - name: Install extension dependencies
+        if: hashFiles('extension/package.json') != ''
+        run: pnpm install --dir extension
+        
+      - name: Setup backend virtual environment
         run: |
           cd backend
           uv venv .venv
           source .venv/bin/activate
           uv sync
-          cd ..
-      
-      - name: Make all
-        run: make all
+          
+      - name: Run environment initialization
+        run: make env-init
+        
+      - name: Check for conflicts
+        run: make check-conflicts
+        
+      - name: Format code
+        run: make format
+        
+      - name: Run linting
+        run: make lint
+        
+      - name: Build backend
+        run: make backend-build
+        
+      - name: Build frontend
+        run: make frontend-build
+        
+      - name: Build admin
+        run: make admin-build
+        
+      - name: Generate client
+        run: make generate-client
+        
+      - name: Run frontend tests
+        run: make frontend-test
+        
+      - name: Final validation
+        run: |
+          echo "===========> All CI/CD steps completed successfully"
+          echo "✅ Environment initialized"
+          echo "✅ No conflicts detected" 
+          echo "✅ Code formatted"
+          echo "✅ Linting passed"
+          echo "✅ All components built"
+          echo "✅ Client generated"
+          echo "✅ All frontend passed"

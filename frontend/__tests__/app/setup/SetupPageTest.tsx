@@ -10,7 +10,7 @@ jest.mock("@/lib/server-auth", () => ({
 }));
 const { getAuthState } = require("@/lib/server-auth"); // require after mock
 
-// Using global mock for next/navigation from jest.setup.js
+// Using global mock for next/navigation from jest.setup.ts
 // No local jest.mock("next/navigation", ...) here
 
 // Using actual SetupContent component
@@ -60,8 +60,8 @@ describe("SetupPage", () => {
   it("SetupContent 应该能够从全局mock中获取searchParams并正确显示扩展相关信息", async () => {
     // Ensure getAuthState is mocked to return isAuthenticated: true for this test path
     (getAuthState as jest.Mock).mockResolvedValue({
-        isAuthenticated: true,
-        user: { id: "test-user", email: "test@example.com", token: "test-token" },
+      isAuthenticated: true,
+      user: { id: "test-user", email: "test@example.com", token: "test-token" },
     });
 
     await act(async () => {
@@ -82,9 +82,11 @@ describe("SetupPage", () => {
     // Now on the CompleteStep
     expect(screen.getByText("设置完成！")).toBeInTheDocument();
 
-    // The global mock in jest.setup.js provides "mocked_plugin_id_from_global_setup"
+    // The global mock in jest.setup.ts provides "mocked_plugin_id_from_global_setup"
     // This should make `fromExtension` true in `CompleteStep` inside `SetupContent`
-    expect(screen.getByText("您的浏览器扩展将自动配置，无需额外设置。")).toBeInTheDocument();
+    expect(
+      screen.getByText("您的浏览器扩展将自动配置，无需额外设置。"),
+    ).toBeInTheDocument();
   });
 
   it("如果用户未认证，应重定向", async () => {
@@ -104,7 +106,7 @@ describe("SetupPage", () => {
       // Next.js specific redirect errors might be caught here if not handled by mocks
       // console.log("Caught error during render for redirect test:", error);
     }
-    
-    expect(redirect).toHaveBeenCalledWith("/login?redirect=/setup");
+
+    expect(redirect).toHaveBeenCalledWith("/login?callbackUrl=/setup");
   });
 });

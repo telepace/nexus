@@ -14,19 +14,22 @@ from app.api.middlewares.posthog import PostHogMiddleware
 def mock_request():
     request = MagicMock(spec=Request)
     request.url = MagicMock()
-    request.state = MagicMock() # Create a general MagicMock for state first
-    request.state.user = None # Explicitly set user to None by default for most tests
+    request.state = MagicMock()  # Create a general MagicMock for state first
+    request.state.user = None  # Explicitly set user to None by default for most tests
     request.method = "GET"
     return request
+
 
 @pytest.fixture
 def mock_call_next():
     return AsyncMock(spec=RequestResponseEndpoint)
 
+
 @pytest.fixture
 def mock_posthog_tracker():
     with patch("app.api.middlewares.posthog.PostHogTracker") as mock_tracker:
         yield mock_tracker
+
 
 @pytest.mark.asyncio
 async def test_posthog_middleware_api_request_posthog_enabled_with_user(
@@ -40,7 +43,7 @@ async def test_posthog_middleware_api_request_posthog_enabled_with_user(
 
         user_mock = MagicMock()
         user_mock.id = "test_user_id"
-        mock_request.state.user = user_mock # Set user for this specific test
+        mock_request.state.user = user_mock  # Set user for this specific test
 
         response_mock = MagicMock(spec=Response)
         response_mock.status_code = 200
@@ -65,6 +68,7 @@ async def test_posthog_middleware_api_request_posthog_enabled_with_user(
                 "duration_ms": pytest.approx(100, abs=10),
             },
         )
+
 
 @pytest.mark.asyncio
 async def test_posthog_middleware_api_request_posthog_enabled_anonymous_user(
@@ -101,6 +105,7 @@ async def test_posthog_middleware_api_request_posthog_enabled_anonymous_user(
             },
         )
 
+
 @pytest.mark.asyncio
 async def test_posthog_middleware_non_api_request_posthog_enabled(
     mock_request, mock_call_next, mock_posthog_tracker
@@ -122,6 +127,7 @@ async def test_posthog_middleware_non_api_request_posthog_enabled(
         # Assert
         mock_call_next.assert_called_once_with(mock_request)
         mock_posthog_tracker.capture_event.assert_not_called()
+
 
 @pytest.mark.asyncio
 async def test_posthog_middleware_api_request_posthog_disabled(
@@ -145,6 +151,7 @@ async def test_posthog_middleware_api_request_posthog_disabled(
         mock_call_next.assert_called_once_with(mock_request)
         mock_posthog_tracker.capture_event.assert_not_called()
 
+
 @pytest.mark.asyncio
 async def test_posthog_middleware_user_id_extraction_no_user_id_attr(
     mock_request, mock_call_next, mock_posthog_tracker
@@ -155,12 +162,13 @@ async def test_posthog_middleware_user_id_extraction_no_user_id_attr(
         mock_settings.API_V1_STR = "/api/v1"
         mock_request.url.path = "/api/v1/test"
 
-        user_mock = MagicMock(spec=object) # Use a spec that doesn't have 'id' by default
+        user_mock = MagicMock(
+            spec=object
+        )  # Use a spec that doesn't have 'id' by default
         # Ensure 'id' is not present
-        if hasattr(user_mock, 'id'):
+        if hasattr(user_mock, "id"):
             del user_mock.id
         mock_request.state.user = user_mock
-
 
         response_mock = MagicMock(spec=Response)
         response_mock.status_code = 200
@@ -185,6 +193,7 @@ async def test_posthog_middleware_user_id_extraction_no_user_id_attr(
             },
         )
 
+
 @pytest.mark.asyncio
 async def test_posthog_middleware_user_id_extraction_exception(
     mock_request, mock_call_next, mock_posthog_tracker
@@ -204,7 +213,6 @@ async def test_posthog_middleware_user_id_extraction_exception(
                 raise Exception("Test Exception accessing user")
 
         mock_request.state = StateUserExceptionMock()
-
 
         response_mock = MagicMock(spec=Response)
         response_mock.status_code = 200

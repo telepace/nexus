@@ -77,7 +77,7 @@ function AuthRedirectHandler() {
  * @returns {JSX.Element} - The rendered Login component.
  */
 function LoginContent() {
-  const { login, user, isLoading } = useAuth();
+  const { login, isLoading } = useAuth();
   const router = useRouter();
   const [callbackUrl, setCallbackUrl] = useState("/setup");
   const [extensionCallback, setExtensionCallback] = useState<string | null>(

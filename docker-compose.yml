@@ -236,6 +236,7 @@ services:
       - default
     volumes:
       - ./litellm/config.yaml:${LITELLM_CONFIG_PATH:-/app/config.yaml}
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:telepace@db/litellm}
       - STORE_MODEL_IN_DB=${LITELLM_STORE_MODEL_IN_DB:-True}
@@ -254,13 +255,17 @@ services:
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-sk-lf}
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-pk-lf}
       - LANGFUSE_HOST=${LANGFUSE_HOST:-https://cloud.langfuse.com}
+      # - https_proxy=http://localhost:7890
+      # - http_proxy=http://localhost:7890
+      # - all_proxy=socks5://localhost:7890
+
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4000/health/liveliness || exit 1"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "-O", "/dev/null", "http://localhost:${LITELLM_PORT:-4000}/health/liveliness"]
       interval: 30s
       timeout: 10s
       retries: 3

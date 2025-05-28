@@ -121,12 +121,41 @@ import type {
   PromptsDuplicatePromptData,
   PromptsDuplicatePromptError,
   PromptsDuplicatePromptResponse,
+  PromptsTogglePromptEnabledData,
+  PromptsTogglePromptEnabledError,
+  PromptsTogglePromptEnabledResponse,
   LlmCreateCompletionData,
   LlmCreateCompletionError,
   LlmCreateCompletionResponse,
   LlmCreateEmbeddingData,
   LlmCreateEmbeddingError,
   LlmCreateEmbeddingResponse,
+  ContentCreateContentItemEndpointData,
+  ContentCreateContentItemEndpointError,
+  ContentCreateContentItemEndpointResponse,
+  ContentProcessContentItemEndpointData,
+  ContentProcessContentItemEndpointError,
+  ContentProcessContentItemEndpointResponse,
+  ContentListContentItemsEndpointData,
+  ContentListContentItemsEndpointError,
+  ContentListContentItemsEndpointResponse,
+  ContentGetContentItemEndpointData,
+  ContentGetContentItemEndpointError,
+  ContentGetContentItemEndpointResponse,
+  ContentGetContentMarkdownEndpointData,
+  ContentGetContentMarkdownEndpointError,
+  ContentGetContentMarkdownEndpointResponse,
+  ContentGetSupportedProcessorsError,
+  ContentGetSupportedProcessorsResponse,
+  ContentGetContentChunksEndpointData,
+  ContentGetContentChunksEndpointError,
+  ContentGetContentChunksEndpointResponse,
+  ContentGetContentChunksSummaryEndpointData,
+  ContentGetContentChunksSummaryEndpointError,
+  ContentGetContentChunksSummaryEndpointResponse,
+  ContentAnalyzeContentStreamData,
+  ContentAnalyzeContentStreamError,
+  ContentAnalyzeContentStreamResponse,
   PrivateCreateUserData,
   PrivateCreateUserError,
   PrivateCreateUserResponse,
@@ -902,6 +931,25 @@ export const promptsDuplicatePrompt = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Toggle Prompt Enabled
+ * 快速切换提示词的启用状态
+ */
+export const promptsTogglePromptEnabled = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<PromptsTogglePromptEnabledData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).patch<
+    PromptsTogglePromptEnabledResponse,
+    PromptsTogglePromptEnabledError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/{prompt_id}/toggle-enabled",
+  });
+};
+
+/**
  * Create Completion
  * Handles creation of completions based on request data.
  */
@@ -932,6 +980,205 @@ export const llmCreateEmbedding = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/api/v1/llm/embeddings",
+  });
+};
+
+/**
+ * Create a New Content Item
+ * Uploads and creates a new content item in the system. Requires user authentication.
+ */
+export const contentCreateContentItemEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentCreateContentItemEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    ContentCreateContentItemEndpointResponse,
+    ContentCreateContentItemEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/create",
+  });
+};
+
+/**
+ * Process Content Item
+ * Process a content item to convert it to Markdown format using appropriate processor.
+ */
+export const contentProcessContentItemEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentProcessContentItemEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    ContentProcessContentItemEndpointResponse,
+    ContentProcessContentItemEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/process/{id}",
+  });
+};
+
+/**
+ * List Content Items
+ * Retrieves a list of content items for the authenticated user, with optional pagination.
+ */
+export const contentListContentItemsEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<
+    ContentListContentItemsEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentListContentItemsEndpointResponse,
+    ContentListContentItemsEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/",
+  });
+};
+
+/**
+ * Get a Specific Content Item
+ * Retrieves a single content item by its unique ID. User can only access their own content.
+ */
+export const contentGetContentItemEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<ContentGetContentItemEndpointData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetContentItemEndpointResponse,
+    ContentGetContentItemEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{id}",
+  });
+};
+
+/**
+ * Get Content Item as Markdown
+ * Retrieves the processed markdown content for a content item. Returns raw markdown text.
+ */
+export const contentGetContentMarkdownEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentGetContentMarkdownEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetContentMarkdownEndpointResponse,
+    ContentGetContentMarkdownEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{id}/markdown",
+  });
+};
+
+/**
+ * Get Supported Content Types
+ * Get list of supported content types and their processors.
+ */
+export const contentGetSupportedProcessors = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetSupportedProcessorsResponse,
+    ContentGetSupportedProcessorsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/processors/supported",
+  });
+};
+
+/**
+ * Get Content Chunks
+ * Retrieves content chunks for efficient rendering with pagination support.
+ */
+export const contentGetContentChunksEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentGetContentChunksEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetContentChunksEndpointResponse,
+    ContentGetContentChunksEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{id}/chunks",
+  });
+};
+
+/**
+ * Get Content Chunks Summary
+ * Get summary information about content chunks without the actual content.
+ */
+export const contentGetContentChunksSummaryEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentGetContentChunksSummaryEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetContentChunksSummaryEndpointResponse,
+    ContentGetContentChunksSummaryEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{id}/chunks/summary",
+  });
+};
+
+/**
+ * Analyze Content Stream
+ * Stream AI analysis of content using LiteLLM.
+ *
+ * Args:
+ * content_id: ID of the content to analyze
+ * system_prompt: System prompt (e.g., prompt template)
+ * user_prompt: User prompt (the actual content text)
+ * current_user: Current authenticated user
+ * db: Database session
+ *
+ * Returns:
+ * StreamingResponse: Server-sent events with analysis chunks
+ */
+export const contentAnalyzeContentStream = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<ContentAnalyzeContentStreamData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ContentAnalyzeContentStreamResponse,
+    ContentAnalyzeContentStreamError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{content_id}/analyze",
   });
 };
 

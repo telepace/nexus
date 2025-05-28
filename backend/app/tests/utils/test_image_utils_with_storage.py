@@ -27,6 +27,12 @@ class MockStorageService(StorageService):
         self.files[file_path] = content
         return self._build_url(file_path)
 
+    def download_file(self, file_path: str) -> bytes:
+        """模拟下载文件"""
+        if file_path in self.files:
+            return self.files[file_path]
+        raise FileNotFoundError(f"File not found: {file_path}")
+
     def get_file_url(self, file_path: str) -> str:
         """获取文件URL"""
         return self._build_url(file_path)

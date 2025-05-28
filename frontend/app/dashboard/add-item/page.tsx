@@ -10,16 +10,25 @@ interface ItemState {
   message?: string;
   success?: boolean;
   errors?: {
-    title?: string;
-    description?: string;
-    [key: string]: string | undefined;
+    title?: string[];
+    description?: string[];
+    [key: string]: string[] | undefined;
   };
 }
 
-const initialState = { message: "" };
+const initialState: ItemState = {};
+
+// 包装函数来匹配 useActionState 的期望类型
+async function addItemAction(
+  prevState: ItemState,
+  formData: FormData,
+): Promise<ItemState> {
+  const result = await addItem({}, formData);
+  return result as ItemState;
+}
 
 export default function CreateItemPage() {
-  const [state, dispatch] = useActionState(addItem, initialState);
+  const [state, dispatch] = useActionState(addItemAction, initialState);
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">
@@ -53,9 +62,9 @@ export default function CreateItemPage() {
                 required
                 className="w-full border-gray-300 dark:border-gray-600"
               />
-              {(state as ItemState).errors?.title && (
+              {state.errors?.title && (
                 <p className="text-red-500 text-sm">
-                  {(state as ItemState).errors.title}
+                  {state.errors.title.join(", ")}
                 </p>
               )}
             </div>
@@ -74,9 +83,9 @@ export default function CreateItemPage() {
                 placeholder="Description of the item"
                 className="w-full border-gray-300 dark:border-gray-600"
               />
-              {(state as ItemState).errors?.description && (
+              {state.errors?.description && (
                 <p className="text-red-500 text-sm">
-                  {(state as ItemState).errors.description}
+                  {state.errors.description.join(", ")}
                 </p>
               )}
             </div>
@@ -84,11 +93,11 @@ export default function CreateItemPage() {
 
           <SubmitButton text="Create Item" />
 
-          {(state as ItemState).message && (
+          {state.message && (
             <div
-              className={`mt-2 text-center text-sm ${(state as ItemState).success ? "text-green-500" : "text-red-500"}`}
+              className={`mt-2 text-center text-sm ${state.success ? "text-green-500" : "text-red-500"}`}
             >
-              <p>{(state as ItemState).message}</p>
+              <p>{state.message}</p>
             </div>
           )}
         </form>

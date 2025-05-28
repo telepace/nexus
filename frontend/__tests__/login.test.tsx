@@ -44,16 +44,12 @@ describe("login action", () => {
     );
 
     expect(cookies).toHaveBeenCalled();
-    expect(mockSet).toHaveBeenCalledWith(
-      "accessToken",
-      "1245token",
-      {
-        httpOnly: true,
-        secure: false, // process.env.NODE_ENV is 'test' during jest runs
-        maxAge: 60 * 60 * 24 * 7, // 604800
-        path: "/",
-      },
-    );
+    expect(mockSet).toHaveBeenCalledWith("accessToken", "1245token", {
+      httpOnly: true,
+      secure: false, // process.env.NODE_ENV is 'test' during jest runs
+      maxAge: 60 * 60 * 24 * 7, // 604800
+      path: "/",
+    });
   });
 
   it("should should return an error if the server validation fails", async () => {

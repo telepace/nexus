@@ -7,6 +7,7 @@ import {
   List,
   MessageSquare,
   BookmarkIcon,
+  Layers, // Add Layers icon
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -44,12 +45,17 @@ export const Sidebar: FC<SidebarProps> = ({ collapsed, onToggleCollapse }) => {
       href: "/prompts",
       icon: <MessageSquare className="h-5 w-5" />,
     },
+    {
+      name: "Content Library",
+      href: "/content-library",
+      icon: <Layers className="h-5 w-5" />,
+    },
   ];
 
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-10 flex flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 transition-all duration-300",
+        "fixed inset-y-0 left-0 z-10 flex flex-col border-r border-border bg-background p-4 transition-all duration-300",
         collapsed ? "w-16" : "w-56",
       )}
     >
@@ -65,9 +71,7 @@ export const Sidebar: FC<SidebarProps> = ({ collapsed, onToggleCollapse }) => {
             />
           </div>
           {!collapsed && (
-            <span className="text-xl font-bold text-gray-900 dark:text-white">
-              Nexus
-            </span>
+            <span className="text-xl font-bold text-foreground">Nexus</span>
           )}
         </Link>
         <Button
@@ -98,8 +102,8 @@ export const Sidebar: FC<SidebarProps> = ({ collapsed, onToggleCollapse }) => {
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
                       isActive
-                        ? "bg-blue-50 text-primary dark:bg-blue-950"
-                        : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800",
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                     aria-label={item.name}
                   >

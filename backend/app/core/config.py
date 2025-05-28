@@ -83,7 +83,8 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str = "nexus"
     SENTRY_DSN: HttpUrl | None = None
-    LITELLM_PROXY_URL: HttpUrl = "http://litellm:4000"
+    LITELLM_PROXY_URL: str = "http://litellm:4000"
+    LITELLM_MASTER_KEY: str | None = None
 
     # Database configuration
     DATABASE_TYPE: Literal["postgres", "supabase"] = "postgres"
@@ -212,6 +213,7 @@ class Settings(BaseSettings):
     EMAIL_TEST_USER: EmailStr = "test@example.com"
     FIRST_SUPERUSER: EmailStr = "admin@telepace.cc"
     FIRST_SUPERUSER_PASSWORD: str = "telepace"
+    FIRST_SUPERUSER_ID: str | None = None  # 可选的管理员用户ID，如果不设置则自动生成
 
     # PostHog Configuration
     POSTHOG_API_KEY: str | None = None
@@ -248,6 +250,9 @@ class Settings(BaseSettings):
     R2_SECRET_ACCESS_KEY: str | None = None
     R2_BUCKET: str | None = None
     R2_PUBLIC_URL: str | None = None
+
+    # Jina AI Configuration
+    JINA_API_KEY: str | None = None
 
     @property
     def google_oauth_redirect_uri(self) -> str:

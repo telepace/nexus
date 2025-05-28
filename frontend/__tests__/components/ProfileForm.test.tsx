@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { ProfileForm } from "@/app/customers/components/ProfileForm";
+import { ProfileForm } from "@/app/settings/components/ProfileForm";
 import type { User } from "@/lib/auth";
 import type { Sex, EarSize } from "react-nice-avatar";
 

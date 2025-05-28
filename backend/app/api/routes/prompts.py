@@ -227,12 +227,12 @@ def read_prompts(
     order: str = "desc",
 ) -> list[Prompt]:
     """Read and return a list of prompts based on specified filters and sorting.
-    
+
     The function constructs a query to retrieve prompts from the database, applying
     optional filters for tag IDs, search terms, and sorting by creation or update
     time. It also handles pagination through skip and limit parameters. Tags are
     manually loaded for each prompt after querying.
-    
+
     Args:
         db (Session): Database session.
         _current_user (Any): Current user information (dependency).
@@ -242,10 +242,10 @@ def read_prompts(
         search (str | None?): Search term to filter prompts by name, description, or content.
         sort (str | None?): Field to sort the results by ('created_at' or 'updated_at'). Defaults to None.
         order (str?): Order of sorting ('asc' or 'desc'). Defaults to "desc".
-    
+
     Returns:
         list[Prompt]: List of prompts matching the filters and sorted as specified.
-    
+
     Raises:
         HTTPException: If an error occurs during database query execution.
     """
@@ -253,39 +253,43 @@ def read_prompts(
         # 构建基础查询
         query = select(Prompt)
 
-        # 如果指定了标签，添加标签过滤
+        # 如果有标签过滤
         if tag_ids:
-            # 使用子查询获取包含所有指定标签的提示词ID
-            subquery = (
+            # 使用子查询来过滤有指定标签的提示词
+            tag_count = len(tag_ids)
+            tag_subquery = (
                 select(PromptTagLink.prompt_id)
-                .where(PromptTagLink.tag_id.in_(tag_ids))
-                .group_by(PromptTagLink.prompt_id)
-                .having(func.count(PromptTagLink.tag_id) == len(tag_ids))
-                .scalar_subquery()
+                .where(PromptTagLink.tag_id.in_(tag_ids))  # type: ignore
+                .group_by(PromptTagLink.prompt_id)  # type: ignore
+                .having(func.count(PromptTagLink.tag_id) >= tag_count)  # type: ignore
             )
-            query = query.where(Prompt.id.in_(subquery))
+            query = query.where(Prompt.id.in_(tag_subquery))  # type: ignore
 
-        # 如果指定了搜索关键词，添加搜索过滤
+        # 搜索过滤
         if search:
-            search_filter = or_(
-                Prompt.name.contains(search),
-                Prompt.description.contains(search)
-                if Prompt.description is not None
-                else False,
-                Prompt.content.contains(search),
+            query = query.where(
+                or_(
+                    Prompt.name.contains(search),  # type: ignore
+                    Prompt.content.contains(search),  # type: ignore
+                    # 可以添加更多搜索字段
+                    Prompt.description.contains(search)  # type: ignore
+                    if hasattr(Prompt, "description")
+                    else False,
+                )
             )
-            query = query.where(search_filter)
 
-        # 添加排序
+        # 排序
         if sort == "created_at":
-            order_col = Prompt.created_at
-            query = query.order_by(desc(order_col) if order == "desc" else order_col)
+            query = query.order_by(  # type: ignore
+                desc(Prompt.created_at) if order == "desc" else Prompt.created_at  # type: ignore
+            )
         elif sort == "updated_at":
-            order_col = Prompt.updated_at
-            query = query.order_by(desc(order_col) if order == "desc" else order_col)
+            query = query.order_by(  # type: ignore
+                desc(Prompt.updated_at) if order == "desc" else Prompt.updated_at  # type: ignore
+            )
         else:
-            # 默认按创建时间排序
-            query = query.order_by(desc(Prompt.created_at))
+            # 默认按更新时间倒序
+            query = query.order_by(desc(Prompt.updated_at))  # type: ignore
 
         # 执行查询
         prompts = db.exec(query).all()
@@ -337,22 +341,22 @@ def update_prompt(
     create_version: bool = False,
 ):
     """Update a prompt by its ID.
-    
+
     This function updates the prompt in the database with new data provided. It
     checks for permissions, updates other fields, and handles version creation if
     specified. It also manages tag relationships by updating or clearing them as
     needed.
-    
+
     Args:
         db (Session): The database session.
         prompt_id (UUID): The ID of the prompt to update.
         prompt_in (PromptUpdate): The data containing the new values for the prompt.
         current_user (Any): The current user making the request.
         create_version (bool): A flag indicating whether to create a new version.
-    
+
     Returns:
         PromptReadWithTags: The updated prompt with tags included.
-    
+
     Raises:
         HTTPException: If the prompt is not found, the user lacks permissions,
             or an error occurs during the update process.
@@ -477,14 +481,14 @@ def read_prompt_versions(
     current_user: Any = Depends(get_current_user),
 ):
     """Retrieves the version history of a given prompt.
-    
+
     This function fetches the version history for a specified prompt by its ID. It
     first retrieves the prompt from the database and checks if it exists. Then, it
     verifies the user's permissions to access the prompt. If both steps are
     successful, it queries the database to get all versions of the prompt, sorted
     in descending order by version number. If any errors occur during this process,
     appropriate HTTP exceptions are raised.
-    
+
     Args:
         db (Session): The database session.
         prompt_id (UUID): The ID of the prompt for which to retrieve version history.
@@ -504,7 +508,7 @@ def read_prompt_versions(
         query = (
             select(PromptVersion)
             .where(PromptVersion.prompt_id == prompt_id)
-            .order_by(PromptVersion.version.desc())
+            .order_by(PromptVersion.version.desc())  # type: ignore
         )
         versions = db.exec(query).all()
         return versions
@@ -527,7 +531,7 @@ def create_prompt_version(
     current_user: Any = Depends(get_current_user),
 ) -> PromptVersion:
     """Creates a new version of a prompt.
-    
+
     This function retrieves the prompt by its ID, checks for access permissions,
     determines the maximum existing version number, and then creates a new version
     with incremented version number, content, change notes, creation time, and
@@ -619,13 +623,13 @@ def duplicate_prompt(
     current_user: Any = Depends(get_current_user),
 ):
     """Duplicates a prompt based on the provided prompt ID.
-    
+
     This function retrieves the original prompt, checks for access permissions,
     creates a new duplicate with updated attributes such as name and visibility,
     copies associated tags, and initializes a new version for the duplicated
     prompt. If any errors occur during the process, it rolls back the database
     transaction and raises an appropriate HTTP exception.
-    
+
     Args:
         db (Session): The database session dependency.
         prompt_id (UUID): The ID of the original prompt to be duplicated.
@@ -694,6 +698,51 @@ def duplicate_prompt(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"复制提示词失败: {str(e)}",
+        )
+
+
+# ===== 快速切换启用状态 =====
+@router.patch("/{prompt_id}/toggle-enabled", response_model=PromptReadWithTags)
+def toggle_prompt_enabled(
+    *,
+    db: Session = Depends(get_db),
+    prompt_id: UUID,
+    current_user: Any = Depends(get_current_user),
+):
+    """快速切换提示词的启用状态"""
+    try:
+        prompt = db.get(Prompt, prompt_id)
+        if not prompt:
+            raise HTTPException(status_code=404, detail="Prompt not found")
+
+        # 检查权限
+        if not _check_prompt_access(prompt, current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not enough permissions to modify this prompt",
+            )
+
+        # 切换启用状态
+        prompt.enabled = not prompt.enabled
+        prompt.updated_at = datetime.utcnow()
+
+        db.add(prompt)
+        db.commit()
+        db.refresh(prompt)
+        # 确保加载标签关系
+        db.refresh(prompt, ["tags"])
+
+        logger.info(f"Toggled prompt {prompt_id} enabled status to: {prompt.enabled}")
+        return PromptReadWithTags.model_validate(prompt)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"切换提示词启用状态失败: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"切换提示词启用状态失败: {str(e)}",
         )
 
 

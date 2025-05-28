@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { FaGithub } from "react-icons/fa";
 import { Badge } from "@/components/ui/badge";
-import { useRouter } from "next/navigation";
-import { useEffect, Suspense } from "react";
-import { useAuth } from "@/lib/auth";
+import { Suspense } from "react";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 
 // Component that handles auth redirect with Suspense

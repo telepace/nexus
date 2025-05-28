@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react"
 import { Storage } from "@plasmohq/storage"
 import "./sidepanel.css"
 import type { UserProfile } from "~/utils/interfaces"
+import { debugLog, sidepanelDebug } from "~/utils/debug"
 
 // 定义消息类型
 interface Message {
@@ -36,26 +37,40 @@ const SidePanel: React.FC = () => {
   
   // 初始化
   useEffect(() => {
+    debugLog('SidePanel component initializing...');
+    
     // 检测系统暗色模式
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     setIsDarkMode(prefersDark)
     
     // 加载用户信息
     const loadUserProfile = async () => {
-      const storage = new Storage({ area: "local" })
-      const profile = await storage.get("userProfile") as UserProfile
-      setUserProfile(profile || null)
+      try {
+        const storage = new Storage({ area: "local" })
+        const profile = await storage.get("userProfile") as UserProfile
+        setUserProfile(profile || null)
+        debugLog('User profile loaded:', profile ? 'Found' : 'Not found');
+      } catch (error) {
+        debugLog('Error loading user profile:', error);
+      }
     }
     
     // 加载对话历史
     const loadConversations = async () => {
-      const storage = new Storage({ area: "local" })
-      const savedConversations = await storage.get("conversations") as Conversation[]
-      if (savedConversations && savedConversations.length > 0) {
-        setConversations(savedConversations)
-        setCurrentConversation(savedConversations[0])
-      } else {
-        // 创建新对话
+      try {
+        const storage = new Storage({ area: "local" })
+        const savedConversations = await storage.get("conversations") as Conversation[]
+        if (savedConversations && savedConversations.length > 0) {
+          setConversations(savedConversations)
+          setCurrentConversation(savedConversations[0])
+          debugLog('Conversations loaded:', savedConversations.length);
+        } else {
+          // 创建新对话
+          createNewConversation()
+          debugLog('Created new conversation');
+        }
+      } catch (error) {
+        debugLog('Error loading conversations:', error);
         createNewConversation()
       }
     }
@@ -66,6 +81,7 @@ const SidePanel: React.FC = () => {
     // 获取当前页面信息
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]?.url) {
+        debugLog('Current tab URL:', tabs[0].url);
         // 可以在这里处理页面URL，例如显示页面标题或进行预处理
       }
     })
@@ -89,12 +105,18 @@ const SidePanel: React.FC = () => {
     setConversations(prev => [newConversation, ...prev])
     setCurrentConversation(newConversation)
     saveConversations([newConversation, ...conversations])
+    debugLog('New conversation created:', newConversation.id);
   }
   
   // 保存对话
   const saveConversations = async (convs: Conversation[]) => {
-    const storage = new Storage({ area: "local" })
-    await storage.set("conversations", convs)
+    try {
+      const storage = new Storage({ area: "local" })
+      await storage.set("conversations", convs)
+      debugLog('Conversations saved:', convs.length);
+    } catch (error) {
+      debugLog('Error saving conversations:', error);
+    }
   }
   
   // 处理用户输入变化
@@ -105,6 +127,8 @@ const SidePanel: React.FC = () => {
   // 处理用户消息提交
   const handleSubmit = async () => {
     if (!userInput.trim() || !currentConversation) return
+    
+    debugLog('Submitting user message:', userInput);
     
     // 添加用户消息
     const userMessage: Message = {
@@ -144,6 +168,7 @@ const SidePanel: React.FC = () => {
   // 处理AI响应
   const processAIResponse = async (conversation: Conversation, allConversations: Conversation[]) => {
     setIsProcessing(true)
+    debugLog('Processing AI response...');
     
     // 这里应该调用实际的AI API，目前使用模拟响应
     setTimeout(() => {
@@ -171,6 +196,7 @@ const SidePanel: React.FC = () => {
       setConversations(updatedConversations)
       saveConversations(updatedConversations)
       setIsProcessing(false)
+      debugLog('AI response processed');
     }, 1000)
   }
   
@@ -191,11 +217,13 @@ const SidePanel: React.FC = () => {
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode)
     document.body.classList.toggle("dark-mode")
+    debugLog('Dark mode toggled:', !isDarkMode);
   }
   
   // 处理页面摘要
   const handleSummary = () => {
     setActiveTab("summary")
+    debugLog('Summary tab activated');
     
     // 获取当前页面，然后提取内容并发送给AI进行摘要生成
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {

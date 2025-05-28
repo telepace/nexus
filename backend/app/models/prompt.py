@@ -82,6 +82,7 @@ class PromptBase(SQLModel):
     )
     meta_data: dict[str, Any] | None = Field(default=None, sa_column=Column(JSON))
     version: int = Field(default=1)
+    enabled: bool = Field(default=False, description="是否启用该提示词")
 
     # 移除team_id外键引用，使用普通字段
     team_id: uuid.UUID | None = Field(default=None, nullable=True)
@@ -102,6 +103,7 @@ class PromptUpdate(SQLModel):
     visibility: Visibility | None = None
     team_id: uuid.UUID | None = None
     meta_data: dict[str, Any] | None = None
+    enabled: bool | None = None
     tag_ids: list[uuid.UUID] | None = None
 
 

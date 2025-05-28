@@ -140,6 +140,12 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
+
+    # Since foreign key constraints have been removed, we can delete the user directly
+    # The application should handle cleanup of related records if needed
+
+    # Optional: Clean up related records (can be done asynchronously)
+    # For now, we'll just delete the user since there are no FK constraints
     session.delete(current_user)
     session.commit()
     return Message(message="User deleted successfully")

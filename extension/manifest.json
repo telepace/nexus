@@ -45,11 +45,6 @@
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content-scripts/oauth-receiver.js"],
-      "css": []
-    },
-    {
       "matches": ["http://*/*", "https://*/*"],
       "js": ["content-scripts/content.js"],
       "all_frames": false,

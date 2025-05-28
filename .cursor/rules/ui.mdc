@@ -3,92 +3,248 @@ description:
 globs: 
 alwaysApply: false
 ---
-## 🎨 Design System Guidelines (Tailwind v3 + shadcn/ui)
+## 📙 Front-End Implementation Guide — v1.2
 
-This document spells out **exactly how to author UI code** in this project. Treat it as a contract.
-
----
-
-### 1 · Source of Truth
-
-- **Tokens live in `globals.css` only**
-    - `globals.css` – declarative CSS variables (`--primary`, `--radius`, etc.).maps those variables to Tailwind design‑tokens (colors, fonts, spacing…).
-- **Do not redefine, shadow, or inline‑override** any values found there.
-- Dark‑mode is controlled by the `.dark` class—respect it; no `prefers-color-scheme` hacks.
+> **Scope** All React code in `frontend/` and `extension/`.
+> **Stack** Tailwind CSS v4 · shadcn/ui · Radix UI · strict TypeScript.
+> **Design Sources**
+> • **Token CSS** → `frontend/app/globals.css`
+> • **UI Library** → `frontend/components/ui/`
+> No visual, typographic, motion, or layout rule may originate elsewhere.
 
 ---
 
-### 2 · Component Workflow
+### Directory & Path Aliases  ⬆️
 
-1. **Look before you code**
-    - Scan `/components/ui/**` for an existing component that already does the job.
-    - If it exists, **reuse**—extend only through props or composition.
-1. **When creating a new component**
-    - Export as a **named functional component** (`export function AlertDialog() { … }`).
-    - Colocate tests and stories (`.test.tsx`, `.stories.tsx`).
-    - Keep the public API minimal; expose only necessary props.
-
----
-
-### 3 · Styling Rules
-
-- **Utility‑first only** – Tailwind classes compose the UI. Absolutely **no `style={{…}}` props**.
-- **No extra CSS files** – If something truly needs CSS, add it under the relevant `@layer` in `globals.css`.
-- **No “magic numbers”** – use spacing scale (`p-4`, `gap-6`), radii (`rounded-lg`), etc.
-- **Typography** – rely on `font-sans` / `font-mono` and `text-{xs…9xl}`. Never hard‑code `px` sizes.
-- **Colors** – pick from the semantic palette (`bg-primary`, `text-muted-foreground`, `border-destructive`). Never call `oklch()` or `hsl()` directly in JSX.
-
-**Use colors semantically:**  * `primary`: For main call-to-action buttons, important highlights.  * `secondary`: For less prominent actions or secondary information.  * `destructive`: For actions that lead to deletion or other potentially negative outcomes.  * `background`, `foreground`: For general page and text colors.  * `card`, `card-foreground`: For card-like container elements.  * `popover`, `popover-foreground`: For popover elements.  * `border`: For general borders.  * `input`: For input field borders/backgrounds.  * `ring`: For focus rings or similar emphasis.
-
-- **Shadows & radius** – only the keys supplied in `boxShadow` / `borderRadius`.
-
----
-
-### 4 · Accessibility & Semantics
-
-- Write **semantic HTML** first (`<button>` not `<div onClick>`).
-- Provide ARIA labels/roles where semantics alone are insufficient.
-- Ensure color‑contrast passes WCAG AA (the token palette is pre‑tuned; deviations are your responsibility).
-
----
-
-### 6 · State, Motion & Feedback
-
-- **Animations** – only `animate-[spin|ping|pulse|bounce|accordion-up|accordion-down]`.
-- Duration/easing are fixed in `tailwind.config.js`; do not inline `transition` props.
-- **Loading / Error states** – every async component must expose at least: “idle”, “loading”, “error”, “success”.
-
----
-
-### 7 · Type Safety & Dependencies
-
-- **TypeScript strict mode**; never use `any`, `unknown`, or `@ts-ignore`.
-- Do not introduce new packages without prior approval—stick to: React 18, Next.js, shadcn/ui, Radix, Tailwind v3, and testing libs already present.
-
----
-
-### 8 · Directory & Naming Conventions
-
-```other
-/components
-    /ui
-        /AlertDialog
-            AlertDialog.tsx
-            AlertDialog.test.tsx
-            AlertDialog.stories.tsx
-            index.ts          (re‑export)
+```text
+frontend/
+├─ app/
+│   ├─ globals.css
+│   ├─ layout.tsx
+│   └─ (routes)/…
+├─ components/
+│   ├─ ui/                  # Design-system components
+│   └─ features/            # Business composites
+├─ lib/                     # Utilities, i18n, helpers
+└─ tailwind.config.ts
 ```
 
-- Component folder = PascalCase.
-- CSS layers keyed to component name inside `globals.css` (rare).
-- Utility classes follow **BEM‑like intent** comments when clarity is needed.
+```jsonc
+// tsconfig.json – excerpt
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@/ui/*": ["./frontend/components/ui/*"],
+      "@/features/*": ["./frontend/components/features/*"],
+      "@/lib/*": ["./frontend/lib/*"]
+    }
+  }
+}
+```
+
+```js
+// next.config.js – excerpt
+module.exports = {
+  webpack: cfg => {
+    cfg.resolve.alias['@'] = require('path').resolve(__dirname, '.');
+    return cfg;
+  }
+};
+```
+
+> Always import with an alias, e.g. `import { Button } from "@/ui";`
 
 ---
 
-### 9 · Code Review Checklist
+### 0 · Authoring Principles
 
-1. Uses only allowed tokens/utilities.
-2. No duplicated component logic.
-3. Passes unit tests + Storybook visual check.
-4. Meets a11y rules (axe-core).
-5. Bundle size unchanged or justified.
+1. **Single source of truth** – never duplicate CSS, variables, or components.
+2. **Token-driven** – colors, spacing, fonts, radii, shadows come from `--*` tokens.
+3. **Component-first** – compose existing UI-library parts; missing pieces → add to library first.
+4. **Zero inline styles** (`style=` / `style={{…}}`).
+5. **Tailwind utilities only** – complex rules belong in `@apply` classes inside token CSS.
+6. **Dark mode** via `.dark`; never use `prefers-color-scheme`.
+
+---
+
+### 1 · Color & Semantics
+
+* Tokens: `--color-background`, `--color-primary`, …
+* Usage (JIT):
+
+```tsx
+className="bg-[oklch(var(--color-primary))] text-[oklch(var(--color-primary-foreground))]"
+```
+
+* Never hard-code `oklch()` / `hsl()` values.
+* Charts → `--color-chart-1`…`-5`; loop if more needed.
+* Sidebar/overlay → `--color-sidebar-*`.
+
+---
+
+### 2 · Typography
+
+```tsx
+<h1 className="text-4xl md:text-5xl font-bold leading-[var(--line-height-4xl)]">
+  Dashboard
+</h1>
+<p className="text-base leading-[var(--line-height-base)] text-muted">
+  Welcome back, Jane!
+</p>
+```
+
+* Families: `font-sans`, `font-mono`.
+* Heading scale: `h1`, `h2`, `h3` (see snippet).
+* Helpers: `.text-lead`, `.text-large`, `.text-small`, `.text-muted`.
+
+---
+
+### 3 · Spacing & Layout
+
+* **Core scale**: `--spacing-*`.
+* **Page gutters**: `<md px-4 · md px-6 · lg+ px-8`.
+* **Vertical rhythm**: paragraph `mt-4`; section `mt-12 md:mt-16`.
+* **Grid**: 12-column fluid, max-width `lg:mx-auto max-w-[theme(screens.lg)]`.
+* **Sidebar**: `w-64 md:w-72`, hidden in drawer on mobile.
+
+#### Responsive two-column → one-column
+
+```tsx
+<div className="grid gap-6 lg:grid-cols-12">
+  {/* Left column (lg = 4/12) */}
+  <aside className="lg:col-span-4 space-y-6">
+    <ProfileCard />
+    <StatsCard />
+  </aside>
+
+  {/* Right column (lg = 8/12) */}
+  <main className="lg:col-span-8 space-y-12">
+    <Activities />
+    <RecentTransactions />
+  </main>
+</div>
+```
+
+*< lg screens stack; `lg:` breakpoint activates split.*
+
+#### Responsive three-column → two-column → one-column  ⬆️ *new*
+
+```tsx
+<div
+  /* Mobile: single column
+     md ≥ 768 px: two columns (8/12 + 4/12)
+     lg ≥ 1024 px: three columns (4/12 each) */
+  className="grid gap-6
+             md:grid-cols-12
+             lg:grid-cols-12"
+>
+  {/* Primary content – spans full on mobile, 8 cols on tablet, 4 cols on desktop */}
+  <section className="md:col-span-8 lg:col-span-4 space-y-6">
+    <ArticleList />
+  </section>
+
+  {/* Secondary content – 4 cols on tablet & desktop, hidden below md */}
+  <aside className="hidden md:block md:col-span-4 lg:col-span-4 space-y-6">
+    <TrendingTopics />
+  </aside>
+
+  {/* Tertiary content – only visible on lg, third column */}
+  <aside className="hidden lg:block lg:col-span-4 space-y-6">
+    <NewsletterSignup />
+  </aside>
+</div>
+```
+
+*Explanation*
+
+* **Mobile (< md)** → one column (`grid-cols-1` implicit).
+* **Tablet (md)** → two columns: 8/12 main + 4/12 secondary.
+* **Desktop (lg)** → three equal 4/12 columns.
+
+---
+
+### 4 · Component Guidelines
+
+#### 4.1 Button
+
+```tsx
+<Button variant="outline">Secondary</Button>
+<Button variant="primary">Save</Button>
+<Button variant="destructive" className="h-10 w-10 p-0" aria-label="Delete">
+  <Trash className="h-5 w-5" />
+  <span className="sr-only">Delete</span>
+</Button>
+```
+
+* Default = outline; one **Primary** per view; **Destructive** for irreversible actions.
+
+#### 4.2 Forms
+
+* Focus ring → `focus-ring`.
+* Field spacing → `space-y-4`; block gap `mt-8`.
+* Error text:
+
+```tsx
+<span className="text-[oklch(var(--color-destructive))] text-sm mt-1">
+  Password is too short
+</span>
+```
+
+#### 4.3 Card
+
+```tsx
+<Card className="p-6 space-y-4 md:space-y-6">
+  <CardHeader>Subscription</CardHeader>
+  <CardBody>
+    <PlanDetails />
+  </CardBody>
+</Card>
+```
+
+#### 4.4 Modal / Drawer
+
+* Use `<Modal>` wrapper (Radix Dialog).
+* Sizes: alert `sm:max-w-md`; form/wizard `sm:max-w-lg`.
+
+---
+
+### 5 · Motion & Performance
+
+* **Animation tokens**: `ultrafast` → `ultraslow` (≤ 400 ms).
+* Pre-defined keyframes: `accordion-up`, `accordion-down`, `spin`, `pulse`, `bounce`.
+* Performance rules:
+
+  * Animate `transform`/`opacity`; avoid `box-shadow`/`filter`.
+  * Add `will-change: transform` for transforms > 120 ms.
+  * Review loops > 400 ms.
+
+```tsx
+<div
+  className="transition-transform duration-300 will-change-transform
+             hover:translate-y-[-2px]"
+>
+  <Card />
+</div>
+```
+
+---
+
+### 6 · Accessibility (a11y)
+
+* Focusable via `.focus-ring`.
+* Labels: `htmlFor` + `id` or Radix `<Label>`.
+* Live regions: `aria-live="polite"`.
+* Images require `alt`.
+* `axe-core` runs in tests.
+
+---
+
+### 7 · Checklist
+
+1. No new `.css/.scss` or inline styles.
+2. Colors/spacing/shadows from tokens.
+3. Look in `@/ui` first; 
+
+> **Remember** If the UI looks like it was built by different people, the guide is incomplete—file an issue and help refine it.

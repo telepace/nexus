@@ -2,6 +2,7 @@ import ForkTsCheckerWebpackPlugin from "fork-ts-checker-webpack-plugin";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   eslint: {
     // 如果仍然需要 ESLint 检查但您想继续尽管有错误，请设置为 true
     ignoreDuringBuilds: true,
