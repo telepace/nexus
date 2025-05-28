@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ContentCreateContentItemEndpointData, ContentCreateContentItemEndpointResponse, ContentListContentItemsEndpointData, ContentListContentItemsEndpointResponse, ContentGetContentItemEndpointData, ContentGetContentItemEndpointResponse, GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LlmCreateCompletionData, LlmCreateCompletionResponse, LlmCreateEmbeddingData, LlmCreateEmbeddingResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { ContentCreateContentItemEndpointData, ContentCreateContentItemEndpointResponse, ContentProcessContentItemEndpointData, ContentProcessContentItemEndpointResponse, ContentListContentItemsEndpointData, ContentListContentItemsEndpointResponse, ContentGetContentItemEndpointData, ContentGetContentItemEndpointResponse, ContentGetContentMarkdownEndpointData, ContentGetContentMarkdownEndpointResponse, ContentGetSupportedProcessorsResponse, ContentGetContentChunksEndpointData, ContentGetContentChunksEndpointResponse, ContentGetContentChunksSummaryEndpointData, ContentGetContentChunksSummaryEndpointResponse, ContentAnalyzeContentStreamData, ContentAnalyzeContentStreamResponse, GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LlmCreateCompletionData, LlmCreateCompletionResponse, LlmCreateEmbeddingData, LlmCreateEmbeddingResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, PromptsTogglePromptEnabledData, PromptsTogglePromptEnabledResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class ContentService {
     /**
@@ -27,23 +27,42 @@ export class ContentService {
     }
     
     /**
+     * Process Content Item
+     * Process a content item to convert it to Markdown format using appropriate processor.
+     * @param data The data for the request.
+     * @param data.id
+     * @returns ContentItemPublic Successful Response
+     * @throws ApiError
+     */
+    public static processContentItemEndpoint(data: ContentProcessContentItemEndpointData): CancelablePromise<ContentProcessContentItemEndpointResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/content/process/{id}',
+            path: {
+                id: data.id
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
      * List Content Items
-     * Retrieves a list of content items, with optional pagination and user filtering.
+     * Retrieves a list of content items for the authenticated user, with optional pagination.
      * @param data The data for the request.
      * @param data.skip Number of items to skip for pagination.
      * @param data.limit Maximum number of items to return.
-     * @param data.userId Optional User ID to filter items by.
      * @returns ContentItemPublic Successful Response
      * @throws ApiError
      */
     public static listContentItemsEndpoint(data: ContentListContentItemsEndpointData = {}): CancelablePromise<ContentListContentItemsEndpointResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/content',
+            url: '/api/v1/content/',
             query: {
                 skip: data.skip,
-                limit: data.limit,
-                user_id: data.userId
+                limit: data.limit
             },
             errors: {
                 422: 'Validation Error'
@@ -53,7 +72,7 @@ export class ContentService {
     
     /**
      * Get a Specific Content Item
-     * Retrieves a single content item by its unique ID.
+     * Retrieves a single content item by its unique ID. User can only access their own content.
      * @param data The data for the request.
      * @param data.id
      * @returns ContentItemPublic Successful Response
@@ -66,6 +85,122 @@ export class ContentService {
             path: {
                 id: data.id
             },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Content Item as Markdown
+     * Retrieves the processed markdown content for a content item. Returns raw markdown text.
+     * @param data The data for the request.
+     * @param data.id
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getContentMarkdownEndpoint(data: ContentGetContentMarkdownEndpointData): CancelablePromise<ContentGetContentMarkdownEndpointResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/content/{id}/markdown',
+            path: {
+                id: data.id
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Supported Content Types
+     * Get list of supported content types and their processors.
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getSupportedProcessors(): CancelablePromise<ContentGetSupportedProcessorsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/content/processors/supported'
+        });
+    }
+    
+    /**
+     * Get Content Chunks
+     * Retrieves content chunks for efficient rendering with pagination support.
+     * @param data The data for the request.
+     * @param data.id
+     * @param data.page Page number (1-based)
+     * @param data.size Number of chunks per page
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getContentChunksEndpoint(data: ContentGetContentChunksEndpointData): CancelablePromise<ContentGetContentChunksEndpointResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/content/{id}/chunks',
+            path: {
+                id: data.id
+            },
+            query: {
+                page: data.page,
+                size: data.size
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Content Chunks Summary
+     * Get summary information about content chunks without the actual content.
+     * @param data The data for the request.
+     * @param data.id
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getContentChunksSummaryEndpoint(data: ContentGetContentChunksSummaryEndpointData): CancelablePromise<ContentGetContentChunksSummaryEndpointResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/content/{id}/chunks/summary',
+            path: {
+                id: data.id
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Analyze Content Stream
+     * Stream AI analysis of content using LiteLLM.
+     *
+     * Args:
+     * content_id: ID of the content to analyze
+     * system_prompt: System prompt (e.g., prompt template)
+     * user_prompt: User prompt (the actual content text)
+     * current_user: Current authenticated user
+     * db: Database session
+     *
+     * Returns:
+     * StreamingResponse: Server-sent events with analysis chunks
+     * @param data The data for the request.
+     * @param data.contentId
+     * @param data.requestBody
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static analyzeContentStream(data: ContentAnalyzeContentStreamData): CancelablePromise<ContentAnalyzeContentStreamResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/content/{content_id}/analyze',
+            path: {
+                content_id: data.contentId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: 'Validation Error'
             }
@@ -812,6 +947,27 @@ export class PromptsService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/prompts/{prompt_id}/duplicate',
+            path: {
+                prompt_id: data.promptId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Toggle Prompt Enabled
+     * 快速切换提示词的启用状态
+     * @param data The data for the request.
+     * @param data.promptId
+     * @returns PromptReadWithTags Successful Response
+     * @throws ApiError
+     */
+    public static togglePromptEnabled(data: PromptsTogglePromptEnabledData): CancelablePromise<PromptsTogglePromptEnabledResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/prompts/{prompt_id}/toggle-enabled',
             path: {
                 prompt_id: data.promptId
             },

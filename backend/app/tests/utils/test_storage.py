@@ -234,6 +234,8 @@ if R2_BOTO3_AVAILABLE:
                     bucket="test-r2-bucket",
                     public_url="https://test-bucket.my-account.r2.cloudflarestorage.com",
                 )
+                # 确保 storage.client 使用 mock_client
+                storage.client = mock_client
                 yield storage, mock_client
 
         def test_client_initialization(self, r2_storage):
@@ -254,11 +256,11 @@ if R2_BOTO3_AVAILABLE:
             # 上传文件
             url = storage.upload_file(file_data, file_path)
 
-            # 验证调用了R2的put_object方法
-            mock_client.put_object.assert_called_once()
-            call_args = mock_client.put_object.call_args
-            assert call_args[1]["Bucket"] == "test-r2-bucket"
-            assert call_args[1]["Key"] == file_path
+            # 验证调用了R2的upload_fileobj方法
+            mock_client.upload_fileobj.assert_called_once()
+            call_args = mock_client.upload_fileobj.call_args
+            assert call_args[0][1] == "test-r2-bucket"  # bucket
+            assert call_args[0][2] == file_path  # key
 
             # 验证URL格式正确
             assert (
@@ -280,20 +282,29 @@ if R2_BOTO3_AVAILABLE:
             """测试检查R2文件是否存在"""
             storage, mock_client = r2_storage
 
-            # 模拟文件存在
-            mock_client.head_object.side_effect = [None, Exception("Not found")]
-
+            # 模拟文件存在的情况
+            mock_client.head_object.return_value = {}
             assert storage.file_exists("avatars/exists.txt")
+
+            # 模拟文件不存在的情况
+            from app.utils.storage.s3 import ClientError
+
+            mock_client.head_object.side_effect = ClientError(
+                error_response={"Error": {"Code": "NoSuchKey"}},
+                operation_name="HeadObject",
+            )
             assert not storage.file_exists("avatars/nonexistent.txt")
 
         def test_delete_file(self, r2_storage):
             """测试删除R2文件"""
             storage, mock_client = r2_storage
 
-            # 设置第一次删除成功，第二次抛出异常
-            mock_client.delete_object.side_effect = [None, Exception("Not found")]
-
+            # 模拟删除成功
+            mock_client.delete_object.return_value = {}
             assert storage.delete_file("avatars/exists.txt")
+
+            # 模拟删除失败
+            mock_client.delete_object.side_effect = Exception("Delete failed")
             assert not storage.delete_file("avatars/nonexistent.txt")
 else:
     # 如果boto3不可用，跳过R2测试

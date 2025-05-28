@@ -24,6 +24,17 @@ export type ApiResponse_NoneType_ = {
   error?: string | null;
 };
 
+export type Body_content_analyze_content_stream = {
+  /**
+   * System prompt for analysis
+   */
+  system_prompt: string;
+  /**
+   * User prompt (content text)
+   */
+  user_prompt: string;
+};
+
 export type Body_login_login_access_token = {
   grant_type?: string | null;
   username: string;
@@ -815,6 +826,17 @@ export type ContentGetContentChunksSummaryEndpointResponse = {
 };
 
 export type ContentGetContentChunksSummaryEndpointError = HTTPValidationError;
+
+export type ContentAnalyzeContentStreamData = {
+  body: Body_content_analyze_content_stream;
+  path: {
+    content_id: string;
+  };
+};
+
+export type ContentAnalyzeContentStreamResponse = unknown;
+
+export type ContentAnalyzeContentStreamError = HTTPValidationError;
 
 export type PrivateCreateUserData = {
   body: PrivateUserCreate;

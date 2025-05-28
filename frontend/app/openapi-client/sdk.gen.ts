@@ -153,6 +153,9 @@ import type {
   ContentGetContentChunksSummaryEndpointData,
   ContentGetContentChunksSummaryEndpointError,
   ContentGetContentChunksSummaryEndpointResponse,
+  ContentAnalyzeContentStreamData,
+  ContentAnalyzeContentStreamError,
+  ContentAnalyzeContentStreamResponse,
   PrivateCreateUserData,
   PrivateCreateUserError,
   PrivateCreateUserResponse,
@@ -1147,6 +1150,35 @@ export const contentGetContentChunksSummaryEndpoint = <
   >({
     ...options,
     url: "/api/v1/content/{id}/chunks/summary",
+  });
+};
+
+/**
+ * Analyze Content Stream
+ * Stream AI analysis of content using LiteLLM.
+ *
+ * Args:
+ * content_id: ID of the content to analyze
+ * system_prompt: System prompt (e.g., prompt template)
+ * user_prompt: User prompt (the actual content text)
+ * current_user: Current authenticated user
+ * db: Database session
+ *
+ * Returns:
+ * StreamingResponse: Server-sent events with analysis chunks
+ */
+export const contentAnalyzeContentStream = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<ContentAnalyzeContentStreamData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ContentAnalyzeContentStreamResponse,
+    ContentAnalyzeContentStreamError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{content_id}/analyze",
   });
 };
 

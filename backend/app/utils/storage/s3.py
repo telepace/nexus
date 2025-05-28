@@ -3,6 +3,16 @@
 from io import BytesIO
 from typing import Any
 
+from app.utils.storage.base import StorageService
+
+
+# 首先定义 MockClientError，确保它总是可用
+class MockClientError(Exception):
+    """模拟的ClientError异常"""
+
+    pass
+
+
 try:
     import boto3
     from botocore.exceptions import ClientError
@@ -11,15 +21,7 @@ try:
 except ImportError:
     # 创建模拟对象，用于在boto3不可用时提供基本功能
     BOTO3_AVAILABLE = False
-
-    class MockClientError(Exception):
-        """模拟的ClientError异常"""
-
-        pass
-
     ClientError = MockClientError  # noqa: F811
-
-from app.utils.storage.base import StorageService
 
 
 class S3StorageService(StorageService):

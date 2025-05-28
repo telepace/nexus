@@ -24,6 +24,17 @@ export type ApiResponse_NoneType_ = {
     error?: (string | null);
 };
 
+export type Body_content_analyze_content_stream = {
+    /**
+     * System prompt for analysis
+     */
+    system_prompt: string;
+    /**
+     * User prompt (content text)
+     */
+    user_prompt: string;
+};
+
 export type Body_login_login_access_token = {
     grant_type?: (string | null);
     username: string;
@@ -58,7 +69,7 @@ export type ContentItemCreate = {
     source_uri?: (string | null);
     title?: (string | null);
     summary?: (string | null);
-    user_id: string;
+    content_text?: (string | null);
 };
 
 export type ContentItemPublic = {
@@ -66,9 +77,10 @@ export type ContentItemPublic = {
     source_uri?: (string | null);
     title?: (string | null);
     summary?: (string | null);
-    user_id: string;
     id: string;
+    user_id: string;
     processing_status: string;
+    content_text?: (string | null);
     created_at: string;
     updated_at: string;
 };
@@ -157,6 +169,10 @@ export type Prompt = {
     [key: string]: unknown;
 } | null);
     version?: number;
+    /**
+     * 是否启用该提示词
+     */
+    enabled?: boolean;
     team_id?: (string | null);
     id?: string;
     created_at?: string;
@@ -176,6 +192,10 @@ export type PromptCreate = {
     [key: string]: unknown;
 } | null);
     version?: number;
+    /**
+     * 是否启用该提示词
+     */
+    enabled?: boolean;
     team_id?: (string | null);
     tag_ids?: (Array<(string)> | null);
 };
@@ -191,6 +211,10 @@ export type PromptReadWithTags = {
     [key: string]: unknown;
 } | null);
     version?: number;
+    /**
+     * 是否启用该提示词
+     */
+    enabled?: boolean;
     team_id?: (string | null);
     id: string;
     created_by: string;
@@ -213,6 +237,7 @@ export type PromptUpdate = {
     meta_data?: ({
     [key: string]: unknown;
 } | null);
+    enabled?: (boolean | null);
     tag_ids?: (Array<(string)> | null);
 };
 
@@ -324,6 +349,12 @@ export type ContentCreateContentItemEndpointData = {
 
 export type ContentCreateContentItemEndpointResponse = (ContentItemPublic);
 
+export type ContentProcessContentItemEndpointData = {
+    id: string;
+};
+
+export type ContentProcessContentItemEndpointResponse = (ContentItemPublic);
+
 export type ContentListContentItemsEndpointData = {
     /**
      * Maximum number of items to return.
@@ -333,10 +364,6 @@ export type ContentListContentItemsEndpointData = {
      * Number of items to skip for pagination.
      */
     skip?: number;
-    /**
-     * Optional User ID to filter items by.
-     */
-    userId?: (string | null);
 };
 
 export type ContentListContentItemsEndpointResponse = (Array<ContentItemPublic>);
@@ -346,6 +373,47 @@ export type ContentGetContentItemEndpointData = {
 };
 
 export type ContentGetContentItemEndpointResponse = (ContentItemPublic);
+
+export type ContentGetContentMarkdownEndpointData = {
+    id: string;
+};
+
+export type ContentGetContentMarkdownEndpointResponse = ({
+    [key: string]: unknown;
+});
+
+export type ContentGetSupportedProcessorsResponse = (unknown);
+
+export type ContentGetContentChunksEndpointData = {
+    id: string;
+    /**
+     * Page number (1-based)
+     */
+    page?: number;
+    /**
+     * Number of chunks per page
+     */
+    size?: number;
+};
+
+export type ContentGetContentChunksEndpointResponse = ({
+    [key: string]: unknown;
+});
+
+export type ContentGetContentChunksSummaryEndpointData = {
+    id: string;
+};
+
+export type ContentGetContentChunksSummaryEndpointResponse = ({
+    [key: string]: unknown;
+});
+
+export type ContentAnalyzeContentStreamData = {
+    contentId: string;
+    requestBody: Body_content_analyze_content_stream;
+};
+
+export type ContentAnalyzeContentStreamResponse = (unknown);
 
 export type GoogleOauthGoogleCallbackApiData = {
     requestBody: GoogleCallbackRequest;
@@ -535,6 +603,12 @@ export type PromptsDuplicatePromptData = {
 };
 
 export type PromptsDuplicatePromptResponse = (Prompt);
+
+export type PromptsTogglePromptEnabledData = {
+    promptId: string;
+};
+
+export type PromptsTogglePromptEnabledResponse = (PromptReadWithTags);
 
 export type UsersReadUsersData = {
     limit?: number;

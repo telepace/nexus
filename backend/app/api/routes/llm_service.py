@@ -75,7 +75,7 @@ async def _forward_request_to_litellm(
 
     except httpx.HTTPStatusError as e:
         # Forward the status code and detail from LiteLLM if possible
-        detail = f"HTTP {e.response.status_code}: {e.response.reason_phrase or 'Unknown error'}"
+        detail = f"HTTP {e.response.status_code}: {getattr(e.response, 'reason_phrase', 'Unknown error') or 'Unknown error'}"
         try:
             detail_json = e.response.json()
             if "detail" in detail_json:  # FastAPI-like error
@@ -84,6 +84,8 @@ async def _forward_request_to_litellm(
                 "error" in detail_json and "message" in detail_json["error"]
             ):  # OpenAI-like error
                 detail = detail_json["error"]["message"]
+            elif "message" in detail_json:  # Custom LiteLLM error format
+                detail = detail_json["message"]
         except ValueError:
             pass  # Use default detail if not JSON or expected structure
         except Exception:

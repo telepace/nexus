@@ -58,6 +58,7 @@ def test_s3_storage_service_init_with_boto3(
     assert service.public_url == s3_settings["public_url"]
 
 
+@patch.object(s3_storage_module, "ClientError", s3_storage_module.MockClientError)
 @patch.object(s3_storage_module, "BOTO3_AVAILABLE", False)
 def test_s3_storage_service_init_without_boto3_uses_mock_client(s3_settings):
     # When BOTO3_AVAILABLE is False, S3StorageService should use MockS3Client
