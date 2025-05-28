@@ -10,6 +10,11 @@ jest.mock("../app/clientService", () => ({
   registerUser: jest.fn(),
 }));
 
+// Mock the encryption function to return a predictable result
+jest.mock("../lib/encryption", () => ({
+  encryptPassword: jest.fn((password: string) => `encrypted_${password}`),
+}));
+
 describe("register action", () => {
   it("should call register service action with the correct input", async () => {
     const formData = new FormData();
@@ -24,7 +29,7 @@ describe("register action", () => {
     expect(registerUser).toHaveBeenCalledWith({
       body: {
         email: "a@a.com",
-        password: "Q12341414#",
+        password: "encrypted_Q12341414#", // Now expecting encrypted password
         full_name: null,
       },
     });
@@ -48,7 +53,7 @@ describe("register action", () => {
     expect(registerUser).toHaveBeenCalledWith({
       body: {
         email: "a@a.com",
-        password: "Q12341414#",
+        password: "encrypted_Q12341414#", // Now expecting encrypted password
         full_name: null,
       },
     });

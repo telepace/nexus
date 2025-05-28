@@ -13,6 +13,7 @@ import {
 } from "@/client"
 import { request } from "@/client/core/request"
 import { handleError } from "@/utils"
+import { encryptPassword } from "@/utils/encryption" // Added import
 
 const isLoggedIn = () => {
   return localStorage.getItem("access_token") !== null
@@ -45,8 +46,16 @@ const useAuth = () => {
   })
 
   const signUpMutation = useMutation({
-    mutationFn: (data: UserRegister) =>
-      UsersService.registerUser({ requestBody: data }),
+    mutationFn: (data: UserRegister) => {
+      // data is UserRegister
+      const encryptedPassword = encryptPassword(data.password)
+      return UsersService.registerUser({
+        requestBody: {
+          ...data,
+          password: encryptedPassword, // Override with encrypted password
+        },
+      })
+    },
 
     onSuccess: () => {
       navigate({ to: "/login" })
@@ -60,8 +69,13 @@ const useAuth = () => {
   })
 
   const login = async (data: AccessToken) => {
+    // AccessToken is Body_login_login_access_token
+    const encryptedPassword = encryptPassword(data.password) // data.password should exist
     const response = await LoginService.loginAccessToken({
-      formData: data,
+      formData: {
+        ...data, // Spread other potential fields like username, grant_type etc.
+        password: encryptedPassword, // Override with encrypted password
+      },
     })
     localStorage.setItem("access_token", response.access_token)
   }

@@ -74,9 +74,6 @@ jobs:
       working-directory: backend
     - run: pnpm install --frozen-lockfile
       working-directory: frontend
-    - run: uv run bash scripts/generate-client.sh
-      env:
-        VIRTUAL_ENV: backend/.venv
     - name: Install Doppler CLI
       uses: dopplerhq/cli-action@v3
     - name: Setup Doppler and env
@@ -87,6 +84,9 @@ jobs:
         echo "STACK_NAME=$STACK_NAME" >> $GITHUB_ENV
       env:
         DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN_STAGING }}
+    - run: doppler run -- uv run bash scripts/generate-client.sh
+      env:
+        VIRTUAL_ENV: backend/.venv
     - run: docker compose --project-name $STACK_NAME down --remove-orphans
     - run: docker compose --project-name $STACK_NAME build
     - run: docker compose --project-name $STACK_NAME up -d

@@ -1,49 +1,49 @@
-name: Deploy to Staging
+# name: Deploy to Staging
 
-on:
-  push:
-    branches:
-      - main
+# on:
+#   push:
+#     branches:
+#       - main
 
-jobs:
-  deploy:
-    runs-on:
-      - self-hosted
-      - staging
+# jobs:
+#   deploy:
+#     runs-on:
+#       - self-hosted
+#       - staging
 
-    steps:
-      - name: Fix workspace permissions
-        run: |
-          sudo chown -R $USER:$USER .
-          sudo find . -type d -exec chmod 755 {} \;
-          sudo find . -type f -exec chmod 644 {} \;
+#     steps:
+#       - name: Fix workspace permissions
+#         run: |
+#           sudo chown -R $USER:$USER .
+#           sudo find . -type d -exec chmod 755 {} \;
+#           sudo find . -type f -exec chmod 644 {} \;
 
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          clean: false
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+#         with:
+#           clean: false
 
-      - name: Clean __pycache__ files
-        run: |
-          find . -type d -name "__pycache__" -exec rm -rf {} +
+#       - name: Clean __pycache__ files
+#         run: |
+#           find . -type d -name "__pycache__" -exec rm -rf {} +
 
-      - name: Show current user and docker access
-        run: |
-          echo "Running as user: $(whoami)"
-          echo "Docker access test:"
-          docker ps || echo "Docker access failed"
+#       - name: Show current user and docker access
+#         run: |
+#           echo "Running as user: $(whoami)"
+#           echo "Docker access test:"
+#           docker ps || echo "Docker access failed"
 
-      - name: Setup Doppler project & download secrets to .env
-        run: |
-          doppler setup --silent --project nexus --config stg
-          doppler secrets download --no-file --format env > .env
-          STACK_NAME=$(doppler run -- printenv STACK_NAME)
-          echo "STACK_NAME=$STACK_NAME" >> $GITHUB_ENV
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN_STAGING }}
+#       - name: Setup Doppler project & download secrets to .env
+#         run: |
+#           doppler setup --silent --project nexus --config stg
+#           doppler secrets download --no-file --format env > .env
+#           STACK_NAME=$(doppler run -- printenv STACK_NAME)
+#           echo "STACK_NAME=$STACK_NAME" >> $GITHUB_ENV
+#         env:
+#           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN_STAGING }}
 
-      - name: Start services with Docker Compose
-        run: |
-          docker compose --project-name $STACK_NAME down --remove-orphans
-          docker compose --project-name $STACK_NAME build
-          docker compose --project-name $STACK_NAME up -d || (echo "Deployment failed, cleaning up..." && docker compose --project-name $STACK_NAME down --remove-orphans && exit 1)
+#       - name: Start services with Docker Compose
+#         run: |
+#           docker compose --project-name $STACK_NAME down --remove-orphans
+#           docker compose --project-name $STACK_NAME build
+#           docker compose --project-name $STACK_NAME up -d || (echo "Deployment failed, cleaning up..." && docker compose --project-name $STACK_NAME down --remove-orphans && exit 1)

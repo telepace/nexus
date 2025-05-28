@@ -342,7 +342,7 @@ backend-restart:
 .PHONY: backend-install
 backend-install: check-uv
 	@echo "===========> Installing backend dependencies"
-	@cd $(BACKEND_DIR) && $(UV) sync
+	@cd $(BACKEND_DIR) && UV_HTTP_TIMEOUT=120 $(UV) sync
 
 ## backend-test: Run backend tests with coverage
 .PHONY: backend-test

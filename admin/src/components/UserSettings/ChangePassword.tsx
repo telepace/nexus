@@ -12,6 +12,7 @@ import {
 import { request } from "@/client/core/request"
 import useCustomToast from "@/hooks/useCustomToast"
 import { confirmPasswordRules, handleError, passwordRules } from "@/utils"
+import { encryptPassword } from "@/utils/encryption" // Added import
 import { PasswordInput } from "../ui/password-input"
 
 interface UpdatePasswordForm extends UpdatePassword {
@@ -71,7 +72,19 @@ const ChangePassword = () => {
   })
 
   const onSubmit: SubmitHandler<UpdatePasswordForm> = async (data) => {
-    mutation.mutate(data)
+    try {
+      // Encrypt passwords before sending to backend
+      const encryptedCurrentPassword = encryptPassword(data.current_password)
+      const encryptedNewPassword = encryptPassword(data.new_password)
+
+      mutation.mutate({
+        current_password: encryptedCurrentPassword,
+        new_password: encryptedNewPassword,
+      })
+    } catch (error) {
+      console.error("Password encryption failed:", error)
+      showErrorToast("Failed to encrypt password. Please try again.")
+    }
   }
 
   return (
@@ -118,4 +131,5 @@ const ChangePassword = () => {
     </>
   )
 }
+
 export default ChangePassword
