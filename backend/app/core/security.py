@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -7,6 +8,9 @@ from fastapi import HTTPException
 from passlib.context import CryptContext
 
 from app.core.config import settings
+
+# 创建logger实例
+logger = logging.getLogger(__name__)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -32,7 +36,9 @@ def get_password_hash(password: str) -> str:
 def decrypt_password(encrypted_password_b64: str) -> str:
     # 在测试环境中直接返回原始密码，跳过解密过程
     if settings.TESTING or settings.TEST_MODE:
-        logger.debug("Testing mode: Skipping password decryption and returning the original password.")
+        logger.debug(
+            "Testing mode: Skipping password decryption and returning the original password."
+        )
         return encrypted_password_b64
 
     try:
