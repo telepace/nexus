@@ -28,7 +28,16 @@ def upgrade():
                existing_type=sa.TEXT(),
                type_=sqlmodel.sql.sqltypes.AutoString(),
                existing_nullable=False)
-    op.add_column('user', sa.Column('is_setup_complete', sa.Boolean(), nullable=False))
+    
+    # Fix: Add NOT NULL column safely for existing data
+    # Step 1: Add nullable column first
+    op.add_column('user', sa.Column('is_setup_complete', sa.Boolean(), nullable=True))
+    
+    # Step 2: Set default value for existing users
+    op.execute('UPDATE "user" SET is_setup_complete = false WHERE is_setup_complete IS NULL')
+    
+    # Step 3: Add NOT NULL constraint
+    op.alter_column('user', 'is_setup_complete', nullable=False)
     # ### end Alembic commands ###
 
 
