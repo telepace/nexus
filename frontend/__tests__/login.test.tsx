@@ -15,6 +15,11 @@ jest.mock("next/navigation", () => ({
   redirect: jest.fn(),
 }));
 
+// Mock the encryption function to return a predictable result
+jest.mock("../lib/encryption", () => ({
+  encryptPassword: jest.fn((password: string) => `encrypted_${password}`),
+}));
+
 describe("login action", () => {
   it("should call login service action with the correct input", async () => {
     const formData = new FormData();
@@ -34,7 +39,7 @@ describe("login action", () => {
       expect.objectContaining({
         body: expect.objectContaining({
           username: "a@a.com",
-          password: "Q12341414#",
+          password: "encrypted_Q12341414#",
           grant_type: "password",
           client_id: "",
           client_secret: "",
@@ -70,7 +75,7 @@ describe("login action", () => {
       expect.objectContaining({
         body: expect.objectContaining({
           username: "invalid@invalid.com",
-          password: "Q12341414#",
+          password: "encrypted_Q12341414#",
           grant_type: "password",
           client_id: "",
           client_secret: "",

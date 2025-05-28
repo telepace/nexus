@@ -1,10 +1,12 @@
 // In frontend/lib/encryption.ts
-import CryptoJS from 'crypto-js';
+import CryptoJS from "crypto-js";
 
 const getEncryptionKey = (): string => {
   const key = process.env.NEXT_PUBLIC_APP_SYMMETRIC_ENCRYPTION_KEY;
   if (!key) {
-    console.error("Encryption key is not defined. Please check NEXT_PUBLIC_APP_SYMMETRIC_ENCRYPTION_KEY environment variable.");
+    console.error(
+      "Encryption key is not defined. Please check NEXT_PUBLIC_APP_SYMMETRIC_ENCRYPTION_KEY environment variable.",
+    );
     throw new Error("Encryption key is not defined.");
   }
   return key;

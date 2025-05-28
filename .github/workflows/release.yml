@@ -115,7 +115,7 @@ jobs:
           artifacts: "dist/*"
           generateReleaseNotes: true
           bodyFile: "CHANGELOG.md"
-          token: ${{ secrets.BOT_GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           draft: false
           prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
 

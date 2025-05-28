@@ -4,19 +4,20 @@ import secrets
 import warnings
 from typing import Annotated, Any, ClassVar, Literal
 
+from cryptography.fernet import Fernet
 from pydantic import (
     AnyUrl,
     BeforeValidator,
     EmailStr,
+    Field,
     HttpUrl,
     PostgresDsn,
     computed_field,
-    model_validator,
     field_validator,
+    model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
-from cryptography.fernet import Fernet
 from yarl import URL
 
 # Set up logger
@@ -54,7 +55,9 @@ class Settings(BaseSettings):
     # We also check for TEST_MODE for compatibility
     TEST_MODE: bool = os.environ.get("TEST_MODE", "").lower() == "true"
 
-    APP_SYMMETRIC_ENCRYPTION_KEY: str
+    APP_SYMMETRIC_ENCRYPTION_KEY: str = Field(
+        description="Symmetric encryption key for password encryption (Fernet key)"
+    )
 
     # Optional: Add a validator if Fernet key format is strict
     @field_validator("APP_SYMMETRIC_ENCRYPTION_KEY")
@@ -65,9 +68,11 @@ class Settings(BaseSettings):
         # For Fernet, it must be a URL-safe base64-encoded 32-byte key.
         # Example basic check (not exhaustive for Fernet format):
         try:
-            Fernet(v.encode()) # Attempt to initialize Fernet to check key validity
+            Fernet(v.encode())  # Attempt to initialize Fernet to check key validity
         except Exception as e:
-            raise ValueError(f"APP_SYMMETRIC_ENCRYPTION_KEY is not a valid Fernet key: {e}")
+            raise ValueError(
+                f"APP_SYMMETRIC_ENCRYPTION_KEY is not a valid Fernet key: {e}"
+            )
         return v
 
     BACKEND_CORS_ORIGINS: Annotated[
@@ -311,4 +316,4 @@ class Settings(BaseSettings):
         return self
 
 
-settings = Settings()
+settings = Settings()  # type: ignore[call-arg]

@@ -8,12 +8,12 @@ import {
   OpenAPI,
   type UpdatePassword,
   UsersService,
-} from "@/client";
-import { request } from "@/client/core/request";
-import useCustomToast from "@/hooks/useCustomToast";
-import { confirmPasswordRules, handleError, passwordRules } from "@/utils";
-import { PasswordInput } from "../ui/password-input";
-import { encryptPassword } from "@/utils/encryption"; // Added import
+} from "@/client"
+import { request } from "@/client/core/request"
+import useCustomToast from "@/hooks/useCustomToast"
+import { confirmPasswordRules, handleError, passwordRules } from "@/utils"
+import { encryptPassword } from "@/utils/encryption" // Added import
+import { PasswordInput } from "../ui/password-input"
 
 interface UpdatePasswordForm extends UpdatePassword {
   confirm_password: string
@@ -74,18 +74,18 @@ const ChangePassword = () => {
   const onSubmit: SubmitHandler<UpdatePasswordForm> = async (data) => {
     try {
       // Encrypt passwords before sending to backend
-      const encryptedCurrentPassword = encryptPassword(data.current_password);
-      const encryptedNewPassword = encryptPassword(data.new_password);
+      const encryptedCurrentPassword = encryptPassword(data.current_password)
+      const encryptedNewPassword = encryptPassword(data.new_password)
 
       mutation.mutate({
         current_password: encryptedCurrentPassword,
         new_password: encryptedNewPassword,
-      });
+      })
     } catch (error) {
-      console.error("Password encryption failed:", error);
-      showErrorToast("Failed to encrypt password. Please try again.");
+      console.error("Password encryption failed:", error)
+      showErrorToast("Failed to encrypt password. Please try again.")
     }
-  };
+  }
 
   return (
     <>
