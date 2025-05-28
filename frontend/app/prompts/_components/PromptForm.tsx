@@ -34,7 +34,7 @@ interface FormState {
   success?: boolean;
   message?: string; // For success messages or other general messages
   redirectUrl?: string; // For redirecting after successful submission
-  data?: any; // To potentially pass back created/updated entity ID for redirection
+  data?: { id: string } | null; // To potentially pass back created/updated entity ID for redirection
 }
 
 const initialState: FormState = {
@@ -48,7 +48,10 @@ const initialState: FormState = {
 interface PromptFormProps {
   tags: TagData[];
   prompt?: PromptData;
-  actionToCall: (prevState: FormState, formData: FormData) => Promise<FormState>;
+  actionToCall: (
+    prevState: FormState,
+    formData: FormData,
+  ) => Promise<FormState>;
 }
 
 function SubmitButton({ isEditing }: { isEditing: boolean }) {
@@ -70,7 +73,8 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
   const router = useRouter();
   const [state, formAction] = useFormState(actionToCall, initialState);
 
-  const { fieldErrors, genericError, success, message, redirectUrl, data } = state || {};
+  const { fieldErrors, genericError, success, message, redirectUrl, data } =
+    state || {};
 
   const [inputVars, setInputVars] = useState<InputVariable[]>(
     prompt?.input_vars || [],
@@ -81,7 +85,6 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
   const [currentVisibility, setCurrentVisibility] = useState<string>(
     prompt?.visibility || "public",
   );
-
 
   useEffect(() => {
     if (success) {
@@ -112,7 +115,16 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
         variant: "destructive",
       });
     }
-  }, [success, message, genericError, fieldErrors, redirectUrl, router, prompt, data?.id]);
+  }, [
+    success,
+    message,
+    genericError,
+    fieldErrors,
+    redirectUrl,
+    router,
+    prompt,
+    data?.id,
+  ]);
 
   const addInputVar = () => {
     setInputVars([
@@ -149,10 +161,13 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
       {prompt && <input type="hidden" name="id" value={prompt.id} />}
       {/* Hidden input for team_id, meta_data if needed */}
       {currentVisibility === "team" && (
-         <input type="hidden" name="team_id" value={prompt?.team_id || ""} /> // Assuming default team_id is handled by server or context
+        <input type="hidden" name="team_id" value={prompt?.team_id || ""} /> // Assuming default team_id is handled by server or context
       )}
-      <input type="hidden" name="meta_data" value={JSON.stringify({ version_notes: "", last_edited_by: "" })} />
-
+      <input
+        type="hidden"
+        name="meta_data"
+        value={JSON.stringify({ version_notes: "", last_edited_by: "" })}
+      />
 
       {genericError && (
         <Alert variant="destructive" className="mb-4">
@@ -264,6 +279,21 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
           </div>
         </div>
 
+        {/* 启用状态 */}
+        <div className="flex flex-row items-center justify-between space-x-3 space-y-0 rounded-md border p-4">
+          <div className="space-y-1 leading-none">
+            <Label htmlFor="enabled">启用状态</Label>
+            <p className="text-sm text-muted-foreground">
+              启用后，此提示词将可以在系统中使用
+            </p>
+          </div>
+          <Switch
+            id="enabled"
+            name="enabled"
+            defaultChecked={prompt?.enabled || false}
+          />
+        </div>
+
         {/* 标签选择 */}
         <div>
           <Label>标签</Label>
@@ -295,7 +325,10 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
                         }
                   }
                   onClick={() => handleTagClick(tag.id)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTagClick(tag.id);}}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ")
+                      handleTagClick(tag.id);
+                  }}
                   role="checkbox"
                   aria-checked={selectedTagIds.includes(tag.id)}
                   tabIndex={0}
@@ -401,7 +434,7 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
                           className="mt-1"
                           // Example for deep field error: state={fieldErrors?.[`input_vars[${index}].name`] ? "error" : "default"}
                         />
-                         {/* Example for deep field error: {fieldErrors?.[`input_vars[${index}].name`] && <p className="text-sm text-destructive mt-1">{fieldErrors[`input_vars[${index}].name`]}</p>} */}
+                        {/* Example for deep field error: {fieldErrors?.[`input_vars[${index}].name`] && <p className="text-sm text-destructive mt-1">{fieldErrors[`input_vars[${index}].name`]}</p>} */}
                       </div>
 
                       <div>
@@ -410,11 +443,7 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
                           id={`var-desc-${index}`}
                           value={variable.description || ""}
                           onChange={(e) =>
-                            updateInputVar(
-                              index,
-                              "description",
-                              e.target.value,
-                            )
+                            updateInputVar(index, "description", e.target.value)
                           }
                           placeholder="变量描述，可选"
                           className="mt-1"
@@ -439,7 +468,9 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
             {fieldErrors?.input_vars && (
               <p className="text-sm text-destructive mt-1">
                 {/* This will show generic error for input_vars array if backend sends it like that */}
-                {typeof fieldErrors.input_vars === 'string' ? fieldErrors.input_vars : "输入变量存在错误"}
+                {typeof fieldErrors.input_vars === "string"
+                  ? fieldErrors.input_vars
+                  : "输入变量存在错误"}
               </p>
             )}
           </div>
@@ -473,11 +504,7 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
 
       {/* 表单按钮 */}
       <div className="flex justify-end space-x-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-        >
+        <Button type="button" variant="outline" onClick={() => router.back()}>
           取消
         </Button>
         <SubmitButton isEditing={!!prompt} />

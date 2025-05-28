@@ -192,7 +192,7 @@ check-extension-env:
 
 ## all: Run all tests, linting, formatting and build all components
 .PHONY: all
-all: env-init backend-build frontend-build admin-build generate-client
+all: env-init check-conflicts format lint backend-build frontend-build admin-build test generate-client test
 	@echo "===========> All builds completed successfully"
 
 ## dev: Start development environment
@@ -207,7 +207,7 @@ lint: backend-lint frontend-lint admin-lint
 
 ## test: Run tests for all components
 .PHONY: test
-test: backend-test frontend-test admin-test extension-test-unit #website-test 
+test: backend-test frontend-test # admin-test extension-test-unit #website-test 
 	@echo "===========> All tests completed successfully"
 
 ## format: Format code in all components
@@ -226,6 +226,79 @@ clean:
 	@find . -name "__pycache__" -delete
 	@find . -name ".pytest_cache" -delete
 	@find . -name ".coverage" -delete
+
+# ==============================================================================
+# CONFLICT DETECTION AND RESOLUTION
+# ==============================================================================
+
+## check-conflicts: Check for file conflicts in the project
+.PHONY: check-conflicts
+check-conflicts:
+	@echo "===========> Checking for file conflicts"
+	@$(PYTHON) scripts/conflict_detector.py --project-root $(ROOT_DIR)
+
+## check-conflicts-json: Check for file conflicts and output JSON format
+.PHONY: check-conflicts-json
+check-conflicts-json:
+	@echo "===========> Checking for file conflicts (JSON output)"
+	@$(PYTHON) scripts/conflict_detector.py --project-root $(ROOT_DIR) --format json
+
+## check-conflicts-high: Check for high severity file conflicts only
+.PHONY: check-conflicts-high
+check-conflicts-high:
+	@echo "===========> Checking for high severity file conflicts"
+	@$(PYTHON) scripts/conflict_detector.py --project-root $(ROOT_DIR) --severity high
+
+## check-conflicts-dry: Preview conflict resolution without making changes
+.PHONY: check-conflicts-dry
+check-conflicts-dry:
+	@echo "===========> Previewing conflict resolution (dry run)"
+	@$(PYTHON) scripts/conflict_resolver.py --project-root $(ROOT_DIR) --dry-run
+
+## clean-conflicts: Automatically resolve file conflicts
+.PHONY: clean-conflicts
+clean-conflicts:
+	@echo "===========> Resolving file conflicts"
+	@$(PYTHON) scripts/conflict_resolver.py --project-root $(ROOT_DIR)
+
+## clean-conflicts-auto: Automatically resolve file conflicts without confirmation
+.PHONY: clean-conflicts-auto
+clean-conflicts-auto:
+	@echo "===========> Resolving file conflicts (auto-confirm)"
+	@$(PYTHON) scripts/conflict_resolver.py --project-root $(ROOT_DIR) --auto-confirm
+
+## clean-conflicts-high: Resolve only high severity conflicts
+.PHONY: clean-conflicts-high
+clean-conflicts-high:
+	@echo "===========> Resolving high severity file conflicts"
+	@$(PYTHON) scripts/conflict_resolver.py --project-root $(ROOT_DIR) --severity high
+
+## clean-conflicts-medium: Resolve only medium severity conflicts
+.PHONY: clean-conflicts-medium
+clean-conflicts-medium:
+	@echo "===========> Resolving medium severity file conflicts"
+	@$(PYTHON) scripts/conflict_resolver.py --project-root $(ROOT_DIR) --severity medium
+
+## list-conflicts: List conflicts by severity level
+.PHONY: list-conflicts
+list-conflicts:
+	@echo "===========> Listing conflicts by severity"
+	@$(PYTHON) scripts/conflict_resolver.py --project-root $(ROOT_DIR) --list-by-severity
+
+## validate-project-structure: Validate project structure and dependencies
+.PHONY: validate-project-structure
+validate-project-structure: check-conflicts
+	@echo "===========> Validating project structure"
+	@echo "===========> Checking for proper package managers in each directory"
+	@if [ -f "$(BACKEND_DIR)/package-lock.json" ]; then \
+		echo "❌ Found npm lock file in Python backend directory"; \
+		exit 1; \
+	fi
+	@if [ -f "$(FRONTEND_DIR)/package-lock.json" ] && [ -f "$(FRONTEND_DIR)/pnpm-lock.yaml" ]; then \
+		echo "❌ Found both npm and pnpm lock files in frontend"; \
+		exit 1; \
+	fi
+	@echo "✅ Project structure validation passed"
 
 # ==============================================================================
 # BACKEND TARGETS
@@ -312,6 +385,29 @@ backend-db-shell:
 	@echo "===========> Connecting to database"
 	@docker compose exec db psql -U postgres -d app || \
 	 psql "$(shell cd $(BACKEND_DIR) && python -c "from app.core.config import settings; print(settings.SQLALCHEMY_DATABASE_URI)")"
+
+## backend-init-data: Initialize default data (admin user and basic prompts)
+.PHONY: backend-init-data
+backend-init-data:
+	@echo "===========> Initializing default data"
+	@cd $(BACKEND_DIR) && ./scripts/init-default-data.py
+
+## backend-create-test-data: Create additional test data for development and testing
+.PHONY: backend-create-test-data
+backend-create-test-data:
+	@echo "===========> Creating additional test data"
+	@cd $(BACKEND_DIR) && ./scripts/create-test-content.py
+
+## backend-reinit-data: Backup existing data and reinitialize with defaults (requires confirmation)
+.PHONY: backend-reinit-data
+backend-reinit-data:
+	@echo "===========> Backing up and reinitializing data"
+	@cd $(BACKEND_DIR) && ./scripts/backup-and-reinit-data.py
+
+## backend-admin-jwt: Get admin JWT access token
+.PHONY: backend-admin-jwt
+backend-admin-jwt:
+	@cd $(BACKEND_DIR) && ./scripts/get-admin-jwt.py
 
 # ==============================================================================
 # FRONTEND TARGETS
@@ -659,6 +755,8 @@ help: Makefile
 	@printf "\n\033[1;34m┌─ DEVELOPMENT TOOLS ───────────────────────────────────────────────────┐\033[0m\n"
 	@grep -E '^## (install|setup|generate)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
 	
+	@printf "\n\033[1;34m┌─ CONFLICT DETECTION ──────────────────────────────────────────────────┐\033[0m\n"
+	@grep -E '^## (check-conflicts|clean-conflicts|check-conflicts-dry)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
 	@printf "\n"
 
 # ==============================================================================

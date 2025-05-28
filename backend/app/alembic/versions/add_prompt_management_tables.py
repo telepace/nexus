@@ -48,7 +48,7 @@ def upgrade():
         sa.Column('embedding', sa.JSON(), nullable=True),
         sa.PrimaryKeyConstraint('id')
     )
-    
+
     # 为了便于查询，添加索引
     op.create_index(op.f('ix_prompts_created_by'), 'prompts', ['created_by'], unique=False)
     op.create_index(op.f('ix_prompts_type'), 'prompts', ['type'], unique=False)
@@ -68,7 +68,7 @@ def upgrade():
         sa.ForeignKeyConstraint(['prompt_id'], ['prompts.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id')
     )
-    
+
     # 为版本表添加索引
     op.create_index(op.f('ix_prompt_versions_prompt_id'), 'prompt_versions', ['prompt_id'], unique=False)
     op.create_index(op.f('ix_prompt_versions_version'), 'prompt_versions', ['version'], unique=False)

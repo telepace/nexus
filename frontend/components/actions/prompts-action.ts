@@ -12,12 +12,37 @@ import {
   deleteTag,
   readPromptVersions,
   duplicatePrompt,
+  togglePromptEnabledApi,
 } from "@/app/clientService";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getAuthToken, requireAuth } from "@/lib/server-auth-bridge";
 import type { PromptType, Visibility } from "@/app/openapi-client/types.gen";
+
+// 定义错误详情类型
+interface ValidationErrorDetail {
+  loc: (string | number)[];
+  msg: string;
+  type: string;
+}
+
+interface ValidationError {
+  status: number;
+  body: {
+    detail: ValidationErrorDetail[];
+  };
+}
+
+// 定义表单状态类型
+interface FormState {
+  fieldErrors?: Record<string, string> | null;
+  genericError?: string | null;
+  success?: boolean;
+  message?: string;
+  redirectUrl?: string;
+  data?: { id: string } | null;
+}
 
 // 定义Prompt和Tag数据类型
 export interface TagData {
@@ -46,6 +71,7 @@ export interface PromptData {
   created_by: string;
   created_at: string;
   updated_at: string;
+  enabled?: boolean;
   tags?: TagData[];
   creator?: {
     id?: string;
@@ -400,6 +426,7 @@ export async function addPrompt(formData: FormData) {
     const inputVarsValue = formData.get("input_vars") as string;
     const input_vars = inputVarsValue ? JSON.parse(inputVarsValue) : [];
     const team_id = (formData.get("team_id") as string) || null;
+    const enabled = formData.get("enabled") === "on";
 
     // 元数据支持
     const metaDataValue = formData.get("meta_data") as string;
@@ -419,6 +446,7 @@ export async function addPrompt(formData: FormData) {
         input_vars,
         team_id,
         meta_data,
+        enabled,
       },
     });
 
@@ -430,15 +458,15 @@ export async function addPrompt(formData: FormData) {
         typeof error === "object" &&
         error !== null &&
         "status" in error &&
-        (error as any).status === 422 &&
+        (error as ValidationError).status === 422 &&
         "body" in error &&
-        typeof (error as any).body === "object" &&
-        (error as any).body !== null &&
-        "detail" in (error as any).body &&
-        Array.isArray((error as any).body.detail)
+        typeof (error as ValidationError).body === "object" &&
+        (error as ValidationError).body !== null &&
+        "detail" in (error as ValidationError).body &&
+        Array.isArray((error as ValidationError).body.detail)
       ) {
-        const fieldErrors = (error as any).body.detail.reduce(
-          (acc: Record<string, string>, errDetail: any) => {
+        const fieldErrors = (error as ValidationError).body.detail.reduce(
+          (acc: Record<string, string>, errDetail: ValidationErrorDetail) => {
             if (
               errDetail.loc &&
               errDetail.loc.length > 1 &&
@@ -460,8 +488,8 @@ export async function addPrompt(formData: FormData) {
       }
       // Fallback for other errors or if parsing fails
       const errorMessage =
-        typeof (error as any)?.message === "string"
-          ? (error as any).message
+        typeof (error as { message?: string })?.message === "string"
+          ? (error as { message?: string }).message
           : JSON.stringify(error);
       return { genericError: errorMessage };
     }
@@ -479,11 +507,11 @@ export async function addPrompt(formData: FormData) {
     }
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("创建prompt出错:", error);
     // Fallback for unexpected errors during the try block execution
     const errorMessage =
-      typeof error?.message === "string" ? error.message : "创建prompt失败";
+      error instanceof Error ? error.message : "创建prompt失败";
     return { genericError: errorMessage };
   }
 }
@@ -514,6 +542,7 @@ export async function updatePromptAction(id: string, formData: FormData) {
     const createVersionValue = formData.get("create_version");
     const create_version = createVersionValue === "true";
     const team_id = (formData.get("team_id") as string) || null;
+    const enabled = formData.get("enabled") === "on";
 
     // 元数据支持
     const metaDataValue = formData.get("meta_data") as string;
@@ -539,6 +568,7 @@ export async function updatePromptAction(id: string, formData: FormData) {
         input_vars,
         team_id,
         meta_data,
+        enabled,
       },
     });
 
@@ -841,41 +871,91 @@ export async function removeTag(id: string) {
 }
 
 // 创建Prompt的包装函数，适配 PromptForm 的接口
-export async function addPromptAction(prevState: any, formData: FormData) {
+export async function addPromptAction(
+  prevState: FormState,
+  formData: FormData,
+): Promise<FormState> {
   try {
     const result = await addPrompt(formData);
     return result;
   } catch (error) {
     console.error("addPromptAction error:", error);
-    return { 
-      genericError: typeof error === 'string' ? error : "创建提示词失败" 
+    return {
+      genericError: typeof error === "string" ? error : "创建提示词失败",
     };
   }
 }
 
 // 更新Prompt的包装函数，适配 PromptForm 的接口
-export async function updatePromptFormAction(prevState: any, formData: FormData) {
+export async function updatePromptFormAction(
+  prevState: FormState,
+  formData: FormData,
+): Promise<FormState> {
   try {
     const id = formData.get("id") as string;
     if (!id) {
       return { genericError: "缺少提示词ID" };
     }
-    
+
     const result = await updatePromptAction(id, formData);
-    
+
     // 转换返回格式以匹配 FormState 接口
     if (result.error) {
       return { genericError: result.error };
     }
-    
+
     return { success: true, message: "提示词更新成功" };
   } catch (error) {
     console.error("updatePromptFormAction error:", error);
-    return { 
-      genericError: typeof error === 'string' ? error : "更新提示词失败" 
+    return {
+      genericError: typeof error === "string" ? error : "更新提示词失败",
     };
   }
 }
 
 // 导出类型
 export type { PromptVersionData, ApiErrorResponse };
+
+export async function togglePromptEnabled(id: string) {
+  // 验证用户
+  const user = await requireAuth();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const token = await getAuthToken();
+  if (!token) {
+    redirect("/login");
+  }
+
+  try {
+    const { data, error } = await togglePromptEnabledApi({
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      path: {
+        prompt_id: id,
+      },
+    });
+
+    if (error) {
+      console.error("切换prompt启用状态出错:", error);
+      return {
+        error: typeof error === "string" ? error : JSON.stringify(error),
+      };
+    }
+
+    // 清除缓存以便重新加载
+    promptsCache = null;
+    lastPromptsFetchTime = 0;
+
+    // 重新验证路径
+    revalidatePath(`/prompts/${id}`);
+    revalidatePath("/prompts");
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("切换prompt启用状态出错:", error);
+    return { error: "操作失败" };
+  }
+}

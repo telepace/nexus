@@ -9,11 +9,13 @@ import { AddContentModal } from "@/components/layout/AddContentModal";
 export interface MainLayoutProps {
   children: React.ReactNode;
   pageTitle?: string;
+  fullscreen?: boolean;
 }
 
 export default function MainLayout({
   children,
-  pageTitle = "Dashboard",
+  pageTitle,
+  fullscreen = false,
 }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -23,8 +25,11 @@ export default function MainLayout({
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
+  // 如果没有 pageTitle 或者是 fullscreen 模式，使用全屏布局
+  const isFullscreen = fullscreen || !pageTitle;
+
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="flex min-h-screen bg-background">
       {/* 侧边栏 */}
       <Sidebar
         collapsed={sidebarCollapsed}
@@ -39,21 +44,25 @@ export default function MainLayout({
 
       {/* 主内容区域 */}
       <main
-        className={`flex-1 pt-20 transition-all duration-300 ${
+        className={`flex-1 transition-all duration-300 ${
           sidebarCollapsed ? "ml-16" : "ml-56"
-        }`}
+        } ${isFullscreen ? "pt-16" : "pt-20"}`}
       >
-        <div className="container mx-auto p-6">
-          <header className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {pageTitle}
-            </h1>
-          </header>
+        {isFullscreen ? (
+          children
+        ) : (
+          <div className="container mx-auto p-6">
+            <header className="mb-6">
+              <h1 className="text-2xl font-bold text-foreground">
+                {pageTitle}
+              </h1>
+            </header>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            {children}
+            <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+              {children}
+            </div>
           </div>
-        </div>
+        )}
       </main>
 
       {/* 设置面板 */}

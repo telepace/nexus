@@ -1,0 +1,200 @@
+# Nexus项目冲突检测规则配置
+# 定义项目中各种文件冲突的检测规则和偏好设置
+
+# 项目偏好设置
+preferences:
+  # JavaScript/Node.js包管理器偏好
+  js_package_manager: "pnpm"  # 可选: npm, pnpm, yarn
+  
+  # Python包管理器偏好
+  python_package_manager: "uv"  # 可选: pip, uv, poetry, pipenv
+  
+  # 代码格式化工具偏好
+  js_formatter: "prettier"  # 可选: prettier, eslint
+  python_formatter: "ruff"  # 可选: black, ruff, autopep8
+  
+  # 测试框架偏好
+  js_test_framework: "jest"  # 可选: jest, vitest, mocha
+  python_test_framework: "pytest"  # 可选: pytest, unittest
+
+# 冲突检测规则
+rules:
+  # JavaScript/Node.js包管理器冲突
+  js_package_managers:
+    description: "JavaScript项目包管理器冲突"
+    enabled: true
+    directories: ["frontend", "admin", "website", "extension"]
+    conflicting_files:
+      - "package-lock.json"  # npm
+      - "pnpm-lock.yaml"     # pnpm
+      - "yarn.lock"          # yarn
+      - "bun.lockb"          # bun
+    preferred_file: "pnpm-lock.yaml"
+    severity: "high"
+    
+  # Python包管理器冲突
+  python_package_managers:
+    description: "Python项目包管理器冲突"
+    enabled: true
+    directories: ["backend"]
+    conflicting_files:
+      - "requirements.txt"   # pip
+      - "uv.lock"           # uv
+      - "poetry.lock"       # poetry
+      - "Pipfile.lock"      # pipenv
+      - "pdm.lock"          # pdm
+    preferred_file: "uv.lock"
+    severity: "high"
+    
+  # sidepanel功能文件重复
+  sidepanel_duplicates:
+    description: "sidepanel功能文件重复"
+    enabled: true
+    directories: ["extension"]
+    conflicting_files:
+      - "sidepanel/index.js"
+      - "sidepanel.js"
+      - "sidepanel.tsx"
+    preferred_file: "sidepanel.tsx"
+    severity: "medium"
+    
+  # ESLint配置文件冲突
+  eslint_configs:
+    description: "ESLint配置文件冲突"
+    enabled: true
+    directories: ["frontend", "admin", "website", "extension"]
+    conflicting_files:
+      - ".eslintrc.js"
+      - ".eslintrc.json"
+      - ".eslintrc.yaml"
+      - "eslint.config.js"
+      - "eslint.config.mjs"
+    preferred_file: "eslint.config.js"
+    severity: "low"
+    
+  # Prettier配置文件冲突
+  prettier_configs:
+    description: "Prettier配置文件冲突"
+    enabled: true
+    conflicting_files:
+      - ".prettierrc"
+      - ".prettierrc.js"
+      - ".prettierrc.json"
+      - ".prettierrc.yaml"
+      - "prettier.config.js"
+    preferred_file: "prettier.config.js"
+    severity: "low"
+    
+  # TypeScript配置文件冲突
+  typescript_configs:
+    description: "TypeScript配置文件冲突"
+    enabled: true
+    directories: ["frontend", "admin", "website", "extension"]
+    conflicting_files:
+      - "tsconfig.json"
+      - "tsconfig.base.json"
+      - "tsconfig.build.json"
+    preferred_file: "tsconfig.json"
+    severity: "medium"
+    
+  # Docker配置文件冲突
+  docker_configs:
+    description: "Docker配置文件冲突"
+    enabled: true
+    directories: ["backend", "frontend", "admin", "website"]
+    conflicting_files:
+      - "Dockerfile"
+      - "Dockerfile.dev"
+      - "Dockerfile.prod"
+      - "Dockerfile.local"
+    preferred_file: "Dockerfile"
+    severity: "medium"
+    
+  # 环境变量文件冲突
+  env_files:
+    description: "环境变量文件冲突"
+    enabled: false  # 通常需要多个环境文件
+    conflicting_files:
+      - ".env"
+      - ".env.local"
+      - ".env.development"
+      - ".env.production"
+    preferred_file: ".env"
+    severity: "low"
+    
+  # 测试配置文件冲突
+  test_configs:
+    description: "测试配置文件冲突"
+    enabled: true
+    directories: ["frontend", "admin", "website", "extension", "backend"]
+    conflicting_files:
+      - "jest.config.js"
+      - "jest.config.json"
+      - "vitest.config.js"
+      - "vitest.config.ts"
+      - "pytest.ini"
+      - "pyproject.toml"  # 如果只用于pytest配置
+    preferred_file: "jest.config.js"  # 对于JS项目
+    severity: "low"
+
+# 忽略规则
+ignore:
+  # 忽略特定文件
+  files:
+    - "*.backup"
+    - "*.tmp"
+    - "node_modules/**"
+    - ".git/**"
+    - "_output/**"
+    - ".venv/**"
+    - "__pycache__/**"
+    - ".plasmo/**"
+    
+  # 忽略特定目录
+  directories:
+    - "node_modules"
+    - ".git"
+    - "_output"
+    - ".venv"
+    - "__pycache__"
+    - ".mypy_cache"
+    - ".pytest_cache"
+    - ".ruff_cache"
+    - ".plasmo"
+    
+  # 忽略特定规则在特定目录
+  rule_exceptions:
+    # 在docs目录中允许多种配置文件共存
+    docs:
+      - "eslint_configs"
+      - "prettier_configs"
+
+# 自动修复设置
+auto_fix:
+  # 是否启用自动修复
+  enabled: true
+  
+  # 自动修复的严重级别阈值
+  severity_threshold: "medium"  # 只自动修复medium及以上级别的冲突
+  
+  # 备份设置
+  backup:
+    enabled: true
+    directory: "_output/backups"
+    
+  # 确认设置
+  require_confirmation: true  # 是否需要用户确认
+
+# 报告设置
+reporting:
+  # 报告格式
+  formats: ["text", "json"]
+  
+  # 报告输出目录
+  output_directory: "_output/reports"
+  
+  # 是否包含详细信息
+  verbose: true
+  
+  # 是否生成摘要
+  include_summary: true 

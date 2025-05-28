@@ -57,7 +57,9 @@ export async function middleware(request: NextRequest) {
 
     // Scenario 2: Setup complete but user is on setup page
     if (data.is_setup_complete === true && pathname === "/setup") {
-      console.log("[Middleware] Setup complete, redirecting from /setup to /dashboard");
+      console.log(
+        "[Middleware] Setup complete, redirecting from /setup to /dashboard",
+      );
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
@@ -72,7 +74,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
-    "/customers/:path*",
+    "/settings/:path*",
     "/setup",
     "/favorites/:path*",
     "/prompts/:path*",

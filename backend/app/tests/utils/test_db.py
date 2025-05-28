@@ -303,7 +303,9 @@ def teardown_test_db() -> None:
                     # 尝试强制删除
                     try:
                         cur.execute(f"DROP DATABASE {test_db_name} WITH (FORCE)")
-                        logger.info(f"Test database {test_db_name} force dropped successfully")
+                        logger.info(
+                            f"Test database {test_db_name} force dropped successfully"
+                        )
                     except Exception as force_error:
                         logger.warning(f"Force drop also failed: {force_error}")
 

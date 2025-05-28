@@ -106,8 +106,12 @@ describe("Register Page", () => {
 
     // 填写表单并提交
     await act(async () => {
-      fireEvent.change(screen.getByLabelText(/邮箱/i), { target: { value: "already@exists.com" } });
-      fireEvent.change(screen.getByLabelText(/密码/i), { target: { value: "Password123!" } });
+      fireEvent.change(screen.getByLabelText(/邮箱/i), {
+        target: { value: "already@exists.com" },
+      });
+      fireEvent.change(screen.getByLabelText(/密码/i), {
+        target: { value: "Password123!" },
+      });
       fireEvent.click(screen.getByRole("button", { name: /^注册$/i })); // Corrected selector
     });
 
@@ -129,8 +133,12 @@ describe("Register Page", () => {
 
     // 填写表单并提交
     await act(async () => {
-      fireEvent.change(screen.getByLabelText(/邮箱/i), { target: { value: "invalid@email.com" } });
-      fireEvent.change(screen.getByLabelText(/密码/i), { target: { value: "password" } });
+      fireEvent.change(screen.getByLabelText(/邮箱/i), {
+        target: { value: "invalid@email.com" },
+      });
+      fireEvent.change(screen.getByLabelText(/密码/i), {
+        target: { value: "password" },
+      });
       fireEvent.click(screen.getByRole("button", { name: /^注册$/i })); // Corrected selector
     });
 

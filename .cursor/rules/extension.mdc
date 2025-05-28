@@ -1,9 +1,8 @@
 ---
-description: 
-globs: extension/**
+description: extension project development guidelines
+globs: 
 alwaysApply: false
 ---
-description: extension project development guidelines
 - Prefer using the shadcn/ui component library for UI implementation
 - Use Tailwind CSS for consistent styling
 - For Chrome extension development, follow Manifest V3 specification

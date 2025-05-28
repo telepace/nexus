@@ -22,7 +22,7 @@ def upgrade() -> None:
     # Add google_id column to user table
     op.add_column('user', sa.Column('google_id', sa.String(255), nullable=True))
     op.create_index(op.f('ix_user_google_id'), 'user', ['google_id'], unique=True)
-    
+
     # Make hashed_password nullable for OAuth users
     op.alter_column('user', 'hashed_password', existing_type=sa.String(255), nullable=True)
 

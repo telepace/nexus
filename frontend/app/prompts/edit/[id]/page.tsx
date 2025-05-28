@@ -158,7 +158,11 @@ async function EditPromptContent({ id }: { id: string }) {
             </div>
           </div>
 
-          <PromptForm tags={tagsResponse} prompt={promptData as PromptData} actionToCall={updatePromptFormAction} />
+          <PromptForm
+            tags={tagsResponse}
+            prompt={promptData as PromptData}
+            actionToCall={updatePromptFormAction}
+          />
         </div>
       </div>
     );
