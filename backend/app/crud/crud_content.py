@@ -292,6 +292,45 @@ def get_content_chunks(
     return list(chunks), total_count  # type: ignore
 
 
-# ... (other ContentChunk functions remain synchronous for now) ...
+# Get content chunks summary
+def get_content_chunks_summary(session: Session, content_item_id: uuid.UUID) -> dict[str, Any]:
+    """
+    Get a summary of content chunks for a content item, including total count and metadata.
+    
+    Args:
+        session: Database session
+        content_item_id: ID of the content item
+        
+    Returns:
+        Dictionary with summary information
+    """
+    # Get total count of chunks
+    total_chunks = session.query(func.count(ContentChunk.id)).filter(
+        ContentChunk.content_item_id == content_item_id
+    ).scalar() or 0
+    
+    # Get first and last chunk for metadata if chunks exist
+    first_chunk = None
+    last_chunk = None
+    
+    if total_chunks > 0:
+        first_chunk = session.query(ContentChunk).filter(
+            ContentChunk.content_item_id == content_item_id
+        ).order_by(ContentChunk.position).first()
+        
+        last_chunk = session.query(ContentChunk).filter(
+            ContentChunk.content_item_id == content_item_id
+        ).order_by(ContentChunk.position.desc()).first()
+    
+    # Build summary response
+    summary = {
+        "total_chunks": total_chunks,
+        "has_chunks": total_chunks > 0,
+        "first_chunk_position": first_chunk.position if first_chunk else None,
+        "last_chunk_position": last_chunk.position if last_chunk else None,
+        "content_item_id": str(content_item_id)
+    }
+    
+    return summary
 
 # print("CRUD functions for ContentItem and ContentAsset potentially modified for async and image processing.")

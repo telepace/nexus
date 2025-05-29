@@ -121,6 +121,33 @@ export type HTTPValidationError = {
   detail?: Array<ValidationError>;
 };
 
+export type ImageCreate = {
+  source_url?: string | null;
+  s3_key?: string | null;
+  type?: string | null;
+  size?: number | null;
+  format?: string | null;
+  alt_text?: string | null;
+  importance?: string | null;
+  is_accessible?: boolean | null;
+};
+
+export type ImageResponse = {
+  source_url?: string | null;
+  s3_key?: string | null;
+  type?: string | null;
+  size?: number | null;
+  format?: string | null;
+  alt_text?: string | null;
+  importance?: string | null;
+  is_accessible?: boolean | null;
+  id: string;
+  owner_id: string;
+  created_at: string;
+  updated_at: string;
+  last_checked?: string | null;
+};
+
 export type InputVariable = {
   name: string;
   description?: string | null;
@@ -149,6 +176,16 @@ export type Message = {
 export type NewPassword = {
   token: string;
   new_password: string;
+};
+
+export type PresignedURLRequest = {
+  filename: string;
+  content_type: string;
+};
+
+export type PresignedURLResponse = {
+  presigned_url: string;
+  s3_key: string;
 };
 
 export type PrivateUserCreate = {
@@ -849,6 +886,53 @@ export type ContentAnalyzeContentStreamData = {
 export type ContentAnalyzeContentStreamResponse = unknown;
 
 export type ContentAnalyzeContentStreamError = HTTPValidationError;
+
+export type ImagesGetUploadUrlData = {
+  body: PresignedURLRequest;
+};
+
+export type ImagesGetUploadUrlResponse = PresignedURLResponse;
+
+export type ImagesGetUploadUrlError = HTTPValidationError;
+
+export type ImagesCreateImageRecordData = {
+  body: ImageCreate;
+};
+
+export type ImagesCreateImageRecordResponse = ImageResponse;
+
+export type ImagesCreateImageRecordError = HTTPValidationError;
+
+export type ImagesListImagesData = {
+  query?: {
+    limit?: number;
+    skip?: number;
+  };
+};
+
+export type ImagesListImagesResponse = Array<ImageResponse>;
+
+export type ImagesListImagesError = HTTPValidationError;
+
+export type ImagesReadImageData = {
+  path: {
+    image_id: string;
+  };
+};
+
+export type ImagesReadImageResponse = ImageResponse;
+
+export type ImagesReadImageError = HTTPValidationError;
+
+export type ImagesDeleteImageData = {
+  path: {
+    image_id: string;
+  };
+};
+
+export type ImagesDeleteImageResponse = ImageResponse;
+
+export type ImagesDeleteImageError = HTTPValidationError;
 
 export type PrivateCreateUserData = {
   body: PrivateUserCreate;

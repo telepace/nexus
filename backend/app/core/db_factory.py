@@ -2,6 +2,7 @@ import logging
 from typing import Any
 from typing import Any as AnyType
 
+from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import create_engine
 
 from app.core.config import settings
@@ -113,3 +114,39 @@ def create_db_engine() -> AnyType:
 
 # Create engine instance
 engine = create_db_engine()
+
+
+def create_async_db_engine() -> AnyType:
+    """Creates and returns a configured async database engine.
+
+    This function retrieves the necessary arguments for creating the async database engine,
+    configures connection pooling parameters, constructs the database URL, and then creates
+    and returns the async engine.
+
+    Returns:
+        sqlalchemy.ext.asyncio.AsyncEngine: The configured async database engine.
+    """
+    engine_args = get_engine_args()
+
+    # Add connection pool configuration for async engine
+    engine_args.update(
+        {
+            "pool_pre_ping": True,
+            "pool_recycle": 300,
+            "pool_size": 5,
+            "max_overflow": 10,
+        }
+    )
+
+    # Get the correct database URL and convert to async URL
+    url = get_db_url()
+    # Convert URL to async format
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://")
+
+    # Return async engine
+    return create_async_engine(url, **engine_args)
+
+
+# Create async engine instance
+async_engine = create_async_db_engine()

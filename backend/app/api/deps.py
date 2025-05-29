@@ -1,4 +1,4 @@
-from collections.abc import Generator
+from collections.abc import AsyncGenerator, Generator
 from typing import Annotated, Any, TypeVar
 
 import jwt
@@ -6,12 +6,14 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Session
 
 from app import crud
 from app.core import security
 from app.core.config import settings
-from app.core.db_factory import engine
+from app.core.db_factory import async_engine, engine
+from app.core.storage import StorageInterface, get_storage
 from app.models import TokenPayload, User
 
 # 定义类型变量
@@ -36,6 +38,25 @@ reusable_oauth2 = OAuth2PasswordBearer(
 def get_db() -> Generator[Session, None, None]:
     with Session(engine) as session:
         yield session
+
+
+async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
+    """Get an async database session.
+    
+    Yields:
+        AsyncSession: An async SQLAlchemy session
+    """
+    async with AsyncSession(async_engine) as session:
+        yield session
+
+
+def get_storage_service() -> StorageInterface:
+    """Get the storage service implementation.
+    
+    Returns:
+        StorageInterface: The storage service implementation
+    """
+    return get_storage()
 
 
 def get_supabase() -> Generator[SupabaseClient | None, None, None]:
@@ -120,6 +141,23 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def get_current_active_user(current_user: CurrentUser) -> User:
+    """Check if the current user is active.
+    
+    Args:
+        current_user: The current authenticated user
+        
+    Returns:
+        The user if active
+        
+    Raises:
+        HTTPException: If the user is not active
+    """
+    if not current_user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
 
 
 def get_current_active_superuser(current_user: CurrentUser) -> User:

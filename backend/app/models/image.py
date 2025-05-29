@@ -1,50 +1,40 @@
 import uuid
+from datetime import datetime
+from typing import Optional, TYPE_CHECKING, List, Any
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-from sqlmodel import SQLModel  # 使用 SQLModel 替代 Base
+from sqlmodel import Field, SQLModel, Relationship
+
+# 避免循环导入
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 class Image(SQLModel, table=True):
     __tablename__ = "images"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    source_url = Column(String, nullable=True)
-    s3_key = Column(String, nullable=True)  # Key for S3 or R2 storage
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    source_url: Optional[str] = None
+    s3_key: Optional[str] = None  # Key for S3 or R2 storage
 
     # Type of image: e.g., 'embedded', 'linked', 'stored'
-    type = Column(String, nullable=True)
-    size = Column(Integer, nullable=True)  # Size in bytes
-    format = Column(String, nullable=True)  # E.g., 'png', 'jpeg', 'gif'
-    alt_text = Column(String, nullable=True)
+    type: Optional[str] = None
+    size: Optional[int] = None  # Size in bytes
+    format: Optional[str] = None  # E.g., 'png', 'jpeg', 'gif'
+    alt_text: Optional[str] = None
 
     # Importance: e.g., 'high', 'medium', 'low'
-    importance = Column(String, nullable=True)
-    last_checked = Column(
-        DateTime, nullable=True
-    )  # Last time the image was checked (e.g., for accessibility or existence)
-    is_accessible = Column(
-        Boolean, default=False, nullable=True
-    )  # If the image is currently accessible
+    importance: Optional[str] = None
+    last_checked: Optional[datetime] = None  # Last time the image was checked
+    is_accessible: Optional[bool] = Field(default=False)  # If the image is currently accessible
 
-    # Foreign key to User table (assuming User model exists and has a UUID id)
-    # Assuming user.id is also of type UUID. If it's Integer, change accordingly.
-    owner_id = Column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
-    )  # Changed users.id from user.id
+    # Foreign key to User table
+    owner_id: uuid.UUID = Field(foreign_key="users.id")
 
-    # Relationship to User (optional, but good for ORM features)
-    # The name 'owner' will be used to access the related User object from an Image instance
-    owner = relationship(
-        "User", back_populates="images"
-    )  # Assumes User model has an 'images' relationship
+    # Relationship to User
+    owner: Optional["User"] = Relationship(back_populates="images")
 
-    created_at = Column(DateTime, default=func.now(), nullable=False)
-    updated_at = Column(
-        DateTime, default=func.now(), onupdate=func.now(), nullable=False
-    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     def __repr__(self):
         return f"<Image(id={self.id}, type='{self.type}', format='{self.format}', owner_id='{self.owner_id}')>"
