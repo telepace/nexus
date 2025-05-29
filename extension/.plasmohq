@@ -1,0 +1,8 @@
+{
+  "manifest": {
+    "permissions": ["storage", "scripting", "unlimitedStorage", "activeTab", "contextMenus", "notifications"]
+  },
+  "build": {
+    "optimize": false
+  }
+} 

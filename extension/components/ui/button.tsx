@@ -1,37 +1,51 @@
-import React, { ButtonHTMLAttributes, forwardRef } from "react";
-import { Slot } from "@radix-ui/react-slot";
+import React from "react";
+import { cn } from "../../lib/utils";
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  asChild?: boolean;
-  variant?: "default" | "primary" | "outline" | "ghost" | "link";
-  size?: "default" | "sm" | "lg" | "icon";
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: "default" | "secondary" | "outline" | "ghost";
+  size?: "sm" | "md" | "lg";
+  isLoading?: boolean;
 }
 
-// 简单的类名合并函数
-function classNames(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ');
-}
-
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "default", size = "default", asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
-    
-    return (
-      <Comp
-        className={classNames(
-          "btn",
-          variant === "primary" && "btn-primary",
-          size === "sm" && "btn-sm",
-          size === "lg" && "btn-lg",
-          className
-        )}
-        ref={ref}
-        {...props}
-      />
-    );
-  }
-);
-
-Button.displayName = "Button";
-
-export default Button; 
+export function Button({
+  className,
+  variant = "default",
+  size = "md",
+  isLoading = false,
+  children,
+  disabled,
+  ...props
+}: ButtonProps) {
+  const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50";
+  
+  const variants = {
+    default: "bg-blue-600 text-white hover:bg-blue-700",
+    secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200",
+    outline: "border border-gray-300 bg-transparent hover:bg-gray-50",
+    ghost: "hover:bg-gray-100"
+  };
+  
+  const sizes = {
+    sm: "h-8 px-3 text-sm",
+    md: "h-10 px-4 text-sm",
+    lg: "h-12 px-6 text-base"
+  };
+  
+  return (
+    <button
+      className={cn(
+        baseStyles,
+        variants[variant],
+        sizes[size],
+        className
+      )}
+      disabled={disabled || isLoading}
+      {...props}
+    >
+      {isLoading ? (
+        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+      ) : null}
+      {children}
+    </button>
+  );
+} 
