@@ -62,6 +62,7 @@ __all__ = [
     "Tag",
     "PromptType",
     "Visibility",
+    "Image",  # Added Image model
     # Content aggregation models
     "ContentItem",
     "ContentAsset",
@@ -76,3 +77,6 @@ from .content import (
     ContentItem,
     ProcessingJob,
 )
+
+# Import the new Image model
+from .image import Image

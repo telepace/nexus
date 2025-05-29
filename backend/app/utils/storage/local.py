@@ -117,3 +117,19 @@ class LocalStorageService(StorageService):
                 return f.read()
         except Exception as e:
             raise Exception(f"Failed to read file {file_path}: {str(e)}")
+
+    def get_presigned_url(self, file_path: str, content_type: str) -> str:
+        """
+        Generates a presigned URL for local storage.
+        Local storage does not support presigned URLs in the same way as cloud storage.
+        This method can either return a direct file path or raise NotImplementedError.
+        """
+        # Option 1: Raise NotImplementedError (more accurate for "presigned")
+        raise NotImplementedError(
+            "Presigned URLs are not applicable for local storage."
+        )
+
+        # Option 2: Return a direct URL/path (if that fits the use case)
+        # This might be useful if the client expects a URL it can try to use,
+        # even if it's just a local file path.
+        # return f"file://{os.path.join(self.base_dir, file_path)}"

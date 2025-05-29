@@ -23,4 +23,18 @@ __all__ = [
     "EmailData",
     "generate_test_email",
     "generate_new_account_email",
+    # Image processor functions
+    "extract_images_from_pdf",
+    "process_web_image",
+    "process_base64_image",
+    "assess_image_importance",
+    "check_image_accessibility",
 ]
+
+from .image_processor import (
+    assess_image_importance,
+    check_image_accessibility,
+    extract_images_from_pdf,
+    process_base64_image,
+    process_web_image,
+)

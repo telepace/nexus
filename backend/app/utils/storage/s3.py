@@ -162,6 +162,50 @@ class S3StorageService(StorageService):
         """
         return f"{self.public_url}/{file_path}"
 
+    def get_presigned_url(
+        self, file_path: str, content_type: str, expires_in: int = 3600
+    ) -> str | None:
+        """生成用于上传的预签名URL
+
+        Args:
+            file_path: S3中的文件键路径
+            content_type: 文件的MIME类型
+            expires_in: URL的有效时间（秒），默认为3600秒
+
+        Returns:
+            str: 预签名URL，如果boto3不可用则返回None
+        """
+        if not BOTO3_AVAILABLE:
+            return None  # 或者根据需要抛出异常
+
+        try:
+            # 确保 client 是 boto3 客户端实例
+            if not hasattr(self.client, "generate_presigned_url"):
+                 # 当 self.client 是 MockS3Client 时，它没有 generate_presigned_url 方法
+                return f"mock_presigned_url_for_s3/{self.bucket}/{file_path}?content_type={content_type}"
+
+
+            params = {
+                "Bucket": self.bucket,
+                "Key": file_path,
+                "ContentType": content_type,
+            }
+            # generate_presigned_post有时更适合上传，但generate_presigned_url(ClientMethod='put_object')更直接
+            url = self.client.generate_presigned_url(
+                ClientMethod="put_object",
+                Params=params,
+                ExpiresIn=expires_in,
+            )
+            return url
+        except ClientError as e:
+            # 处理可能的错误，例如权限问题
+            print(f"Error generating presigned URL for S3: {e}")
+            return None
+        except Exception as e:
+            # 捕获其他潜在错误
+            print(f"An unexpected error occurred when generating presigned URL for S3: {e}")
+            return None
+
 
 # 当boto3不可用时使用的模拟实现
 class MockS3Client:

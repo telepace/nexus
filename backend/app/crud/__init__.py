@@ -22,6 +22,9 @@ from .crud_content import (
     get_content_items,
 )
 
+# Import from crud_image.py
+from . import crud_image
+
 ModelType = TypeVar("ModelType")
 CreateSchemaType = TypeVar("CreateSchemaType")
 UpdateSchemaType = TypeVar("UpdateSchemaType")
@@ -436,4 +439,12 @@ __all__ = [
     "create_content_item",
     "get_content_item",
     "get_content_items",
+    # Image CRUD operations
+    "crud_image",  # Add the module itself for access like crud.crud_image.create_image
+    # Or list individual functions if preferred:
+    # "create_image",
+    # "get_image",
+    # "get_multi_images_by_owner",
+    # "update_image",
+    # "remove_image",
 ]
