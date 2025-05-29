@@ -9,6 +9,13 @@ from .email import (
     send_email,
     verify_password_reset_token,
 )
+from .image_processor import (
+    assess_image_importance,
+    check_image_accessibility,
+    extract_images_from_pdf,
+    process_base64_image,
+    process_web_image,
+)
 from .posthog_tracker import PostHogTracker
 
 # Check if posthog is available
@@ -30,11 +37,3 @@ __all__ = [
     "assess_image_importance",
     "check_image_accessibility",
 ]
-
-from .image_processor import (
-    assess_image_importance,
-    check_image_accessibility,
-    extract_images_from_pdf,
-    process_base64_image,
-    process_web_image,
-)

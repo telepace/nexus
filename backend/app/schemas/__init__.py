@@ -1,8 +1,8 @@
 from .image import (
     ImageBase,
     ImageCreate,
-    ImageUpdate,
     ImageResponse,
+    ImageUpdate,
     PresignedURLRequest,
     PresignedURLResponse,
 )

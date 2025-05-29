@@ -1,9 +1,8 @@
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload # For eager loading if needed
 
 from app.models.image import Image
 from app.schemas.image import ImageCreate, ImageUpdate
@@ -26,7 +25,7 @@ async def create_image(
     return db_obj
 
 
-async def get_image(db: AsyncSession, *, image_id: uuid.UUID) -> Optional[Image]:
+async def get_image(db: AsyncSession, *, image_id: uuid.UUID) -> Image | None:
     """
     Get a single image by its ID.
     """
@@ -61,7 +60,9 @@ async def update_image(
     if isinstance(obj_in, dict):
         update_data = obj_in
     else:
-        update_data = obj_in.model_dump(exclude_unset=True) # Use model_dump for Pydantic v2
+        update_data = obj_in.model_dump(
+            exclude_unset=True
+        )  # Use model_dump for Pydantic v2
 
     for field, value in update_data.items():
         setattr(db_obj, field, value)
@@ -72,7 +73,7 @@ async def update_image(
     return db_obj
 
 
-async def remove_image(db: AsyncSession, *, image_id: uuid.UUID) -> Optional[Image]:
+async def remove_image(db: AsyncSession, *, image_id: uuid.UUID) -> Image | None:
     """
     Delete an image record from the database by its ID.
     Returns the deleted image object if found, otherwise None.
@@ -82,6 +83,7 @@ async def remove_image(db: AsyncSession, *, image_id: uuid.UUID) -> Optional[Ima
         await db.delete(db_obj)
         await db.commit()
     return db_obj
+
 
 # Example of a more generic CRUD base if you decide to abstract it later
 # from app.crud.base import CRUDBase

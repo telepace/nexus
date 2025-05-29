@@ -15,15 +15,15 @@ from sqlmodel import Session, select
 from app.core.security import get_password_hash, verify_password
 from app.models import Item, TokenBlacklist, User
 
+# Import from crud_image.py
+from . import crud_image
+
 # Import from crud_content.py
 from .crud_content import (
     create_content_item,
     get_content_item,
     get_content_items,
 )
-
-# Import from crud_image.py
-from . import crud_image
 
 ModelType = TypeVar("ModelType")
 CreateSchemaType = TypeVar("CreateSchemaType")

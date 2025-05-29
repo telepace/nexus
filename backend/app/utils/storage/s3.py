@@ -181,9 +181,8 @@ class S3StorageService(StorageService):
         try:
             # 确保 client 是 boto3 客户端实例
             if not hasattr(self.client, "generate_presigned_url"):
-                 # 当 self.client 是 MockS3Client 时，它没有 generate_presigned_url 方法
+                # 当 self.client 是 MockS3Client 时，它没有 generate_presigned_url 方法
                 return f"mock_presigned_url_for_s3/{self.bucket}/{file_path}?content_type={content_type}"
-
 
             params = {
                 "Bucket": self.bucket,
@@ -203,7 +202,9 @@ class S3StorageService(StorageService):
             return None
         except Exception as e:
             # 捕获其他潜在错误
-            print(f"An unexpected error occurred when generating presigned URL for S3: {e}")
+            print(
+                f"An unexpected error occurred when generating presigned URL for S3: {e}"
+            )
             return None
 
 

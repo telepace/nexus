@@ -1,12 +1,12 @@
 import uuid
-from typing import Any, List
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Body, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import crud, models, schemas
 from app.api import deps
-from app.core.storage import StorageInterface # Import StorageInterface
+from app.core.storage import StorageInterface  # Import StorageInterface
 
 router = APIRouter()
 
@@ -33,9 +33,11 @@ async def get_upload_url(
     # Example: f"user_uploads/{current_user.id}/{payload.filename}"
     # For simplicity, using filename directly for now, but ensure it's sanitized
     # or a UUID is used for the actual key to prevent overwrites and control structure.
-    
+
     # Let's create a more robust s3_key
-    file_extension = payload.filename.split('.')[-1] if '.' in payload.filename else 'bin'
+    file_extension = (
+        payload.filename.split(".")[-1] if "." in payload.filename else "bin"
+    )
     unique_filename = f"{uuid.uuid4()}.{file_extension}"
     destination_blob_name = f"user_uploads/{current_user.id}/{unique_filename}"
 
@@ -44,9 +46,7 @@ async def get_upload_url(
     )
 
     if not presigned_url:
-        raise HTTPException(
-            status_code=500, detail="Could not generate presigned URL."
-        )
+        raise HTTPException(status_code=500, detail="Could not generate presigned URL.")
 
     return {
         "presigned_url": presigned_url,
@@ -55,8 +55,8 @@ async def get_upload_url(
 
 
 @router.post(
-    "/", 
-    response_model=schemas.ImageResponse, 
+    "/",
+    response_model=schemas.ImageResponse,
     status_code=201,
     summary="Create a new image record.",
     description="After uploading a file using a presigned URL, call this endpoint to create the image metadata in the database.",
@@ -79,9 +79,9 @@ async def create_image_record(
 
 
 @router.get(
-    "/{image_id}", 
+    "/{image_id}",
     response_model=schemas.ImageResponse,
-    summary="Get an image by its ID."
+    summary="Get an image by its ID.",
 )
 async def read_image(
     *,
@@ -101,16 +101,17 @@ async def read_image(
         raise HTTPException(status_code=403, detail="Not enough permissions")
     return image
 
+
 @router.get(
     "/",
-    response_model=List[schemas.ImageResponse],
-    summary="List images for the current user."
+    response_model=list[schemas.ImageResponse],
+    summary="List images for the current user.",
 )
 async def list_images(
     *,
     db: AsyncSession = Depends(deps.get_async_db),
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=200), # Added upper limit for safety
+    limit: int = Query(100, ge=1, le=200),  # Added upper limit for safety
     current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
@@ -123,9 +124,9 @@ async def list_images(
 
 
 @router.delete(
-    "/{image_id}", 
-    response_model=schemas.ImageResponse, # Or perhaps a status message
-    summary="Delete an image."
+    "/{image_id}",
+    response_model=schemas.ImageResponse,  # Or perhaps a status message
+    summary="Delete an image.",
 )
 async def delete_image(
     *,
@@ -156,18 +157,23 @@ async def delete_image(
             print(f"Error deleting file {image.s3_key} from storage: {e}")
             # raise HTTPException(status_code=500, detail=f"Error deleting file from storage: {e}")
 
-    deleted_image_db_record = await crud.crud_image.remove_image(db=db, image_id=image_id)
+    deleted_image_db_record = await crud.crud_image.remove_image(
+        db=db, image_id=image_id
+    )
     # remove_image returns the deleted object, so it can be returned.
     # If it returned None (e.g. if it failed or was already deleted),
     # we might want to raise an error or return a different response.
     if not deleted_image_db_record:
-         # This case should ideally not happen if the previous get_image worked
-         # and no other process deleted it in between.
-        raise HTTPException(status_code=404, detail="Image not found after attempting deletion from DB.")
+        # This case should ideally not happen if the previous get_image worked
+        # and no other process deleted it in between.
+        raise HTTPException(
+            status_code=404, detail="Image not found after attempting deletion from DB."
+        )
 
-    return deleted_image_db_record # Return the representation of the deleted image.
+    return deleted_image_db_record  # Return the representation of the deleted image.
     # Alternatively, return a message:
     # return {"message": "Image deleted successfully"}
+
 
 # TODO: Add PUT/PATCH endpoint for updating image metadata (e.g., alt_text, importance)
 # @router.patch("/{image_id}", response_model=schemas.ImageResponse)

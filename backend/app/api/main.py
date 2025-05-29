@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.routes import (
     content,  # Add content router
     google_oauth,
+    images,  # Added images router
     items,
     llm_service,
     login,
@@ -10,7 +11,6 @@ from app.api.routes import (
     prompts,
     users,
     utils,
-    images,  # Added images router
 )
 from app.core.config import settings
 
@@ -25,7 +25,9 @@ api_router.include_router(llm_service.router, prefix="/llm", tags=["llm"])
 api_router.include_router(
     content.router, prefix="/content", tags=["content"]
 )  # Include content router
-api_router.include_router(images.router, prefix="/images", tags=["images"]) # Include images router
+api_router.include_router(
+    images.router, prefix="/images", tags=["images"]
+)  # Include images router
 
 
 if settings.ENVIRONMENT == "local":
