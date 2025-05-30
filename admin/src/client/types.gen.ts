@@ -487,6 +487,10 @@ export type LoginLoginAccessTokenData = {
 
 export type LoginLoginAccessTokenResponse = (Token);
 
+export type LoginLoginAccessTokenHeadResponse = ({
+    [key: string]: unknown;
+});
+
 export type LoginTestTokenResponse = (UserPublic);
 
 export type LoginLogoutResponse = (Message);
@@ -626,6 +630,10 @@ export type UsersCreateUserResponse = (UserPublic);
 export type UsersReadUserMeResponse = (UserPublic);
 
 export type UsersDeleteUserMeResponse = (Message);
+
+export type UsersReadUserMeHeadResponse = ({
+    [key: string]: unknown;
+});
 
 export type UsersUpdateUserMeData = {
     requestBody: UserUpdateMe;

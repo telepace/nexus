@@ -131,6 +131,15 @@ def read_user_me(current_user: CurrentUser) -> Any:
     return current_user
 
 
+@router.head("/me")
+def read_user_me_head(_current_user: CurrentUser) -> dict[str, Any]:
+    """
+    HEAD request for user info endpoint - used by browser extensions to check token validity
+    Returns headers without body
+    """
+    return {}  # FastAPI will automatically convert this to a HEAD response
+
+
 @router.delete("/me", response_model=Message)
 def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
     """

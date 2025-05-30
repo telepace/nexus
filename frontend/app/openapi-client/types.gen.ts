@@ -355,6 +355,12 @@ export type LoginLoginAccessTokenResponse = Token;
 
 export type LoginLoginAccessTokenError = HTTPValidationError;
 
+export type LoginLoginAccessTokenHeadResponse = {
+  [key: string]: unknown;
+};
+
+export type LoginLoginAccessTokenHeadError = unknown;
+
 export type LoginTestTokenResponse = UserPublic;
 
 export type LoginTestTokenError = unknown;
@@ -417,6 +423,12 @@ export type UsersReadUserMeError = unknown;
 export type UsersDeleteUserMeResponse = Message;
 
 export type UsersDeleteUserMeError = unknown;
+
+export type UsersReadUserMeHeadResponse = {
+  [key: string]: unknown;
+};
+
+export type UsersReadUserMeHeadError = unknown;
 
 export type UsersUpdateUserMeData = {
   body: UserUpdateMe;

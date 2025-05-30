@@ -35,6 +35,15 @@ export async function processGoogleAuthToken(token: string) {
       path: "/",
     });
 
+    // 为浏览器扩展设置一个额外的非httpOnly cookie
+    cookieStore.set("accessToken_ext", token, {
+      httpOnly: false, // 允许扩展访问
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 7, // 7天
+      path: "/",
+      sameSite: "lax", // 适当的安全设置
+    });
+
     // Redirect to the dashboard
     redirect("/dashboard");
   } catch (error) {

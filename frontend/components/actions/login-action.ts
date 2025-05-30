@@ -74,6 +74,15 @@ export async function login(prevState: unknown, formData: FormData) {
       maxAge: 60 * 60 * 24 * 7, // 7天
       path: "/",
     });
+
+    // 为浏览器扩展设置一个额外的非httpOnly cookie
+    cookieStore.set("accessToken_ext", data.access_token, {
+      httpOnly: false, // 允许扩展访问
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 7, // 7天
+      path: "/",
+      sameSite: "lax", // 适当的安全设置
+    });
   } catch (err) {
     console.error("Login error:", err);
     return {

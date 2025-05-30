@@ -9,6 +9,9 @@
 # testing
 /coverage
 
+#cache
+.turbo
+
 # misc
 .DS_Store
 *.pem
@@ -20,24 +23,17 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # local env files
-.env*.local
+.env*
 
 out/
 build/
 dist/
 
-# plasmo
+# plasmo - https://www.plasmo.com
 .plasmo
+
+# bpp - http://bpp.browser.market/
+keys.json
 
 # typescript
 .tsbuildinfo
-
-# Playwright
-/playwright-report/
-
-# Generated test files
-/tests/e2e/*.generated.*
-
-# Source maps
-*.js.map
-package-lock.json

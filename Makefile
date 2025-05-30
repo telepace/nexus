@@ -192,7 +192,7 @@ check-extension-env:
 
 ## all: Run all tests, linting, formatting and build all components
 .PHONY: all
-all: env-init check-conflicts format lint backend-build frontend-build admin-build test generate-client test
+all: env-init check-conflicts format lint backend-build frontend-build admin-build extension-build test generate-client
 	@echo "===========> All builds completed successfully"
 
 ## dev: Start development environment
@@ -653,9 +653,7 @@ extension: check-pnpm check-extension-env
 .PHONY: extension-build
 extension-build: check-pnpm extension-clean
 	@echo "===========> Building browser extension for production"
-	@cd $(EXTENSION_DIR) && $(PNPM) run build:with-tailwind
-	@echo "===========> Running post-build fixes"
-	@cd $(EXTENSION_DIR) && ./scripts/fix-build.sh
+	@cd $(EXTENSION_DIR) && $(PNPM) run build
 
 ## extension-package: Package browser extension for distribution
 .PHONY: extension-package

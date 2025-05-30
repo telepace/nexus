@@ -11,12 +11,9 @@
   "compilerOptions": {
     "paths": {
       "~*": [
-        "./*"
+        "./src/*"
       ]
     },
-    "baseUrl": ".",
-    "verbatimModuleSyntax": false,
-    "esModuleInterop": true,
-    "isolatedModules": true
+    "baseUrl": "."
   }
 }
