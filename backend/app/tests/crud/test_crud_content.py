@@ -6,11 +6,19 @@ import pytest
 from sqlmodel import Session
 
 from app.crud.crud_content import (
-    create_content_item,
-    delete_content_item,
-    get_content_item,
-    get_content_items,
-    update_content_item,
+    create_content_item_sync as create_content_item,
+)
+from app.crud.crud_content import (
+    delete_content_item_sync as delete_content_item,
+)
+from app.crud.crud_content import (
+    get_content_item_sync as get_content_item,
+)
+from app.crud.crud_content import (
+    get_content_items_sync as get_content_items,
+)
+from app.crud.crud_content import (
+    update_content_item_sync as update_content_item,
 )
 from app.models.content import ContentItem
 

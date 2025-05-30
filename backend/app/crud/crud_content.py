@@ -126,6 +126,33 @@ async def get_content_items(
     return result.scalars().all()
 
 
+# Synchronous versions for routes compatibility
+def get_content_item_sync(session: Session, id: uuid.UUID) -> ContentItem | None:
+    return session.get(ContentItem, id)
+
+
+def get_content_items_sync(
+    session: Session, skip: int = 0, limit: int = 100, user_id: uuid.UUID | None = None
+) -> Sequence[ContentItem]:
+    statement = select(ContentItem)
+    if user_id:
+        statement = statement.where(ContentItem.user_id == user_id)
+    statement = statement.offset(skip).limit(limit)
+    result = session.exec(statement)
+    return result.all()
+
+
+def create_content_item_sync(
+    session: Session,
+    *,
+    content_item_in: ContentItem,  # Accept ContentItem model directly
+) -> ContentItem:
+    session.add(content_item_in)
+    session.commit()
+    session.refresh(content_item_in)
+    return content_item_in
+
+
 async def create_content_item(
     db: AsyncSession,
     *,
@@ -293,44 +320,85 @@ def get_content_chunks(
 
 
 # Get content chunks summary
-def get_content_chunks_summary(session: Session, content_item_id: uuid.UUID) -> dict[str, Any]:
+def get_content_chunks_summary(
+    session: Session, content_item_id: uuid.UUID
+) -> dict[str, Any]:
     """
     Get a summary of content chunks for a content item, including total count and metadata.
-    
+
     Args:
         session: Database session
         content_item_id: ID of the content item
-        
+
     Returns:
         Dictionary with summary information
     """
     # Get total count of chunks
-    total_chunks = session.query(func.count(ContentChunk.id)).filter(
-        ContentChunk.content_item_id == content_item_id
-    ).scalar() or 0
-    
+    total_chunks = (
+        session.query(func.count(ContentChunk.id))
+        .filter(ContentChunk.content_item_id == content_item_id)
+        .scalar()
+        or 0
+    )
+
     # Get first and last chunk for metadata if chunks exist
     first_chunk = None
     last_chunk = None
-    
+
     if total_chunks > 0:
-        first_chunk = session.query(ContentChunk).filter(
-            ContentChunk.content_item_id == content_item_id
-        ).order_by(ContentChunk.position).first()
-        
-        last_chunk = session.query(ContentChunk).filter(
-            ContentChunk.content_item_id == content_item_id
-        ).order_by(ContentChunk.position.desc()).first()
-    
+        first_chunk = (
+            session.query(ContentChunk)
+            .filter(ContentChunk.content_item_id == content_item_id)
+            .order_by(ContentChunk.position)
+            .first()
+        )
+
+        last_chunk = (
+            session.query(ContentChunk)
+            .filter(ContentChunk.content_item_id == content_item_id)
+            .order_by(ContentChunk.position.desc())
+            .first()
+        )
+
     # Build summary response
     summary = {
         "total_chunks": total_chunks,
         "has_chunks": total_chunks > 0,
         "first_chunk_position": first_chunk.position if first_chunk else None,
         "last_chunk_position": last_chunk.position if last_chunk else None,
-        "content_item_id": str(content_item_id)
+        "content_item_id": str(content_item_id),
     }
-    
+
     return summary
+
+
+def update_content_item_sync(
+    session: Session,
+    *,
+    db_content_item: ContentItem,
+    content_item_in: dict | Any,  # Accept dict or Pydantic model
+) -> ContentItem:
+    if isinstance(content_item_in, dict):
+        update_data = content_item_in
+    else:
+        update_data = content_item_in.model_dump(exclude_unset=True)
+
+    for key, value in update_data.items():
+        setattr(db_content_item, key, value)
+
+    session.add(db_content_item)
+    session.commit()
+    session.refresh(db_content_item)
+    return db_content_item
+
+
+def delete_content_item_sync(session: Session, id: uuid.UUID) -> ContentItem | None:
+    db_content_item = get_content_item_sync(session, id)
+    if db_content_item:
+        session.delete(db_content_item)
+        session.commit()
+        return db_content_item
+    return None
+
 
 # print("CRUD functions for ContentItem and ContentAsset potentially modified for async and image processing.")

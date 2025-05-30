@@ -121,6 +121,33 @@ export type HTTPValidationError = {
     detail?: Array<ValidationError>;
 };
 
+export type ImageCreate = {
+    source_url?: (string | null);
+    s3_key?: (string | null);
+    type?: (string | null);
+    size?: (number | null);
+    format?: (string | null);
+    alt_text?: (string | null);
+    importance?: (string | null);
+    is_accessible?: (boolean | null);
+};
+
+export type ImageResponse = {
+    source_url?: (string | null);
+    s3_key?: (string | null);
+    type?: (string | null);
+    size?: (number | null);
+    format?: (string | null);
+    alt_text?: (string | null);
+    importance?: (string | null);
+    is_accessible?: (boolean | null);
+    id: string;
+    owner_id: string;
+    created_at: string;
+    updated_at: string;
+    last_checked?: (string | null);
+};
+
 export type InputVariable = {
     name: string;
     description?: (string | null);
@@ -149,6 +176,16 @@ export type Message = {
 export type NewPassword = {
     token: string;
     new_password: string;
+};
+
+export type PresignedURLRequest = {
+    filename: string;
+    content_type: string;
+};
+
+export type PresignedURLResponse = {
+    presigned_url: string;
+    s3_key: string;
 };
 
 export type PrivateUserCreate = {
@@ -436,6 +473,37 @@ export type GoogleOauthGoogleCallbackData = {
 export type GoogleOauthGoogleCallbackResponse = (unknown);
 
 export type HealthGetHealthApiResponse = (unknown);
+
+export type ImagesGetUploadUrlData = {
+    requestBody: PresignedURLRequest;
+};
+
+export type ImagesGetUploadUrlResponse = (PresignedURLResponse);
+
+export type ImagesCreateImageRecordData = {
+    requestBody: ImageCreate;
+};
+
+export type ImagesCreateImageRecordResponse = (ImageResponse);
+
+export type ImagesListImagesData = {
+    limit?: number;
+    skip?: number;
+};
+
+export type ImagesListImagesResponse = (Array<ImageResponse>);
+
+export type ImagesReadImageData = {
+    imageId: string;
+};
+
+export type ImagesReadImageResponse = (ImageResponse);
+
+export type ImagesDeleteImageData = {
+    imageId: string;
+};
+
+export type ImagesDeleteImageResponse = (ImageResponse);
 
 export type ItemsReadItemsData = {
     limit?: number;

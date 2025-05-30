@@ -189,9 +189,9 @@ def test_get_content_markdown_api(
         content_id = created_content["id"]
 
     # Update the content to be completed
-    from app.crud.crud_content import get_content_item
+    from app.crud.crud_content import get_content_item_sync
 
-    content_item = get_content_item(session=db, id=content_id)
+    content_item = get_content_item_sync(session=db, id=content_id)
     content_item.processing_status = "completed"
     db.add(content_item)
     db.commit()

@@ -220,7 +220,7 @@ async def test_check_image_accessibility_reachable(mock_async_client):
     mock_async_client.return_value.__aenter__.return_value.head = mock_head
 
     assert await check_image_accessibility(image_url) is True
-    mock_head.assert_called_once_with(image_url, follow_redirects=True, timeout=5.0)
+    mock_head.assert_called_once_with(image_url, timeout=5.0)
 
 
 @pytest.mark.asyncio

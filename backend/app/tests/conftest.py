@@ -29,10 +29,44 @@ def setup_test_environment() -> Generator[None, None, None]:
     test_engine = setup_test_db()
 
     # Replace the global engine with our test engine
+    from sqlalchemy.ext.asyncio import create_async_engine
+
     import app.core.db
+    import app.core.db_factory
 
     original_engine = app.core.db.engine
     app.core.db.engine = test_engine
+
+    # Also replace the db_factory engine
+    original_db_factory_engine = app.core.db_factory.engine
+    app.core.db_factory.engine = test_engine
+
+    # Create and replace async engine for test database
+    from app.tests.utils.test_db import get_test_db_url
+
+    test_db_url = get_test_db_url()
+    # Convert to async URL
+    if test_db_url.startswith("postgresql+psycopg://"):
+        async_test_db_url = test_db_url.replace(
+            "postgresql+psycopg://", "postgresql+asyncpg://"
+        )
+    elif test_db_url.startswith("postgresql://"):
+        async_test_db_url = test_db_url.replace(
+            "postgresql://", "postgresql+asyncpg://"
+        )
+    else:
+        async_test_db_url = test_db_url
+
+    test_async_engine = create_async_engine(
+        async_test_db_url,
+        pool_pre_ping=True,
+        pool_recycle=300,
+        pool_size=5,
+        max_overflow=10,
+    )
+
+    original_async_engine = app.core.db_factory.async_engine
+    app.core.db_factory.async_engine = test_async_engine
 
     try:
         yield
@@ -40,8 +74,10 @@ def setup_test_environment() -> Generator[None, None, None]:
         print("\n⚠️  Tests interrupted by user. Cleaning up...")
         # 继续执行清理，不重新抛出异常
     finally:
-        # After all tests, restore the original engine and clean up the test database
+        # After all tests, restore the original engines and clean up the test database
         app.core.db.engine = original_engine
+        app.core.db_factory.engine = original_db_factory_engine
+        app.core.db_factory.async_engine = original_async_engine
         try:
             teardown_test_db()
         except KeyboardInterrupt:

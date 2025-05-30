@@ -128,10 +128,10 @@ class MockStorage(StorageInterface):
 # Factory function to get the appropriate storage implementation
 def get_storage() -> StorageInterface:
     """Get the storage service implementation based on configuration.
-    
+
     Currently returns a MockStorage instance, but in production this would
     return the appropriate storage implementation based on configuration.
-    
+
     Returns:
         StorageInterface: The storage service implementation
     """

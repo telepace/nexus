@@ -1,34 +1,36 @@
 import uuid
 from datetime import datetime
-from typing import Optional, TYPE_CHECKING, List, Any
+from typing import TYPE_CHECKING, Optional
 
-from sqlmodel import Field, SQLModel, Relationship
+from sqlmodel import Field, Relationship, SQLModel
 
 # 避免循环导入
 if TYPE_CHECKING:
-    from app.models.user import User
+    from app.base import User
 
 
 class Image(SQLModel, table=True):
     __tablename__ = "images"
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    source_url: Optional[str] = None
-    s3_key: Optional[str] = None  # Key for S3 or R2 storage
+    source_url: str | None = None
+    s3_key: str | None = None  # Key for S3 or R2 storage
 
     # Type of image: e.g., 'embedded', 'linked', 'stored'
-    type: Optional[str] = None
-    size: Optional[int] = None  # Size in bytes
-    format: Optional[str] = None  # E.g., 'png', 'jpeg', 'gif'
-    alt_text: Optional[str] = None
+    type: str | None = None
+    size: int | None = None  # Size in bytes
+    format: str | None = None  # E.g., 'png', 'jpeg', 'gif'
+    alt_text: str | None = None
 
     # Importance: e.g., 'high', 'medium', 'low'
-    importance: Optional[str] = None
-    last_checked: Optional[datetime] = None  # Last time the image was checked
-    is_accessible: Optional[bool] = Field(default=False)  # If the image is currently accessible
+    importance: str | None = None
+    last_checked: datetime | None = None  # Last time the image was checked
+    is_accessible: bool | None = Field(
+        default=False
+    )  # If the image is currently accessible
 
     # Foreign key to User table
-    owner_id: uuid.UUID = Field(foreign_key="users.id")
+    owner_id: uuid.UUID = Field(foreign_key="user.id")
 
     # Relationship to User
     owner: Optional["User"] = Relationship(back_populates="images")

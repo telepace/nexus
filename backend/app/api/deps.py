@@ -42,7 +42,7 @@ def get_db() -> Generator[Session, None, None]:
 
 async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
     """Get an async database session.
-    
+
     Yields:
         AsyncSession: An async SQLAlchemy session
     """
@@ -52,7 +52,7 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
 
 def get_storage_service() -> StorageInterface:
     """Get the storage service implementation.
-    
+
     Returns:
         StorageInterface: The storage service implementation
     """
@@ -145,13 +145,13 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 def get_current_active_user(current_user: CurrentUser) -> User:
     """Check if the current user is active.
-    
+
     Args:
         current_user: The current authenticated user
-        
+
     Returns:
         The user if active
-        
+
     Raises:
         HTTPException: If the user is not active
     """
