@@ -44,6 +44,15 @@ def login_access_token(
     )
 
 
+@router.head("/login/access-token")
+def login_access_token_head() -> dict:
+    """
+    HEAD request for login endpoint - used by browser extensions to check API availability
+    Returns basic headers without body
+    """
+    return {}  # FastAPI will automatically convert this to a HEAD response with appropriate headers
+
+
 @router.post("/login/test-token", response_model=UserPublic)
 def test_token(current_user: CurrentUser) -> Any:
     """

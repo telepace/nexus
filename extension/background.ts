@@ -17,13 +17,13 @@ async function initialize() {
 // 检查认证状态
 async function checkAuthStatus() {
   try {
-    // 从存储中获取认证信息
-    const result = await chrome.storage.local.get(['authToken', 'user'])
-    const { authToken, user } = result
+    // 从存储中获取认证信息 - 使用与 auth.ts 一致的键名
+    const result = await chrome.storage.local.get(['accessToken', 'user'])
+    const { accessToken, user } = result
 
-    if (authToken && user) {
+    if (accessToken && user) {
       console.log('User authenticated:', user)
-      return { isAuthenticated: true, user, token: authToken }
+      return { isAuthenticated: true, user, token: accessToken }
     }
 
     // 尝试从前端网站同步认证状态
@@ -39,9 +39,9 @@ async function checkAuthStatus() {
         })
         
         if (response?.isAuthenticated) {
-          // 同步认证信息到扩展存储
+          // 同步认证信息到扩展存储 - 使用与 auth.ts 一致的键名
           await chrome.storage.local.set({
-            authToken: response.token,
+            accessToken: response.token,
             user: response.user
           })
           

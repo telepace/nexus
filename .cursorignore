@@ -4,7 +4,7 @@ website/node_modules/
 frontend/node_modules/
 vendor/
 dist/
-build/
+frontend/build/
 target/
 
 # Ignore IDE and editor cache files

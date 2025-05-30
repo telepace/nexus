@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus 扩展调试工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            min-width: 120px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+            border-left: 4px solid #007cba;
+        }
+        .error {
+            background: #fee;
+            border-left-color: #dc3545;
+        }
+        .success {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Nexus 扩展调试工具</h1>
+    
+    <div class="container">
+        <h2>📡 服务状态检查</h2>
+        <button onclick="checkServices()">检查服务状态</button>
+        <div id="service-status"></div>
+    </div>
+
+    <div class="container">
+        <h2>🔑 登录测试</h2>
+        <div style="margin-bottom: 10px;">
+            <label>邮箱: <input type="email" id="email" value="admin@telepace.cc" style="padding: 5px; margin-left: 10px;"></label>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label>密码: <input type="password" id="password" value="telepace" style="padding: 5px; margin-left: 10px;"></label>
+        </div>
+        <button onclick="testLogin()">测试登录</button>
+        <button onclick="testPostLogin()">POST登录</button>
+        <button onclick="testHeadLogin()">HEAD检查</button>
+        <div id="login-result" class="result"></div>
+    </div>
+
+    <div class="container">
+        <h2>🍪 Cookie管理</h2>
+        <button onclick="setCookies()">设置测试Cookie</button>
+        <button onclick="checkCookies()">检查当前Cookie</button>
+        <button onclick="clearCookies()">清除Cookie</button>
+        <div id="cookie-result" class="result"></div>
+    </div>
+
+    <div class="container">
+        <h2>🔄 扩展同步模拟</h2>
+        <p><small>这部分模拟扩展如何读取cookie并验证token</small></p>
+        <button onclick="simulateExtensionSync()">模拟扩展同步</button>
+        <button onclick="testTokenValidation()">验证Token</button>
+        <div id="sync-result" class="result"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000';
+        const FRONTEND_URL = 'http://127.0.0.1:3000';
+
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            element.className = `result ${type}`;
+            element.textContent = `[${timestamp}] ${message}`;
+        }
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        async function checkServices() {
+            const statusDiv = document.getElementById('service-status');
+            statusDiv.innerHTML = '<p>检查中...</p>';
+            
+            let html = '<h3>服务状态:</h3>';
+            
+            // 检查后端API
+            try {
+                const response = await fetch(`${API_URL}/api/v1/health`);
+                if (response.ok) {
+                    html += `<p>后端API: <span class="status online">在线</span> (${API_URL})</p>`;
+                } else {
+                    html += `<p>后端API: <span class="status offline">离线</span> (状态: ${response.status})</p>`;
+                }
+            } catch (error) {
+                html += `<p>后端API: <span class="status offline">离线</span> (错误: ${error.message})</p>`;
+            }
+
+            // 检查前端
+            try {
+                const response = await fetch(FRONTEND_URL);
+                if (response.ok) {
+                    html += `<p>前端: <span class="status online">在线</span> (${FRONTEND_URL})</p>`;
+                } else {
+                    html += `<p>前端: <span class="status offline">离线</span></p>`;
+                }
+            } catch (error) {
+                html += `<p>前端: <span class="status offline">离线</span> (错误: ${error.message})</p>`;
+            }
+
+            // 检查HEAD端点
+            try {
+                const response = await fetch(`${API_URL}/api/v1/login/access-token`, { method: 'HEAD' });
+                if (response.ok) {
+                    html += `<p>HEAD支持: <span class="status online">已支持</span></p>`;
+                } else {
+                    html += `<p>HEAD支持: <span class="status offline">不支持</span> (${response.status})</p>`;
+                }
+            } catch (error) {
+                html += `<p>HEAD支持: <span class="status offline">错误</span> (${error.message})</p>`;
+            }
+
+            statusDiv.innerHTML = html;
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            log('login-result', '正在测试登录...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/v1/login/access-token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        username: email,
+                        password: password
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log('login-result', `✅ 登录成功！\nToken: ${data.access_token.substring(0, 50)}...\n响应: ${JSON.stringify(data, null, 2)}`, 'success');
+                    
+                    // 自动设置cookie
+                    const maxAge = 60 * 60 * 24 * 7; // 7天
+                    document.cookie = `accessToken=${data.access_token}; path=/; max-age=${maxAge}`;
+                    document.cookie = `accessToken_ext=${data.access_token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+                    
+                } else {
+                    const errorText = await response.text();
+                    log('login-result', `❌ 登录失败 (${response.status}): ${errorText}`, 'error');
+                }
+            } catch (error) {
+                log('login-result', `❌ 网络错误: ${error.message}`, 'error');
+            }
+        }
+
+        async function testPostLogin() {
+            await testLogin();
+        }
+
+        async function testHeadLogin() {
+            log('login-result', '正在测试HEAD请求...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/v1/login/access-token`, {
+                    method: 'HEAD'
+                });
+
+                log('login-result', `HEAD请求结果: ${response.status} ${response.statusText}\n头部信息: ${JSON.stringify([...response.headers.entries()], null, 2)}`, 
+                    response.ok ? 'success' : 'error');
+            } catch (error) {
+                log('login-result', `❌ HEAD请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        function setCookies() {
+            const testToken = 'test-token-' + Date.now();
+            const maxAge = 60 * 60 * 24 * 7; // 7天
+            
+            document.cookie = `accessToken=${testToken}; path=/; max-age=${maxAge}`;
+            document.cookie = `accessToken_ext=${testToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
+            
+            log('cookie-result', `✅ 测试Cookie已设置:\naccessToken=${testToken}\naccessToken_ext=${testToken}`, 'success');
+        }
+
+        function checkCookies() {
+            const accessToken = getCookie('accessToken');
+            const accessTokenExt = getCookie('accessToken_ext');
+            
+            const result = `当前Cookie状态:\n` +
+                         `accessToken: ${accessToken || '未设置'}\n` +
+                         `accessToken_ext: ${accessTokenExt || '未设置'}\n\n` +
+                         `所有cookies: ${document.cookie || '无'}`;
+            
+            log('cookie-result', result, accessToken || accessTokenExt ? 'success' : 'warning');
+        }
+
+        function clearCookies() {
+            document.cookie = 'accessToken=; path=/; max-age=0';
+            document.cookie = 'accessToken_ext=; path=/; max-age=0';
+            
+            log('cookie-result', '✅ Cookie已清除', 'success');
+        }
+
+        async function simulateExtensionSync() {
+            log('sync-result', '模拟扩展同步过程...', 'info');
+            
+            const accessTokenExt = getCookie('accessToken_ext');
+            if (!accessTokenExt) {
+                log('sync-result', '❌ 未找到accessToken_ext cookie，请先登录或设置cookie', 'error');
+                return;
+            }
+            
+            log('sync-result', `📋 找到accessToken_ext: ${accessTokenExt.substring(0, 20)}...\n正在验证token...`, 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/v1/users/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessTokenExt}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    log('sync-result', `✅ 扩展同步成功！\n用户信息: ${JSON.stringify(userData, null, 2)}`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    log('sync-result', `❌ Token验证失败 (${response.status}): ${errorText}`, 'error');
+                }
+            } catch (error) {
+                log('sync-result', `❌ 同步过程中发生错误: ${error.message}`, 'error');
+            }
+        }
+
+        async function testTokenValidation() {
+            const token = getCookie('accessToken') || getCookie('accessToken_ext');
+            if (!token) {
+                log('sync-result', '❌ 未找到任何token，请先登录', 'error');
+                return;
+            }
+            
+            log('sync-result', '验证token有效性...', 'info');
+            
+            try {
+                // 测试HEAD请求
+                const headResponse = await fetch(`${API_URL}/api/v1/users/me`, {
+                    method: 'HEAD',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                log('sync-result', `HEAD验证结果: ${headResponse.status} ${headResponse.statusText}`, 
+                    headResponse.ok ? 'success' : 'error');
+                
+                // 测试GET请求
+                const getResponse = await fetch(`${API_URL}/api/v1/users/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (getResponse.ok) {
+                    const userData = await getResponse.json();
+                    log('sync-result', `✅ Token有效！\n用户: ${userData.email}\n完整信息: ${JSON.stringify(userData, null, 2)}`, 'success');
+                } else {
+                    log('sync-result', `❌ Token无效 (${getResponse.status})`, 'error');
+                }
+                
+            } catch (error) {
+                log('sync-result', `❌ 验证过程中发生错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 页面加载时自动检查服务状态
+        window.onload = function() {
+            checkServices();
+            checkCookies();
+        };
+    </script>
+</body>
+</html> 

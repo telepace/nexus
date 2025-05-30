@@ -45,6 +45,10 @@ function GoogleAuthCallbackContent() {
       const cookieValue = `accessToken=${token};path=/;max-age=${60 * 60 * 24 * 7}`;
       document.cookie = cookieValue;
 
+      // 为浏览器扩展设置一个额外的非httpOnly cookie
+      const extCookieValue = `accessToken_ext=${token};path=/;max-age=${60 * 60 * 24 * 7};SameSite=Lax`;
+      document.cookie = extCookieValue;
+
       setStatus("登录成功，正在跳转到仪表盘...");
 
       // 跳转到仪表盘

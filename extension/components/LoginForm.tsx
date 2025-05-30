@@ -7,21 +7,32 @@ interface LoginFormProps {
 
 export function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const { login, isLoading, error, syncFromWeb } = useAuth();
-  const [email, setEmail] = useState('test@example.com'); // 预填测试用户
-  const [password, setPassword] = useState('password'); // 预填测试用户密码
+  const [email, setEmail] = useState('admin@telepace.cc'); // 修改为实际存在的用户
+  const [password, setPassword] = useState('telepace'); // 修改为正确的密码
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
     setLoginError('');
+    setSuccessMessage('');
 
     try {
+      console.log('[LoginForm] 开始登录流程');
       await login(email, password);
-      onLoginSuccess?.();
+      console.log('[LoginForm] 登录成功');
+      setSuccessMessage('登录成功！');
+      
+      // 延迟一下以显示成功消息，然后执行回调
+      setTimeout(() => {
+        console.log('[LoginForm] 执行登录成功回调');
+        onLoginSuccess?.();
+      }, 500); // 减少延迟时间
     } catch (err) {
+      console.error('[LoginForm] 登录失败:', err);
       setLoginError(err instanceof Error ? err.message : '登录失败');
     } finally {
       setIsLoggingIn(false);
@@ -31,15 +42,26 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const handleSyncFromWeb = async () => {
     setIsSyncing(true);
     setLoginError('');
+    setSuccessMessage('');
 
     try {
+      console.log('[LoginForm] 开始从Web同步');
       const synced = await syncFromWeb();
+      console.log('[LoginForm] 同步结果:', synced);
+      
       if (synced) {
-        onLoginSuccess?.();
+        setSuccessMessage('同步成功！正在更新状态...');
+        
+        // 延迟一下以显示成功消息，然后执行回调
+        setTimeout(() => {
+          console.log('[LoginForm] 执行同步成功回调');
+          onLoginSuccess?.();
+        }, 500); // 减少延迟时间
       } else {
         setLoginError('未在网页中找到登录状态，请先在网页中登录');
       }
     } catch (err) {
+      console.error('[LoginForm] 同步失败:', err);
       setLoginError('同步失败：' + (err instanceof Error ? err.message : '未知错误'));
     } finally {
       setIsSyncing(false);
@@ -49,6 +71,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const openWebLogin = () => {
     const frontendUrl = process.env.PLASMO_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
     const loginUrl = `${frontendUrl}/login?extension_callback=true`;
+    console.log('[LoginForm] 打开Web登录页面:', loginUrl);
     chrome.tabs.create({ url: loginUrl });
   };
 
@@ -62,6 +85,12 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
       {(error || loginError) && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
           <p className="text-red-700 text-sm">{error?.message || loginError}</p>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+          <p className="text-green-700 text-sm">{successMessage}</p>
         </div>
       )}
 

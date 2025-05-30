@@ -155,6 +155,10 @@ export function useAuth(): AuthContextType {
       const cookieValue = `accessToken=${token};path=/;max-age=${60 * 60 * 24 * 7}`;
       document.cookie = cookieValue;
 
+      // 为浏览器扩展设置一个额外的非httpOnly cookie
+      const extCookieValue = `accessToken_ext=${token};path=/;max-age=${60 * 60 * 24 * 7};SameSite=Lax`;
+      document.cookie = extCookieValue;
+
       // 验证cookie是否设置成功
       const savedToken = getCookie("accessToken");
       console.log(
@@ -196,6 +200,10 @@ export function useAuth(): AuthContextType {
       // 设置cookie
       const cookieValue = `accessToken=${token};path=/;max-age=${60 * 60 * 24 * 7}`;
       document.cookie = cookieValue;
+
+      // 为浏览器扩展设置一个额外的非httpOnly cookie
+      const extCookieValue = `accessToken_ext=${token};path=/;max-age=${60 * 60 * 24 * 7};SameSite=Lax`;
+      document.cookie = extCookieValue;
 
       // 验证设置成功
       const savedToken = getCookie("accessToken");

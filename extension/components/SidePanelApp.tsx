@@ -4,7 +4,14 @@ import { LoginForm } from './LoginForm';
 import { DashboardView } from './DashboardView';
 
 export default function SidePanelApp() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, checkAuth } = useAuth();
+
+  // 登录成功后的回调函数
+  const handleLoginSuccess = async () => {
+    console.log('[SidePanelApp] 登录成功，重新检查认证状态');
+    // 强制重新检查认证状态以更新UI
+    await checkAuth();
+  };
 
   if (isLoading) {
     return (
@@ -17,13 +24,15 @@ export default function SidePanelApp() {
     );
   }
 
+  console.log('[SidePanelApp] 渲染状态 - user:', user ? 'logged in' : 'not logged in', 'isLoading:', isLoading);
+
   return (
     <div className="w-full min-h-screen bg-gray-50">
       {user ? (
         <DashboardView user={user} />
       ) : (
         <div className="p-4">
-          <LoginForm />
+          <LoginForm onLoginSuccess={handleLoginSuccess} />
         </div>
       )}
     </div>

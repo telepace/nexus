@@ -68,7 +68,7 @@
       "sidePanel"
     ],
     "content_security_policy": {
-      "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://localhost:8000 http://localhost:3000 https://* http://*;"
+      "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://localhost:8000 http://localhost:3000 http://127.0.0.1:8000 http://127.0.0.1:3000 https://* http://*;"
     },
     "side_panel": {
       "default_path": "sidepanel.html"
