@@ -275,6 +275,7 @@ class ConflictDetector:
     def scan_directory(self, directory: Path, patterns: List[str], max_depth: int = 2) -> List[str]:
         """扫描目录中匹配模式的文件"""
         found_files = []
+        resolved_paths = set()  # 用于去重，存储已解析的物理路径
         
         if not directory.exists():
             return found_files
@@ -283,29 +284,53 @@ class ConflictDetector:
             if current_depth > max_depth:
                 return
             
+            # 首先获取当前目录中实际存在的所有文件
+            try:
+                actual_files = {f.name: f for f in current_dir.iterdir() if f.is_file()}
+            except (OSError, PermissionError):
+                actual_files = {}
+            
             for pattern in patterns:
                 # 支持通配符匹配
                 if "/" in pattern:
                     # 相对路径模式
                     file_path = current_dir / pattern
                     if file_path.exists() and not self._should_ignore_file(file_path):
-                        found_files.append(str(file_path.relative_to(self.project_root)))
+                        resolved_path = file_path.resolve()
+                        if resolved_path not in resolved_paths:
+                            resolved_paths.add(resolved_path)
+                            # 找到实际的文件名
+                            for actual_name, actual_file in actual_files.items():
+                                if actual_file.resolve() == resolved_path:
+                                    found_files.append(str(actual_file.relative_to(self.project_root)))
+                                    break
                 else:
                     # 文件名模式 - 支持通配符
                     if "*" in pattern:
                         for file_path in current_dir.glob(pattern):
                             if file_path.is_file() and not self._should_ignore_file(file_path):
-                                found_files.append(str(file_path.relative_to(self.project_root)))
+                                resolved_path = file_path.resolve()
+                                if resolved_path not in resolved_paths:
+                                    resolved_paths.add(resolved_path)
+                                    found_files.append(str(file_path.relative_to(self.project_root)))
                     else:
-                        file_path = current_dir / pattern
-                        if file_path.exists() and not self._should_ignore_file(file_path):
-                            found_files.append(str(file_path.relative_to(self.project_root)))
+                        # 直接文件名匹配 - 只检查实际存在的文件
+                        for actual_name, actual_file in actual_files.items():
+                            if actual_name == pattern:
+                                resolved_path = actual_file.resolve()
+                                if resolved_path not in resolved_paths:
+                                    resolved_paths.add(resolved_path)
+                                    found_files.append(str(actual_file.relative_to(self.project_root)))
+                                break
             
             # 递归扫描子目录
             if current_depth < max_depth:
-                for subdir in current_dir.iterdir():
-                    if subdir.is_dir() and not self._should_ignore_file(subdir):
-                        _scan_recursive(subdir, current_depth + 1)
+                try:
+                    for subdir in current_dir.iterdir():
+                        if subdir.is_dir() and not self._should_ignore_file(subdir):
+                            _scan_recursive(subdir, current_depth + 1)
+                except (OSError, PermissionError):
+                    pass
         
         _scan_recursive(directory, 0)
         return found_files

@@ -12,6 +12,8 @@ import type {
   LoginLoginAccessTokenData,
   LoginLoginAccessTokenError,
   LoginLoginAccessTokenResponse,
+  LoginLoginAccessTokenHeadError,
+  LoginLoginAccessTokenHeadResponse,
   LoginTestTokenError,
   LoginTestTokenResponse,
   LoginLogoutError,
@@ -35,6 +37,8 @@ import type {
   UsersReadUserMeResponse,
   UsersDeleteUserMeError,
   UsersDeleteUserMeResponse,
+  UsersReadUserMeHeadError,
+  UsersReadUserMeHeadResponse,
   UsersUpdateUserMeData,
   UsersUpdateUserMeError,
   UsersUpdateUserMeResponse,
@@ -202,6 +206,24 @@ export const loginLoginAccessToken = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Login Access Token Head
+ * HEAD request for login endpoint - used by browser extensions to check API availability
+ * Returns basic headers without body
+ */
+export const loginLoginAccessTokenHead = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).head<
+    LoginLoginAccessTokenHeadResponse,
+    LoginLoginAccessTokenHeadError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/login/access-token",
+  });
+};
+
+/**
  * Test Token
  * Test access token
  */
@@ -355,6 +377,24 @@ export const usersDeleteUserMe = <ThrowOnError extends boolean = false>(
   return (options?.client ?? client).delete<
     UsersDeleteUserMeResponse,
     UsersDeleteUserMeError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/users/me",
+  });
+};
+
+/**
+ * Read User Me Head
+ * HEAD request for user info endpoint - used by browser extensions to check token validity
+ * Returns headers without body
+ */
+export const usersReadUserMeHead = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).head<
+    UsersReadUserMeHeadResponse,
+    UsersReadUserMeHeadError,
     ThrowOnError
   >({
     ...options,

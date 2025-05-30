@@ -132,7 +132,7 @@ def read_user_me(current_user: CurrentUser) -> Any:
 
 
 @router.head("/me")
-def read_user_me_head(current_user: CurrentUser) -> dict:
+def read_user_me_head(_current_user: CurrentUser) -> dict[str, Any]:
     """
     HEAD request for user info endpoint - used by browser extensions to check token validity
     Returns headers without body
