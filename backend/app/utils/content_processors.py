@@ -242,7 +242,7 @@ class JinaProcessor(ProcessingStep):
 class MarkItDownProcessor(ProcessingStep):
     """Core processor using Microsoft MarkItDown for file conversion."""
 
-    def __init__(self, llm_client=None, llm_model="gpt-4o"):
+    def __init__(self, llm_client: Any = None, llm_model: str = "gpt-4o") -> None:
         """Initialize with optional LLM client for image processing."""
         if llm_client:
             self.markitdown = MarkItDown(llm_client=llm_client, llm_model=llm_model)

@@ -208,18 +208,21 @@ export function MarkdownRenderer({
               {children}
             </a>
           ),
-          img: ({ src, alt, ...props }) => (
-            <OptimizedImage
-              src={src || ""}
-              alt={alt || ""}
-              className="rounded-md border w-full h-auto object-contain max-w-full block mx-auto"
-              loading="lazy"
-              style={{ aspectRatio: "auto", maxHeight: "80vh" }}
-              objectFit="contain"
-              preserveAspectRatio={true}
-              {...props}
-            />
-          ),
+          img: ({ src, alt }) => {
+            // 过滤掉不兼容的属性，只保留OptimizedImage需要的属性
+            const optimizedImageProps = {
+              src: typeof src === "string" ? src : "",
+              alt: alt || "",
+              className:
+                "rounded-md border w-full h-auto object-contain max-w-full block mx-auto",
+              loading: "lazy" as const,
+              style: { aspectRatio: "auto", maxHeight: "80vh" },
+              objectFit: "contain" as const,
+              preserveAspectRatio: true,
+            };
+
+            return <OptimizedImage {...optimizedImageProps} />;
+          },
           hr: ({ ...props }) => <hr className="my-4 md:my-8" {...props} />,
         }}
       >
