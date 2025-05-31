@@ -165,10 +165,9 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
 
     return (
       <Avatar className="h-32 w-32">
-        <AvatarImage
-          src={user.avatar_url || ""}
-          alt={user.full_name || "User"}
-        />
+        {user.avatar_url ? (
+          <AvatarImage src={user.avatar_url} alt={user.full_name || "User"} />
+        ) : null}
         <AvatarFallback className="text-2xl">{getInitials()}</AvatarFallback>
       </Avatar>
     );

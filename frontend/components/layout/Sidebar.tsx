@@ -65,7 +65,7 @@ export const Sidebar: FC<SidebarProps> = ({ collapsed, onToggleCollapse }) => {
             <Image
               src="/images/vinta.png"
               alt="Nexus Logo"
-              className="object-cover"
+              className="object-contain"
               width={32}
               height={32}
             />
