@@ -1,9 +1,13 @@
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from pydantic import EmailStr
 from sqlalchemy import String
 from sqlmodel import Column, Field, Relationship, SQLModel
+
+if TYPE_CHECKING:
+    from app.models.image import Image
 
 
 # Shared properties
@@ -62,6 +66,14 @@ class User(UserBase, table=True):
             "cascade": "all, delete-orphan",
             "primaryjoin": "User.id == Item.owner_id",
             "foreign_keys": "[Item.owner_id]",
+        },
+    )
+    images: list["Image"] = Relationship(
+        back_populates="owner",
+        sa_relationship_kwargs={
+            "cascade": "all, delete-orphan",
+            "primaryjoin": "User.id == Image.owner_id",
+            "foreign_keys": "[Image.owner_id]",
         },
     )
 

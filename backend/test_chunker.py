@@ -3,6 +3,7 @@
 
 from app.utils.content_chunker import ContentChunker
 
+
 def test_chunker():
     content = '''# Test Document
 
@@ -44,10 +45,10 @@ Final section with conclusion.
 
     chunker = ContentChunker(max_chunk_size=300)
     chunks = chunker.chunk_markdown_content(content)
-    
+
     print(f'Generated {len(chunks)} chunks:')
     print('=' * 50)
-    
+
     for i, chunk in enumerate(chunks):
         print(f'Chunk {i + 1}:')
         print(f'  Type: {chunk.chunk_type}')
@@ -58,4 +59,4 @@ Final section with conclusion.
         print('-' * 30)
 
 if __name__ == "__main__":
-    test_chunker() 
+    test_chunker()

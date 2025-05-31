@@ -1,188 +1,263 @@
+import re  # For Markdown image processing
 import uuid
 from collections.abc import Sequence
 from typing import Any
 
-from sqlmodel import Session, func, select
+from sqlalchemy import func  # For count
+from sqlalchemy.ext.asyncio import AsyncSession  # Changed from sqlmodel.Session
+from sqlalchemy.future import select  # For async select
+from sqlmodel import Session  # Add this for sync operations
 
+from app.core.storage import StorageInterface
+from app.crud import crud_image  # crud_image module itself
 from app.models.content import ContentAsset, ContentChunk, ContentItem
 
-# Placeholder schemas (can be replaced by actual schemas from app.schemas later)
-# For simplicity in this task, we'll use the main model types for creation/update inputs.
-# If ContentItemCreate, ContentItemUpdate etc. schemas were defined, they would be imported here.
-# e.g. from app.schemas.content import ContentItemCreate, ContentItemUpdate
+# Schema imports - assuming these exist
+from app.schemas.content import ContentItemCreate, ContentItemUpdate
+from app.schemas.image import ImageCreate
 
-# CRUD for ContentItem
+# Image processing imports
+from app.utils.image_processor import process_base64_image, process_web_image
 
 
-def get_content_item(session: Session, id: uuid.UUID) -> ContentItem | None:
+# Helper function to process images in Markdown
+async def _process_markdown_images(
+    db: AsyncSession,
+    content_markdown: str,
+    owner_id: uuid.UUID,
+    storage_service: StorageInterface,
+) -> str:
     """
-    Retrieves a ContentItem by its unique ID.
-
-    Args:
-        session: The database session.
-        id: The UUID of the ContentItem to retrieve.
-
-    Returns:
-        The ContentItem object if found, otherwise None.
+    Finds all Markdown image links, processes them (stores if base64 or new web URL if strategy requires),
+    creates Image records, and updates the Markdown with new URLs if applicable.
     """
-    return session.get(ContentItem, id)
+    if not content_markdown:
+        return ""
+
+    # Regex to find Markdown images: ![alt_text](url)
+    # Using finditer to handle replacements carefully, especially with async calls
+    image_pattern = re.compile(r"!\[(?P<alt_text>.*?)\]\((?P<url>.*?)\)")
+
+    processed_parts = []
+    last_end = 0
+
+    for match in image_pattern.finditer(content_markdown):
+        alt_text = match.group("alt_text")
+        url = match.group("url")
+        original_markdown_image = match.group(0)
+
+        # Add the text part before this match
+        processed_parts.append(content_markdown[last_end : match.start()])
+
+        new_image_markdown = (
+            original_markdown_image  # Default to original if processing fails
+        )
+
+        try:
+            image_schema: ImageCreate | None = None
+            if url.startswith("data:image"):
+                image_schema = await process_base64_image(
+                    base64_string=url, user_id=owner_id, storage=storage_service
+                )
+            elif url.startswith("http://") or url.startswith("https://"):
+                # Check if URL is already one of our own public URLs to avoid reprocessing
+                # This check is basic; might need refinement based on actual public URL structure
+                if storage_service.public_url and url.startswith(
+                    storage_service.public_url
+                ):  # type: ignore
+                    # Already a processed image, try to find its record or just keep it
+                    # For now, just keep it to prevent loops. A more robust check would be needed.
+                    pass  # Keep new_image_markdown = original_markdown_image
+                else:
+                    image_schema = await process_web_image(
+                        image_url=url,
+                        strategy="keep_link",  # Default strategy as per subtask focus
+                        user_id=owner_id,
+                        storage=storage_service,
+                    )
+
+            if image_schema:
+                # Create the Image DB record
+                # Ensure s3_key is set if it's None and type demands it (e.g. stored_base64)
+                # The process_base64_image and process_web_image (download strategy) should set s3_key.
+                # For "keep_link", s3_key is None, which is now allowed by ImageCreate.
+                db_image = await crud_image.create_image(
+                    db=db, obj_in=image_schema, owner_id=owner_id
+                )
+
+                if db_image.s3_key:  # Image was stored (base64 or downloaded web image)
+                    final_url = await storage_service.get_public_url(db_image.s3_key)
+                    new_image_markdown = f"![{alt_text}]({final_url})"
+                elif (
+                    db_image.source_url
+                ):  # Image is linked (web image with keep_link strategy)
+                    new_image_markdown = f"![{alt_text}]({db_image.source_url})"
+                # If somehow no URL, it defaults to original_markdown_image
+        except Exception:
+            # Log error: print(f"Error processing image {url}: {e}")
+            # Keep original markdown for this image if processing fails
+            pass  # new_image_markdown remains original_markdown_image
+
+        processed_parts.append(new_image_markdown)
+        last_end = match.end()
+
+    # Add the remaining part of the markdown string
+    processed_parts.append(content_markdown[last_end:])
+
+    return "".join(processed_parts)
 
 
-def get_content_items(
-    session: Session, skip: int = 0, limit: int = 100, user_id: uuid.UUID | None = None
+# CRUD for ContentItem (now async)
+
+
+async def get_content_item(db: AsyncSession, id: uuid.UUID) -> ContentItem | None:
+    result = await db.execute(select(ContentItem).where(ContentItem.id == id))
+    return result.scalar_one_or_none()
+
+
+async def get_content_items(
+    db: AsyncSession, skip: int = 0, limit: int = 100, user_id: uuid.UUID | None = None
 ) -> Sequence[ContentItem]:
-    """
-    Retrieves a list of ContentItem objects, with optional pagination and user filtering.
-
-    Args:
-        session: The database session.
-        skip: The number of items to skip (for pagination).
-        limit: The maximum number of items to return (for pagination).
-        user_id: Optional UUID of the user to filter ContentItems by.
-
-    Returns:
-        A sequence of ContentItem objects.
-    """
     statement = select(ContentItem)
     if user_id:
         statement = statement.where(ContentItem.user_id == user_id)
     statement = statement.offset(skip).limit(limit)
-    items = session.exec(statement).all()
-    return items
+    result = await db.execute(statement)
+    return result.scalars().all()
 
 
-def create_content_item(session: Session, content_item_in: ContentItem) -> ContentItem:
-    """
-    Creates a new ContentItem in the database.
+# Synchronous versions for routes compatibility
+def get_content_item_sync(session: Session, id: uuid.UUID) -> ContentItem | None:
+    return session.get(ContentItem, id)
 
-    Args:
-        session: The database session.
-        content_item_in: The ContentItem model instance with data for the new item.
-                         It's assumed that this instance has already been validated if created
-                         from a schema (e.g., ContentItemCreate).
 
-    Returns:
-        The newly created and refreshed ContentItem object.
-    """
-    db_content_item = ContentItem.model_validate(
-        content_item_in
-    )  # Ensure it's a valid model instance
-    session.add(db_content_item)
+def get_content_items_sync(
+    session: Session, skip: int = 0, limit: int = 100, user_id: uuid.UUID | None = None
+) -> Sequence[ContentItem]:
+    statement = select(ContentItem)
+    if user_id:
+        statement = statement.where(ContentItem.user_id == user_id)
+    statement = statement.offset(skip).limit(limit)
+    result = session.exec(statement)
+    return result.all()
+
+
+def create_content_item_sync(
+    session: Session,
+    *,
+    content_item_in: ContentItem,  # Accept ContentItem model directly
+) -> ContentItem:
+    session.add(content_item_in)
     session.commit()
-    session.refresh(db_content_item)
+    session.refresh(content_item_in)
+    return content_item_in
+
+
+async def create_content_item(
+    db: AsyncSession,
+    *,
+    content_item_in: ContentItemCreate,  # Use Pydantic schema for creation
+    owner_id: uuid.UUID,  # Explicitly pass owner_id
+    storage_service: StorageInterface,
+) -> ContentItem:
+    processed_markdown = ""
+    # Use content_text as confirmed from schema and model
+    if content_item_in.content_text:
+        processed_markdown = await _process_markdown_images(
+            db=db,
+            content_markdown=content_item_in.content_text,
+            owner_id=owner_id,
+            storage_service=storage_service,
+        )
+
+    # Create a dictionary for ContentItem creation, excluding fields not in the model
+    content_data = content_item_in.model_dump(exclude_unset=True)
+    content_data["content_text"] = processed_markdown  # Use processed markdown
+    content_data["user_id"] = owner_id  # Set user_id (owner_id)
+
+    # Ensure all required fields for ContentItem are present
+    # Example: title might be required by ContentItem but optional in ContentItemCreate
+    if "title" not in content_data or content_data["title"] is None:
+        content_data["title"] = (
+            "Untitled Content"  # Provide a default or handle as error
+        )
+
+    db_content_item = ContentItem(**content_data)
+
+    db.add(db_content_item)
+    await db.commit()
+    await db.refresh(db_content_item)
     return db_content_item
 
 
-def update_content_item(
-    session: Session,
+async def update_content_item(
+    db: AsyncSession,
+    *,
     db_content_item: ContentItem,
-    content_item_in: Any,
-    # content_item_in could be ContentItemUpdate schema or Dict[str, Any]
+    content_item_in: ContentItemUpdate,  # Use Pydantic schema for update
+    owner_id: uuid.UUID,  # Needed for _process_markdown_images if content changes
+    storage_service: StorageInterface,
 ) -> ContentItem:
-    """
-    Updates an existing ContentItem in the database.
+    update_data = content_item_in.model_dump(exclude_unset=True)
 
-    Args:
-        session: The database session.
-        db_content_item: The existing ContentItem model instance to update.
-        content_item_in: An object containing the fields to update. This can be a Pydantic
-                         model (e.g., ContentItemUpdate) or a dictionary.
-
-    Returns:
-        The updated and refreshed ContentItem object.
-    """
-    if isinstance(content_item_in, dict):
-        update_data = content_item_in
-    else:  # Assumes Pydantic model
-        update_data = content_item_in.model_dump(exclude_unset=True)
+    # Use content_text as confirmed from schema and model
+    if "content_text" in update_data and update_data["content_text"] is not None:
+        processed_markdown = await _process_markdown_images(
+            db=db,
+            content_markdown=update_data["content_text"],
+            owner_id=owner_id,  # Assuming owner_id of content item doesn't change
+            storage_service=storage_service,
+        )
+        update_data["content_text"] = processed_markdown
 
     for key, value in update_data.items():
         setattr(db_content_item, key, value)
 
-    session.add(db_content_item)
-    session.commit()
-    session.refresh(db_content_item)
+    db.add(db_content_item)
+    await db.commit()
+    await db.refresh(db_content_item)
     return db_content_item
 
 
-def delete_content_item(session: Session, id: uuid.UUID) -> ContentItem | None:
-    """
-    Deletes a ContentItem from the database by its ID.
-
-    Args:
-        session: The database session.
-        id: The UUID of the ContentItem to delete.
-
-    Returns:
-        The deleted ContentItem object if found and deleted, otherwise None.
-    """
-    db_content_item = session.get(ContentItem, id)
+async def delete_content_item(db: AsyncSession, id: uuid.UUID) -> ContentItem | None:
+    db_content_item = await get_content_item(db, id)  # Use async version
     if db_content_item:
-        session.delete(db_content_item)
-        session.commit()
+        await db.delete(db_content_item)
+        await db.commit()
         return db_content_item
     return None
 
 
-# CRUD for ContentAsset
+# CRUD for ContentAsset (keeping sync for now, unless required to be async)
+# If ContentAsset operations need to be part of the same transaction or involve async calls,
+# they should also be converted to async. For this subtask, focus is on ContentItem.
 
 
 def get_content_asset(session: Session, id: uuid.UUID) -> ContentAsset | None:
-    """
-    Retrieves a ContentAsset by its unique ID.
-
-    Args:
-        session: The database session.
-        id: The UUID of the ContentAsset to retrieve.
-
-    Returns:
-        The ContentAsset object if found, otherwise None.
-    """
     return session.get(ContentAsset, id)
 
 
 def get_content_assets_by_item_id(
     session: Session, content_item_id: uuid.UUID, skip: int = 0, limit: int = 100
 ) -> Sequence[ContentAsset]:
-    """
-    Retrieves a list of ContentAsset objects associated with a specific ContentItem,
-    with optional pagination.
-
-    Args:
-        session: The database session.
-        content_item_id: The UUID of the parent ContentItem.
-        skip: The number of assets to skip (for pagination).
-        limit: The maximum number of assets to return (for pagination).
-
-    Returns:
-        A sequence of ContentAsset objects.
-    """
     statement = (
-        select(ContentAsset)
+        select(
+            ContentAsset
+        )  # This select is sqlalchemy.future.select, might need adjustment if session is not AsyncSession
         .where(ContentAsset.content_item_id == content_item_id)
         .offset(skip)
         .limit(limit)
     )
-    assets = session.exec(statement).all()
+    # If session is sqlmodel.Session, session.exec(statement).all() is correct.
+    # If this part were async with AsyncSession, it'd be await session.execute(statement)
+    assets = session.exec(statement).all()  # type: ignore
     return assets
 
 
 def create_content_asset(
     session: Session, content_asset_in: ContentAsset
 ) -> ContentAsset:
-    """
-    Creates a new ContentAsset in the database.
-
-    Args:
-        session: The database session.
-        content_asset_in: The ContentAsset model instance with data for the new asset.
-
-    Returns:
-        The newly created and refreshed ContentAsset object.
-    """
-    db_content_asset = ContentAsset.model_validate(
-        content_asset_in
-    )  # Ensure valid model instance
+    db_content_asset = ContentAsset.model_validate(content_asset_in)
     session.add(db_content_asset)
     session.commit()
     session.refresh(db_content_asset)
@@ -193,23 +268,10 @@ def update_content_asset(
     session: Session,
     db_content_asset: ContentAsset,
     content_asset_in: Any,
-    # content_asset_in could be ContentAssetUpdate schema or Dict[str, Any]
 ) -> ContentAsset:
-    """
-    Updates an existing ContentAsset in the database.
-
-    Args:
-        session: The database session.
-        db_content_asset: The existing ContentAsset model instance to update.
-        content_asset_in: An object containing the fields to update. This can be a Pydantic
-                         model or a dictionary.
-
-    Returns:
-        The updated and refreshed ContentAsset object.
-    """
     if isinstance(content_asset_in, dict):
         update_data = content_asset_in
-    else:  # Assumes Pydantic model
+    else:
         update_data = content_asset_in.model_dump(exclude_unset=True)
 
     for key, value in update_data.items():
@@ -222,16 +284,6 @@ def update_content_asset(
 
 
 def delete_content_asset(session: Session, id: uuid.UUID) -> ContentAsset | None:
-    """
-    Deletes a ContentAsset from the database by its ID.
-
-    Args:
-        session: The database session.
-        id: The UUID of the ContentAsset to delete.
-
-    Returns:
-        The deleted ContentAsset object if found and deleted, otherwise None.
-    """
     db_content_asset = session.get(ContentAsset, id)
     if db_content_asset:
         session.delete(db_content_asset)
@@ -240,119 +292,113 @@ def delete_content_asset(session: Session, id: uuid.UUID) -> ContentAsset | None
     return None
 
 
+# ContentChunk functions are more complex and might require separate async conversion
+# For now, keeping them as synchronous, assuming they are called in a context
+# that can bridge sync/async if needed, or they are not directly affected by this change.
+
+
 def get_content_chunks(
     session: Session, content_item_id: uuid.UUID, page: int = 1, size: int = 10
 ) -> tuple[list[ContentChunk], int]:
-    """
-    Get content chunks for a content item with pagination.
-
-    Args:
-        session: Database session
-        content_item_id: ID of the content item
-        page: Page number (1-based)
-        size: Number of chunks per page
-
-    Returns:
-        Tuple of (chunks, total_count)
-    """
     offset = (page - 1) * size
-
-    # Get total count
-    total_count = session.exec(
-        select(func.count())
+    total_count_statement = (
+        select(func.count())  # type: ignore
         .select_from(ContentChunk)
         .where(ContentChunk.content_item_id == content_item_id)
-    ).one()
+    )
+    total_count = session.exec(total_count_statement).one()  # type: ignore
 
-    # Get chunks for the page
-    chunks = session.exec(
-        select(ContentChunk)
+    chunks_statement = (
+        select(ContentChunk)  # type: ignore
         .where(ContentChunk.content_item_id == content_item_id)
         .order_by(ContentChunk.chunk_index)  # type: ignore[arg-type]
         .offset(offset)
         .limit(size)
-    ).all()
-
-    return list(chunks), total_count
-
-
-def get_content_chunk_by_index(
-    session: Session, content_item_id: uuid.UUID, chunk_index: int
-) -> ContentChunk | None:
-    """
-    Get a specific content chunk by its index.
-
-    Args:
-        session: Database session
-        content_item_id: ID of the content item
-        chunk_index: Index of the chunk
-
-    Returns:
-        ContentChunk or None if not found
-    """
-    return session.exec(
-        select(ContentChunk).where(
-            ContentChunk.content_item_id == content_item_id,
-            ContentChunk.chunk_index == chunk_index,
-        )
-    ).first()
+    )
+    chunks = session.exec(chunks_statement).all()  # type: ignore
+    return list(chunks), total_count  # type: ignore
 
 
-def delete_content_chunks(session: Session, content_item_id: uuid.UUID) -> int:
-    """
-    Delete all content chunks for a content item.
-
-    Args:
-        session: Database session
-        content_item_id: ID of the content item
-
-    Returns:
-        Number of deleted chunks
-    """
-    chunks = session.exec(
-        select(ContentChunk).where(ContentChunk.content_item_id == content_item_id)
-    ).all()
-
-    count = len(chunks)
-    for chunk in chunks:
-        session.delete(chunk)
-
-    return count
-
-
+# Get content chunks summary
 def get_content_chunks_summary(
     session: Session, content_item_id: uuid.UUID
-) -> dict[str, int]:
+) -> dict[str, Any]:
     """
-    Get summary information about content chunks.
+    Get a summary of content chunks for a content item, including total count and metadata.
 
     Args:
         session: Database session
         content_item_id: ID of the content item
 
     Returns:
-        Dictionary with chunk statistics
+        Dictionary with summary information
     """
-    result: Any = session.exec(
-        select(
-            func.count().label("total_chunks"),
-            func.sum(ContentChunk.word_count).label("total_words"),
-            func.sum(ContentChunk.char_count).label("total_chars"),
-            func.max(ContentChunk.chunk_index).label("max_index"),
+    # Get total count of chunks
+    total_chunks = (
+        session.query(func.count(ContentChunk.id))
+        .filter(ContentChunk.content_item_id == content_item_id)
+        .scalar()
+        or 0
+    )
+
+    # Get first and last chunk for metadata if chunks exist
+    first_chunk = None
+    last_chunk = None
+
+    if total_chunks > 0:
+        first_chunk = (
+            session.query(ContentChunk)
+            .filter(ContentChunk.content_item_id == content_item_id)
+            .order_by(ContentChunk.position)
+            .first()
         )
-        .select_from(ContentChunk)
-        .where(ContentChunk.content_item_id == content_item_id)
-    ).first()
 
-    if not result:
-        return {"total_chunks": 0, "total_words": 0, "total_chars": 0, "max_index": -1}
+        last_chunk = (
+            session.query(ContentChunk)
+            .filter(ContentChunk.content_item_id == content_item_id)
+            .order_by(ContentChunk.position.desc())
+            .first()
+        )
 
-    return {
-        "total_chunks": result.total_chunks or 0,
-        "total_words": result.total_words or 0,
-        "total_chars": result.total_chars or 0,
-        "max_index": result.max_index or -1,
+    # Build summary response
+    summary = {
+        "total_chunks": total_chunks,
+        "has_chunks": total_chunks > 0,
+        "first_chunk_position": first_chunk.position if first_chunk else None,
+        "last_chunk_position": last_chunk.position if last_chunk else None,
+        "content_item_id": str(content_item_id),
     }
 
+    return summary
 
-print("CRUD functions for ContentItem and ContentAsset implemented.")
+
+def update_content_item_sync(
+    session: Session,
+    *,
+    db_content_item: ContentItem,
+    content_item_in: dict | Any,  # Accept dict or Pydantic model
+) -> ContentItem:
+    if isinstance(content_item_in, dict):
+        update_data = content_item_in
+    else:
+        update_data = content_item_in.model_dump(exclude_unset=True)
+
+    for key, value in update_data.items():
+        setattr(db_content_item, key, value)
+
+    session.add(db_content_item)
+    session.commit()
+    session.refresh(db_content_item)
+    return db_content_item
+
+
+def delete_content_item_sync(session: Session, id: uuid.UUID) -> ContentItem | None:
+    db_content_item = get_content_item_sync(session, id)
+    if db_content_item:
+        session.delete(db_content_item)
+        session.commit()
+        return db_content_item
+    return None
+
+
+# print("CRUD functions for ContentItem and ContentAsset potentially modified for async and image processing.")

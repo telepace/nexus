@@ -186,9 +186,9 @@ class TestContentProcessingAPI:
         content_id = extract_content_id(content_item)
 
         # Manually update status to completed
-        from app.crud.crud_content import get_content_item
+        from app.crud.crud_content import get_content_item_sync
 
-        item = get_content_item(db, uuid.UUID(content_id))
+        item = get_content_item_sync(db, uuid.UUID(content_id))
         item.processing_status = "completed"
         db.add(item)
         db.commit()

@@ -46,6 +46,13 @@ class StorageInterface(abc.ABC):
         """
         pass
 
+    @abc.abstractmethod
+    async def get_presigned_url(self, blob_name: str, content_type: str) -> str:
+        """
+        Generates a presigned URL for uploading a file.
+        """
+        pass
+
 
 class MockStorage(StorageInterface):
     """
@@ -109,6 +116,28 @@ class MockStorage(StorageInterface):
             logger.warning(
                 f"Mock Delete: File '{blob_name}' not found in mock_db. No action taken."
             )
+
+    async def get_presigned_url(self, blob_name: str, content_type: str) -> str:
+        url = f"mock_presigned_url/{self.bucket_name}/{blob_name}?content_type={content_type}"
+        logger.info(
+            f"Mock Get Presigned URL: Presigned URL for '{blob_name}' with content_type '{content_type}' is {url}"
+        )
+        return url
+
+
+# Factory function to get the appropriate storage implementation
+def get_storage() -> StorageInterface:
+    """Get the storage service implementation based on configuration.
+
+    Currently returns a MockStorage instance, but in production this would
+    return the appropriate storage implementation based on configuration.
+
+    Returns:
+        StorageInterface: The storage service implementation
+    """
+    # TODO: In production, choose the appropriate storage implementation based on configuration
+    # For now, return a MockStorage instance
+    return MockStorage()
 
 
 print("StorageInterface and MockStorage created in backend/app/core/storage.py")

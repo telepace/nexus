@@ -15,6 +15,9 @@ from sqlmodel import Session, select
 from app.core.security import get_password_hash, verify_password
 from app.models import Item, TokenBlacklist, User
 
+# Import from crud_image.py
+from . import crud_image
+
 # Import from crud_content.py
 from .crud_content import (
     create_content_item,
@@ -436,4 +439,12 @@ __all__ = [
     "create_content_item",
     "get_content_item",
     "get_content_items",
+    # Image CRUD operations
+    "crud_image",  # Add the module itself for access like crud.crud_image.create_image
+    # Or list individual functions if preferred:
+    # "create_image",
+    # "get_image",
+    # "get_multi_images_by_owner",
+    # "update_image",
+    # "remove_image",
 ]

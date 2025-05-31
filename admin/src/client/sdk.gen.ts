@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ContentCreateContentItemEndpointData, ContentCreateContentItemEndpointResponse, ContentProcessContentItemEndpointData, ContentProcessContentItemEndpointResponse, ContentListContentItemsEndpointData, ContentListContentItemsEndpointResponse, ContentGetContentItemEndpointData, ContentGetContentItemEndpointResponse, ContentGetContentMarkdownEndpointData, ContentGetContentMarkdownEndpointResponse, ContentGetSupportedProcessorsResponse, ContentGetContentChunksEndpointData, ContentGetContentChunksEndpointResponse, ContentGetContentChunksSummaryEndpointData, ContentGetContentChunksSummaryEndpointResponse, ContentAnalyzeContentStreamData, ContentAnalyzeContentStreamResponse, GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LlmCreateCompletionData, LlmCreateCompletionResponse, LlmCreateEmbeddingData, LlmCreateEmbeddingResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginLoginAccessTokenHeadResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, PromptsTogglePromptEnabledData, PromptsTogglePromptEnabledResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersReadUserMeHeadResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { ContentCreateContentItemEndpointData, ContentCreateContentItemEndpointResponse, ContentProcessContentItemEndpointData, ContentProcessContentItemEndpointResponse, ContentListContentItemsEndpointData, ContentListContentItemsEndpointResponse, ContentGetContentItemEndpointData, ContentGetContentItemEndpointResponse, ContentGetContentMarkdownEndpointData, ContentGetContentMarkdownEndpointResponse, ContentGetSupportedProcessorsResponse, ContentGetContentChunksEndpointData, ContentGetContentChunksEndpointResponse, ContentGetContentChunksSummaryEndpointData, ContentGetContentChunksSummaryEndpointResponse, ContentAnalyzeContentStreamData, ContentAnalyzeContentStreamResponse, GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ImagesGetUploadUrlData, ImagesGetUploadUrlResponse, ImagesCreateImageRecordData, ImagesCreateImageRecordResponse, ImagesListImagesData, ImagesListImagesResponse, ImagesReadImageData, ImagesReadImageResponse, ImagesDeleteImageData, ImagesDeleteImageResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LlmCreateCompletionData, LlmCreateCompletionResponse, LlmCreateEmbeddingData, LlmCreateEmbeddingResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginLoginAccessTokenHeadResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, PromptsTogglePromptEnabledData, PromptsTogglePromptEnabledResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersReadUserMeHeadResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class ContentService {
     /**
@@ -291,6 +291,119 @@ export class HealthService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/health'
+        });
+    }
+    
+}
+
+export class ImagesService {
+    /**
+     * Get a presigned URL for uploading a file to S3/R2-compatible storage.
+     * Get a presigned URL that can be used to upload a file directly to the storage.
+     * The `s3_key` returned is the path in the bucket where the file should be uploaded.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns PresignedURLResponse Successful Response
+     * @throws ApiError
+     */
+    public static getUploadUrl(data: ImagesGetUploadUrlData): CancelablePromise<ImagesGetUploadUrlResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/images/upload-url',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create a new image record.
+     * After uploading a file using a presigned URL, call this endpoint to create the image metadata in the database.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns ImageResponse Successful Response
+     * @throws ApiError
+     */
+    public static createImageRecord(data: ImagesCreateImageRecordData): CancelablePromise<ImagesCreateImageRecordResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/images/',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * List images for the current user.
+     * Retrieve a list of images owned by the current user.
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns ImageResponse Successful Response
+     * @throws ApiError
+     */
+    public static listImages(data: ImagesListImagesData = {}): CancelablePromise<ImagesListImagesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/images/',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get an image by its ID.
+     * Get a specific image by its ID.
+     * Users can only retrieve images they own.
+     * @param data The data for the request.
+     * @param data.imageId
+     * @returns ImageResponse Successful Response
+     * @throws ApiError
+     */
+    public static readImage(data: ImagesReadImageData): CancelablePromise<ImagesReadImageResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/images/{image_id}',
+            path: {
+                image_id: data.imageId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete an image.
+     * Delete an image:
+     * - Deletes the file from S3/R2 storage.
+     * - Deletes the image metadata from the database.
+     * Users can only delete images they own.
+     * @param data The data for the request.
+     * @param data.imageId
+     * @returns ImageResponse Successful Response
+     * @throws ApiError
+     */
+    public static deleteImage(data: ImagesDeleteImageData): CancelablePromise<ImagesDeleteImageResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/images/{image_id}',
+            path: {
+                image_id: data.imageId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
         });
     }
     

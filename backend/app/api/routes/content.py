@@ -19,17 +19,17 @@ from app.api.deps import CurrentUser, SessionDep, get_current_user, get_db
 from app.base import User
 from app.core.config import settings
 from app.crud.crud_content import (
-    create_content_item as crud_create_content_item,
+    create_content_item_sync as crud_create_content_item,
 )
 from app.crud.crud_content import (
     get_content_chunks,
     get_content_chunks_summary,
 )
 from app.crud.crud_content import (
-    get_content_item as crud_get_content_item,
+    get_content_item_sync as crud_get_content_item,
 )
 from app.crud.crud_content import (
-    get_content_items as crud_get_content_items,
+    get_content_items_sync as crud_get_content_items,
 )
 from app.models.content import (
     ContentItem,  # For converting ContentItemCreate to ContentItem model for CRUD

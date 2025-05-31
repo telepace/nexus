@@ -231,11 +231,12 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
                   <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
                     <div className="h-24 w-24 relative rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
                       <Image
-                        src={avatarSrc}
+                        src={avatarSrc || "/images/vinta.png"}
                         alt="Profile"
-                        className="object-cover w-full h-full"
+                        className="object-contain w-full h-full"
                         width={96}
                         height={96}
+                        onError={() => setAvatarSrc("/images/vinta.png")}
                       />
                       <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                         <Button

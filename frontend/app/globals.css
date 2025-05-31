@@ -1,7 +1,7 @@
 /* stylelint-disable at-rule-no-unknown */
 @import "tailwindcss";
 
-/* Tailwind v4 自定义变体 */
+/* Tailwind v4 自定义变体 */
 @variant dark (&:is(.dark *));
 
 /* =============================================================================
@@ -346,6 +346,36 @@
     @apply focus-visible:outline-none focus-visible:ring-1
            focus-visible:ring-ring focus-visible:ring-offset-1;
   }
+
+  /* 优化所有图片的默认显示 */
+  .image-optimized {
+    @apply object-contain w-full h-auto max-w-full;
+    aspect-ratio: auto;
+  }
+
+  /* Markdown 中的图片优化 */
+  .prose img {
+    @apply object-contain max-h-[80vh] w-auto h-auto mx-auto;
+    aspect-ratio: auto !important;
+  }
+
+  /* 确保图片容器不会破坏布局 */
+  .image-container {
+    @apply flex items-center justify-center w-full overflow-hidden;
+  }
+
+  /* 头像图片优化 */
+  .avatar-image {
+    @apply object-contain w-full h-full;
+    aspect-ratio: 1;
+  }
+
+  /* 响应式图片 */
+  .responsive-image {
+    @apply w-full h-auto object-contain;
+    max-height: min(80vh, 600px);
+    aspect-ratio: auto;
+  }
 }
 
 /* =============================================================================
@@ -387,6 +417,18 @@
   }
   .animate-ultraslow {
     @apply transition-all duration-500;
+  }
+
+  /* 确保图片在不同容器中都能正确显示 */
+  .preserve-aspect-ratio {
+    aspect-ratio: auto;
+    object-fit: contain;
+  }
+
+  .image-full-width {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
   }
 }
 

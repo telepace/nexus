@@ -308,7 +308,9 @@ export const StreamingChat = forwardRef<HTMLDivElement, StreamingChatProps>(
         >
           {!isSystem && (
             <Avatar className="h-8 w-8 shrink-0">
-              <AvatarImage src={isUser ? userAvatar : assistantAvatar} />
+              {(isUser ? userAvatar : assistantAvatar) ? (
+                <AvatarImage src={isUser ? userAvatar : assistantAvatar} />
+              ) : null}
               <AvatarFallback>
                 {isUser ? (
                   <User className="h-4 w-4" />

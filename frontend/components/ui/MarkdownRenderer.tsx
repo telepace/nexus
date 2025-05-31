@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -6,9 +8,11 @@ import rehypeHighlight from "rehype-highlight";
 // 移除 rehypeRaw 插件，避免未知HTML标签错误
 // import rehypeRaw from 'rehype-raw'
 import { cn } from "@/lib/utils";
+import { OptimizedImage } from "./OptimizedImage";
 
 // Import highlight.js styles
 import "highlight.js/styles/github-dark.css";
+import "highlight.js/styles/github.css";
 
 interface MarkdownRendererProps {
   content: string | null;
@@ -67,7 +71,7 @@ export function MarkdownRenderer({
         "prose-pre:mt-6 prose-pre:mb-4 prose-pre:overflow-x-auto prose-pre:rounded-lg prose-pre:bg-muted prose-pre:p-4",
         "prose-pre:code:bg-transparent prose-pre:code:p-0",
         "prose-a:font-medium prose-a:underline prose-a:underline-offset-4",
-        "prose-img:rounded-md prose-img:border",
+        "prose-img:rounded-md prose-img:border prose-img:mx-auto prose-img:object-contain prose-img:max-h-[80vh] prose-img:w-auto prose-img:h-auto",
         "prose-hr:my-4 prose-hr:md:my-8",
         className,
       )}
@@ -204,15 +208,21 @@ export function MarkdownRenderer({
               {children}
             </a>
           ),
-          img: ({ src, alt, ...props }) => (
-            <img
-              src={src}
-              alt={alt}
-              className="rounded-md border max-w-full h-auto"
-              loading="lazy"
-              {...props}
-            />
-          ),
+          img: ({ src, alt }) => {
+            // 过滤掉不兼容的属性，只保留OptimizedImage需要的属性
+            const optimizedImageProps = {
+              src: typeof src === "string" ? src : "",
+              alt: alt || "",
+              className:
+                "rounded-md border w-full h-auto object-contain max-w-full block mx-auto",
+              loading: "lazy" as const,
+              style: { aspectRatio: "auto", maxHeight: "80vh" },
+              objectFit: "contain" as const,
+              preserveAspectRatio: true,
+            };
+
+            return <OptimizedImage {...optimizedImageProps} />;
+          },
           hr: ({ ...props }) => <hr className="my-4 md:my-8" {...props} />,
         }}
       >

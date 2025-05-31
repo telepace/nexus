@@ -160,6 +160,21 @@ import type {
   ContentAnalyzeContentStreamData,
   ContentAnalyzeContentStreamError,
   ContentAnalyzeContentStreamResponse,
+  ImagesGetUploadUrlData,
+  ImagesGetUploadUrlError,
+  ImagesGetUploadUrlResponse,
+  ImagesCreateImageRecordData,
+  ImagesCreateImageRecordError,
+  ImagesCreateImageRecordResponse,
+  ImagesListImagesData,
+  ImagesListImagesError,
+  ImagesListImagesResponse,
+  ImagesReadImageData,
+  ImagesReadImageError,
+  ImagesReadImageResponse,
+  ImagesDeleteImageData,
+  ImagesDeleteImageError,
+  ImagesDeleteImageResponse,
   PrivateCreateUserData,
   PrivateCreateUserError,
   PrivateCreateUserResponse,
@@ -1219,6 +1234,96 @@ export const contentAnalyzeContentStream = <
   >({
     ...options,
     url: "/api/v1/content/{content_id}/analyze",
+  });
+};
+
+/**
+ * Get a presigned URL for uploading a file to S3/R2-compatible storage.
+ * Get a presigned URL that can be used to upload a file directly to the storage.
+ * The `s3_key` returned is the path in the bucket where the file should be uploaded.
+ */
+export const imagesGetUploadUrl = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ImagesGetUploadUrlData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ImagesGetUploadUrlResponse,
+    ImagesGetUploadUrlError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/images/upload-url",
+  });
+};
+
+/**
+ * Create a new image record.
+ * After uploading a file using a presigned URL, call this endpoint to create the image metadata in the database.
+ */
+export const imagesCreateImageRecord = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ImagesCreateImageRecordData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ImagesCreateImageRecordResponse,
+    ImagesCreateImageRecordError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/images/",
+  });
+};
+
+/**
+ * List images for the current user.
+ * Retrieve a list of images owned by the current user.
+ */
+export const imagesListImages = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<ImagesListImagesData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ImagesListImagesResponse,
+    ImagesListImagesError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/images/",
+  });
+};
+
+/**
+ * Get an image by its ID.
+ * Get a specific image by its ID.
+ * Users can only retrieve images they own.
+ */
+export const imagesReadImage = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ImagesReadImageData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ImagesReadImageResponse,
+    ImagesReadImageError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/images/{image_id}",
+  });
+};
+
+/**
+ * Delete an image.
+ * Delete an image:
+ * - Deletes the file from S3/R2 storage.
+ * - Deletes the image metadata from the database.
+ * Users can only delete images they own.
+ */
+export const imagesDeleteImage = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ImagesDeleteImageData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).delete<
+    ImagesDeleteImageResponse,
+    ImagesDeleteImageError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/images/{image_id}",
   });
 };
 

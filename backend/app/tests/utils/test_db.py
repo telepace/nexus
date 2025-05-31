@@ -153,6 +153,13 @@ def apply_migrations() -> None:
 
         # 确保预先导入所有模型
         import app.models  # noqa
+        from app.models.content import (  # noqa - 导入内容模型
+            AIConversation,
+            ContentAsset,
+            ContentItem,
+            ProcessingJob,
+        )
+        from app.models.image import Image  # noqa - 显式导入Image模型
         from app.models.prompt import Prompt, PromptTagLink, PromptVersion, Tag  # noqa
 
         # 创建连接到测试数据库的引擎
@@ -176,6 +183,13 @@ def apply_migrations_with_engine(engine: Engine) -> None:
 
         # 确保预先导入所有模型
         import app.models  # noqa
+        from app.models.content import (  # noqa - 导入内容模型
+            AIConversation,
+            ContentAsset,
+            ContentItem,
+            ProcessingJob,
+        )
+        from app.models.image import Image  # noqa - 显式导入Image模型
         from app.models.prompt import Prompt, PromptTagLink, PromptVersion, Tag  # noqa
 
         logger.info(f"Creating all tables in test database: {get_test_db_name()}")
@@ -202,6 +216,13 @@ def create_tables(engine: Engine) -> None:
 
     # 确保提前导入所有模型，以便SQLModel能够创建所有表
     import app.models  # noqa
+    from app.models.content import (  # noqa - 导入内容模型
+        AIConversation,
+        ContentAsset,
+        ContentItem,
+        ProcessingJob,
+    )
+    from app.models.image import Image  # noqa - 显式导入Image模型
     from app.models.prompt import Prompt, PromptTagLink, PromptVersion, Tag  # noqa
 
     logger.info("Creating tables directly with SQLModel")

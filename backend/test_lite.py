@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-import httpx
 import asyncio
 import socket
-import subprocess
-import sys
+
+import httpx
+
 
 async def detailed_diagnosis():
     print("=== 详细的网络和httpx诊断 ===\n")
-    
+
     # 1. 检查端口连通性
     print("1. 检查端口连通性...")
     try:
@@ -16,7 +16,7 @@ async def detailed_diagnosis():
         sock.settimeout(5)
         result = sock.connect_ex(('127.0.0.1', 4000))
         sock.close()
-        
+
         if result == 0:
             print("✓ 端口4000可以连接")
         else:
@@ -25,14 +25,14 @@ async def detailed_diagnosis():
     except Exception as e:
         print(f"✗ 端口检查异常: {e}")
         return
-    
+
     # 2. 尝试不同的地址格式
     addresses = [
         'http://127.0.0.1:4000/health',
         'http://localhost:4000/health',
         'http://0.0.0.0:4000/health',
     ]
-    
+
     print("\n2. 测试不同地址格式...")
     for addr in addresses:
         print(f"\n测试地址: {addr}")
@@ -51,7 +51,7 @@ async def detailed_diagnosis():
             print(f"✗ HTTP状态错误: {e.response.status_code}")
         except Exception as e:
             print(f"✗ 其他错误: {type(e).__name__}: {e}")
-    
+
     # 3. 测试原始HTTP请求
     print("\n3. 测试原始HTTP请求...")
     try:
@@ -60,21 +60,21 @@ Host: 127.0.0.1:4000\r
 Connection: close\r
 \r
 """
-        
+
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(10)
         sock.connect(('127.0.0.1', 4000))
         sock.send(raw_request.encode())
-        
+
         response = sock.recv(4096).decode()
         sock.close()
-        
+
         print("✓ 原始HTTP响应:")
         print(response[:500])
-        
+
     except Exception as e:
         print(f"✗ 原始HTTP请求失败: {e}")
-    
+
     # 4. 检查是否有代理设置
     print("\n4. 检查环境变量...")
     proxy_vars = ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy', 'ALL_PROXY']
@@ -85,17 +85,17 @@ Connection: close\r
             print(f"⚠️  发现代理设置: {var}={value}")
         else:
             print(f"✓ {var}: 未设置")
-    
+
     # 5. 测试带详细日志的httpx请求
     print("\n5. 带详细日志的httpx请求...")
     try:
         import logging
-        
+
         # 启用httpx详细日志
         logging.basicConfig(level=logging.DEBUG)
         httpx_logger = logging.getLogger("httpx")
         httpx_logger.setLevel(logging.DEBUG)
-        
+
         async with httpx.AsyncClient(
             timeout=httpx.Timeout(10.0, connect=5.0),
             follow_redirects=True,
@@ -106,7 +106,7 @@ Connection: close\r
             print(f"✓ 最终响应: {response.status_code}")
             print(f"✓ 响应头: {dict(response.headers)}")
             print(f"✓ 响应体: {response.text}")
-            
+
     except Exception as e:
         print(f"✗ 详细日志请求失败: {type(e).__name__}: {e}")
         import traceback
