@@ -37,6 +37,23 @@ python -m pip install --no-cache-dir sentry_sdk posthog || {
 cd "$PROJECT_ROOT/backend"
 echo "📍 Changed to backend directory: $(pwd)"
 
+# 安装后端依赖
+echo "📦 Installing backend dependencies..."
+python -m pip install . || {
+  echo "❌ Failed to install backend dependencies using pip install ."
+  # Fallback to requirements.txt if it exists, though pyproject.toml is preferred
+  if [ -f "requirements.txt" ]; then
+    echo "📦 Trying pip install -r requirements.txt..."
+    python -m pip install -r requirements.txt || {
+      echo "❌ Failed to install backend dependencies from requirements.txt"
+      exit 1
+    }
+  else
+    exit 1
+  fi
+}
+echo "✅ Backend dependencies installed."
+
 # 检查依赖项是否安装
 echo "📦 Checking for required dependencies..."
 python -c "import sys; print('Python version:', sys.version); print('Path:', sys.path)" || {
@@ -75,6 +92,12 @@ echo "✅ Dependencies check passed"
 
 # 生成OpenAPI JSON
 echo "📝 Generating OpenAPI JSON..."
+# Set required environment variables for OpenAPI generation
+# A valid Fernet key is 32 bytes, URL-safe base64 encoded.
+export APP_SYMMETRIC_ENCRYPTION_KEY="cw_2xL3n14u9k29SMTFb7yYJ3jS2pLp4o7TjV_hC_rU="
+export SENTRY_DSN="" # Optional, provide dummy if strictly required
+export POSTHOG_API_KEY="" # Optional, provide dummy if strictly required
+
 python -c "import app.main; import json; print(json.dumps(app.main.app.openapi()))" > "$PROJECT_ROOT/openapi.json" 2> generate-client.log || {
   echo "❌ Failed to generate OpenAPI specification"
   cat generate-client.log
@@ -102,6 +125,13 @@ if [ -f "$PROJECT_ROOT/openapi.json" ]; then
   mv "$PROJECT_ROOT/openapi.json" "$PROJECT_ROOT/frontend/"
   cd "$PROJECT_ROOT/frontend"
   echo "📍 Changed to frontend directory: $(pwd)"
+
+  echo "📦 Installing frontend dependencies..."
+  pnpm install || {
+    echo "❌ Failed to install frontend dependencies"
+    exit 1
+  }
+  echo "✅ Frontend dependencies installed."
   
   pnpm run generate-client || {
     echo "❌ Failed to generate client"
