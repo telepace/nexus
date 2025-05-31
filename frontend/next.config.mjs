@@ -10,25 +10,47 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "**", // 允许所有HTTPS域名
+        protocol: 'https',
+        hostname: '**', // 允许所有HTTPS域名（开发环境）
       },
       {
-        protocol: "http",
-        hostname: "**", // 允许所有HTTP域名（开发环境）
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+      },
+      {
+        protocol: 'http',
+        hostname: 'sm.nsddd.top', // 添加具体的域名
+      },
+      {
+        protocol: 'https',
+        hostname: 'sm.nsddd.top',
+      },
+      // 添加其他常见的图片托管域名
+      {
+        protocol: 'https',
+        hostname: '*.amazonaws.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.cloudfront.net',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.githubusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.jsdelivr.net',
       },
     ],
-    // 对于无法访问的图片源，不进行优化处理
-    unoptimized: false, // 保持默认优化，但在组件层面使用原生 img 标签绕过
-    // 可选：也可以使用具体域名列表（更安全）
-    // domains: [
-    //   'sm.nsddd.top',
-    //   'example.com',
-    //   'github.com',
-    //   'avatars.githubusercontent.com',
-    //   'images.unsplash.com',
-    //   'cdn.jsdelivr.net',
-    // ],
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {

@@ -289,29 +289,53 @@ export function MarkdownRenderer({
               {children}
             </a>
           ),
-          img: ({ src, alt, ...props }) => {
-            // 直接使用原始的 img 标签，避免 Next.js 图片代理
-            return (
-              <img
-                src={src}
-                alt={alt || ""}
-                className="rounded-md border w-full h-auto object-contain max-w-full block mx-auto"
-                style={{ aspectRatio: "auto", maxHeight: "80vh" }}
-                loading="lazy"
-                onError={(e) => {
-                  // 图片加载失败时的处理
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = "none";
-                  // 可以选择显示一个占位符
-                  const placeholder = document.createElement("div");
-                  placeholder.className =
-                    "flex items-center justify-center w-full h-32 bg-gray-100 border rounded-md text-gray-500";
-                  placeholder.textContent = `图片加载失败: ${src}`;
-                  target.parentNode?.insertBefore(placeholder, target);
-                }}
-                {...props}
-              />
-            );
+          img: ({ src, alt }) => {
+            // 确保src是string类型
+            const srcString = typeof src === "string" ? src : "";
+            
+            // 检查是否为外部URL
+            const isExternalUrl = srcString && (srcString.startsWith('http://') || srcString.startsWith('https://'));
+            const isLocalhost = srcString && (srcString.includes('localhost') || srcString.includes('127.0.0.1'));
+            
+            // 对于外部URL（非localhost），使用普通img标签避免Next.js域名限制
+            if (isExternalUrl && !isLocalhost) {
+              return (
+                <img
+                  src={srcString}
+                  alt={alt || ""}
+                  className="rounded-md border max-w-full h-auto object-contain block mx-auto"
+                  loading="lazy"
+                  style={{ 
+                    aspectRatio: "auto", 
+                    maxHeight: "80vh",
+                    width: "auto",
+                    height: "auto"
+                  }}
+                  onError={(e) => {
+                    // 如果图片加载失败，显示占位符
+                    e.currentTarget.src = "/images/image-placeholder.svg";
+                    e.currentTarget.alt = "Image failed to load";
+                  }}
+                />
+              );
+            }
+
+            // 对于本地图片或相对路径，使用OptimizedImage组件
+            const optimizedImageProps = {
+              src: srcString,
+              alt: alt || "",
+              width: 800, // 提供默认宽度
+              height: 600, // 提供默认高度
+              className:
+                "rounded-md border max-w-full h-auto object-contain block mx-auto",
+              loading: "lazy" as const,
+              objectFit: "contain" as const,
+              preserveAspectRatio: true,
+              showLoader: true,
+              fallbackSrc: "/images/image-placeholder.svg", // 提供回退图片
+            };
+
+            return <OptimizedImage {...optimizedImageProps} />;
           },
           hr: ({ ...props }) => <hr className="my-4 md:my-8" {...props} />,
         }}
