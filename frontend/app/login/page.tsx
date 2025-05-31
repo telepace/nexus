@@ -14,6 +14,14 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { initiateGoogleLogin } from "@/components/actions/google-auth-action";
 
+// Function to determine callback URL based on extension_callback
+function getCallbackUrl(extensionCallback: string | null): string {
+  if (extensionCallback === "true") {
+    return "/setup";
+  }
+  return "/dashboard";
+}
+
 // SearchParams component to handle useSearchParams hook with Suspense
 function SearchParamsHandler({
   setEmail,
@@ -41,14 +49,15 @@ function CallbackUrlHandler({
   setExtensionCallback: (url: string | null) => void;
 }) {
   const searchParams = useSearchParams();
-  const callbackUrlFromQuery = searchParams.get("callbackUrl") || "/setup";
+  // const callbackUrlFromQuery = searchParams.get("callbackUrl") || "/setup"; // Original logic, potentially overridden
   const extensionCallbackUrl = searchParams.get("extension_callback");
 
   useEffect(() => {
-    setCallbackUrl(callbackUrlFromQuery);
+    // Determine callback URL based on extension_callback presence
+    const determinedCallbackUrl = getCallbackUrl(extensionCallbackUrl);
+    setCallbackUrl(determinedCallbackUrl);
     setExtensionCallback(extensionCallbackUrl);
   }, [
-    callbackUrlFromQuery,
     extensionCallbackUrl,
     setCallbackUrl,
     setExtensionCallback,
@@ -79,7 +88,8 @@ function AuthRedirectHandler() {
 function LoginContent() {
   const { login, isLoading } = useAuth();
   const router = useRouter();
-  const [callbackUrl, setCallbackUrl] = useState("/setup");
+  // Defaulting to /dashboard as per getCallbackUrl logic when extension_callback is not 'true'
+  const [callbackUrl, setCallbackUrl] = useState("/dashboard");
   const [extensionCallback, setExtensionCallback] = useState<string | null>(
     null,
   );
