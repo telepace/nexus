@@ -82,9 +82,48 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def all_cors_origins(self) -> list[str]:
-        return [str(origin).rstrip("/") for origin in self.BACKEND_CORS_ORIGINS] + [
-            self.FRONTEND_HOST
+        """
+        获取所有允许的 CORS 源地址
+        包含配置的 BACKEND_CORS_ORIGINS 和 FRONTEND_HOST，
+        同时自动添加常用的本地开发地址
+        """
+        origins = []
+        
+        # 添加配置的 CORS 源
+        if self.BACKEND_CORS_ORIGINS:
+            if isinstance(self.BACKEND_CORS_ORIGINS, str):
+                # 如果是字符串，按逗号分割
+                for origin in self.BACKEND_CORS_ORIGINS.split(','):
+                    origin = origin.strip()
+                    if origin:
+                        origins.append(origin.rstrip("/"))
+            else:
+                # 如果是列表
+                for origin in self.BACKEND_CORS_ORIGINS:
+                    origins.append(str(origin).rstrip("/"))
+        
+        # 添加前端主机
+        if self.FRONTEND_HOST:
+            origins.append(self.FRONTEND_HOST.rstrip("/"))
+        
+        # 自动添加常用的本地开发地址（避免重复）
+        additional_origins = [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "https://localhost:3000", 
+            "https://127.0.0.1:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "https://localhost:5173",
+            "https://127.0.0.1:5173"
         ]
+        
+        for origin in additional_origins:
+            if origin not in origins:
+                origins.append(origin)
+        
+        logger.info(f"Configured CORS origins: {origins}")
+        return origins
 
     PROJECT_NAME: str = "nexus"
     SENTRY_DSN: HttpUrl | None = None
