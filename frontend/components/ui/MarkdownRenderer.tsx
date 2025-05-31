@@ -1,10 +1,17 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react"; // Added useEffect, useRef
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import rehypeHighlight from "rehype-highlight";
+import remarkToc from "remark-toc"; // Added
+import rehypeAutolinkHeadings from "rehype-autolink-headings"; // Added
+import remarkMath from "remark-math"; // Added
+import rehypeKatex from "rehype-katex"; // Added
+import mediumZoom from "medium-zoom"; // Added
+import copy from "copy-to-clipboard"; // Added
+
 // 移除 rehypeRaw 插件，避免未知HTML标签错误
 // import rehypeRaw from 'rehype-raw'
 import { cn } from "@/lib/utils";
@@ -13,6 +20,7 @@ import { OptimizedImage } from "./OptimizedImage";
 // Import highlight.js styles
 import "highlight.js/styles/github-dark.css";
 import "highlight.js/styles/github.css";
+import "katex/dist/katex.min.css"; // Added KaTeX CSS
 
 interface MarkdownRendererProps {
   content: string | null;
@@ -23,6 +31,27 @@ export function MarkdownRenderer({
   content,
   className,
 }: MarkdownRendererProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      // Initialize Medium Zoom
+      const images = contentRef.current.querySelectorAll(
+        // Targeting images within the prose scope, assuming OptimizedImage renders an <img> tag
+        // If OptimizedImage does not render a standard img, this selector needs adjustment
+        // or medium-zoom needs to be applied differently, perhaps via a ref to each image.
+        ".prose img",
+      );
+      if (images.length) {
+        mediumZoom(images, { background: "rgba(0, 0, 0, 0.7)" });
+      }
+    }
+    // Cleanup zoom instance on component unmount
+    return () => {
+      mediumZoom.detach();
+    };
+  }, [content]); // Re-apply zoom when content changes
+
   if (!content) {
     return (
       <div
@@ -48,6 +77,7 @@ export function MarkdownRenderer({
 
   return (
     <div
+      ref={contentRef} // Added ref
       data-testid="markdown-renderer"
       className={cn(
         "prose prose-slate dark:prose-invert max-w-none",
@@ -77,8 +107,17 @@ export function MarkdownRenderer({
       )}
     >
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkBreaks]}
-        rehypePlugins={[rehypeHighlight]}
+        remarkPlugins={[
+          remarkGfm,
+          remarkBreaks,
+          remarkMath,
+          [remarkToc, { heading: "toc|table[ -]of[ -]contents?" }],
+        ]}
+        rehypePlugins={[
+          rehypeHighlight,
+          rehypeKatex,
+          [rehypeAutolinkHeadings, { behavior: "wrap" }],
+        ]}
         components={{
           // 自定义组件渲染
           h1: ({ children, ...props }) => (
@@ -139,7 +178,7 @@ export function MarkdownRenderer({
             </li>
           ),
           table: ({ children, ...props }) => (
-            <div className="my-6 w-full overflow-y-auto">
+            <div className="my-6 w-full overflow-x-auto"> {/* Changed overflow-y-auto to overflow-x-auto */}
               <table className="w-full" {...props}>
                 {children}
               </table>
@@ -189,14 +228,43 @@ export function MarkdownRenderer({
               </code>
             );
           },
-          pre: ({ children, ...props }) => (
-            <pre
-              className="mt-6 mb-4 overflow-x-auto rounded-lg bg-muted p-4"
-              {...props}
-            >
-              {children}
-            </pre>
-          ),
+          pre: ({ children, ...props }) => {
+            // Try to extract raw code from children
+            let rawCode = "";
+            if (props.node && props.node.children && props.node.children.length > 0) {
+                const codeNode = props.node.children[0];
+                if (codeNode && codeNode.type === 'element' && codeNode.tagName === 'code') {
+                    if (codeNode.children && codeNode.children.length > 0 && codeNode.children[0].type === 'text') {
+                        rawCode = codeNode.children[0].value;
+                    }
+                }
+            }
+
+            return (
+              <pre
+                className="mt-6 mb-4 overflow-x-auto rounded-lg bg-muted p-4 relative group" // Added relative and group
+                {...props}
+              >
+                <button
+                  className="absolute top-2 right-2 p-1.5 text-xs font-sans bg-gray-700 hover:bg-gray-600 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => {
+                    if (rawCode) {
+                      copy(rawCode);
+                      // Consider adding a more sophisticated user feedback, like a toast notification
+                      alert("Copied to clipboard!");
+                    } else {
+                      // Fallback or error for unexpected structure
+                      const el = (props.node as any)?.children?.[0]?.children?.[0]?.value;
+                      if(el) copy(el); else alert("Could not copy code.");
+                    }
+                  }}
+                >
+                  Copy
+                </button>
+                {children}
+              </pre>
+            );
+          },
           a: ({ children, href, ...props }) => (
             <a
               href={href}
