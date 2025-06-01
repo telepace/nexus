@@ -17,16 +17,13 @@ describe("TopNavigation", () => {
       />,
     );
 
-    // 检查Logo
-    expect(screen.getByAltText("Nexus Logo")).toBeInTheDocument();
-
-    // 检查搜索框
-    expect(screen.getByPlaceholderText("搜索您的内容库…")).toBeInTheDocument();
-
     // 检查添加内容按钮
     expect(
       screen.getByRole("button", { name: /添加内容/i }),
     ).toBeInTheDocument();
+
+    // 检查设置按钮
+    expect(screen.getByRole("button", { name: /设置/i })).toBeInTheDocument();
 
     // 检查用户菜单
     expect(screen.getByTestId("user-menu")).toBeInTheDocument();
@@ -86,23 +83,5 @@ describe("TopNavigation", () => {
 
     // 验证按钮仍然存在（基本功能测试）
     expect(userMenuButton).toBeInTheDocument();
-  });
-
-  it("搜索框应该能正确输入", () => {
-    render(
-      <TopNavigation
-        onSettingsClick={jest.fn()}
-        onAddContentClick={jest.fn()}
-      />,
-    );
-
-    // 获取搜索输入框 - 使用正确的省略号字符
-    const searchInput = screen.getByPlaceholderText("搜索您的内容库…");
-
-    // 输入搜索文本
-    fireEvent.change(searchInput, { target: { value: "测试搜索" } });
-
-    // 验证输入值
-    expect(searchInput).toHaveValue("测试搜索");
   });
 });

@@ -7,26 +7,20 @@ import {
   List,
   MessageSquare,
   BookmarkIcon,
-  Layers, // Add Layers icon
-  ChevronLeft,
-  ChevronRight,
+  Layers,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+
+// 导入 ui/sidebar 组件
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
 
-interface SidebarProps {
-  collapsed: boolean;
-  onToggleCollapse: () => void;
-}
-
-export const Sidebar: FC<SidebarProps> = ({ collapsed, onToggleCollapse }) => {
+export const AppSidebar: FC = () => {
   const pathname = usePathname();
 
   const navItems = [
@@ -53,74 +47,31 @@ export const Sidebar: FC<SidebarProps> = ({ collapsed, onToggleCollapse }) => {
   ];
 
   return (
-    <aside
-      className={cn(
-        "fixed inset-y-0 left-0 z-10 flex flex-col border-r border-border bg-background p-4 transition-all duration-300",
-        collapsed ? "w-16" : "w-56",
-      )}
-    >
-      <div className="flex items-center justify-between mb-8">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="relative h-8 w-8 overflow-hidden rounded-full">
-            <Image
-              src="/images/vinta.png"
-              alt="Nexus Logo"
-              className="object-contain"
-              width={32}
-              height={32}
-            />
-          </div>
-          {!collapsed && (
-            <span className="text-xl font-bold text-foreground">Nexus</span>
-          )}
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        <Link href="/" className="text-xl font-bold text-foreground">
+          Nexus
         </Link>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="rounded-full"
-          onClick={onToggleCollapse}
-          aria-label={collapsed ? "展开侧边栏" : "折叠侧边栏"}
-        >
-          {collapsed ? (
-            <ChevronRight className="h-5 w-5" />
-          ) : (
-            <ChevronLeft className="h-5 w-5" />
-          )}
-        </Button>
-      </div>
-
-      <nav className="flex flex-col gap-2">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
-
-          return (
-            <TooltipProvider key={item.href} delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                      isActive
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                    )}
-                    aria-label={item.name}
-                  >
-                    {item.icon}
-                    {!collapsed && <span>{item.name}</span>}
-                  </Link>
-                </TooltipTrigger>
-                {collapsed && (
-                  <TooltipContent side="right">
-                    <p>{item.name}</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-          );
-        })}
-      </nav>
-    </aside>
+      </SidebarHeader>
+      
+      <SidebarContent>
+        <SidebarMenu>
+          {navItems.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton 
+                asChild 
+                isActive={pathname === item.href}
+                tooltip={item.name}
+              >
+                <Link href={item.href}>
+                  {item.icon}
+                  <span>{item.name}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+    </Sidebar>
   );
 };
