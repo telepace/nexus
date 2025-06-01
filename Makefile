@@ -488,7 +488,7 @@ frontend-test: frontend-install
 frontend-lint: frontend-install
 	@echo "===========> Running frontend linters"
 	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
-		cd $(FRONTEND_DIR) && $(PNPM) run lint; \
+		cd $(FRONTEND_DIR) && DEBUG= $(PNPM) run lint; \
 	else \
 		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
 	fi

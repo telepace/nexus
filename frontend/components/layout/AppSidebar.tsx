@@ -15,7 +15,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -66,11 +65,10 @@ const data = {
 };
 
 export interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  onSettingsClick: () => void;
   onAddContentClick: () => void;
 }
 
-export function AppSidebar({ onSettingsClick, onAddContentClick, ...props }: AppSidebarProps) {
+export function AppSidebar({ onAddContentClick, ...props }: AppSidebarProps) {
   const pathname = usePathname();
   const { user } = useAuth();
 
