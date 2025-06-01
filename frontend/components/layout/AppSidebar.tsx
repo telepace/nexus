@@ -109,7 +109,7 @@ export function AppSidebar({ onSettingsClick, onAddContentClick, ...props }: App
         </SidebarGroup>
 
         {/* 主要导航 */}
-        <SidebarGroup className="!px-4">
+        <SidebarGroup className="!px-4 -mt-3">
           <SidebarGroupContent>
             <SidebarMenu>
               {data.navMain.map((item) => (

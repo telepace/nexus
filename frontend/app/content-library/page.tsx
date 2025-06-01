@@ -223,10 +223,6 @@ export default function ContentLibraryPage() {
           <div>
             <h1 className="text-3xl font-bold">Content Library</h1>
           </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Content
-          </Button>
         </div>
 
         {/* Content Grid */}
@@ -245,10 +241,6 @@ export default function ContentLibraryPage() {
                       Start building your content library by adding your first
                       item
                     </p>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Your First Content
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -259,7 +251,7 @@ export default function ContentLibraryPage() {
                     key={item.id}
                     className={`cursor-pointer transition-all duration-200 hover:shadow-md hover:bg-muted/30 ${
                       selectedItem?.id === item.id
-                        ? "ring-2 ring-primary shadow-md"
+                        ? "ring-1 ring-primary shadow-md"
                         : ""
                     }`}
                     onClick={() => setSelectedItem(item)}
