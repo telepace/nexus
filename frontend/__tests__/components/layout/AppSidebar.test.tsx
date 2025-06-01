@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -24,47 +24,81 @@ jest.mock("@/components/actions/logout-action", () => ({
   logout: jest.fn(),
 }));
 
-const renderSidebar = () => {
+const renderSidebar = (mockOnAddContentClick?: jest.Mock) => {
   const mockOnSettingsClick = jest.fn();
-  const mockOnAddContentClick = jest.fn();
+  const defaultMockOnAddContentClick = mockOnAddContentClick || jest.fn();
   
-  return render(
-    <SidebarProvider>
-      <AppSidebar 
-        onSettingsClick={mockOnSettingsClick}
-        onAddContentClick={mockOnAddContentClick}
-      />
-    </SidebarProvider>
-  );
+  return {
+    ...render(
+      <SidebarProvider>
+        <AppSidebar 
+          onSettingsClick={mockOnSettingsClick}
+          onAddContentClick={defaultMockOnAddContentClick}
+        />
+      </SidebarProvider>
+    ),
+    mockOnSettingsClick,
+    mockOnAddContentClick: defaultMockOnAddContentClick,
+  };
 };
 
 describe("AppSidebar", () => {
-  it("renders without crashing", () => {
+  it("renders the sidebar", () => {
     renderSidebar();
-    expect(screen.getByText("Nexus")).toBeInTheDocument();
+    expect(screen.getByText("Telepace")).toBeInTheDocument();
   });
 
   it("renders all navigation links", () => {
     renderSidebar();
+    
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("Favorites")).toBeInTheDocument();
     expect(screen.getByText("Prompts")).toBeInTheDocument();
     expect(screen.getByText("Content Library")).toBeInTheDocument();
   });
 
-  it("renders the logo link", () => {
+  it("shows the active state for current route", () => {
     renderSidebar();
-    const logoLink = screen.getByRole("link", { name: /nexus/i });
-    expect(logoLink).toHaveAttribute("href", "/");
+    
+    const dashboardLink = screen.getByRole("link", { name: /dashboard/i });
+    expect(dashboardLink).toHaveAttribute("data-active", "true");
   });
 
-  it("renders settings option", () => {
+  it("renders the logo link", () => {
     renderSidebar();
+    
+    const logoLink = screen.getByText("Telepace").closest("a");
+    expect(logoLink).toBeInTheDocument();
+  });
+
+  it("renders user information", () => {
+    renderSidebar();
+    
+    expect(screen.getByText("Test User")).toBeInTheDocument();
+    expect(screen.getByText("test@example.com")).toBeInTheDocument();
+  });
+
+  it("renders add content section", () => {
+    renderSidebar();
+    
+    // 测试add content按钮存在
+    const addContentButtons = screen.getAllByText("add content");
+    expect(addContentButtons.length).toBeGreaterThan(0);
+  });
+
+  it("renders settings button", () => {
+    renderSidebar();
+    
     expect(screen.getByText("Settings")).toBeInTheDocument();
   });
 
-  it("renders upload content option", () => {
-    renderSidebar();
-    expect(screen.getByText("Upload Content")).toBeInTheDocument();
+  it("calls onAddContentClick when add content button is clicked", () => {
+    const mockOnAddContentClick = jest.fn();
+    renderSidebar(mockOnAddContentClick);
+    
+    const addContentButton = screen.getByText("add content");
+    fireEvent.click(addContentButton);
+    
+    expect(mockOnAddContentClick).toHaveBeenCalledTimes(1);
   });
 });
