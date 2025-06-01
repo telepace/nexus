@@ -185,7 +185,8 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
               name="name"
               placeholder="输入提示词名称"
               defaultValue={prompt?.name || ""}
-              state={fieldErrors?.name ? "error" : "default"}
+              aria-invalid={fieldErrors?.name ? "true" : "false"}
+              className={fieldErrors?.name ? "border-destructive" : ""}
               aria-describedby="name-error"
             />
             {fieldErrors?.name && (

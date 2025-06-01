@@ -117,12 +117,12 @@ function PromptCards({ prompts }: { prompts: PromptData[] }) {
 export default async function PromptsPage({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams?: Promise<{
     query?: string;
     tags?: string;
     sort?: string;
     order?: string;
-  };
+  }>;
 }) {
   // 获取认证状态
   const authState = await getAuthState();
@@ -184,22 +184,21 @@ export default async function PromptsPage({
 async function PromptsContent({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams?: Promise<{
     query?: string;
     tags?: string;
     sort?: string;
     order?: string;
-  };
+  }>;
 }) {
   // 使用唯一ID标识这次渲染，帮助调试
   const renderID = Math.random().toString(36).substring(7);
   console.log(`[prompts-${renderID}] 开始渲染 Prompts 内容`);
 
   try {
-    // 使用安全的方式处理 searchParams
-    const params = searchParams
-      ? Object.fromEntries(Object.entries(searchParams))
-      : {};
+    // 使用安全的方式处理 searchParams - 异步等待
+    const resolvedSearchParams = searchParams ? await searchParams : {};
+    const params = resolvedSearchParams || {};
 
     // 准备查询参数
     const search = params.query || undefined;
