@@ -222,9 +222,6 @@ export default function ContentLibraryPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Content Library</h1>
-            <p className="text-muted-foreground">
-              Manage and explore your content collection
-            </p>
           </div>
           <Button>
             <Plus className="h-4 w-4 mr-2" />
@@ -238,7 +235,7 @@ export default function ContentLibraryPage() {
           <div className="lg:col-span-2">
             {items.length === 0 ? (
               <Card>
-                <CardContent className="pt-6">
+                <CardContent className="py-6">
                   <div className="text-center py-12">
                     <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold mb-2">
@@ -267,7 +264,7 @@ export default function ContentLibraryPage() {
                     }`}
                     onClick={() => setSelectedItem(item)}
                   >
-                    <CardContent className="pt-6">
+                    <CardContent className="py-6">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start space-x-4 flex-1">
                           <div className="p-3 bg-muted rounded-lg">
@@ -307,7 +304,7 @@ export default function ContentLibraryPage() {
 
           {/* Content Preview */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-6">
+            <Card className="sticky top-6 py-6">
               <CardHeader>
                 <CardTitle>Content Preview</CardTitle>
               </CardHeader>

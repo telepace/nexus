@@ -26,10 +26,10 @@ function ResetPasswordForm() {
   const token = searchParams?.get("token");
   const { user, isLoading } = useAuth();
 
-  // Redirect to dashboard if user is already logged in
+  // Redirect to content library if user is already logged in
   useEffect(() => {
     if (user && !isLoading) {
-      router.push("/dashboard");
+      router.push("/content-library");
     }
   }, [user, isLoading, router]);
 

@@ -4,17 +4,11 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  BookmarkIcon,
-  MessageSquare,
-  Layers,
   Settings,
   ChevronUp,
-  User2,
 } from "lucide-react";
-import { IconCirclePlusFilled, IconMail, IconInnerShadowTop } from "@tabler/icons-react";
+import { IconCirclePlusFilled,IconHome,IconDashboard,IconTags,IconMessageChatbot,IconInnerShadowTop,IconUser } from "@tabler/icons-react";
 
-import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -27,6 +21,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -43,22 +38,22 @@ const data = {
     {
       title: "Content Library",
       url: "/content-library",
-      icon: Layers,
+      icon: IconHome,
     },
     {
       title: "Dashboard",
       url: "/dashboard",
-      icon: LayoutDashboard,
+      icon: IconDashboard,
     },
     {
       title: "Favorites",
       url: "/favorites",
-      icon: BookmarkIcon,
+      icon: IconTags,
     },
     {
       title: "Prompts",
       url: "/prompts",
-      icon: MessageSquare,
+      icon: IconMessageChatbot,
     },
     
   ],
@@ -82,34 +77,30 @@ export function AppSidebar({ onSettingsClick, onAddContentClick, ...props }: App
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem className="!pl-1.5 !pr-4">
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button] "
-            >
-              <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Telepace</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <div className="flex w-full items-center justify-between gap-2 pl-3 pb-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:pl-0 group-data-[collapsible=icon]:pr-0">
+          {/* 左侧：Logo和品牌名称 - 在折叠状态下隐藏 */}
+          <div className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:hidden">
+            <IconInnerShadowTop className="!size-5" />
+            <span className="text-base font-semibold">Telepace</span>
+          </div>
+          {/* 右侧：Sidebar Trigger - 在折叠状态下居中 */}
+          <SidebarTrigger className="h-8 w-8 border border-neutral-900 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:border-sidebar-accent-foreground/20 group-data-[collapsible=icon]:ml-0" />
+        </div>
       </SidebarHeader>
 
       <SidebarContent>
         {/* 快速创建 - 采用参考示例样式 */}
-        <SidebarGroup className="!pl-4 !pr-6">
+        <SidebarGroup className="!px-4">
           <SidebarGroupContent className="flex flex-col gap-2">
             <SidebarMenu>
               <SidebarMenuItem className="flex items-center gap-2">
                 <SidebarMenuButton
                   onClick={onAddContentClick}
-                  tooltip="add content"
+                  tooltip="Upload Content"
                   className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
                 >
                   <IconCirclePlusFilled />
-                  <span>add content</span>
+                  <span>Upload Content</span>
                 </SidebarMenuButton>
                 
               </SidebarMenuItem>
@@ -118,7 +109,7 @@ export function AppSidebar({ onSettingsClick, onAddContentClick, ...props }: App
         </SidebarGroup>
 
         {/* 主要导航 */}
-        <SidebarGroup className="!pl-4 !pr-6">
+        <SidebarGroup className="!px-4">
           <SidebarGroupContent>
             <SidebarMenu>
               {data.navMain.map((item) => (
@@ -140,32 +131,20 @@ export function AppSidebar({ onSettingsClick, onAddContentClick, ...props }: App
         </SidebarGroup>
 
         {/* 次要导航 */}
-        <SidebarGroup className="mt-auto !pl-4 !pr-6">
+        <SidebarGroup className="mt-auto !px-4">
           <SidebarGroupContent>
-            <SidebarMenu>
-              {data.navSecondary.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    onClick={onSettingsClick}
-                    tooltip={item.title}
-                  >
-                    <item.icon />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+            
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="!pl-4 !pr-6">
+      <SidebarFooter className="!px-4 !pb-4">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                  <User2 />
+                  <IconUser />
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">
                       {user?.full_name || "User"}

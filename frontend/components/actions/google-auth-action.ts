@@ -44,8 +44,8 @@ export async function processGoogleAuthToken(token: string) {
       sameSite: "lax", // 适当的安全设置
     });
 
-    // Redirect to the dashboard
-    redirect("/dashboard");
+    // Redirect to the content library
+    redirect("/content-library");
   } catch (error) {
     console.error("Error processing Google auth token:", error);
     redirect("/login?error=token_processing_error");

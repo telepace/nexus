@@ -64,11 +64,11 @@ describe("AppSidebar", () => {
     expect(dashboardLink).toHaveAttribute("data-active", "true");
   });
 
-  it("renders the logo link", () => {
+  it("renders the logo div", () => {
     renderSidebar();
     
-    const logoLink = screen.getByText("Telepace").closest("a");
-    expect(logoLink).toBeInTheDocument();
+    const logoDiv = screen.getByText("Telepace").closest("div");
+    expect(logoDiv).toBeInTheDocument();
   });
 
   it("renders user information", () => {
@@ -78,12 +78,12 @@ describe("AppSidebar", () => {
     expect(screen.getByText("test@example.com")).toBeInTheDocument();
   });
 
-  it("renders add content section", () => {
+  it("renders upload content section", () => {
     renderSidebar();
     
-    // 测试add content按钮存在
-    const addContentButtons = screen.getAllByText("add content");
-    expect(addContentButtons.length).toBeGreaterThan(0);
+    // 测试Upload Content按钮存在
+    const uploadContentButtons = screen.getAllByText("Upload Content");
+    expect(uploadContentButtons.length).toBeGreaterThan(0);
   });
 
   it("renders settings button", () => {
@@ -92,13 +92,26 @@ describe("AppSidebar", () => {
     expect(screen.getByText("Settings")).toBeInTheDocument();
   });
 
-  it("calls onAddContentClick when add content button is clicked", () => {
+  it("calls onAddContentClick when Upload Content button is clicked", () => {
     const mockOnAddContentClick = jest.fn();
     renderSidebar(mockOnAddContentClick);
     
-    const addContentButton = screen.getByText("add content");
-    fireEvent.click(addContentButton);
+    const uploadContentButton = screen.getByText("Upload Content");
+    fireEvent.click(uploadContentButton);
     
     expect(mockOnAddContentClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders sidebar trigger button", () => {
+    renderSidebar();
+    
+    // Find all buttons with "Toggle Sidebar" name and filter for the one with data-sidebar="trigger"
+    const triggerButtons = screen.getAllByRole("button", { name: /toggle sidebar/i });
+    const headerTrigger = triggerButtons.find(button => 
+      button.getAttribute("data-sidebar") === "trigger"
+    );
+    
+    expect(headerTrigger).toBeInTheDocument();
+    expect(headerTrigger).toHaveAttribute("data-sidebar", "trigger");
   });
 });
