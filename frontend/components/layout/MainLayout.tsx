@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { AppSidebar } from "@/components/layout/Sidebar";
+import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { TopNavigation } from "@/components/layout/TopNavigation";
 import { SettingsPanel } from "@/components/layout/SettingsPanel";
 import { AddContentModal } from "@/components/layout/AddContentModal";
 
@@ -28,23 +27,18 @@ export default function MainLayout({
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen bg-background">
         {/* 侧边栏 */}
-        <AppSidebar />
+        <AppSidebar 
+          onSettingsClick={() => setSettingsOpen(true)}
+          onAddContentClick={() => setAddContentOpen(true)}
+        />
 
         <SidebarInset>
-          {/* 顶部导航栏 - 现在在SidebarInset内，不再fixed */}
-          <TopNavigation
-            onSettingsClick={() => setSettingsOpen(true)}
-            onAddContentClick={() => setAddContentOpen(true)}
-          />
-
-          {/* 主内容区域 - 移除顶部内边距，因为TopNavigation不再fixed */}
+          {/* 主内容区域 */}
           <main className="flex-1">
             {isFullscreen ? (
               children
             ) : (
               <div className="container mx-auto p-4">
-                
-
                 <div className="p-4">
                   {children}
                 </div>
