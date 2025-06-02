@@ -33,11 +33,12 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm' # Or npm/yarn if used
 
-      # Placeholder: Install PNPM if not available on runner, or if preferred
-      # - name: Install pnpm
-      #   uses: pnpm/action-setup@v2
-      #   with:
-      #     version: 8 # Specify pnpm version
+      # Install PNPM
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+          run_install: true
 
       - name: Install project dependencies (root)
         run: pnpm install # Or npm ci / yarn install --frozen-lockfile
