@@ -90,8 +90,8 @@ export async function login(prevState: unknown, formData: FormData) {
     };
   }
 
-  // 成功登录后重定向到控制面板
-  redirect("/dashboard");
+  // 成功登录后重定向到内容库
+  redirect("/content-library");
 }
 
 // 此函数可扩展以支持后端的Google登录

@@ -6,43 +6,28 @@ import { XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-/**
- * Renders a sheet component with the provided props.
- */
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />;
 }
 
-/**
- * Renders a sheet trigger element with additional slot data.
- */
 function SheetTrigger({
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Trigger>) {
   return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />;
 }
 
-/**
- * Renders a close button for a sheet component.
- */
 function SheetClose({
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Close>) {
   return <SheetPrimitive.Close data-slot="sheet-close" {...props} />;
 }
 
-/**
- * Renders a sheet portal with additional data attributes.
- */
 function SheetPortal({
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Portal>) {
   return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />;
 }
 
-/**
- * Renders a sheet overlay with animation and styling.
- */
 function SheetOverlay({
   className,
   ...props
@@ -59,13 +44,6 @@ function SheetOverlay({
   );
 }
 
-/**
- * Renders a sheet content component with animation and positioning based on side prop.
- *
- * This function returns a React component that includes a portal, an overlay,
- * and a content area with specific animations and styles depending on the `side`
- * prop. It also includes a close button for dismissing the sheet.
- */
 function SheetContent({
   className,
   children,
@@ -103,9 +81,6 @@ function SheetContent({
   );
 }
 
-/**
- * Renders a sheet header component with optional custom class names and props.
- */
 function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -116,9 +91,6 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-/**
- * Renders a footer component with specified class name and props.
- */
 function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -129,9 +101,6 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-/**
- * Renders a sheet title with additional styling and props.
- */
 function SheetTitle({
   className,
   ...props
@@ -145,9 +114,6 @@ function SheetTitle({
   );
 }
 
-/**
- * Renders a SheetPrimitive.Description with additional styling and data attributes.
- */
 function SheetDescription({
   className,
   ...props

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { TopNavigation } from "@/components/layout/TopNavigation";
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { SettingsPanel } from "@/components/layout/SettingsPanel";
 import { AddContentModal } from "@/components/layout/AddContentModal";
 
@@ -17,65 +17,54 @@ export default function MainLayout({
   pageTitle,
   fullscreen = false,
 }: MainLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addContentOpen, setAddContentOpen] = useState(false);
-
-  const handleToggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
-  };
 
   // 如果没有 pageTitle 或者是 fullscreen 模式，使用全屏布局
   const isFullscreen = fullscreen || !pageTitle;
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* 侧边栏 */}
-      <Sidebar
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={handleToggleSidebar}
-      />
+    <SidebarProvider
+      defaultOpen={true}
+      style={
+        {
+          "--sidebar-width": "240px", // 展开时的宽度，比默认的280px要窄
+          "--sidebar-width-icon": "4rem", // 64px，相当于原来的宽度 + pr-4 (16px)
+        } as React.CSSProperties
+      }
+    >
+      <div className="flex min-h-screen bg-background">
+        {/* 侧边栏 */}
+        <AppSidebar
+          onSettingsClick={() => setSettingsOpen(true)}
+          onAddContentClick={() => setAddContentOpen(true)}
+        />
 
-      {/* 顶部导航栏 */}
-      <TopNavigation
-        onSettingsClick={() => setSettingsOpen(true)}
-        onAddContentClick={() => setAddContentOpen(true)}
-      />
+        <SidebarInset>
+          {/* 主内容区域 */}
+          <main className="flex-1">
+            {isFullscreen ? (
+              children
+            ) : (
+              <div className="container mx-auto p-4">
+                <div className="p-4">{children}</div>
+              </div>
+            )}
+          </main>
+        </SidebarInset>
 
-      {/* 主内容区域 */}
-      <main
-        className={`flex-1 transition-all duration-300 ${
-          sidebarCollapsed ? "ml-16" : "ml-56"
-        } ${isFullscreen ? "pt-16" : "pt-20"}`}
-      >
-        {isFullscreen ? (
-          children
-        ) : (
-          <div className="container mx-auto p-6">
-            <header className="mb-6">
-              <h1 className="text-2xl font-bold text-foreground">
-                {pageTitle}
-              </h1>
-            </header>
+        {/* 设置面板 */}
+        <SettingsPanel
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+        />
 
-            <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-              {children}
-            </div>
-          </div>
-        )}
-      </main>
-
-      {/* 设置面板 */}
-      <SettingsPanel
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-      />
-
-      {/* 添加内容模态窗口 */}
-      <AddContentModal
-        open={addContentOpen}
-        onClose={() => setAddContentOpen(false)}
-      />
-    </div>
+        {/* 添加内容模态窗口 */}
+        <AddContentModal
+          open={addContentOpen}
+          onClose={() => setAddContentOpen(false)}
+        />
+      </div>
+    </SidebarProvider>
   );
 }

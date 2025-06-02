@@ -245,7 +245,7 @@ export async function removeItem(id: string) {
     lastFetchTime = 0;
 
     // 重新验证路径，但不重复渲染
-    revalidatePath("/dashboard");
+    revalidatePath("/content-library");
 
     // 处理嵌套结构
     const responseData = data as DataResponse;
@@ -343,7 +343,7 @@ export async function addItem(
     lastFetchTime = 0;
 
     // 重新验证路径
-    revalidatePath("/dashboard");
+    revalidatePath("/content-library");
 
     // 成功添加物品，如果data包含物品信息，确认成功
     if (data?.data && typeof data.data === "object") {
@@ -359,8 +359,8 @@ export async function addItem(
       return { message: successMessage, success: true };
     }
 
-    // 重定向到Dashboard
-    redirect(`/dashboard`);
+    // 重定向到Content Library
+    redirect(`/content-library`);
   } catch (error) {
     console.error("添加物品时出错:", error);
     const errorMessage = error instanceof Error ? error.message : "未知错误";

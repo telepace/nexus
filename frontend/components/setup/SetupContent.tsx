@@ -182,7 +182,7 @@ const StepComponents = [WelcomeStep, PreferencesStep];
  * 1. Fetches or retrieves `plugin_id` from URL parameters or extensions.
  * 2. Marks the setup as complete on the server by updating user data.
  * 3. Sends a token to an extension if necessary and redirects based on callback URLs.
- * 4. Redirects to the dashboard after completing all steps.
+ * 4. Redirects to the content library after completing all steps.
  *
  * @returns A React component that renders the setup process UI.
  */
@@ -236,7 +236,7 @@ export function SetupContent() {
    * The function performs several steps: it first checks if the setup has already been marked as complete to prevent duplicate execution.
    * It then attempts to mark the user's setup as complete by making an API call. If successful, it updates the local authentication state.
    * Next, if a user token and extension plugin ID are available, it sends the token to the extension and handles any success or failure scenarios.
-   * Finally, if not redirected elsewhere, it redirects the user to the dashboard.
+   * Finally, if not redirected elsewhere, it redirects the user to the content library.
    *
    * @returns void
    */
@@ -336,13 +336,13 @@ export function SetupContent() {
           "[SetupContent] Error sending Token to extension:",
           error,
         );
-        // Non-critical, so proceed to dashboard redirection
+        // Non-critical, so proceed to content library redirection
       }
     }
 
-    // 3. Redirect to dashboard (if not redirected to extension callback)
-    console.log("[SetupContent] Redirecting to /dashboard");
-    router.push("/dashboard");
+    // 3. Redirect to content library (if not redirected to extension callback)
+    console.log("[SetupContent] Redirecting to /content-library");
+    router.push("/content-library");
   };
 
   const handleNext = () => {

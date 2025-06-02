@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/client-auth";
 /**
  * Custom hook to handle redirection based on authentication status and setup completion.
  * This hook checks if the user is authenticated and redirects accordingly:
- * - If authenticated and setup is complete, it redirects to a callback URL or /dashboard.
+ * - If authenticated and setup is complete, it redirects to a callback URL or /content-library.
  * - If authenticated but setup is incomplete, it redirects to /setup.
  * - It does nothing for unauthenticated users as they should be redirected by middleware.
  *
@@ -37,9 +37,9 @@ export function useAuthRedirect() {
           router.push(callbackUrl);
         } else {
           console.log(
-            "[useAuthRedirect] Setup complete, redirecting to /dashboard",
+            "[useAuthRedirect] Setup complete, redirecting to /content-library",
           );
-          router.push("/dashboard");
+          router.push("/content-library");
         }
       } else {
         // User has not completed setup, is_setup_complete is false or undefined

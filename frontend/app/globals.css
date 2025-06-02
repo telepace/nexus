@@ -1,6 +1,8 @@
 /* stylelint-disable at-rule-no-unknown */
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 /* Tailwind v4 自定义变体 */
 @variant dark (&:is(.dark *));
 
@@ -483,5 +485,14 @@
   50% {
     transform: none;
     animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }

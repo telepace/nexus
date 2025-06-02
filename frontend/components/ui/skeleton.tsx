@@ -1,8 +1,5 @@
 import { cn } from "@/lib/utils";
 
-/**
- * Renders a skeleton component with animation and styling.
- */
 function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div

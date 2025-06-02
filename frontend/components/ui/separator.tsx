@@ -5,9 +5,6 @@ import * as SeparatorPrimitive from "@radix-ui/react-separator";
 
 import { cn } from "@/lib/utils";
 
-/**
- * Renders a separator component with customizable orientation and styling.
- */
 function Separator({
   className,
   orientation = "horizontal",
@@ -16,7 +13,7 @@ function Separator({
 }: React.ComponentProps<typeof SeparatorPrimitive.Root>) {
   return (
     <SeparatorPrimitive.Root
-      data-slot="separator-root"
+      data-slot="separator"
       decorative={decorative}
       orientation={orientation}
       className={cn(
