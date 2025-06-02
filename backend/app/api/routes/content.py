@@ -1,7 +1,8 @@
 import json
 import uuid
 from collections.abc import AsyncGenerator
-from typing import Any, Optional # Added Optional
+from datetime import datetime  # For checking expiration
+from typing import Any  # Added Optional
 
 from fastapi import (
     APIRouter,
@@ -9,8 +10,8 @@ from fastapi import (
     Body,
     Depends,
     HTTPException,
+    Path,  # Added Path
     Query,
-    Path, # Added Path
     status,
 )
 from fastapi.responses import StreamingResponse
@@ -18,7 +19,9 @@ from sqlmodel import Session
 
 from app.api.deps import CurrentUser, SessionDep, get_current_user, get_db
 from app.base import User
+from app.core import security  # For password verification
 from app.core.config import settings
+from app.crud import crud_content as crud  # Alias for clarity
 from app.crud.crud_content import (
     create_content_item_sync as crud_create_content_item,
 )
@@ -43,9 +46,6 @@ from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is
 )
 from app.schemas.llm import CompletionRequest, LLMMessage
 from app.utils.content_processors import ContentProcessorFactory
-from app.core import security # For password verification
-from app.crud import crud_content as crud # Alias for clarity
-from datetime import datetime # For checking expiration
 
 router = APIRouter()
 
@@ -557,6 +557,7 @@ async def analyze_content_stream(
 
 # Content Sharing Endpoints
 
+
 @router.post(
     "/{id}/share",
     response_model=ContentSharePublic,
@@ -587,14 +588,17 @@ def create_share_link_endpoint(
 
     # Ensure content_item_id from path is used, not potentially from body if schema included it
     created_share = crud.create_content_share(
-        db=session, content_share_in=share_in, content_item_id=id, user_id=current_user.id
+        db=session,
+        content_share_in=share_in,
+        content_item_id=id,
+        user_id=current_user.id,
     )
-    return created_share # FastAPI will serialize using ContentSharePublic
+    return created_share  # FastAPI will serialize using ContentSharePublic
 
 
 @router.get(
     "/share/{token}",
-    response_model=ContentItemPublic, # Or a new schema like SharedContentPublic
+    response_model=ContentItemPublic,  # Or a new schema like SharedContentPublic
     summary="Access Shared Content",
     description="Retrieves a content item using a share token. May require a password.",
 )
@@ -602,8 +606,8 @@ def get_shared_content_endpoint(
     *,
     session: SessionDep,
     token: str = Path(..., description="The unique share token"),
-    password: Optional[str] = Query(None, description="Password for protected content"),
-) -> ContentItemPublic: # Change to SharedContentPublic if different fields are needed
+    password: str | None = Query(None, description="Password for protected content"),
+) -> ContentItemPublic:  # Change to SharedContentPublic if different fields are needed
     """
     Access shared content item using a token.
     """
@@ -611,7 +615,8 @@ def get_shared_content_endpoint(
 
     if not share_record or not share_record.is_active:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Share link not found or inactive"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Share link not found or inactive",
         )
 
     if share_record.expires_at and share_record.expires_at < datetime.utcnow():
@@ -632,23 +637,31 @@ def get_shared_content_endpoint(
 
     # Check max_access_count before incrementing and fetching content
     # Note: This is a slight deviation from prompt order to fail fast if already over limit
-    if share_record.max_access_count is not None and \
-       share_record.access_count >= share_record.max_access_count:
+    if (
+        share_record.max_access_count is not None
+        and share_record.access_count >= share_record.max_access_count
+    ):
         # Deactivate if it wasn't already (e.g. if increment happened elsewhere or exact match)
         if share_record.is_active:
-             crud.deactivate_content_share(db=session, content_share=share_record)
+            crud.deactivate_content_share(db=session, content_share=share_record)
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Share link access limit reached"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Share link access limit reached",
         )
 
-    updated_share_record = crud.increment_access_count(db=session, content_share=share_record)
+    updated_share_record = crud.increment_access_count(
+        db=session, content_share=share_record
+    )
     # Check again if incrementing pushed it over the limit and deactivated it
     if not updated_share_record.is_active:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Share link access limit reached and deactivated"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Share link access limit reached and deactivated",
         )
 
-    content_item = crud.get_content_item_sync(session=session, id=share_record.content_item_id)
+    content_item = crud.get_content_item_sync(
+        session=session, id=share_record.content_item_id
+    )
     if not content_item:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Shared content not found"
@@ -669,7 +682,9 @@ def deactivate_share_link_endpoint(
     *,
     session: SessionDep,
     current_user: CurrentUser,
-    id: uuid.UUID = Path(..., description="ID of the content item whose shares to deactivate"),
+    id: uuid.UUID = Path(
+        ..., description="ID of the content item whose shares to deactivate"
+    ),
 ):
     """
     Deactivate share link(s) for a content item.
@@ -687,7 +702,9 @@ def deactivate_share_link_endpoint(
             detail="You don't have permission to modify shares for this content item",
         )
 
-    active_shares = crud.get_content_shares_by_content_id(db=session, content_item_id=id)
+    active_shares = crud.get_content_shares_by_content_id(
+        db=session, content_item_id=id
+    )
     if not active_shares:
         # Not an error, just nothing to do.
         return status.HTTP_204_NO_CONTENT
@@ -698,4 +715,6 @@ def deactivate_share_link_endpoint(
     return status.HTTP_204_NO_CONTENT
 
 
-print("API routes for ContentItem and ContentShare created in backend/app/api/routes/content.py")
+print(
+    "API routes for ContentItem and ContentShare created in backend/app/api/routes/content.py"
+)

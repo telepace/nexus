@@ -6,10 +6,10 @@ from sqlmodel import Session
 
 from app.core.config import settings
 from app.crud import crud_content
-from app.models.content import ContentItem, ContentShare
-from app.schemas.content import ContentShareCreate, ContentSharePublic
-from app.tests.utils.user import create_random_user, authentication_token_from_email
+from app.models.content import ContentShare
+from app.schemas.content import ContentShareCreate
 from app.tests.utils.content import create_random_content_item
+from app.tests.utils.user import create_random_user
 
 # Fixtures from conftest.py (db, client, normal_user_token_headers) will be auto-injected.
 
@@ -30,7 +30,7 @@ def test_create_content_share_api(
     share_data = {
         "expires_at": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(),
         "max_access_count": 5,
-        "password": "testpassword"
+        "password": "testpassword",
     }
     response = client.post(
         f"{settings.API_V1_STR}/content/{content_item.id}/share",
@@ -51,17 +51,19 @@ def test_create_content_share_api(
     assert db_share is not None
     assert db_share.content_item_id == content_item.id
     assert db_share.max_access_count == 5
-    assert db_share.password_hash is not None # Password was set
+    assert db_share.password_hash is not None  # Password was set
 
     # Test creating share for content not owned by user
     other_user = create_random_user(db)
     other_content_item = create_random_content_item(db, user_id=other_user.id)
     response_forbidden = client.post(
         f"{settings.API_V1_STR}/content/{other_content_item.id}/share",
-        headers=normal_user_token_headers, # User trying to share other_user's content
+        headers=normal_user_token_headers,  # User trying to share other_user's content
         json={"max_access_count": 1},
     )
-    assert response_forbidden.status_code == 403, response_forbidden.text # Or 404 if item not found for user
+    assert response_forbidden.status_code == 403, (
+        response_forbidden.text
+    )  # Or 404 if item not found for user
 
     # Test with minimal data (no expiry, no max access, no password)
     share_data_minimal = {}
@@ -82,12 +84,14 @@ def test_create_content_share_api(
 
 def test_get_shared_content_public_no_password(client: TestClient, db: Session) -> None:
     user = create_random_user(db)
-    content_item = create_random_content_item(db, user_id=user.id, content_text="Public Shared Content")
+    content_item = create_random_content_item(
+        db, user_id=user.id, content_text="Public Shared Content"
+    )
     share = crud_content.create_content_share(
         db,
         content_share_in=ContentShareCreate(content_item_id=content_item.id),
         content_item_id=content_item.id,
-        user_id=user.id
+        user_id=user.id,
     )
 
     response = client.get(f"{settings.API_V1_STR}/share/{share.share_token}")
@@ -96,40 +100,49 @@ def test_get_shared_content_public_no_password(client: TestClient, db: Session) 
     assert shared_item_data["id"] == str(content_item.id)
     assert shared_item_data["content_text"] == "Public Shared Content"
 
-    db.refresh(share) # Refresh to get updated access_count
+    db.refresh(share)  # Refresh to get updated access_count
     assert share.access_count == 1
 
 
 def test_get_shared_content_with_password(client: TestClient, db: Session) -> None:
     user = create_random_user(db)
-    content_item = create_random_content_item(db, user_id=user.id, content_text="Password Protected Content")
+    content_item = create_random_content_item(
+        db, user_id=user.id, content_text="Password Protected Content"
+    )
     share = crud_content.create_content_share(
         db,
-        content_share_in=ContentShareCreate(content_item_id=content_item.id, password="secure"),
+        content_share_in=ContentShareCreate(
+            content_item_id=content_item.id, password="secure"
+        ),
         content_item_id=content_item.id,
-        user_id=user.id
+        user_id=user.id,
     )
 
     # Attempt without password
     response_no_pw = client.get(f"{settings.API_V1_STR}/share/{share.share_token}")
-    assert response_no_pw.status_code == 401, response_no_pw.text # Assuming 401 if password required but not provided
+    assert response_no_pw.status_code == 401, (
+        response_no_pw.text
+    )  # Assuming 401 if password required but not provided
     assert response_no_pw.json()["detail"] == "Password required"
 
-
     # Attempt with incorrect password
-    response_wrong_pw = client.get(f"{settings.API_V1_STR}/share/{share.share_token}?password=wrong")
+    response_wrong_pw = client.get(
+        f"{settings.API_V1_STR}/share/{share.share_token}?password=wrong"
+    )
     assert response_wrong_pw.status_code == 403, response_wrong_pw.text
     assert response_wrong_pw.json()["detail"] == "Incorrect password"
 
     # Attempt with correct password
-    response_correct_pw = client.get(f"{settings.API_V1_STR}/share/{share.share_token}?password=secure")
+    response_correct_pw = client.get(
+        f"{settings.API_V1_STR}/share/{share.share_token}?password=secure"
+    )
     assert response_correct_pw.status_code == 200, response_correct_pw.text
     shared_item_data = response_correct_pw.json()
     assert shared_item_data["id"] == str(content_item.id)
     assert shared_item_data["content_text"] == "Password Protected Content"
 
     db.refresh(share)
-    assert share.access_count == 1 # Only successful access should increment
+    assert share.access_count == 1  # Only successful access should increment
 
 
 def test_get_shared_content_expired(client: TestClient, db: Session) -> None:
@@ -138,17 +151,21 @@ def test_get_shared_content_expired(client: TestClient, db: Session) -> None:
     expired_dt = datetime.now(timezone.utc) - timedelta(days=1)
     share = crud_content.create_content_share(
         db,
-        content_share_in=ContentShareCreate(content_item_id=content_item.id, expires_at=expired_dt),
+        content_share_in=ContentShareCreate(
+            content_item_id=content_item.id, expires_at=expired_dt
+        ),
         content_item_id=content_item.id,
-        user_id=user.id
+        user_id=user.id,
     )
 
     response = client.get(f"{settings.API_V1_STR}/share/{share.share_token}")
-    assert response.status_code == 404, response.text # Or 410 Gone, depends on API implementation
+    assert response.status_code == 404, (
+        response.text
+    )  # Or 410 Gone, depends on API implementation
     assert "expired" in response.json()["detail"].lower()
 
     db.refresh(share)
-    assert share.is_active is False # Should be deactivated by the API endpoint
+    assert share.is_active is False  # Should be deactivated by the API endpoint
 
 
 def test_get_shared_content_max_access_reached(client: TestClient, db: Session) -> None:
@@ -156,9 +173,11 @@ def test_get_shared_content_max_access_reached(client: TestClient, db: Session) 
     content_item = create_random_content_item(db, user_id=user.id)
     share = crud_content.create_content_share(
         db,
-        content_share_in=ContentShareCreate(content_item_id=content_item.id, max_access_count=1),
+        content_share_in=ContentShareCreate(
+            content_item_id=content_item.id, max_access_count=1
+        ),
         content_item_id=content_item.id,
-        user_id=user.id
+        user_id=user.id,
     )
 
     # First access - should succeed
@@ -166,12 +185,17 @@ def test_get_shared_content_max_access_reached(client: TestClient, db: Session) 
     assert response1.status_code == 200, response1.text
     db.refresh(share)
     assert share.access_count == 1
-    assert share.is_active is False # Max access count of 1 reached, should deactivate
+    assert share.is_active is False  # Max access count of 1 reached, should deactivate
 
     # Second access - should fail
     response2 = client.get(f"{settings.API_V1_STR}/share/{share.share_token}")
-    assert response2.status_code == 404, response2.text # No longer active or limit reached
-    assert "limit reached" in response2.json()["detail"].lower() or "not found or inactive" in response2.json()["detail"].lower()
+    assert response2.status_code == 404, (
+        response2.text
+    )  # No longer active or limit reached
+    assert (
+        "limit reached" in response2.json()["detail"].lower()
+        or "not found or inactive" in response2.json()["detail"].lower()
+    )
 
 
 def test_get_shared_content_invalid_token(client: TestClient) -> None:
@@ -192,13 +216,13 @@ def test_deactivate_share_link_api_owner(
         db,
         content_share_in=ContentShareCreate(content_item_id=content_item.id),
         content_item_id=content_item.id,
-        user_id=user.id
+        user_id=user.id,
     )
     share2 = crud_content.create_content_share(
         db,
         content_share_in=ContentShareCreate(content_item_id=content_item.id),
         content_item_id=content_item.id,
-        user_id=user.id
+        user_id=user.id,
     )
     assert share1.is_active is True
     assert share2.is_active is True
@@ -225,20 +249,22 @@ def test_deactivate_share_link_api_owner(
 def test_deactivate_share_link_api_not_owner(
     client: TestClient, db: Session, normal_user_token_headers: dict[str, str]
 ) -> None:
-    owner_user = create_random_user(db) # Different user
+    owner_user = create_random_user(db)  # Different user
     content_item_other_owner = create_random_content_item(db, user_id=owner_user.id)
     crud_content.create_content_share(
         db,
-        content_share_in=ContentShareCreate(content_item_id=content_item_other_owner.id),
+        content_share_in=ContentShareCreate(
+            content_item_id=content_item_other_owner.id
+        ),
         content_item_id=content_item_other_owner.id,
-        user_id=owner_user.id
+        user_id=owner_user.id,
     )
 
     response = client.delete(
         f"{settings.API_V1_STR}/content/{content_item_other_owner.id}/share",
-        headers=normal_user_token_headers, # `normal_user` does not own this item
+        headers=normal_user_token_headers,  # `normal_user` does not own this item
     )
-    assert response.status_code == 403, response.text # Or 404 if hidden
+    assert response.status_code == 403, response.text  # Or 404 if hidden
 
 
 def test_deactivate_share_link_api_content_not_found(
@@ -252,4 +278,6 @@ def test_deactivate_share_link_api_content_not_found(
     assert response.status_code == 404, response.text
 
 
-print("API tests for ContentShare created in backend/app/tests/api/routes/test_share_api.py")
+print(
+    "API tests for ContentShare created in backend/app/tests/api/routes/test_share_api.py"
+)

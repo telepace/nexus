@@ -22,7 +22,9 @@ jest.mock("@/app/openapi-client/index", () => ({
 
 // Mock MarkdownRenderer as its internals are tested separately
 jest.mock("@/components/ui/MarkdownRenderer", () => ({
-  MarkdownRenderer: ({ content }: { content: string }) => <div data-testid="mock-markdown-renderer">{content}</div>,
+  MarkdownRenderer: ({ content }: { content: string }) => (
+    <div data-testid="mock-markdown-renderer">{content}</div>
+  ),
 }));
 
 const mockSuccessData: ContentItemPublic = {
@@ -43,27 +45,38 @@ describe("SharedContentPage", () => {
   });
 
   const mockUseParams = (token?: string) => {
-    (require("next/navigation").useParams as jest.Mock).mockReturnValue({ token });
+    (require("next/navigation").useParams as jest.Mock).mockReturnValue({
+      token,
+    });
   };
 
   it("renders loading state initially", () => {
     mockUseParams("test-token");
-    (client.getSharedContentShareTokenGet as jest.Mock).mockReturnValue(new Promise(() => {})); // Pending promise
+    (client.getSharedContentShareTokenGet as jest.Mock).mockReturnValue(
+      new Promise(() => {}),
+    ); // Pending promise
     render(<SharedContentPage />);
     expect(screen.getByText(/Loading shared content.../i)).toBeInTheDocument();
   });
 
   it("fetches and renders content successfully", async () => {
     mockUseParams("test-token");
-    (client.getSharedContentShareTokenGet as jest.Mock).mockResolvedValueOnce(mockSuccessData);
+    (client.getSharedContentShareTokenGet as jest.Mock).mockResolvedValueOnce(
+      mockSuccessData,
+    );
     render(<SharedContentPage />);
 
     await waitFor(() => {
-      expect(client.getSharedContentShareTokenGet).toHaveBeenCalledWith("test-token", { password: undefined });
+      expect(client.getSharedContentShareTokenGet).toHaveBeenCalledWith(
+        "test-token",
+        { password: undefined },
+      );
     });
     await waitFor(() => {
       expect(screen.getByText(mockSuccessData.title!)).toBeInTheDocument();
-      expect(screen.getByTestId("mock-markdown-renderer")).toHaveTextContent(mockSuccessData.content_text!);
+      expect(screen.getByTestId("mock-markdown-renderer")).toHaveTextContent(
+        mockSuccessData.content_text!,
+      );
     });
   });
 
@@ -73,7 +86,12 @@ describe("SharedContentPage", () => {
       status: 401,
       data: { detail: "Password required" }, // Structure based on component's error handling
     });
-    render(<><SharedContentPage /><Toaster/></>); // Toaster for potential error toasts
+    render(
+      <>
+        <SharedContentPage />
+        <Toaster />
+      </>,
+    ); // Toaster for potential error toasts
 
     await waitFor(() => {
       expect(screen.getByText(/Password Required/i)).toBeInTheDocument();
@@ -90,40 +108,67 @@ describe("SharedContentPage", () => {
       data: { detail: "Password required" },
     });
 
-    render(<><SharedContentPage /><Toaster/></>);
+    render(
+      <>
+        <SharedContentPage />
+        <Toaster />
+      </>,
+    );
 
-    await waitFor(() => expect(screen.getByLabelText(/Password/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByLabelText(/Password/i)).toBeInTheDocument(),
+    );
 
     // Second call (after password submission): success
-    (client.getSharedContentShareTokenGet as jest.Mock).mockResolvedValueOnce(mockSuccessData);
+    (client.getSharedContentShareTokenGet as jest.Mock).mockResolvedValueOnce(
+      mockSuccessData,
+    );
 
     await user.type(screen.getByLabelText(/Password/i), "secret");
     fireEvent.click(screen.getByRole("button", { name: /Unlock Content/i }));
 
     await waitFor(() => {
       expect(client.getSharedContentShareTokenGet).toHaveBeenCalledTimes(2); // Initial + password attempt
-      expect(client.getSharedContentShareTokenGet).toHaveBeenCalledWith("test-token-pw", { password: "secret" });
+      expect(client.getSharedContentShareTokenGet).toHaveBeenCalledWith(
+        "test-token-pw",
+        { password: "secret" },
+      );
     });
     await waitFor(() => {
       expect(screen.getByText(mockSuccessData.title!)).toBeInTheDocument();
     });
   });
 
-   it("displays error if submitted password is incorrect", async () => {
+  it("displays error if submitted password is incorrect", async () => {
     const user = userEvent.setup();
     mockUseParams("test-token-wrong-pw");
     (client.getSharedContentShareTokenGet as jest.Mock)
-      .mockRejectedValueOnce({ status: 401, data: { detail: "Password required" } }) // First call
-      .mockRejectedValueOnce({ status: 403, data: { detail: "Incorrect password" } }); // Second call
+      .mockRejectedValueOnce({
+        status: 401,
+        data: { detail: "Password required" },
+      }) // First call
+      .mockRejectedValueOnce({
+        status: 403,
+        data: { detail: "Incorrect password" },
+      }); // Second call
 
-    render(<><SharedContentPage /><Toaster/></>);
-    await waitFor(() => expect(screen.getByLabelText(/Password/i)).toBeInTheDocument());
+    render(
+      <>
+        <SharedContentPage />
+        <Toaster />
+      </>,
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText(/Password/i)).toBeInTheDocument(),
+    );
 
     await user.type(screen.getByLabelText(/Password/i), "wrongsecret");
     fireEvent.click(screen.getByRole("button", { name: /Unlock Content/i }));
 
     await waitFor(() => {
-        expect(screen.getByText(/Incorrect password. Please try again./i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Incorrect password. Please try again./i),
+      ).toBeInTheDocument();
     });
   });
 
@@ -131,12 +176,23 @@ describe("SharedContentPage", () => {
     mockUseParams("invalid-token");
     (client.getSharedContentShareTokenGet as jest.Mock).mockRejectedValueOnce({
       status: 404,
-      data: { detail: "Share link not found, expired, or access limit reached." },
+      data: {
+        detail: "Share link not found, expired, or access limit reached.",
+      },
     });
-    render(<><SharedContentPage /><Toaster/></>);
+    render(
+      <>
+        <SharedContentPage />
+        <Toaster />
+      </>,
+    );
     await waitFor(() => {
       expect(screen.getByText(/Error Accessing Content/i)).toBeInTheDocument();
-      expect(screen.getByText(/Share link not found, expired, or access limit reached./i)).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /Share link not found, expired, or access limit reached./i,
+        ),
+      ).toBeInTheDocument();
     });
   });
 
@@ -146,18 +202,24 @@ describe("SharedContentPage", () => {
       status: 500,
       data: { detail: "Server error" },
     });
-     render(<><SharedContentPage /><Toaster/></>);
+    render(
+      <>
+        <SharedContentPage />
+        <Toaster />
+      </>,
+    );
     await waitFor(() => {
       expect(screen.getByText(/Error Accessing Content/i)).toBeInTheDocument();
       expect(screen.getByText(/Server error/i)).toBeInTheDocument();
     });
   });
 
-   it("handles missing token in URL", () => {
+  it("handles missing token in URL", () => {
     mockUseParams(undefined); // No token
     render(<SharedContentPage />);
     expect(screen.getByText(/Error Accessing Content/i)).toBeInTheDocument();
-    expect(screen.getByText(/Share token is missing in URL./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Share token is missing in URL./i),
+    ).toBeInTheDocument();
   });
-
 });

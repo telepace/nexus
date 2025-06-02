@@ -13,7 +13,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { client } from "@/app/openapi-client/index"; // Adjust path as needed
-import { ContentSharePublic, ContentItemPublic } from "@/app/openapi-client/sdk.gen"; // Adjust path
+import {
+  ContentSharePublic,
+  ContentItemPublic,
+} from "@/app/openapi-client/sdk.gen"; // Adjust path
 import { AlertCircle, Trash2, Eye, RefreshCw, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ShareContentModal } from "./ShareContentModal"; // For creating new shares or editing
@@ -34,8 +37,9 @@ interface ExtendedContentSharePublic extends ContentSharePublic {
   content_item_id?: string; // For revoke action
 }
 
-
-export const ManageShareLinks: React.FC<ManageShareLinksProps> = ({ userId }) => {
+export const ManageShareLinks: React.FC<ManageShareLinksProps> = ({
+  userId,
+}) => {
   const [shares, setShares] = useState<ExtendedContentSharePublic[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +47,8 @@ export const ManageShareLinks: React.FC<ManageShareLinksProps> = ({ userId }) =>
 
   // State for ShareContentModal (if we want to edit/create from here)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [selectedContentItemForShare, setSelectedContentItemForShare] = useState<ContentItemPublic | null>(null);
-
+  const [selectedContentItemForShare, setSelectedContentItemForShare] =
+    useState<ContentItemPublic | null>(null);
 
   const fetchShares = useCallback(async () => {
     if (!userId) return;
@@ -88,13 +92,12 @@ export const ManageShareLinks: React.FC<ManageShareLinksProps> = ({ userId }) =>
       // Example: const fetchedShares = await client.listActiveSharesForUser(); setShares(fetchedShares);
       setShares([]); // Remove this line when actual API call is implemented
       if (allShares.length === 0 && !error) {
-         //setError("No share links found or API to list them is not yet implemented.");
+        //setError("No share links found or API to list them is not yet implemented.");
       }
-
-
     } catch (err: any) {
       console.error("Failed to fetch share links:", err);
-      const errorMsg = err.data?.detail || err.message || "Failed to load share links.";
+      const errorMsg =
+        err.data?.detail || err.message || "Failed to load share links.";
       setError(errorMsg);
       // toast({ title: "Error", description: errorMsg, variant: "destructive" });
     } finally {
@@ -106,9 +109,16 @@ export const ManageShareLinks: React.FC<ManageShareLinksProps> = ({ userId }) =>
     fetchShares();
   }, [fetchShares]);
 
-  const handleRevokeShare = async (contentItemId: string | undefined, shareToken: string) => {
+  const handleRevokeShare = async (
+    contentItemId: string | undefined,
+    shareToken: string,
+  ) => {
     if (!contentItemId) {
-      toast({ title: "Error", description: "Content item ID is missing.", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Content item ID is missing.",
+        variant: "destructive",
+      });
       return;
     }
     // The DELETE endpoint is /api/v1/content/{id}/share
@@ -117,16 +127,22 @@ export const ManageShareLinks: React.FC<ManageShareLinksProps> = ({ userId }) =>
     // For now, using the existing endpoint means all shares for this item will be revoked.
     // A confirmation dialog would be good here.
 
-    const confirmRevoke = window.confirm("Are you sure you want to revoke all share links for this content item? This action cannot be undone for the specific links, though new ones can be created.");
+    const confirmRevoke = window.confirm(
+      "Are you sure you want to revoke all share links for this content item? This action cannot be undone for the specific links, though new ones can be created.",
+    );
     if (!confirmRevoke) return;
 
     try {
       await client.deactivateShareLinkEndpoint(contentItemId); // This uses content ID
-      toast({ title: "Success", description: "Share link(s) for the item have been revoked." });
+      toast({
+        title: "Success",
+        description: "Share link(s) for the item have been revoked.",
+      });
       fetchShares(); // Refresh the list
     } catch (err: any) {
       console.error("Failed to revoke share link:", err);
-      const errorMsg = err.data?.detail || err.message || "Failed to revoke share link.";
+      const errorMsg =
+        err.data?.detail || err.message || "Failed to revoke share link.";
       setError(errorMsg); // Display error in the component
       toast({ title: "Error", description: errorMsg, variant: "destructive" });
     }
@@ -138,7 +154,6 @@ export const ManageShareLinks: React.FC<ManageShareLinksProps> = ({ userId }) =>
   //   setSelectedContentItemForShare(item);
   //   setIsShareModalOpen(true);
   // };
-
 
   if (isLoading && shares.length === 0) {
     return (
@@ -154,7 +169,9 @@ export const ManageShareLinks: React.FC<ManageShareLinksProps> = ({ userId }) =>
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold">Manage Share Links</h2>
         <Button variant="outline" onClick={fetchShares} disabled={isLoading}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+          />
           Refresh
         </Button>
       </div>
@@ -167,7 +184,9 @@ export const ManageShareLinks: React.FC<ManageShareLinksProps> = ({ userId }) =>
       )}
 
       {shares.length === 0 && !isLoading && !error && (
-        <p className="text-muted-foreground">No active share links found for your content.</p>
+        <p className="text-muted-foreground">
+          No active share links found for your content.
+        </p>
       )}
 
       {shares.length > 0 && (
@@ -186,17 +205,27 @@ export const ManageShareLinks: React.FC<ManageShareLinksProps> = ({ userId }) =>
           <TableBody>
             {shares.map((share) => (
               <TableRow key={share.id}>
-                <TableCell className="font-medium">{share.content_item_title || "N/A"}</TableCell>
+                <TableCell className="font-medium">
+                  {share.content_item_title || "N/A"}
+                </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="truncate max-w-[100px]">{share.share_token}</Badge>
+                  <Badge variant="outline" className="truncate max-w-[100px]">
+                    {share.share_token}
+                  </Badge>
                 </TableCell>
                 <TableCell>
                   <Badge variant={share.is_active ? "default" : "secondary"}>
                     {share.is_active ? "Active" : "Inactive"}
                   </Badge>
                 </TableCell>
-                <TableCell>{format(new Date(share.created_at), "PPp")}</TableCell>
-                <TableCell>{share.expires_at ? format(new Date(share.expires_at), "PPp") : "Never"}</TableCell>
+                <TableCell>
+                  {format(new Date(share.created_at), "PPp")}
+                </TableCell>
+                <TableCell>
+                  {share.expires_at
+                    ? format(new Date(share.expires_at), "PPp")
+                    : "Never"}
+                </TableCell>
                 <TableCell>
                   {share.access_count} / {share.max_access_count || "∞"}
                 </TableCell>
@@ -208,7 +237,12 @@ export const ManageShareLinks: React.FC<ManageShareLinksProps> = ({ userId }) =>
                     variant="ghost"
                     size="icon"
                     title="Revoke Share"
-                    onClick={() => handleRevokeShare(share.content_item_id, share.share_token)}
+                    onClick={() =>
+                      handleRevokeShare(
+                        share.content_item_id,
+                        share.share_token,
+                      )
+                    }
                   >
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>

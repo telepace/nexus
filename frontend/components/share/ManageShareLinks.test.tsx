@@ -59,11 +59,10 @@ const mockShares: ContentSharePublic[] = [
 ];
 // Add the augmented fields for the test data
 const mockExtendedShares = mockShares.map((s, i) => ({
-    ...s,
-    content_item_title: `Content Title ${i === 0 ? 'Alpha' : 'Beta'}`,
-    // content_item_id is already in base type
+  ...s,
+  content_item_title: `Content Title ${i === 0 ? "Alpha" : "Beta"}`,
+  // content_item_id is already in base type
 }));
-
 
 describe("ManageShareLinks", () => {
   beforeEach(() => {
@@ -79,14 +78,15 @@ describe("ManageShareLinks", () => {
     // So, we'll mock the direct call it *should* make, or mock the items call if that's what it does.
     // Given the component's current fetchShares uses listContentItemsEndpoint:
     (client.listContentItemsEndpoint as jest.Mock).mockResolvedValue(
-      mockExtendedShares.map(s => ({ id: s.content_item_id, title: s.content_item_title })) // Mock items
+      mockExtendedShares.map((s) => ({
+        id: s.content_item_id,
+        title: s.content_item_title,
+      })), // Mock items
     );
     // And then assume it would fetch shares per item (which is not ideal but reflects component's comment)
     // For simplicity, let's assume a direct fetch for now or that the component is refactored.
     // For the test to pass with current component structure (empty fetch), we mock it to return empty.
     (client.listContentItemsEndpoint as jest.Mock).mockResolvedValue([]);
-
-
   });
 
   const renderComponent = (userId?: string) => {
@@ -94,7 +94,7 @@ describe("ManageShareLinks", () => {
       <>
         <ManageShareLinks userId={userId || "user-123"} />
         <Toaster />
-      </>
+      </>,
     );
   };
 
@@ -103,7 +103,9 @@ describe("ManageShareLinks", () => {
     renderComponent();
     expect(screen.getByText(/Loading share links.../i)).toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.getByText(/No active share links found for your content./i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/No active share links found for your content./i),
+      ).toBeInTheDocument();
     });
   });
 
@@ -121,7 +123,8 @@ describe("ManageShareLinks", () => {
     // or having a more complex mock setup for the N+1 fetching it implies.
 
     // Let's assume the component state is directly updated for testing the render path:
-    jest.spyOn(React, 'useState')
+    jest
+      .spyOn(React, "useState")
       .mockImplementationOnce(() => [mockExtendedShares, jest.fn()]) // shares
       .mockImplementationOnce(() => [false, jest.fn()]) // isLoading
       .mockImplementationOnce(() => [null, jest.fn()]); // error
@@ -129,24 +132,34 @@ describe("ManageShareLinks", () => {
     renderComponent();
 
     await waitFor(() => {
-      expect(screen.getByText(mockExtendedShares[0].content_item_title!)).toBeInTheDocument();
-      expect(screen.getByText(mockExtendedShares[0].share_token!)).toBeInTheDocument();
+      expect(
+        screen.getByText(mockExtendedShares[0].content_item_title!),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(mockExtendedShares[0].share_token!),
+      ).toBeInTheDocument();
       expect(screen.getByText("Active")).toBeInTheDocument();
-      expect(screen.getByText(mockExtendedShares[1].content_item_title!)).toBeInTheDocument();
-      expect(screen.getByText(mockExtendedShares[1].share_token!)).toBeInTheDocument();
+      expect(
+        screen.getByText(mockExtendedShares[1].content_item_title!),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(mockExtendedShares[1].share_token!),
+      ).toBeInTheDocument();
       expect(screen.getByText("Inactive")).toBeInTheDocument();
     });
   });
 
-
   it("calls revoke API when revoke button is clicked and user confirms", async () => {
-     // Similar to above, set initial state to have shares to test revoke
-    jest.spyOn(React, 'useState')
+    // Similar to above, set initial state to have shares to test revoke
+    jest
+      .spyOn(React, "useState")
       .mockImplementationOnce(() => [mockExtendedShares, jest.fn()]) // shares
       .mockImplementationOnce(() => [false, jest.fn()]) // isLoading
       .mockImplementationOnce(() => [null, jest.fn()]); // error
 
-    (client.deactivateShareLinkEndpoint as jest.Mock).mockResolvedValueOnce({ status: 204 });
+    (client.deactivateShareLinkEndpoint as jest.Mock).mockResolvedValueOnce({
+      status: 204,
+    });
     (global.confirm as jest.Mock).mockReturnValueOnce(true); // User confirms
 
     renderComponent();
@@ -157,13 +170,18 @@ describe("ManageShareLinks", () => {
 
     expect(global.confirm).toHaveBeenCalledTimes(1);
     await waitFor(() => {
-      expect(client.deactivateShareLinkEndpoint).toHaveBeenCalledWith(mockExtendedShares[0].content_item_id);
+      expect(client.deactivateShareLinkEndpoint).toHaveBeenCalledWith(
+        mockExtendedShares[0].content_item_id,
+      );
     });
-    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: "Success" }));
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Success" }),
+    );
   });
 
   it("does not call revoke API if user cancels confirmation", async () => {
-    jest.spyOn(React, 'useState')
+    jest
+      .spyOn(React, "useState")
       .mockImplementationOnce(() => [mockExtendedShares, jest.fn()])
       .mockImplementationOnce(() => [false, jest.fn()])
       .mockImplementationOnce(() => [null, jest.fn()]);
@@ -181,13 +199,14 @@ describe("ManageShareLinks", () => {
   it("displays error if fetching shares fails", async () => {
     // This test will work with the current component structure if listContentItemsEndpoint is mocked to fail
     (client.listContentItemsEndpoint as jest.Mock).mockRejectedValueOnce({
-        response: { data: { detail: "Failed to load items" } },
-        message: "Network Error"
+      response: { data: { detail: "Failed to load items" } },
+      message: "Network Error",
     });
     renderComponent();
     await waitFor(() => {
-      expect(screen.getByText(/Failed to load share links./i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Failed to load share links./i),
+      ).toBeInTheDocument();
     });
   });
-
 });

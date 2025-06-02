@@ -24,7 +24,10 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast"; // Assuming useToast exists for sonner
 import copyToClipboard from "copy-to-clipboard";
 import { client } from "@/app/openapi-client/index"; // Adjust path as needed
-import { ContentItemPublic, ContentShareCreate } from "@/app/openapi-client/sdk.gen"; // Adjust path
+import {
+  ContentItemPublic,
+  ContentShareCreate,
+} from "@/app/openapi-client/sdk.gen"; // Adjust path
 
 interface ShareContentModalProps {
   open: boolean;
@@ -76,12 +79,17 @@ export const ShareContentModal: React.FC<ShareContentModalProps> = ({
     const shareCreateData: ContentShareCreate = {
       content_item_id: contentItem.id, // This will be overridden by path param on API, but good to have
       expires_at: expiresAt ? expiresAt.toISOString() : undefined,
-      max_access_count: maxAccessCount ? parseInt(maxAccessCount, 10) : undefined,
+      max_access_count: maxAccessCount
+        ? parseInt(maxAccessCount, 10)
+        : undefined,
       password: password || undefined,
     };
 
     try {
-      const response = await client.createShareLinkContentIdSharePost(contentItem.id, shareCreateData); // Adjust client call
+      const response = await client.createShareLinkContentIdSharePost(
+        contentItem.id,
+        shareCreateData,
+      ); // Adjust client call
 
       if (response.share_token && response.id) {
         // Assuming the API returns the full token and other details needed.
@@ -91,11 +99,16 @@ export const ShareContentModal: React.FC<ShareContentModalProps> = ({
         setShareToken(response.share_token);
         toast({ title: "Success", description: "Share link generated!" });
       } else {
-        throw new Error("Failed to generate share link: Invalid response from server.");
+        throw new Error(
+          "Failed to generate share link: Invalid response from server.",
+        );
       }
     } catch (err: any) {
       console.error("Failed to generate share link:", err);
-      const errorMsg = err.data?.detail || err.message || "Failed to generate share link. Please try again.";
+      const errorMsg =
+        err.data?.detail ||
+        err.message ||
+        "Failed to generate share link. Please try again.";
       setError(errorMsg);
       toast({ title: "Error", description: errorMsg, variant: "destructive" });
     } finally {
@@ -137,7 +150,11 @@ export const ShareContentModal: React.FC<ShareContentModalProps> = ({
                   }`}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {expiresAt ? format(expiresAt, "PPP") : <span>Pick a date</span>}
+                  {expiresAt ? (
+                    format(expiresAt, "PPP")
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -185,16 +202,30 @@ export const ShareContentModal: React.FC<ShareContentModalProps> = ({
 
           {generatedLink && shareToken && (
             <div className="space-y-3 pt-4">
-              <p className="text-sm font-medium text-green-600 dark:text-green-400">Share link generated successfully!</p>
+              <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                Share link generated successfully!
+              </p>
               <div className="flex items-center space-x-2">
                 <Input value={generatedLink} readOnly className="flex-1" />
-                <Button variant="outline" size="icon" onClick={() => handleCopyToClipboard(generatedLink, "URL")}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleCopyToClipboard(generatedLink, "URL")}
+                >
                   <CopyIcon className="h-4 w-4" />
                 </Button>
               </div>
               <div className="flex items-center space-x-2">
-                <Input value={`Token: ${shareToken}`} readOnly className="flex-1 text-xs text-muted-foreground" />
-                 <Button variant="outline" size="icon" onClick={() => handleCopyToClipboard(shareToken, "Token")}>
+                <Input
+                  value={`Token: ${shareToken}`}
+                  readOnly
+                  className="flex-1 text-xs text-muted-foreground"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleCopyToClipboard(shareToken, "Token")}
+                >
                   <CopyIcon className="h-4 w-4" />
                 </Button>
               </div>
@@ -203,11 +234,19 @@ export const ShareContentModal: React.FC<ShareContentModalProps> = ({
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
           </DialogClose>
-          <Button type="button" onClick={handleGenerateLink} disabled={isLoading}>
+          <Button
+            type="button"
+            onClick={handleGenerateLink}
+            disabled={isLoading}
+          >
             {isLoading ? "Generating..." : "Generate Share Link"}
           </Button>
         </DialogFooter>

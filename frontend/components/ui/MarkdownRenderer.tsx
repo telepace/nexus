@@ -178,7 +178,9 @@ export function MarkdownRenderer({
             </li>
           ),
           table: ({ children, ...props }) => (
-            <div className="my-6 w-full overflow-x-auto"> {/* Changed overflow-y-auto to overflow-x-auto */}
+            <div className="my-6 w-full overflow-x-auto">
+              {" "}
+              {/* Changed overflow-y-auto to overflow-x-auto */}
               <table className="w-full" {...props}>
                 {children}
               </table>
@@ -231,13 +233,25 @@ export function MarkdownRenderer({
           pre: ({ children, ...props }) => {
             // Try to extract raw code from children
             let rawCode = "";
-            if (props.node && props.node.children && props.node.children.length > 0) {
-                const codeNode = props.node.children[0];
-                if (codeNode && codeNode.type === 'element' && codeNode.tagName === 'code') {
-                    if (codeNode.children && codeNode.children.length > 0 && codeNode.children[0].type === 'text') {
-                        rawCode = codeNode.children[0].value;
-                    }
+            if (
+              props.node &&
+              props.node.children &&
+              props.node.children.length > 0
+            ) {
+              const codeNode = props.node.children[0];
+              if (
+                codeNode &&
+                codeNode.type === "element" &&
+                codeNode.tagName === "code"
+              ) {
+                if (
+                  codeNode.children &&
+                  codeNode.children.length > 0 &&
+                  codeNode.children[0].type === "text"
+                ) {
+                  rawCode = codeNode.children[0].value;
                 }
+              }
             }
 
             return (
@@ -254,8 +268,10 @@ export function MarkdownRenderer({
                       alert("Copied to clipboard!");
                     } else {
                       // Fallback or error for unexpected structure
-                      const el = (props.node as any)?.children?.[0]?.children?.[0]?.value;
-                      if(el) copy(el); else alert("Could not copy code.");
+                      const el = (props.node as any)?.children?.[0]
+                        ?.children?.[0]?.value;
+                      if (el) copy(el);
+                      else alert("Could not copy code.");
                     }
                   }}
                 >

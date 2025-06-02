@@ -15,7 +15,9 @@ const SharedContentPage = () => {
   const params = useParams();
   const token = params?.token as string | undefined;
 
-  const [contentItem, setContentItem] = useState<ContentItemPublic | null>(null);
+  const [contentItem, setContentItem] = useState<ContentItemPublic | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [passwordRequired, setPasswordRequired] = useState(false);
@@ -37,12 +39,15 @@ const SharedContentPage = () => {
       try {
         // Note: The actual client method name might differ based on your OpenAPI spec and generator.
         // It expects `token` as path param and `password` as query param.
-        const response = await client.getSharedContentShareTokenGet(token, { password: accessPassword });
+        const response = await client.getSharedContentShareTokenGet(token, {
+          password: accessPassword,
+        });
         setContentItem(response); // Assuming response is ContentItemPublic
       } catch (err: any) {
         console.error("Failed to fetch shared content:", err);
         const status = err.status || err.response?.status;
-        const errorDetail = err.data?.detail || err.message || "Failed to load shared content.";
+        const errorDetail =
+          err.data?.detail || err.message || "Failed to load shared content.";
 
         if (status === 401 && errorDetail === "Password required") {
           setPasswordRequired(true);
@@ -61,11 +66,12 @@ const SharedContentPage = () => {
       }
     };
 
-    if (token && !passwordRequired) { // Only fetch if token exists and password is not currently required
-        fetchSharedContent();
+    if (token && !passwordRequired) {
+      // Only fetch if token exists and password is not currently required
+      fetchSharedContent();
     } else if (!token) {
-        setError("Share token is missing in URL.");
-        setIsLoading(false);
+      setError("Share token is missing in URL.");
+      setIsLoading(false);
     }
   }, [token, passwordRequired]); // Effect will re-run if token changes or if passwordRequired is reset
 
@@ -79,38 +85,44 @@ const SharedContentPage = () => {
     setIsLoading(true);
 
     // Re-fetch with password
-     try {
-        const response = await client.getSharedContentShareTokenGet(token!, { password: password });
-        setContentItem(response);
-        setError(null); // Clear password error if successful
-      } catch (err: any) {
-        console.error("Failed to fetch shared content with password:", err);
-        const status = err.status || err.response?.status;
-        const errorDetail = err.data?.detail || err.message || "Failed to load shared content.";
+    try {
+      const response = await client.getSharedContentShareTokenGet(token!, {
+        password: password,
+      });
+      setContentItem(response);
+      setError(null); // Clear password error if successful
+    } catch (err: any) {
+      console.error("Failed to fetch shared content with password:", err);
+      const status = err.status || err.response?.status;
+      const errorDetail =
+        err.data?.detail || err.message || "Failed to load shared content.";
 
-        setPasswordRequired(true); // Show password form again on error
-        if (status === 403 && errorDetail === "Incorrect password") {
-          setError("Incorrect password. Please try again.");
-        } else if (status === 404) {
-          setError("Share link not found, expired, or access limit reached.");
-        } else {
-          setError(errorDetail);
-        }
-        setContentItem(null);
-      } finally {
-        setIsLoading(false);
+      setPasswordRequired(true); // Show password form again on error
+      if (status === 403 && errorDetail === "Incorrect password") {
+        setError("Incorrect password. Please try again.");
+      } else if (status === 404) {
+        setError("Share link not found, expired, or access limit reached.");
+      } else {
+        setError(errorDetail);
       }
+      setContentItem(null);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 min-h-screen flex items-center justify-center">
-        <p className="text-lg text-muted-foreground">Loading shared content...</p>
+        <p className="text-lg text-muted-foreground">
+          Loading shared content...
+        </p>
       </div>
     );
   }
 
-  if (error && !passwordRequired) { // If there's an error and it's not just asking for a password
+  if (error && !passwordRequired) {
+    // If there's an error and it's not just asking for a password
     return (
       <div className="container mx-auto px-4 py-8 min-h-screen flex flex-col items-center justify-center">
         <Alert variant="destructive" className="w-full max-w-md">
@@ -129,15 +141,16 @@ const SharedContentPage = () => {
     return (
       <div className="container mx-auto px-4 py-8 min-h-screen flex flex-col items-center justify-center">
         <div className="w-full max-w-sm space-y-6">
-            <div className="text-center">
-                <LockIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-gray-100">
-                    Password Required
-                </h2>
-                <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-                    This content is password protected. Please enter the password to view.
-                </p>
-            </div>
+          <div className="text-center">
+            <LockIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-gray-100">
+              Password Required
+            </h2>
+            <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+              This content is password protected. Please enter the password to
+              view.
+            </p>
+          </div>
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div>
               <Label htmlFor="password">Password</Label>
@@ -153,12 +166,14 @@ const SharedContentPage = () => {
                   className="pr-10"
                 />
                 <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                    <EyeIcon className={`h-5 w-5 ${showPassword ? "text-primary" : ""}`} />
+                  <EyeIcon
+                    className={`h-5 w-5 ${showPassword ? "text-primary" : ""}`}
+                  />
                 </button>
               </div>
             </div>
@@ -167,9 +182,9 @@ const SharedContentPage = () => {
               {isLoading ? "Unlocking..." : "Unlock Content"}
             </Button>
           </form>
-           <Button variant="link" asChild className="mt-4">
-              <Link href="/">Go to Homepage</Link>
-            </Button>
+          <Button variant="link" asChild className="mt-4">
+            <Link href="/">Go to Homepage</Link>
+          </Button>
         </div>
       </div>
     );
@@ -191,11 +206,11 @@ const SharedContentPage = () => {
         <MarkdownRenderer content={contentItem.content_text || ""} />
         {/* You might want to display other metadata from contentItem here */}
       </article>
-       <div className="mt-12 text-center">
-            <Button variant="outline" asChild>
-                <Link href="/">Back to Homepage</Link>
-            </Button>
-        </div>
+      <div className="mt-12 text-center">
+        <Button variant="outline" asChild>
+          <Link href="/">Back to Homepage</Link>
+        </Button>
+      </div>
     </div>
   );
 };

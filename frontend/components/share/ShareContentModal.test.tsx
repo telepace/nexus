@@ -3,7 +3,10 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ShareContentModal } from "./ShareContentModal";
 import { client } from "@/app/openapi-client/index"; // Adjust path as needed
-import { ContentItemPublic, ContentSharePublic } from "@/app/openapi-client/sdk.gen"; // Adjust path
+import {
+  ContentItemPublic,
+  ContentSharePublic,
+} from "@/app/openapi-client/sdk.gen"; // Adjust path
 import { Toaster } from "@/components/ui/sonner"; // Assuming sonner is used via useToast
 
 // Mock the API client
@@ -39,7 +42,9 @@ describe("ShareContentModal", () => {
     mockToast.mockClear();
   });
 
-  const renderModal = (props: Partial<React.ComponentProps<typeof ShareContentModal>> = {}) => {
+  const renderModal = (
+    props: Partial<React.ComponentProps<typeof ShareContentModal>> = {},
+  ) => {
     return render(
       <>
         <ShareContentModal
@@ -49,13 +54,15 @@ describe("ShareContentModal", () => {
           {...props}
         />
         <Toaster /> {/* Needed for toasts to be rendered */}
-      </>
+      </>,
     );
   };
 
   it("renders with content item title", () => {
     renderModal();
-    expect(screen.getByText(`Share: ${mockContentItem.title}`)).toBeInTheDocument();
+    expect(
+      screen.getByText(`Share: ${mockContentItem.title}`),
+    ).toBeInTheDocument();
   });
 
   it("allows setting expiration date, max access count, and password", async () => {
@@ -88,7 +95,9 @@ describe("ShareContentModal", () => {
       access_count: 0,
       // other fields from ContentSharePublic if needed
     };
-    (client.createShareLinkContentIdSharePost as jest.Mock).mockResolvedValueOnce(mockApiResponse);
+    (
+      client.createShareLinkContentIdSharePost as jest.Mock
+    ).mockResolvedValueOnce(mockApiResponse);
 
     renderModal();
 
@@ -98,7 +107,9 @@ describe("ShareContentModal", () => {
     // For date, we can't easily select from calendar in test, so we'll skip direct date input test here
     // or mock the date state change if ShareContentModal allows setting date programmatically for tests.
 
-    const generateButton = screen.getByRole("button", { name: /Generate Share Link/i });
+    const generateButton = screen.getByRole("button", {
+      name: /Generate Share Link/i,
+    });
     fireEvent.click(generateButton);
 
     await waitFor(() => {
@@ -108,42 +119,57 @@ describe("ShareContentModal", () => {
           max_access_count: 5,
           password: "securepass",
           // expires_at would be undefined or an ISO string if date picker was used
-        })
+        }),
       );
     });
 
     await waitFor(() => {
       const expectedShareUrl = `${window.location.origin}/share/${mockApiResponse.share_token}`;
       expect(screen.getByDisplayValue(expectedShareUrl)).toBeInTheDocument();
-      expect(screen.getByDisplayValue(`Token: ${mockApiResponse.share_token}`)).toBeInTheDocument();
+      expect(
+        screen.getByDisplayValue(`Token: ${mockApiResponse.share_token}`),
+      ).toBeInTheDocument();
     });
-    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: "Success" }));
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Success" }),
+    );
   });
 
   it("displays error message on API failure", async () => {
     const user = userEvent.setup();
     const errorMessage = "Network Error";
-    (client.createShareLinkContentIdSharePost as jest.Mock).mockRejectedValueOnce({
+    (
+      client.createShareLinkContentIdSharePost as jest.Mock
+    ).mockRejectedValueOnce({
       // Simulate error structure from API client/axios
       isAxiosError: true,
       response: { data: { detail: errorMessage } },
-      message: "Network Error" // Fallback
+      message: "Network Error", // Fallback
     });
 
     renderModal();
-    const generateButton = screen.getByRole("button", { name: /Generate Share Link/i });
+    const generateButton = screen.getByRole("button", {
+      name: /Generate Share Link/i,
+    });
     fireEvent.click(generateButton);
 
     await waitFor(() => {
       expect(screen.getByText(errorMessage)).toBeInTheDocument();
     });
-    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: "Error", variant: "destructive" }));
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Error", variant: "destructive" }),
+    );
   });
 
   it("resets form when modal is closed or contentItem changes", () => {
-    const { rerender } = renderModal({ open: true, contentItem: mockContentItem });
+    const { rerender } = renderModal({
+      open: true,
+      contentItem: mockContentItem,
+    });
 
-    const maxAccessInput = screen.getByLabelText(/Max Accesses/i) as HTMLInputElement;
+    const maxAccessInput = screen.getByLabelText(
+      /Max Accesses/i,
+    ) as HTMLInputElement;
     fireEvent.change(maxAccessInput, { target: { value: "10" } });
     expect(maxAccessInput.value).toBe("10");
 
@@ -153,31 +179,38 @@ describe("ShareContentModal", () => {
         open={false}
         onOpenChange={jest.fn()}
         contentItem={mockContentItem}
-      />
+      />,
     );
 
     // Re-render as open with same item, should be reset (due to useEffect dependency on `open`)
-     rerender(
+    rerender(
       <ShareContentModal
         open={true}
         onOpenChange={jest.fn()}
         contentItem={mockContentItem}
-      />
+      />,
     );
-    const maxAccessInputAfterCloseOpen = screen.getByLabelText(/Max Accesses/i) as HTMLInputElement;
+    const maxAccessInputAfterCloseOpen = screen.getByLabelText(
+      /Max Accesses/i,
+    ) as HTMLInputElement;
     expect(maxAccessInputAfterCloseOpen.value).toBe(""); // Assuming it resets to empty string
 
     // Simulate changing content item
-    const anotherItem = { ...mockContentItem, id: "item-456", title: "Another Item" };
-     rerender(
+    const anotherItem = {
+      ...mockContentItem,
+      id: "item-456",
+      title: "Another Item",
+    };
+    rerender(
       <ShareContentModal
         open={true}
         onOpenChange={jest.fn()}
         contentItem={anotherItem}
-      />
+      />,
     );
-    const maxAccessInputAfterItemChange = screen.getByLabelText(/Max Accesses/i) as HTMLInputElement;
+    const maxAccessInputAfterItemChange = screen.getByLabelText(
+      /Max Accesses/i,
+    ) as HTMLInputElement;
     expect(maxAccessInputAfterItemChange.value).toBe("");
   });
-
 });

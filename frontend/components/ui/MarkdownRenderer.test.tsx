@@ -13,7 +13,6 @@ jest.mock("medium-zoom", () => {
 
 jest.mock("copy-to-clipboard", () => jest.fn());
 
-
 describe("MarkdownRenderer", () => {
   // Clear mocks before each test
   beforeEach(() => {
@@ -100,24 +99,36 @@ describe("MarkdownRenderer", () => {
 
   // Tests for new features
   it("renders Table of Contents for headings", () => {
-    const markdownWithToc = "# Title\n## Subtitle 1\n### Sub-subtitle\n## Subtitle 2\n toc"; // remark-toc looks for 'toc' or 'table of contents'
+    const markdownWithToc =
+      "# Title\n## Subtitle 1\n### Sub-subtitle\n## Subtitle 2\n toc"; // remark-toc looks for 'toc' or 'table of contents'
     render(<MarkdownRenderer content={markdownWithToc} />);
     // Check if a list item from ToC is present. Default remark-toc creates ul > li > a
     // This is a basic check; more specific checks might depend on remark-toc output structure.
-    const tocLink = screen.getByRole('link', { name: /subtitle 1/i });
+    const tocLink = screen.getByRole("link", { name: /subtitle 1/i });
     expect(tocLink).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /sub-subtitle/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /sub-subtitle/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders math formulas using KaTeX", () => {
-    const markdownWithMath = "Inline math: $E=mc^2$. Display math: $$x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}$$";
+    const markdownWithMath =
+      "Inline math: $E=mc^2$. Display math: $$x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}$$";
     render(<MarkdownRenderer content={markdownWithMath} />);
     // Check for KaTeX rendered output, e.g., elements with 'katex' class
-    expect(screen.getAllByText((content, element) => element?.classList.contains('katex') || element?.classList.contains('katex-display') ).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(
+        (content, element) =>
+          element?.classList.contains("katex") ||
+          element?.classList.contains("katex-display"),
+      ).length,
+    ).toBeGreaterThan(0);
     // More specific: find a specific part of the formula if possible, e.g. "E=mc" or "x="
     // This depends heavily on how KaTeX structures its output.
     // For simplicity, checking for the presence of 'katex' class is a good start.
-    expect(screen.getByText((content, element) => content.includes('E=mc'))).toBeInTheDocument();
+    expect(
+      screen.getByText((content, element) => content.includes("E=mc")),
+    ).toBeInTheDocument();
   });
 
   it("applies medium-zoom to images", () => {
@@ -133,10 +144,10 @@ describe("MarkdownRenderer", () => {
     const markdownWithCodeBlock = "```javascript\n" + codeContent + "\n```";
     render(<MarkdownRenderer content={markdownWithCodeBlock} />);
 
-    const preElement = screen.getByText(codeContent).closest('pre');
+    const preElement = screen.getByText(codeContent).closest("pre");
     expect(preElement).toBeInTheDocument();
 
-    const copyButton = screen.getByRole('button', { name: /copy/i });
+    const copyButton = screen.getByRole("button", { name: /copy/i });
     expect(copyButton).toBeInTheDocument();
 
     fireEvent.click(copyButton);
@@ -146,15 +157,16 @@ describe("MarkdownRenderer", () => {
   it("handles autolink headings by wrapping them in links", () => {
     const markdown = "## My Awesome Title";
     render(<MarkdownRenderer content={markdown} />);
-    const headingElement = screen.getByRole('heading', { name: /my awesome title/i });
+    const headingElement = screen.getByRole("heading", {
+      name: /my awesome title/i,
+    });
     // rehype-autolink-headings with behavior: 'wrap' wraps the heading text in an <a> tag
     // So, the heading itself should be a link, or contain one.
     // Check if the heading's text is within an anchor tag that is a child of the heading.
-    const linkElement = headingElement.querySelector('a');
+    const linkElement = headingElement.querySelector("a");
     expect(linkElement).toBeInTheDocument();
     // The href might be #my-awesome-title or similar, depending on slug generation.
     // For now, just checking for presence of the link is good.
-    expect(linkElement).toHaveAttribute('href');
+    expect(linkElement).toHaveAttribute("href");
   });
-
 });
