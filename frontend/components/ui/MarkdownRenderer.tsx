@@ -268,6 +268,7 @@ export function MarkdownRenderer({
                       alert("Copied to clipboard!");
                     } else {
                       // Fallback or error for unexpected structure
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       const el = (props.node as any)?.children?.[0]
                         ?.children?.[0]?.value;
                       if (el) copy(el);

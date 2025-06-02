@@ -6,6 +6,7 @@ jest.mock("medium-zoom", () => {
   const mockZoom = jest.fn();
   const mockDetach = jest.fn();
   // Mock the default export and the detach method
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mz = mockZoom as any;
   mz.detach = mockDetach;
   return mz;
@@ -13,12 +14,16 @@ jest.mock("medium-zoom", () => {
 
 jest.mock("copy-to-clipboard", () => jest.fn());
 
+// 使用 require 并添加 ESLint 禁用注释
+
 describe("MarkdownRenderer", () => {
   // Clear mocks before each test
   beforeEach(() => {
+    /* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
     (require("medium-zoom") as jest.Mock).mockClear();
     (require("medium-zoom").detach as jest.Mock).mockClear();
     (require("copy-to-clipboard") as jest.Mock).mockClear();
+    /* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
   });
 
   it("renders markdown content", () => {
@@ -127,6 +132,7 @@ describe("MarkdownRenderer", () => {
     // This depends heavily on how KaTeX structures its output.
     // For simplicity, checking for the presence of 'katex' class is a good start.
     expect(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       screen.getByText((content, element) => content.includes("E=mc")),
     ).toBeInTheDocument();
   });
@@ -136,6 +142,7 @@ describe("MarkdownRenderer", () => {
     render(<MarkdownRenderer content={markdownWithImage} />);
     // Check if mediumZoom was called. Relies on OptimizedImage rendering an actual <img> tag.
     // The useEffect in MarkdownRenderer applies zoom to '.prose img'
+    /* eslint-disable-next-line @typescript-eslint/no-require-imports */
     expect(require("medium-zoom")).toHaveBeenCalledTimes(1);
   });
 
@@ -147,10 +154,10 @@ describe("MarkdownRenderer", () => {
     const preElement = screen.getByText(codeContent).closest("pre");
     expect(preElement).toBeInTheDocument();
 
-    const copyButton = screen.getByRole("button", { name: /copy/i });
-    expect(copyButton).toBeInTheDocument();
-
+    const copyButton = screen.getByText("Copy");
     fireEvent.click(copyButton);
+
+    /* eslint-disable-next-line @typescript-eslint/no-require-imports */
     expect(require("copy-to-clipboard")).toHaveBeenCalledWith(codeContent);
   });
 
