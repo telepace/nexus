@@ -89,7 +89,6 @@ export type ContentShareCreate = {
   expires_at?: string | null;
   max_access_count?: number | null;
   password?: string | null;
-  content_item_id: string;
 };
 
 export type ContentSharePublic = {

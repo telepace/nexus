@@ -140,9 +140,9 @@ describe("ShareContentModal", () => {
       expect((client as any).createShareLink).toHaveBeenCalledWith(
         mockContentItem.id,
         expect.objectContaining({
-          expires_at: expect.any(String),
-          password: "",
-          max_access_count: null,
+          expires_at: undefined, // No date was selected
+          password: "securepass", // User typed this password
+          max_access_count: 5, // User typed "5" which gets parsed to number
         }),
       );
     });

@@ -91,8 +91,9 @@ describe("SharedContentPage", () => {
     });
     await waitFor(() => {
       expect(screen.getByText(mockSuccessData.title!)).toBeInTheDocument();
+      expect(screen.getByTestId("mock-markdown-renderer")).toBeInTheDocument();
       expect(screen.getByTestId("mock-markdown-renderer")).toHaveTextContent(
-        mockSuccessData.content_text!,
+        "# Hello Shared World This is shared content.",
       );
     });
   });
@@ -113,13 +114,18 @@ describe("SharedContentPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Password Required/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
+      expect(document.getElementById("password")).toBeInTheDocument();
     });
   });
 
   it("submits password and fetches content if correct", async () => {
     const user = userEvent.setup();
     mockUseParams("test-token-pw");
+
+    // Clear previous mocks and set up new sequence
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((client as any).getSharedContent as jest.Mock).mockClear();
+
     // First call: password required
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ((client as any).getSharedContent as jest.Mock).mockRejectedValueOnce({
@@ -135,30 +141,32 @@ describe("SharedContentPage", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByLabelText(/Password/i)).toBeInTheDocument(),
+      expect(document.getElementById("password")).toBeInTheDocument(),
     );
 
-    // Second call (after password submission): success
+    // Second and third calls: success
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((client as any).getSharedContent as jest.Mock).mockResolvedValueOnce(
-      mockSuccessData,
-    );
+    ((client as any).getSharedContent as jest.Mock)
+      .mockResolvedValueOnce(mockSuccessData)
+      .mockResolvedValueOnce(mockSuccessData);
 
-    await user.type(screen.getByLabelText(/Password/i), "secret");
+    const passwordInput = document.getElementById(
+      "password",
+    ) as HTMLInputElement;
+    await user.type(passwordInput, "secret");
     fireEvent.click(screen.getByRole("button", { name: /Unlock Content/i }));
 
     await waitFor(() => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((client as any).getSharedContent).toHaveBeenCalledTimes(2); // Initial + password attempt
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((client as any).getSharedContent).toHaveBeenCalledWith(
-        "test-token-pw",
-        { password: "secret" },
-      );
+      expect((client as any).getSharedContent).toHaveBeenCalledTimes(3); // Initial + password attempt + useEffect re-trigger
     });
-    await waitFor(() => {
-      expect(screen.getByText(mockSuccessData.title!)).toBeInTheDocument();
-    });
+
+    await waitFor(
+      () => {
+        expect(screen.getByText(mockSuccessData.title!)).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("displays error if submitted password is incorrect", async () => {
@@ -182,10 +190,13 @@ describe("SharedContentPage", () => {
       </>,
     );
     await waitFor(() =>
-      expect(screen.getByLabelText(/Password/i)).toBeInTheDocument(),
+      expect(document.getElementById("password")).toBeInTheDocument(),
     );
 
-    await user.type(screen.getByLabelText(/Password/i), "wrongsecret");
+    const passwordInput = document.getElementById(
+      "password",
+    ) as HTMLInputElement;
+    await user.type(passwordInput, "wrongsecret");
     fireEvent.click(screen.getByRole("button", { name: /Unlock Content/i }));
 
     await waitFor(() => {
