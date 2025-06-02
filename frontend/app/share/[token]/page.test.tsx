@@ -99,7 +99,8 @@ describe("SharedContentPage", () => {
 
   it("displays password prompt if API returns 401 'Password required'", async () => {
     mockUseParams("test-token");
-    (client.getSharedContent as jest.Mock).mockRejectedValueOnce({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((client as any).getSharedContent as jest.Mock).mockRejectedValueOnce({
       status: 401,
       data: { detail: "Password required" }, // Structure based on component's error handling
     });
@@ -120,7 +121,8 @@ describe("SharedContentPage", () => {
     const user = userEvent.setup();
     mockUseParams("test-token-pw");
     // First call: password required
-    (client.getSharedContent as jest.Mock).mockRejectedValueOnce({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((client as any).getSharedContent as jest.Mock).mockRejectedValueOnce({
       status: 401,
       data: { detail: "Password required" },
     });
@@ -137,7 +139,8 @@ describe("SharedContentPage", () => {
     );
 
     // Second call (after password submission): success
-    (client.getSharedContent as jest.Mock).mockResolvedValueOnce(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((client as any).getSharedContent as jest.Mock).mockResolvedValueOnce(
       mockSuccessData,
     );
 
@@ -194,7 +197,8 @@ describe("SharedContentPage", () => {
 
   it("displays error for invalid token (404)", async () => {
     mockUseParams("invalid-token");
-    (client.getSharedContent as jest.Mock).mockRejectedValueOnce({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((client as any).getSharedContent as jest.Mock).mockRejectedValueOnce({
       status: 404,
       data: {
         detail: "Share link not found, expired, or access limit reached.",

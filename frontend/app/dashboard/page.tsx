@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Table,
   TableBody,
@@ -18,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Share2, Settings2 } from "lucide-react"; // Added Share2, Settings2
-import { getAuthState } from "@/lib/server-auth-bridge";
+import { useAuth } from "@/lib/client-auth"; // 改用客户端认证
 import { Suspense, useState, useEffect } from "react"; // Added useState
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 
@@ -51,13 +53,25 @@ interface ApiErrorResponse {
   status?: number;
 }
 
-// Dashboard 顶级页面组件，增加错误边界和Suspense
-export default async function DashboardPage() {
-  // 获取认证状态
-  const authState = await getAuthState();
+// Dashboard 顶级页面组件，现在是客户端组件
+export default function DashboardPage() {
+  const { user, isLoading: isLoadingAuth } = useAuth();
 
-  // 如果未认证，将在 getAuthState 内部重定向到登录页
-  if (!authState.isAuthenticated) {
+  if (isLoadingAuth) {
+    return (
+      <div className="container py-10">
+        <div className="animate-pulse">
+          <div className="rounded-md bg-gray-200 h-8 w-32 mb-6"></div>
+          <div className="rounded-md bg-gray-200 h-4 w-full mb-2"></div>
+          <div className="rounded-md bg-gray-200 h-4 w-full mb-2"></div>
+          <div className="rounded-md bg-gray-200 h-4 w-3/4 mb-2"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // 如果未认证，显示错误提示
+  if (!user) {
     return (
       <div className="container py-10">
         <Alert variant="destructive" className="mb-6">
@@ -111,9 +125,6 @@ export default async function DashboardPage() {
 
 // 实际内容组件，可能会挂起(Suspend)
 // Convert to client component to use hooks like useState
-/* eslint-disable-next-line @typescript-eslint/no-unused-expressions */
-("use client");
-
 // 此函数已被重构，保留作为参考
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function DashboardContentOriginal() {
@@ -291,13 +302,13 @@ function DashboardContent() {
     undefined,
   );
 
+  const { user } = useAuth(); // 使用客户端认证hook
+
   useEffect(() => {
-    // Fetch user ID for ManageShareLinks - this might come from a context or auth hook in a real app
-    getAuthState().then((authState) => {
-      if (authState.isAuthenticated && authState.user?.id) {
-        setCurrentUserId(authState.user.id);
-      }
-    });
+    // 从认证hook中获取用户ID
+    if (user?.id) {
+      setCurrentUserId(user.id);
+    }
 
     async function loadData() {
       setIsLoading(true);
@@ -335,7 +346,7 @@ function DashboardContent() {
       }
     }
     loadData();
-  }, [renderID]);
+  }, [renderID, user]); // 添加user作为依赖
 
   const openShareModal = (item: ContentItemPublic) => {
     setSelectedItemToShare(item);

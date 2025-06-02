@@ -21,7 +21,6 @@ def test_create_content_share(db: Session) -> None:
 
     expires_at_dt = datetime.now(timezone.utc) + timedelta(days=7)
     share_in = ContentShareCreate(
-        content_item_id=content_item.id,  # Not strictly used by CRUD, but good for schema validation
         expires_at=expires_at_dt,
         max_access_count=10,
         password="testpassword",
@@ -31,7 +30,7 @@ def test_create_content_share(db: Session) -> None:
         db=db,
         content_share_in=share_in,
         content_item_id=content_item.id,
-        user_id=user.id,  # user_id for audit/context, not stored on ContentShare model itself
+        _user_id=user.id,
     )
 
     assert created_share.id is not None
@@ -40,18 +39,22 @@ def test_create_content_share(db: Session) -> None:
     assert len(created_share.share_token) > 10  # Basic check for token format/length
     assert created_share.is_active is True
     assert created_share.access_count == 0
-    assert created_share.expires_at == expires_at_dt
+    if created_share.expires_at.tzinfo is None:
+        db_expires_at = created_share.expires_at.replace(tzinfo=timezone.utc)
+        assert db_expires_at == expires_at_dt
+    else:
+        assert created_share.expires_at == expires_at_dt
     assert created_share.max_access_count == 10
     assert created_share.password_hash is not None
     assert verify_password("testpassword", created_share.password_hash)
 
     # Test creating a share with minimal options
-    share_in_minimal = ContentShareCreate(content_item_id=content_item.id)
+    share_in_minimal = ContentShareCreate()
     created_share_minimal = crud_content.create_content_share(
         db=db,
         content_share_in=share_in_minimal,
         content_item_id=content_item.id,
-        user_id=user.id,
+        _user_id=user.id,
     )
     assert created_share_minimal.expires_at is None
     assert created_share_minimal.max_access_count is None
@@ -64,13 +67,13 @@ def test_unique_share_token_generation(db: Session) -> None:
     """
     user = create_random_user(db)
     content_item = create_random_content_item(db, user_id=user.id)
-    share_in = ContentShareCreate(content_item_id=content_item.id)
+    share_in = ContentShareCreate()
 
     share1 = crud_content.create_content_share(
-        db, content_share_in=share_in, content_item_id=content_item.id, user_id=user.id
+        db, content_share_in=share_in, content_item_id=content_item.id, _user_id=user.id
     )
     share2 = crud_content.create_content_share(
-        db, content_share_in=share_in, content_item_id=content_item.id, user_id=user.id
+        db, content_share_in=share_in, content_item_id=content_item.id, _user_id=user.id
     )
 
     assert share1.share_token != share2.share_token
@@ -82,9 +85,9 @@ def test_get_content_share_by_token(db: Session) -> None:
     """
     user = create_random_user(db)
     content_item = create_random_content_item(db, user_id=user.id)
-    share_in = ContentShareCreate(content_item_id=content_item.id)
+    share_in = ContentShareCreate()
     created_share = crud_content.create_content_share(
-        db, content_share_in=share_in, content_item_id=content_item.id, user_id=user.id
+        db, content_share_in=share_in, content_item_id=content_item.id, _user_id=user.id
     )
 
     # Test successful retrieval
@@ -123,21 +126,21 @@ def test_get_content_shares_by_content_id(db: Session) -> None:
 
     share1_ci1 = crud_content.create_content_share(
         db,
-        content_share_in=ContentShareCreate(content_item_id=content_item1.id),
+        content_share_in=ContentShareCreate(),
         content_item_id=content_item1.id,
-        user_id=user.id,
+        _user_id=user.id,
     )
     share2_ci1 = crud_content.create_content_share(
         db,
-        content_share_in=ContentShareCreate(content_item_id=content_item1.id),
+        content_share_in=ContentShareCreate(),
         content_item_id=content_item1.id,
-        user_id=user.id,
+        _user_id=user.id,
     )
     share1_ci2 = crud_content.create_content_share(
         db,
-        content_share_in=ContentShareCreate(content_item_id=content_item2.id),
+        content_share_in=ContentShareCreate(),
         content_item_id=content_item2.id,
-        user_id=user.id,
+        _user_id=user.id,
     )
 
     # Deactivate one share to ensure only active ones are returned by default
@@ -168,11 +171,9 @@ def test_increment_access_count(db: Session) -> None:
     content_item = create_random_content_item(db, user_id=user.id)
     share = crud_content.create_content_share(
         db,
-        content_share_in=ContentShareCreate(
-            content_item_id=content_item.id, max_access_count=3
-        ),
+        content_share_in=ContentShareCreate(max_access_count=3),
         content_item_id=content_item.id,
-        user_id=user.id,
+        _user_id=user.id,
     )
 
     assert share.access_count == 0
@@ -203,9 +204,9 @@ def test_deactivate_content_share(db: Session) -> None:
     content_item = create_random_content_item(db, user_id=user.id)
     share = crud_content.create_content_share(
         db,
-        content_share_in=ContentShareCreate(content_item_id=content_item.id),
+        content_share_in=ContentShareCreate(),
         content_item_id=content_item.id,
-        user_id=user.id,
+        _user_id=user.id,
     )
     assert share.is_active is True
 
@@ -225,9 +226,9 @@ def test_delete_content_share(db: Session) -> None:
     content_item = create_random_content_item(db, user_id=user.id)
     share = crud_content.create_content_share(
         db,
-        content_share_in=ContentShareCreate(content_item_id=content_item.id),
+        content_share_in=ContentShareCreate(),
         content_item_id=content_item.id,
-        user_id=user.id,
+        _user_id=user.id,
     )
     share_id = share.id
     share_token = share.share_token
@@ -251,9 +252,9 @@ def test_update_content_share(db: Session) -> None:
     content_item = create_random_content_item(db, user_id=user.id)
     share = crud_content.create_content_share(
         db,
-        content_share_in=ContentShareCreate(content_item_id=content_item.id),
+        content_share_in=ContentShareCreate(),
         content_item_id=content_item.id,
-        user_id=user.id,
+        _user_id=user.id,
     )
 
     old_password_hash = share.password_hash
@@ -269,7 +270,13 @@ def test_update_content_share(db: Session) -> None:
         db, content_share=share, update_data=update_data
     )
 
-    assert updated_share.expires_at == new_expiry
+    # 比较时间时考虑时区问题
+    if updated_share.expires_at.tzinfo is None:
+        # 数据库返回的是无时区的，将其转换为UTC进行比较
+        db_expires_at = updated_share.expires_at.replace(tzinfo=timezone.utc)
+        assert db_expires_at == new_expiry
+    else:
+        assert updated_share.expires_at == new_expiry
     assert updated_share.max_access_count == 50
     assert updated_share.is_active is False
     assert updated_share.password_hash is not None

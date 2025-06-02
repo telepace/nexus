@@ -1,7 +1,7 @@
 import json
 import uuid
 from collections.abc import AsyncGenerator
-from datetime import datetime  # For checking expiration
+from datetime import datetime, timezone
 from typing import Any  # Added Optional
 
 from fastapi import (
@@ -591,7 +591,7 @@ def create_share_link_endpoint(
         db=session,
         content_share_in=share_in,
         content_item_id=id,
-        user_id=current_user.id,
+        _user_id=current_user.id,
     )
     return created_share  # FastAPI will serialize using ContentSharePublic
 
@@ -619,11 +619,19 @@ def get_shared_content_endpoint(
             detail="Share link not found or inactive",
         )
 
-    if share_record.expires_at and share_record.expires_at < datetime.utcnow():
-        crud.deactivate_content_share(db=session, content_share=share_record)
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Share link has expired"
-        )
+    # Check if expired - handle timezone comparison
+    current_time = datetime.now(timezone.utc)
+    if share_record.expires_at:
+        # Convert expires_at to timezone-aware datetime if it's naive
+        expires_at = share_record.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+        if expires_at < current_time:
+            crud.deactivate_content_share(db=session, content_share=share_record)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Share link has expired"
+            )
 
     if share_record.password_hash:
         if not password:
@@ -636,7 +644,6 @@ def get_shared_content_endpoint(
             )
 
     # Check max_access_count before incrementing and fetching content
-    # Note: This is a slight deviation from prompt order to fail fast if already over limit
     if (
         share_record.max_access_count is not None
         and share_record.access_count >= share_record.max_access_count
@@ -649,16 +656,10 @@ def get_shared_content_endpoint(
             detail="Share link access limit reached",
         )
 
-    updated_share_record = crud.increment_access_count(
-        db=session, content_share=share_record
-    )
-    # Check again if incrementing pushed it over the limit and deactivated it
-    if not updated_share_record.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Share link access limit reached and deactivated",
-        )
+    # Increment access count - this might deactivate the share if limit is reached
+    crud.increment_access_count(db=session, content_share=share_record)
 
+    # Get content item before final checks
     content_item = crud.get_content_item_sync(
         session=session, id=share_record.content_item_id
     )

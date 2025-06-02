@@ -46,10 +46,7 @@ export function MarkdownRenderer({
         mediumZoom(images, { background: "rgba(0, 0, 0, 0.7)" });
       }
     }
-    // Cleanup zoom instance on component unmount
-    return () => {
-      mediumZoom.detach();
-    };
+    // Note: medium-zoom cleanup will happen automatically when DOM elements are removed
   }, [content]); // Re-apply zoom when content changes
 
   if (!content) {

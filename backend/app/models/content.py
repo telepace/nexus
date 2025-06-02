@@ -71,6 +71,12 @@ class ContentItem(ContentItemBase, table=True):
             "primaryjoin": "ContentItem.id == foreign(ContentChunk.content_item_id)"
         },
     )
+    shares: list["ContentShare"] = Relationship(
+        back_populates="content_item",
+        sa_relationship_kwargs={
+            "primaryjoin": "ContentItem.id == foreign(ContentShare.content_item_id)"
+        },
+    )
 
 
 class ContentAssetBase(SQLModel):
@@ -227,7 +233,6 @@ class ContentChunk(ContentChunkBase, table=True):
             "primaryjoin": "foreign(ContentChunk.content_item_id) == ContentItem.id"
         },
     )
-    shares: list["ContentShare"] = Relationship(back_populates="content_item")
 
 
 class ContentShareBase(SQLModel):

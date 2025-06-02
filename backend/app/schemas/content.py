@@ -60,7 +60,8 @@ class ContentShareBase(SQLModel):
 
 
 class ContentShareCreate(ContentShareBase):
-    content_item_id: uuid.UUID  # Required when creating a share
+    # content_item_id will be provided via URL path parameter, not request body
+    pass
 
 
 class ContentSharePublic(
