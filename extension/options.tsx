@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Settings, Save, ExternalLink } from "lucide-react";
 import { Button } from "./components/ui/Button";
-import { getAPIConfig } from "./lib/auth";
+// TODO: Fix getAPIConfig import error. This is a temporary workaround.
+// import { getAPIConfig } from "./lib/auth";
 import "./style.css";
 
 export default function OptionsPage() {
-  const [config, setConfig] = useState(() => getAPIConfig());
+  // TODO: Fix getAPIConfig import
+  const [config, setConfig] = useState(() => ({ apiUrl: 'http://localhost:8000', frontendUrl: 'http://localhost:3000' })); // TODO: Fix getAPIConfig import
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {

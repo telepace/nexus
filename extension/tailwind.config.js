@@ -15,4 +15,8 @@ module.exports = {
     },
   },
   plugins: [],
+  prefix: 'nexus-',
+  corePlugins: {
+    preflight: false,
+  },
 }
