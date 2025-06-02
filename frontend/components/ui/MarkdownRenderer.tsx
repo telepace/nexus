@@ -290,20 +290,28 @@ export function MarkdownRenderer({
               {children}
             </a>
           ),
-          img: ({ src, alt }) => {
-            // 过滤掉不兼容的属性，只保留OptimizedImage需要的属性
-            const optimizedImageProps = {
-              src: typeof src === "string" ? src : "",
-              alt: alt || "",
-              className:
-                "rounded-md border w-full h-auto object-contain max-w-full block mx-auto",
-              loading: "lazy" as const,
-              style: { aspectRatio: "auto", maxHeight: "80vh" },
-              objectFit: "contain" as const,
-              preserveAspectRatio: true,
-            };
-
-            return <OptimizedImage {...optimizedImageProps} />;
+          img: ({ src, alt, ...props }) => {
+            // 直接使用原始的 img 标签，避免 Next.js 图片代理
+            return (
+              <img
+                src={src}
+                alt={alt || ""}
+                className="rounded-md border w-full h-auto object-contain max-w-full block mx-auto"
+                style={{ aspectRatio: "auto", maxHeight: "80vh" }}
+                loading="lazy"
+                onError={(e) => {
+                  // 图片加载失败时的处理
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  // 可以选择显示一个占位符
+                  const placeholder = document.createElement('div');
+                  placeholder.className = 'flex items-center justify-center w-full h-32 bg-gray-100 border rounded-md text-gray-500';
+                  placeholder.textContent = `图片加载失败: ${src}`;
+                  target.parentNode?.insertBefore(placeholder, target);
+                }}
+                {...props}
+              />
+            );
           },
           hr: ({ ...props }) => <hr className="my-4 md:my-8" {...props} />,
         }}

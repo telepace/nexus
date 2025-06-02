@@ -27,22 +27,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Install PNPM first with specific version
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
       - name: Set up Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'pnpm' # Or npm/yarn if used
+          cache: 'pnpm' # Now pnpm is available for caching
 
-      # Install PNPM
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: latest
-          run_install: true
+      # Verify pnpm installation
+      - name: Verify pnpm installation
+        run: |
+          which pnpm
+          pnpm --version
 
-      - name: Install project dependencies (root)
-        run: pnpm install # Or npm ci / yarn install --frozen-lockfile
-        # This assumes a pnpm-lock.yaml or equivalent exists at the root
+      - name: Install project dependencies (extension)
+        run: pnpm install --frozen-lockfile
+        working-directory: ./extension
 
       # Placeholder: Build the extension
       # The actual build command depends on how the extension is built.
@@ -60,8 +65,8 @@ jobs:
 
       # Install E2E test dependencies (scoped to extension/e2e)
       - name: Install E2E test dependencies
-        run: pnpm install --prefix extension/e2e
-        # If pnpm is not used: npm ci --prefix extension/e2e
+        run: pnpm install --frozen-lockfile
+        working-directory: ./extension/e2e
 
       # Install Playwright's browsers (or Chrome for Puppeteer)
       # Puppeteer downloads Chromium by default during `npm install puppeteer` if PUPPETEER_SKIP_CHROMIUM_DOWNLOAD is not set.

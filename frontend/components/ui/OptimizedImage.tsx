@@ -22,6 +22,7 @@ interface OptimizedImageProps {
   onError?: () => void;
   onLoad?: () => void;
   style?: React.CSSProperties;
+  inline?: boolean;
 }
 
 /**
@@ -45,6 +46,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   onError,
   onLoad,
   style,
+  inline = false,
   ...props
 }) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -63,6 +65,8 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
       setCurrentSrc(fallbackSrc);
       setHasError(false);
       setIsLoading(true);
+    } else {
+      console.warn(`Failed to load image: ${currentSrc}`);
     }
     onError?.();
   };
@@ -85,6 +89,49 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
     !isLoading && "opacity-100",
     className,
   );
+
+  const imageWidth = width || 800;
+  const imageHeight = height || 600;
+
+  if (inline) {
+    if (hasError && !fallbackSrc) {
+      return (
+        <span className="inline-flex items-center justify-center text-muted-foreground text-sm bg-muted px-2 py-1 rounded">
+          Failed to load image
+        </span>
+      );
+    }
+
+    return fill ? (
+      <Image
+        src={currentSrc}
+        alt={alt}
+        fill
+        className={imageClassName}
+        style={imageStyle}
+        priority={priority}
+        quality={quality}
+        onLoad={handleLoad}
+        onError={handleError}
+        {...props}
+      />
+    ) : (
+      <Image
+        src={currentSrc}
+        alt={alt}
+        width={imageWidth}
+        height={imageHeight}
+        className={imageClassName}
+        style={imageStyle}
+        priority={priority}
+        quality={quality}
+        loading={loading}
+        onLoad={handleLoad}
+        onError={handleError}
+        {...props}
+      />
+    );
+  }
 
   return (
     <div className="relative inline-block">
@@ -111,8 +158,8 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
         <Image
           src={currentSrc}
           alt={alt}
-          width={width}
-          height={height}
+          width={imageWidth}
+          height={imageHeight}
           className={imageClassName}
           style={imageStyle}
           priority={priority}

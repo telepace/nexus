@@ -394,7 +394,7 @@ function DashboardContent() {
         <div className="bg-muted p-8 text-center rounded-lg mb-6">
           <h2 className="text-xl mb-2">No Items Yet</h2>
           <p className="text-muted-foreground mb-4">
-            <p>You don&apos;t have any content yet.</p> Add one to get started.
+            You don&apos;t have any content yet. Add one to get started.
           </p>
           <Button asChild>
             <Link href="/dashboard/add-item">Add Item</Link>

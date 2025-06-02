@@ -309,6 +309,7 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
+            credentials: "include",
           },
         );
 
@@ -335,6 +336,7 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
                   Authorization: `Bearer ${token}`,
                   "Content-Type": "application/json",
                 },
+                credentials: "include",
               },
             );
 

@@ -251,6 +251,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
               "Content-Type": "application/json",
             },
             body: JSON.stringify(contentData),
+            credentials: "include",
           });
 
           if (!response.ok) {
@@ -272,6 +273,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
               },
+              credentials: "include",
             },
           );
 
@@ -296,6 +298,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
             "Content-Type": "application/json",
           },
           body: JSON.stringify(contentData),
+          credentials: "include",
         });
 
         if (!response.ok) {
@@ -317,6 +320,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
+            credentials: "include",
           },
         );
 

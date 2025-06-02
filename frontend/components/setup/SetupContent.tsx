@@ -267,6 +267,7 @@ export function SetupContent() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ is_setup_complete: true }),
+        credentials: "include", // 包含cookies，确保CORS请求正常工作
       });
 
       if (!response.ok) {

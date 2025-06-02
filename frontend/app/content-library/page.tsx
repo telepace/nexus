@@ -89,6 +89,7 @@ export default function ContentLibraryPage() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          credentials: "include",
         },
       );
 
@@ -144,6 +145,7 @@ export default function ContentLibraryPage() {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
+          credentials: "include",
         });
 
         if (!response.ok) {
