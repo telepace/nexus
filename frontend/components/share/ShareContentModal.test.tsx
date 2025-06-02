@@ -2,8 +2,8 @@ import React from "react";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ShareContentModal } from "./ShareContentModal";
-import { client } from "@/app/openapi-client/index"; 
-import { Toaster } from "@/components/ui/sonner"; 
+import { client } from "@/app/openapi-client/index";
+import { Toaster } from "@/components/ui/sonner";
 
 // 临时定义缺失的类型
 interface ContentItemPublic {

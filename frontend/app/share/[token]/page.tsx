@@ -59,14 +59,16 @@ const SharedContentPage = () => {
         const handleError = (error: Error | unknown) => {
           const status = (error as { status?: number }).status;
           // 移除未使用的 response 变量
-          const responseObj = (error as { response?: { status?: number } }).response;
+          const responseObj = (error as { response?: { status?: number } })
+            .response;
           const data = (error as { data?: { detail?: string } }).data;
           const message = (error as { message?: string }).message;
           return { status, responseObj, data, message };
         };
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { status, responseObj: _, data, message } = handleError(error);
-        const errorDetail = data?.detail || message || "Failed to load shared content.";
+        const errorDetail =
+          data?.detail || message || "Failed to load shared content.";
 
         if (status === 401 && errorDetail === "Password required") {
           setPasswordRequired(true);
@@ -118,7 +120,9 @@ const SharedContentPage = () => {
       const errObj = err as any;
       const status = errObj.status || errObj.response?.status;
       const errorDetail =
-        errObj.data?.detail || errObj.message || "Failed to load shared content.";
+        errObj.data?.detail ||
+        errObj.message ||
+        "Failed to load shared content.";
 
       setPasswordRequired(true); // Show password form again on error
       if (status === 403 && errorDetail === "Incorrect password") {

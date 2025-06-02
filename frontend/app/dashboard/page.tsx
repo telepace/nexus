@@ -112,7 +112,7 @@ export default async function DashboardPage() {
 // 实际内容组件，可能会挂起(Suspend)
 // Convert to client component to use hooks like useState
 /* eslint-disable-next-line @typescript-eslint/no-unused-expressions */
-'use client';
+("use client");
 
 // 此函数已被重构，保留作为参考
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

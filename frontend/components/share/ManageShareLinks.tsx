@@ -84,7 +84,10 @@ export const ManageShareLinks: React.FC<ManageShareLinksProps> = ({
       // This is just for demonstration if a direct "get all my shares" API is missing.
       // 临时使用 any 类型避免类型错误
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const contentItemsResponse = await (client as any).listContentItems(0, 10); // Get top 10 items
+      const contentItemsResponse = await (client as any).listContentItems(
+        0,
+        10,
+      ); // Get top 10 items
       const allShares: ExtendedContentSharePublic[] = [];
       if (contentItemsResponse && Array.isArray(contentItemsResponse)) {
         for (const item of contentItemsResponse) {
@@ -120,23 +123,26 @@ export const ManageShareLinks: React.FC<ManageShareLinksProps> = ({
     fetchShares();
   }, [fetchShares]);
 
-  const handleRevokeShare = useCallback(async (shareId: string) => {
-    try {
-      setIsLoading(true);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (client as any).deactivateShareLink(shareId);
-      setShares((prevShares) =>
-        prevShares.map((share) =>
-          share.id === shareId ? { ...share, is_active: false } : share
-        )
-      );
-    } catch (error) {
-      console.error("Failed to revoke share:", error);
-      setError("Failed to revoke share link. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [setError]);
+  const handleRevokeShare = useCallback(
+    async (shareId: string) => {
+      try {
+        setIsLoading(true);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (client as any).deactivateShareLink(shareId);
+        setShares((prevShares) =>
+          prevShares.map((share) =>
+            share.id === shareId ? { ...share, is_active: false } : share,
+          ),
+        );
+      } catch (error) {
+        console.error("Failed to revoke share:", error);
+        setError("Failed to revoke share link. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [setError],
+  );
 
   // Function to open the share modal for a specific content item
   // This would be triggered from a list of content items, not directly from this component's current design

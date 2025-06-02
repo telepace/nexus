@@ -117,7 +117,7 @@ export const ShareContentModal: React.FC<ShareContentModalProps> = ({
           "Failed to generate share link: Invalid response from server.",
         );
       }
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     } catch (err: any) {
       console.error("Failed to generate share link:", err);
       const errorMsg =

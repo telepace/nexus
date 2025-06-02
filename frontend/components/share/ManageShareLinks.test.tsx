@@ -101,7 +101,9 @@ describe("ManageShareLinks", () => {
     // For simplicity, let's assume a direct fetch for now or that the component is refactored.
     // For the test to pass with current component structure (empty fetch), we mock it to return empty.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((client as any).getActiveSharesForUser as jest.Mock).mockResolvedValueOnce([]);
+    ((client as any).getActiveSharesForUser as jest.Mock).mockResolvedValueOnce(
+      [],
+    );
   });
 
   const renderComponent = (userId?: string) => {
@@ -184,7 +186,9 @@ describe("ManageShareLinks", () => {
 
     // Mock successful revoke
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (client as any).deactivateShareLink.mockResolvedValueOnce({ success: true });
+    (client as any).deactivateShareLink.mockResolvedValueOnce({
+      success: true,
+    });
 
     (global.confirm as jest.Mock).mockReturnValueOnce(true); // User confirms
 
@@ -198,7 +202,7 @@ describe("ManageShareLinks", () => {
     await waitFor(() => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((client as any).deactivateShareLink).toHaveBeenCalledWith(
-        "error-share-id"
+        "error-share-id",
       );
     });
     expect(mockToast).toHaveBeenCalledWith(
