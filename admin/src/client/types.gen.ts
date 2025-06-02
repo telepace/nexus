@@ -85,6 +85,20 @@ export type ContentItemPublic = {
     updated_at: string;
 };
 
+export type ContentShareCreate = {
+    expires_at?: (string | null);
+    max_access_count?: (number | null);
+    password?: (string | null);
+};
+
+export type ContentSharePublic = {
+    id: string;
+    share_token: string;
+    created_at: string;
+    expires_at?: (string | null);
+    is_active: boolean;
+};
+
 export type EmbeddingData = {
     object: string;
     embedding: Array<(number)>;
@@ -451,6 +465,38 @@ export type ContentAnalyzeContentStreamData = {
 };
 
 export type ContentAnalyzeContentStreamResponse = (unknown);
+
+export type ContentCreateShareLinkEndpointData = {
+    /**
+     * ID of the content item to share
+     */
+    id: string;
+    requestBody: ContentShareCreate;
+};
+
+export type ContentCreateShareLinkEndpointResponse = (ContentSharePublic);
+
+export type ContentDeactivateShareLinkEndpointData = {
+    /**
+     * ID of the content item whose shares to deactivate
+     */
+    id: string;
+};
+
+export type ContentDeactivateShareLinkEndpointResponse = (void);
+
+export type ContentGetSharedContentEndpointData = {
+    /**
+     * Password for protected content
+     */
+    password?: (string | null);
+    /**
+     * The unique share token
+     */
+    token: string;
+};
+
+export type ContentGetSharedContentEndpointResponse = (ContentItemPublic);
 
 export type GoogleOauthGoogleCallbackApiData = {
     requestBody: GoogleCallbackRequest;

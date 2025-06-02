@@ -71,6 +71,12 @@ class ContentItem(ContentItemBase, table=True):
             "primaryjoin": "ContentItem.id == foreign(ContentChunk.content_item_id)"
         },
     )
+    shares: list["ContentShare"] = Relationship(
+        back_populates="content_item",
+        sa_relationship_kwargs={
+            "primaryjoin": "ContentItem.id == foreign(ContentShare.content_item_id)"
+        },
+    )
 
 
 class ContentAssetBase(SQLModel):
@@ -227,6 +233,29 @@ class ContentChunk(ContentChunkBase, table=True):
             "primaryjoin": "foreign(ContentChunk.content_item_id) == ContentItem.id"
         },
     )
+
+
+class ContentShareBase(SQLModel):
+    """Base model for content shares."""
+
+    content_item_id: uuid.UUID = Field(
+        default=None, foreign_key="contentitem.id", index=True
+    )
+    share_token: str = Field(max_length=255, unique=True, index=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    expires_at: datetime | None = Field(default=None)
+    access_count: int = Field(default=0)
+    max_access_count: int | None = Field(default=None)
+    password_hash: str | None = Field(default=None, max_length=255)
+    is_active: bool = Field(default=True, index=True)
+
+
+class ContentShare(ContentShareBase, table=True):
+    """Represents a shareable link for a ContentItem."""
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
+
+    content_item: ContentItem | None = Relationship(back_populates="shares")
 
 
 # Ensure User model is defined elsewhere and imported if needed for relationships

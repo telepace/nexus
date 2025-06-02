@@ -85,6 +85,20 @@ export type ContentItemPublic = {
   updated_at: string;
 };
 
+export type ContentShareCreate = {
+  expires_at?: string | null;
+  max_access_count?: number | null;
+  password?: string | null;
+};
+
+export type ContentSharePublic = {
+  id: string;
+  share_token: string;
+  created_at: string;
+  expires_at?: string | null;
+  is_active: boolean;
+};
+
 export type EmbeddingData = {
   object: string;
   embedding: Array<number>;
@@ -886,6 +900,52 @@ export type ContentAnalyzeContentStreamData = {
 export type ContentAnalyzeContentStreamResponse = unknown;
 
 export type ContentAnalyzeContentStreamError = HTTPValidationError;
+
+export type ContentCreateShareLinkEndpointData = {
+  body: ContentShareCreate;
+  path: {
+    /**
+     * ID of the content item to share
+     */
+    id: string;
+  };
+};
+
+export type ContentCreateShareLinkEndpointResponse = ContentSharePublic;
+
+export type ContentCreateShareLinkEndpointError = HTTPValidationError;
+
+export type ContentDeactivateShareLinkEndpointData = {
+  path: {
+    /**
+     * ID of the content item whose shares to deactivate
+     */
+    id: string;
+  };
+};
+
+export type ContentDeactivateShareLinkEndpointResponse = void;
+
+export type ContentDeactivateShareLinkEndpointError = HTTPValidationError;
+
+export type ContentGetSharedContentEndpointData = {
+  path: {
+    /**
+     * The unique share token
+     */
+    token: string;
+  };
+  query?: {
+    /**
+     * Password for protected content
+     */
+    password?: string | null;
+  };
+};
+
+export type ContentGetSharedContentEndpointResponse = ContentItemPublic;
+
+export type ContentGetSharedContentEndpointError = HTTPValidationError;
 
 export type ImagesGetUploadUrlData = {
   body: PresignedURLRequest;

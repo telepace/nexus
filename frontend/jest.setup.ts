@@ -404,3 +404,48 @@ jest.mock("remark-gfm", () => () => {});
 jest.mock("remark-breaks", () => () => {});
 jest.mock("rehype-highlight", () => () => {});
 jest.mock("rehype-raw", () => () => {});
+
+// Mock sonner toast library
+jest.mock("sonner", () => {
+  const React = require("react");
+  return {
+    toast: {
+      success: jest.fn(),
+      error: jest.fn(),
+      info: jest.fn(),
+      warning: jest.fn(),
+      loading: jest.fn(),
+      dismiss: jest.fn(),
+    },
+    Toaster: jest.fn(({ ...props }) => {
+      return React.createElement("div", {
+        "data-testid": "mock-toaster",
+        ...props,
+      });
+    }),
+  };
+});
+
+// Mock remark-toc
+jest.mock("remark-toc", () => () => {});
+
+// Mock rehype-autolink-headings and other rehype plugins
+jest.mock("rehype-autolink-headings", () => () => {});
+
+// Mock all remark and rehype related modules
+jest.mock("remark-math", () => () => {});
+jest.mock("rehype-katex", () => () => {});
+
+// Mock medium-zoom
+jest.mock("medium-zoom", () => {
+  const mockZoom = jest.fn();
+  const mockDetach = jest.fn();
+  // Mock the default export and the detach method
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mz = mockZoom as any;
+  mz.detach = mockDetach;
+  return mz;
+});
+
+// Mock copy-to-clipboard
+jest.mock("copy-to-clipboard", () => jest.fn());

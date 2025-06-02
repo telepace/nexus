@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ContentCreateContentItemEndpointData, ContentCreateContentItemEndpointResponse, ContentProcessContentItemEndpointData, ContentProcessContentItemEndpointResponse, ContentListContentItemsEndpointData, ContentListContentItemsEndpointResponse, ContentGetContentItemEndpointData, ContentGetContentItemEndpointResponse, ContentGetContentMarkdownEndpointData, ContentGetContentMarkdownEndpointResponse, ContentGetSupportedProcessorsResponse, ContentGetContentChunksEndpointData, ContentGetContentChunksEndpointResponse, ContentGetContentChunksSummaryEndpointData, ContentGetContentChunksSummaryEndpointResponse, ContentAnalyzeContentStreamData, ContentAnalyzeContentStreamResponse, GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ImagesGetUploadUrlData, ImagesGetUploadUrlResponse, ImagesCreateImageRecordData, ImagesCreateImageRecordResponse, ImagesListImagesData, ImagesListImagesResponse, ImagesReadImageData, ImagesReadImageResponse, ImagesDeleteImageData, ImagesDeleteImageResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LlmCreateCompletionData, LlmCreateCompletionResponse, LlmCreateEmbeddingData, LlmCreateEmbeddingResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginLoginAccessTokenHeadResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, PromptsTogglePromptEnabledData, PromptsTogglePromptEnabledResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersReadUserMeHeadResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { ContentCreateContentItemEndpointData, ContentCreateContentItemEndpointResponse, ContentProcessContentItemEndpointData, ContentProcessContentItemEndpointResponse, ContentListContentItemsEndpointData, ContentListContentItemsEndpointResponse, ContentGetContentItemEndpointData, ContentGetContentItemEndpointResponse, ContentGetContentMarkdownEndpointData, ContentGetContentMarkdownEndpointResponse, ContentGetSupportedProcessorsResponse, ContentGetContentChunksEndpointData, ContentGetContentChunksEndpointResponse, ContentGetContentChunksSummaryEndpointData, ContentGetContentChunksSummaryEndpointResponse, ContentAnalyzeContentStreamData, ContentAnalyzeContentStreamResponse, ContentCreateShareLinkEndpointData, ContentCreateShareLinkEndpointResponse, ContentDeactivateShareLinkEndpointData, ContentDeactivateShareLinkEndpointResponse, ContentGetSharedContentEndpointData, ContentGetSharedContentEndpointResponse, GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ImagesGetUploadUrlData, ImagesGetUploadUrlResponse, ImagesCreateImageRecordData, ImagesCreateImageRecordResponse, ImagesListImagesData, ImagesListImagesResponse, ImagesReadImageData, ImagesReadImageResponse, ImagesDeleteImageData, ImagesDeleteImageResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LlmCreateCompletionData, LlmCreateCompletionResponse, LlmCreateEmbeddingData, LlmCreateEmbeddingResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginLoginAccessTokenHeadResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, PromptsTogglePromptEnabledData, PromptsTogglePromptEnabledResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersReadUserMeHeadResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class ContentService {
     /**
@@ -201,6 +201,76 @@ export class ContentService {
             },
             body: data.requestBody,
             mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create a Share Link for a Content Item
+     * Generates a shareable link for the specified content item. Requires ownership.
+     * @param data The data for the request.
+     * @param data.id ID of the content item to share
+     * @param data.requestBody
+     * @returns ContentSharePublic Successful Response
+     * @throws ApiError
+     */
+    public static createShareLinkEndpoint(data: ContentCreateShareLinkEndpointData): CancelablePromise<ContentCreateShareLinkEndpointResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/content/{id}/share',
+            path: {
+                id: data.id
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Deactivate Share Link(s) for a Content Item
+     * Deactivates active share links for the specified content item. Requires ownership.
+     * @param data The data for the request.
+     * @param data.id ID of the content item whose shares to deactivate
+     * @returns void Successful Response
+     * @throws ApiError
+     */
+    public static deactivateShareLinkEndpoint(data: ContentDeactivateShareLinkEndpointData): CancelablePromise<ContentDeactivateShareLinkEndpointResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/content/{id}/share',
+            path: {
+                id: data.id
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Access Shared Content
+     * Retrieves a content item using a share token. May require a password.
+     * @param data The data for the request.
+     * @param data.token The unique share token
+     * @param data.password Password for protected content
+     * @returns ContentItemPublic Successful Response
+     * @throws ApiError
+     */
+    public static getSharedContentEndpoint(data: ContentGetSharedContentEndpointData): CancelablePromise<ContentGetSharedContentEndpointResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/content/share/{token}',
+            path: {
+                token: data.token
+            },
+            query: {
+                password: data.password
+            },
             errors: {
                 422: 'Validation Error'
             }

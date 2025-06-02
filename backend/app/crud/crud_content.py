@@ -1,19 +1,24 @@
 import re  # For Markdown image processing
+import secrets  # For generating unique tokens
 import uuid
 from collections.abc import Sequence
-from typing import Any
+from typing import (
+    Any,  # For optional fields
+)
 
 from sqlalchemy import func  # For count
 from sqlalchemy.ext.asyncio import AsyncSession  # Changed from sqlmodel.Session
 from sqlalchemy.future import select  # For async select
-from sqlmodel import Session  # Add this for sync operations
+from sqlmodel import Session  # Add this for sync operations and specific select
+from sqlmodel import select as sqlmodel_select
 
+from app.core import security  # For password hashing
 from app.core.storage import StorageInterface
 from app.crud import crud_image  # crud_image module itself
-from app.models.content import ContentAsset, ContentChunk, ContentItem
+from app.models.content import ContentAsset, ContentChunk, ContentItem, ContentShare
 
 # Schema imports - assuming these exist
-from app.schemas.content import ContentItemCreate, ContentItemUpdate
+from app.schemas.content import ContentItemCreate, ContentItemUpdate, ContentShareCreate
 from app.schemas.image import ImageCreate
 
 # Image processing imports
@@ -402,3 +407,107 @@ def delete_content_item_sync(session: Session, id: uuid.UUID) -> ContentItem | N
 
 
 # print("CRUD functions for ContentItem and ContentAsset potentially modified for async and image processing.")
+
+
+# CRUD for ContentShare (Synchronous)
+
+
+def create_content_share(
+    db: Session,
+    *,
+    content_share_in: ContentShareCreate,
+    content_item_id: uuid.UUID,
+    _user_id: uuid.UUID,
+) -> ContentShare:
+    """
+    Create a new content share link.
+    Note: _user_id is included for audit/ownership but not directly on ContentShare model currently.
+    It's used to ensure the user creating the share owns the content_item (checked in API layer).
+    """
+    share_token = secrets.token_urlsafe(16)
+    password_hash = None
+    if content_share_in.password:
+        password_hash = security.get_password_hash(content_share_in.password)
+
+    db_content_share = ContentShare(
+        content_item_id=content_item_id,
+        share_token=share_token,
+        expires_at=content_share_in.expires_at,
+        max_access_count=content_share_in.max_access_count,
+        password_hash=password_hash,
+        # created_at is default_factory
+        # access_count is default 0
+        # is_active is default True
+    )
+    db.add(db_content_share)
+    db.commit()
+    db.refresh(db_content_share)
+    return db_content_share
+
+
+def get_content_share_by_token(db: Session, token: str) -> ContentShare | None:
+    """Get a content share by its unique token."""
+    statement = sqlmodel_select(ContentShare).where(ContentShare.share_token == token)
+    return db.exec(statement).first()
+
+
+def get_content_shares_by_content_id(
+    db: Session, content_item_id: uuid.UUID
+) -> Sequence[ContentShare]:
+    """Get all active content shares for a specific content item."""
+    statement = sqlmodel_select(ContentShare).where(
+        ContentShare.content_item_id == content_item_id,
+        ContentShare.is_active == True,  # noqa: E712
+    )
+    return db.exec(statement).all()
+
+
+def update_content_share(
+    db: Session, *, content_share: ContentShare, update_data: dict[str, Any]
+) -> ContentShare:
+    """Update a content share."""
+    for field, value in update_data.items():
+        if field == "password" and value is not None:
+            content_share.password_hash = security.get_password_hash(value)
+        elif hasattr(content_share, field):
+            setattr(content_share, field, value)
+
+    db.add(content_share)
+    db.commit()
+    db.refresh(content_share)
+    return content_share
+
+
+def increment_access_count(db: Session, *, content_share: ContentShare) -> ContentShare:
+    """Increment the access count for a share link and deactivate if max count reached."""
+    content_share.access_count += 1
+    if (
+        content_share.max_access_count is not None
+        and content_share.access_count >= content_share.max_access_count
+    ):
+        content_share.is_active = False
+
+    db.add(content_share)
+    db.commit()
+    db.refresh(content_share)
+    return content_share
+
+
+def deactivate_content_share(
+    db: Session, *, content_share: ContentShare
+) -> ContentShare:
+    """Deactivate a content share link."""
+    content_share.is_active = False
+    db.add(content_share)
+    db.commit()
+    db.refresh(content_share)
+    return content_share
+
+
+def delete_content_share(db: Session, *, id: uuid.UUID) -> ContentShare | None:
+    """Delete a content share by its ID."""
+    content_share = db.get(ContentShare, id)
+    if content_share:
+        db.delete(content_share)
+        db.commit()
+    return content_share
