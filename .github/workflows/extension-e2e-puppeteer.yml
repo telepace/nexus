@@ -1,0 +1,109 @@
+# .github/workflows/extension-e2e-puppeteer.yml
+name: Nexus Extension E2E (Puppeteer)
+
+on:
+  push:
+    branches: [main, master, develop] # Adjust branches as needed
+    paths:
+      - 'extension/**' # Trigger only if extension code changes
+      - '.github/workflows/extension-e2e-puppeteer.yml'
+  pull_request:
+    branches: [main, master, develop]
+    paths:
+      - 'extension/**'
+      - '.github/workflows/extension-e2e-puppeteer.yml'
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  e2e-tests:
+    name: Run Extension E2E Tests
+    runs-on: ubuntu-latest # Or a self-hosted runner if Chrome installation is an issue
+
+    strategy:
+      matrix:
+        node-version: [18.x] # Specify Node.js versions
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm' # Or npm/yarn if used
+
+      # Placeholder: Install PNPM if not available on runner, or if preferred
+      # - name: Install pnpm
+      #   uses: pnpm/action-setup@v2
+      #   with:
+      #     version: 8 # Specify pnpm version
+
+      - name: Install project dependencies (root)
+        run: pnpm install # Or npm ci / yarn install --frozen-lockfile
+        # This assumes a pnpm-lock.yaml or equivalent exists at the root
+
+      # Placeholder: Build the extension
+      # The actual build command depends on how the extension is built.
+      # This might involve running a script from the root package.json or extension/package.json
+      - name: Build Nexus Extension (Placeholder)
+        run: |
+          echo "Building extension... (This is a placeholder step)"
+          # Example: cd extension && pnpm build
+          # Ensure the build output is at 'extension/build' as configured in test.config.js
+          # For now, create a dummy build directory for the test runner to find
+          mkdir -p extension/build
+          echo "<html><body>Mock Extension</body></html>" > extension/build/sidepanel.html
+          echo "{ \"name\": \"Nexus Mock Extension\", \"version\": \"0.1\", \"manifest_version\": 3 }" > extension/build/manifest.json
+
+
+      # Install E2E test dependencies (scoped to extension/e2e)
+      - name: Install E2E test dependencies
+        run: pnpm install --prefix extension/e2e
+        # If pnpm is not used: npm ci --prefix extension/e2e
+
+      # Install Playwright's browsers (or Chrome for Puppeteer)
+      # Puppeteer downloads Chromium by default during `npm install puppeteer` if PUPPETEER_SKIP_CHROMIUM_DOWNLOAD is not set.
+      # However, in some CI environments, a specific Chrome installation might be needed.
+      # For ubuntu-latest, a version of Chrome is usually pre-installed.
+      # We can try to use it or ensure Puppeteer's version is used.
+      # This step ensures Chrome is available if system Chrome is preferred or Puppeteer's download fails.
+      - name: Setup Chrome (if needed)
+        uses: browser-actions/setup-chrome@v1
+        # with:
+        #   chrome-version: stable # Or a specific version Puppeteer supports
+
+      - name: Start Mock API Server
+        run: node extension/e2e/utils/mock-server.js & # Run in background
+        working-directory: ./ # Ensure paths in mock-server.js resolve correctly, or run from extension/e2e
+
+      - name: Wait for Mock API Server
+        run: |
+          echo "Waiting for mock API server to start..."
+          sleep 5 # Simple wait, consider using wait-on or curl loop for robustness
+          # Example: wait-on http://localhost:3001/api/v1/some-health-check-endpoint
+
+      - name: Run Puppeteer E2E tests
+        working-directory: ./extension/e2e # Run Jest from the e2e directory
+        run: pnpm test # This will execute 'jest' as defined in extension/e2e/package.json
+        # Or: npm test --prefix extension/e2e
+        env:
+          DISPLAY: ':99.0' # Needed for headless Chrome if running in a true headless environment without Xvfb
+          # CHROME_BIN: /usr/bin/google-chrome # If using system installed Chrome
+          # TEST_USER_EMAIL, TEST_USER_PASSWORD can be set via GitHub Secrets if needed for non-mocked parts
+
+      - name: Upload Test Report
+        if: always() # Run this step even if tests fail
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-e2e-test-report
+          path: extension/e2e/test-report/index.html
+          retention-days: 7 # Optional: how long to keep the artifact
+
+      - name: Upload Screenshots on Failure
+        if: failure() # Run this step only if tests fail
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-screenshots
+          path: extension/e2e/screenshots/ # Path where screenshots are saved by tests
+          retention-days: 7
