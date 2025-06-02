@@ -31,6 +31,8 @@ rules:
       - "bun.lockb"          # bun
     preferred_file: "pnpm-lock.yaml"
     severity: "high"
+    # 设置最大扫描深度为1，避免检测子目录中的锁文件
+    max_depth: 1
     
   # Python包管理器冲突
   python_package_managers:
@@ -97,6 +99,18 @@ rules:
     preferred_file: "tsconfig.json"
     severity: "medium"
     
+  # 重复的README文件
+  readme_duplicates:
+    description: "重复的README文件"
+    enabled: false  # 禁用此规则，不同目录下的README文件是合理的
+    conflicting_files:
+      - "README.md"
+      - "README-*.md"
+      - "readme.md"
+      - "Readme.md"
+    preferred_file: "README.md"
+    severity: "low"
+    
   # Docker配置文件冲突
   docker_configs:
     description: "Docker配置文件冲突"
@@ -162,12 +176,15 @@ ignore:
     - ".ruff_cache"
     - ".plasmo"
     
-  # 忽略特定规则在特定目录
+  # 忽略规则在特定目录
   rule_exceptions:
     # 在docs目录中允许多种配置文件共存
     docs:
       - "eslint_configs"
       - "prettier_configs"
+    # 在extension/e2e目录中允许存在pnpm-lock.yaml
+    "extension/e2e":
+      - "js_package_managers"
 
 # 自动修复设置
 auto_fix:

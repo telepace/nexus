@@ -1,0 +1,26 @@
+{
+  "name": "nexus-extension-e2e-tests",
+  "version": "1.0.0",
+  "description": "E2E tests for Nexus browser extension",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "start-mock-server": "node utils/mock-server.js"
+  },
+  "keywords": [
+    "puppeteer",
+    "jest",
+    "e2e"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "puppeteer": "^22.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "express": "^4.17.1",
+    "body-parser": "^1.19.0",
+    "jest-html-reporter": "^3.7.0"
+  }
+}
