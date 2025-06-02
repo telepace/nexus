@@ -2,6 +2,17 @@
 
 # Generate OpenAPI client
 # This script generates OpenAPI specifications from a FastAPI application and uses them for frontend client code generation
+#
+# 安全改进说明：
+# 1. 不再硬编码敏感的加密密钥，而是利用应用的测试模式机制
+# 2. 通过 DOCS_GENERATION 环境变量触发配置类的自动密钥生成
+# 3. 所有临时密钥仅用于通过配置验证，不用于实际的加密操作
+# 4. 符合最佳安全实践，避免在代码中暴露敏感信息
+#
+# 架构说明：
+# - FastAPI 应用启动时需要验证所有配置字段
+# - 即使只是生成 OpenAPI 文档，也会触发完整的应用初始化
+# - 通过测试模式和文档生成模式，可以绕过严格的生产环境配置要求
 
 # Strict mode, exit immediately if any command fails
 set -e
@@ -92,11 +103,29 @@ echo "✅ Dependencies check passed"
 
 # 生成OpenAPI JSON
 echo "📝 Generating OpenAPI JSON..."
-# Set required environment variables for OpenAPI generation
-# A valid Fernet key is 32 bytes, URL-safe base64 encoded.
-export APP_SYMMETRIC_ENCRYPTION_KEY="cw_2xL3n14u9k29SMTFb7yYJ3jS2pLp4o7TjV_hC_rU="
-export SENTRY_DSN="" # Optional, provide dummy if strictly required
-export POSTHOG_API_KEY="" # Optional, provide dummy if strictly required
+
+# 安全说明：以下环境变量仅用于生成API文档，不会用于生产环境
+echo "🔒 Setting up environment variables for OpenAPI generation (not for production use)"
+
+# 启用文档生成模式，配置类会自动生成临时密钥
+export DOCS_GENERATION=true
+export TESTING=true
+export TEST_MODE=true
+echo "📄 Enabled documentation generation mode with automatic key generation"
+
+# 设置其他必要的环境变量（如果未设置）
+# 这些服务在文档生成过程中不会被实际调用
+if [ -z "$SENTRY_DSN" ]; then
+  export SENTRY_DSN=""
+  echo "ℹ️ SENTRY_DSN set to empty (not needed for docs generation)"
+fi
+
+if [ -z "$POSTHOG_API_KEY" ]; then
+  export POSTHOG_API_KEY=""
+  echo "ℹ️ POSTHOG_API_KEY set to empty (not needed for docs generation)"
+fi
+
+echo "🔧 Environment variables configured for OpenAPI generation"
 
 python -c "import app.main; import json; print(json.dumps(app.main.app.openapi()))" > "$PROJECT_ROOT/openapi.json" 2> generate-client.log || {
   echo "❌ Failed to generate OpenAPI specification"
