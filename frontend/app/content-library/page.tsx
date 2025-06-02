@@ -10,7 +10,6 @@ import {
   BookOpen,
   FileText,
   Link,
-  Plus,
   AlertCircle,
   Loader2,
   Download,

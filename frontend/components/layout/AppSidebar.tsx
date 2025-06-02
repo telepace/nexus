@@ -20,7 +20,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -75,7 +74,7 @@ export interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 }
 
 export function AppSidebar({
-  onSettingsClick,
+  onSettingsClick: _onSettingsClick, // eslint-disable-line @typescript-eslint/no-unused-vars
   onAddContentClick,
   ...props
 }: AppSidebarProps) {

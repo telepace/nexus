@@ -86,12 +86,6 @@ describe("AppSidebar", () => {
     expect(uploadContentButtons.length).toBeGreaterThan(0);
   });
 
-  it("renders settings button", () => {
-    renderSidebar();
-
-    expect(screen.getByText("Settings")).toBeInTheDocument();
-  });
-
   it("calls onAddContentClick when Upload Content button is clicked", () => {
     const mockOnAddContentClick = jest.fn();
     renderSidebar(mockOnAddContentClick);

@@ -16,16 +16,6 @@ jest.mock("next/image", () => ({
   ),
 }));
 
-// Mock TopNavigation component
-jest.mock("@/components/layout/TopNavigation", () => ({
-  TopNavigation: ({ onSettingsClick, onAddContentClick }: any) => (
-    <div data-testid="top-navigation">
-      <button onClick={onSettingsClick}>Settings</button>
-      <button onClick={onAddContentClick}>Add Content</button>
-    </div>
-  ),
-}));
-
 // Mock SettingsPanel component
 jest.mock("@/components/layout/SettingsPanel", () => ({
   SettingsPanel: ({ open, onClose }: any) =>
@@ -51,15 +41,8 @@ describe("MainLayout", () => {
     );
 
     // 检查sidebar是否渲染
-    expect(screen.getByAltText("Nexus Logo")).toBeInTheDocument();
-    expect(screen.getByText("Nexus")).toBeInTheDocument();
+    expect(screen.getByText("Telepace")).toBeInTheDocument();
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
-
-    // 检查顶部导航
-    expect(screen.getByTestId("top-navigation")).toBeInTheDocument();
-
-    // 检查页面标题
-    expect(screen.getByText("Test Page")).toBeInTheDocument();
 
     // 检查页面内容
     expect(screen.getByTestId("page-content")).toBeInTheDocument();
@@ -73,7 +56,7 @@ describe("MainLayout", () => {
     );
 
     // 检查sidebar仍然存在
-    expect(screen.getByText("Nexus")).toBeInTheDocument();
+    expect(screen.getByText("Telepace")).toBeInTheDocument();
 
     // 检查内容直接渲染，没有容器包装
     expect(screen.getByTestId("fullscreen-content")).toBeInTheDocument();
