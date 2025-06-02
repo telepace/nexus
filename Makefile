@@ -806,13 +806,13 @@ generate-client: generate-frontend-client generate-admin-client
 .PHONY: generate-frontend-client
 generate-frontend-client:
 	@echo "===========> Generating OpenAPI client for frontend"
-	@$(ROOT_DIR)/scripts/generate-client.sh
+	@source $(BACKEND_DIR)/.venv/bin/activate && $(ROOT_DIR)/scripts/generate-client.sh
 
 ## generate-admin-client: Generate OpenAPI client for admin panel
 .PHONY: generate-admin-client
 generate-admin-client:
 	@echo "===========> Generating OpenAPI client for admin panel"
-	@$(ROOT_DIR)/scripts/generate-admin-client.sh
+	@source $(BACKEND_DIR)/.venv/bin/activate && $(ROOT_DIR)/scripts/generate-admin-client.sh
 
 # For backward compatibility
 .PHONY: generate-all-clients
