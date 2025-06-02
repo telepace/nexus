@@ -3,11 +3,16 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Settings, ChevronUp } from "lucide-react";
 import {
-  Settings,
-  ChevronUp,
-} from "lucide-react";
-import { IconCirclePlusFilled,IconHome,IconDashboard,IconTags,IconMessageChatbot,IconInnerShadowTop,IconUser } from "@tabler/icons-react";
+  IconCirclePlusFilled,
+  IconHome,
+  IconDashboard,
+  IconTags,
+  IconMessageChatbot,
+  IconInnerShadowTop,
+  IconUser,
+} from "@tabler/icons-react";
 
 import {
   Sidebar,
@@ -55,7 +60,6 @@ const data = {
       url: "/prompts",
       icon: IconMessageChatbot,
     },
-    
   ],
   navSecondary: [
     {
@@ -70,7 +74,11 @@ export interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   onAddContentClick: () => void;
 }
 
-export function AppSidebar({ onSettingsClick, onAddContentClick, ...props }: AppSidebarProps) {
+export function AppSidebar({
+  onSettingsClick,
+  onAddContentClick,
+  ...props
+}: AppSidebarProps) {
   const pathname = usePathname();
   const { user } = useAuth();
 
@@ -102,7 +110,6 @@ export function AppSidebar({ onSettingsClick, onAddContentClick, ...props }: App
                   <IconCirclePlusFilled />
                   <span>Upload Content</span>
                 </SidebarMenuButton>
-                
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
@@ -114,8 +121,8 @@ export function AppSidebar({ onSettingsClick, onAddContentClick, ...props }: App
             <SidebarMenu>
               {data.navMain.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild 
+                  <SidebarMenuButton
+                    asChild
                     isActive={pathname === item.url}
                     tooltip={item.title}
                   >
@@ -132,9 +139,7 @@ export function AppSidebar({ onSettingsClick, onAddContentClick, ...props }: App
 
         {/* 次要导航 */}
         <SidebarGroup className="mt-auto !px-4">
-          <SidebarGroupContent>
-            
-          </SidebarGroupContent>
+          <SidebarGroupContent></SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 

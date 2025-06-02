@@ -28,16 +28,14 @@ jest.mock("@/components/layout/TopNavigation", () => ({
 
 // Mock SettingsPanel component
 jest.mock("@/components/layout/SettingsPanel", () => ({
-  SettingsPanel: ({ open, onClose }: any) => (
-    open ? <div data-testid="settings-panel">Settings Panel</div> : null
-  ),
+  SettingsPanel: ({ open, onClose }: any) =>
+    open ? <div data-testid="settings-panel">Settings Panel</div> : null,
 }));
 
 // Mock AddContentModal component
 jest.mock("@/components/layout/AddContentModal", () => ({
-  AddContentModal: ({ open, onClose }: any) => (
-    open ? <div data-testid="add-content-modal">Add Content Modal</div> : null
-  ),
+  AddContentModal: ({ open, onClose }: any) =>
+    open ? <div data-testid="add-content-modal">Add Content Modal</div> : null,
 }));
 
 describe("MainLayout", () => {
@@ -49,7 +47,7 @@ describe("MainLayout", () => {
     render(
       <MainLayout pageTitle="Test Page">
         <div data-testid="page-content">Page Content</div>
-      </MainLayout>
+      </MainLayout>,
     );
 
     // 检查sidebar是否渲染
@@ -71,7 +69,7 @@ describe("MainLayout", () => {
     render(
       <MainLayout fullscreen={true}>
         <div data-testid="fullscreen-content">Fullscreen Content</div>
-      </MainLayout>
+      </MainLayout>,
     );
 
     // 检查sidebar仍然存在
@@ -86,17 +84,17 @@ describe("MainLayout", () => {
 
   it("应该正确显示当前激活的导航项", () => {
     (usePathname as jest.Mock).mockReturnValue("/prompts");
-    
+
     render(
       <MainLayout pageTitle="Prompts">
         <div>Prompts Content</div>
-      </MainLayout>
+      </MainLayout>,
     );
 
     // 直接查找导航链接，使用getAllByText来处理重复的文本
     const allPromptsElements = screen.getAllByText("Prompts");
     const allDashboardElements = screen.getAllByText("Dashboard");
-    
+
     // 找到sidebar中的导航链接（应该是第一个，因为sidebar在页面标题之前渲染）
     const promptsLink = allPromptsElements[0].closest("a");
     const dashboardLink = allDashboardElements[0].closest("a");
@@ -112,11 +110,13 @@ describe("MainLayout", () => {
     const { container } = render(
       <MainLayout pageTitle="Test">
         <div>Content</div>
-      </MainLayout>
+      </MainLayout>,
     );
 
     // 检查是否有SidebarProvider的包装器
-    const sidebarWrapper = container.querySelector('[data-slot="sidebar-wrapper"]');
+    const sidebarWrapper = container.querySelector(
+      '[data-slot="sidebar-wrapper"]',
+    );
     expect(sidebarWrapper).toBeInTheDocument();
 
     // 检查是否有SidebarInset
@@ -128,7 +128,7 @@ describe("MainLayout", () => {
     render(
       <MainLayout>
         <div data-testid="no-title-content">No Title Content</div>
-      </MainLayout>
+      </MainLayout>,
     );
 
     // 不应该有页面标题
@@ -137,4 +137,4 @@ describe("MainLayout", () => {
     // 内容应该直接渲染
     expect(screen.getByTestId("no-title-content")).toBeInTheDocument();
   });
-}); 
+});

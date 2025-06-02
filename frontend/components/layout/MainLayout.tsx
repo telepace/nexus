@@ -24,7 +24,7 @@ export default function MainLayout({
   const isFullscreen = fullscreen || !pageTitle;
 
   return (
-    <SidebarProvider 
+    <SidebarProvider
       defaultOpen={true}
       style={
         {
@@ -35,7 +35,7 @@ export default function MainLayout({
     >
       <div className="flex min-h-screen bg-background">
         {/* 侧边栏 */}
-        <AppSidebar 
+        <AppSidebar
           onSettingsClick={() => setSettingsOpen(true)}
           onAddContentClick={() => setAddContentOpen(true)}
         />
@@ -47,9 +47,7 @@ export default function MainLayout({
               children
             ) : (
               <div className="container mx-auto p-4">
-                <div className="p-4">
-                  {children}
-                </div>
+                <div className="p-4">{children}</div>
               </div>
             )}
           </main>
