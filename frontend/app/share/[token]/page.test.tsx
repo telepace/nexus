@@ -1,0 +1,261 @@
+"use client"; // Required for useParams and useEffect/useState
+
+import React from "react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import SharedContentPage from "./page"; // Default export from page.tsx
+import { client } from "@/app/openapi-client/index";
+import { Toaster } from "@/components/ui/sonner";
+import { useParams } from "next/navigation";
+
+// 临时定义缺失的类型
+interface ContentItemPublic {
+  id: string;
+  title: string;
+  content?: string;
+  content_text?: string;
+  user_id?: string;
+  type?: string;
+  processing_status?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Mock Next.js navigation (useParams)
+jest.mock("next/navigation", () => ({
+  useParams: jest.fn(),
+}));
+
+// Mock the API client
+jest.mock("@/app/openapi-client/index", () => ({
+  client: {
+    getSharedContent: jest.fn(),
+  },
+}));
+
+// Mock MarkdownRenderer as its internals are tested separately
+jest.mock("@/components/ui/MarkdownRenderer", () => ({
+  MarkdownRenderer: ({ content }: { content: string }) => (
+    <div data-testid="mock-markdown-renderer">{content}</div>
+  ),
+}));
+
+const mockSuccessData: ContentItemPublic = {
+  id: "content-123",
+  title: "Shared Content Title",
+  content_text: "# Hello Shared World\nThis is shared content.",
+  user_id: "user-xyz",
+  type: "text",
+  processing_status: "completed",
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
+describe("SharedContentPage", () => {
+  beforeEach(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((client as any).getSharedContent as jest.Mock).mockReset();
+    (useParams as jest.Mock).mockReset();
+  });
+
+  const mockUseParams = (token?: string) => {
+    (useParams as jest.Mock).mockReturnValue({
+      token,
+    });
+  };
+
+  it("renders loading state initially", () => {
+    mockUseParams("test-token");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((client as any).getSharedContent as jest.Mock).mockReturnValue(
+      new Promise(() => {}),
+    ); // Pending promise
+    render(<SharedContentPage />);
+    expect(screen.getByText(/Loading shared content.../i)).toBeInTheDocument();
+  });
+
+  it("fetches and renders content successfully", async () => {
+    mockUseParams("test-token");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((client as any).getSharedContent as jest.Mock).mockResolvedValueOnce(
+      mockSuccessData,
+    );
+    render(<SharedContentPage />);
+
+    await waitFor(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((client as any).getSharedContent).toHaveBeenCalledWith(
+        "test-token",
+        { password: undefined },
+      );
+    });
+    await waitFor(() => {
+      expect(screen.getByText(mockSuccessData.title!)).toBeInTheDocument();
+      expect(screen.getByTestId("mock-markdown-renderer")).toBeInTheDocument();
+      expect(screen.getByTestId("mock-markdown-renderer")).toHaveTextContent(
+        "# Hello Shared World This is shared content.",
+      );
+    });
+  });
+
+  it("displays password prompt if API returns 401 'Password required'", async () => {
+    mockUseParams("test-token");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((client as any).getSharedContent as jest.Mock).mockRejectedValueOnce({
+      status: 401,
+      data: { detail: "Password required" }, // Structure based on component's error handling
+    });
+    render(
+      <>
+        <SharedContentPage />
+        <Toaster />
+      </>,
+    ); // Toaster for potential error toasts
+
+    await waitFor(() => {
+      expect(screen.getByText(/Password Required/i)).toBeInTheDocument();
+      expect(document.getElementById("password")).toBeInTheDocument();
+    });
+  });
+
+  it("submits password and fetches content if correct", async () => {
+    const user = userEvent.setup();
+    mockUseParams("test-token-pw");
+
+    // Clear previous mocks and set up new sequence
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((client as any).getSharedContent as jest.Mock).mockClear();
+
+    // First call: password required
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((client as any).getSharedContent as jest.Mock).mockRejectedValueOnce({
+      status: 401,
+      data: { detail: "Password required" },
+    });
+
+    render(
+      <>
+        <SharedContentPage />
+        <Toaster />
+      </>,
+    );
+
+    await waitFor(() =>
+      expect(document.getElementById("password")).toBeInTheDocument(),
+    );
+
+    // Second and third calls: success
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((client as any).getSharedContent as jest.Mock)
+      .mockResolvedValueOnce(mockSuccessData)
+      .mockResolvedValueOnce(mockSuccessData);
+
+    const passwordInput = document.getElementById(
+      "password",
+    ) as HTMLInputElement;
+    await user.type(passwordInput, "secret");
+    fireEvent.click(screen.getByRole("button", { name: /Unlock Content/i }));
+
+    await waitFor(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((client as any).getSharedContent).toHaveBeenCalledTimes(3); // Initial + password attempt + useEffect re-trigger
+    });
+
+    await waitFor(
+      () => {
+        expect(screen.getByText(mockSuccessData.title!)).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+  });
+
+  it("displays error if submitted password is incorrect", async () => {
+    const user = userEvent.setup();
+    mockUseParams("test-token-wrong-pw");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((client as any).getSharedContent as jest.Mock)
+      .mockRejectedValueOnce({
+        status: 401,
+        data: { detail: "Password required" },
+      }) // First call
+      .mockRejectedValueOnce({
+        status: 403,
+        data: { detail: "Incorrect password" },
+      }); // Second call
+
+    render(
+      <>
+        <SharedContentPage />
+        <Toaster />
+      </>,
+    );
+    await waitFor(() =>
+      expect(document.getElementById("password")).toBeInTheDocument(),
+    );
+
+    const passwordInput = document.getElementById(
+      "password",
+    ) as HTMLInputElement;
+    await user.type(passwordInput, "wrongsecret");
+    fireEvent.click(screen.getByRole("button", { name: /Unlock Content/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Incorrect password. Please try again./i),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("displays error for invalid token (404)", async () => {
+    mockUseParams("invalid-token");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((client as any).getSharedContent as jest.Mock).mockRejectedValueOnce({
+      status: 404,
+      data: {
+        detail: "Share link not found, expired, or access limit reached.",
+      },
+    });
+    render(
+      <>
+        <SharedContentPage />
+        <Toaster />
+      </>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText(/Error Accessing Content/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /Share link not found, expired, or access limit reached./i,
+        ),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("displays generic error for other API failures", async () => {
+    mockUseParams("error-token");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((client as any).getSharedContent as jest.Mock).mockRejectedValueOnce({
+      status: 500,
+      data: { detail: "Server error" },
+    });
+    render(
+      <>
+        <SharedContentPage />
+        <Toaster />
+      </>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText(/Error Accessing Content/i)).toBeInTheDocument();
+      expect(screen.getByText(/Server error/i)).toBeInTheDocument();
+    });
+  });
+
+  it("handles missing token in URL", () => {
+    mockUseParams(undefined); // No token
+    render(<SharedContentPage />);
+    expect(screen.getByText(/Error Accessing Content/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Share token is missing in URL./i),
+    ).toBeInTheDocument();
+  });
+});

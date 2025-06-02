@@ -185,7 +185,7 @@ const config: Config = {
 
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
   transformIgnorePatterns: [
-    "/node_modules/(?!(react-markdown|remark-.*|rehype-.*|unified|bail|is-plain-obj|trough|vfile|unist-.*|mdast-.*|hast-.*|comma-separated-tokens|property-information|space-separated-tokens|web-namespaces|zwitch|html-void-elements)/)",
+    "/node_modules/(?!(react-markdown|remark-.*|rehype-.*|unified|bail|is-plain-obj|trough|vfile|unist-.*|mdast-.*|hast-.*|comma-separated-tokens|property-information|space-separated-tokens|web-namespaces|zwitch|html-void-elements|remark-toc|rehype-autolink-headings)/)",
     "/.next/",
     "\\.pnp\\.[^\\/]+$",
   ],

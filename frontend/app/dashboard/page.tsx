@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Table,
   TableBody,
@@ -17,15 +19,24 @@ import { DeleteButton } from "./deleteButton";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { getAuthState } from "@/lib/server-auth-bridge";
-import { Suspense } from "react";
+import { AlertCircle, Share2, Settings2 } from "lucide-react"; // Added Share2, Settings2
+import { useAuth } from "@/lib/client-auth"; // 改用客户端认证
+import { Suspense, useState, useEffect } from "react"; // Added useState
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 // 导入客户端组件
 import { TokenDebugTool } from "./TokenDebugTool";
+import { ShareContentModal } from "@/components/share/ShareContentModal"; // Added
+import { ManageShareLinks } from "@/components/share/ManageShareLinks"; // Added
 
-// 定义Item类型
+// 临时定义缺失的类型
+interface ContentItemPublic {
+  id: string;
+  title: string;
+  // 其他必要的属性
+} // Added for type safety
+
+// 定义Item类型 - assuming this aligns with ContentItemPublic for relevant fields
 interface Item {
   id: string;
   title: string;
@@ -42,13 +53,25 @@ interface ApiErrorResponse {
   status?: number;
 }
 
-// Dashboard 顶级页面组件，增加错误边界和Suspense
-export default async function DashboardPage() {
-  // 获取认证状态
-  const authState = await getAuthState();
+// Dashboard 顶级页面组件，现在是客户端组件
+export default function DashboardPage() {
+  const { user, isLoading: isLoadingAuth } = useAuth();
 
-  // 如果未认证，将在 getAuthState 内部重定向到登录页
-  if (!authState.isAuthenticated) {
+  if (isLoadingAuth) {
+    return (
+      <div className="container py-10">
+        <div className="animate-pulse">
+          <div className="rounded-md bg-gray-200 h-8 w-32 mb-6"></div>
+          <div className="rounded-md bg-gray-200 h-4 w-full mb-2"></div>
+          <div className="rounded-md bg-gray-200 h-4 w-full mb-2"></div>
+          <div className="rounded-md bg-gray-200 h-4 w-3/4 mb-2"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // 如果未认证，显示错误提示
+  if (!user) {
     return (
       <div className="container py-10">
         <Alert variant="destructive" className="mb-6">
@@ -101,7 +124,11 @@ export default async function DashboardPage() {
 }
 
 // 实际内容组件，可能会挂起(Suspend)
-async function DashboardContent() {
+// Convert to client component to use hooks like useState
+// 此函数已被重构，保留作为参考
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function DashboardContentOriginal() {
+  // Renamed to avoid conflict, will call this from new wrapper
   // 使用唯一ID标识这次渲染，帮助调试
   const renderID = Math.random().toString(36).substring(7);
   console.log(`[dashboard-${renderID}] 开始渲染 Dashboard 内容`);
@@ -220,8 +247,23 @@ async function DashboardContent() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Link href={`/dashboard/edit/${item.id}`}>Edit</Link>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={`/dashboard/edit/${item.id}`}
+                          className="flex items-center"
+                        >
+                          <Settings2 className="mr-2 h-4 w-4" /> Edit
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          // 暂时注释掉未定义的函数调用，后续需要实现
+                          // openShareModal(item as ContentItemPublic)
+                          console.log("Share modal for", item.id)
+                        }
+                        className="flex items-center"
+                      >
+                        <Share2 className="mr-2 h-4 w-4" /> Share
                       </DropdownMenuItem>
                       <DropdownMenuItem>
                         <DeleteButton itemId={item.id} />
@@ -233,10 +275,233 @@ async function DashboardContent() {
             ))}
           </TableBody>
         </Table>
+
+        {/* Section to display ManageShareLinks */}
+        {/* 暂时注释掉未定义的变量，后续需要实现 */}
+        {/* {showManageShares && <ManageShareLinks userId={currentUserId} />} */}
       </div>
     );
   } catch (error) {
     console.error(`[dashboard-${renderID}] 渲染过程出错:`, error);
     throw error; // 让错误边界处理
   }
+}
+
+// New wrapper component to handle state and async data fetching
+function DashboardContent() {
+  const [items, setItems] = useState<Item[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [renderID] = useState(Math.random().toString(36).substring(7)); // Stable renderID
+
+  const [selectedItemToShare, setSelectedItemToShare] =
+    useState<ContentItemPublic | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [showManageShares, setShowManageShares] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(
+    undefined,
+  );
+
+  const { user } = useAuth(); // 使用客户端认证hook
+
+  useEffect(() => {
+    // 从认证hook中获取用户ID
+    if (user?.id) {
+      setCurrentUserId(user.id);
+    }
+
+    async function loadData() {
+      setIsLoading(true);
+      console.log(`[dashboard-${renderID}] 开始获取数据`);
+      try {
+        const itemsResponse = await fetchItems();
+        if (Array.isArray(itemsResponse)) {
+          setItems(itemsResponse);
+          console.log(
+            `[dashboard-${renderID}] 成功获取 ${itemsResponse.length} 个物品`,
+          );
+        } else if (itemsResponse && typeof itemsResponse === "object") {
+          const errorResponse = itemsResponse as ApiErrorResponse;
+          let errorMessage = "未知错误";
+          if (errorResponse.error) errorMessage = String(errorResponse.error);
+          else if (errorResponse.message)
+            errorMessage = String(errorResponse.message);
+          else if (errorResponse.meta && errorResponse.meta.message)
+            errorMessage = String(errorResponse.meta.message);
+          setError(errorMessage);
+          console.error(
+            `[dashboard-${renderID}] 获取物品出错:`,
+            errorMessage,
+            "状态:",
+            errorResponse.status,
+          );
+        } else {
+          setError("获取物品数据失败");
+        }
+      } catch (e: unknown) {
+        console.error(`[dashboard-${renderID}] 获取数据过程出错:`, e);
+        setError(String(e));
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, [renderID, user]); // 添加user作为依赖
+
+  const openShareModal = (item: ContentItemPublic) => {
+    setSelectedItemToShare(item);
+    setIsShareModalOpen(true);
+  };
+
+  // 暂时未使用的函数，后续实现点击内容项的逻辑
+  // const handleItemClick = (item: ContentItem) => {
+  //   console.log("Clicked item:", item);
+  //   // 可以在这里打开详情页面或执行其他操作
+  // };
+
+  // const handleError = (error: Error | unknown) => {
+  //   console.error("Error occurred:", error);
+  // };
+
+  if (isLoading && items.length === 0) {
+    // Show fuller loading state if items are not yet loaded
+    return (
+      <div className="container py-10">
+        <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+        <p>Loading content...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container py-10">
+        <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (items.length === 0 && !isLoading) {
+    // Check isLoading to prevent flash of "No items"
+    return (
+      <div className="container py-10">
+        <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+        <div className="bg-muted p-8 text-center rounded-lg mb-6">
+          <h2 className="text-xl mb-2">No Items Yet</h2>
+          <p className="text-muted-foreground mb-4">
+            <p>You don&apos;t have any content yet.</p> Add one to get started.
+          </p>
+          <Button asChild>
+            <Link href="/dashboard/add-item">Add Item</Link>
+          </Button>
+        </div>
+        <div className="mt-8">
+          <Button onClick={() => setShowManageShares((prev) => !prev)}>
+            {showManageShares ? "Hide Share Links" : "Manage Share Links"}
+          </Button>
+          {showManageShares && (
+            <div className="mt-4">
+              <ManageShareLinks userId={currentUserId} />
+            </div>
+          )}
+        </div>
+        <ShareContentModal
+          open={isShareModalOpen}
+          onOpenChange={setIsShareModalOpen}
+          contentItem={selectedItemToShare}
+        />
+      </div>
+    );
+  }
+
+  // Copied from original DashboardContent, now using state `items`
+  return (
+    <div className="container py-10">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <div>
+          <Button
+            onClick={() => setShowManageShares((prev) => !prev)}
+            variant="outline"
+            className="mr-4"
+          >
+            {showManageShares ? "Hide Shares" : "Manage Shares"}
+          </Button>
+          <Button asChild>
+            <Link href="/dashboard/add-item">Add Item</Link>
+          </Button>
+        </div>
+      </div>
+
+      {process.env.NODE_ENV === "development" && (
+        <div className="bg-yellow-50 border border-yellow-200 p-4 mb-6 rounded-md">
+          <h3 className="text-sm font-semibold mb-2">Debug Tools</h3>
+          <TokenDebugTool />
+        </div>
+      )}
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Title</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead className="w-24">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {items.map((item) => (
+            <TableRow key={item.id}>
+              <TableCell>{item.title}</TableCell>
+              <TableCell>{item.description || "No description"}</TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      ⋯
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={`/dashboard/edit/${item.id}`}
+                        className="flex items-center"
+                      >
+                        <Settings2 className="mr-2 h-4 w-4" /> Edit
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => openShareModal(item as ContentItemPublic)}
+                      className="flex items-center cursor-pointer"
+                    >
+                      <Share2 className="mr-2 h-4 w-4" /> Share
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <DeleteButton itemId={item.id} />
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      {showManageShares && (
+        <div className="mt-8">
+          <ManageShareLinks userId={currentUserId} />
+        </div>
+      )}
+
+      <ShareContentModal
+        open={isShareModalOpen}
+        onOpenChange={setIsShareModalOpen}
+        contentItem={selectedItemToShare}
+      />
+    </div>
+  );
 }

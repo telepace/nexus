@@ -1,7 +1,8 @@
 import json
 import uuid
 from collections.abc import AsyncGenerator
-from typing import Any
+from datetime import datetime, timezone
+from typing import Any  # Added Optional
 
 from fastapi import (
     APIRouter,
@@ -9,6 +10,7 @@ from fastapi import (
     Body,
     Depends,
     HTTPException,
+    Path,  # Added Path
     Query,
     status,
 )
@@ -17,7 +19,9 @@ from sqlmodel import Session
 
 from app.api.deps import CurrentUser, SessionDep, get_current_user, get_db
 from app.base import User
+from app.core import security  # For password verification
 from app.core.config import settings
+from app.crud import crud_content as crud  # Alias for clarity
 from app.crud.crud_content import (
     create_content_item_sync as crud_create_content_item,
 )
@@ -37,6 +41,8 @@ from app.models.content import (
 from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is just base + id and audit fields
     ContentItemCreate,
     ContentItemPublic,
+    ContentShareCreate,
+    ContentSharePublic,
 )
 from app.schemas.llm import CompletionRequest, LLMMessage
 from app.utils.content_processors import ContentProcessorFactory
@@ -547,4 +553,169 @@ async def analyze_content_stream(
 
 
 # Note: Update and Delete endpoints can be added later if needed
-print("API routes for ContentItem created in backend/app/api/routes/content.py")
+
+
+# Content Sharing Endpoints
+
+
+@router.post(
+    "/{id}/share",
+    response_model=ContentSharePublic,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a Share Link for a Content Item",
+    description="Generates a shareable link for the specified content item. Requires ownership.",
+)
+def create_share_link_endpoint(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID = Path(..., description="ID of the content item to share"),
+    share_in: ContentShareCreate,
+) -> ContentSharePublic:
+    """
+    Create a new share link for a content item.
+    """
+    item = crud.get_content_item_sync(session=session, id=id)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="ContentItem not found"
+        )
+    if item.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to share this content item",
+        )
+
+    # Ensure content_item_id from path is used, not potentially from body if schema included it
+    created_share = crud.create_content_share(
+        db=session,
+        content_share_in=share_in,
+        content_item_id=id,
+        _user_id=current_user.id,
+    )
+    return created_share  # FastAPI will serialize using ContentSharePublic
+
+
+@router.get(
+    "/share/{token}",
+    response_model=ContentItemPublic,  # Or a new schema like SharedContentPublic
+    summary="Access Shared Content",
+    description="Retrieves a content item using a share token. May require a password.",
+)
+def get_shared_content_endpoint(
+    *,
+    session: SessionDep,
+    token: str = Path(..., description="The unique share token"),
+    password: str | None = Query(None, description="Password for protected content"),
+) -> ContentItemPublic:  # Change to SharedContentPublic if different fields are needed
+    """
+    Access shared content item using a token.
+    """
+    share_record = crud.get_content_share_by_token(db=session, token=token)
+
+    if not share_record or not share_record.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Share link not found or inactive",
+        )
+
+    # Check if expired - handle timezone comparison
+    current_time = datetime.now(timezone.utc)
+    if share_record.expires_at:
+        # Convert expires_at to timezone-aware datetime if it's naive
+        expires_at = share_record.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+        if expires_at < current_time:
+            crud.deactivate_content_share(db=session, content_share=share_record)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Share link has expired"
+            )
+
+    if share_record.password_hash:
+        if not password:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Password required"
+            )
+        if not security.verify_password(password, share_record.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Incorrect password"
+            )
+
+    # Check max_access_count before incrementing and fetching content
+    if (
+        share_record.max_access_count is not None
+        and share_record.access_count >= share_record.max_access_count
+    ):
+        # Deactivate if it wasn't already (e.g. if increment happened elsewhere or exact match)
+        if share_record.is_active:
+            crud.deactivate_content_share(db=session, content_share=share_record)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Share link access limit reached",
+        )
+
+    # Increment access count - this might deactivate the share if limit is reached
+    crud.increment_access_count(db=session, content_share=share_record)
+
+    # Get content item before final checks
+    content_item = crud.get_content_item_sync(
+        session=session, id=share_record.content_item_id
+    )
+    if not content_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Shared content not found"
+        )
+
+    # Return as ContentItemPublic. A more specific SharedContentPublic could be defined
+    # if we want to expose different fields for shared content vs owned content.
+    return content_item
+
+
+@router.delete(
+    "/{id}/share",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Deactivate Share Link(s) for a Content Item",
+    description="Deactivates active share links for the specified content item. Requires ownership.",
+)
+def deactivate_share_link_endpoint(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID = Path(
+        ..., description="ID of the content item whose shares to deactivate"
+    ),
+):
+    """
+    Deactivate share link(s) for a content item.
+    Currently deactivates all active shares for the item.
+    To delete a specific share, an endpoint like /share/{share_id_or_token} would be needed.
+    """
+    item = crud.get_content_item_sync(session=session, id=id)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="ContentItem not found"
+        )
+    if item.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to modify shares for this content item",
+        )
+
+    active_shares = crud.get_content_shares_by_content_id(
+        db=session, content_item_id=id
+    )
+    if not active_shares:
+        # Not an error, just nothing to do.
+        return status.HTTP_204_NO_CONTENT
+
+    for share in active_shares:
+        crud.deactivate_content_share(db=session, content_share=share)
+
+    return status.HTTP_204_NO_CONTENT
+
+
+print(
+    "API routes for ContentItem and ContentShare created in backend/app/api/routes/content.py"
+)

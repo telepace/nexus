@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlmodel import SQLModel
+from sqlmodel import Field, SQLModel
 
 # Schemas for ContentItem
 
@@ -49,4 +49,32 @@ class ContentItemDetail(ContentItemPublic):
 # Schemas for ContentAsset (can be added later if needed for API endpoints)
 # For this task, only ContentItem schemas are explicitly required for the endpoints.
 
-print("Schemas for ContentItem created in backend/app/schemas/content.py")
+
+# Schemas for ContentShare
+class ContentShareBase(SQLModel):
+    expires_at: datetime | None = Field(default=None)
+    max_access_count: int | None = Field(default=None)
+    password: str | None = Field(
+        default=None, sa_column_kwargs={"exclude": True}
+    )  # Write-only
+
+
+class ContentShareCreate(ContentShareBase):
+    # content_item_id will be provided via URL path parameter, not request body
+    pass
+
+
+class ContentSharePublic(
+    SQLModel
+):  # Intentionally not inheriting from ContentShareBase to select fields
+    id: uuid.UUID
+    share_token: str
+    created_at: datetime
+    expires_at: datetime | None = None
+    is_active: bool
+    # content_item_id could be exposed if needed, but not in this version for simplicity
+
+
+print(
+    "Schemas for ContentItem and ContentShare created in backend/app/schemas/content.py"
+)

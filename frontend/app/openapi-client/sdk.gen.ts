@@ -160,6 +160,15 @@ import type {
   ContentAnalyzeContentStreamData,
   ContentAnalyzeContentStreamError,
   ContentAnalyzeContentStreamResponse,
+  ContentCreateShareLinkEndpointData,
+  ContentCreateShareLinkEndpointError,
+  ContentCreateShareLinkEndpointResponse,
+  ContentDeactivateShareLinkEndpointData,
+  ContentDeactivateShareLinkEndpointError,
+  ContentDeactivateShareLinkEndpointResponse,
+  ContentGetSharedContentEndpointData,
+  ContentGetSharedContentEndpointError,
+  ContentGetSharedContentEndpointResponse,
   ImagesGetUploadUrlData,
   ImagesGetUploadUrlError,
   ImagesGetUploadUrlResponse,
@@ -1234,6 +1243,72 @@ export const contentAnalyzeContentStream = <
   >({
     ...options,
     url: "/api/v1/content/{content_id}/analyze",
+  });
+};
+
+/**
+ * Create a Share Link for a Content Item
+ * Generates a shareable link for the specified content item. Requires ownership.
+ */
+export const contentCreateShareLinkEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentCreateShareLinkEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    ContentCreateShareLinkEndpointResponse,
+    ContentCreateShareLinkEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{id}/share",
+  });
+};
+
+/**
+ * Deactivate Share Link(s) for a Content Item
+ * Deactivates active share links for the specified content item. Requires ownership.
+ */
+export const contentDeactivateShareLinkEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentDeactivateShareLinkEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).delete<
+    ContentDeactivateShareLinkEndpointResponse,
+    ContentDeactivateShareLinkEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{id}/share",
+  });
+};
+
+/**
+ * Access Shared Content
+ * Retrieves a content item using a share token. May require a password.
+ */
+export const contentGetSharedContentEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentGetSharedContentEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetSharedContentEndpointResponse,
+    ContentGetSharedContentEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/share/{token}",
   });
 };
 
