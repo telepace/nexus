@@ -258,7 +258,7 @@ export default function ContentLibraryPage() {
                     <CardContent className="py-6">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start space-x-4 flex-1">
-                          <div className="p-3 bg-muted rounded-lg">
+                          <div className="p-3 rounded-lg">
                             {getContentIcon(item.type)}
                           </div>
                           <div className="flex-1 min-w-0">

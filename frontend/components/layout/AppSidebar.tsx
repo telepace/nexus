@@ -91,7 +91,7 @@ export function AppSidebar({
             <span className="text-base font-semibold">Telepace</span>
           </div>
           {/* 右侧：Sidebar Trigger - 在折叠状态下居中 */}
-          <SidebarTrigger className="h-8 w-8 border border-neutral-900 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:border-sidebar-accent-foreground/20 group-data-[collapsible=icon]:ml-0" />
+          <SidebarTrigger className="h-8 w-8 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:border-sidebar-accent-foreground/20 group-data-[collapsible=icon]:ml-0" />
         </div>
       </SidebarHeader>
 
