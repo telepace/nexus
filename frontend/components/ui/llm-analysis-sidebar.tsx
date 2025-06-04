@@ -4,7 +4,6 @@ import { FC, useEffect } from "react";
 import { Brain, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LLMAnalysisCard } from "@/components/ui/llm-analysis-card";
 import { PromptRecommendations } from "@/components/ui/prompt-recommendations";
 import { PromptCommandDialog } from "@/components/ui/prompt-command-dialog";
@@ -12,13 +11,13 @@ import { useLLMAnalysisStore } from "@/lib/stores/llm-analysis-store";
 import { useToast } from "@/hooks/use-toast";
 import { Prompt } from "@/lib/api/services/prompts";
 
-interface LLMAnalysisPanelProps {
+interface LLMAnalysisSidebarProps {
   contentId: string;
   className?: string;
-  contentText?: string; // 添加内容文本参数
+  contentText?: string;
 }
 
-export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
+export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
   contentId,
   className = "",
   contentText = "",
@@ -155,8 +154,8 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
 
   if (isLoadingPrompts) {
     return (
-      <div className={`bg-sidebar border border-sidebar-border rounded-lg h-full flex flex-col ${className}`}>
-        <div className="flex items-center justify-center flex-1">
+      <div className={`h-full bg-sidebar text-sidebar-foreground border-l flex flex-col ${className}`}>
+        <div className="flex items-center justify-center h-full">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span className="text-sm">加载中...</span>
@@ -167,38 +166,35 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
   }
 
   return (
-    <div className={`bg-sidebar border border-sidebar-border rounded-lg h-full flex flex-col ${className}`}>
-      {/* Header - 参考 SidebarHeader 样式 */}
-      <div className="flex-shrink-0 pl-3 pb-4 pt-6">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">AI 分析</h2>
-            {contentAnalyses.length > 0 && (
-              <span className="text-sm text-muted-foreground">
-                ({contentAnalyses.length})
-              </span>
-            )}
-          </div>
-
+    <div className={`h-full bg-sidebar text-sidebar-foreground border-l flex flex-col ${className}`}>
+      {/* Header - 与 AppSidebar 高度一致 */}
+      <div className="flex h-header shrink-0 items-center justify-between gap-2 border-b px-4">
+        <div className="flex items-center gap-2">
+          <Brain className="h-5 w-5 text-primary" />
+          <h2 className="text-base font-semibold">AI 分析</h2>
           {contentAnalyses.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClearAll}
-              className="text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              清空全部
-            </Button>
+            <span className="text-sm text-muted-foreground">
+              ({contentAnalyses.length})
+            </span>
           )}
         </div>
+
+        {contentAnalyses.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClearAll}
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            清空全部
+          </Button>
+        )}
       </div>
 
-      {/* Content - 参考 SidebarContent 样式 */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        {/* 分析结果列表 - 参考 SidebarGroup 样式 */}
-        <div className="flex-1 min-h-0 overflow-hidden !px-4">
+      {/* Content */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden px-4">
           <ScrollArea className="h-full w-full">
             <div className="space-y-4 pr-4">
               {contentAnalyses.map((analysis) => (
@@ -225,80 +221,82 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
         </div>
       </div>
 
-      {/* Footer - 参考 SidebarFooter 样式 */}
-      <div className="flex-shrink-0 !px-4 !pb-4 space-y-4 mt-auto">
-        {/* 启用的 Prompt 推荐 */}
-        {enabledPrompts.length > 0 && (
-          <div className="border border-border rounded-lg bg-card">
-            <div className="p-4 border-b border-border">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-foreground">
-                  推荐分析
-                </h3>
-                <div className="flex items-center gap-2">
-                  {usedPromptIds.size > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={resetUsedPrompts}
-                      className="text-xs text-muted-foreground hover:text-foreground h-7 px-2"
-                    >
-                      重置
-                    </Button>
-                  )}
-                  {usedPromptIds.size > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={toggleShowAllPrompts}
-                      className="text-xs text-muted-foreground hover:text-foreground h-7 px-2"
-                    >
-                      {showAllPrompts
-                        ? "隐藏已用"
-                        : `显示全部 (${usedPromptIds.size}个已隐藏)`}
-                    </Button>
-                  )}
+      {/* Footer */}
+      <div className="px-4 pb-4">
+        <div className="space-y-4">
+          {/* 启用的 Prompt 推荐 */}
+          {enabledPrompts.length > 0 && (
+            <div className="border border-border rounded-lg bg-card">
+              <div className="p-4 border-b border-border">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-foreground">
+                    推荐分析
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    {usedPromptIds.size > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={resetUsedPrompts}
+                        className="text-xs text-muted-foreground hover:text-foreground h-7 px-2"
+                      >
+                        重置
+                      </Button>
+                    )}
+                    {usedPromptIds.size > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={toggleShowAllPrompts}
+                        className="text-xs text-muted-foreground hover:text-foreground h-7 px-2"
+                      >
+                        {showAllPrompts
+                          ? "隐藏已用"
+                          : `显示全部 (${usedPromptIds.size}个已隐藏)`}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
+              <div className="p-4">
+                <PromptRecommendations
+                  recommendations={getAvailablePrompts().map((prompt) => ({
+                    id: prompt.id,
+                    name: prompt.name,
+                    description: prompt.description,
+                    prompt: prompt.content,
+                    type: "custom" as const,
+                    icon: "🤖",
+                  }))}
+                  onPromptClick={(rec) => {
+                    const prompt = enabledPrompts.find((p) => p.id === rec.id);
+                    if (prompt) handleEnabledPromptClick(prompt);
+                  }}
+                  isGenerating={isGenerating}
+                  disabled={isGenerating}
+                  usedPromptIds={usedPromptIds}
+                  showAllPrompts={showAllPrompts}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* 对话框 */}
+          <div className="border border-border rounded-lg bg-card">
+            <div className="p-4 border-b border-border">
+              <h3 className="text-sm font-medium text-foreground">AI 对话</h3>
             </div>
             <div className="p-4">
-              <PromptRecommendations
-                recommendations={getAvailablePrompts().map((prompt) => ({
-                  id: prompt.id,
-                  name: prompt.name,
-                  description: prompt.description,
-                  prompt: prompt.content,
-                  type: "custom" as const,
-                  icon: "🤖",
-                }))}
-                onPromptClick={(rec) => {
-                  const prompt = enabledPrompts.find((p) => p.id === rec.id);
-                  if (prompt) handleEnabledPromptClick(prompt);
-                }}
-                isGenerating={isGenerating}
-                disabled={isGenerating}
-                usedPromptIds={usedPromptIds}
-                showAllPrompts={showAllPrompts}
+              <PromptCommandDialog
+                availablePrompts={disabledPrompts}
+                isExecuting={isGenerating}
+                onPromptSelect={handlePromptSelect}
+                onExecute={handleExecute}
               />
             </div>
-          </div>
-        )}
-
-        {/* 对话框 */}
-        <div className="border border-border rounded-lg bg-card">
-          <div className="p-4 border-b border-border">
-            <h3 className="text-sm font-medium text-foreground">AI 对话</h3>
-          </div>
-          <div className="p-4">
-            <PromptCommandDialog
-              availablePrompts={disabledPrompts}
-              isExecuting={isGenerating}
-              onPromptSelect={handlePromptSelect}
-              onExecute={handleExecute}
-            />
           </div>
         </div>
       </div>
     </div>
   );
-};
+}; 

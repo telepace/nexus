@@ -84,14 +84,14 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <div className="flex w-full items-center justify-between gap-2 pl-3 pb-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:pl-0 group-data-[collapsible=icon]:pr-0">
+        <div className="flex h-header shrink-0 items-center justify-between gap-2 border-b px-4 group-data-[collapsible=icon]:justify-center">
           {/* 左侧：Logo和品牌名称 - 在折叠状态下隐藏 */}
           <div className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:hidden">
             <IconInnerShadowTop className="!size-5" />
             <span className="text-base font-semibold">Telepace</span>
           </div>
           {/* 右侧：Sidebar Trigger - 在折叠状态下居中 */}
-          <SidebarTrigger className="h-8 w-8 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:border-sidebar-accent-foreground/20 group-data-[collapsible=icon]:ml-0" />
+          <SidebarTrigger className="h-8 w-8 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:border-sidebar-accent-foreground/20" />
         </div>
       </SidebarHeader>
 
