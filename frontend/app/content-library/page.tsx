@@ -248,7 +248,7 @@ export default function ContentLibraryPage() {
                 {items.map((item) => (
                   <Card
                     key={item.id}
-                    className={`cursor-pointer transition-all duration-200 hover:shadow-md hover:bg-muted/30 ${
+                    className={`cursor-pointer transition-all duration-200 shadow-md rounded-sm hover:shadow-lg hover:bg-muted/30  ${
                       selectedItem?.id === item.id
                         ? "ring-1 ring-primary shadow-md"
                         : ""
@@ -258,7 +258,7 @@ export default function ContentLibraryPage() {
                     <CardContent className="py-6">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start space-x-4 flex-1">
-                          <div className="p-3 bg-muted rounded-lg">
+                          <div className="p-3 rounded-lg">
                             {getContentIcon(item.type)}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -295,7 +295,7 @@ export default function ContentLibraryPage() {
 
           {/* Content Preview */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-6 py-6">
+            <Card className="sticky top-6 py-6 rounded-sm shadow-md">
               <CardHeader>
                 <CardTitle>Content Preview</CardTitle>
               </CardHeader>

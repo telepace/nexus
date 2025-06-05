@@ -125,72 +125,65 @@ export function PromptCommandDialog({
 
       {/* 输入框和发送按钮 */}
       <form onSubmit={handleSubmit} className="relative">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                selectedPrompt
-                  ? "输入要分析的内容..."
-                  : "输入消息或使用 / 快速选择 prompt..."
-              }
-              className="pr-4"
-              disabled={isExecuting}
-            />
+        {/* 现代聊天输入框容器 */}
+        <div className="relative bg-transparent focus-within:ring-1 focus-within:ring-ring/20 transition-all">
+          <div className="flex items-end gap-3 p-3">
+            <div className="relative flex-1">
+              <Input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="chat with content"
+                className="border-0 bg-transparent px-0 py-2 h-auto text-base border-b-2 border-neutral-800 rounded-none focus-visible:border-b-2 focus-visible:border-ring focus-visible:ring-0 focus-visible:ring-offset-0"
+                disabled={isExecuting}
+              />
 
-            {/* 命令建议列表 */}
-            {showSuggestions && filteredPrompts.length > 0 && (
-              <Card
-                ref={suggestionsRef}
-                className="absolute top-full left-0 right-0 z-50 mt-1 max-h-64 overflow-y-auto"
-              >
-                <CardContent className="p-2">
-                  {filteredPrompts.map((prompt) => (
-                    <button
-                      key={prompt.id}
-                      type="button"
-                      onClick={() => handlePromptClick(prompt)}
-                      className="w-full p-2 text-left rounded-md hover:bg-muted transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Command className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <div className="font-medium text-sm">
-                            {prompt.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {prompt.description}
+              {/* 命令建议列表 */}
+              {showSuggestions && filteredPrompts.length > 0 && (
+                <Card
+                  ref={suggestionsRef}
+                  className="absolute top-full left-0 right-0 z-50 mt-2 max-h-64 overflow-y-auto bg-transparent border-input"
+                >
+                  <CardContent className="p-2">
+                    {filteredPrompts.map((prompt) => (
+                      <button
+                        key={prompt.id}
+                        type="button"
+                        onClick={() => handlePromptClick(prompt)}
+                        className="w-full p-2 text-left rounded-md hover:bg-muted transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Command className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <div className="font-medium text-sm">
+                              {prompt.name}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {prompt.description}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </button>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                      </button>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
-          <Button
-            type="submit"
-            disabled={!input.trim() || isExecuting}
-            size="sm"
-          >
-            <Send className="h-4 w-4" />
-            发送
-          </Button>
+            {/* 集成的发送按钮 - 添加outline样式 */}
+            <Button
+              type="submit"
+              disabled={!input.trim() || isExecuting}
+              variant="ghost"
+              size="sm"
+              className="h-10 w-10 p-0 hover:bg-transparent flex-shrink-0"
+            >
+              <Send className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </form>
-
-      {/* 提示文本 */}
-      {!selectedPrompt && (
-        <p className="text-xs text-muted-foreground mt-2">
-          输入 <kbd className="px-1 py-0.5 bg-muted rounded text-xs">/</kbd>{" "}
-          浏览可用的 prompt 命令
-        </p>
-      )}
     </div>
   );
 }

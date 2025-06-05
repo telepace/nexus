@@ -62,6 +62,11 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
+  /* Layout dimensions */
+  --header-height: 2.5rem; /* 40px */
+  --sidebar-width: 16rem; /* 256px */
+  --sidebar-width-collapsed: 3.5rem; /* 56px */
+
   /* Base radius token */
   --radius: 0.625rem;
 }
@@ -191,6 +196,11 @@
   --spacing-80: 20rem;
   --spacing-96: 24rem;
 
+  /* Custom layout dimensions */
+  --spacing-header: 3.5rem; /* 56px - header height */
+  --spacing-sidebar: 16rem; /* 256px - sidebar width */
+  --spacing-sidebar-collapsed: 3.5rem; /* 56px - collapsed sidebar width */
+
   /* Border radius */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -233,6 +243,7 @@
   --breakpoint-lg: 1024px;
   --breakpoint-xl: 1280px;
   --breakpoint-2xl: 1536px;
+  --size-sidebar-width-collapsed: var(--sidebar-width-collapsed);
 
   /* =============================================================================
    * SHADCN/UI 颜色令牌映射
@@ -495,4 +506,47 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* =============================================================================
+ * 自定义滚动条样式 - 更透明、更美观
+ * ============================================================================= */
+
+/* Webkit 浏览器滚动条样式 (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 2px;
+  height: 2px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(0.5 0 0 / 0.1);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.4 0 0 / 0.15); /* 悬停时稍微深一点，增加透明度 */
+}
+
+/* 暗色模式的滚动条 */
+.dark ::-webkit-scrollbar-thumb {
+  background: oklch(0.7 0 0 / 0.15); /* 暗色模式：15% 透明度的亮灰色 */
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.8 0 0 / 0.25); /* 暗色模式悬停时稍微亮一点 */
+}
+
+/* Firefox 滚动条样式 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.5 0 0 / 0.1) transparent;
+}
+
+.dark * {
+  scrollbar-color: oklch(0.7 0 0 / 0.15) transparent;
 }

@@ -3,8 +3,6 @@
 import { FC, useEffect } from "react";
 import { Brain, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LLMAnalysisCard } from "@/components/ui/llm-analysis-card";
 import { PromptRecommendations } from "@/components/ui/prompt-recommendations";
 import { PromptCommandDialog } from "@/components/ui/prompt-command-dialog";
@@ -12,13 +10,13 @@ import { useLLMAnalysisStore } from "@/lib/stores/llm-analysis-store";
 import { useToast } from "@/hooks/use-toast";
 import { Prompt } from "@/lib/api/services/prompts";
 
-interface LLMAnalysisPanelProps {
+interface LLMAnalysisSidebarProps {
   contentId: string;
   className?: string;
-  contentText?: string; // 添加内容文本参数
+  contentText?: string;
 }
 
-export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
+export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
   contentId,
   className = "",
   contentText = "",
@@ -30,8 +28,6 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
     enabledPrompts,
     disabledPrompts,
     isLoadingPrompts,
-    usedPromptIds,
-    showAllPrompts,
     toggleExpanded,
     removeAnalysis,
     clearAnalyses,
@@ -39,8 +35,6 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
     executeAnalysisWithContent,
     loadPrompts,
     setError,
-    toggleShowAllPrompts,
-    resetUsedPrompts,
     getAvailablePrompts,
   } = useLLMAnalysisStore();
 
@@ -155,8 +149,10 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
 
   if (isLoadingPrompts) {
     return (
-      <div className={`space-y-4 ${className}`}>
-        <div className="flex items-center justify-center py-8">
+      <div
+        className={`h-full bg-sidebar text-sidebar-foreground border-l flex flex-col ${className}`}
+      >
+        <div className="flex items-center justify-center h-full">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span className="text-sm">加载中...</span>
@@ -167,98 +163,66 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
   }
 
   return (
-    <Card className={`flex flex-col h-full ${className}`}>
-      <CardHeader className="flex-shrink-0 pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg font-semibold">AI 分析</CardTitle>
-            {contentAnalyses.length > 0 && (
-              <span className="text-sm text-muted-foreground">
-                ({contentAnalyses.length})
-              </span>
-            )}
-          </div>
-
+    <div
+      className={`h-full bg-sidebar text-sidebar-foreground border-l flex flex-col ${className}`}
+    >
+      {/* Header - 固定不缩放 */}
+      <div className="flex h-header shrink-0 items-center justify-between gap-2 border-b px-4">
+        <div className="flex items-center gap-2">
+          <Brain className="h-5 w-5 text-primary" />
+          <h2 className="text-base font-semibold">AI 分析</h2>
           {contentAnalyses.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClearAll}
-              className="text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              清空全部
-            </Button>
+            <span className="text-sm text-muted-foreground">
+              ({contentAnalyses.length})
+            </span>
           )}
         </div>
-      </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col gap-4 min-h-0 overflow-hidden p-6">
-        {/* 分析结果列表 - 使用灵活的高度分配 */}
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full w-full">
-            <div className="space-y-4 pr-4">
-              {contentAnalyses.map((analysis) => (
-                <LLMAnalysisCard
-                  key={analysis.id}
-                  analysis={analysis}
-                  onToggleExpanded={toggleExpanded}
-                  onRemove={removeAnalysis}
-                  onRegenerate={handleRegenerate}
-                  onCopy={handleCopy}
-                />
-              ))}
+        {contentAnalyses.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClearAll}
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
 
-              {/* 空状态提示 */}
-              {contentAnalyses.length === 0 && !isGenerating && (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Brain className="h-16 w-16 mx-auto mb-6 opacity-30" />
-                  <p className="text-lg font-medium mb-2">还没有 AI 分析</p>
-                  <p className="text-sm">选择下方的分析类型或使用对话框开始</p>
-                </div>
-              )}
+      {/* Content - 占据剩余空间，可滚动 */}
+      <div className="flex-1 min-h-0 overflow-auto px-4 py-4">
+        <div className="space-y-4">
+          {contentAnalyses.map((analysis) => (
+            <LLMAnalysisCard
+              key={analysis.id}
+              analysis={analysis}
+              onToggleExpanded={toggleExpanded}
+              onRemove={removeAnalysis}
+              onRegenerate={handleRegenerate}
+              onCopy={handleCopy}
+            />
+          ))}
+
+          {/* 空状态提示 */}
+          {contentAnalyses.length === 0 && !isGenerating && (
+            <div className="text-center py-12 text-muted-foreground">
+              <Brain className="h-16 w-16 mx-auto mb-6 opacity-30" />
+              <p className="text-lg font-medium mb-2">还没有 AI 分析</p>
+              <p className="text-sm">选择下方的分析类型或使用对话框开始</p>
             </div>
-          </ScrollArea>
+          )}
         </div>
+      </div>
 
-        {/* 底部操作区域 - 自适应高度 */}
-        <div className="flex-shrink-0 space-y-4">
+      {/* Footer - 固定不缩放 */}
+      <div className="shrink-0 px-4 pb-4">
+        <div className="space-y-1">
           {/* 启用的 Prompt 推荐 */}
           {enabledPrompts.length > 0 && (
-            <div className="border border-border rounded-lg bg-card">
-              <div className="p-4 border-b border-border">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-foreground">
-                    推荐分析
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    {usedPromptIds.size > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={resetUsedPrompts}
-                        className="text-xs text-muted-foreground hover:text-foreground h-7 px-2"
-                      >
-                        重置
-                      </Button>
-                    )}
-                    {usedPromptIds.size > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={toggleShowAllPrompts}
-                        className="text-xs text-muted-foreground hover:text-foreground h-7 px-2"
-                      >
-                        {showAllPrompts
-                          ? "隐藏已用"
-                          : `显示全部 (${usedPromptIds.size}个已隐藏)`}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="p-4">
+            <div className="bg-transparent">
+              {/* 直接使用滚动容器，移除多余的padding */}
+              <div className="max-h-[160px] overflow-y-auto">
                 <PromptRecommendations
                   recommendations={getAvailablePrompts().map((prompt) => ({
                     id: prompt.id,
@@ -274,29 +238,22 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
                   }}
                   isGenerating={isGenerating}
                   disabled={isGenerating}
-                  usedPromptIds={usedPromptIds}
-                  showAllPrompts={showAllPrompts}
                 />
               </div>
             </div>
           )}
 
           {/* 对话框 */}
-          <div className="border border-border rounded-lg bg-card">
-            <div className="p-4 border-b border-border">
-              <h3 className="text-sm font-medium text-foreground">AI 对话</h3>
-            </div>
-            <div className="p-4">
-              <PromptCommandDialog
-                availablePrompts={disabledPrompts}
-                isExecuting={isGenerating}
-                onPromptSelect={handlePromptSelect}
-                onExecute={handleExecute}
-              />
-            </div>
+          <div className="bg-transparent">
+            <PromptCommandDialog
+              availablePrompts={disabledPrompts}
+              isExecuting={isGenerating}
+              onPromptSelect={handlePromptSelect}
+              onExecute={handleExecute}
+            />
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

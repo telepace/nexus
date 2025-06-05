@@ -2,21 +2,17 @@
 
 import { useEffect, useState, memo, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   ArrowLeft,
-  BookOpen,
   Loader2,
   AlertCircle,
   ExternalLink,
   Download,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
-import { LLMAnalysisPanel } from "@/components/ui/llm-analysis-panel";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
 
@@ -66,7 +62,7 @@ const LazyOriginalContent = memo(
       return (
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-between mb-4 p-2 bg-muted rounded">
-            <span className="text-sm font-medium">PDF Document</span>
+            <span className="text-small">PDF Document</span>
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -107,7 +103,7 @@ const LazyOriginalContent = memo(
       return (
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-between mb-4 p-2 bg-muted rounded">
-            <span className="text-sm font-medium">Web Page</span>
+            <span className="text-small">Web Page</span>
             <Button
               variant="outline"
               size="sm"
@@ -186,7 +182,7 @@ const ContentRenderer = memo(
           {/* 渲染模式切换 */}
           <div className="absolute top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur-sm border-b">
             <div className="flex items-center justify-between p-3">
-              <span className="text-sm font-medium">Processed Content</span>
+              <span className="text-small">Processed Content</span>
               <span className="text-xs text-muted-foreground">
                 Optimized rendering enabled
               </span>
@@ -215,7 +211,7 @@ const ContentRenderer = memo(
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
             <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               {content.processing_status === "completed"
                 ? "Processed content not available"
                 : `Content is being processed. Status: ${content.processing_status}`}
@@ -230,7 +226,7 @@ const ContentRenderer = memo(
       <div className="relative h-full">
         <div className="absolute top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur-sm border-b">
           <div className="flex items-center justify-between p-3">
-            <span className="text-sm font-medium">Processed Content</span>
+            <span className="text-small">Processed Content</span>
             <span className="text-xs text-muted-foreground">
               Legacy rendering mode
             </span>
@@ -405,96 +401,49 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
   }
 
   return (
-    <div className="space-y-6 h-screen overflow-hidden">
+    <div className="h-full flex flex-col p-2">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push("/content-library")}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Library
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">
-              {content.title || "Untitled"}
-            </h1>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant="outline">{content.type.toUpperCase()}</Badge>
-              <Badge variant="secondary">{content.processing_status}</Badge>
-              {content.source_uri && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => window.open(content.source_uri!, "_blank")}
-                >
-                  <ExternalLink className="h-3 w-3 mr-1" />
-                  Source
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
+      <div className="flex h-header shrink-0 items-center gap-2 border-b ">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/content-library")}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <h1 className="text-lg font-semibold">{content.title || "Untitled"}</h1>
       </div>
 
-      {/* Main Content */}
-      <div
-        className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-140px)] px-6"
-        data-testid="reader-layout"
-      >
-        {/* Left Panel - Content Reading Area */}
-        <div className="lg:col-span-2 space-y-4" data-testid="content-panel">
-          <Card className="h-full flex flex-col">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                Content
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <Tabs
-                value={activeTab}
-                onValueChange={setActiveTab}
-                className="h-full flex flex-col"
-              >
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="processed">Processed</TabsTrigger>
-                  <TabsTrigger value="original">Original</TabsTrigger>
-                </TabsList>
+      {/* Main Content - 现在占据剩余空间 */}
+      <div className="flex-1 p-6 min-h-0">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="h-full flex flex-col"
+        >
+          <TabsList className="grid w-full max-w-[12rem] grid-cols-2">
+            <TabsTrigger value="processed">Processed</TabsTrigger>
+            <TabsTrigger value="original">Original</TabsTrigger>
+          </TabsList>
 
-                <TabsContent value="processed" className="flex-1 mt-4">
-                  <ContentRenderer
-                    content={content}
-                    type="processed"
-                    markdownContent={markdownContent}
-                    contentId={contentId}
-                  />
-                </TabsContent>
+          <TabsContent value="processed" className="flex-1 mt-4 min-h-0">
+            <ContentRenderer
+              content={content}
+              type="processed"
+              markdownContent={markdownContent}
+              contentId={contentId}
+            />
+          </TabsContent>
 
-                <TabsContent value="original" className="flex-1 mt-4">
-                  <ContentRenderer
-                    content={content}
-                    type="original"
-                    sourceUri={content.source_uri}
-                    markdownContent={markdownContent}
-                  />
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Panel - LLM Analysis */}
-        <div className="lg:col-span-1" data-testid="llm-panel">
-          <LLMAnalysisPanel
-            contentId={contentId}
-            contentText={
-              content?.processed_content || content?.content_text || ""
-            }
-          />
-        </div>
+          <TabsContent value="original" className="flex-1 mt-4 min-h-0">
+            <ContentRenderer
+              content={content}
+              type="original"
+              sourceUri={content.source_uri}
+              markdownContent={markdownContent}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
