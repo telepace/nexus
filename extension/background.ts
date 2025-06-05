@@ -77,10 +77,18 @@ chrome.action.onClicked.addListener(async (tab) => {
 
 // 监听来自内容脚本和侧边栏的消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  // 处理连接检查（心跳）
+  if (request.type === 'PING') {
+    sendResponse({ success: true, pong: true, timestamp: Date.now() })
+    return false // 同步响应
+  }
+
   // 处理认证相关
   if (request.type === 'CHECK_AUTH') {
     checkAuthStatus().then(result => {
       sendResponse(result)
+    }).catch(error => {
+      sendResponse({ success: false, error: error.message })
     })
     return true
   }
@@ -88,6 +96,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === 'LOGOUT') {
     chrome.storage.local.clear().then(() => {
       sendResponse({ success: true })
+    }).catch(error => {
+      sendResponse({ success: false, error: error.message })
     })
     return true
   }
@@ -102,6 +112,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === 'PROCESS_SAVE_PAGE') {
     handleSavePageRequest(request.data).then(response => {
       sendResponse(response)
+    }).catch(error => {
+      sendResponse({ success: false, error: error.message })
     })
     return true
   }
@@ -110,6 +122,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === 'PROCESS_SUMMARIZE_PAGE') {
     handleSummarizePageRequest(request.data).then(response => {
       sendResponse(response)
+    }).catch(error => {
+      sendResponse({ success: false, error: error.message })
     })
     return true
   }
@@ -118,14 +132,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === 'GENERATE_SUMMARY') {
     handleGenerateSummary(request.data).then(response => {
       sendResponse(response)
+    }).catch(error => {
+      sendResponse({ success: false, error: error.message })
     })
     return true
   }
 
-  // 处理保存页面和摘要请求
+  // 处理保存页面和摘要
   if (request.type === 'SAVE_PAGE_WITH_SUMMARY') {
     handleSavePageWithSummary(request.data).then(response => {
       sendResponse(response)
+    }).catch(error => {
+      sendResponse({ success: false, error: error.message })
     })
     return true
   }
@@ -140,6 +158,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === 'EXECUTE_ACTION') {
     handleExecuteAction(request.action, request.data).then(response => {
       sendResponse(response)
+    }).catch(error => {
+      sendResponse({ success: false, error: error.message })
     })
     return true
   }
@@ -234,8 +254,9 @@ async function handleGenerateSummary(data: any) {
 // 处理保存页面和摘要
 async function handleSavePageWithSummary(data: any) {
   try {
-    // 这里可以保存页面和摘要
-    const success = await saveToLibrary(data.title, data.url, data.content, data.summary)
+    // 将摘要附加到内容中
+    const contentWithSummary = `${data.content}\n\n[AI摘要]\n${data.summary}`;
+    const success = await saveToLibrary(data.title, data.url, contentWithSummary)
     return { success }
   } catch (error) {
     console.error('Save page with summary error:', error)

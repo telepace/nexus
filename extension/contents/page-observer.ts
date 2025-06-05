@@ -23,16 +23,114 @@ interface PageData {
 class PageObserver {
   private lastExtractedContent: string = '';
   private extractionTimeout: NodeJS.Timeout | null = null;
+  private isExtensionConnected: boolean = true;
+  private connectionCheckInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     this.setupMessageListener();
     this.setupContentObserver();
+    this.setupConnectionMonitor();
     console.log('Nexus Page Observer initialized - Non-invasive mode');
+  }
+
+  // 设置连接监控
+  private setupConnectionMonitor() {
+    // 每10秒检查一次扩展连接状态
+    this.connectionCheckInterval = setInterval(() => {
+      this.checkExtensionConnection();
+    }, 10000);
+
+    // 页面卸载时清理
+    window.addEventListener('beforeunload', () => {
+      if (this.connectionCheckInterval) {
+        clearInterval(this.connectionCheckInterval);
+      }
+      if (this.extractionTimeout) {
+        clearTimeout(this.extractionTimeout);
+      }
+    });
+  }
+
+  // 检查扩展连接状态
+  private async checkExtensionConnection(): Promise<boolean> {
+    try {
+      // 尝试发送一个简单的ping消息
+      await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ type: 'PING' }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+          } else {
+            resolve(response);
+          }
+        });
+      });
+      
+      if (!this.isExtensionConnected) {
+        console.log('Extension connection restored');
+        this.isExtensionConnected = true;
+      }
+      return true;
+    } catch (error) {
+      if (this.isExtensionConnected) {
+        console.log('Extension connection lost:', error);
+        this.isExtensionConnected = false;
+      }
+      return false;
+    }
+  }
+
+  // 安全的消息发送方法
+  private async sendMessageSafely(message: any, maxRetries: number = 3): Promise<any> {
+    let lastError: Error | null = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // 先检查连接状态
+        const isConnected = await this.checkExtensionConnection();
+        if (!isConnected) {
+          throw new Error('Extension context invalidated');
+        }
+
+        return await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Message timeout'));
+          }, 5000); // 5秒超时
+
+          chrome.runtime.sendMessage(message, (response) => {
+            clearTimeout(timeout);
+            
+            if (chrome.runtime.lastError) {
+              this.isExtensionConnected = false;
+              reject(chrome.runtime.lastError);
+            } else {
+              resolve(response);
+            }
+          });
+        });
+      } catch (error) {
+        lastError = error as Error;
+        console.warn(`Message sending attempt ${attempt}/${maxRetries} failed:`, error);
+        
+        // 如果不是最后一次尝试，等待一下再重试
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // 递增延迟
+        }
+      }
+    }
+    
+    // 所有重试都失败了
+    throw lastError || new Error('All message sending attempts failed');
   }
 
   // 设置消息监听器
   private setupMessageListener() {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      // 处理ping消息
+      if (message.type === 'PING') {
+        sendResponse({ success: true, pong: true });
+        return false;
+      }
+
       switch (message.type) {
         case 'EXTRACT_CONTENT':
           this.handleExtractContent(sendResponse);
@@ -133,13 +231,18 @@ class PageObserver {
       if (this.hasSignificantContentChange(pageData.content)) {
         this.lastExtractedContent = pageData.content;
         
-        // 通知background脚本页面内容已更新
-        chrome.runtime.sendMessage({
-          type: 'PAGE_CONTENT_UPDATED',
-          data: pageData
-        }).catch(() => {
-          // 忽略连接错误（background可能未运行）
-        });
+        // 使用安全的消息发送方法
+        try {
+          await this.sendMessageSafely({
+            type: 'PAGE_CONTENT_UPDATED',
+            data: pageData
+          });
+        } catch (error) {
+          // 静默处理连接错误，避免在控制台产生过多噪音
+          if (error.message !== 'Extension context invalidated') {
+            console.warn('Failed to notify background:', error.message);
+          }
+        }
       }
     } catch (error) {
       console.error('Content extraction failed:', error);
@@ -276,40 +379,42 @@ class PageObserver {
   }
 
   // 处理保存页面请求
-  private handleSavePage(sendResponse: (response: any) => void) {
+  private async handleSavePage(sendResponse: (response: any) => void) {
     try {
       const pageData = this.extractPageData();
       
-      // 通知background处理保存
-      chrome.runtime.sendMessage({
+      // 使用安全的消息发送方法
+      const response = await this.sendMessageSafely({
         type: 'PROCESS_SAVE_PAGE',
         data: pageData
-      }).then(response => {
-        sendResponse(response);
-      }).catch(error => {
-        sendResponse({ success: false, error: error.message });
       });
+      
+      sendResponse(response);
     } catch (error) {
-      sendResponse({ success: false, error: (error as Error).message });
+      sendResponse({ 
+        success: false, 
+        error: error.message || 'Extension connection error'
+      });
     }
   }
 
   // 处理摘要请求
-  private handleSummarizePage(sendResponse: (response: any) => void) {
+  private async handleSummarizePage(sendResponse: (response: any) => void) {
     try {
       const pageData = this.extractPageData();
       
-      // 通知background处理摘要
-      chrome.runtime.sendMessage({
+      // 使用安全的消息发送方法
+      const response = await this.sendMessageSafely({
         type: 'PROCESS_SUMMARIZE_PAGE',
         data: pageData
-      }).then(response => {
-        sendResponse(response);
-      }).catch(error => {
-        sendResponse({ success: false, error: error.message });
       });
+      
+      sendResponse(response);
     } catch (error) {
-      sendResponse({ success: false, error: (error as Error).message });
+      sendResponse({ 
+        success: false, 
+        error: error.message || 'Extension connection error'
+      });
     }
   }
 
