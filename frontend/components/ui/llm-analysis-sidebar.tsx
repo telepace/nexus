@@ -3,7 +3,6 @@
 import { FC, useEffect } from "react";
 import { Brain, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { LLMAnalysisCard } from "@/components/ui/llm-analysis-card";
 import { PromptRecommendations } from "@/components/ui/prompt-recommendations";
 import { PromptCommandDialog } from "@/components/ui/prompt-command-dialog";
@@ -29,8 +28,6 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
     enabledPrompts,
     disabledPrompts,
     isLoadingPrompts,
-    usedPromptIds,
-    showAllPrompts,
     toggleExpanded,
     removeAnalysis,
     clearAnalyses,
@@ -38,8 +35,6 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
     executeAnalysisWithContent,
     loadPrompts,
     setError,
-    toggleShowAllPrompts,
-    resetUsedPrompts,
     getAvailablePrompts,
   } = useLLMAnalysisStore();
 

@@ -63,7 +63,6 @@ describe("PromptCommandDialog", () => {
 
   const defaultProps = {
     availablePrompts: mockPrompts,
-    contentId: "content-1",
     isExecuting: false,
     onPromptSelect: mockOnPromptSelect,
     onExecute: mockOnExecute,
@@ -73,18 +72,16 @@ describe("PromptCommandDialog", () => {
     render(<PromptCommandDialog {...defaultProps} />);
 
     expect(
-      screen.getByPlaceholderText(/输入消息或使用 \/ 快速选择 prompt/),
+      screen.getByPlaceholderText("chat with content"),
     ).toBeInTheDocument();
-    expect(screen.getByText("发送")).toBeInTheDocument();
+    expect(screen.getByRole("button", { hidden: true })).toBeInTheDocument();
   });
 
   it("should show command suggestions when typing /", async () => {
     const user = userEvent.setup();
     render(<PromptCommandDialog {...defaultProps} />);
 
-    const input = screen.getByPlaceholderText(
-      /输入消息或使用 \/ 快速选择 prompt/,
-    );
+    const input = screen.getByPlaceholderText("chat with content");
     await user.type(input, "/");
 
     await waitFor(() => {
@@ -97,9 +94,7 @@ describe("PromptCommandDialog", () => {
     const user = userEvent.setup();
     render(<PromptCommandDialog {...defaultProps} />);
 
-    const input = screen.getByPlaceholderText(
-      /输入消息或使用 \/ 快速选择 prompt/,
-    );
+    const input = screen.getByPlaceholderText("chat with content");
     await user.type(input, "/摘要");
 
     await waitFor(() => {
@@ -112,9 +107,7 @@ describe("PromptCommandDialog", () => {
     const user = userEvent.setup();
     render(<PromptCommandDialog {...defaultProps} />);
 
-    const input = screen.getByPlaceholderText(
-      /输入消息或使用 \/ 快速选择 prompt/,
-    );
+    const input = screen.getByPlaceholderText("chat with content");
     await user.type(input, "/");
 
     await waitFor(() => {
@@ -130,12 +123,10 @@ describe("PromptCommandDialog", () => {
     const user = userEvent.setup();
     render(<PromptCommandDialog {...defaultProps} />);
 
-    const input = screen.getByPlaceholderText(
-      /输入消息或使用 \/ 快速选择 prompt/,
-    );
+    const input = screen.getByPlaceholderText("chat with content");
     await user.type(input, "这是测试内容");
 
-    const sendButton = screen.getByText("发送");
+    const sendButton = screen.getByRole("button");
     await user.click(sendButton);
 
     expect(mockOnExecute).toHaveBeenCalledWith("这是测试内容", null);
@@ -145,9 +136,7 @@ describe("PromptCommandDialog", () => {
     const user = userEvent.setup();
     render(<PromptCommandDialog {...defaultProps} />);
 
-    const input = screen.getByPlaceholderText(
-      /输入消息或使用 \/ 快速选择 prompt/,
-    );
+    const input = screen.getByPlaceholderText("chat with content");
 
     // Select a prompt first
     await user.type(input, "/");
@@ -160,8 +149,9 @@ describe("PromptCommandDialog", () => {
     await user.clear(input);
     await user.type(input, "这是测试内容");
 
-    const sendButton = screen.getByText("发送");
-    await user.click(sendButton);
+    // Find the form element via the input
+    const form = input.closest("form");
+    fireEvent.submit(form!);
 
     expect(mockOnExecute).toHaveBeenCalledWith("这是测试内容", mockPrompts[0]);
   });
@@ -169,7 +159,7 @@ describe("PromptCommandDialog", () => {
   it("should disable send button when executing", () => {
     render(<PromptCommandDialog {...defaultProps} isExecuting={true} />);
 
-    const sendButton = screen.getByText("发送");
+    const sendButton = screen.getByRole("button");
     expect(sendButton).toBeDisabled();
   });
 
@@ -177,9 +167,7 @@ describe("PromptCommandDialog", () => {
     const user = userEvent.setup();
     render(<PromptCommandDialog {...defaultProps} />);
 
-    const input = screen.getByPlaceholderText(
-      /输入消息或使用 \/ 快速选择 prompt/,
-    );
+    const input = screen.getByPlaceholderText("chat with content");
     await user.type(input, "/");
 
     await waitFor(() => {
