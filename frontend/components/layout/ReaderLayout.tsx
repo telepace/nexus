@@ -54,7 +54,9 @@ export default function ReaderLayout({
         {/* 主内容区域和右侧sidebar的容器 - 强制占满剩余宽度 */}
         <div className="flex-1 flex w-full min-w-0 h-screen">
           {/* 主内容区域 - 占一半，独立滚动 */}
-          <ReaderContext.Provider value={{ onContentChange: handleContentChange }}>
+          <ReaderContext.Provider
+            value={{ onContentChange: handleContentChange }}
+          >
             <div className="flex-1 flex flex-col bg-background overflow-auto">
               {children}
             </div>

@@ -36,8 +36,12 @@ jest.mock("@/app/content-library/reader/[id]/ReaderContent", () => ({
   ReaderContent: ({ params }: { params: Promise<{ id: string }> }) => (
     <div data-testid="reader-content">
       <div role="tablist">
-        <button role="tab" aria-label="Original">Original</button>
-        <button role="tab" aria-label="Processed">Processed</button>
+        <button role="tab" aria-label="Original">
+          Original
+        </button>
+        <button role="tab" aria-label="Processed">
+          Processed
+        </button>
       </div>
       <button aria-label="Back">Back to Library</button>
     </div>
