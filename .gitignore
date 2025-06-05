@@ -494,6 +494,7 @@ sketch
 
 # Local development files
 .qodo
+
 .qodo/*_pagefind/
 
 intellidoc/
