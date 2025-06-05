@@ -77,7 +77,7 @@ def create_content_item_endpoint(
     created_item = crud_create_content_item(
         session=session, content_item_in=db_content_item
     )
-    
+
     # Convert ContentItem to ContentItemPublic
     public_item = ContentItemPublic(
         id=created_item.id,
@@ -91,7 +91,7 @@ def create_content_item_endpoint(
         created_at=created_item.created_at,
         updated_at=created_item.updated_at,
     )
-    
+
     return public_item
 
 
@@ -213,7 +213,7 @@ def list_content_items_endpoint(
     items = crud_get_content_items(
         session=session, skip=skip, limit=limit, user_id=current_user.id
     )
-    
+
     # Convert ContentItem objects to ContentItemPublic objects
     public_items = []
     for item in items:
@@ -230,7 +230,7 @@ def list_content_items_endpoint(
             updated_at=item.updated_at,
         )
         public_items.append(public_item)
-    
+
     return public_items
 
 
@@ -600,7 +600,7 @@ async def analyze_content_stream(
                             # Forward the chunk as-is (LiteLLM sends SSE format)
                             yield chunk.decode("utf-8", errors="ignore")
 
-        except Exception as e:
+        except Exception:
             # 当LiteLLM服务不可用时，发送模拟分析响应
             async for chunk in _send_mock_analysis_response(system_prompt, user_prompt):
                 yield chunk
@@ -608,7 +608,7 @@ async def analyze_content_stream(
     async def _send_mock_analysis_response(system_prompt: str, user_prompt: str) -> AsyncGenerator[str, None]:
         """发送模拟的分析响应（当LiteLLM不可用时）"""
         import asyncio
-        
+
         mock_analysis = f"""基于提示"{system_prompt}"对内容的分析：
 
 这是一个AI分析的模拟响应。当前LiteLLM服务不可用或配置不完整，因此显示此模拟结果。
@@ -637,7 +637,7 @@ async def analyze_content_stream(
             }
             yield f"data: {json.dumps(chunk_data)}\n\n"
             await asyncio.sleep(0.05)  # 模拟真实的流式延迟
-        
+
         # 发送结束标志
         yield "data: [DONE]\n\n"
 
@@ -784,7 +784,7 @@ def get_shared_content_endpoint(
         created_at=content_item.created_at,
         updated_at=content_item.updated_at,
     )
-    
+
     return public_item
 
 

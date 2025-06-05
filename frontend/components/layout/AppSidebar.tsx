@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings, ChevronUp } from "lucide-react";
+import { Settings, ChevronUp, RefreshCw } from "lucide-react";
 import {
   IconCirclePlusFilled,
   IconHome,
@@ -31,8 +31,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useAuth } from "@/lib/auth";
 import { logout } from "@/components/actions/logout-action";
 
@@ -74,12 +78,47 @@ export interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 }
 
 export function AppSidebar({
-  onSettingsClick: _onSettingsClick, // eslint-disable-line @typescript-eslint/no-unused-vars
+  onSettingsClick,
   onAddContentClick,
   ...props
 }: AppSidebarProps) {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, isLoading, fetchUser } = useAuth();
+  const [isSyncing, setIsSyncing] = React.useState(false);
+
+  // 同步登录状态
+  const handleSyncAuth = async () => {
+    if (isSyncing) return;
+    
+    setIsSyncing(true);
+    try {
+      // 检查是否有扩展token
+      const checkExtensionToken = () => {
+        const cookies = document.cookie.split(';');
+        for (const cookie of cookies) {
+          const [name, value] = cookie.trim().split('=');
+          if (name === 'accessToken_ext' && value) {
+            return value;
+          }
+        }
+        return null;
+      };
+
+      const extToken = checkExtensionToken();
+      if (extToken && !user) {
+        // 如果有扩展token但没有用户信息，尝试同步
+        document.cookie = `accessToken=${extToken};path=/;max-age=${60 * 60 * 24 * 7}`;
+        await fetchUser();
+      } else {
+        // 手动触发用户信息刷新
+        await fetchUser();
+      }
+    } catch (error) {
+      console.error("同步登录失败:", error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -145,32 +184,65 @@ export function AppSidebar({
       <SidebarFooter className="!px-4 !pb-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                  <IconUser />
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">
-                      {user?.full_name || "User"}
-                    </span>
-                    <span className="truncate text-xs">
-                      {user?.email || "user@example.com"}
-                    </span>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground h-12">
+                    <div className="flex items-center gap-3 w-full">
+                      <UserAvatar user={user} size="md" />
+                      <div className="grid flex-1 text-left text-sm leading-tight overflow-hidden">
+                        <span className="truncate font-semibold">
+                          {user.full_name || "User"}
+                        </span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {user.email || "user@example.com"}
+                        </span>
+                      </div>
+                      <ChevronUp className="ml-auto size-4 shrink-0" />
+                    </div>
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                  side="bottom"
+                  align="end"
+                  sideOffset={4}
+                >
+                  <DropdownMenuItem onClick={onSettingsClick}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSyncAuth} disabled={isSyncing}>
+                    <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                    <span>{isSyncing ? '同步中...' : '同步登录状态'}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => logout()}>
+                    <IconUser className="mr-2 h-4 w-4" />
+                    <span>Sign out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="p-3 space-y-3">
+                <div className="flex items-center gap-3">
+                  <UserAvatar user={user} size="md" showFallback={true} />
+                  <div className="flex-1 text-sm">
+                    <div className="font-medium text-muted-foreground">未登录</div>
                   </div>
-                  <ChevronUp className="ml-auto size-4" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                side="bottom"
-                align="end"
-                sideOffset={4}
-              >
-                <DropdownMenuItem onClick={() => logout()}>
-                  <span>Sign out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleSyncAuth}
+                  disabled={isSyncing || isLoading}
+                  className="w-full"
+                >
+                  <RefreshCw className={`mr-2 h-3 w-3 ${(isSyncing || isLoading) ? 'animate-spin' : ''}`} />
+                  {isSyncing || isLoading ? '同步中...' : '同步登录状态'}
+                </Button>
+              </div>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

@@ -314,12 +314,12 @@ def get_content_chunks(
 
     # Calculate offset for pagination
     offset = (page - 1) * size
-    
+
     # Get chunks with pagination using the same pattern as get_content_items_sync
     chunks_statement = sqlmodel_select(ContentChunk).where(ContentChunk.content_item_id == content_item_id).order_by(ContentChunk.chunk_index).offset(offset).limit(size)
     chunks_result = session.exec(chunks_statement)
     chunks = chunks_result.all()
-    
+
     return list(chunks), int(total_count)
 
 

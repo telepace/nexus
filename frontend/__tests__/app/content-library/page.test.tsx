@@ -59,6 +59,7 @@ describe("ContentLibraryPage", () => {
       login: jest.fn(),
       logout: jest.fn(),
       setCustomToken: jest.fn(),
+      fetchUser: jest.fn(),
     });
 
     // Mock fetch

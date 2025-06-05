@@ -2,39 +2,13 @@ import React from "react";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ShareContentModal } from "./ShareContentModal";
-import { client } from "@/app/openapi-client/index";
+import { contentCreateShareLinkEndpoint } from "@/app/openapi-client/index";
+import { ContentItemPublic, ContentSharePublic } from "@/app/openapi-client/index";
 import { Toaster } from "@/components/ui/sonner";
-
-// 临时定义缺失的类型
-interface ContentItemPublic {
-  id: string;
-  title: string;
-  content?: string;
-  content_text?: string;
-  user_id?: string;
-  type?: string;
-  processing_status?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-interface ContentSharePublic {
-  id: string;
-  share_token: string;
-  is_active: boolean;
-  created_at: string;
-  expires_at?: string;
-  access_count: number;
-  max_access_count?: number;
-  content_item_title?: string;
-  content_item_id?: string;
-}
 
 // Mock the API client
 jest.mock("@/app/openapi-client/index", () => ({
-  client: {
-    createShareLink: jest.fn(),
-  },
+  contentCreateShareLinkEndpoint: jest.fn(),
 }));
 
 // Mock useToast
@@ -59,8 +33,7 @@ const mockContentItem: ContentItemPublic = {
 describe("ShareContentModal", () => {
   beforeEach(() => {
     // Clear mocks before each test
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((client as any).createShareLink as jest.Mock).mockClear();
+    (contentCreateShareLinkEndpoint as jest.Mock).mockClear();
     mockToast.mockClear();
   });
 
@@ -114,11 +87,9 @@ describe("ShareContentModal", () => {
       share_token: "test-share-token-123",
       created_at: new Date().toISOString(),
       is_active: true,
-      access_count: 0,
       // other fields from ContentSharePublic if needed
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((client as any).createShareLink as jest.Mock).mockResolvedValueOnce(
+    (contentCreateShareLinkEndpoint as jest.Mock).mockResolvedValueOnce(
       mockShareResponse,
     );
 
@@ -136,15 +107,16 @@ describe("ShareContentModal", () => {
     fireEvent.click(generateButton);
 
     await waitFor(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((client as any).createShareLink).toHaveBeenCalledWith(
-        mockContentItem.id,
-        expect.objectContaining({
+      expect(contentCreateShareLinkEndpoint).toHaveBeenCalledWith({
+        path: {
+          id: mockContentItem.id,
+        },
+        body: expect.objectContaining({
           expires_at: undefined, // No date was selected
           password: "securepass", // User typed this password
           max_access_count: 5, // User typed "5" which gets parsed to number
         }),
-      );
+      });
     });
 
     await waitFor(() => {
@@ -162,8 +134,7 @@ describe("ShareContentModal", () => {
   it("displays error message on API failure", async () => {
     // const user = userEvent.setup(); // 暂时未使用
     const errorMessage = "Network Error";
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((client as any).createShareLink as jest.Mock).mockRejectedValueOnce({
+    (contentCreateShareLinkEndpoint as jest.Mock).mockRejectedValueOnce({
       // Simulate error structure from API client/axios
       isAxiosError: true,
       response: { data: { detail: errorMessage } },

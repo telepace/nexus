@@ -28,22 +28,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { TokenDebugTool } from "./TokenDebugTool";
 import { ShareContentModal } from "@/components/share/ShareContentModal"; // Added
 import { ManageShareLinks } from "@/components/share/ManageShareLinks"; // Added
-
-// 临时定义缺失的类型
-interface ContentItemPublic {
-  id: string;
-  title: string;
-  // 其他必要的属性
-} // Added for type safety
-
-// 定义Item类型 - assuming this aligns with ContentItemPublic for relevant fields
-interface Item {
-  id: string;
-  title: string;
-  description?: string | null;
-  quantity?: number;
-  owner_id?: string;
-}
+import { ContentItemPublic } from "@/app/openapi-client/index";
 
 // 定义API错误响应类型
 interface ApiErrorResponse {
@@ -56,6 +41,16 @@ interface ApiErrorResponse {
 // Dashboard 顶级页面组件，现在是客户端组件
 export default function DashboardPage() {
   const { user, isLoading: isLoadingAuth } = useAuth();
+  const [items, setItems] = useState<ContentItemPublic[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedItemToShare, setSelectedItemToShare] = useState<ContentItemPublic | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [showManageShares, setShowManageShares] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
+
+  // 生成唯一的渲染ID用于调试
+  const renderID = useState(() => Math.random().toString(36).substring(7))[0];
 
   if (isLoadingAuth) {
     return (
@@ -85,6 +80,56 @@ export default function DashboardPage() {
       </div>
     );
   }
+
+  useEffect(() => {
+    console.log(`[dashboard-${renderID}] 组件挂载/更新，用户:`, user?.id);
+
+    if (user?.id) {
+      setCurrentUserId(user.id);
+    }
+
+    async function loadData() {
+      setIsLoading(true);
+      console.log(`[dashboard-${renderID}] 开始获取数据`);
+      try {
+        const itemsResponse = await fetchItems();
+        if (Array.isArray(itemsResponse)) {
+          setItems(itemsResponse);
+          console.log(
+            `[dashboard-${renderID}] 成功获取 ${itemsResponse.length} 个物品`,
+          );
+        } else if (itemsResponse && typeof itemsResponse === "object") {
+          const errorResponse = itemsResponse as ApiErrorResponse;
+          let errorMessage = "未知错误";
+          if (errorResponse.error) errorMessage = String(errorResponse.error);
+          else if (errorResponse.message)
+            errorMessage = String(errorResponse.message);
+          else if (errorResponse.meta && errorResponse.meta.message)
+            errorMessage = String(errorResponse.meta.message);
+          setError(errorMessage);
+          console.error(
+            `[dashboard-${renderID}] 获取物品出错:`,
+            errorMessage,
+            "状态:",
+            errorResponse.status,
+          );
+        } else {
+          setError("获取物品数据失败");
+        }
+      } catch (e: unknown) {
+        console.error(`[dashboard-${renderID}] 获取数据过程出错:`, e);
+        setError(String(e));
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, [renderID, user]); // 添加user作为依赖
+
+  const openShareModal = (item: ContentItemPublic) => {
+    setSelectedItemToShare(item);
+    setIsShareModalOpen(true);
+  };
 
   return (
     <ErrorBoundary
@@ -138,7 +183,7 @@ async function DashboardContentOriginal() {
     const itemsResponse = await fetchItems();
 
     // 处理错误或空结果
-    let itemsList: Item[] = [];
+    let itemsList: ContentItemPublic[] = [];
     let errorMessage: string | null = null;
     let errorStatus: number | null = null;
 
@@ -230,15 +275,19 @@ async function DashboardContentOriginal() {
           <TableHeader>
             <TableRow>
               <TableHead>Title</TableHead>
-              <TableHead>Description</TableHead>
+              <TableHead>Summary</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="w-24">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {itemsList.map((item) => (
               <TableRow key={item.id}>
-                <TableCell>{item.title}</TableCell>
-                <TableCell>{item.description || "No description"}</TableCell>
+                <TableCell>{item.title || "Untitled"}</TableCell>
+                <TableCell>{item.summary || "No summary"}</TableCell>
+                <TableCell>{item.type}</TableCell>
+                <TableCell>{item.processing_status}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -289,23 +338,21 @@ async function DashboardContentOriginal() {
 
 // New wrapper component to handle state and async data fetching
 function DashboardContent() {
-  const [items, setItems] = useState<Item[]>([]);
+  const { user } = useAuth();
+  const [items, setItems] = useState<ContentItemPublic[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [renderID] = useState(Math.random().toString(36).substring(7)); // Stable renderID
-
-  const [selectedItemToShare, setSelectedItemToShare] =
-    useState<ContentItemPublic | null>(null);
+  const [selectedItemToShare, setSelectedItemToShare] = useState<ContentItemPublic | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [showManageShares, setShowManageShares] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string | undefined>(
-    undefined,
-  );
+  const [currentUserId, setCurrentUserId] = useState<string>("");
 
-  const { user } = useAuth(); // 使用客户端认证hook
+  // 生成唯一的渲染ID用于调试
+  const renderID = useState(() => Math.random().toString(36).substring(7))[0];
 
   useEffect(() => {
-    // 从认证hook中获取用户ID
+    console.log(`[dashboard-${renderID}] 组件挂载/更新，用户:`, user?.id);
+
     if (user?.id) {
       setCurrentUserId(user.id);
     }
@@ -449,15 +496,19 @@ function DashboardContent() {
         <TableHeader>
           <TableRow>
             <TableHead>Title</TableHead>
-            <TableHead>Description</TableHead>
+            <TableHead>Summary</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead className="w-24">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {items.map((item) => (
             <TableRow key={item.id}>
-              <TableCell>{item.title}</TableCell>
-              <TableCell>{item.description || "No description"}</TableCell>
+              <TableCell>{item.title || "Untitled"}</TableCell>
+              <TableCell>{item.summary || "No summary"}</TableCell>
+              <TableCell>{item.type}</TableCell>
+              <TableCell>{item.processing_status}</TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -475,7 +526,7 @@ function DashboardContent() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => openShareModal(item as ContentItemPublic)}
+                      onClick={() => openShareModal(item)}
                       className="flex items-center cursor-pointer"
                     >
                       <Share2 className="mr-2 h-4 w-4" /> Share

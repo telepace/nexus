@@ -11,10 +11,12 @@ import {
   AlertCircle,
   ExternalLink,
   Download,
+  Share2,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
+import { ShareContentModal } from "@/components/share/ShareContentModal";
 
 interface ContentDetail {
   id: string;
@@ -270,6 +272,9 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("processed"); // 默认选择processed
   const [contentId, setContentId] = useState<string | null>(null);
+  
+  // 添加分享状态管理
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // 解析参数
   useEffect(() => {
@@ -405,15 +410,51 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
   return (
     <div className="h-full flex flex-col p-2">
       {/* Header */}
-      <div className="flex h-header shrink-0 items-center gap-2 border-b ">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push("/content-library")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-lg font-semibold">{content.title || "Untitled"}</h1>
+      <div className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push("/content-library")}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Library
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">
+              {content.title || "Untitled"}
+            </h1>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant="outline">{content.type.toUpperCase()}</Badge>
+              <Badge variant="secondary">{content.processing_status}</Badge>
+              {content.source_uri && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.open(content.source_uri!, "_blank")}
+                >
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  Source
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* 添加右侧操作区域 */}
+        <div className="flex items-center gap-2">
+          {content?.processing_status === "completed" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsShareModalOpen(true)}
+              title="分享内容"
+            >
+              <Share2 className="h-4 w-4 mr-2" />
+              分享
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Main Content - 现在占据剩余空间 */}
@@ -447,6 +488,24 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* 分享弹窗 */}
+      {content && (
+        <ShareContentModal
+          open={isShareModalOpen}
+          onOpenChange={setIsShareModalOpen}
+          contentItem={{
+            id: content.id,
+            title: content.title || "Untitled",
+            content_text: content.content_text,
+            user_id: content.user_id,
+            type: content.type,
+            processing_status: content.processing_status,
+            created_at: content.created_at,
+            updated_at: content.updated_at,
+          }}
+        />
+      )}
     </div>
   );
 };

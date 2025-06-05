@@ -1,9 +1,9 @@
-import React from 'react'
-import { createRoot } from 'react-dom/client'
+import React from 'react';
+import { createRoot } from 'react-dom/client';
 import './style.css'
 import SidePanelApp from './components/SidePanelApp'
 
-// 初始化 Side Panel
+// 初始化 Side Panel - 直接使用改进后的 SidePanelApp
 function init() {
   const rootElement = document.getElementById('__plasmo')
   if (rootElement) {
@@ -19,5 +19,5 @@ if (document.readyState === 'loading') {
   init()
 }
 
-// Plasmo 导出
+// Plasmo 导出 - 导出我们的新组件
 export default SidePanelApp 

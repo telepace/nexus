@@ -27,6 +27,7 @@ export interface AuthContextType {
   login: (token: string) => void;
   logout: () => void;
   setCustomToken: (token: string) => void;
+  fetchUser: () => Promise<void>;
 }
 
 // 避免使用 React 的 createContext，直接返回一个对象
@@ -246,6 +247,7 @@ export function useAuth(): AuthContextType {
     login,
     logout,
     setCustomToken,
+    fetchUser,
   };
 }
 

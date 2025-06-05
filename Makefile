@@ -658,7 +658,22 @@ extension: check-pnpm check-extension-env
 .PHONY: extension-build
 extension-build: check-pnpm extension-clean
 	@echo "===========> Building browser extension for production"
-	@cd $(EXTENSION_DIR) && $(PNPM) run build
+	@cd $(EXTENSION_DIR) && \
+		echo "===========> Trying offline build first..." && \
+		($(PNPM) run build:offline 2>/dev/null || \
+		(echo "===========> Offline build failed, trying standard build..." && \
+		 $(PNPM) run build 2>/dev/null || \
+		 (echo "===========> Standard build failed, trying with network config..." && \
+		  PLASMO_UPDATE_CHECK=false PLASMO_NO_REMOTE=true NODE_OPTIONS='--max-old-space-size=4096' $(PNPM) run build)))
+
+## extension-build-force: Force build extension with all offline flags
+.PHONY: extension-build-force
+extension-build-force: check-pnpm extension-clean
+	@echo "===========> Force building browser extension (offline mode)"
+	@cd $(EXTENSION_DIR) && \
+		PLASMO_UPDATE_CHECK=false PLASMO_NO_REMOTE=true PLASMO_NO_HOIST=true \
+		NODE_OPTIONS='--max-old-space-size=4096' \
+		$(PNPM) run build:offline
 
 ## extension-package: Package browser extension for distribution
 .PHONY: extension-package

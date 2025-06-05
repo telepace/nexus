@@ -56,13 +56,24 @@ export const isExtensionInstalled = async (): Promise<boolean> => {
           { action: "ping" },
           (response: ExtensionResponse) => {
             clearTimeout(timeoutId);
+            // 抑制chrome.runtime.lastError
+            if (typeof window !== 'undefined' && window.chrome && 
+                (window.chrome as any).runtime && 
+                (window.chrome as any).runtime.lastError) {
+              // 静默处理扩展连接错误
+              resolve(false);
+              return;
+            }
             resolve(!!response);
           },
         );
+      } else {
+        clearTimeout(timeoutId);
+        resolve(false);
       }
     });
   } catch (error) {
-    console.error("检查扩展安装状态时出错:", error);
+    // 静默处理所有扩展相关错误，避免控制台警告
     return false;
   }
 };

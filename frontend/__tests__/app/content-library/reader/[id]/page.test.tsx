@@ -82,6 +82,7 @@ describe("ReaderPage", () => {
       login: jest.fn(),
       logout: jest.fn(),
       setCustomToken: jest.fn(),
+      fetchUser: jest.fn(),
     });
 
     // Mock fetch for content details and markdown
