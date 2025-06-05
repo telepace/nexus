@@ -3,10 +3,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 扩展容器基础样式重置 */
+.nexus-extension-container,
 .nexus-extension-container * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+/* 确保扩展内的字体正确应用 */
+.nexus-extension-container {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #374151;
 }
 
 body {
