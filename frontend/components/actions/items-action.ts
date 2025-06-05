@@ -1,24 +1,17 @@
 "use server";
 
 import {
-  readItems,
-  readItem,
-  deleteItem,
-  createItem,
-} from "@/app/clientService";
+  contentListContentItemsEndpoint,
+  contentGetContentItemEndpoint,
+  itemsDeleteItem,
+  itemsCreateItem,
+} from "@/app/openapi-client/index";
+import { ContentItemPublic } from "@/app/openapi-client/index";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { itemSchema } from "@/lib/definitions";
 import { cache } from "react";
 import { getAuthToken, requireAuth } from "@/lib/server-auth-bridge";
-
-// 定义Item数据类型
-interface ItemData {
-  id: string;
-  title: string;
-  description?: string;
-  [key: string]: unknown;
-}
+import { itemSchema } from "@/lib/definitions";
 
 // 定义API错误响应类型
 interface ApiErrorResponse {
@@ -28,21 +21,15 @@ interface ApiErrorResponse {
   status?: number;
 }
 
-// 定义API响应类型
-interface ApiResponse<T> {
-  data?: T | { data?: T } | null;
+// 定义数据响应类型
+interface DataResponse {
+  data?: unknown;
   meta?: { message?: string } | null;
   error?: string | null;
 }
 
-type DataResponse = {
-  data?: ItemData[] | { data?: ItemData[] } | unknown;
-  meta?: { message?: string } | null;
-  error?: string | null;
-};
-
 // 定义 fetchItems 的可能返回类型
-type FetchItemsReturn = ItemData[] | ApiErrorResponse;
+type FetchItemsReturn = ContentItemPublic[] | ApiErrorResponse;
 
 // 缓存结果和上次请求时间
 let itemsCache: FetchItemsReturn | null = null;
@@ -84,7 +71,7 @@ export const fetchItems = cache(async (): Promise<FetchItemsReturn> => {
       `[${requestId}] 获取物品数据，token: ${token.substring(0, 5)}...`,
     );
 
-    const response = await readItems({
+    const response = await contentListContentItemsEndpoint({
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -99,69 +86,21 @@ export const fetchItems = cache(async (): Promise<FetchItemsReturn> => {
       return errorResult;
     }
 
-    const { data, error } = response;
-
-    // 增强的错误处理
-    if (error) {
-      console.error(`[${requestId}] API 错误:`, error || "空错误对象");
-      const errorResult = {
-        error:
-          typeof error === "string"
-            ? error
-            : error
-              ? JSON.stringify(error)
-              : "未知API错误",
-        status: 500,
-      };
-      itemsCache = errorResult;
+    // content API 直接返回 ContentItemPublic[]
+    if (Array.isArray(response)) {
+      itemsCache = response;
       lastFetchTime = now;
-      return errorResult;
-    }
-
-    // 如果API返回的数据为空或无效，返回适当的错误信息
-    if (!data) {
-      console.warn(`[${requestId}] API 未返回数据`);
-      const errorResult = { error: "API未返回数据", status: 404 };
-      itemsCache = errorResult;
-      lastFetchTime = now;
-      return errorResult;
-    }
-
-    // 处理嵌套的数据结构
-    const responseData = data as ApiResponse<ItemData[]>;
-    let result: FetchItemsReturn;
-
-    if (
-      responseData &&
-      responseData.data &&
-      typeof responseData.data === "object" &&
-      "data" in responseData.data &&
-      Array.isArray(responseData.data.data)
-    ) {
-      result = responseData.data.data;
-    } else if (
-      responseData &&
-      responseData.data &&
-      Array.isArray(responseData.data)
-    ) {
-      result = responseData.data;
-    } else if (Array.isArray(responseData)) {
-      result = responseData;
-    } else if (responseData && responseData.error) {
-      result = { error: responseData.error };
+      console.log(
+        `[${requestId}] fetchItems 执行完成，数据长度: ${response.length}`,
+      );
+      return response;
     } else {
-      console.warn(`[${requestId}] 意外的 API 响应格式:`, data);
-      result = { error: "API返回了意外的数据格式", status: 400 };
+      console.warn(`[${requestId}] 意外的 API 响应格式:`, response);
+      const errorResult = { error: "API返回了意外的数据格式", status: 400 };
+      itemsCache = errorResult;
+      lastFetchTime = now;
+      return errorResult;
     }
-
-    // 更新缓存
-    itemsCache = result;
-    lastFetchTime = now;
-
-    console.log(
-      `[${requestId}] fetchItems 执行完成，数据${Array.isArray(result) ? `长度: ${result.length}` : "是错误对象"}`,
-    );
-    return result;
   } catch (error) {
     console.error(`[${requestId}] 获取物品数据出错:`, error);
     const errorMessage = error instanceof Error ? error.message : "未知错误";
@@ -175,7 +114,7 @@ export const fetchItems = cache(async (): Promise<FetchItemsReturn> => {
   }
 });
 
-// 其他函数也增加缓存和认证机制
+// 其他函数也更新为使用content API
 export const fetchItem = cache(async (id: string) => {
   // 验证用户
   const user = await requireAuth();
@@ -189,7 +128,7 @@ export const fetchItem = cache(async (id: string) => {
   }
 
   try {
-    const { data, error } = await readItem({
+    const response = await contentGetContentItemEndpoint({
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -198,16 +137,10 @@ export const fetchItem = cache(async (id: string) => {
       },
     });
 
-    if (error) {
-      return {
-        error: typeof error === "string" ? error : JSON.stringify(error),
-      };
-    }
-
-    return data?.data;
+    return response;
   } catch (error) {
-    console.error("获取物品详情出错:", error);
-    return { error: "获取数据失败" };
+    console.error("获取单个物品数据出错:", error);
+    throw error;
   }
 });
 
@@ -224,7 +157,7 @@ export async function removeItem(id: string) {
   }
 
   try {
-    const { data, error } = await deleteItem({
+    const response = await itemsDeleteItem({
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -233,12 +166,7 @@ export async function removeItem(id: string) {
       },
     });
 
-    if (error) {
-      console.error("删除物品出错:", error);
-      return { message: error };
-    }
-
-    console.log("删除物品成功:", data);
+    console.log("删除物品成功:", response);
 
     // 清除缓存以便重新加载
     itemsCache = null;
@@ -247,28 +175,30 @@ export async function removeItem(id: string) {
     // 重新验证路径，但不重复渲染
     revalidatePath("/content-library");
 
-    // 处理嵌套结构
-    const responseData = data as DataResponse;
+    // 处理响应结构
+    if (response && typeof response === "object") {
+      const responseData = response as DataResponse;
 
-    if (
-      responseData &&
-      responseData.meta &&
-      typeof responseData.meta === "object" &&
-      "message" in responseData.meta
-    ) {
-      return responseData.meta.message;
-    } else if (
-      responseData &&
-      responseData.data &&
-      typeof responseData.data === "object"
-    ) {
-      const nestedData = responseData.data as DataResponse;
       if (
-        nestedData.meta &&
-        typeof nestedData.meta === "object" &&
-        "message" in nestedData.meta
+        responseData &&
+        responseData.meta &&
+        typeof responseData.meta === "object" &&
+        "message" in responseData.meta
       ) {
-        return nestedData.meta.message;
+        return responseData.meta.message;
+      } else if (
+        responseData &&
+        responseData.data &&
+        typeof responseData.data === "object"
+      ) {
+        const nestedData = responseData.data as DataResponse;
+        if (
+          nestedData.meta &&
+          typeof nestedData.meta === "object" &&
+          "message" in nestedData.meta
+        ) {
+          return nestedData.meta.message;
+        }
       }
     }
 
@@ -305,38 +235,18 @@ export async function addItem(
 
   const { title, description } = validatedFields.data;
 
-  const input = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: {
-      title,
-      description,
-    },
-  };
-
   try {
-    const response = await createItem(input);
+    const response = await itemsCreateItem({
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: {
+        title,
+        description,
+      },
+    });
+
     console.log("添加物品API响应:", response);
-
-    const { data, error } = response;
-
-    // 检查API错误
-    if (error) {
-      console.error("API 错误:", error);
-      return {
-        message:
-          typeof error === "string"
-            ? `添加物品失败: ${error}`
-            : `添加物品失败: ${JSON.stringify(error)}`,
-      };
-    }
-
-    // 如果存在data但也存在data.error，返回该错误
-    if (data?.error) {
-      console.error("API 数据错误:", data.error);
-      return { message: `添加物品失败: ${data.error}` };
-    }
 
     // 清除缓存以便重新加载
     itemsCache = null;
@@ -345,14 +255,18 @@ export async function addItem(
     // 重新验证路径
     revalidatePath("/content-library");
 
-    // 成功添加物品，如果data包含物品信息，确认成功
-    if (data?.data && typeof data.data === "object") {
-      console.log("物品添加成功:", data.data);
+    // 成功添加物品
+    if (response && typeof response === "object") {
+      console.log("物品添加成功:", response);
 
       // 检查是否有成功消息
       let successMessage = "物品添加成功";
-      if (data.meta?.message && typeof data.meta.message === "string") {
-        successMessage = data.meta.message;
+      const responseData = response as DataResponse;
+      if (
+        responseData.meta?.message &&
+        typeof responseData.meta.message === "string"
+      ) {
+        successMessage = responseData.meta.message;
       }
 
       // 通常我们应该重定向到dashboard，但为了确认成功，我们可以返回消息

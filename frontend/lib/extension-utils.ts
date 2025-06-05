@@ -7,7 +7,16 @@
 
 declare global {
   interface Window {
-    chrome?: unknown;
+    chrome?: {
+      runtime?: {
+        sendMessage?: (
+          extensionId: string,
+          message: object,
+          callback: (response: ExtensionResponse) => void,
+        ) => void;
+        lastError?: { message: string };
+      };
+    };
   }
 }
 
@@ -56,13 +65,27 @@ export const isExtensionInstalled = async (): Promise<boolean> => {
           { action: "ping" },
           (response: ExtensionResponse) => {
             clearTimeout(timeoutId);
+            // 抑制chrome.runtime.lastError
+            if (
+              typeof window !== "undefined" &&
+              window.chrome &&
+              window.chrome.runtime &&
+              window.chrome.runtime.lastError
+            ) {
+              // 静默处理扩展连接错误
+              resolve(false);
+              return;
+            }
             resolve(!!response);
           },
         );
+      } else {
+        clearTimeout(timeoutId);
+        resolve(false);
       }
     });
-  } catch (error) {
-    console.error("检查扩展安装状态时出错:", error);
+  } catch {
+    // 静默处理所有扩展相关错误，避免控制台警告
     return false;
   }
 };
@@ -88,25 +111,8 @@ export const openSidebar = async (): Promise<boolean> => {
       const timeoutId = setTimeout(() => resolve(false), 1000);
 
       // 尝试向扩展发送消息
-      if (
-        typeof window.chrome === "object" &&
-        window.chrome &&
-        "runtime" in window.chrome &&
-        (window.chrome as { runtime?: unknown }).runtime &&
-        typeof (window.chrome as { runtime: { sendMessage?: unknown } }).runtime
-          .sendMessage === "function"
-      ) {
-        (
-          window.chrome as {
-            runtime: {
-              sendMessage: (
-                id: string,
-                msg: object,
-                cb: (response: ExtensionResponse) => void,
-              ) => void;
-            };
-          }
-        ).runtime.sendMessage(
+      if (window.chrome?.runtime?.sendMessage) {
+        window.chrome.runtime.sendMessage(
           extensionId,
           { action: "openSidebar" },
           (response: ExtensionResponse) => {
@@ -140,36 +146,21 @@ export const getExtensionPluginId = async (): Promise<string | null> => {
     return new Promise<string | null>((resolve) => {
       const timeoutId = setTimeout(() => resolve(null), 500);
 
-      if (
-        typeof window.chrome === "object" &&
-        window.chrome &&
-        "runtime" in window.chrome &&
-        (window.chrome as { runtime?: unknown }).runtime &&
-        typeof (window.chrome as { runtime: { sendMessage?: unknown } }).runtime
-          .sendMessage === "function"
-      ) {
-        (
-          window.chrome as {
-            runtime: {
-              sendMessage: (
-                id: string,
-                msg: object,
-                cb: (
-                  response: ExtensionResponse & { pluginId?: string },
-                ) => void,
-              ) => void;
-            };
-          }
-        ).runtime.sendMessage(extensionId, { action: "ping" }, (response) => {
-          clearTimeout(timeoutId);
-          resolve(response?.pluginId || null);
-        });
+      if (window.chrome?.runtime?.sendMessage) {
+        window.chrome.runtime.sendMessage(
+          extensionId,
+          { action: "ping" },
+          (response) => {
+            clearTimeout(timeoutId);
+            resolve(response?.pluginId || null);
+          },
+        );
       } else {
         resolve(null);
       }
     });
-  } catch (error) {
-    console.error("获取插件ID时出错:", error);
+  } catch {
+    // 静默处理所有扩展相关错误，避免控制台警告
     return null;
   }
 };
@@ -197,25 +188,8 @@ export const saveTokenToExtension = async (
     return new Promise<boolean>((resolve) => {
       const timeoutId = setTimeout(() => resolve(false), 1000);
 
-      if (
-        typeof window.chrome === "object" &&
-        window.chrome &&
-        "runtime" in window.chrome &&
-        (window.chrome as { runtime?: unknown }).runtime &&
-        typeof (window.chrome as { runtime: { sendMessage?: unknown } }).runtime
-          .sendMessage === "function"
-      ) {
-        (
-          window.chrome as {
-            runtime: {
-              sendMessage: (
-                id: string,
-                msg: object,
-                cb: (response: ExtensionResponse) => void,
-              ) => void;
-            };
-          }
-        ).runtime.sendMessage(
+      if (window.chrome?.runtime?.sendMessage) {
+        window.chrome.runtime.sendMessage(
           extensionId,
           {
             action: "saveToken",
@@ -233,8 +207,8 @@ export const saveTokenToExtension = async (
         resolve(false);
       }
     });
-  } catch (error) {
-    console.error("保存Token到扩展时出错:", error);
+  } catch {
+    // 静默处理所有扩展相关错误，避免控制台警告
     return false;
   }
 };
@@ -253,6 +227,9 @@ export const isSidebarSupported = (): boolean => {
 };
 
 // 定义扩展消息响应类型
-// 只关心 success 字段
-
-type ExtensionResponse = { success?: boolean } | undefined;
+type ExtensionResponse =
+  | {
+      success?: boolean;
+      pluginId?: string;
+    }
+  | undefined;

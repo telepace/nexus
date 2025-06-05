@@ -98,6 +98,7 @@ export function PasswordForm() {
             }
           })(),
         }),
+        credentials: "include",
       });
 
       if (!response.ok) {

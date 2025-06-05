@@ -11,13 +11,27 @@ interface ContentItemPublic {
   title: string;
   content?: string;
   content_text?: string; // 添加缺失的属性
+  type?: string;
+  processing_status?: string;
+  source_uri?: string;
+  created_at?: string;
+  updated_at?: string;
   // 其他必要的属性
 } // Adjust as per your project
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer"; // Adjust as per your project
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, LockIcon, EyeIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  AlertCircle,
+  LockIcon,
+  EyeIcon,
+  FileText,
+  Calendar,
+  ExternalLink,
+} from "lucide-react";
 import Link from "next/link"; // For a link back to homepage or login
 
 const SharedContentPage = () => {
@@ -227,16 +241,91 @@ const SharedContentPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <article className="prose dark:prose-invert max-w-none">
-        {contentItem.title && <h1>{contentItem.title}</h1>}
-        <MarkdownRenderer content={contentItem.content_text || ""} />
-        {/* You might want to display other metadata from contentItem here */}
-      </article>
-      <div className="mt-12 text-center">
-        <Button variant="outline" asChild>
-          <Link href="/">Back to Homepage</Link>
-        </Button>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        {/* Header */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-6 mb-6">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                {contentItem.title || "Untitled Content"}
+              </h1>
+
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                {contentItem.type && (
+                  <Badge variant="outline" className="capitalize">
+                    <FileText className="h-3 w-3 mr-1" />
+                    {contentItem.type}
+                  </Badge>
+                )}
+                {contentItem.processing_status && (
+                  <Badge
+                    variant={
+                      contentItem.processing_status === "completed"
+                        ? "default"
+                        : "secondary"
+                    }
+                  >
+                    {contentItem.processing_status}
+                  </Badge>
+                )}
+                {contentItem.created_at && (
+                  <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    {new Date(contentItem.created_at).toLocaleDateString()}
+                  </div>
+                )}
+              </div>
+
+              {contentItem.source_uri && (
+                <div className="flex items-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  <a
+                    href={contentItem.source_uri}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="truncate max-w-md"
+                  >
+                    {contentItem.source_uri}
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <Button variant="outline" asChild size="sm">
+              <Link href="/">回到首页</Link>
+            </Button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border">
+          <div className="p-6">
+            {contentItem.content_text ? (
+              <div className="prose prose-gray dark:prose-invert max-w-none">
+                <MarkdownRenderer content={contentItem.content_text} />
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400">
+                  No content available for this item.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 text-center">
+          <Separator className="mb-6" />
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            This content was shared via Nexus
+          </p>
+          <Button variant="outline" asChild>
+            <Link href="/">Explore Nexus</Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -8,10 +8,11 @@
     "dev": "plasmo dev",
     "dev:local": "cross-env PLASMO_PUBLIC_API_URL=http://localhost:8000 PLASMO_PUBLIC_FRONTEND_URL=http://localhost:3000 plasmo dev",
     "dev:staging": "cross-env PLASMO_PUBLIC_API_URL=https://api-staging.nexus-app.com PLASMO_PUBLIC_FRONTEND_URL=https://staging.nexus-app.com plasmo dev",
-    "build": "plasmo build",
-    "build:local": "cross-env PLASMO_PUBLIC_API_URL=http://localhost:8000 PLASMO_PUBLIC_FRONTEND_URL=http://localhost:3000 plasmo build",
-    "build:staging": "cross-env PLASMO_PUBLIC_API_URL=https://api-staging.nexus-app.com PLASMO_PUBLIC_FRONTEND_URL=https://staging.nexus-app.com plasmo build",
-    "build:prod": "cross-env PLASMO_PUBLIC_API_URL=https://api.nexus-app.com PLASMO_PUBLIC_FRONTEND_URL=https://app.nexus-app.com plasmo build",
+    "build": "plasmo build --no-hoist --no-remote",
+    "build:local": "cross-env PLASMO_PUBLIC_API_URL=http://localhost:8000 PLASMO_PUBLIC_FRONTEND_URL=http://localhost:3000 plasmo build --no-hoist --no-remote",
+    "build:staging": "cross-env PLASMO_PUBLIC_API_URL=https://api-staging.nexus-app.com PLASMO_PUBLIC_FRONTEND_URL=https://staging.nexus-app.com plasmo build --no-hoist --no-remote",
+    "build:prod": "cross-env PLASMO_PUBLIC_API_URL=https://api.nexus-app.com PLASMO_PUBLIC_FRONTEND_URL=https://app.nexus-app.com plasmo build --no-hoist --no-remote",
+    "build:offline": "NODE_OPTIONS='--max-old-space-size=4096' plasmo build --no-hoist --no-remote --no-update-check",
     "package": "plasmo package",
     "package:staging": "cross-env PLASMO_PUBLIC_API_URL=https://api-staging.nexus-app.com PLASMO_PUBLIC_FRONTEND_URL=https://staging.nexus-app.com plasmo package",
     "package:prod": "cross-env PLASMO_PUBLIC_API_URL=https://api.nexus-app.com PLASMO_PUBLIC_FRONTEND_URL=https://app.nexus-app.com plasmo package",
@@ -22,7 +23,9 @@
     "test:coverage": "playwright test --coverage",
     "build:tailwind": "tailwindcss -i ./styles/globals.css -o ./styles/tailwind.css",
     "dev:with-tailwind": "concurrently \"npm run build:tailwind -- --watch\" \"npm run dev:local\"",
-    "build:with-tailwind": "npm run build:tailwind && npm run build"
+    "build:with-tailwind": "npm run build:tailwind && npm run build",
+    "clean": "rm -rf build/ .plasmo/ node_modules/.cache/",
+    "prebuild": "npm run clean"
   },
   "dependencies": {
     "@plasmohq/messaging": "^0.7.1",
@@ -71,6 +74,17 @@
     "content_security_policy": {
       "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://localhost:8000 http://localhost:3000 http://127.0.0.1:8000 http://127.0.0.1:3000 https://* http://*;"
     },
+    "web_accessible_resources": [
+      {
+        "resources": [
+          "iframe-ui.html",
+          "summary-window.html",
+          "save-confirm-window.html",
+          "notification-popup.html"
+        ],
+        "matches": ["<all_urls>"]
+      }
+    ],
     "side_panel": {
       "default_path": "sidepanel.html"
     },

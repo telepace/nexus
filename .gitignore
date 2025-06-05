@@ -494,6 +494,8 @@ sketch
 
 # Local development files
 .qodo
+
 .qodo/*_pagefind/
 
 intellidoc/
+openapi.json.bak

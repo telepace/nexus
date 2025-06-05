@@ -3,6 +3,7 @@
 import { FC, useEffect } from "react";
 import { Brain, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { LLMAnalysisCard } from "@/components/ui/llm-analysis-card";
 import { PromptRecommendations } from "@/components/ui/prompt-recommendations";
 import { PromptCommandDialog } from "@/components/ui/prompt-command-dialog";
@@ -63,9 +64,20 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
   }, [error, toast, setError]);
 
   const handleEnabledPromptClick = async (prompt: Prompt) => {
+    console.log("[LLM Analysis] 开始生成分析:", {
+      contentId,
+      promptName: prompt.name,
+      contentTextLength: contentText.length,
+      hasContent: !!contentText,
+    });
+
     try {
       // 使用传入的内容文本或获取当前页面内容
       const content = contentText || "当前页面的内容...";
+
+      if (!content || content.trim().length === 0) {
+        throw new Error("没有可分析的内容，请确保内容已加载完成");
+      }
 
       await generateAnalysis(
         contentId,
@@ -74,11 +86,14 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
         prompt.id,
         prompt.name,
       );
+
+      console.log("[LLM Analysis] 分析生成请求已发送");
     } catch (error) {
-      console.error("生成分析失败:", error);
+      console.error("[LLM Analysis] 生成分析失败:", error);
       toast({
         title: "生成失败",
-        description: "无法生成分析，请稍后重试",
+        description:
+          error instanceof Error ? error.message : "无法生成分析，请稍后重试",
         variant: "destructive",
       });
     }
@@ -163,32 +178,69 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
   }
 
   return (
-    <div
-      className={`h-full bg-sidebar text-sidebar-foreground border-l flex flex-col ${className}`}
-    >
-      {/* Header - 固定不缩放 */}
-      <div className="flex h-header shrink-0 items-center justify-between gap-2 border-b px-4">
-        <div className="flex items-center gap-2">
-          <Brain className="h-5 w-5 text-primary" />
-          <h2 className="text-base font-semibold">AI 分析</h2>
+    <Card className={`flex flex-col h-full ${className}`}>
+      <CardHeader className="flex-shrink-0 pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg font-semibold">AI 分析</CardTitle>
+            {contentAnalyses.length > 0 && (
+              <span className="text-sm text-muted-foreground">
+                ({contentAnalyses.length})
+              </span>
+            )}
+          </div>
+
+          {/* 添加内容状态提示 */}
+          {process.env.NODE_ENV === "development" && (
+            <div className="text-xs text-muted-foreground">
+              内容ID: {contentId} | 内容长度: {contentText.length} 字符
+            </div>
+          )}
+
           {contentAnalyses.length > 0 && (
-            <span className="text-sm text-muted-foreground">
-              ({contentAnalyses.length})
-            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearAll}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           )}
         </div>
 
-        {contentAnalyses.length > 0 && (
+        {/* 测试按钮 */}
+        {process.env.NODE_ENV === "development" && contentText && (
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            onClick={handleClearAll}
-            className="text-muted-foreground hover:text-destructive"
+            onClick={() =>
+              handleEnabledPromptClick({
+                id: "test",
+                name: "测试分析",
+                content: "请对以下内容进行简要分析，提取主要观点：",
+                description: "测试用的分析提示",
+                visibility: "public" as const,
+                version: 1,
+                enabled: true,
+                type: "template" as const,
+                input_vars: [],
+                meta_data: {},
+                team_id: null,
+                updated_at: new Date().toISOString(),
+                created_at: new Date().toISOString(),
+                embedding: {},
+                created_by: "test",
+              })
+            }
+            disabled={isGenerating}
+            className="w-full"
           >
-            <Trash2 className="h-4 w-4" />
+            {isGenerating ? "分析中..." : "🧪 测试分析功能"}
           </Button>
         )}
-      </div>
+      </CardHeader>
 
       {/* Content - 占据剩余空间，可滚动 */}
       <div className="flex-1 min-h-0 overflow-auto px-4 py-4">
@@ -254,6 +306,6 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 };

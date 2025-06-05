@@ -17,32 +17,33 @@ on:
 jobs:
   e2e-tests:
     name: Run Extension E2E Tests
-    runs-on: ubuntu-latest # Or a self-hosted runner if Chrome installation is an issue
-
-    strategy:
-      matrix:
-        node-version: [18.x] # Specify Node.js versions
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js ${{ matrix.node-version }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.9.0
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm' # Or npm/yarn if used
+          node-version: 20.0.0
+          cache: 'pnpm'
+          cache-dependency-path: extension/pnpm-lock.yaml
 
-      # Install PNPM
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: latest
-          run_install: true
+      # Verify pnpm installation
+      - name: Verify pnpm installation
+        run: |
+          which pnpm
+          pnpm --version
 
-      - name: Install project dependencies (root)
-        run: pnpm install # Or npm ci / yarn install --frozen-lockfile
-        # This assumes a pnpm-lock.yaml or equivalent exists at the root
+      - name: Install project dependencies (extension)
+        run: pnpm install --frozen-lockfile
+        working-directory: ./extension
 
       # Placeholder: Build the extension
       # The actual build command depends on how the extension is built.
@@ -60,8 +61,8 @@ jobs:
 
       # Install E2E test dependencies (scoped to extension/e2e)
       - name: Install E2E test dependencies
-        run: pnpm install --prefix extension/e2e
-        # If pnpm is not used: npm ci --prefix extension/e2e
+        run: pnpm install --frozen-lockfile
+        working-directory: ./extension/e2e
 
       # Install Playwright's browsers (or Chrome for Puppeteer)
       # Puppeteer downloads Chromium by default during `npm install puppeteer` if PUPPETEER_SKIP_CHROMIUM_DOWNLOAD is not set.

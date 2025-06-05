@@ -28,22 +28,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { TokenDebugTool } from "./TokenDebugTool";
 import { ShareContentModal } from "@/components/share/ShareContentModal"; // Added
 import { ManageShareLinks } from "@/components/share/ManageShareLinks"; // Added
-
-// 临时定义缺失的类型
-interface ContentItemPublic {
-  id: string;
-  title: string;
-  // 其他必要的属性
-} // Added for type safety
-
-// 定义Item类型 - assuming this aligns with ContentItemPublic for relevant fields
-interface Item {
-  id: string;
-  title: string;
-  description?: string | null;
-  quantity?: number;
-  owner_id?: string;
-}
+import { ContentItemPublic } from "@/app/openapi-client/index";
 
 // 定义API错误响应类型
 interface ApiErrorResponse {
@@ -57,6 +42,10 @@ interface ApiErrorResponse {
 export default function DashboardPage() {
   const { user, isLoading: isLoadingAuth } = useAuth();
 
+  // 生成唯一的渲染ID用于调试
+  const renderID = useState(() => Math.random().toString(36).substring(7))[0];
+
+  // 如果正在加载认证状态，显示加载动画
   if (isLoadingAuth) {
     return (
       <div className="container py-10">
@@ -86,6 +75,7 @@ export default function DashboardPage() {
     );
   }
 
+  // 用户已认证，渲染主要内容
   return (
     <ErrorBoundary
       fallback={
@@ -117,7 +107,7 @@ export default function DashboardPage() {
           </div>
         }
       >
-        <DashboardContent />
+        <DashboardContent renderID={renderID} />
       </Suspense>
     </ErrorBoundary>
   );
@@ -138,7 +128,7 @@ async function DashboardContentOriginal() {
     const itemsResponse = await fetchItems();
 
     // 处理错误或空结果
-    let itemsList: Item[] = [];
+    let itemsList: ContentItemPublic[] = [];
     let errorMessage: string | null = null;
     let errorStatus: number | null = null;
 
@@ -230,15 +220,19 @@ async function DashboardContentOriginal() {
           <TableHeader>
             <TableRow>
               <TableHead>Title</TableHead>
-              <TableHead>Description</TableHead>
+              <TableHead>Summary</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="w-24">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {itemsList.map((item) => (
               <TableRow key={item.id}>
-                <TableCell>{item.title}</TableCell>
-                <TableCell>{item.description || "No description"}</TableCell>
+                <TableCell>{item.title || "Untitled"}</TableCell>
+                <TableCell>{item.summary || "No summary"}</TableCell>
+                <TableCell>{item.type}</TableCell>
+                <TableCell>{item.processing_status}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -288,24 +282,20 @@ async function DashboardContentOriginal() {
 }
 
 // New wrapper component to handle state and async data fetching
-function DashboardContent() {
-  const [items, setItems] = useState<Item[]>([]);
+function DashboardContent({ renderID }: { renderID: string }) {
+  const { user } = useAuth();
+  const [items, setItems] = useState<ContentItemPublic[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [renderID] = useState(Math.random().toString(36).substring(7)); // Stable renderID
-
   const [selectedItemToShare, setSelectedItemToShare] =
     useState<ContentItemPublic | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [showManageShares, setShowManageShares] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string | undefined>(
-    undefined,
-  );
-
-  const { user } = useAuth(); // 使用客户端认证hook
+  const [currentUserId, setCurrentUserId] = useState<string>("");
 
   useEffect(() => {
-    // 从认证hook中获取用户ID
+    console.log(`[dashboard-${renderID}] 组件挂载/更新，用户:`, user?.id);
+
     if (user?.id) {
       setCurrentUserId(user.id);
     }
@@ -394,7 +384,7 @@ function DashboardContent() {
         <div className="bg-muted p-8 text-center rounded-lg mb-6">
           <h2 className="text-xl mb-2">No Items Yet</h2>
           <p className="text-muted-foreground mb-4">
-            <p>You don&apos;t have any content yet.</p> Add one to get started.
+            You don&apos;t have any content yet. Add one to get started.
           </p>
           <Button asChild>
             <Link href="/dashboard/add-item">Add Item</Link>
@@ -449,15 +439,19 @@ function DashboardContent() {
         <TableHeader>
           <TableRow>
             <TableHead>Title</TableHead>
-            <TableHead>Description</TableHead>
+            <TableHead>Summary</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead className="w-24">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {items.map((item) => (
             <TableRow key={item.id}>
-              <TableCell>{item.title}</TableCell>
-              <TableCell>{item.description || "No description"}</TableCell>
+              <TableCell>{item.title || "Untitled"}</TableCell>
+              <TableCell>{item.summary || "No summary"}</TableCell>
+              <TableCell>{item.type}</TableCell>
+              <TableCell>{item.processing_status}</TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -475,7 +469,7 @@ function DashboardContent() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => openShareModal(item as ContentItemPublic)}
+                      onClick={() => openShareModal(item)}
                       className="flex items-center cursor-pointer"
                     >
                       <Share2 className="mr-2 h-4 w-4" /> Share

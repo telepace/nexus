@@ -13,10 +13,12 @@ import {
   AlertCircle,
   Loader2,
   Download,
+  Share2,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import MainLayout from "@/components/layout/MainLayout";
+import { ShareContentModal } from "@/components/share/ShareContentModal";
 
 // Define the ContentItemPublic type based on backend schema
 interface ContentItemPublic {
@@ -69,12 +71,21 @@ export default function ContentLibraryPage() {
     null,
   );
 
+  // 添加分享状态管理
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
   // Handle Open Reader
   const handleOpenReader = (item: ContentItemPublic) => {
     router.push(`/content-library/reader/${item.id}`);
+  };
+
+  // Handle Share
+  const handleShare = (item: ContentItemPublic) => {
+    setSelectedItem(item);
+    setIsShareModalOpen(true);
   };
 
   // Handle Download
@@ -89,6 +100,7 @@ export default function ContentLibraryPage() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          credentials: "include",
         },
       );
 
@@ -144,6 +156,7 @@ export default function ContentLibraryPage() {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
+          credentials: "include",
         });
 
         if (!response.ok) {
@@ -388,17 +401,28 @@ export default function ContentLibraryPage() {
                         <BookOpen className="h-4 w-4 mr-2" />
                         Open Reader
                       </Button>
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => handleDownload(selectedItem)}
-                        disabled={
-                          selectedItem.processing_status !== "completed"
-                        }
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </Button>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => handleDownload(selectedItem)}
+                          disabled={
+                            selectedItem.processing_status !== "completed"
+                          }
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleShare(selectedItem)}
+                          disabled={
+                            selectedItem.processing_status !== "completed"
+                          }
+                        >
+                          <Share2 className="h-4 w-4 mr-2" />
+                          Share
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -414,6 +438,24 @@ export default function ContentLibraryPage() {
           </div>
         </div>
       </div>
+
+      {/* 分享弹窗 */}
+      {selectedItem && (
+        <ShareContentModal
+          open={isShareModalOpen}
+          onOpenChange={setIsShareModalOpen}
+          contentItem={{
+            id: selectedItem.id,
+            title: selectedItem.title || "Untitled",
+            content_text: selectedItem.summary,
+            user_id: selectedItem.user_id,
+            type: selectedItem.type,
+            processing_status: selectedItem.processing_status,
+            created_at: selectedItem.created_at,
+            updated_at: selectedItem.updated_at,
+          }}
+        />
+      )}
     </MainLayout>
   );
 }

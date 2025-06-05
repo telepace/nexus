@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus UI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: white;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #f9fafb;
+    }
+
+    .header h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: #6b7280;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .content {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .notification {
+      text-align: center;
+      padding: 16px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 500;
+      width: 100%;
+    }
+
+    .notification.success { background: #10b981; }
+    .notification.error { background: #ef4444; }
+    .notification.warning { background: #f59e0b; }
+    .notification.info { background: #3b82f6; }
+
+    .loading {
+      text-align: center;
+      color: #6b7280;
+    }
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid #e5e7eb;
+      border-top: 2px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .text-content {
+      line-height: 1.6;
+      color: #374151;
+      white-space: pre-wrap;
+      text-align: left;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      padding: 8px;
+      background: #f9fafb;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header hidden" id="header">
+      <h3 id="title">Nexus</h3>
+      <button class="close-btn" id="closeBtn">×</button>
+    </div>
+    
+    <div class="content" id="content">
+      <div class="loading hidden" id="loading">
+        <div class="spinner"></div>
+        <div id="loadingMessage">加载中...</div>
+      </div>
+      
+      <div class="notification hidden" id="notification">
+        <div id="notificationMessage"></div>
+      </div>
+      
+      <div class="text-content hidden" id="textContent"></div>
+    </div>
+  </div>
+
+  <script>
+    // UI元素引用
+    const header = document.getElementById('header');
+    const title = document.getElementById('title');
+    const closeBtn = document.getElementById('closeBtn');
+    const content = document.getElementById('content');
+    const loading = document.getElementById('loading');
+    const loadingMessage = document.getElementById('loadingMessage');
+    const notification = document.getElementById('notification');
+    const notificationMessage = document.getElementById('notificationMessage');
+    const textContent = document.getElementById('textContent');
+
+    // 隐藏所有内容
+    function hideAll() {
+      loading.classList.add('hidden');
+      notification.classList.add('hidden');
+      textContent.classList.add('hidden');
+      header.classList.add('hidden');
+    }
+
+    // 显示通知
+    function showNotification(message, type) {
+      hideAll();
+      notification.className = `notification ${type}`;
+      notificationMessage.textContent = message;
+      notification.classList.remove('hidden');
+    }
+
+    // 显示加载
+    function showLoading(message) {
+      hideAll();
+      loadingMessage.textContent = message;
+      loading.classList.remove('hidden');
+    }
+
+    // 显示内容
+    function showContent(titleText, contentText) {
+      hideAll();
+      header.classList.remove('hidden');
+      title.textContent = titleText;
+      textContent.textContent = contentText;
+      textContent.classList.remove('hidden');
+      
+      // 调整iframe大小
+      parent.postMessage({
+        type: 'resize',
+        data: { width: 500, height: 400 }
+      }, '*');
+    }
+
+    // 关闭按钮事件
+    closeBtn.addEventListener('click', () => {
+      parent.postMessage({ type: 'close' }, '*');
+    });
+
+    // 监听来自父页面的消息
+    window.addEventListener('message', (event) => {
+      const { type, data } = event.data;
+      
+      switch (type) {
+        case 'notification':
+          showNotification(data.message, data.type);
+          break;
+        case 'loading':
+          showLoading(data.message);
+          break;
+        case 'content':
+          showContent(data.title, data.content);
+          break;
+      }
+    });
+
+    // 通知父页面iframe已准备就绪
+    parent.postMessage({ type: 'ready' }, '*');
+  </script>
+</body>
+</html> 

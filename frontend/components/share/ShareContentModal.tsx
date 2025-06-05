@@ -24,26 +24,11 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast"; // Assuming useToast exists for sonner
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const copyToClipboard = require("copy-to-clipboard");
-import { client } from "@/app/openapi-client/index";
-
-// 临时定义缺失的类型
-interface ContentItemPublic {
-  id: string;
-  title: string;
-  content?: string;
-  content_text?: string;
-  user_id?: string;
-  type?: string;
-  processing_status?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-interface ContentShareCreate {
-  expires_at?: string;
-  password?: string;
-  max_access_count?: number | null;
-}
+import { contentCreateShareLinkEndpoint } from "@/app/openapi-client/index";
+import {
+  ContentItemPublic,
+  ContentShareCreate,
+} from "@/app/openapi-client/index";
 
 interface ShareContentModalProps {
   open: boolean;
@@ -101,29 +86,40 @@ export const ShareContentModal: React.FC<ShareContentModalProps> = ({
     };
 
     try {
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      const response = await (client as any).createShareLink(
-        contentItem.id,
-        shareCreateData,
-      );
+      const response = await contentCreateShareLinkEndpoint({
+        path: {
+          id: contentItem.id,
+        },
+        body: shareCreateData,
+      });
 
-      if (response.share_token && response.id) {
-        const shareUrl = `${window.location.origin}/share/${response.share_token}`;
+      // Response should be ContentSharePublic type
+      if (
+        response &&
+        typeof response === "object" &&
+        "share_token" in response &&
+        "id" in response
+      ) {
+        const shareResponse = response as { share_token: string; id: string };
+        const shareToken = shareResponse.share_token;
+        const shareUrl = `${window.location.origin}/share/${shareToken}`;
         setGeneratedLink(shareUrl);
-        setShareToken(response.share_token);
+        setShareToken(shareToken);
         toast({ title: "Success", description: "Share link generated!" });
       } else {
         throw new Error(
           "Failed to generate share link: Invalid response from server.",
         );
       }
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to generate share link:", err);
-      const errorMsg =
-        err.data?.detail ||
-        err.message ||
-        "Failed to generate share link. Please try again.";
+      let errorMsg = "Failed to generate share link. Please try again.";
+
+      if (err && typeof err === "object") {
+        const error = err as { data?: { detail?: string }; message?: string };
+        errorMsg = error.data?.detail || error.message || errorMsg;
+      }
+
       setError(errorMsg);
       toast({ title: "Error", description: errorMsg, variant: "destructive" });
     } finally {
