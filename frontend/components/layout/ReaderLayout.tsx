@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, createContext, useContext } from "react";
 import { AppSidebar } from "@/components/layout/AppSidebar";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { SettingsPanel } from "@/components/layout/SettingsPanel";
 import { AddContentModal } from "@/components/layout/AddContentModal";
 import { LLMAnalysisSidebar } from "@/components/ui/llm-analysis-sidebar";
@@ -44,20 +44,22 @@ export default function ReaderLayout({
         } as React.CSSProperties
       }
     >
-      <div className="flex min-h-screen bg-background">
+      <div
+        className="flex min-h-screen bg-background max-w-none w-screen"
+      >
         {/* 左侧边栏 */}
         <AppSidebar
           onSettingsClick={() => setSettingsOpen(true)}
           onAddContentClick={() => setAddContentOpen(true)}
         />
 
-        {/* 主内容区域和右侧sidebar的容器 - 平分剩余空间 */}
-        <div className="flex-1 flex">
+        {/* 主内容区域和右侧sidebar的容器 - 强制占满剩余宽度 */}
+        <div className="flex-1 flex w-full min-w-0">
           {/* 主内容区域 - 占一半 */}
           <ReaderContext.Provider value={{ onContentChange: handleContentChange }}>
-            <SidebarInset className="flex-1">
+            <div className="flex-1 flex flex-col bg-background">
               {children}
-            </SidebarInset>
+            </div>
           </ReaderContext.Provider>
 
           {/* 右侧 LLM 分析边栏 - 占一半 */}

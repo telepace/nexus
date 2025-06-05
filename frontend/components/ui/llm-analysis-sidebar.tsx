@@ -10,7 +10,7 @@ import { PromptCommandDialog } from "@/components/ui/prompt-command-dialog";
 import { useLLMAnalysisStore } from "@/lib/stores/llm-analysis-store";
 import { useToast } from "@/hooks/use-toast";
 import { Prompt } from "@/lib/api/services/prompts";
-
+ 
 interface LLMAnalysisSidebarProps {
   contentId: string;
   className?: string;
@@ -166,9 +166,9 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
   }
 
   return (
-    <div className={`h-full bg-sidebar text-sidebar-foreground border-l flex flex-col ${className}`}>
+    <div className={`h-full p-2 bg-sidebar text-sidebar-foreground border-l flex flex-col ${className}`}>
       {/* Header - 与 AppSidebar 高度一致 */}
-      <div className="flex h-header shrink-0 items-center justify-between gap-2 border-b px-4">
+      <div className="flex h-header shrink-0 items-center justify-between gap-2 border-b px-2">
         <div className="flex items-center gap-2">
           <Brain className="h-5 w-5 text-primary" />
           <h2 className="text-base font-semibold">AI 分析</h2>

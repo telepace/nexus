@@ -2,23 +2,19 @@
 
 import { useEffect, useState, memo, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   ArrowLeft,
-  BookOpen,
   Loader2,
   AlertCircle,
   ExternalLink,
   Download,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
-import { LLMAnalysisPanel } from "@/components/ui/llm-analysis-panel";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
-import { Badge } from "@/components/ui/badge";
 
 interface ContentDetail {
   id: string;
@@ -422,44 +418,34 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
 
       {/* Main Content - 现在占据剩余空间 */}
       <div className="flex-1 p-6 min-h-0">
-        <Card className="h-full flex flex-col">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              Content
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 min-h-0">
-            <Tabs
-              value={activeTab}
-              onValueChange={setActiveTab}
-              className="h-full flex flex-col"
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="processed">Processed</TabsTrigger>
-                <TabsTrigger value="original">Original</TabsTrigger>
-              </TabsList>
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="h-full flex flex-col"
+        >
+          <TabsList className="grid w-full max-w-[12rem] grid-cols-2">
+            <TabsTrigger value="processed">Processed</TabsTrigger>
+            <TabsTrigger value="original">Original</TabsTrigger>
+          </TabsList>
 
-              <TabsContent value="processed" className="flex-1 mt-4 min-h-0">
-                <ContentRenderer
-                  content={content}
-                  type="processed"
-                  markdownContent={markdownContent}
-                  contentId={contentId}
-                />
-              </TabsContent>
+          <TabsContent value="processed" className="flex-1 mt-4 min-h-0">
+            <ContentRenderer
+              content={content}
+              type="processed"
+              markdownContent={markdownContent}
+              contentId={contentId}
+            />
+          </TabsContent>
 
-              <TabsContent value="original" className="flex-1 mt-4 min-h-0">
-                <ContentRenderer
-                  content={content}
-                  type="original"
-                  sourceUri={content.source_uri}
-                  markdownContent={markdownContent}
-                />
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+          <TabsContent value="original" className="flex-1 mt-4 min-h-0">
+            <ContentRenderer
+              content={content}
+              type="original"
+              sourceUri={content.source_uri}
+              markdownContent={markdownContent}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

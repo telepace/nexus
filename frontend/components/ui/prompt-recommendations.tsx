@@ -30,8 +30,7 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Sparkles className="h-4 w-4 text-primary" />
-        <span>选择一个分析类型来开始 AI 分析</span>
+        
         {hasUsedPrompts && !showAllPrompts && (
           <span className="text-xs bg-muted px-2 py-1 rounded-full">
             {availableCount} 可用
@@ -49,17 +48,17 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
               size="sm"
               onClick={() => onPromptClick(recommendation)}
               disabled={disabled || isGenerating}
-              className={`justify-start h-auto p-4 text-left hover:bg-muted/50 transition-all duration-200 ${
+              className={`justify-start h-auto p-2.5 text-left hover:bg-muted/50 transition-all duration-200 ${
                 isUsed ? "opacity-70 border-dashed" : "hover:border-primary/50"
               }`}
             >
               <div className="flex items-center gap-3 w-full">
-                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <div className="flex-shrink-0 w-4 h-4 rounded-lg bg-primary/10 flex items-center justify-center">
                   <span className="text-lg">{recommendation.icon}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-sm text-foreground">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-xs text-foreground">
                       {recommendation.name}
                     </span>
                     {isUsed && (
@@ -71,9 +70,6 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
                       <Loader2 className="h-3 w-3 animate-spin text-primary" />
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {recommendation.description}
-                  </p>
                 </div>
               </div>
             </Button>
