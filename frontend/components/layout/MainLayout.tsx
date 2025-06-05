@@ -28,7 +28,7 @@ export default function MainLayout({
       defaultOpen={true}
       style={
         {
-          "--sidebar-width": "240px", // 展开时的宽度，比默认的280px要窄
+          "--sidebar-width": "240px",
           "--sidebar-width-icon": "4rem", // 64px，相当于原来的宽度 + pr-4 (16px)
         } as React.CSSProperties
       }

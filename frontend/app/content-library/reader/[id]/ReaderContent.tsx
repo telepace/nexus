@@ -411,9 +411,7 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-lg font-semibold">
-          {content.title || "Untitled"}
-        </h1>
+        <h1 className="text-lg font-semibold">{content.title || "Untitled"}</h1>
       </div>
 
       {/* Main Content - 现在占据剩余空间 */}

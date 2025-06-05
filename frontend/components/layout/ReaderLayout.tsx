@@ -44,9 +44,7 @@ export default function ReaderLayout({
         } as React.CSSProperties
       }
     >
-      <div
-        className="flex min-h-screen bg-background max-w-none w-screen"
-      >
+      <div className="flex min-h-screen bg-background max-w-none w-screen">
         {/* 左侧边栏 */}
         <AppSidebar
           onSettingsClick={() => setSettingsOpen(true)}
@@ -54,16 +52,16 @@ export default function ReaderLayout({
         />
 
         {/* 主内容区域和右侧sidebar的容器 - 强制占满剩余宽度 */}
-        <div className="flex-1 flex w-full min-w-0">
-          {/* 主内容区域 - 占一半 */}
+        <div className="flex-1 flex w-full min-w-0 h-screen">
+          {/* 主内容区域 - 占一半，独立滚动 */}
           <ReaderContext.Provider value={{ onContentChange: handleContentChange }}>
-            <div className="flex-1 flex flex-col bg-background">
+            <div className="flex-1 flex flex-col bg-background overflow-auto">
               {children}
             </div>
           </ReaderContext.Provider>
 
-          {/* 右侧 LLM 分析边栏 - 占一半 */}
-          <div className="flex-1">
+          {/* 右侧 LLM 分析边栏 - 占一半，独立滚动 */}
+          <div className="flex-1 overflow-auto">
             <LLMAnalysisSidebar
               contentId={contentId}
               contentText={contentText}
@@ -85,4 +83,4 @@ export default function ReaderLayout({
       </div>
     </SidebarProvider>
   );
-} 
+}

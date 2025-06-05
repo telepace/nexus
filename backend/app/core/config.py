@@ -56,8 +56,11 @@ class Settings(BaseSettings):
     TEST_MODE: bool = os.environ.get("TEST_MODE", "").lower() == "true"
 
     APP_SYMMETRIC_ENCRYPTION_KEY: str = Field(
-        default_factory=lambda: Fernet.generate_key().decode() if os.environ.get("TESTING", "").lower() == "true" or os.environ.get("DOCS_GENERATION", "").lower() == "true" else "",
-        description="Symmetric encryption key for password encryption (Fernet key)"
+        default_factory=lambda: Fernet.generate_key().decode()
+        if os.environ.get("TESTING", "").lower() == "true"
+        or os.environ.get("DOCS_GENERATION", "").lower() == "true"
+        else "",
+        description="Symmetric encryption key for password encryption (Fernet key)",
     )
 
     # Optional: Add a validator if Fernet key format is strict

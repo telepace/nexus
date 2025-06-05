@@ -10,7 +10,7 @@ import { PromptCommandDialog } from "@/components/ui/prompt-command-dialog";
 import { useLLMAnalysisStore } from "@/lib/stores/llm-analysis-store";
 import { useToast } from "@/hooks/use-toast";
 import { Prompt } from "@/lib/api/services/prompts";
- 
+
 interface LLMAnalysisSidebarProps {
   contentId: string;
   className?: string;
@@ -154,7 +154,9 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
 
   if (isLoadingPrompts) {
     return (
-      <div className={`h-full bg-sidebar text-sidebar-foreground border-l flex flex-col ${className}`}>
+      <div
+        className={`h-full bg-sidebar text-sidebar-foreground border-l flex flex-col ${className}`}
+      >
         <div className="flex items-center justify-center h-full">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -166,7 +168,9 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
   }
 
   return (
-    <div className={`h-full p-2 bg-sidebar text-sidebar-foreground border-l flex flex-col ${className}`}>
+    <div
+      className={`h-full p-2 bg-sidebar text-sidebar-foreground border-l flex flex-col ${className}`}
+    >
       {/* Header - 与 AppSidebar 高度一致 */}
       <div className="flex h-header shrink-0 items-center justify-between gap-2 border-b px-2">
         <div className="flex items-center gap-2">
@@ -299,4 +303,4 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
       </div>
     </div>
   );
-}; 
+};

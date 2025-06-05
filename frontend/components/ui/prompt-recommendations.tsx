@@ -30,7 +30,6 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        
         {hasUsedPrompts && !showAllPrompts && (
           <span className="text-xs bg-muted px-2 py-1 rounded-full">
             {availableCount} 可用

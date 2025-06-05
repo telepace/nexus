@@ -11,7 +11,7 @@ interface ReaderPageProps {
 
 export default function ReaderPage({ params }: ReaderPageProps) {
   const [contentId, setContentId] = useState<string | null>(null);
-  
+
   // 解析参数
   useEffect(() => {
     params.then(({ id }) => {
@@ -31,7 +31,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
   }
 
   return (
-    <ReaderLayout 
+    <ReaderLayout
       contentId={contentId}
       contentText="" // 这里可以传入内容文本，或在 ReaderContent 中获取
     >

@@ -4,7 +4,6 @@ import { FC, useEffect } from "react";
 import { Brain, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LLMAnalysisCard } from "@/components/ui/llm-analysis-card";
 import { PromptRecommendations } from "@/components/ui/prompt-recommendations";
 import { PromptCommandDialog } from "@/components/ui/prompt-command-dialog";
@@ -155,7 +154,9 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
 
   if (isLoadingPrompts) {
     return (
-      <div className={`bg-sidebar border border-sidebar-border rounded-lg h-full flex flex-col ${className}`}>
+      <div
+        className={`bg-sidebar border border-sidebar-border rounded-lg h-full flex flex-col ${className}`}
+      >
         <div className="flex items-center justify-center flex-1">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -167,7 +168,9 @@ export const LLMAnalysisPanel: FC<LLMAnalysisPanelProps> = ({
   }
 
   return (
-    <div className={`bg-sidebar border border-sidebar-border rounded-lg h-full flex flex-col ${className}`}>
+    <div
+      className={`bg-sidebar border border-sidebar-border rounded-lg h-full flex flex-col ${className}`}
+    >
       {/* Header - 参考 SidebarHeader 样式 */}
       <div className="flex-shrink-0 pl-3 pb-4 pt-6">
         <div className="flex items-center justify-between gap-2">
