@@ -155,7 +155,7 @@ export function useAuth(): AuthContextType {
       // 设置cookie，支持 localhost 和 127.0.0.1
       const maxAge = 60 * 60 * 24 * 7; // 7天
       const cookieOptions = `path=/;max-age=${maxAge};SameSite=Lax`;
-      
+
       // 为当前域名设置 cookie
       document.cookie = `accessToken=${token};${cookieOptions}`;
       document.cookie = `accessToken_ext=${token};${cookieOptions}`;
@@ -202,7 +202,7 @@ export function useAuth(): AuthContextType {
       // 设置cookie，支持 localhost 和 127.0.0.1
       const maxAge = 60 * 60 * 24 * 7; // 7天
       const cookieOptions = `path=/;max-age=${maxAge};SameSite=Lax`;
-      
+
       // 为当前域名设置 cookie
       document.cookie = `accessToken=${token};${cookieOptions}`;
       document.cookie = `accessToken_ext=${token};${cookieOptions}`;

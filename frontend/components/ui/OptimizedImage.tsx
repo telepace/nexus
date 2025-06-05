@@ -33,8 +33,8 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   src,
   alt,
   className,
-  width,
-  height,
+  width = 800,
+  height = 600,
   fill = false,
   priority = false,
   quality = 75,
@@ -52,6 +52,10 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [currentSrc, setCurrentSrc] = useState(src);
+
+  // 计算图片尺寸
+  const imageWidth = width;
+  const imageHeight = height;
 
   const handleLoad = () => {
     setIsLoading(false);
@@ -91,9 +95,9 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   );
 
   // 选择容器元素类型
-  const ContainerElement = inline ? 'span' : 'div';
-  const containerClassName = inline 
-    ? "relative inline-block align-top" 
+  const ContainerElement = inline ? "span" : "div";
+  const containerClassName = inline
+    ? "relative inline-block align-top"
     : "relative inline-block";
 
   return (

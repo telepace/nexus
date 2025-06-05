@@ -42,11 +42,12 @@ export default function TestMarkdownPage() {
       <div className="bg-card rounded-lg border p-6">
         <h1 className="text-2xl font-bold mb-4">Markdown 图片渲染测试</h1>
         <p className="text-muted-foreground mb-6">
-          这个页面用于测试修复后的 markdown 图片渲染功能。请打开浏览器开发者工具查看是否还有 HTML 嵌套错误。
+          这个页面用于测试修复后的 markdown
+          图片渲染功能。请打开浏览器开发者工具查看是否还有 HTML 嵌套错误。
         </p>
-        
+
         <div className="border rounded-lg p-4">
-          <MarkdownRenderer 
+          <MarkdownRenderer
             content={testMarkdownWithImages}
             className="max-w-none"
           />
@@ -54,4 +55,4 @@ export default function TestMarkdownPage() {
       </div>
     </div>
   );
-} 
+}

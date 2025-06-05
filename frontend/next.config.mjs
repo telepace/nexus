@@ -10,45 +10,45 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: '**', // 允许所有HTTPS域名（开发环境）
+        protocol: "https",
+        hostname: "**", // 允许所有HTTPS域名（开发环境）
       },
       {
-        protocol: 'http',
-        hostname: 'localhost',
+        protocol: "http",
+        hostname: "localhost",
       },
       {
-        protocol: 'http',
-        hostname: '127.0.0.1',
+        protocol: "http",
+        hostname: "127.0.0.1",
       },
       {
-        protocol: 'http',
-        hostname: 'sm.nsddd.top', // 添加具体的域名
+        protocol: "http",
+        hostname: "sm.nsddd.top", // 添加具体的域名
       },
       {
-        protocol: 'https',
-        hostname: 'sm.nsddd.top',
+        protocol: "https",
+        hostname: "sm.nsddd.top",
       },
       // 添加其他常见的图片托管域名
       {
-        protocol: 'https',
-        hostname: '*.amazonaws.com',
+        protocol: "https",
+        hostname: "*.amazonaws.com",
       },
       {
-        protocol: 'https',
-        hostname: '*.cloudfront.net',
+        protocol: "https",
+        hostname: "*.cloudfront.net",
       },
       {
-        protocol: 'https',
-        hostname: '*.githubusercontent.com',
+        protocol: "https",
+        hostname: "*.githubusercontent.com",
       },
       {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
+        protocol: "https",
+        hostname: "images.unsplash.com",
       },
       {
-        protocol: 'https',
-        hostname: 'cdn.jsdelivr.net',
+        protocol: "https",
+        hostname: "cdn.jsdelivr.net",
       },
     ],
   },
