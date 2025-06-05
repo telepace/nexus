@@ -62,8 +62,8 @@ export default function ReaderLayout({
             </div>
           </ReaderContext.Provider>
 
-          {/* 右侧 LLM 分析边栏 - 占一半，独立滚动 */}
-          <div className="flex-1 overflow-auto">
+          {/* 右侧 LLM 分析边栏 - 占一半，固定高度不滚动，内部自己管理滚动 */}
+          <div className="flex-1">
             <LLMAnalysisSidebar
               contentId={contentId}
               contentText={contentText}

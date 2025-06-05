@@ -422,15 +422,10 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
       },
 
       getAvailablePrompts: () => {
-        const {
-          enabledPrompts,
-          disabledPrompts,
-          usedPromptIds,
-          showAllPrompts,
-        } = get();
-        return showAllPrompts
-          ? enabledPrompts.concat(disabledPrompts)
-          : enabledPrompts.filter((prompt) => !usedPromptIds.has(prompt.id));
+        const { enabledPrompts } = get();
+        // 返回所有enabled prompts，不再根据used状态过滤
+        // 保留used状态追踪机制，但不在UI层面隐藏已使用的prompts
+        return enabledPrompts;
       },
     }),
     {

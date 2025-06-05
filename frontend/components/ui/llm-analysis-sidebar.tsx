@@ -169,10 +169,10 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
 
   return (
     <div
-      className={`h-full p-2 bg-sidebar text-sidebar-foreground border-l flex flex-col ${className}`}
+      className={`h-full bg-sidebar text-sidebar-foreground border-l flex flex-col ${className}`}
     >
-      {/* Header - 与 AppSidebar 高度一致 */}
-      <div className="flex h-header shrink-0 items-center justify-between gap-2 border-b px-2">
+      {/* Header - 固定不缩放 */}
+      <div className="flex h-header shrink-0 items-center justify-between gap-2 border-b px-4">
         <div className="flex items-center gap-2">
           <Brain className="h-5 w-5 text-primary" />
           <h2 className="text-base font-semibold">AI 分析</h2>
@@ -190,79 +190,44 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
             onClick={handleClearAll}
             className="text-muted-foreground hover:text-destructive"
           >
-            <Trash2 className="h-4 w-4 mr-2" />
-            清空全部
+            <Trash2 className="h-4 w-4" />
           </Button>
         )}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-hidden px-4">
-          <ScrollArea className="h-full w-full">
-            <div className="space-y-4 pr-4">
-              {contentAnalyses.map((analysis) => (
-                <LLMAnalysisCard
-                  key={analysis.id}
-                  analysis={analysis}
-                  onToggleExpanded={toggleExpanded}
-                  onRemove={removeAnalysis}
-                  onRegenerate={handleRegenerate}
-                  onCopy={handleCopy}
-                />
-              ))}
+      {/* Content - 占据剩余空间，可滚动 */}
+      <div className="flex-1 min-h-0 overflow-auto px-4 py-4">
+        <div className="space-y-4">
+          {contentAnalyses.map((analysis) => (
+            <LLMAnalysisCard
+              key={analysis.id}
+              analysis={analysis}
+              onToggleExpanded={toggleExpanded}
+              onRemove={removeAnalysis}
+              onRegenerate={handleRegenerate}
+              onCopy={handleCopy}
+            />
+          ))}
 
-              {/* 空状态提示 */}
-              {contentAnalyses.length === 0 && !isGenerating && (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Brain className="h-16 w-16 mx-auto mb-6 opacity-30" />
-                  <p className="text-lg font-medium mb-2">还没有 AI 分析</p>
-                  <p className="text-sm">选择下方的分析类型或使用对话框开始</p>
-                </div>
-              )}
+          {/* 空状态提示 */}
+          {contentAnalyses.length === 0 && !isGenerating && (
+            <div className="text-center py-12 text-muted-foreground">
+              <Brain className="h-16 w-16 mx-auto mb-6 opacity-30" />
+              <p className="text-lg font-medium mb-2">还没有 AI 分析</p>
+              <p className="text-sm">选择下方的分析类型或使用对话框开始</p>
             </div>
-          </ScrollArea>
+          )}
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="px-4 pb-4">
-        <div className="space-y-4">
+      {/* Footer - 固定不缩放 */}
+      <div className="shrink-0 px-4 pb-4">
+        <div className="space-y-1">
           {/* 启用的 Prompt 推荐 */}
           {enabledPrompts.length > 0 && (
-            <div className="border border-border rounded-lg bg-card">
-              <div className="p-4 border-b border-border">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-foreground">
-                    推荐分析
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    {usedPromptIds.size > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={resetUsedPrompts}
-                        className="text-xs text-muted-foreground hover:text-foreground h-7 px-2"
-                      >
-                        重置
-                      </Button>
-                    )}
-                    {usedPromptIds.size > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={toggleShowAllPrompts}
-                        className="text-xs text-muted-foreground hover:text-foreground h-7 px-2"
-                      >
-                        {showAllPrompts
-                          ? "隐藏已用"
-                          : `显示全部 (${usedPromptIds.size}个已隐藏)`}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="p-4">
+            <div className="bg-transparent">
+              {/* 直接使用滚动容器，移除多余的padding */}
+              <div className="max-h-[160px] overflow-y-auto">
                 <PromptRecommendations
                   recommendations={getAvailablePrompts().map((prompt) => ({
                     id: prompt.id,
@@ -278,26 +243,19 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
                   }}
                   isGenerating={isGenerating}
                   disabled={isGenerating}
-                  usedPromptIds={usedPromptIds}
-                  showAllPrompts={showAllPrompts}
                 />
               </div>
             </div>
           )}
 
           {/* 对话框 */}
-          <div className="border border-border rounded-lg bg-card">
-            <div className="p-4 border-b border-border">
-              <h3 className="text-sm font-medium text-foreground">AI 对话</h3>
-            </div>
-            <div className="p-4">
-              <PromptCommandDialog
-                availablePrompts={disabledPrompts}
-                isExecuting={isGenerating}
-                onPromptSelect={handlePromptSelect}
-                onExecute={handleExecute}
-              />
-            </div>
+          <div className="bg-transparent">
+            <PromptCommandDialog
+              availablePrompts={disabledPrompts}
+              isExecuting={isGenerating}
+              onPromptSelect={handlePromptSelect}
+              onExecute={handleExecute}
+            />
           </div>
         </div>
       </div>

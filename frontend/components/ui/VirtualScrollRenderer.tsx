@@ -280,7 +280,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
       onScroll={handleScroll}
     >
       {/* Debug info */}
-      <div className="sticky top-0 z-20 bg-blue-100 dark:bg-blue-900 text-xs p-2 border-b">
+      <div className="sticky top-0 z-20 bg-neutral-100 dark:bg-neutral-900 text-xs p-2 border-b">
         <div>
           Chunks loaded: {chunks?.length || 0} | Total: {totalChunks} | Has
           more: {hasMore ? "Yes" : "No"}

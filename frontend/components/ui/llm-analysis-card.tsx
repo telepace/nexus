@@ -15,8 +15,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { LLMAnalysis } from "@/lib/stores/llm-analysis-store";
-import { formatDistance } from "date-fns";
-import { zhCN } from "date-fns/locale";
 
 interface LLMAnalysisCardProps {
   analysis: LLMAnalysis;
@@ -37,22 +35,20 @@ const getAnalysisIcon = (type: LLMAnalysis["type"]) => {
     case "insights":
       return "💡";
     default:
-      return "🤖";
+      return "";
   }
 };
 
 const getAnalysisColor = (type: LLMAnalysis["type"]) => {
+  // 保留类型判断逻辑，但暂时统一使用灰色主题
+  // TODO: 未来可能需要根据类型返回不同颜色
   switch (type) {
     case "summary":
-      return "bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800";
     case "key_points":
-      return "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800";
     case "questions":
-      return "bg-purple-50 border-purple-200 dark:bg-purple-950 dark:border-purple-800";
     case "insights":
-      return "bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800";
     default:
-      return "bg-gray-50 border-gray-200 dark:bg-gray-950 dark:border-gray-800";
+      return "bg-neutral-50 border-neutral-200 dark:bg-neutral-950 dark:border-neutral-800";
   }
 };
 
@@ -74,12 +70,12 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
   return (
     <Card
       className={cn(
-        "transition-all duration-200 hover:shadow-md",
+        "py-2 rounded-sm transition-all duration-200 shadow-sm hover:shadow-lg ",
         getAnalysisColor(analysis.type),
-        analysis.isExpanded ? "shadow-sm" : "",
+        analysis.isExpanded ? "shadow-md" : "",
       )}
     >
-      <CardHeader className="pb-3">
+      <CardHeader>
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
@@ -139,22 +135,15 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
           </div>
         </div>
 
-        {/* 时间戳和状态 */}
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-xs text-muted-foreground">
-            {formatDistance(new Date(analysis.created_at), new Date(), {
-              addSuffix: true,
-              locale: zhCN,
-            })}
-          </span>
-
-          {analysis.error && (
+        {/* 状态显示 - 移除时间戳显示 */}
+        {analysis.error && (
+          <div className="flex items-center gap-2 mt-1">
             <Badge variant="destructive" className="text-xs">
               <AlertCircle className="h-3 w-3 mr-1" />
               错误
             </Badge>
-          )}
-        </div>
+          </div>
+        )}
       </CardHeader>
 
       {analysis.isExpanded && (
@@ -193,8 +182,8 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
                 </div>
               </div>
 
-              {/* 使用的prompt */}
-              {analysis.prompt && (
+              {/* 使用的prompt - 暂时隐藏，未来可能启用 */}
+              {/* {analysis.prompt && (
                 <details className="mt-4">
                   <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
                     查看使用的提示词
@@ -203,7 +192,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
                     {analysis.prompt}
                   </div>
                 </details>
-              )}
+              )} */}
             </div>
           )}
         </CardContent>
