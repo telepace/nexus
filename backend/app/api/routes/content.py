@@ -590,22 +590,27 @@ async def analyze_content_stream(
                 ) as response:
                     if response.status != 200:
                         # 如果LiteLLM不可用，提供模拟响应
-                        async for chunk in _send_mock_analysis_response(system_prompt, user_prompt):
+                        async for chunk in _send_mock_analysis_response(system_prompt):
                             yield chunk
                         return
 
                     # Stream the response
-                    async for chunk in response.content.iter_chunked(1024):
-                        if chunk:
+                    async for chunk_bytes in response.content.iter_chunked(1024):
+                        if chunk_bytes:
                             # Forward the chunk as-is (LiteLLM sends SSE format)
-                            yield chunk.decode("utf-8", errors="ignore")
+                            chunk_str: str = chunk_bytes.decode(
+                                "utf-8", errors="ignore"
+                            )
+                            yield chunk_str
 
         except Exception:
             # 当LiteLLM服务不可用时，发送模拟分析响应
-            async for chunk in _send_mock_analysis_response(system_prompt, user_prompt):
+            async for chunk in _send_mock_analysis_response(system_prompt):
                 yield chunk
 
-    async def _send_mock_analysis_response(system_prompt: str, user_prompt: str) -> AsyncGenerator[str, None]:
+    async def _send_mock_analysis_response(
+        system_prompt: str,
+    ) -> AsyncGenerator[str, None]:
         """发送模拟的分析响应（当LiteLLM不可用时）"""
         import asyncio
 
@@ -627,14 +632,8 @@ async def analyze_content_stream(
 
         # 模拟流式响应
         words = mock_analysis.split()
-        for i, word in enumerate(words):
-            chunk_data = {
-                "choices": [{
-                    "delta": {
-                        "content": word + " "
-                    }
-                }]
-            }
+        for _, word in enumerate(words):
+            chunk_data = {"choices": [{"delta": {"content": word + " "}}]}
             yield f"data: {json.dumps(chunk_data)}\n\n"
             await asyncio.sleep(0.05)  # 模拟真实的流式延迟
 

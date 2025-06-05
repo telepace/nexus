@@ -10,12 +10,12 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: '**', // 允许所有HTTPS域名
+        protocol: "https",
+        hostname: "**", // 允许所有HTTPS域名
       },
       {
-        protocol: 'http',
-        hostname: '**', // 允许所有HTTP域名（开发环境）
+        protocol: "http",
+        hostname: "**", // 允许所有HTTP域名（开发环境）
       },
     ],
     // 对于无法访问的图片源，不进行优化处理

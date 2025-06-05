@@ -24,13 +24,13 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  AlertCircle, 
-  LockIcon, 
-  EyeIcon, 
-  FileText, 
+import {
+  AlertCircle,
+  LockIcon,
+  EyeIcon,
+  FileText,
   Calendar,
-  ExternalLink 
+  ExternalLink,
 } from "lucide-react";
 import Link from "next/link"; // For a link back to homepage or login
 
@@ -250,7 +250,7 @@ const SharedContentPage = () => {
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
                 {contentItem.title || "Untitled Content"}
               </h1>
-              
+
               <div className="flex flex-wrap items-center gap-3 mb-4">
                 {contentItem.type && (
                   <Badge variant="outline" className="capitalize">
@@ -259,8 +259,12 @@ const SharedContentPage = () => {
                   </Badge>
                 )}
                 {contentItem.processing_status && (
-                  <Badge 
-                    variant={contentItem.processing_status === "completed" ? "default" : "secondary"}
+                  <Badge
+                    variant={
+                      contentItem.processing_status === "completed"
+                        ? "default"
+                        : "secondary"
+                    }
                   >
                     {contentItem.processing_status}
                   </Badge>
@@ -276,9 +280,9 @@ const SharedContentPage = () => {
               {contentItem.source_uri && (
                 <div className="flex items-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
                   <ExternalLink className="h-3 w-3 mr-1" />
-                  <a 
-                    href={contentItem.source_uri} 
-                    target="_blank" 
+                  <a
+                    href={contentItem.source_uri}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="truncate max-w-md"
                   >
@@ -287,11 +291,9 @@ const SharedContentPage = () => {
                 </div>
               )}
             </div>
-            
+
             <Button variant="outline" asChild size="sm">
-              <Link href="/">
-                回到首页
-              </Link>
+              <Link href="/">回到首页</Link>
             </Button>
           </div>
         </div>
@@ -321,9 +323,7 @@ const SharedContentPage = () => {
             This content was shared via Nexus
           </p>
           <Button variant="outline" asChild>
-            <Link href="/">
-              Explore Nexus
-            </Link>
+            <Link href="/">Explore Nexus</Link>
           </Button>
         </div>
       </div>

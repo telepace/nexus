@@ -3,11 +3,10 @@
 import {
   contentListContentItemsEndpoint,
   contentGetContentItemEndpoint,
-  contentCreateContentItemEndpoint,
   itemsDeleteItem,
   itemsCreateItem,
 } from "@/app/openapi-client/index";
-import { ContentItemPublic, ContentItemCreate } from "@/app/openapi-client/index";
+import { ContentItemPublic } from "@/app/openapi-client/index";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -179,7 +178,7 @@ export async function removeItem(id: string) {
     // 处理响应结构
     if (response && typeof response === "object") {
       const responseData = response as DataResponse;
-      
+
       if (
         responseData &&
         responseData.meta &&
@@ -246,7 +245,7 @@ export async function addItem(
         description,
       },
     });
-    
+
     console.log("添加物品API响应:", response);
 
     // 清除缓存以便重新加载
@@ -263,7 +262,10 @@ export async function addItem(
       // 检查是否有成功消息
       let successMessage = "物品添加成功";
       const responseData = response as DataResponse;
-      if (responseData.meta?.message && typeof responseData.meta.message === "string") {
+      if (
+        responseData.meta?.message &&
+        typeof responseData.meta.message === "string"
+      ) {
         successMessage = responseData.meta.message;
       }
 

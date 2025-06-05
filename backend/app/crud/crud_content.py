@@ -309,14 +309,22 @@ def get_content_chunks(
     Get content chunks with pagination, using correct SQLModel syntax.
     """
     # Get total count first
-    total_count_statement = sqlmodel_select(func.count(ContentChunk.id)).where(ContentChunk.content_item_id == content_item_id)
+    total_count_statement = sqlmodel_select(func.count(ContentChunk.id)).where(
+        ContentChunk.content_item_id == content_item_id
+    )
     total_count = session.exec(total_count_statement).one() or 0
 
     # Calculate offset for pagination
     offset = (page - 1) * size
 
     # Get chunks with pagination using the same pattern as get_content_items_sync
-    chunks_statement = sqlmodel_select(ContentChunk).where(ContentChunk.content_item_id == content_item_id).order_by(ContentChunk.chunk_index).offset(offset).limit(size)
+    chunks_statement = (
+        sqlmodel_select(ContentChunk)
+        .where(ContentChunk.content_item_id == content_item_id)
+        .order_by(ContentChunk.chunk_index)
+        .offset(offset)
+        .limit(size)
+    )
     chunks_result = session.exec(chunks_statement)
     chunks = chunks_result.all()
 
@@ -339,17 +347,26 @@ def get_content_chunks_summary(
     """
     # Get total count of chunks using SQLModel syntax
     total_chunks = (
-        session.exec(select(func.count(ContentChunk.id)).where(ContentChunk.content_item_id == content_item_id)).scalar() or 0
+        session.exec(
+            select(func.count(ContentChunk.id)).where(
+                ContentChunk.content_item_id == content_item_id
+            )
+        ).scalar()
+        or 0
     )
 
     # Calculate total word count and character count
     word_count_result = session.exec(
-        select(func.sum(ContentChunk.word_count)).where(ContentChunk.content_item_id == content_item_id)
+        select(func.sum(ContentChunk.word_count)).where(
+            ContentChunk.content_item_id == content_item_id
+        )
     ).scalar()
     total_word_count = word_count_result or 0
 
     char_count_result = session.exec(
-        select(func.sum(ContentChunk.char_count)).where(ContentChunk.content_item_id == content_item_id)
+        select(func.sum(ContentChunk.char_count)).where(
+            ContentChunk.content_item_id == content_item_id
+        )
     ).scalar()
     total_char_count = char_count_result or 0
 

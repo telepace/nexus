@@ -3,7 +3,10 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ShareContentModal } from "./ShareContentModal";
 import { contentCreateShareLinkEndpoint } from "@/app/openapi-client/index";
-import { ContentItemPublic, ContentSharePublic } from "@/app/openapi-client/index";
+import {
+  ContentItemPublic,
+  ContentSharePublic,
+} from "@/app/openapi-client/index";
 import { Toaster } from "@/components/ui/sonner";
 
 // Mock the API client

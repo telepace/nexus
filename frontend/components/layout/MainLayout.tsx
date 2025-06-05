@@ -7,12 +7,12 @@ import { SettingsPanel } from "@/components/layout/SettingsPanel";
 import { AddContentModal } from "@/components/layout/AddContentModal";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { RefreshCw, Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -40,15 +40,15 @@ export default function MainLayout({
   // 同步登录状态
   const handleSyncAuth = async () => {
     if (isSyncing) return;
-    
+
     setIsSyncing(true);
     try {
       // 检查是否有扩展token
       const checkExtensionToken = () => {
-        const cookies = document.cookie.split(';');
+        const cookies = document.cookie.split(";");
         for (const cookie of cookies) {
-          const [name, value] = cookie.trim().split('=');
-          if (name === 'accessToken_ext' && value) {
+          const [name, value] = cookie.trim().split("=");
+          if (name === "accessToken_ext" && value) {
             return value;
           }
         }
@@ -102,7 +102,9 @@ export default function MainLayout({
                   <div className="flex items-center gap-2 p-2">
                     <UserAvatar user={user} size="sm" />
                     <div className="flex-1 text-sm">
-                      <div className="font-medium">{user.full_name || "User"}</div>
+                      <div className="font-medium">
+                        {user.full_name || "User"}
+                      </div>
                       <div className="text-xs text-muted-foreground truncate">
                         {user.email}
                       </div>
@@ -113,9 +115,14 @@ export default function MainLayout({
                     <Settings className="mr-2 h-4 w-4" />
                     Settings
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleSyncAuth} disabled={isSyncing}>
-                    <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                    {isSyncing ? '同步中...' : '同步登录状态'}
+                  <DropdownMenuItem
+                    onClick={handleSyncAuth}
+                    disabled={isSyncing}
+                  >
+                    <RefreshCw
+                      className={`mr-2 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
+                    />
+                    {isSyncing ? "同步中..." : "同步登录状态"}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => logout()}>
@@ -134,8 +141,10 @@ export default function MainLayout({
                   disabled={isSyncing || isLoading}
                   className="h-6 px-2 text-xs"
                 >
-                  <RefreshCw className={`mr-1 h-3 w-3 ${(isSyncing || isLoading) ? 'animate-spin' : ''}`} />
-                  {isSyncing || isLoading ? '同步中' : '同步登录'}
+                  <RefreshCw
+                    className={`mr-1 h-3 w-3 ${isSyncing || isLoading ? "animate-spin" : ""}`}
+                  />
+                  {isSyncing || isLoading ? "同步中" : "同步登录"}
                 </Button>
               </div>
             )}

@@ -3,6 +3,7 @@
 import { useEffect, useState, memo, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -272,7 +273,7 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("processed"); // 默认选择processed
   const [contentId, setContentId] = useState<string | null>(null);
-  
+
   // 添加分享状态管理
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
@@ -440,7 +441,7 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
             </div>
           </div>
         </div>
-        
+
         {/* 添加右侧操作区域 */}
         <div className="flex items-center gap-2">
           {content?.processing_status === "completed" && (

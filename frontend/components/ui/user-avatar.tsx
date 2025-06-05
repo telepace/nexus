@@ -17,7 +17,7 @@ interface UserAvatarProps {
 
 const sizeClasses = {
   sm: "h-6 w-6",
-  md: "h-8 w-8", 
+  md: "h-8 w-8",
   lg: "h-12 w-12",
   xl: "h-32 w-32",
 };
@@ -25,15 +25,15 @@ const sizeClasses = {
 const fallbackTextSizes = {
   sm: "text-xs",
   md: "text-xs",
-  lg: "text-sm", 
+  lg: "text-sm",
   xl: "text-2xl",
 };
 
-export function UserAvatar({ 
-  user, 
-  size = "md", 
+export function UserAvatar({
+  user,
+  size = "md",
   className,
-  showFallback = true 
+  showFallback = true,
 }: UserAvatarProps) {
   // 获取用户名的首字母
   const getUserInitials = (user: User | null) => {
@@ -51,27 +51,31 @@ export function UserAvatar({
     const sizePixels = {
       sm: 24,
       md: 32,
-      lg: 48, 
+      lg: 48,
       xl: 128,
     };
 
     return (
-      <div className={cn(
-        sizeClasses[size],
-        "rounded-full overflow-hidden bg-gray-100 flex items-center justify-center",
-        className
-      )}>
-        <React.Suspense fallback={
-          <Avatar className={sizeClasses[size]}>
-            <AvatarFallback className={fallbackTextSizes[size]}>
-              {getUserInitials(user)}
-            </AvatarFallback>
-          </Avatar>
-        }>
+      <div
+        className={cn(
+          sizeClasses[size],
+          "rounded-full overflow-hidden bg-gray-100 flex items-center justify-center",
+          className,
+        )}
+      >
+        <React.Suspense
+          fallback={
+            <Avatar className={sizeClasses[size]}>
+              <AvatarFallback className={fallbackTextSizes[size]}>
+                {getUserInitials(user)}
+              </AvatarFallback>
+            </Avatar>
+          }
+        >
           <NiceAvatar
-            style={{ 
-              width: `${sizePixels[size]}px`, 
-              height: `${sizePixels[size]}px` 
+            style={{
+              width: `${sizePixels[size]}px`,
+              height: `${sizePixels[size]}px`,
             }}
             {...user.anime_avatar_config}
           />
@@ -84,14 +88,11 @@ export function UserAvatar({
   return (
     <Avatar className={cn(sizeClasses[size], className)}>
       {user?.avatar_url ? (
-        <AvatarImage 
-          src={user.avatar_url} 
-          alt={user.full_name || "User"} 
-        />
+        <AvatarImage src={user.avatar_url} alt={user.full_name || "User"} />
       ) : null}
       <AvatarFallback className={fallbackTextSizes[size]}>
         {getUserInitials(user)}
       </AvatarFallback>
     </Avatar>
   );
-} 
+}

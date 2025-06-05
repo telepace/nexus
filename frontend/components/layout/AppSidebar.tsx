@@ -34,7 +34,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useAuth } from "@/lib/auth";
@@ -89,15 +88,15 @@ export function AppSidebar({
   // 同步登录状态
   const handleSyncAuth = async () => {
     if (isSyncing) return;
-    
+
     setIsSyncing(true);
     try {
       // 检查是否有扩展token
       const checkExtensionToken = () => {
-        const cookies = document.cookie.split(';');
+        const cookies = document.cookie.split(";");
         for (const cookie of cookies) {
-          const [name, value] = cookie.trim().split('=');
-          if (name === 'accessToken_ext' && value) {
+          const [name, value] = cookie.trim().split("=");
+          if (name === "accessToken_ext" && value) {
             return value;
           }
         }
@@ -212,9 +211,14 @@ export function AppSidebar({
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleSyncAuth} disabled={isSyncing}>
-                    <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                    <span>{isSyncing ? '同步中...' : '同步登录状态'}</span>
+                  <DropdownMenuItem
+                    onClick={handleSyncAuth}
+                    disabled={isSyncing}
+                  >
+                    <RefreshCw
+                      className={`mr-2 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
+                    />
+                    <span>{isSyncing ? "同步中..." : "同步登录状态"}</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => logout()}>
@@ -228,18 +232,22 @@ export function AppSidebar({
                 <div className="flex items-center gap-3">
                   <UserAvatar user={user} size="md" showFallback={true} />
                   <div className="flex-1 text-sm">
-                    <div className="font-medium text-muted-foreground">未登录</div>
+                    <div className="font-medium text-muted-foreground">
+                      未登录
+                    </div>
                   </div>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleSyncAuth}
                   disabled={isSyncing || isLoading}
                   className="w-full"
                 >
-                  <RefreshCw className={`mr-2 h-3 w-3 ${(isSyncing || isLoading) ? 'animate-spin' : ''}`} />
-                  {isSyncing || isLoading ? '同步中...' : '同步登录状态'}
+                  <RefreshCw
+                    className={`mr-2 h-3 w-3 ${isSyncing || isLoading ? "animate-spin" : ""}`}
+                  />
+                  {isSyncing || isLoading ? "同步中..." : "同步登录状态"}
                 </Button>
               </div>
             )}

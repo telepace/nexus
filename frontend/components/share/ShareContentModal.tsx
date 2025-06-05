@@ -25,7 +25,10 @@ import { useToast } from "@/hooks/use-toast"; // Assuming useToast exists for so
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const copyToClipboard = require("copy-to-clipboard");
 import { contentCreateShareLinkEndpoint } from "@/app/openapi-client/index";
-import { ContentItemPublic, ContentShareCreate } from "@/app/openapi-client/index";
+import {
+  ContentItemPublic,
+  ContentShareCreate,
+} from "@/app/openapi-client/index";
 
 interface ShareContentModalProps {
   open: boolean;
@@ -91,8 +94,14 @@ export const ShareContentModal: React.FC<ShareContentModalProps> = ({
       });
 
       // Response should be ContentSharePublic type
-      if (response && typeof response === 'object' && 'share_token' in response && 'id' in response) {
-        const shareToken = (response as any).share_token as string;
+      if (
+        response &&
+        typeof response === "object" &&
+        "share_token" in response &&
+        "id" in response
+      ) {
+        const shareResponse = response as { share_token: string; id: string };
+        const shareToken = shareResponse.share_token;
         const shareUrl = `${window.location.origin}/share/${shareToken}`;
         setGeneratedLink(shareUrl);
         setShareToken(shareToken);
@@ -102,13 +111,15 @@ export const ShareContentModal: React.FC<ShareContentModalProps> = ({
           "Failed to generate share link: Invalid response from server.",
         );
       }
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to generate share link:", err);
-      const errorMsg =
-        err.data?.detail ||
-        err.message ||
-        "Failed to generate share link. Please try again.";
+      let errorMsg = "Failed to generate share link. Please try again.";
+
+      if (err && typeof err === "object") {
+        const error = err as { data?: { detail?: string }; message?: string };
+        errorMsg = error.data?.detail || error.message || errorMsg;
+      }
+
       setError(errorMsg);
       toast({ title: "Error", description: errorMsg, variant: "destructive" });
     } finally {

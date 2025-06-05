@@ -15,7 +15,6 @@ import copy from "copy-to-clipboard"; // Added
 // 移除 rehypeRaw 插件，避免未知HTML标签错误
 // import rehypeRaw from 'rehype-raw'
 import { cn } from "@/lib/utils";
-import { OptimizedImage } from "./OptimizedImage";
 
 // Import highlight.js styles
 import "highlight.js/styles/github-dark.css";
@@ -302,10 +301,11 @@ export function MarkdownRenderer({
                 onError={(e) => {
                   // 图片加载失败时的处理
                   const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
+                  target.style.display = "none";
                   // 可以选择显示一个占位符
-                  const placeholder = document.createElement('div');
-                  placeholder.className = 'flex items-center justify-center w-full h-32 bg-gray-100 border rounded-md text-gray-500';
+                  const placeholder = document.createElement("div");
+                  placeholder.className =
+                    "flex items-center justify-center w-full h-32 bg-gray-100 border rounded-md text-gray-500";
                   placeholder.textContent = `图片加载失败: ${src}`;
                   target.parentNode?.insertBefore(placeholder, target);
                 }}

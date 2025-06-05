@@ -3,6 +3,7 @@
 import { FC, useEffect } from "react";
 import { Brain, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { LLMAnalysisCard } from "@/components/ui/llm-analysis-card";
 import { PromptRecommendations } from "@/components/ui/prompt-recommendations";
 import { PromptCommandDialog } from "@/components/ui/prompt-command-dialog";
@@ -91,7 +92,8 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
       console.error("[LLM Analysis] 生成分析失败:", error);
       toast({
         title: "生成失败",
-        description: error instanceof Error ? error.message : "无法生成分析，请稍后重试",
+        description:
+          error instanceof Error ? error.message : "无法生成分析，请稍后重试",
         variant: "destructive",
       });
     }
@@ -190,60 +192,55 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
           </div>
 
           {/* 添加内容状态提示 */}
-          {process.env.NODE_ENV === 'development' && (
+          {process.env.NODE_ENV === "development" && (
             <div className="text-xs text-muted-foreground">
               内容ID: {contentId} | 内容长度: {contentText.length} 字符
             </div>
           )}
 
           {contentAnalyses.length > 0 && (
-            <span className="text-sm text-muted-foreground">
-              ({contentAnalyses.length})
-            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearAll}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           )}
         </div>
 
         {/* 测试按钮 */}
-        {process.env.NODE_ENV === 'development' && contentText && (
+        {process.env.NODE_ENV === "development" && contentText && (
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleEnabledPromptClick({
-              id: 'test',
-              name: '测试分析',
-              content: '请对以下内容进行简要分析，提取主要观点：',
-              description: '测试用的分析提示',
-              visibility: 'public' as const,
-              version: 1,
-              enabled: true,
-              type: 'template' as const,
-              input_vars: [],
-              meta_data: {},
-              team_id: null,
-              updated_at: new Date().toISOString(),
-              created_at: new Date().toISOString(),
-              embedding: {},
-              created_by: 'test',
-            })}
+            onClick={() =>
+              handleEnabledPromptClick({
+                id: "test",
+                name: "测试分析",
+                content: "请对以下内容进行简要分析，提取主要观点：",
+                description: "测试用的分析提示",
+                visibility: "public" as const,
+                version: 1,
+                enabled: true,
+                type: "template" as const,
+                input_vars: [],
+                meta_data: {},
+                team_id: null,
+                updated_at: new Date().toISOString(),
+                created_at: new Date().toISOString(),
+                embedding: {},
+                created_by: "test",
+              })
+            }
             disabled={isGenerating}
             className="w-full"
           >
-            {isGenerating ? '分析中...' : '🧪 测试分析功能'}
+            {isGenerating ? "分析中..." : "🧪 测试分析功能"}
           </Button>
         )}
       </CardHeader>
-
-        {contentAnalyses.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClearAll}
-            className="text-muted-foreground hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
 
       {/* Content - 占据剩余空间，可滚动 */}
       <div className="flex-1 min-h-0 overflow-auto px-4 py-4">
@@ -309,6 +306,6 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 };
