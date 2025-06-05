@@ -17,27 +17,23 @@ on:
 jobs:
   e2e-tests:
     name: Run Extension E2E Tests
-    runs-on: ubuntu-latest # Or a self-hosted runner if Chrome installation is an issue
-
-    strategy:
-      matrix:
-        node-version: [18.x] # Specify Node.js versions
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Install PNPM first with specific version
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
         with:
-          version: 8
+          version: 9.9.0
 
-      - name: Set up Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm' # Now pnpm is available for caching
+          node-version: 20.0.0
+          cache: 'pnpm'
+          cache-dependency-path: extension/pnpm-lock.yaml
 
       # Verify pnpm installation
       - name: Verify pnpm installation

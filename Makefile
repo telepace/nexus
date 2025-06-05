@@ -696,7 +696,14 @@ extension-test-unit: check-pnpm
 .PHONY: extension-test-e2e
 extension-test-e2e: check-pnpm
 	@echo "===========> Running extension E2E tests"
-	@cd $(EXTENSION_DIR) && $(PNPM) exec playwright test
+	@echo "===========> Installing E2E dependencies with PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true"
+	@cd $(EXTENSION_DIR)/e2e && PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true PUPPETEER_SKIP_DOWNLOAD=true $(PNPM) install
+	@echo "===========> Installing Puppeteer Chrome"
+	@cd $(EXTENSION_DIR)/e2e && $(PNPM) exec puppeteer browsers install chrome
+	@echo "===========> Killing any process using port 3001"
+	@lsof -ti:3001 | xargs kill -9 2>/dev/null || true
+	@echo "===========> Running E2E tests"
+	@cd $(EXTENSION_DIR)/e2e && $(PNPM) test
 
 # ==============================================================================
 # DOCKER TARGETS
