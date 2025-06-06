@@ -34,6 +34,12 @@ export const getBrowserTimeZone = (): TimeZone => {
 
 // 获取浏览器默认语言
 export const getBrowserLocale = (): Locale => {
+  // 检查是否在浏览器环境中
+  if (typeof window === "undefined" || typeof navigator === "undefined") {
+    // 服务端默认返回英文
+    return "en-US";
+  }
+
   const browserLocale = navigator.language;
   return browserLocale.startsWith("zh") ? "zh-CN" : "en-US";
 };

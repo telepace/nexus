@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import desc
 from sqlmodel import Session, func, or_, select
 
@@ -20,6 +20,7 @@ from app.models.prompt import (
     TagCreate,
     TagUpdate,
 )
+from app.utils.timezone import TimezoneMiddleware
 
 # 避免导入User类以避免循环导入
 # from app.models import User
@@ -36,13 +37,27 @@ def read_tags(
     *,
     db: Session = Depends(get_db),
     _current_user: Any = Depends(get_current_user),
+    request: Request,
     skip: int = 0,
     limit: int = 100,
 ):
     """获取标签列表"""
     try:
+        # 提取用户时区
+        user_timezone = TimezoneMiddleware.extract_user_timezone(dict(request.headers))
+
         tags = db.exec(select(Tag).offset(skip).limit(limit)).all()
-        return tags
+
+        # 应用时区处理到每个标签
+        processed_tags = []
+        for tag in tags:
+            tag_dict = tag.model_dump()
+            processed_tag = TimezoneMiddleware.add_timezone_to_response(
+                tag_dict, user_timezone
+            )
+            processed_tags.append(processed_tag)
+
+        return processed_tags
     except Exception as e:
         logger.error(f"获取标签列表失败: {str(e)}")
         raise HTTPException(
@@ -57,9 +72,13 @@ def create_tag(
     db: Session = Depends(get_db),
     tag_in: TagCreate,
     _current_user: Any = Depends(get_current_user),
+    request: Request,
 ):
     """创建新标签"""
     try:
+        # 提取用户时区
+        user_timezone = TimezoneMiddleware.extract_user_timezone(dict(request.headers))
+
         # 检查是否已存在同名标签
         existing = db.exec(select(Tag).where(Tag.name == tag_in.name)).first()
         if existing:
@@ -72,7 +91,14 @@ def create_tag(
         db.add(tag)
         db.commit()
         db.refresh(tag)
-        return tag
+
+        # 应用时区处理
+        tag_dict = tag.model_dump()
+        processed_tag = TimezoneMiddleware.add_timezone_to_response(
+            tag_dict, user_timezone
+        )
+
+        return Tag.model_validate(processed_tag)
     except HTTPException:
         raise
     except Exception as e:
@@ -171,9 +197,13 @@ def create_prompt(
     db: Session = Depends(get_db),
     prompt_in: PromptCreate,
     current_user: Any = Depends(get_current_user),
+    request: Request,
 ):
     """创建新的提示词"""
     try:
+        # 提取用户时区
+        user_timezone = TimezoneMiddleware.extract_user_timezone(dict(request.headers))
+
         # 从输入中提取标签 ID 列表
         tag_ids = prompt_in.tag_ids or []
         prompt_data = prompt_in.model_dump(exclude={"tag_ids"})
@@ -199,19 +229,23 @@ def create_prompt(
             created_by=current_user.id,
         )
         db.add(version)
-
         db.commit()
         db.refresh(prompt)
-        # 确保加载标签关系
+
+        # 手动加载标签关系
         db.refresh(prompt, ["tags"])
-        return PromptReadWithTags.model_validate(prompt)
+
+        # 应用时区处理
+        prompt_dict = prompt.model_dump()
+        processed_prompt = TimezoneMiddleware.add_timezone_to_response(
+            prompt_dict, user_timezone
+        )
+
+        return PromptReadWithTags.model_validate(processed_prompt)
     except Exception as e:
         db.rollback()
-        logger.error(f"创建提示词失败: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"创建提示词失败: {str(e)}",
-        )
+        logger.error(f"Error creating prompt: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/", response_model=list[Prompt])
@@ -219,6 +253,7 @@ def read_prompts(
     *,
     db: Session = Depends(get_db),
     _current_user: Any = Depends(get_current_user),
+    request: Request,
     skip: int = 0,
     limit: int = 100,
     tag_ids: list[UUID] | None = Query(None),
@@ -236,6 +271,7 @@ def read_prompts(
     Args:
         db (Session): Database session.
         _current_user (Any): Current user information (dependency).
+        request (Request): FastAPI request object for timezone extraction.
         skip (int?): Number of records to skip. Defaults to 0.
         limit (int?): Maximum number of records to return. Defaults to 100.
         tag_ids (list[UUID] | None?): List of UUIDs for tags to filter prompts by.
@@ -250,6 +286,9 @@ def read_prompts(
         HTTPException: If an error occurs during database query execution.
     """
     try:
+        # 提取用户时区
+        user_timezone = TimezoneMiddleware.extract_user_timezone(dict(request.headers))
+
         # 构建基础查询
         query = select(Prompt)
 
@@ -296,8 +335,21 @@ def read_prompts(
         # 手动加载标签
         for prompt in prompts:
             db.refresh(prompt, ["tags"])
+
         # 在 Python 中进行分页
-        return list(prompts[skip : skip + limit])
+        paginated_prompts = list(prompts[skip : skip + limit])
+
+        # 应用时区处理到每个prompt的时间字段
+        processed_prompts = []
+        for prompt in paginated_prompts:
+            prompt_dict = prompt.model_dump()
+            # 处理时区感知的时间字段
+            processed_prompt = TimezoneMiddleware.add_timezone_to_response(
+                prompt_dict, user_timezone
+            )
+            processed_prompts.append(processed_prompt)
+
+        return processed_prompts
     except Exception as e:
         logger.error(f"Error reading prompts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -309,9 +361,13 @@ def read_prompt(
     db: Session = Depends(get_db),
     prompt_id: UUID,
     current_user: Any = Depends(get_current_user),
+    request: Request,
 ) -> PromptReadWithTags:
     """获取提示词详情"""
     try:
+        # 提取用户时区
+        user_timezone = TimezoneMiddleware.extract_user_timezone(dict(request.headers))
+
         # 使用 select 而不是 get，以便能够显式加载关系
         prompt = db.get(Prompt, prompt_id)
         if not prompt:
@@ -321,7 +377,14 @@ def read_prompt(
             raise HTTPException(status_code=403, detail="Not enough permissions")
         # 手动加载标签
         db.refresh(prompt, ["tags"])
-        return PromptReadWithTags.model_validate(prompt)
+
+        # 转换为字典并应用时区处理
+        prompt_dict = prompt.model_dump()
+        processed_prompt = TimezoneMiddleware.add_timezone_to_response(
+            prompt_dict, user_timezone
+        )
+
+        return PromptReadWithTags.model_validate(processed_prompt)
     except HTTPException as e:
         # 如果是 HTTPException，直接传递
         logger.error(f"Error reading prompt: {e}")
@@ -338,6 +401,7 @@ def update_prompt(
     prompt_id: UUID,
     prompt_in: PromptUpdate,
     current_user: Any = Depends(get_current_user),
+    request: Request,
     create_version: bool = False,
 ):
     """Update a prompt by its ID.
@@ -352,6 +416,7 @@ def update_prompt(
         prompt_id (UUID): The ID of the prompt to update.
         prompt_in (PromptUpdate): The data containing the new values for the prompt.
         current_user (Any): The current user making the request.
+        request (Request): FastAPI request object for timezone extraction.
         create_version (bool): A flag indicating whether to create a new version.
 
     Returns:
@@ -362,6 +427,9 @@ def update_prompt(
             or an error occurs during the update process.
     """
     try:
+        # 提取用户时区
+        user_timezone = TimezoneMiddleware.extract_user_timezone(dict(request.headers))
+
         prompt = db.get(Prompt, prompt_id)
         if not prompt:
             raise HTTPException(status_code=404, detail="Prompt not found")
@@ -415,27 +483,30 @@ def update_prompt(
             prompt.tags = []
             db.flush()
 
-            # 添加新标签
-            for tag_id in tag_ids:
-                tag = db.get(Tag, tag_id)
-                if tag:
-                    prompt.tags.append(tag)
+            # 添加新的标签关系
+            if tag_ids:
+                for tag_id in tag_ids:
+                    tag = db.get(Tag, tag_id)
+                    if tag:
+                        prompt.tags.append(tag)
 
         db.add(prompt)
         db.commit()
-        db.refresh(prompt)
-        # 确保加载标签关系
         db.refresh(prompt, ["tags"])
-        return PromptReadWithTags.model_validate(prompt)
+
+        # 应用时区处理
+        prompt_dict = prompt.model_dump()
+        processed_prompt = TimezoneMiddleware.add_timezone_to_response(
+            prompt_dict, user_timezone
+        )
+
+        return PromptReadWithTags.model_validate(processed_prompt)
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"更新提示词失败: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"更新提示词失败: {str(e)}",
-        )
+        logger.error(f"Error updating prompt: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/{prompt_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -479,47 +550,61 @@ def read_prompt_versions(
     db: Session = Depends(get_db),
     prompt_id: UUID,
     current_user: Any = Depends(get_current_user),
+    request: Request,
 ):
-    """Retrieves the version history of a given prompt.
+    """Get all versions of a prompt.
 
-    This function fetches the version history for a specified prompt by its ID. It
-    first retrieves the prompt from the database and checks if it exists. Then, it
-    verifies the user's permissions to access the prompt. If both steps are
-    successful, it queries the database to get all versions of the prompt, sorted
-    in descending order by version number. If any errors occur during this process,
-    appropriate HTTP exceptions are raised.
+    This function retrieves all versions of a specific prompt. It first checks
+    if the prompt exists and if the user has permission to access it, then
+    returns a list of all versions sorted by version number in descending order.
 
     Args:
-        db (Session): The database session.
-        prompt_id (UUID): The ID of the prompt for which to retrieve version history.
-        current_user (Any): The current authenticated user.
+        db (Session): Database session.
+        prompt_id (UUID): The ID of the prompt to get versions for.
+        current_user (Any): Current user information (dependency).
+        request (Request): FastAPI request object for timezone extraction.
+
+    Returns:
+        list[PromptVersion]: List of prompt versions sorted by version number.
+
+    Raises:
+        HTTPException: If the prompt is not found, user lacks permissions,
+            or an error occurs during the query.
     """
     try:
-        # 获取提示词
+        # 提取用户时区
+        user_timezone = TimezoneMiddleware.extract_user_timezone(dict(request.headers))
+
+        # 检查提示词是否存在和权限
         prompt = db.get(Prompt, prompt_id)
         if not prompt:
             raise HTTPException(status_code=404, detail="Prompt not found")
 
-        # 检查权限
         if not _check_prompt_access(prompt, current_user):
             raise HTTPException(status_code=403, detail="Not enough permissions")
 
-        # 获取版本列表，按版本号降序排序
-        query = (
+        # 查询版本
+        versions = db.exec(
             select(PromptVersion)
             .where(PromptVersion.prompt_id == prompt_id)
-            .order_by(PromptVersion.version.desc())  # type: ignore
-        )
-        versions = db.exec(query).all()
-        return versions
+            .order_by(desc(PromptVersion.version))
+        ).all()
+
+        # 应用时区处理到每个版本
+        processed_versions = []
+        for version in versions:
+            version_dict = version.model_dump()
+            processed_version = TimezoneMiddleware.add_timezone_to_response(
+                version_dict, user_timezone
+            )
+            processed_versions.append(processed_version)
+
+        return processed_versions
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"获取版本历史失败: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"获取版本历史失败: {str(e)}",
-        )
+        logger.error(f"Error reading prompt versions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/{prompt_id}/versions", response_model=PromptVersion)
@@ -529,6 +614,7 @@ def create_prompt_version(
     prompt_id: UUID,
     version_in: PromptVersionCreate,
     current_user: Any = Depends(get_current_user),
+    request: Request,
 ) -> PromptVersion:
     """Creates a new version of a prompt.
 
@@ -539,38 +625,51 @@ def create_prompt_version(
     exceptions.
     """
     try:
-        # 获取提示词
+        # 提取用户时区
+        user_timezone = TimezoneMiddleware.extract_user_timezone(dict(request.headers))
+
+        # 检查提示词是否存在和权限
         prompt = db.get(Prompt, prompt_id)
         if not prompt:
             raise HTTPException(status_code=404, detail="Prompt not found")
 
-        # 检查访问权限
         if not _check_prompt_access(prompt, current_user):
             raise HTTPException(status_code=403, detail="Not enough permissions")
 
-        # 获取当前最大版本号
+        # 查询最大版本号
         max_version_result = db.exec(
             select(func.max(PromptVersion.version)).where(
                 PromptVersion.prompt_id == prompt_id
             )
         ).first()
+
         max_version = max_version_result if max_version_result is not None else 0
 
         # 创建新版本
         version = PromptVersion(
             prompt_id=prompt_id,
-            content=version_in.content,
-            change_notes=version_in.change_notes,
             version=max_version + 1,
-            created_at=datetime.utcnow(),
+            content=version_in.content,
+            input_vars=version_in.input_vars,
+            change_notes=version_in.change_notes,
             created_by=current_user.id,
         )
+
         db.add(version)
         db.commit()
         db.refresh(version)
 
-        return version
+        # 应用时区处理
+        version_dict = version.model_dump()
+        processed_version = TimezoneMiddleware.add_timezone_to_response(
+            version_dict, user_timezone
+        )
+
+        return PromptVersion.model_validate(processed_version)
+    except HTTPException:
+        raise
     except Exception as e:
+        db.rollback()
         logger.error(f"Error creating prompt version: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 

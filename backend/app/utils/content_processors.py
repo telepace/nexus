@@ -110,7 +110,7 @@ class JinaProcessor(ProcessingStep):
             # Jina returns markdown content directly
             # 确保响应编码正确（Jina API通常返回UTF-8，但为了保险起见）
             if response.encoding is None:
-                response.encoding = 'utf-8'
+                response.encoding = "utf-8"
             markdown_content = response.text
 
             # Extract title from markdown if not set
@@ -300,21 +300,24 @@ class MarkItDownProcessor(ProcessingStep):
 
             response = requests.get(content_item.source_uri, timeout=30)
             response.raise_for_status()
-            
+
             # 改进的编码处理逻辑
             html_content = None
             try:
                 # 首先尝试使用response.text（可能会有编码问题）
-                if response.encoding and response.encoding.lower() not in ['iso-8859-1', 'latin-1']:
+                if response.encoding and response.encoding.lower() not in [
+                    "iso-8859-1",
+                    "latin-1",
+                ]:
                     # 如果有明确的编码且不是默认的latin-1，使用它
                     html_content = response.text
                 else:
                     # 否则直接从字节内容解码UTF-8
-                    html_content = response.content.decode('utf-8', errors='replace')
-                    
+                    html_content = response.content.decode("utf-8", errors="replace")
+
             except UnicodeDecodeError:
                 # 如果UTF-8解码失败，尝试其他常见编码
-                encodings_to_try = ['gbk', 'gb2312', 'big5', 'utf-8']
+                encodings_to_try = ["gbk", "gb2312", "big5", "utf-8"]
                 for encoding in encodings_to_try:
                     try:
                         html_content = response.content.decode(encoding)
@@ -322,15 +325,15 @@ class MarkItDownProcessor(ProcessingStep):
                         break
                     except UnicodeDecodeError:
                         continue
-                        
+
                 if html_content is None:
                     # 最后的备选方案：强制UTF-8解码并忽略错误
-                    html_content = response.content.decode('utf-8', errors='ignore')
+                    html_content = response.content.decode("utf-8", errors="ignore")
                     print("⚠️  使用UTF-8强制解码（忽略错误）")
 
             # Create temporary file for MarkItDown，明确指定UTF-8编码
             with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".html", delete=False, encoding='utf-8'
+                mode="w", suffix=".html", delete=False, encoding="utf-8"
             ) as temp_file:
                 temp_file.write(html_content)
                 temp_path = temp_file.name

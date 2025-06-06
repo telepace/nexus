@@ -69,7 +69,9 @@ class TimezoneHTTPMiddleware(BaseHTTPMiddleware):
                 body_bytes = response.body
                 if isinstance(body_bytes, memoryview):
                     body_bytes = bytes(body_bytes)
-                response_data = json.loads(body_bytes.decode("utf-8"))  # 明确指定UTF-8编码
+                response_data = json.loads(
+                    body_bytes.decode("utf-8")
+                )  # 明确指定UTF-8编码
 
                 # 递归处理时间字段
                 processed_data = TimezoneMiddleware.add_timezone_to_response(

@@ -16,15 +16,15 @@ except ImportError:
     print("Warning: sentry_sdk not found, Sentry integration will be disabled")
     SENTRY_AVAILABLE = False
 
+import json
 import logging
 import traceback
-import json
 
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
-from fastapi.encoders import jsonable_encoder
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -66,6 +66,7 @@ app = FastAPI(
 # 自定义JSON响应类，确保UTF-8编码
 class UTF8JSONResponse(JSONResponse):
     """自定义JSON响应类，确保使用UTF-8编码"""
+
     def render(self, content) -> bytes:
         return json.dumps(
             jsonable_encoder(content),

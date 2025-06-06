@@ -1,4 +1,5 @@
 import { getCookie } from "@/lib/auth";
+import { getBrowserTimeZone } from "@/lib/date";
 
 // 请求配置类型
 interface RequestConfig {
@@ -37,6 +38,12 @@ class APIClient {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
+  // 获取时区头
+  private getTimezoneHeaders(): Record<string, string> {
+    const userTimeZone = getBrowserTimeZone();
+    return { "X-User-Timezone": userTimeZone };
+  }
+
   // 构建完整URL
   private buildURL(endpoint: string): string {
     const cleanEndpoint = endpoint.startsWith("/")
@@ -54,6 +61,7 @@ class APIClient {
     const headers = {
       ...this.defaultHeaders,
       ...this.getAuthHeaders(),
+      ...this.getTimezoneHeaders(),
       ...options.headers,
     };
 

@@ -799,6 +799,7 @@ export const promptsCreatePrompt = <ThrowOnError extends boolean = false>(
  * Args:
  * db (Session): Database session.
  * _current_user (Any): Current user information (dependency).
+ * request (Request): FastAPI request object for timezone extraction.
  * skip (int?): Number of records to skip. Defaults to 0.
  * limit (int?): Maximum number of records to return. Defaults to 100.
  * tag_ids (list[UUID] | None?): List of UUIDs for tags to filter prompts by.
@@ -856,6 +857,7 @@ export const promptsReadPrompt = <ThrowOnError extends boolean = false>(
  * prompt_id (UUID): The ID of the prompt to update.
  * prompt_in (PromptUpdate): The data containing the new values for the prompt.
  * current_user (Any): The current user making the request.
+ * request (Request): FastAPI request object for timezone extraction.
  * create_version (bool): A flag indicating whether to create a new version.
  *
  * Returns:
@@ -897,19 +899,24 @@ export const promptsDeletePrompt = <ThrowOnError extends boolean = false>(
 
 /**
  * Read Prompt Versions
- * Retrieves the version history of a given prompt.
+ * Get all versions of a prompt.
  *
- * This function fetches the version history for a specified prompt by its ID. It
- * first retrieves the prompt from the database and checks if it exists. Then, it
- * verifies the user's permissions to access the prompt. If both steps are
- * successful, it queries the database to get all versions of the prompt, sorted
- * in descending order by version number. If any errors occur during this process,
- * appropriate HTTP exceptions are raised.
+ * This function retrieves all versions of a specific prompt. It first checks
+ * if the prompt exists and if the user has permission to access it, then
+ * returns a list of all versions sorted by version number in descending order.
  *
  * Args:
- * db (Session): The database session.
- * prompt_id (UUID): The ID of the prompt for which to retrieve version history.
- * current_user (Any): The current authenticated user.
+ * db (Session): Database session.
+ * prompt_id (UUID): The ID of the prompt to get versions for.
+ * current_user (Any): Current user information (dependency).
+ * request (Request): FastAPI request object for timezone extraction.
+ *
+ * Returns:
+ * list[PromptVersion]: List of prompt versions sorted by version number.
+ *
+ * Raises:
+ * HTTPException: If the prompt is not found, user lacks permissions,
+ * or an error occurs during the query.
  */
 export const promptsReadPromptVersions = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<PromptsReadPromptVersionsData, ThrowOnError>,
