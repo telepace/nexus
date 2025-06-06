@@ -18,11 +18,13 @@ except ImportError:
 
 import logging
 import traceback
+import json
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
+from fastapi.encoders import jsonable_encoder
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -60,6 +62,23 @@ app = FastAPI(
     generate_unique_id_function=custom_generate_unique_id,
 )
 
+
+# 自定义JSON响应类，确保UTF-8编码
+class UTF8JSONResponse(JSONResponse):
+    """自定义JSON响应类，确保使用UTF-8编码"""
+    def render(self, content) -> bytes:
+        return json.dumps(
+            jsonable_encoder(content),
+            ensure_ascii=False,  # 允许非ASCII字符
+            allow_nan=False,
+            indent=None,
+            separators=(",", ":"),
+        ).encode("utf-8")  # 明确使用UTF-8编码
+
+
+# 设置默认响应类
+app.router.default_response_class = UTF8JSONResponse
+
 # 添加 SessionMiddleware，secret_key 建议用 settings.SECRET_KEY
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
@@ -90,13 +109,13 @@ app.add_middleware(ApiResponseMiddleware)
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
-# 异常处理器
+# 异常处理器 - 使用自定义JSON响应类
 @app.exception_handler(AppError)
 async def app_error_handler(_request: Request, exc: AppError):
     """处理应用自定义错误"""
     logger.error(f"AppError: {exc.message}", exc_info=True)
     response, status_code = create_error_response(exc)
-    return JSONResponse(
+    return UTF8JSONResponse(
         status_code=status_code, content=response.model_dump(exclude_none=True)
     )
 
@@ -106,7 +125,7 @@ async def http_exception_handler(_request: Request, exc: StarletteHTTPException)
     """处理HTTP异常"""
     logger.error(f"HTTPException: {exc.detail}", exc_info=True)
     response, status_code = create_error_response(exc)
-    return JSONResponse(
+    return UTF8JSONResponse(
         status_code=status_code, content=response.model_dump(exclude_none=True)
     )
 
@@ -116,7 +135,7 @@ async def validation_exception_handler(_request: Request, exc: RequestValidation
     """处理请求验证错误"""
     logger.error(f"ValidationError: {exc}", exc_info=True)
     response, status_code = create_error_response(exc)
-    return JSONResponse(
+    return UTF8JSONResponse(
         status_code=status_code, content=response.model_dump(exclude_none=True)
     )
 
@@ -127,7 +146,7 @@ async def general_exception_handler(_request: Request, exc: Exception):
     logger.error(f"Unhandled exception: {str(exc)}")
     logger.error(traceback.format_exc())
     response, status_code = create_error_response(exc)
-    return JSONResponse(
+    return UTF8JSONResponse(
         status_code=status_code, content=response.model_dump(exclude_none=True)
     )
 

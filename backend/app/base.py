@@ -6,6 +6,9 @@ from pydantic import EmailStr
 from sqlalchemy import String
 from sqlmodel import Column, Field, Relationship, SQLModel
 
+# 导入时区工具
+from app.utils.timezone import now_utc
+
 if TYPE_CHECKING:
     from app.models.image import Image
 
@@ -94,7 +97,7 @@ class TokenBlacklist(SQLModel, table=True):
     token: str = Field(index=True)
     user_id: uuid.UUID = Field(index=True)
     expires_at: datetime
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now_utc)
 
 
 # Shared properties
