@@ -28,9 +28,12 @@ import { DuplicateButton } from "../_components/DuplicateButton";
 import { CopyToClipboardButton } from "./CopyToClipboardButton";
 import { PromptToggle } from "../promptToggle";
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata({
+  params,
+}: { params: Promise<{ id: string }> }) {
   try {
-    const promptData = await fetchPrompt(params.id);
+    const { id } = await params;
+    const promptData = await fetchPrompt(id);
 
     if ("error" in promptData) {
       return {
@@ -52,12 +55,43 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   }
 }
 
+// 安全的时间解析函数
+function parseTimeValue(
+  timeValue: string | Date | { utc: string } | null | undefined,
+): Date {
+  if (!timeValue) {
+    return new Date();
+  }
+
+  // 如果是字符串，直接解析
+  if (typeof timeValue === "string") {
+    const date = new Date(timeValue);
+    return isNaN(date.getTime()) ? new Date() : date;
+  }
+
+  // 如果是时区格式的对象，提取UTC时间
+  if (typeof timeValue === "object" && timeValue && "utc" in timeValue) {
+    const date = new Date(timeValue.utc);
+    return isNaN(date.getTime()) ? new Date() : date;
+  }
+
+  // 如果是Date对象
+  if (timeValue instanceof Date) {
+    return isNaN(timeValue.getTime()) ? new Date() : timeValue;
+  }
+
+  // 其他情况返回当前时间
+  return new Date();
+}
+
 // 主页面组件
 export default async function PromptDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
+
   // 获取认证状态
   const authState = await getAuthState();
 
@@ -109,7 +143,7 @@ export default async function PromptDetailPage({
           </div>
         }
       >
-        <PromptDetailContent id={params.id} />
+        <PromptDetailContent id={id} />
       </Suspense>
     </ErrorBoundary>
   );
@@ -208,12 +242,16 @@ async function PromptDetailContent({ id }: { id: string }) {
                 <span className="font-medium">更新时间:</span>
                 <span
                   className="ml-auto"
-                  title={new Date(promptData.updated_at).toLocaleString()}
+                  title={parseTimeValue(promptData.updated_at).toLocaleString()}
                 >
-                  {formatDistance(new Date(promptData.updated_at), new Date(), {
-                    addSuffix: true,
-                    locale: zhCN,
-                  })}
+                  {formatDistance(
+                    parseTimeValue(promptData.updated_at),
+                    new Date(),
+                    {
+                      addSuffix: true,
+                      locale: zhCN,
+                    },
+                  )}
                 </span>
               </div>
             </Card>
@@ -318,7 +356,7 @@ async function PromptDetailContent({ id }: { id: string }) {
                         <h3 className="font-medium">版本 {version.version}</h3>
                         <span className="text-sm text-muted-foreground">
                           {formatDistance(
-                            new Date(version.created_at),
+                            parseTimeValue(version.created_at),
                             new Date(),
                             {
                               addSuffix: true,

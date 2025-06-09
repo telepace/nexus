@@ -29,6 +29,7 @@ import { TokenDebugTool } from "./TokenDebugTool";
 import { ShareContentModal } from "@/components/share/ShareContentModal"; // Added
 import { ManageShareLinks } from "@/components/share/ManageShareLinks"; // Added
 import { ContentItemPublic } from "@/app/openapi-client/index";
+import { ApiDebugTool } from "./ApiDebugTool";
 
 // 定义API错误响应类型
 interface ApiErrorResponse {
@@ -287,6 +288,7 @@ function DashboardContent({ renderID }: { renderID: string }) {
   const [items, setItems] = useState<ContentItemPublic[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [selectedItemToShare, setSelectedItemToShare] =
     useState<ContentItemPublic | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -302,11 +304,13 @@ function DashboardContent({ renderID }: { renderID: string }) {
 
     async function loadData() {
       setIsLoading(true);
+      setError(null); // 清除之前的错误
       console.log(`[dashboard-${renderID}] 开始获取数据`);
       try {
         const itemsResponse = await fetchItems();
         if (Array.isArray(itemsResponse)) {
           setItems(itemsResponse);
+          setRetryCount(0); // 重置重试计数
           console.log(
             `[dashboard-${renderID}] 成功获取 ${itemsResponse.length} 个物品`,
           );
@@ -318,6 +322,22 @@ function DashboardContent({ renderID }: { renderID: string }) {
             errorMessage = String(errorResponse.message);
           else if (errorResponse.meta && errorResponse.meta.message)
             errorMessage = String(errorResponse.meta.message);
+
+          // 提供更详细的错误信息
+          if (
+            errorResponse.status === 400 &&
+            errorMessage.includes("意外的数据格式")
+          ) {
+            errorMessage =
+              "服务器返回了意外的数据格式，这可能是一个临时问题。请尝试刷新页面。";
+          } else if (errorResponse.status === 401) {
+            errorMessage = "认证已过期，请重新登录。";
+          } else if (errorResponse.status === 403) {
+            errorMessage = "您没有权限访问此内容。";
+          } else if (errorResponse.status >= 500) {
+            errorMessage = "服务器内部错误，请稍后重试。";
+          }
+
           setError(errorMessage);
           console.error(
             `[dashboard-${renderID}] 获取物品出错:`,
@@ -326,17 +346,33 @@ function DashboardContent({ renderID }: { renderID: string }) {
             errorResponse.status,
           );
         } else {
-          setError("获取物品数据失败");
+          setError("获取物品数据失败，请检查网络连接并重试。");
         }
       } catch (e: unknown) {
         console.error(`[dashboard-${renderID}] 获取数据过程出错:`, e);
-        setError(String(e));
+        const errorMessage = e instanceof Error ? e.message : "未知错误";
+
+        // 根据错误类型提供不同的提示
+        if (
+          errorMessage.includes("fetch") ||
+          errorMessage.includes("network")
+        ) {
+          setError("网络连接出现问题，请检查您的网络连接并重试。");
+        } else if (errorMessage.includes("timeout")) {
+          setError("请求超时，请稍后重试。");
+        } else {
+          setError(`获取数据失败: ${errorMessage}`);
+        }
       } finally {
         setIsLoading(false);
       }
     }
     loadData();
-  }, [renderID, user]); // 添加user作为依赖
+  }, [renderID, user, retryCount]); // 添加retryCount作为依赖
+
+  const handleRetry = () => {
+    setRetryCount((prev) => prev + 1);
+  };
 
   const openShareModal = (item: ContentItemPublic) => {
     setSelectedItemToShare(item);
@@ -369,8 +405,16 @@ function DashboardContent({ renderID }: { renderID: string }) {
         <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertTitle>错误</AlertTitle>
+          <AlertDescription className="mb-4">{error}</AlertDescription>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleRetry} size="sm">
+              重试
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/dashboard/add-item">添加新内容</Link>
+            </Button>
+          </div>
         </Alert>
       </div>
     );
@@ -432,6 +476,9 @@ function DashboardContent({ renderID }: { renderID: string }) {
         <div className="bg-yellow-50 border border-yellow-200 p-4 mb-6 rounded-md">
           <h3 className="text-sm font-semibold mb-2">Debug Tools</h3>
           <TokenDebugTool />
+          <div className="mt-4">
+            <ApiDebugTool />
+          </div>
         </div>
       )}
 

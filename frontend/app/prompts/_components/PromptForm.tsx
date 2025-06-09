@@ -1,10 +1,16 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
 
-import { useState, useEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useActionState,
+} from "react";
 import { useRouter } from "next/navigation";
-import { useFormState, useFormStatus } from "react-dom";
-import { X, Trash, Plus as PlusIcon } from "lucide-react";
+import { useFormStatus } from "react-dom";
+import { X, Trash, Plus as PlusIcon, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -71,7 +77,7 @@ function SubmitButton({ isEditing }: { isEditing: boolean }) {
 
 export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
   const router = useRouter();
-  const [state, formAction] = useFormState(actionToCall, initialState);
+  const [state, formAction] = useActionState(actionToCall, initialState);
 
   const { fieldErrors, genericError, success, message, redirectUrl, data } =
     state || {};
@@ -85,6 +91,72 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
   const [currentVisibility, setCurrentVisibility] = useState<string>(
     prompt?.visibility || "public",
   );
+  const [content, setContent] = useState<string>(prompt?.content || "");
+  const [showVariablePreview, setShowVariablePreview] =
+    useState<boolean>(false);
+
+  // 解析内容中的变量
+  const parseVariablesFromContent = useCallback((contentText: string) => {
+    const variableRegex = /\{\{([^}]+)\}\}/g;
+    const matches = contentText.matchAll(variableRegex);
+    const variables = new Set<string>();
+
+    for (const match of matches) {
+      const variableName = match[1].trim();
+      if (variableName) {
+        variables.add(variableName);
+      }
+    }
+
+    return Array.from(variables);
+  }, []);
+
+  // 自动更新输入变量
+  const autoUpdateInputVars = useCallback(
+    (contentText: string) => {
+      const parsedVars = parseVariablesFromContent(contentText);
+      const existingVarNames = inputVars.map((v) => v.name);
+
+      // 添加新变量
+      const newVars = parsedVars.filter(
+        (varName) => !existingVarNames.includes(varName),
+      );
+      if (newVars.length > 0) {
+        const newInputVars = newVars.map((name) => ({
+          name,
+          description: `自动识别的变量: ${name}`,
+          required: false,
+        }));
+        setInputVars((prev) => [...prev, ...newInputVars]);
+      }
+
+      // 可选：移除不再使用的变量（注释掉以避免意外删除用户手动添加的变量）
+      // const unusedVars = existingVarNames.filter(varName => !parsedVars.includes(varName));
+      // if (unusedVars.length > 0) {
+      //   setInputVars(prev => prev.filter(v => parsedVars.includes(v.name)));
+      // }
+    },
+    [inputVars, parseVariablesFromContent],
+  );
+
+  // 处理内容变化
+  const handleContentChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const newContent = e.target.value;
+      setContent(newContent);
+      autoUpdateInputVars(newContent);
+    },
+    [autoUpdateInputVars],
+  );
+
+  // 高亮显示变量的内容
+  const highlightedContent = useMemo(() => {
+    if (!showVariablePreview) return content;
+
+    return content.replace(/(\{\{[^}]+\}\})/g, (match) => {
+      return `<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold">${match}</span>`;
+    });
+  }, [content, showVariablePreview]);
 
   useEffect(() => {
     if (success) {
@@ -359,19 +431,68 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
 
         {/* 提示词内容 */}
         <div>
-          <Label htmlFor="content">提示词内容</Label>
-          <Textarea
-            id="content"
-            name="content"
-            placeholder="输入提示词内容"
-            rows={10}
-            className={`font-mono text-sm ${fieldErrors?.content ? "border-destructive" : ""}`}
-            defaultValue={prompt?.content || ""}
-            aria-describedby="content-error"
-          />
-          <p className="text-sm text-muted-foreground mt-1">
-            提示词的主体内容，可以包含文本、指令和输入变量
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <Label htmlFor="content">提示词内容</Label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowVariablePreview(!showVariablePreview)}
+              className="text-sm"
+            >
+              {showVariablePreview ? (
+                <>
+                  <EyeOff className="h-4 w-4 mr-1" />
+                  隐藏变量预览
+                </>
+              ) : (
+                <>
+                  <Eye className="h-4 w-4 mr-1" />
+                  显示变量预览
+                </>
+              )}
+            </Button>
+          </div>
+
+          <div className="relative">
+            <Textarea
+              id="content"
+              name="content"
+              placeholder="输入提示词内容，使用 {{变量名}} 格式插入变量"
+              rows={10}
+              className={`font-mono text-sm ${fieldErrors?.content ? "border-destructive" : ""} ${showVariablePreview ? "opacity-50" : ""}`}
+              value={content}
+              onChange={handleContentChange}
+              aria-describedby="content-error"
+            />
+
+            {/* 变量高亮预览层 */}
+            {showVariablePreview && (
+              <div
+                className="absolute inset-0 pointer-events-none font-mono text-sm p-3 whitespace-pre-wrap overflow-auto rounded-md border bg-background/80 backdrop-blur-sm"
+                style={{
+                  lineHeight: "1.5",
+                  fontSize: "14px",
+                  fontFamily:
+                    'ui-monospace, SFMono-Regular, "SF Mono", monospace',
+                }}
+                dangerouslySetInnerHTML={{ __html: highlightedContent }}
+              />
+            )}
+          </div>
+
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-sm text-muted-foreground">
+              提示词的主体内容，可以包含文本、指令和输入变量
+            </p>
+            {parseVariablesFromContent(content).length > 0 && (
+              <p className="text-sm text-blue-600">
+                检测到 {parseVariablesFromContent(content).length} 个变量:{" "}
+                {parseVariablesFromContent(content).join(", ")}
+              </p>
+            )}
+          </div>
+
           {fieldErrors?.content && (
             <p id="content-error" className="text-sm text-destructive mt-1">
               {fieldErrors.content}

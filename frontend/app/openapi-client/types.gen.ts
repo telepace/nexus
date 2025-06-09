@@ -24,6 +24,50 @@ export type ApiResponse_NoneType_ = {
   error?: string | null;
 };
 
+export type Body_chat_create_chat_completion = {
+  /**
+   * Chat messages in OpenAI format
+   */
+  messages: Array<{
+    [key: string]: unknown;
+  }>;
+  /**
+   * Model to use
+   */
+  model?: string;
+  /**
+   * Whether to stream the response
+   */
+  stream?: boolean;
+  /**
+   * Sampling temperature
+   */
+  temperature?: number;
+  /**
+   * Maximum tokens to generate
+   */
+  max_tokens?: number;
+};
+
+export type Body_content_analyze_content_ai_sdk = {
+  /**
+   * Analysis instruction/prompt
+   */
+  user_prompt: string;
+  /**
+   * Model to use
+   */
+  model?: string;
+  /**
+   * Sampling temperature
+   */
+  temperature?: number;
+  /**
+   * Maximum tokens to generate
+   */
+  max_tokens?: number;
+};
+
 export type Body_content_analyze_content_stream = {
   /**
    * System prompt for analysis
@@ -33,6 +77,25 @@ export type Body_content_analyze_content_stream = {
    * User prompt (content text)
    */
   user_prompt: string;
+};
+
+export type Body_content_content_completion_stream = {
+  /**
+   * Analysis prompt
+   */
+  prompt: string;
+  /**
+   * Model to use
+   */
+  model?: string;
+  /**
+   * Sampling temperature
+   */
+  temperature?: number;
+  /**
+   * Maximum tokens to generate
+   */
+  max_tokens?: number;
 };
 
 export type Body_login_login_access_token = {
@@ -795,6 +858,18 @@ export type LlmCreateEmbeddingResponse = EmbeddingResponse;
 
 export type LlmCreateEmbeddingError = HTTPValidationError;
 
+export type ChatCreateChatCompletionData = {
+  body: Body_chat_create_chat_completion;
+};
+
+export type ChatCreateChatCompletionResponse = unknown;
+
+export type ChatCreateChatCompletionError = HTTPValidationError;
+
+export type ChatListAvailableModelsResponse = unknown;
+
+export type ChatListAvailableModelsError = unknown;
+
 export type ContentCreateContentItemEndpointData = {
   body: ContentItemCreate;
 };
@@ -900,6 +975,28 @@ export type ContentAnalyzeContentStreamData = {
 export type ContentAnalyzeContentStreamResponse = unknown;
 
 export type ContentAnalyzeContentStreamError = HTTPValidationError;
+
+export type ContentAnalyzeContentAiSdkData = {
+  body: Body_content_analyze_content_ai_sdk;
+  path: {
+    content_id: string;
+  };
+};
+
+export type ContentAnalyzeContentAiSdkResponse = unknown;
+
+export type ContentAnalyzeContentAiSdkError = HTTPValidationError;
+
+export type ContentContentCompletionStreamData = {
+  body: Body_content_content_completion_stream;
+  path: {
+    content_id: string;
+  };
+};
+
+export type ContentContentCompletionStreamResponse = unknown;
+
+export type ContentContentCompletionStreamError = HTTPValidationError;
 
 export type ContentCreateShareLinkEndpointData = {
   body: ContentShareCreate;

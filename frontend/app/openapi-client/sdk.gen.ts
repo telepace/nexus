@@ -134,6 +134,11 @@ import type {
   LlmCreateEmbeddingData,
   LlmCreateEmbeddingError,
   LlmCreateEmbeddingResponse,
+  ChatCreateChatCompletionData,
+  ChatCreateChatCompletionError,
+  ChatCreateChatCompletionResponse,
+  ChatListAvailableModelsError,
+  ChatListAvailableModelsResponse,
   ContentCreateContentItemEndpointData,
   ContentCreateContentItemEndpointError,
   ContentCreateContentItemEndpointResponse,
@@ -160,6 +165,12 @@ import type {
   ContentAnalyzeContentStreamData,
   ContentAnalyzeContentStreamError,
   ContentAnalyzeContentStreamResponse,
+  ContentAnalyzeContentAiSdkData,
+  ContentAnalyzeContentAiSdkError,
+  ContentAnalyzeContentAiSdkResponse,
+  ContentContentCompletionStreamData,
+  ContentContentCompletionStreamError,
+  ContentContentCompletionStreamResponse,
   ContentCreateShareLinkEndpointData,
   ContentCreateShareLinkEndpointError,
   ContentCreateShareLinkEndpointResponse,
@@ -1055,6 +1066,42 @@ export const llmCreateEmbedding = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Create Chat Completion
+ * Create chat completion compatible with Vercel AI SDK.
+ *
+ * Supports Data Stream Protocol format for frontend integration.
+ */
+export const chatCreateChatCompletion = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ChatCreateChatCompletionData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ChatCreateChatCompletionResponse,
+    ChatCreateChatCompletionError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/chat/completions",
+  });
+};
+
+/**
+ * List Available Models
+ * 列出可用的 AI 模型
+ */
+export const chatListAvailableModels = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ChatListAvailableModelsResponse,
+    ChatListAvailableModelsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/chat/models",
+  });
+};
+
+/**
  * Create a New Content Item
  * Uploads and creates a new content item in the system. Requires user authentication.
  */
@@ -1250,6 +1297,67 @@ export const contentAnalyzeContentStream = <
   >({
     ...options,
     url: "/api/v1/content/{content_id}/analyze",
+  });
+};
+
+/**
+ * Analyze Content Ai Sdk
+ * Stream AI analysis of content using Vercel AI SDK compatible format.
+ *
+ * This endpoint provides Data Stream Protocol compatible responses for
+ * seamless integration with Vercel AI SDK useCompletion hook.
+ *
+ * Args:
+ * content_id: ID of the content to analyze
+ * user_prompt: The analysis instruction/prompt from user
+ * model: AI model to use
+ * temperature: Sampling temperature
+ * max_tokens: Maximum tokens to generate
+ */
+export const contentAnalyzeContentAiSdk = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<ContentAnalyzeContentAiSdkData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ContentAnalyzeContentAiSdkResponse,
+    ContentAnalyzeContentAiSdkError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{content_id}/analyze-ai-sdk",
+  });
+};
+
+/**
+ * Content Completion Stream
+ * Stream content analysis using Vercel AI SDK compatible format.
+ *
+ * This endpoint returns pure text streaming for optimal compatibility
+ * with Vercel AI SDK useCompletion hook.
+ *
+ * Args:
+ * content_id: ID of the content to analyze
+ * prompt: The analysis instruction/prompt from user
+ * model: AI model to use
+ * temperature: Sampling temperature
+ * max_tokens: Maximum tokens to generate
+ */
+export const contentContentCompletionStream = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentContentCompletionStreamData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    ContentContentCompletionStreamResponse,
+    ContentContentCompletionStreamError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{content_id}/completion",
   });
 };
 

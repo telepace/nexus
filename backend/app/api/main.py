@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.routes import (
+    chat,  # Add chat router
     content,  # Add content router
     google_oauth,
     images,  # Added images router
@@ -22,6 +23,9 @@ api_router.include_router(items.router)
 api_router.include_router(google_oauth.router)
 api_router.include_router(prompts.router, prefix="/prompts", tags=["prompts"])
 api_router.include_router(llm_service.router, prefix="/llm", tags=["llm"])
+api_router.include_router(
+    chat.router, prefix="/chat", tags=["chat"]
+)  # Include chat router
 api_router.include_router(
     content.router, prefix="/content", tags=["content"]
 )  # Include content router

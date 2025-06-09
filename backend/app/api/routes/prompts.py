@@ -197,13 +197,10 @@ def create_prompt(
     db: Session = Depends(get_db),
     prompt_in: PromptCreate,
     current_user: Any = Depends(get_current_user),
-    request: Request,
+    _request: Request,
 ):
     """创建新的提示词"""
     try:
-        # 提取用户时区
-        user_timezone = TimezoneMiddleware.extract_user_timezone(dict(request.headers))
-
         # 从输入中提取标签 ID 列表
         tag_ids = prompt_in.tag_ids or []
         prompt_data = prompt_in.model_dump(exclude={"tag_ids"})
@@ -235,13 +232,8 @@ def create_prompt(
         # 手动加载标签关系
         db.refresh(prompt, ["tags"])
 
-        # 应用时区处理
-        prompt_dict = prompt.model_dump()
-        processed_prompt = TimezoneMiddleware.add_timezone_to_response(
-            prompt_dict, user_timezone
-        )
-
-        return PromptReadWithTags.model_validate(processed_prompt)
+        # 直接返回 PromptReadWithTags 对象，让 FastAPI 处理序列化
+        return PromptReadWithTags.model_validate(prompt.model_dump())
     except Exception as e:
         db.rollback()
         logger.error(f"Error creating prompt: {e}")
@@ -361,13 +353,10 @@ def read_prompt(
     db: Session = Depends(get_db),
     prompt_id: UUID,
     current_user: Any = Depends(get_current_user),
-    request: Request,
+    _request: Request,
 ) -> PromptReadWithTags:
     """获取提示词详情"""
     try:
-        # 提取用户时区
-        user_timezone = TimezoneMiddleware.extract_user_timezone(dict(request.headers))
-
         # 使用 select 而不是 get，以便能够显式加载关系
         prompt = db.get(Prompt, prompt_id)
         if not prompt:
@@ -378,13 +367,8 @@ def read_prompt(
         # 手动加载标签
         db.refresh(prompt, ["tags"])
 
-        # 转换为字典并应用时区处理
-        prompt_dict = prompt.model_dump()
-        processed_prompt = TimezoneMiddleware.add_timezone_to_response(
-            prompt_dict, user_timezone
-        )
-
-        return PromptReadWithTags.model_validate(processed_prompt)
+        # 直接返回 PromptReadWithTags 对象，让 FastAPI 处理序列化
+        return PromptReadWithTags.model_validate(prompt.model_dump())
     except HTTPException as e:
         # 如果是 HTTPException，直接传递
         logger.error(f"Error reading prompt: {e}")
@@ -427,8 +411,8 @@ def update_prompt(
             or an error occurs during the update process.
     """
     try:
-        # 提取用户时区
-        user_timezone = TimezoneMiddleware.extract_user_timezone(dict(request.headers))
+        # 提取用户时区（用于后续处理响应时间字段）
+        _user_timezone = TimezoneMiddleware.extract_user_timezone(dict(request.headers))
 
         prompt = db.get(Prompt, prompt_id)
         if not prompt:
@@ -494,13 +478,8 @@ def update_prompt(
         db.commit()
         db.refresh(prompt, ["tags"])
 
-        # 应用时区处理
-        prompt_dict = prompt.model_dump()
-        processed_prompt = TimezoneMiddleware.add_timezone_to_response(
-            prompt_dict, user_timezone
-        )
-
-        return PromptReadWithTags.model_validate(processed_prompt)
+        # 直接返回 PromptReadWithTags 对象，让 FastAPI 处理序列化
+        return PromptReadWithTags.model_validate(prompt.model_dump())
     except HTTPException:
         raise
     except Exception as e:

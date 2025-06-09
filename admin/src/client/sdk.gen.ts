@@ -3,7 +3,45 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ContentCreateContentItemEndpointData, ContentCreateContentItemEndpointResponse, ContentProcessContentItemEndpointData, ContentProcessContentItemEndpointResponse, ContentListContentItemsEndpointData, ContentListContentItemsEndpointResponse, ContentGetContentItemEndpointData, ContentGetContentItemEndpointResponse, ContentGetContentMarkdownEndpointData, ContentGetContentMarkdownEndpointResponse, ContentGetSupportedProcessorsResponse, ContentGetContentChunksEndpointData, ContentGetContentChunksEndpointResponse, ContentGetContentChunksSummaryEndpointData, ContentGetContentChunksSummaryEndpointResponse, ContentAnalyzeContentStreamData, ContentAnalyzeContentStreamResponse, ContentCreateShareLinkEndpointData, ContentCreateShareLinkEndpointResponse, ContentDeactivateShareLinkEndpointData, ContentDeactivateShareLinkEndpointResponse, ContentGetSharedContentEndpointData, ContentGetSharedContentEndpointResponse, GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ImagesGetUploadUrlData, ImagesGetUploadUrlResponse, ImagesCreateImageRecordData, ImagesCreateImageRecordResponse, ImagesListImagesData, ImagesListImagesResponse, ImagesReadImageData, ImagesReadImageResponse, ImagesDeleteImageData, ImagesDeleteImageResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LlmCreateCompletionData, LlmCreateCompletionResponse, LlmCreateEmbeddingData, LlmCreateEmbeddingResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginLoginAccessTokenHeadResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, PromptsTogglePromptEnabledData, PromptsTogglePromptEnabledResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersReadUserMeHeadResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { ChatCreateChatCompletionData, ChatCreateChatCompletionResponse, ChatListAvailableModelsResponse, ContentCreateContentItemEndpointData, ContentCreateContentItemEndpointResponse, ContentProcessContentItemEndpointData, ContentProcessContentItemEndpointResponse, ContentListContentItemsEndpointData, ContentListContentItemsEndpointResponse, ContentGetContentItemEndpointData, ContentGetContentItemEndpointResponse, ContentGetContentMarkdownEndpointData, ContentGetContentMarkdownEndpointResponse, ContentGetSupportedProcessorsResponse, ContentGetContentChunksEndpointData, ContentGetContentChunksEndpointResponse, ContentGetContentChunksSummaryEndpointData, ContentGetContentChunksSummaryEndpointResponse, ContentAnalyzeContentStreamData, ContentAnalyzeContentStreamResponse, ContentAnalyzeContentAiSdkData, ContentAnalyzeContentAiSdkResponse, ContentContentCompletionStreamData, ContentContentCompletionStreamResponse, ContentCreateShareLinkEndpointData, ContentCreateShareLinkEndpointResponse, ContentDeactivateShareLinkEndpointData, ContentDeactivateShareLinkEndpointResponse, ContentGetSharedContentEndpointData, ContentGetSharedContentEndpointResponse, GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ImagesGetUploadUrlData, ImagesGetUploadUrlResponse, ImagesCreateImageRecordData, ImagesCreateImageRecordResponse, ImagesListImagesData, ImagesListImagesResponse, ImagesReadImageData, ImagesReadImageResponse, ImagesDeleteImageData, ImagesDeleteImageResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LlmCreateCompletionData, LlmCreateCompletionResponse, LlmCreateEmbeddingData, LlmCreateEmbeddingResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginLoginAccessTokenHeadResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, PromptsTogglePromptEnabledData, PromptsTogglePromptEnabledResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersReadUserMeHeadResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+
+export class ChatService {
+    /**
+     * Create Chat Completion
+     * Create chat completion compatible with Vercel AI SDK.
+     *
+     * Supports Data Stream Protocol format for frontend integration.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static createChatCompletion(data: ChatCreateChatCompletionData): CancelablePromise<ChatCreateChatCompletionResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/chat/completions',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * List Available Models
+     * 列出可用的 AI 模型
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static listAvailableModels(): CancelablePromise<ChatListAvailableModelsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/chat/models'
+        });
+    }
+    
+}
 
 export class ContentService {
     /**
@@ -196,6 +234,74 @@ export class ContentService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/content/{content_id}/analyze',
+            path: {
+                content_id: data.contentId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Analyze Content Ai Sdk
+     * Stream AI analysis of content using Vercel AI SDK compatible format.
+     *
+     * This endpoint provides Data Stream Protocol compatible responses for
+     * seamless integration with Vercel AI SDK useCompletion hook.
+     *
+     * Args:
+     * content_id: ID of the content to analyze
+     * user_prompt: The analysis instruction/prompt from user
+     * model: AI model to use
+     * temperature: Sampling temperature
+     * max_tokens: Maximum tokens to generate
+     * @param data The data for the request.
+     * @param data.contentId
+     * @param data.requestBody
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static analyzeContentAiSdk(data: ContentAnalyzeContentAiSdkData): CancelablePromise<ContentAnalyzeContentAiSdkResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/content/{content_id}/analyze-ai-sdk',
+            path: {
+                content_id: data.contentId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Content Completion Stream
+     * Stream content analysis using Vercel AI SDK compatible format.
+     *
+     * This endpoint returns pure text streaming for optimal compatibility
+     * with Vercel AI SDK useCompletion hook.
+     *
+     * Args:
+     * content_id: ID of the content to analyze
+     * prompt: The analysis instruction/prompt from user
+     * model: AI model to use
+     * temperature: Sampling temperature
+     * max_tokens: Maximum tokens to generate
+     * @param data The data for the request.
+     * @param data.contentId
+     * @param data.requestBody
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static contentCompletionStream(data: ContentContentCompletionStreamData): CancelablePromise<ContentContentCompletionStreamResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/content/{content_id}/completion',
             path: {
                 content_id: data.contentId
             },
