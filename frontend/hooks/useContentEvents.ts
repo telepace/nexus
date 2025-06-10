@@ -28,77 +28,119 @@ export function useContentEvents(options: UseContentEventsOptions = {}) {
   } = options;
   
   const { user } = useAuth();
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isConnectedRef = useRef(false);
 
-  const connect = useCallback(() => {
-    if (!enabled || !user?.token || eventSourceRef.current) {
+  const connect = useCallback(async () => {
+    if (!enabled || !user?.token || abortControllerRef.current) {
       return;
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-    const eventSource = new EventSource(
-      `${apiUrl}/api/v1/content/events`,
-      {
-        withCredentials: true,
-      }
-    );
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
 
-    eventSource.onopen = () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+      
+      const response = await fetch(`${apiUrl}/api/v1/content/events`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${user.token}`,
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+        },
+        signal: abortController.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`SSE connection failed: ${response.status} ${response.statusText}`);
+      }
+
+      if (!response.body) {
+        throw new Error('SSE response body is null');
+      }
+
       isConnectedRef.current = true;
-      console.log('SSE connection opened');
-    };
+      console.log('SSE connection established');
 
-    eventSource.onmessage = (event) => {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
       try {
-        const data: ContentEvent = JSON.parse(event.data);
-        
-        switch (data.type) {
-          case 'connection_established':
-            onConnectionEstablished?.();
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) {
             break;
-          case 'content_status_update':
-            onContentUpdate?.(data);
-            break;
-          case 'heartbeat':
-            // 心跳，保持连接
-            break;
-          default:
-            console.log('Unknown SSE event type:', data.type);
-        }
-      } catch (error) {
-        console.error('Error parsing SSE message:', error);
-        onError?.(error as Error);
-      }
-    };
+          }
 
-    eventSource.onerror = (error) => {
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const dataContent = line.slice(6); // Remove "data: " prefix
+              
+              if (dataContent.trim() === '') {
+                continue;
+              }
+
+              try {
+                const eventData: ContentEvent = JSON.parse(dataContent);
+                
+                switch (eventData.type) {
+                  case 'connection_established':
+                    onConnectionEstablished?.();
+                    break;
+                  case 'content_status_update':
+                    onContentUpdate?.(eventData);
+                    break;
+                  case 'heartbeat':
+                    // 心跳，保持连接
+                    break;
+                  default:
+                    console.log('Unknown SSE event type:', eventData.type);
+                }
+              } catch (parseError) {
+                console.error('Error parsing SSE message:', parseError);
+                onError?.(parseError as Error);
+              }
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
+
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        // Connection was intentionally aborted
+        return;
+      }
+
       console.error('SSE connection error:', error);
       isConnectedRef.current = false;
       
-      // 关闭当前连接
-      eventSource.close();
-      eventSourceRef.current = null;
+      // 清理当前连接
+      abortControllerRef.current = null;
       
       // 尝试重连
-      if (enabled) {
+      if (enabled && user?.token) {
         reconnectTimeoutRef.current = setTimeout(() => {
           console.log('Attempting to reconnect SSE...');
           connect();
         }, 3000);
       }
       
-      onError?.(new Error('SSE connection failed'));
-    };
-
-    eventSourceRef.current = eventSource;
+      onError?.(error as Error);
+    }
   }, [enabled, user?.token, onContentUpdate, onConnectionEstablished, onError]);
 
   const disconnect = useCallback(() => {
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-      eventSourceRef.current = null;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
     }
     
     if (reconnectTimeoutRef.current) {

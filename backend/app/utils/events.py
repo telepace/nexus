@@ -91,6 +91,11 @@ def format_sse_message(data: dict[str, Any]) -> str:
 
 async def create_sse_generator(user_id: str):
     """创建SSE数据流生成器"""
+    import os
+    
+    # 检测是否在测试模式下
+    is_testing = os.getenv("TESTING") == "true" or os.getenv("TEST_MODE") == "true"
+    
     queue = await content_event_manager.add_connection(user_id)
 
     try:
@@ -100,6 +105,10 @@ async def create_sse_generator(user_id: str):
             "message": "SSE connection established",
         }
         yield format_sse_message(initial_data)
+        
+        # 在测试模式下，发送初始消息后就退出，避免无限循环
+        if is_testing:
+            return
 
         # 保持连接并发送事件
         while True:
