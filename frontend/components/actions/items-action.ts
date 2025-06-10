@@ -31,12 +31,12 @@ interface DataResponse {
 // 定义 fetchItems 的可能返回类型
 type FetchItemsReturn = ContentItemPublic[] | ApiErrorResponse;
 
-// 缓存结果和上次请求时间
-let itemsCache: FetchItemsReturn | null = null;
+// Cache for items to avoid redundant API calls
+let itemsCache: ContentItemPublic[] | ApiErrorResponse | null = null;
 let lastFetchTime = 0;
-const CACHE_TTL = 3000; // 3秒缓存
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-// 使用 React cache 和认证缓存
+// Fetch items from content API with caching and error handling
 export const fetchItems = cache(async (): Promise<FetchItemsReturn> => {
   const now = Date.now();
   const requestId = `fetchItems-${Math.random().toString(36).substring(7)}`;
@@ -51,7 +51,7 @@ export const fetchItems = cache(async (): Promise<FetchItemsReturn> => {
   }
 
   // 使用缓存如果在有效期内
-  if (itemsCache && now - lastFetchTime < CACHE_TTL) {
+  if (itemsCache && now - lastFetchTime < CACHE_DURATION) {
     console.log(
       `[${requestId}] 返回缓存的物品数据，缓存时间: ${new Date(lastFetchTime).toISOString()}`,
     );

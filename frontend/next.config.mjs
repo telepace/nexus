@@ -7,6 +7,14 @@ const nextConfig = {
     // 如果仍然需要 ESLint 检查但您想继续尽管有错误，请设置为 true
     ignoreDuringBuilds: true,
   },
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "http://localhost:8000/api/:path*", // 代理到后端服务器
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

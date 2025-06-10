@@ -83,29 +83,21 @@ beforeEach(() => {
   (window as any).location.hash = "";
 });
 
-// Mock IntersectionObserver
-(global as any).IntersectionObserver = class MockIntersectionObserver {
-  constructor() {}
-  disconnect() {}
-  observe() {}
-  unobserve() {}
-  root = null;
-  rootMargin = "";
-  thresholds = [];
-  takeRecords() {
-    return [];
-  }
-};
+// Mock IntersectionObserver for tests
+global.IntersectionObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}));
 
-// Mock ResizeObserver
-(global as any).ResizeObserver = class MockResizeObserver {
-  constructor() {}
-  disconnect() {}
-  observe() {}
-  unobserve() {}
-};
+// Mock ResizeObserver for tests
+global.ResizeObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}));
 
-// Mock matchMedia
+// Mock window.matchMedia
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: jest.fn().mockImplementation((query) => ({
@@ -120,11 +112,64 @@ Object.defineProperty(window, "matchMedia", {
   })),
 });
 
-// Mock scrollTo
-Object.defineProperty(window, "scrollTo", {
-  value: jest.fn(),
-  writable: true,
-});
+// Mock window.location with jest.fn for better control
+delete (window as any).location;
+window.location = {
+  href: "http://localhost:3000/",
+  origin: "http://localhost:3000",
+  protocol: "http:",
+  host: "localhost:3000",
+  hostname: "localhost",
+  port: "3000",
+  pathname: "/",
+  search: "",
+  hash: "",
+  assign: jest.fn(),
+  replace: jest.fn(),
+  reload: jest.fn(),
+  toString: jest.fn(() => "http://localhost:3000/"),
+} as any;
+
+// Mock console methods to reduce noise in tests unless explicitly needed
+const originalConsoleError = console.error;
+const originalConsoleWarn = console.warn;
+const originalConsoleLog = console.log;
+
+console.error = (...args: any[]) => {
+  // Suppress expected errors and warnings
+  if (
+    args[0] &&
+    typeof args[0] === "string" &&
+    (args[0].includes("LOGIN_BAD_CREDENTIALS") ||
+      args[0].includes("Login API error:") ||
+      args[0].includes("Login error:") ||
+      args[0].includes("Registration error:") ||
+      args[0].includes(
+        "Warning: An update to Root inside a test was not wrapped in act",
+      ) ||
+      args[0].includes("Warning: It looks like you're using the wrong act()") ||
+      args[0].includes(
+        "act(...) is not supported in production builds of React",
+      ))
+  ) {
+    return; // Suppress expected login credential errors, registration errors and act warnings
+  }
+  originalConsoleError(...args);
+};
+
+console.warn = (...args: any[]) => {
+  // Allow warnings in debug mode
+  if (process.env.DEBUG_TESTS) {
+    originalConsoleWarn(...args);
+  }
+};
+
+console.log = (...args: any[]) => {
+  // Allow logs in debug mode
+  if (process.env.DEBUG_TESTS) {
+    originalConsoleLog(...args);
+  }
+};
 
 // Mock next/router
 jest.mock("next/router", () => ({
@@ -330,37 +375,6 @@ global.fetch = jest
     return Promise.resolve(response as Response);
   });
 
-// Mock console.error to handle expected errors during testing
-const originalConsoleError = console.error;
-console.error = (...args: any[]) => {
-  // Suppress expected errors and warnings
-  if (
-    args[0] &&
-    typeof args[0] === "string" &&
-    (args[0].includes("LOGIN_BAD_CREDENTIALS") ||
-      args[0].includes("Login API error:") ||
-      args[0].includes("Login error:") ||
-      args[0].includes("Registration error:") ||
-      args[0].includes(
-        "Warning: An update to Root inside a test was not wrapped in act",
-      ) ||
-      args[0].includes("Warning: It looks like you're using the wrong act()") ||
-      args[0].includes(
-        "act(...) is not supported in production builds of React",
-      ))
-  ) {
-    return; // Suppress expected login credential errors, registration errors and act warnings
-  }
-  originalConsoleError(...args);
-};
-
-// Intercept debug logs
-const originalConsoleDebug = console.debug;
-console.debug = (...args: any[]) => {
-  // Disable all debug logs during testing
-  // originalConsoleDebug(...args);
-};
-
 // Mock auth hooks
 jest.mock("@/lib/auth", () => ({
   useAuth: jest.fn().mockReturnValue({
@@ -453,24 +467,6 @@ jest.mock("@/components/ui/use-toast", () => ({
     toast: jest.fn(),
   }),
 }));
-
-// Additional log filtering
-jest.spyOn(console, "log").mockImplementation((...args: any[]) => {
-  // Filter out debug info if DEBUG env variable not set
-  if (!process.env.DEBUG) {
-    if (
-      args[0] &&
-      typeof args[0] === "string" &&
-      (args[0].includes("emittery") ||
-        args[0].includes("[data:") ||
-        args[0].includes("[Customer]") ||
-        args[0].match(/\[\d{2}:\d{2}:\d{2}\.\d{3}\]/))
-    ) {
-      return;
-    }
-  }
-  process.stdout.write(args.join(" ") + "\n");
-});
 
 // Clean up after each test
 afterEach(() => {

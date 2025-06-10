@@ -150,7 +150,6 @@ export function FeaturesJourney() {
             );
             if (stepIndex !== -1) {
               // Keep for potential future use with step indicators
-              console.log("Active step:", stepIndex);
             }
           }
         });

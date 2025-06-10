@@ -255,25 +255,24 @@ export function useAuth(): AuthContextType {
 // Helper to get cookie value on client side
 export function getCookie(name: string): string | undefined {
   if (typeof document === "undefined") {
-    console.log("[Auth] getCookie: document is undefined (server side)");
     return undefined;
   }
 
-  console.log("[Auth] getCookie: 搜索cookie:", name);
-  console.log("[Auth] getCookie: 所有cookie:", document.cookie);
-
-  const cookies = document.cookie.split(";");
-  for (let i = 0; i < cookies.length; i++) {
-    const cookie = cookies[i].trim();
-    if (cookie.startsWith(name + "=")) {
-      const value = cookie.substring(name.length + 1);
-      console.log(
-        `[Auth] getCookie: 找到 ${name} = ${value.substring(0, 10)}...`,
-      );
-      return value;
-    }
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    return parts.pop()?.split(";").shift();
   }
 
-  console.log(`[Auth] getCookie: ${name} 未找到`);
   return undefined;
+}
+
+export function setCookie(name: string, value: string, days: number = 7) {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  const maxAge = 60 * 60 * 24 * days; // Convert days to seconds
+  const cookieOptions = `path=/;max-age=${maxAge};SameSite=Lax`;
+  document.cookie = `${name}=${value};${cookieOptions}`;
 }

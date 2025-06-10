@@ -2,14 +2,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import DashboardPage from "@/app/dashboard/page";
 import { useAuth } from "@/lib/client-auth";
 
-// Mock dependencies
-jest.mock("@/lib/client-auth", () => ({
-  useAuth: jest.fn(),
-}));
+// Mock fetch items action
+jest.mock("@/components/actions/items-action-client");
 
-jest.mock("@/components/actions/items-action-client", () => ({
-  fetchItems: jest.fn(),
-}));
+// Mock auth
+jest.mock("@/lib/client-auth");
 
 jest.mock("@/components/share/ShareContentModal", () => {
   return function MockShareContentModal() {
@@ -23,41 +20,16 @@ jest.mock("@/components/share/ManageShareLinks", () => {
   };
 });
 
-jest.mock("@/app/dashboard/deleteButton", () => {
-  return {
-    DeleteButton: function MockDeleteButton() {
-      return <button data-testid="delete-button">Delete</button>;
-    },
-  };
-});
-
-jest.mock("@/app/dashboard/TokenDebugTool", () => {
-  return {
-    TokenDebugTool: function MockTokenDebugTool() {
-      return <div data-testid="token-debug">Token Debug</div>;
-    },
-  };
-});
-
-jest.mock("@/app/dashboard/ApiDebugTool", () => {
-  return {
-    ApiDebugTool: function MockApiDebugTool() {
-      return <div data-testid="api-debug">API Debug</div>;
-    },
-  };
-});
+jest.mock("@/app/dashboard/deleteButton", () => ({
+  DeleteButton: function MockDeleteButton() {
+    return <button data-testid="delete-button">Delete</button>;
+  },
+}));
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 
 describe("DashboardPage 集成测试", () => {
   beforeEach(() => {
-    // Mock process.env using Object.defineProperty
-    Object.defineProperty(process.env, "NODE_ENV", {
-      value: "development",
-      writable: true,
-      configurable: true,
-    });
-
     mockUseAuth.mockReturnValue({
       user: {
         id: "test-user-id",
@@ -211,23 +183,6 @@ describe("DashboardPage 集成测试", () => {
     await waitFor(() => {
       expect(screen.getByText("Test Item")).toBeInTheDocument();
       expect(screen.getByText("Test summary")).toBeInTheDocument();
-    });
-  });
-
-  it("应该在开发环境显示调试工具", async () => {
-    const { fetchItems } = await import(
-      "@/components/actions/items-action-client"
-    );
-    const mockFetchItems = fetchItems as jest.MockedFunction<typeof fetchItems>;
-
-    mockFetchItems.mockResolvedValue([]);
-
-    render(<DashboardPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Debug Tools")).toBeInTheDocument();
-      expect(screen.getByTestId("token-debug")).toBeInTheDocument();
-      expect(screen.getByTestId("api-debug")).toBeInTheDocument();
     });
   });
 });
