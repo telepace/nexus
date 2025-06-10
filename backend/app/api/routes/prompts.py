@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import desc
 from sqlmodel import Session, func, or_, select
 
@@ -175,7 +175,6 @@ def create_prompt(
     db: Session = Depends(get_db),
     prompt_in: PromptCreate,
     current_user: Any = Depends(get_current_user),
-    _request: Request,
 ):
     """创建新的提示词"""
     try:
@@ -317,7 +316,6 @@ def read_prompt(
     db: Session = Depends(get_db),
     prompt_id: UUID,
     current_user: Any = Depends(get_current_user),
-    _request: Request,
 ) -> PromptReadWithTags:
     """获取提示词详情"""
     try:
@@ -349,7 +347,6 @@ def update_prompt(
     prompt_id: UUID,
     prompt_in: PromptUpdate,
     current_user: Any = Depends(get_current_user),
-    request: Request,
     create_version: bool = False,
 ):
     """Update a prompt by its ID.
@@ -364,7 +361,6 @@ def update_prompt(
         prompt_id (UUID): The ID of the prompt to update.
         prompt_in (PromptUpdate): The data containing the new values for the prompt.
         current_user (Any): The current user making the request.
-        request (Request): FastAPI request object for timezone extraction.
         create_version (bool): A flag indicating whether to create a new version.
 
     Returns:

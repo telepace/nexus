@@ -93,7 +93,7 @@ def test_extract_images_from_pdf_no_fitz():
 
 # --- Tests for process_web_image ---
 @pytest.fixture
-async def mock_storage_service():
+def mock_storage_service():
     return MockStorage()
 
 

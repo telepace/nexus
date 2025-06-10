@@ -17,8 +17,7 @@ from fastapi import (
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session
 
-from app.api.deps import CurrentUser, SessionDep, get_current_user, get_db
-from app.base import User
+from app.api.deps import CurrentUser, SessionDep, get_db
 from app.core import security  # For password verification
 from app.core.config import settings
 from app.crud import crud_content as crud  # Alias for clarity
@@ -45,17 +44,42 @@ from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is
     ContentSharePublic,
 )
 from app.schemas.llm import CompletionRequest, LLMMessage
+from app.utils.background_tasks import background_task_manager
 from app.utils.content_processors import ContentProcessorFactory
+from app.utils.events import create_sse_generator
 
 router = APIRouter()
+
+
+@router.get(
+    "/events",
+    summary="Content Events Stream (SSE)",
+    description="Server-Sent Events stream for real-time content processing status updates.",
+)
+async def content_events_endpoint(
+    current_user: CurrentUser,
+):
+    """
+    SSE endpoint for real-time content processing updates.
+    """
+    return StreamingResponse(
+        create_sse_generator(str(current_user.id)),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Cache-Control",
+        },
+    )
 
 
 @router.post(
     "/create",
     response_model=ContentItemPublic,
     status_code=status.HTTP_201_CREATED,
-    summary="Create a New Content Item",
-    description="Uploads and creates a new content item in the system. Requires user authentication.",
+    summary="Create a New Content Item with Automatic Processing",
+    description="Creates a new content item and automatically starts background processing. Returns immediately for seamless user experience.",
 )
 def create_content_item_endpoint(
     *,
@@ -64,11 +88,18 @@ def create_content_item_endpoint(
     content_in: ContentItemCreate,
 ) -> ContentItemPublic:
     """
-    Create new content item.
+    Create new content item with automatic background processing.
     """
     # Set the user_id from the authenticated user
     content_item_data = content_in.model_dump()
     content_item_data["user_id"] = current_user.id
+
+    # For text content, set status to completed since no processing needed
+    # For URL and other types, set to processing and trigger background task
+    if content_in.type == "text":
+        content_item_data["processing_status"] = "completed"
+    else:
+        content_item_data["processing_status"] = "processing"
 
     # Create a ContentItem model instance
     db_content_item = ContentItem(**content_item_data)
@@ -77,6 +108,12 @@ def create_content_item_endpoint(
     created_item = crud_create_content_item(
         session=session, content_item_in=db_content_item
     )
+
+    # Start background processing for non-text content
+    if content_in.type != "text":
+        background_task_manager.start_content_processing(
+            content_id=str(created_item.id), user_id=str(current_user.id)
+        )
 
     # Convert ContentItem to ContentItemPublic
     public_item = ContentItemPublic(
@@ -532,9 +569,9 @@ def get_content_chunks_summary_endpoint(
 @router.post("/{content_id}/analyze")
 async def analyze_content_stream(
     content_id: str,
+    current_user: CurrentUser,
     system_prompt: str = Body(..., description="System prompt for analysis"),
     user_prompt: str = Body(..., description="User prompt (content text)"),
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -655,11 +692,11 @@ async def analyze_content_stream(
 @router.post("/{content_id}/analyze-ai-sdk")
 async def analyze_content_ai_sdk(
     content_id: str,
+    current_user: CurrentUser,
     user_prompt: str = Body(..., description="Analysis instruction/prompt"),
     model: str = Body(default="or-llama-3-1-8b-instruct", description="Model to use"),
     temperature: float = Body(default=0.7, description="Sampling temperature"),
     max_tokens: int = Body(default=2000, description="Maximum tokens to generate"),
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -829,11 +866,11 @@ async def analyze_content_ai_sdk(
 @router.post("/{content_id}/completion")
 async def content_completion_stream(
     content_id: str,
+    current_user: CurrentUser,
     prompt: str = Body(..., description="Analysis prompt"),
     model: str = Body(default="or-llama-3-1-8b-instruct", description="Model to use"),
     temperature: float = Body(default=0.7, description="Sampling temperature"),
     max_tokens: int = Body(default=2000, description="Maximum tokens to generate"),
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """

@@ -213,11 +213,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   };
 
   /**
-   * Handles the addition of content through an asynchronous process.
-   *
-   * This function creates content items by calling the backend API,
-   * handles different content types (text, URL, file), and manages
-   * error states and loading indicators.
+   * Handles the submission of content addition with optimistic UI updates.
+   * Creates content items and immediately closes modal for seamless experience.
+   * Background processing and status updates are handled via SSE.
    */
   const handleAddContent = async () => {
     setIsLoading(true);
@@ -263,23 +261,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
           const createdItem = await response.json();
           console.log("URL内容创建成功:", createdItem);
-
-          // 自动开始处理
-          const processResponse = await fetch(
-            `${apiUrl}/api/v1/content/process/${createdItem.id || createdItem.data?.id}`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              credentials: "include",
-            },
-          );
-
-          if (processResponse.ok) {
-            console.log("内容处理已开始");
-          }
+          // Note: Background processing is automatically started by the backend
         }
       } else if (contentType === "text" && content.trim()) {
         // 处理文本类型内容
@@ -310,23 +292,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
         const createdItem = await response.json();
         console.log("文本内容创建成功:", createdItem);
-
-        // 自动开始处理
-        const processResponse = await fetch(
-          `${apiUrl}/api/v1/content/process/${createdItem.id || createdItem.data?.id}`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-          },
-        );
-
-        if (processResponse.ok) {
-          console.log("内容处理已开始");
-        }
+        // Text content is immediately completed, no background processing needed
       } else if (contentType === "file" && selectedFiles.length > 0) {
         // 处理文件类型内容（暂时显示提示信息）
         setError("文件上传功能正在开发中，敬请期待。");
@@ -336,15 +302,12 @@ export const AddContentModal: FC<AddContentModalProps> = ({
         return;
       }
 
-      // 清空表单并关闭模态窗口
+      // 立即清空表单并关闭模态窗口 - 乐观UI更新
       resetForm();
       onClose();
 
-      // 可以在这里触发页面刷新或者通知父组件更新内容列表
-      if (typeof window !== "undefined") {
-        // 简单的页面刷新，实际项目中可以使用更优雅的状态管理
-        window.location.reload();
-      }
+      // Note: Content status updates will be handled via SSE in the content library
+      // No need to refresh the page or manually update the UI
     } catch (error) {
       console.error("添加内容时发生错误:", error);
       setError(

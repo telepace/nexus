@@ -11,7 +11,7 @@ from app.schemas.image import ImageCreate, ImageUpdate  # Pydantic schemas
 
 # --- Async Mock Session Fixture ---
 @pytest.fixture
-async def mock_db_session() -> AsyncMock:
+def mock_db_session() -> AsyncMock:
     session = AsyncMock(spec=AsyncSession)
     session.commit = AsyncMock()
     session.refresh = AsyncMock()

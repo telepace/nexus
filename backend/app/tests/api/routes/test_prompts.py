@@ -109,7 +109,9 @@ def test_create_tag_success(client: TestClient, mock_db_session_fixture: MagicMo
         obj.id = mock_created_tag.id
 
     mock_db_session_fixture.refresh.side_effect = mock_refresh_effect
-    response = client.post(f"{app_settings.API_V1_STR}/prompts/tags", json=tag_in.model_dump())
+    response = client.post(
+        f"{app_settings.API_V1_STR}/prompts/tags", json=tag_in.model_dump()
+    )
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == tag_in.name
@@ -123,7 +125,9 @@ def test_create_tag_conflict(client: TestClient, mock_db_session_fixture: MagicM
     mock_db_session_fixture.exec.return_value.first.return_value = Tag(
         id=uuid.uuid4(), name="Existing Tag"
     )
-    response = client.post(f"{app_settings.API_V1_STR}/prompts/tags", json=tag_in.model_dump())
+    response = client.post(
+        f"{app_settings.API_V1_STR}/prompts/tags", json=tag_in.model_dump()
+    )
     assert response.status_code == 409
 
 
@@ -133,7 +137,9 @@ def test_create_tag_db_error_on_commit(
     tag_in = TagCreate(name="Error Tag")
     mock_db_session_fixture.exec.return_value.first.return_value = None
     mock_db_session_fixture.commit.side_effect = SQLAlchemyError("Commit error")
-    response = client.post(f"{app_settings.API_V1_STR}/prompts/tags", json=tag_in.model_dump())
+    response = client.post(
+        f"{app_settings.API_V1_STR}/prompts/tags", json=tag_in.model_dump()
+    )
     assert response.status_code == 500
     mock_db_session_fixture.rollback.assert_called_once()
 
@@ -229,7 +235,9 @@ def test_create_prompt_success_no_tags(
     p_mock.content = p_in.content
     p_mock.input_vars = p_in.input_vars
     MPV.return_value = MagicMock(spec=PromptVersion)
-    response = client.post(f"{app_settings.API_V1_STR}/prompts/", json=p_in.model_dump())
+    response = client.post(
+        f"{app_settings.API_V1_STR}/prompts/", json=p_in.model_dump()
+    )
     assert response.status_code == 201
     assert response.json()["name"] == p_in.name
 
@@ -284,7 +292,9 @@ def test_create_prompt_db_error(
     p_in = PromptCreate(name="Error", content="Err", type="simple", visibility="public")
     MPr.return_value = MagicMock(spec=Prompt, id=uuid.uuid4(), tags=[])
     mock_db_session_fixture.add.side_effect = SQLAlchemyError("DB add error")
-    response = client.post(f"{app_settings.API_V1_STR}/prompts/", json=p_in.model_dump())
+    response = client.post(
+        f"{app_settings.API_V1_STR}/prompts/", json=p_in.model_dump()
+    )
     assert response.status_code == 500
     mock_db_session_fixture.rollback.assert_called_once()
 
@@ -465,7 +475,9 @@ def test_update_prompt_success_change_name_and_tags(
         update_payload["tag_ids"] = [
             str(tag_id) for tag_id in update_payload["tag_ids"]
         ]
-    response = client.put(f"{app_settings.API_V1_STR}/prompts/{prompt_id}", json=update_payload)
+    response = client.put(
+        f"{app_settings.API_V1_STR}/prompts/{prompt_id}", json=update_payload
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -524,7 +536,9 @@ def test_update_prompt_db_error(
     mock_datetime_routes.utcnow.return_value = datetime.utcnow()
     mock_db_session_fixture.commit.side_effect = SQLAlchemyError("DB Update Error")
     update_payload = PromptUpdate(name="New Name").model_dump()
-    response = client.put(f"{app_settings.API_V1_STR}/prompts/{prompt_id}", json=update_payload)
+    response = client.put(
+        f"{app_settings.API_V1_STR}/prompts/{prompt_id}", json=update_payload
+    )
     assert response.status_code == 500
     error_detail = get_error_detail(response.json())
     assert "更新提示词失败" in error_detail

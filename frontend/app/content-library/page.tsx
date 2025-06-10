@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,9 @@ import { useAuth, getCookie } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import MainLayout from "@/components/layout/MainLayout";
 import { ShareContentModal } from "@/components/share/ShareContentModal";
+import { useContentEvents, ContentEvent } from "@/hooks/useContentEvents";
+import { ProcessingStatusBadge, ProcessingStatusIcon } from "@/components/ui/ProcessingStatusBadge";
+import { toast } from "sonner";
 
 // Define the ContentItemPublic type based on backend schema
 interface ContentItemPublic {
@@ -47,7 +50,7 @@ const getContentIcon = (type: string) => {
   }
 };
 
-// Status badge variant mapping
+// Status badge variant mapping (for fallback)
 const getStatusVariant = (status: string) => {
   switch (status) {
     case "completed":
@@ -76,6 +79,55 @@ export default function ContentLibraryPage() {
 
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
+
+  // Handle content status updates from SSE
+  const handleContentUpdate = useCallback((event: ContentEvent) => {
+    if (event.type === 'content_status_update' && event.content_id) {
+      setItems(prevItems => {
+        return prevItems.map(item => {
+          if (item.id === event.content_id) {
+            const updatedItem = {
+              ...item,
+              processing_status: event.status || item.processing_status,
+              title: event.title || item.title,
+              updated_at: new Date().toISOString(),
+            };
+            
+            // Update selected item if it's the same one
+            setSelectedItem(prev => 
+              prev?.id === event.content_id ? updatedItem : prev
+            );
+            
+            return updatedItem;
+          }
+          return item;
+        });
+      });
+
+      // Show toast notifications for important status changes
+      if (event.status === 'completed') {
+        toast.success(`内容处理完成: ${event.title || '未知内容'}`);
+      } else if (event.status === 'failed') {
+        toast.error(`内容处理失败: ${event.error_message || '未知错误'}`);
+      }
+    }
+  }, []);
+
+  const handleConnectionEstablished = useCallback(() => {
+    console.log('SSE connection established');
+  }, []);
+
+  const handleSSEError = useCallback((error: Error) => {
+    console.error('SSE error:', error);
+  }, []);
+
+  // Setup SSE connection
+  useContentEvents({
+    onContentUpdate: handleContentUpdate,
+    onConnectionEstablished: handleConnectionEstablished,
+    onError: handleSSEError,
+    enabled: !!user,
+  });
 
   // Handle Open Reader
   const handleOpenReader = (item: ContentItemPublic) => {
@@ -119,7 +171,7 @@ export default function ContentLibraryPage() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Download error:", error);
-      // You could add a toast notification here
+      toast.error("下载失败，请重试");
     }
   };
 
@@ -282,13 +334,10 @@ export default function ContentLibraryPage() {
                               {item.summary || "No summary available"}
                             </p>
                             <div className="flex items-center gap-3">
-                              <Badge
-                                variant={getStatusVariant(
-                                  item.processing_status,
-                                )}
-                              >
-                                {item.processing_status}
-                              </Badge>
+                              <ProcessingStatusBadge
+                                status={item.processing_status as any}
+                                size="sm"
+                              />
                               <Badge variant="outline">
                                 {item.type.toUpperCase()}
                               </Badge>
@@ -324,13 +373,10 @@ export default function ContentLibraryPage() {
                         <Badge variant="outline">
                           {selectedItem.type.toUpperCase()}
                         </Badge>
-                        <Badge
-                          variant={getStatusVariant(
-                            selectedItem.processing_status,
-                          )}
-                        >
-                          {selectedItem.processing_status}
-                        </Badge>
+                        <ProcessingStatusBadge
+                          status={selectedItem.processing_status as any}
+                          size="sm"
+                        />
                       </div>
                     </div>
 
