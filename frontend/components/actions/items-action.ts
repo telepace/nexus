@@ -4,7 +4,7 @@ import {
   contentListContentItemsEndpoint,
   contentGetContentItemEndpoint,
   itemsDeleteItem,
-  itemsCreateItem,
+  itemsCreateProject,
 } from "@/app/openapi-client/index";
 import { ContentItemPublic } from "@/app/openapi-client/index";
 import { revalidatePath } from "next/cache";
@@ -287,7 +287,7 @@ export async function addItem(
   const { title, description } = validatedFields.data;
 
   try {
-    const response = await itemsCreateItem({
+    const response = await itemsCreateProject({
       headers: {
         Authorization: `Bearer ${token}`,
       },

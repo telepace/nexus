@@ -135,6 +135,9 @@ class Settings(BaseSettings):
     LITELLM_PROXY_URL: str = "http://litellm:4000"
     LITELLM_MASTER_KEY: str | None = None
 
+    # LLM 配置
+    DEFAULT_LLM_MODEL: str = "gpt-3.5-turbo"  # 默认 LLM 模型
+
     # Database configuration
     DATABASE_TYPE: Literal["postgres", "supabase"] = "postgres"
 

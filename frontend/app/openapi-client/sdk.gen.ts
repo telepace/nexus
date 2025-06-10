@@ -65,9 +65,9 @@ import type {
   ItemsReadItemsData,
   ItemsReadItemsError,
   ItemsReadItemsResponse,
-  ItemsCreateItemData,
-  ItemsCreateItemError,
-  ItemsCreateItemResponse,
+  ItemsCreateProjectData,
+  ItemsCreateProjectError,
+  ItemsCreateProjectResponse,
   ItemsReadItemData,
   ItemsReadItemError,
   ItemsReadItemResponse,
@@ -197,6 +197,23 @@ import type {
   ImagesDeleteImageData,
   ImagesDeleteImageError,
   ImagesDeleteImageResponse,
+  DashboardAnalyzeQueryData,
+  DashboardAnalyzeQueryError,
+  DashboardAnalyzeQueryResponse,
+  DashboardGetDashboardMetricsError,
+  DashboardGetDashboardMetricsResponse,
+  DashboardGetRecentActivitiesData,
+  DashboardGetRecentActivitiesError,
+  DashboardGetRecentActivitiesResponse,
+  DashboardConfirmRoutingData,
+  DashboardConfirmRoutingError,
+  DashboardConfirmRoutingResponse,
+  DashboardCreateProjectData,
+  DashboardCreateProjectError,
+  DashboardCreateProjectResponse,
+  DashboardGetUserProjectsData,
+  DashboardGetUserProjectsError,
+  DashboardGetUserProjectsResponse,
   PrivateCreateUserData,
   PrivateCreateUserError,
   PrivateCreateUserResponse,
@@ -592,15 +609,15 @@ export const itemsReadItems = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create Item
+ * Create Project
  * Create new item.
  */
-export const itemsCreateItem = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<ItemsCreateItemData, ThrowOnError>,
+export const itemsCreateProject = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ItemsCreateProjectData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).post<
-    ItemsCreateItemResponse,
-    ItemsCreateItemError,
+    ItemsCreateProjectResponse,
+    ItemsCreateProjectError,
     ThrowOnError
   >({
     ...options,
@@ -1532,6 +1549,112 @@ export const imagesDeleteImage = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/api/v1/images/{image_id}",
+  });
+};
+
+/**
+ * Analyze Query
+ * 分析用户问题并推荐项目路由
+ */
+export const dashboardAnalyzeQuery = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<DashboardAnalyzeQueryData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    DashboardAnalyzeQueryResponse,
+    DashboardAnalyzeQueryError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/analyze-query",
+  });
+};
+
+/**
+ * Get Dashboard Metrics
+ * 获取 Dashboard 价值指标
+ */
+export const dashboardGetDashboardMetrics = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    DashboardGetDashboardMetricsResponse,
+    DashboardGetDashboardMetricsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/metrics",
+  });
+};
+
+/**
+ * Get Recent Activities
+ * 获取最近的 AI 处理活动流
+ */
+export const dashboardGetRecentActivities = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<DashboardGetRecentActivitiesData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    DashboardGetRecentActivitiesResponse,
+    DashboardGetRecentActivitiesError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/activities",
+  });
+};
+
+/**
+ * Confirm Routing
+ * 确认或拒绝智能路由建议
+ */
+export const dashboardConfirmRouting = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<DashboardConfirmRoutingData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    DashboardConfirmRoutingResponse,
+    DashboardConfirmRoutingError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/confirm-routing/{route_id}",
+  });
+};
+
+/**
+ * Create Project
+ * 创建新项目（基于智能路由建议）
+ */
+export const dashboardCreateProject = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<DashboardCreateProjectData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    DashboardCreateProjectResponse,
+    DashboardCreateProjectError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/projects",
+  });
+};
+
+/**
+ * Get User Projects
+ * 获取用户项目列表
+ */
+export const dashboardGetUserProjects = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<DashboardGetUserProjectsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    DashboardGetUserProjectsResponse,
+    DashboardGetUserProjectsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/projects",
   });
 };
 

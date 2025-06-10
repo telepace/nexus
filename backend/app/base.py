@@ -11,6 +11,7 @@ from app.utils.timezone import now_utc
 
 if TYPE_CHECKING:
     from app.models.image import Image
+    from app.models.project import Project
 
 
 # Shared properties
@@ -63,12 +64,12 @@ class User(UserBase, table=True):
         default=None, sa_column=Column(String(255), unique=True, index=True)
     )
     avatar_url: str | None = Field(default=None, max_length=1024)
-    items: list["Item"] = Relationship(
+    projects: list["Project"] = Relationship(
         back_populates="owner",
         sa_relationship_kwargs={
             "cascade": "all, delete-orphan",
-            "primaryjoin": "User.id == Item.owner_id",
-            "foreign_keys": "[Item.owner_id]",
+            "primaryjoin": "User.id == Project.owner_id",
+            "foreign_keys": "[Project.owner_id]",
         },
     )
     images: list["Image"] = Relationship(
@@ -98,47 +99,6 @@ class TokenBlacklist(SQLModel, table=True):
     user_id: uuid.UUID = Field(index=True)
     expires_at: datetime
     created_at: datetime = Field(default_factory=now_utc)
-
-
-# Shared properties
-class ItemBase(SQLModel):
-    title: str = Field(min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=255)
-
-
-# Properties to receive on item creation
-class ItemCreate(ItemBase):
-    pass
-
-
-# Properties to receive on item update
-class ItemUpdate(ItemBase):
-    title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
-
-
-# Database model, database table inferred from class name
-class Item(ItemBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    # Remove foreign_key constraint, but keep it indexed for performance
-    owner_id: uuid.UUID = Field(index=True, nullable=False)
-    owner: User | None = Relationship(
-        back_populates="items",
-        sa_relationship_kwargs={
-            "primaryjoin": "User.id == Item.owner_id",
-            "foreign_keys": "[Item.owner_id]",
-        },
-    )
-
-
-# Properties to return via API, id is always required
-class ItemPublic(ItemBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
-
-
-class ItemsPublic(SQLModel):
-    data: list[ItemPublic]
-    count: int
 
 
 # Generic message

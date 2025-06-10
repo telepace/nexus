@@ -14,7 +14,7 @@ from sqlmodel import Session, delete
 from app.core.config import settings
 from app.core.db import engine, init_db
 from app.main import app
-from app.models import Item, User
+from app.models import User
 from app.models.content import (
     AIConversation,  # Added ContentShare
     ContentAsset,
@@ -22,6 +22,7 @@ from app.models.content import (
     ContentShare,
     ProcessingJob,
 )
+from app.models.project import Project
 from app.tests.utils.test_db import setup_test_db, teardown_test_db
 from app.tests.utils.user import authentication_token_from_email
 from app.tests.utils.utils import get_superuser_token_headers
@@ -121,8 +122,8 @@ def db() -> Generator[Session, None, None]:
     # Cleanup: Since foreign key constraints have been removed,
     # we can clean up tables in any order
     with Session(engine) as session:
-        # Clean up all test data
-        session.execute(delete(Item))
+        # Clean up all test data - use Project instead of Item
+        session.execute(delete(Project))
         session.execute(delete(User))
         # Clean up content-related tables
         session.execute(delete(AIConversation))

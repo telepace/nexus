@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ChatCreateChatCompletionData, ChatCreateChatCompletionResponse, ChatListAvailableModelsResponse, ContentContentEventsEndpointResponse, ContentCreateContentItemEndpointData, ContentCreateContentItemEndpointResponse, ContentProcessContentItemEndpointData, ContentProcessContentItemEndpointResponse, ContentListContentItemsEndpointData, ContentListContentItemsEndpointResponse, ContentGetContentItemEndpointData, ContentGetContentItemEndpointResponse, ContentGetContentMarkdownEndpointData, ContentGetContentMarkdownEndpointResponse, ContentGetSupportedProcessorsResponse, ContentGetContentChunksEndpointData, ContentGetContentChunksEndpointResponse, ContentGetContentChunksSummaryEndpointData, ContentGetContentChunksSummaryEndpointResponse, ContentAnalyzeContentStreamData, ContentAnalyzeContentStreamResponse, ContentAnalyzeContentAiSdkData, ContentAnalyzeContentAiSdkResponse, ContentContentCompletionStreamData, ContentContentCompletionStreamResponse, ContentCreateShareLinkEndpointData, ContentCreateShareLinkEndpointResponse, ContentDeactivateShareLinkEndpointData, ContentDeactivateShareLinkEndpointResponse, ContentGetSharedContentEndpointData, ContentGetSharedContentEndpointResponse, GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ImagesGetUploadUrlData, ImagesGetUploadUrlResponse, ImagesCreateImageRecordData, ImagesCreateImageRecordResponse, ImagesListImagesData, ImagesListImagesResponse, ImagesReadImageData, ImagesReadImageResponse, ImagesDeleteImageData, ImagesDeleteImageResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LlmCreateCompletionData, LlmCreateCompletionResponse, LlmCreateEmbeddingData, LlmCreateEmbeddingResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginLoginAccessTokenHeadResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, PromptsTogglePromptEnabledData, PromptsTogglePromptEnabledResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersReadUserMeHeadResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { ChatCreateChatCompletionData, ChatCreateChatCompletionResponse, ChatListAvailableModelsResponse, ContentContentEventsEndpointResponse, ContentCreateContentItemEndpointData, ContentCreateContentItemEndpointResponse, ContentProcessContentItemEndpointData, ContentProcessContentItemEndpointResponse, ContentListContentItemsEndpointData, ContentListContentItemsEndpointResponse, ContentGetContentItemEndpointData, ContentGetContentItemEndpointResponse, ContentGetContentMarkdownEndpointData, ContentGetContentMarkdownEndpointResponse, ContentGetSupportedProcessorsResponse, ContentGetContentChunksEndpointData, ContentGetContentChunksEndpointResponse, ContentGetContentChunksSummaryEndpointData, ContentGetContentChunksSummaryEndpointResponse, ContentAnalyzeContentStreamData, ContentAnalyzeContentStreamResponse, ContentAnalyzeContentAiSdkData, ContentAnalyzeContentAiSdkResponse, ContentContentCompletionStreamData, ContentContentCompletionStreamResponse, ContentCreateShareLinkEndpointData, ContentCreateShareLinkEndpointResponse, ContentDeactivateShareLinkEndpointData, ContentDeactivateShareLinkEndpointResponse, ContentGetSharedContentEndpointData, ContentGetSharedContentEndpointResponse, DashboardAnalyzeQueryData, DashboardAnalyzeQueryResponse, DashboardGetDashboardMetricsResponse, DashboardGetRecentActivitiesData, DashboardGetRecentActivitiesResponse, DashboardConfirmRoutingData, DashboardConfirmRoutingResponse, DashboardCreateProjectData, DashboardCreateProjectResponse, DashboardGetUserProjectsData, DashboardGetUserProjectsResponse, GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ImagesGetUploadUrlData, ImagesGetUploadUrlResponse, ImagesCreateImageRecordData, ImagesCreateImageRecordResponse, ImagesListImagesData, ImagesListImagesResponse, ImagesReadImageData, ImagesReadImageResponse, ImagesDeleteImageData, ImagesDeleteImageResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateProjectData, ItemsCreateProjectResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LlmCreateCompletionData, LlmCreateCompletionResponse, LlmCreateEmbeddingData, LlmCreateEmbeddingResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginLoginAccessTokenHeadResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, PromptsTogglePromptEnabledData, PromptsTogglePromptEnabledResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersReadUserMeHeadResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class ChatService {
     /**
@@ -398,6 +398,133 @@ export class ContentService {
     
 }
 
+export class DashboardService {
+    /**
+     * Analyze Query
+     * 分析用户问题并推荐项目路由
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns ApiResponse_SmartRoutingResponse_ Successful Response
+     * @throws ApiError
+     */
+    public static analyzeQuery(data: DashboardAnalyzeQueryData): CancelablePromise<DashboardAnalyzeQueryResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/dashboard/analyze-query',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Dashboard Metrics
+     * 获取 Dashboard 价值指标
+     * @returns ApiResponse_dict_str__Any__ Successful Response
+     * @throws ApiError
+     */
+    public static getDashboardMetrics(): CancelablePromise<DashboardGetDashboardMetricsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/dashboard/metrics'
+        });
+    }
+    
+    /**
+     * Get Recent Activities
+     * 获取最近的 AI 处理活动流
+     * @param data The data for the request.
+     * @param data.limit
+     * @returns ApiResponse_list_dict_str__Any___ Successful Response
+     * @throws ApiError
+     */
+    public static getRecentActivities(data: DashboardGetRecentActivitiesData = {}): CancelablePromise<DashboardGetRecentActivitiesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/dashboard/activities',
+            query: {
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Confirm Routing
+     * 确认或拒绝智能路由建议
+     * @param data The data for the request.
+     * @param data.routeId
+     * @param data.confirmed
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static confirmRouting(data: DashboardConfirmRoutingData): CancelablePromise<DashboardConfirmRoutingResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/dashboard/confirm-routing/{route_id}',
+            path: {
+                route_id: data.routeId
+            },
+            query: {
+                confirmed: data.confirmed
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Project
+     * 创建新项目（基于智能路由建议）
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns app__schemas__common__ApiResponse_ProjectPublic_ Successful Response
+     * @throws ApiError
+     */
+    public static createProject(data: DashboardCreateProjectData): CancelablePromise<DashboardCreateProjectResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/dashboard/projects',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get User Projects
+     * 获取用户项目列表
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @param data.includeInactive
+     * @returns app__schemas__common__ApiResponse_ProjectsPublic_ Successful Response
+     * @throws ApiError
+     */
+    public static getUserProjects(data: DashboardGetUserProjectsData = {}): CancelablePromise<DashboardGetUserProjectsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/dashboard/projects',
+            query: {
+                skip: data.skip,
+                limit: data.limit,
+                include_inactive: data.includeInactive
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+}
+
 export class GoogleOauthService {
     /**
      * Google Callback Api
@@ -605,7 +732,7 @@ export class ItemsService {
      * @param data The data for the request.
      * @param data.skip
      * @param data.limit
-     * @returns ApiResponse_ItemsPublic_ Successful Response
+     * @returns app__utils__response__ApiResponse_ProjectsPublic_ Successful Response
      * @throws ApiError
      */
     public static readItems(data: ItemsReadItemsData = {}): CancelablePromise<ItemsReadItemsResponse> {
@@ -623,14 +750,14 @@ export class ItemsService {
     }
     
     /**
-     * Create Item
+     * Create Project
      * Create new item.
      * @param data The data for the request.
      * @param data.requestBody
-     * @returns ApiResponse_ItemPublic_ Successful Response
+     * @returns app__utils__response__ApiResponse_ProjectPublic_ Successful Response
      * @throws ApiError
      */
-    public static createItem(data: ItemsCreateItemData): CancelablePromise<ItemsCreateItemResponse> {
+    public static createProject(data: ItemsCreateProjectData): CancelablePromise<ItemsCreateProjectResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/items/',
@@ -647,7 +774,7 @@ export class ItemsService {
      * Get item by ID.
      * @param data The data for the request.
      * @param data.id
-     * @returns ApiResponse_ItemPublic_ Successful Response
+     * @returns app__utils__response__ApiResponse_ProjectPublic_ Successful Response
      * @throws ApiError
      */
     public static readItem(data: ItemsReadItemData): CancelablePromise<ItemsReadItemResponse> {
@@ -669,7 +796,7 @@ export class ItemsService {
      * @param data The data for the request.
      * @param data.id
      * @param data.requestBody
-     * @returns ApiResponse_ItemPublic_ Successful Response
+     * @returns app__utils__response__ApiResponse_ProjectPublic_ Successful Response
      * @throws ApiError
      */
     public static updateItem(data: ItemsUpdateItemData): CancelablePromise<ItemsUpdateItemResponse> {

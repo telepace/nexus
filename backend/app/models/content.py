@@ -13,6 +13,7 @@ class ContentItemBase(SQLModel):
     """Base model for content items, containing common fields."""
 
     user_id: uuid.UUID = Field(index=True)
+    project_id: uuid.UUID | None = Field(default=None, index=True)
     type: str = Field(
         sa_column_args=[
             CheckConstraint("type IN ('url', 'pdf', 'docx', 'text', 'plugin')")

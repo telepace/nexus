@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.routes import (
     chat,  # Add chat router
     content,  # Add content router
+    dashboard,  # Add dashboard router
     google_oauth,
     images,  # Added images router
     items,
@@ -32,6 +33,9 @@ api_router.include_router(
 api_router.include_router(
     images.router, prefix="/images", tags=["images"]
 )  # Include images router
+api_router.include_router(
+    dashboard.router, prefix="/dashboard", tags=["dashboard"]
+)  # Include dashboard router
 
 
 if settings.ENVIRONMENT == "local":
