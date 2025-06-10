@@ -4,18 +4,18 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  ArrowRight, 
-  Rocket, 
-  Download, 
-  Play, 
+import {
+  ArrowRight,
+  Rocket,
+  Download,
+  Play,
   Check,
   Sparkles,
   Clock,
   Star,
   Zap,
   Shield,
-  Gift
+  Gift,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -27,34 +27,34 @@ export function FinalCTA() {
     {
       icon: Zap,
       title: "即刻生效",
-      description: "无需复杂配置，2分钟即可开始体验AI阅读助手的强大功能"
+      description: "无需复杂配置，2分钟即可开始体验AI阅读助手的强大功能",
     },
     {
       icon: Shield,
       title: "隐私安全",
-      description: "数据本地加密存储，完全掌控你的知识资产"
+      description: "数据本地加密存储，完全掌控你的知识资产",
     },
     {
       icon: Gift,
       title: "免费体验",
-      description: "核心功能免费使用，随时可以升级到更多高级特性"
-    }
+      description: "核心功能免费使用，随时可以升级到更多高级特性",
+    },
   ];
 
   // 用户担忧及解答
   const concerns = [
     {
       question: "会不会很复杂？",
-      answer: "不会！我们专注简洁易用的设计，大多数功能都是一键完成。"
+      answer: "不会！我们专注简洁易用的设计，大多数功能都是一键完成。",
     },
     {
       question: "数据安全吗？",
-      answer: "绝对安全！所有数据都在你的设备上加密存储，我们无法访问。"
+      answer: "绝对安全！所有数据都在你的设备上加密存储，我们无法访问。",
     },
     {
       question: "免费版够用吗？",
-      answer: "对大多数用户来说完全够用，包含核心的AI分析和笔记功能。"
-    }
+      answer: "对大多数用户来说完全够用，包含核心的AI分析和笔记功能。",
+    },
   ];
 
   return (
@@ -66,7 +66,7 @@ export function FinalCTA() {
             <Sparkles className="w-4 h-4 mr-2" />
             开始你的知识旅程
           </Badge>
-          
+
           <h2 className="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
             准备好让 AI 成为
             <br />
@@ -74,7 +74,7 @@ export function FinalCTA() {
               你的知识助手了吗？
             </span>
           </h2>
-          
+
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed">
             不再为信息过载焦虑，不再让有价值的内容在收藏夹里沉睡。
             <br />
@@ -84,8 +84,8 @@ export function FinalCTA() {
           {/* 主要行动按钮 */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
             <Link href="/setup">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="px-10 py-4 text-xl font-semibold rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 group bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90"
               >
                 <Rocket className="w-6 h-6 mr-3 group-hover:translate-x-1 transition-transform" />
@@ -93,10 +93,10 @@ export function FinalCTA() {
                 <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            
-            <Button 
-              variant="outline" 
-              size="lg" 
+
+            <Button
+              variant="outline"
+              size="lg"
               className="px-8 py-4 text-lg font-medium rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
             >
               <Download className="w-5 h-5 mr-2" />
@@ -111,7 +111,10 @@ export function FinalCTA() {
               <span>观看产品演示 (2分钟)</span>
             </button>
             <span className="hidden sm:block">•</span>
-            <Link href="/dashboard" className="flex items-center space-x-2 hover:text-foreground transition-colors">
+            <Link
+              href="/dashboard"
+              className="flex items-center space-x-2 hover:text-foreground transition-colors"
+            >
               <span>已有账户？直接登录</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
@@ -127,12 +130,16 @@ export function FinalCTA() {
               onMouseEnter={() => setHoveredFeature(index)}
               onMouseLeave={() => setHoveredFeature(null)}
             >
-              <div className={`w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center transition-all duration-300 ${
-                hoveredFeature === index ? 'bg-primary/20 scale-110' : ''
-              }`}>
-                <prop.icon className={`w-8 h-8 text-primary transition-all duration-300 ${
-                  hoveredFeature === index ? 'scale-110' : ''
-                }`} />
+              <div
+                className={`w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center transition-all duration-300 ${
+                  hoveredFeature === index ? "bg-primary/20 scale-110" : ""
+                }`}
+              >
+                <prop.icon
+                  className={`w-8 h-8 text-primary transition-all duration-300 ${
+                    hoveredFeature === index ? "scale-110" : ""
+                  }`}
+                />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 {prop.title}
@@ -151,7 +158,10 @@ export function FinalCTA() {
           </h3>
           <div className="grid md:grid-cols-3 gap-6">
             {concerns.map((concern, index) => (
-              <Card key={index} className="hover:shadow-lg transition-all duration-300">
+              <Card
+                key={index}
+                className="hover:shadow-lg transition-all duration-300"
+              >
                 <CardContent className="p-6">
                   <h4 className="font-semibold text-foreground mb-3 flex items-center">
                     <span className="w-6 h-6 bg-orange-100 text-orange-600 rounded-full text-xs font-bold flex items-center justify-center mr-2">
@@ -185,15 +195,17 @@ export function FinalCTA() {
               <div className="flex space-x-8 animate-pulse">
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground whitespace-nowrap">
                   <Star className="w-4 h-4 text-yellow-500" />
-                  <span>"阅读效率提升了3倍！" - 产品经理 Sarah</span>
+                  <span>&quot;阅读效率提升了3倍！&quot; - 产品经理 Sarah</span>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground whitespace-nowrap">
                   <Star className="w-4 h-4 text-yellow-500" />
-                  <span>"终于有了完整的知识体系" - 研究员 Dr. Chen</span>
+                  <span>
+                    &quot;终于有了完整的知识体系&quot; - 研究员 Dr. Chen
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground whitespace-nowrap">
                   <Star className="w-4 h-4 text-yellow-500" />
-                  <span>"信息焦虑彻底消失了" - 创业者 Mike</span>
+                  <span>&quot;信息焦虑彻底消失了&quot; - 创业者 Mike</span>
                 </div>
               </div>
             </div>
@@ -220,15 +232,15 @@ export function FinalCTA() {
 
             {/* 最终CTA */}
             <Link href="/setup">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="px-12 py-4 text-xl font-bold rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 group"
               >
                 现在就开始我的知识旅程
                 <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform" />
               </Button>
             </Link>
-            
+
             <p className="text-xs text-muted-foreground mt-4">
               点击开始即表示你同意我们的服务条款和隐私政策
             </p>
@@ -237,4 +249,4 @@ export function FinalCTA() {
       </div>
     </section>
   );
-} 
+}

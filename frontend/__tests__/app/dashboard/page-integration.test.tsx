@@ -90,7 +90,9 @@ describe("DashboardPage 集成测试", () => {
 
   it("应该显示错误信息当API失败时", async () => {
     // 动态导入并模拟 fetchItems
-    const { fetchItems } = await import("@/components/actions/items-action-client");
+    const { fetchItems } = await import(
+      "@/components/actions/items-action-client"
+    );
     const mockFetchItems = fetchItems as jest.MockedFunction<typeof fetchItems>;
 
     mockFetchItems.mockResolvedValue({
@@ -111,7 +113,9 @@ describe("DashboardPage 集成测试", () => {
   });
 
   it("应该显示空状态当没有内容时", async () => {
-    const { fetchItems } = await import("@/components/actions/items-action-client");
+    const { fetchItems } = await import(
+      "@/components/actions/items-action-client"
+    );
     const mockFetchItems = fetchItems as jest.MockedFunction<typeof fetchItems>;
 
     mockFetchItems.mockResolvedValue([]);
@@ -129,7 +133,9 @@ describe("DashboardPage 集成测试", () => {
   });
 
   it("应该正确显示内容列表", async () => {
-    const { fetchItems } = await import("@/components/actions/items-action-client");
+    const { fetchItems } = await import(
+      "@/components/actions/items-action-client"
+    );
     const mockFetchItems = fetchItems as jest.MockedFunction<typeof fetchItems>;
 
     const mockItems = [
@@ -177,7 +183,9 @@ describe("DashboardPage 集成测试", () => {
   });
 
   it("应该处理包装格式的API响应", async () => {
-    const { fetchItems } = await import("@/components/actions/items-action-client");
+    const { fetchItems } = await import(
+      "@/components/actions/items-action-client"
+    );
     const mockFetchItems = fetchItems as jest.MockedFunction<typeof fetchItems>;
 
     // 模拟修复后应该能正确处理的包装格式
@@ -207,7 +215,9 @@ describe("DashboardPage 集成测试", () => {
   });
 
   it("应该在开发环境显示调试工具", async () => {
-    const { fetchItems } = await import("@/components/actions/items-action-client");
+    const { fetchItems } = await import(
+      "@/components/actions/items-action-client"
+    );
     const mockFetchItems = fetchItems as jest.MockedFunction<typeof fetchItems>;
 
     mockFetchItems.mockResolvedValue([]);

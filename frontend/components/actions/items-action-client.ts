@@ -1,8 +1,6 @@
 "use client";
 
-import {
-  contentListContentItemsEndpoint,
-} from "@/app/openapi-client/index";
+import { contentListContentItemsEndpoint } from "@/app/openapi-client/index";
 import { ContentItemPublic } from "@/app/openapi-client/index";
 import { getCookie } from "@/lib/client-auth";
 
@@ -145,4 +143,4 @@ export const fetchItems = async (): Promise<FetchItemsReturn> => {
 
     return errorResult;
   }
-}; 
+};

@@ -139,6 +139,8 @@ import type {
   ChatCreateChatCompletionResponse,
   ChatListAvailableModelsError,
   ChatListAvailableModelsResponse,
+  ContentContentEventsEndpointError,
+  ContentContentEventsEndpointResponse,
   ContentCreateContentItemEndpointData,
   ContentCreateContentItemEndpointError,
   ContentCreateContentItemEndpointResponse,
@@ -810,7 +812,6 @@ export const promptsCreatePrompt = <ThrowOnError extends boolean = false>(
  * Args:
  * db (Session): Database session.
  * _current_user (Any): Current user information (dependency).
- * request (Request): FastAPI request object for timezone extraction.
  * skip (int?): Number of records to skip. Defaults to 0.
  * limit (int?): Maximum number of records to return. Defaults to 100.
  * tag_ids (list[UUID] | None?): List of UUIDs for tags to filter prompts by.
@@ -868,7 +869,6 @@ export const promptsReadPrompt = <ThrowOnError extends boolean = false>(
  * prompt_id (UUID): The ID of the prompt to update.
  * prompt_in (PromptUpdate): The data containing the new values for the prompt.
  * current_user (Any): The current user making the request.
- * request (Request): FastAPI request object for timezone extraction.
  * create_version (bool): A flag indicating whether to create a new version.
  *
  * Returns:
@@ -920,7 +920,6 @@ export const promptsDeletePrompt = <ThrowOnError extends boolean = false>(
  * db (Session): Database session.
  * prompt_id (UUID): The ID of the prompt to get versions for.
  * current_user (Any): Current user information (dependency).
- * request (Request): FastAPI request object for timezone extraction.
  *
  * Returns:
  * list[PromptVersion]: List of prompt versions sorted by version number.
@@ -1102,8 +1101,27 @@ export const chatListAvailableModels = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create a New Content Item
- * Uploads and creates a new content item in the system. Requires user authentication.
+ * Content Events Stream (SSE)
+ * Server-Sent Events stream for real-time content processing status updates.
+ */
+export const contentContentEventsEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ContentContentEventsEndpointResponse,
+    ContentContentEventsEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/events",
+  });
+};
+
+/**
+ * Create a New Content Item with Automatic Processing
+ * Creates a new content item and automatically starts background processing. Returns immediately for seamless user experience.
  */
 export const contentCreateContentItemEndpoint = <
   ThrowOnError extends boolean = false,

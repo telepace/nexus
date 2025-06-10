@@ -9,8 +9,8 @@ global.TextDecoder = TextDecoder;
 // Add Request polyfill for Jest
 global.Request = class MockRequest {
   constructor(input: any, init?: any) {
-    this.url = typeof input === 'string' ? input : input.url;
-    this.method = init?.method || 'GET';
+    this.url = typeof input === "string" ? input : input.url;
+    this.method = init?.method || "GET";
     this.headers = new Headers(init?.headers);
     this.body = init?.body;
   }
@@ -236,21 +236,25 @@ jest.mock("@/lib/client-auth", () => ({
 
 // Mock server-auth-bridge module
 jest.mock("@/lib/server-auth-bridge", () => ({
-  requireAuth: jest.fn(() => Promise.resolve({
-    id: "test-user-id",
-    email: "test@example.com",
-    full_name: "Test User"
-  })),
+  requireAuth: jest.fn(() =>
+    Promise.resolve({
+      id: "test-user-id",
+      email: "test@example.com",
+      full_name: "Test User",
+    }),
+  ),
   getAuthToken: jest.fn(() => Promise.resolve("test-auth-token-12345")),
 }));
 
 // Mock server-auth module
 jest.mock("@/lib/server-auth", () => ({
-  requireAuth: jest.fn(() => Promise.resolve({
-    id: "test-user-id", 
-    email: "test@example.com",
-    full_name: "Test User"
-  })),
+  requireAuth: jest.fn(() =>
+    Promise.resolve({
+      id: "test-user-id",
+      email: "test@example.com",
+      full_name: "Test User",
+    }),
+  ),
   getAuthToken: jest.fn(() => Promise.resolve("test-auth-token-12345")),
 }));
 

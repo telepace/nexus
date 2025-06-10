@@ -23,7 +23,7 @@ function clearItemsActionCache() {
   // 通过重新导入模块并手动重置缓存
   const itemsActionModule = require("@/components/actions/items-action");
   // 访问模块内部的缓存变量并重置
-  if (itemsActionModule && typeof itemsActionModule === 'object') {
+  if (itemsActionModule && typeof itemsActionModule === "object") {
     // 直接访问模块的内部状态（虽然不是最佳实践，但这是测试需要）
     eval(`
       const itemsActionPath = require.resolve("@/components/actions/items-action");
@@ -40,15 +40,15 @@ describe("fetchItems function", () => {
   beforeEach(() => {
     // 重置所有 mock
     jest.clearAllMocks();
-    
+
     // 清除模块缓存
     jest.resetModules();
 
     // 设置默认的成功 mock - 确保返回有效的字符串
-    mockRequireAuth.mockResolvedValue({ 
+    mockRequireAuth.mockResolvedValue({
       id: "test-user-id",
       email: "test@example.com",
-      full_name: "Test User"
+      full_name: "Test User",
     } as any);
     mockGetAuthToken.mockResolvedValue("test-token-12345");
   });
@@ -78,7 +78,9 @@ describe("fetchItems function", () => {
     mockContentListContentItemsEndpoint.mockResolvedValue(mockItems as any);
 
     // 动态导入以获取新的模块实例
-    const { fetchItems: freshFetchItems } = require("@/components/actions/items-action");
+    const {
+      fetchItems: freshFetchItems,
+    } = require("@/components/actions/items-action");
 
     // Act
     const result = await freshFetchItems();
@@ -97,7 +99,7 @@ describe("fetchItems function", () => {
     // Arrange
     const mockApiResponse = {
       message: "Success",
-      status: "ok"
+      status: "ok",
     };
 
     mockContentListContentItemsEndpoint.mockResolvedValue(
@@ -105,7 +107,9 @@ describe("fetchItems function", () => {
     );
 
     // 动态导入以获取新的模块实例
-    const { fetchItems: freshFetchItems } = require("@/components/actions/items-action");
+    const {
+      fetchItems: freshFetchItems,
+    } = require("@/components/actions/items-action");
 
     // Act
     const result = await freshFetchItems();
@@ -136,7 +140,9 @@ describe("fetchItems function", () => {
     );
 
     // 动态导入以获取新的模块实例
-    const { fetchItems: freshFetchItems } = require("@/components/actions/items-action");
+    const {
+      fetchItems: freshFetchItems,
+    } = require("@/components/actions/items-action");
 
     // Act
     const result = await freshFetchItems();
@@ -152,7 +158,9 @@ describe("fetchItems function", () => {
     mockContentListContentItemsEndpoint.mockRejectedValue(mockError);
 
     // 动态导入以获取新的模块实例
-    const { fetchItems: freshFetchItems } = require("@/components/actions/items-action");
+    const {
+      fetchItems: freshFetchItems,
+    } = require("@/components/actions/items-action");
 
     // Act
     const result = await freshFetchItems();
@@ -169,7 +177,9 @@ describe("fetchItems function", () => {
     mockContentListContentItemsEndpoint.mockResolvedValue(null as any);
 
     // 动态导入以获取新的模块实例
-    const { fetchItems: freshFetchItems } = require("@/components/actions/items-action");
+    const {
+      fetchItems: freshFetchItems,
+    } = require("@/components/actions/items-action");
 
     // Act
     const result = await freshFetchItems();

@@ -1,14 +1,18 @@
-import { FC } from 'react';
-import { Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { FC } from "react";
+import { Loader2, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export type ProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type ProcessingStatus =
+  | "pending"
+  | "processing"
+  | "completed"
+  | "failed";
 
 interface ProcessingStatusBadgeProps {
   status: ProcessingStatus;
   progress?: number;
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   showText?: boolean;
 }
 
@@ -22,45 +26,45 @@ interface StatusConfig {
 const statusConfigs: Record<ProcessingStatus, StatusConfig> = {
   pending: {
     icon: Clock,
-    label: '等待处理',
-    className: 'text-amber-600 border-amber-200',
-    bgClassName: 'bg-amber-50',
+    label: "等待处理",
+    className: "text-amber-600 border-amber-200",
+    bgClassName: "bg-amber-50",
   },
   processing: {
     icon: Loader2,
-    label: '处理中',
-    className: 'text-blue-600 border-blue-200',
-    bgClassName: 'bg-blue-50',
+    label: "处理中",
+    className: "text-blue-600 border-blue-200",
+    bgClassName: "bg-blue-50",
   },
   completed: {
     icon: CheckCircle2,
-    label: '处理完成',
-    className: 'text-green-600 border-green-200',
-    bgClassName: 'bg-green-50',
+    label: "处理完成",
+    className: "text-green-600 border-green-200",
+    bgClassName: "bg-green-50",
   },
   failed: {
     icon: XCircle,
-    label: '处理失败',
-    className: 'text-red-600 border-red-200',
-    bgClassName: 'bg-red-50',
+    label: "处理失败",
+    className: "text-red-600 border-red-200",
+    bgClassName: "bg-red-50",
   },
 };
 
 const sizeClasses = {
   sm: {
-    container: 'text-xs px-1.5 py-0.5',
-    icon: 'h-3 w-3',
-    gap: 'gap-1',
+    container: "text-xs px-1.5 py-0.5",
+    icon: "h-3 w-3",
+    gap: "gap-1",
   },
   md: {
-    container: 'text-sm px-2 py-1',
-    icon: 'h-4 w-4',
-    gap: 'gap-1.5',
+    container: "text-sm px-2 py-1",
+    icon: "h-4 w-4",
+    gap: "gap-1.5",
   },
   lg: {
-    container: 'text-base px-3 py-1.5',
-    icon: 'h-5 w-5',
-    gap: 'gap-2',
+    container: "text-base px-3 py-1.5",
+    icon: "h-5 w-5",
+    gap: "gap-2",
   },
 };
 
@@ -68,7 +72,7 @@ export const ProcessingStatusBadge: FC<ProcessingStatusBadgeProps> = ({
   status,
   progress,
   className,
-  size = 'md',
+  size = "md",
   showText = true,
 }) => {
   const config = statusConfigs[status];
@@ -78,24 +82,24 @@ export const ProcessingStatusBadge: FC<ProcessingStatusBadgeProps> = ({
   return (
     <div
       className={cn(
-        'inline-flex items-center rounded-full border font-medium transition-colors',
+        "inline-flex items-center rounded-full border font-medium transition-colors",
         config.className,
         config.bgClassName,
         sizeConfig.container,
         sizeConfig.gap,
-        className
+        className,
       )}
     >
       <Icon
         className={cn(
           sizeConfig.icon,
-          status === 'processing' && 'animate-spin'
+          status === "processing" && "animate-spin",
         )}
       />
       {showText && (
         <span>
           {config.label}
-          {status === 'processing' && progress !== undefined && (
+          {status === "processing" && progress !== undefined && (
             <span className="ml-1">({progress}%)</span>
           )}
         </span>
@@ -107,4 +111,4 @@ export const ProcessingStatusBadge: FC<ProcessingStatusBadgeProps> = ({
 // 简化版本，只显示图标
 export const ProcessingStatusIcon: FC<ProcessingStatusBadgeProps> = (props) => {
   return <ProcessingStatusBadge {...props} showText={false} />;
-}; 
+};

@@ -870,6 +870,10 @@ export type ChatListAvailableModelsResponse = unknown;
 
 export type ChatListAvailableModelsError = unknown;
 
+export type ContentContentEventsEndpointResponse = unknown;
+
+export type ContentContentEventsEndpointError = unknown;
+
 export type ContentCreateContentItemEndpointData = {
   body: ContentItemCreate;
 };

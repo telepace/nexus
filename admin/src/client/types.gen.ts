@@ -465,6 +465,8 @@ export type ChatCreateChatCompletionResponse = (unknown);
 
 export type ChatListAvailableModelsResponse = (unknown);
 
+export type ContentContentEventsEndpointResponse = (unknown);
+
 export type ContentCreateContentItemEndpointData = {
     requestBody: ContentItemCreate;
 };

@@ -26,16 +26,16 @@ function OnboardingContent() {
     <div className="min-h-screen bg-background">
       {/* Hero Section - 情感共鸣 + 价值主张 */}
       <OnboardingHero />
-      
+
       {/* Interactive Demo - 真实产品体验 */}
       <InteractiveDemo />
-      
+
       {/* Features Journey - 功能流程可视化 */}
       <FeaturesJourney />
-      
+
       {/* Social Proof - 用户价值证明 */}
       <SocialProof />
-      
+
       {/* Final CTA - 分层行动召唤 */}
       <FinalCTA />
     </div>

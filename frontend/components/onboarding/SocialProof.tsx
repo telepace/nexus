@@ -2,18 +2,18 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  TrendingUp, 
-  Users, 
-  BookOpen, 
-  Clock, 
+import {
+  TrendingUp,
+  Users,
+  BookOpen,
+  Clock,
   Brain,
   Star,
   Target,
   Lightbulb,
   GraduationCap,
   Building,
-  Briefcase
+  Briefcase,
 } from "lucide-react";
 
 export function SocialProof() {
@@ -31,8 +31,8 @@ export function SocialProof() {
       metrics: [
         { label: "月处理论文", value: "200+", unit: "篇" },
         { label: "时间节省", value: "60%", unit: "" },
-        { label: "知识留存", value: "85%", unit: "" }
-      ]
+        { label: "知识留存", value: "85%", unit: "" },
+      ],
     },
     {
       persona: "产品经理",
@@ -46,8 +46,8 @@ export function SocialProof() {
       metrics: [
         { label: "日处理信息", value: "100+", unit: "条" },
         { label: "决策准确率", value: "92%", unit: "" },
-        { label: "团队效率", value: "2.5x", unit: "" }
-      ]
+        { label: "团队效率", value: "2.5x", unit: "" },
+      ],
     },
     {
       persona: "终身学习者",
@@ -61,9 +61,9 @@ export function SocialProof() {
       metrics: [
         { label: "知识节点", value: "500+", unit: "个" },
         { label: "学习路径", value: "15+", unit: "条" },
-        { label: "技能提升", value: "显著", unit: "" }
-      ]
-    }
+        { label: "技能提升", value: "显著", unit: "" },
+      ],
+    },
   ];
 
   // 核心数据指标
@@ -73,29 +73,29 @@ export function SocialProof() {
       label: "阅读效率提升",
       value: "300%",
       description: "平均用户反馈",
-      color: "text-green-600"
+      color: "text-green-600",
     },
     {
       icon: Clock,
       label: "时间节省",
       value: "70%",
       description: "每天节省 2+ 小时",
-      color: "text-blue-600"
+      color: "text-blue-600",
     },
     {
       icon: Brain,
       label: "知识留存率",
       value: "85%",
       description: "vs 传统阅读 35%",
-      color: "text-purple-600"
+      color: "text-purple-600",
     },
     {
       icon: Users,
       label: "活跃用户",
       value: "10K+",
       description: "遍布全球的知识工作者",
-      color: "text-orange-600"
-    }
+      color: "text-orange-600",
+    },
   ];
 
   // 使用场景
@@ -104,26 +104,26 @@ export function SocialProof() {
       icon: BookOpen,
       title: "学术研究",
       description: "快速梳理文献，发现研究机会",
-      users: "研究员、博士生、学者"
+      users: "研究员、博士生、学者",
     },
     {
       icon: Target,
       title: "行业分析",
       description: "追踪趋势，洞察商机",
-      users: "分析师、投资人、咨询师"
+      users: "分析师、投资人、咨询师",
     },
     {
       icon: Lightbulb,
       title: "产品创新",
       description: "整合信息，激发创意",
-      users: "产品经理、设计师、创业者"
+      users: "产品经理、设计师、创业者",
     },
     {
       icon: GraduationCap,
       title: "技能提升",
       description: "系统学习，持续成长",
-      users: "工程师、管理者、学生"
-    }
+      users: "工程师、管理者、学生",
+    },
   ];
 
   return (
@@ -146,9 +146,14 @@ export function SocialProof() {
         {/* 核心数据指标 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20">
           {keyMetrics.map((metric, index) => (
-            <Card key={index} className="text-center hover:shadow-lg transition-all duration-300">
+            <Card
+              key={index}
+              className="text-center hover:shadow-lg transition-all duration-300"
+            >
               <CardContent className="p-6">
-                <div className={`w-12 h-12 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center`}>
+                <div
+                  className={`w-12 h-12 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center`}
+                >
                   <metric.icon className={`w-6 h-6 ${metric.color}`} />
                 </div>
                 <div className="text-3xl font-bold text-foreground mb-1">
@@ -172,16 +177,25 @@ export function SocialProof() {
           </h3>
           <div className="grid md:grid-cols-3 gap-8">
             {userStories.map((story, index) => (
-              <Card key={index} className="relative overflow-hidden hover:shadow-lg transition-all duration-300 group">
+              <Card
+                key={index}
+                className="relative overflow-hidden hover:shadow-lg transition-all duration-300 group"
+              >
                 <CardContent className="p-6">
                   {/* 用户信息 */}
                   <div className="flex items-center space-x-3 mb-4">
-                    <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${story.gradient} flex items-center justify-center`}>
+                    <div
+                      className={`w-12 h-12 rounded-full bg-gradient-to-r ${story.gradient} flex items-center justify-center`}
+                    >
                       <story.icon className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-foreground">{story.name}</h4>
-                      <p className="text-sm text-muted-foreground">{story.role}</p>
+                      <h4 className="font-semibold text-foreground">
+                        {story.name}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {story.role}
+                      </p>
                     </div>
                   </div>
 
@@ -233,7 +247,9 @@ export function SocialProof() {
                   </div>
 
                   {/* 装饰性背景 */}
-                  <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${story.gradient} opacity-5 group-hover:opacity-10 transition-opacity rounded-full -mr-16 -mt-16`} />
+                  <div
+                    className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${story.gradient} opacity-5 group-hover:opacity-10 transition-opacity rounded-full -mr-16 -mt-16`}
+                  />
                 </CardContent>
               </Card>
             ))}
@@ -247,7 +263,10 @@ export function SocialProof() {
           </h3>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {useScenes.map((scene, index) => (
-              <Card key={index} className="text-center hover:shadow-lg transition-all duration-300 group">
+              <Card
+                key={index}
+                className="text-center hover:shadow-lg transition-all duration-300 group"
+              >
                 <CardContent className="p-6">
                   <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
                     <scene.icon className="w-8 h-8 text-primary" />
@@ -297,4 +316,4 @@ export function SocialProof() {
       </div>
     </section>
   );
-} 
+}

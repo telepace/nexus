@@ -20,7 +20,10 @@ import { useRouter } from "next/navigation";
 import MainLayout from "@/components/layout/MainLayout";
 import { ShareContentModal } from "@/components/share/ShareContentModal";
 import { useContentEvents, ContentEvent } from "@/hooks/useContentEvents";
-import { ProcessingStatusBadge, ProcessingStatusIcon } from "@/components/ui/ProcessingStatusBadge";
+import {
+  ProcessingStatusBadge,
+  ProcessingStatus,
+} from "@/components/ui/ProcessingStatusBadge";
 import { toast } from "sonner";
 
 // Define the ContentItemPublic type based on backend schema
@@ -50,22 +53,6 @@ const getContentIcon = (type: string) => {
   }
 };
 
-// Status badge variant mapping (for fallback)
-const getStatusVariant = (status: string) => {
-  switch (status) {
-    case "completed":
-      return "default";
-    case "pending":
-      return "secondary";
-    case "processing":
-      return "outline";
-    case "failed":
-      return "destructive";
-    default:
-      return "secondary";
-  }
-};
-
 export default function ContentLibraryPage() {
   const [items, setItems] = useState<ContentItemPublic[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,9 +69,9 @@ export default function ContentLibraryPage() {
 
   // Handle content status updates from SSE
   const handleContentUpdate = useCallback((event: ContentEvent) => {
-    if (event.type === 'content_status_update' && event.content_id) {
-      setItems(prevItems => {
-        return prevItems.map(item => {
+    if (event.type === "content_status_update" && event.content_id) {
+      setItems((prevItems) => {
+        return prevItems.map((item) => {
           if (item.id === event.content_id) {
             const updatedItem = {
               ...item,
@@ -92,12 +79,12 @@ export default function ContentLibraryPage() {
               title: event.title || item.title,
               updated_at: new Date().toISOString(),
             };
-            
+
             // Update selected item if it's the same one
-            setSelectedItem(prev => 
-              prev?.id === event.content_id ? updatedItem : prev
+            setSelectedItem((prev) =>
+              prev?.id === event.content_id ? updatedItem : prev,
             );
-            
+
             return updatedItem;
           }
           return item;
@@ -105,20 +92,20 @@ export default function ContentLibraryPage() {
       });
 
       // Show toast notifications for important status changes
-      if (event.status === 'completed') {
-        toast.success(`内容处理完成: ${event.title || '未知内容'}`);
-      } else if (event.status === 'failed') {
-        toast.error(`内容处理失败: ${event.error_message || '未知错误'}`);
+      if (event.status === "completed") {
+        toast.success(`内容处理完成: ${event.title || "未知内容"}`);
+      } else if (event.status === "failed") {
+        toast.error(`内容处理失败: ${event.error_message || "未知错误"}`);
       }
     }
   }, []);
 
   const handleConnectionEstablished = useCallback(() => {
-    console.log('SSE connection established');
+    console.log("SSE connection established");
   }, []);
 
   const handleSSEError = useCallback((error: Error) => {
-    console.error('SSE error:', error);
+    console.error("SSE error:", error);
   }, []);
 
   // Setup SSE connection
@@ -335,7 +322,9 @@ export default function ContentLibraryPage() {
                             </p>
                             <div className="flex items-center gap-3">
                               <ProcessingStatusBadge
-                                status={item.processing_status as any}
+                                status={
+                                  item.processing_status as ProcessingStatus
+                                }
                                 size="sm"
                               />
                               <Badge variant="outline">
@@ -374,7 +363,9 @@ export default function ContentLibraryPage() {
                           {selectedItem.type.toUpperCase()}
                         </Badge>
                         <ProcessingStatusBadge
-                          status={selectedItem.processing_status as any}
+                          status={
+                            selectedItem.processing_status as ProcessingStatus
+                          }
                           size="sm"
                         />
                       </div>

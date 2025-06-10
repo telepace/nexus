@@ -175,7 +175,7 @@ export default function MainLayout({
           onClose={() => setAddContentOpen(false)}
         />
       </div>
-      
+
       {/* Toast notifications */}
       <Toaster position="top-right" richColors />
     </SidebarProvider>

@@ -15,18 +15,18 @@ export function OnboardingHero() {
     {
       icon: "📚",
       text: "收藏了 200+ 文章，却很少真正阅读",
-      subtext: "信息堆积，知识焦虑"
+      subtext: "信息堆积，知识焦虑",
     },
     {
-      icon: "🌊", 
+      icon: "🌊",
       text: "每天被信息洪流淹没，找不到重点",
-      subtext: "注意力分散，效率低下"
+      subtext: "注意力分散，效率低下",
     },
     {
       icon: "🧠",
       text: "读完就忘，无法形成系统化知识",
-      subtext: "学习碎片化，缺乏沉淀"
-    }
+      subtext: "学习碎片化，缺乏沉淀",
+    },
   ];
 
   // 解决方案特性
@@ -34,18 +34,18 @@ export function OnboardingHero() {
     {
       icon: Brain,
       title: "AI 智能理解",
-      description: "深度解析内容结构，提取核心观点"
+      description: "深度解析内容结构，提取核心观点",
     },
     {
       icon: Target,
       title: "精准摘要",
-      description: "智能分段，快速抓住文章重点"
+      description: "智能分段，快速抓住文章重点",
     },
     {
       icon: BookOpen,
       title: "知识沉淀",
-      description: "构建个人知识库，让学习有迹可循"
-    }
+      description: "构建个人知识库，让学习有迹可循",
+    },
   ];
 
   // 问题轮播效果
@@ -65,12 +65,18 @@ export function OnboardingHero() {
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* 背景效果 */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-muted/20" />
-      
+
       {/* 动态背景装饰 */}
       <div className="absolute inset-0 opacity-40">
         <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-primary/10 rounded-full mix-blend-multiply filter blur-xl animate-pulse" />
-        <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-blue-300/10 rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '2s' }} />
-        <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-purple-300/10 rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '4s' }} />
+        <div
+          className="absolute top-1/3 right-1/4 w-72 h-72 bg-blue-300/10 rounded-full mix-blend-multiply filter blur-xl animate-pulse"
+          style={{ animationDelay: "2s" }}
+        />
+        <div
+          className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-purple-300/10 rounded-full mix-blend-multiply filter blur-xl animate-pulse"
+          style={{ animationDelay: "4s" }}
+        />
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 text-center">
@@ -84,14 +90,20 @@ export function OnboardingHero() {
 
         {/* 痛点共鸣区域 */}
         <div className="mb-12">
-          <h2 className="text-lg text-muted-foreground mb-6">你是否也遇到过这样的困扰？</h2>
+          <h2 className="text-lg text-muted-foreground mb-6">
+            你是否也遇到过这样的困扰？
+          </h2>
           <div className="relative h-20 flex items-center justify-center">
-            <div 
+            <div
               className={`transition-all duration-300 ${
-                isTransitioning ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'
+                isTransitioning
+                  ? "opacity-0 transform scale-95"
+                  : "opacity-100 transform scale-100"
               }`}
             >
-              <div className="text-2xl mb-2">{problems[currentProblem].icon}</div>
+              <div className="text-2xl mb-2">
+                {problems[currentProblem].icon}
+              </div>
               <p className="text-xl font-medium text-foreground">
                 {problems[currentProblem].text}
               </p>
@@ -100,14 +112,14 @@ export function OnboardingHero() {
               </p>
             </div>
           </div>
-          
+
           {/* 问题指示器 */}
           <div className="flex justify-center space-x-2 mt-6">
             {problems.map((_, index) => (
               <div
                 key={index}
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  index === currentProblem ? 'bg-primary' : 'bg-muted'
+                  index === currentProblem ? "bg-primary" : "bg-muted"
                 }`}
               />
             ))}
@@ -153,15 +165,15 @@ export function OnboardingHero() {
         {/* 主要 CTA */}
         <div className="space-y-4">
           <Link href="/setup">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               className="px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group"
             >
               开始你的知识旅程
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
-          
+
           <p className="text-sm text-muted-foreground">
             免费开始，无需信用卡 • 2 分钟即可设置完成
           </p>
@@ -179,4 +191,4 @@ export function OnboardingHero() {
       </div>
     </section>
   );
-} 
+}
