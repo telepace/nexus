@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { fetchItems } from "@/components/actions/items-action";
+import { fetchItems } from "@/components/actions/items-action-client";
 import { contentListContentItemsEndpoint } from "@/app/openapi-client/sdk.gen";
 
 export function ApiDebugTool() {
@@ -55,7 +55,7 @@ export function ApiDebugTool() {
   };
 
   return (
-    <div className="border rounded p-4 bg-gray-50">
+    <div className="border rounded p-4 bg-gray-50" data-testid="api-debug">
       <h3 className="text-sm font-semibold mb-2">API 调试工具</h3>
       <div className="flex gap-2 mb-4">
         <Button

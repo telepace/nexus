@@ -18,14 +18,39 @@ const mockGetAuthToken = getAuthToken as jest.MockedFunction<
   typeof getAuthToken
 >;
 
+// 辅助函数：重置模块缓存
+function clearItemsActionCache() {
+  // 通过重新导入模块并手动重置缓存
+  const itemsActionModule = require("@/components/actions/items-action");
+  // 访问模块内部的缓存变量并重置
+  if (itemsActionModule && typeof itemsActionModule === 'object') {
+    // 直接访问模块的内部状态（虽然不是最佳实践，但这是测试需要）
+    eval(`
+      const itemsActionPath = require.resolve("@/components/actions/items-action");
+      if (require.cache[itemsActionPath]) {
+        // 通过直接修改模块代码中的缓存变量
+        const moduleCode = require.cache[itemsActionPath].exports;
+        // 这种方式对于模块级变量不太有效，我们需要另一种方法
+      }
+    `);
+  }
+}
+
 describe("fetchItems function", () => {
   beforeEach(() => {
     // 重置所有 mock
     jest.clearAllMocks();
+    
+    // 清除模块缓存
+    jest.resetModules();
 
-    // 设置默认的成功 mock
-    mockRequireAuth.mockResolvedValue({ id: "test-user-id" } as any);
-    mockGetAuthToken.mockResolvedValue("test-token");
+    // 设置默认的成功 mock - 确保返回有效的字符串
+    mockRequireAuth.mockResolvedValue({ 
+      id: "test-user-id",
+      email: "test@example.com",
+      full_name: "Test User"
+    } as any);
+    mockGetAuthToken.mockResolvedValue("test-token-12345");
   });
 
   afterEach(() => {
@@ -52,15 +77,18 @@ describe("fetchItems function", () => {
 
     mockContentListContentItemsEndpoint.mockResolvedValue(mockItems as any);
 
+    // 动态导入以获取新的模块实例
+    const { fetchItems: freshFetchItems } = require("@/components/actions/items-action");
+
     // Act
-    const result = await fetchItems();
+    const result = await freshFetchItems();
 
     // Assert
     expect(Array.isArray(result)).toBe(true);
     expect(result).toEqual(mockItems);
     expect(mockContentListContentItemsEndpoint).toHaveBeenCalledWith({
       headers: {
-        Authorization: "Bearer test-token",
+        Authorization: "Bearer test-token-12345",
       },
     });
   });
@@ -68,21 +96,23 @@ describe("fetchItems function", () => {
   it("should return error object when API returns non-array response", async () => {
     // Arrange
     const mockApiResponse = {
-      data: [],
-      meta: { total: 0, page: 1 },
       message: "Success",
+      status: "ok"
     };
 
     mockContentListContentItemsEndpoint.mockResolvedValue(
       mockApiResponse as any,
     );
 
+    // 动态导入以获取新的模块实例
+    const { fetchItems: freshFetchItems } = require("@/components/actions/items-action");
+
     // Act
-    const result = await fetchItems();
+    const result = await freshFetchItems();
 
     // Assert
     expect(result).toEqual({
-      error: "API返回了意外的数据格式",
+      error: "API返回了意外的数据格式: object",
       status: 400,
     });
   });
@@ -105,14 +135,15 @@ describe("fetchItems function", () => {
       mockWrappedResponse as any,
     );
 
-    // Act
-    const result = await fetchItems();
+    // 动态导入以获取新的模块实例
+    const { fetchItems: freshFetchItems } = require("@/components/actions/items-action");
 
-    // Assert - 当前版本会返回错误，我们需要修复这个
-    expect(result).toEqual({
-      error: "API返回了意外的数据格式",
-      status: 400,
-    });
+    // Act
+    const result = await freshFetchItems();
+
+    // Assert - 现在应该正确提取 data 数组
+    expect(Array.isArray(result)).toBe(true);
+    expect(result).toEqual(mockWrappedResponse.data);
   });
 
   it("should return error when API throws exception", async () => {
@@ -120,8 +151,11 @@ describe("fetchItems function", () => {
     const mockError = new Error("Network error");
     mockContentListContentItemsEndpoint.mockRejectedValue(mockError);
 
+    // 动态导入以获取新的模块实例
+    const { fetchItems: freshFetchItems } = require("@/components/actions/items-action");
+
     // Act
-    const result = await fetchItems();
+    const result = await freshFetchItems();
 
     // Assert
     expect(result).toEqual({
@@ -134,8 +168,11 @@ describe("fetchItems function", () => {
     // Arrange
     mockContentListContentItemsEndpoint.mockResolvedValue(null as any);
 
+    // 动态导入以获取新的模块实例
+    const { fetchItems: freshFetchItems } = require("@/components/actions/items-action");
+
     // Act
-    const result = await fetchItems();
+    const result = await freshFetchItems();
 
     // Assert
     expect(result).toEqual({

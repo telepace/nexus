@@ -1,3 +1,8 @@
+import os
+# Set testing environment variables as early as possible
+os.environ["TESTING"] = "true"
+os.environ["TEST_MODE"] = "true"
+
 from collections.abc import Generator
 from typing import Any
 

@@ -46,7 +46,7 @@ def mock_current_user_fixture():
 @pytest.fixture(scope="module")
 def app_for_prompts_module():
     app = FastAPI()
-    app.include_router(prompts_router, prefix=app_settings.API_V1_STR)
+    app.include_router(prompts_router, prefix=f"{app_settings.API_V1_STR}/prompts")
     return app
 
 
@@ -73,7 +73,7 @@ def test_read_tags_success(client: TestClient, mock_db_session_fixture: MagicMoc
     mock_tag1 = Tag(id=uuid.uuid4(), name="Tag1", description="Desc1")
     mock_tag2 = Tag(id=uuid.uuid4(), name="Tag2", description="Desc2")
     mock_db_session_fixture.exec.return_value.all.return_value = [mock_tag1, mock_tag2]
-    response = client.get(f"{app_settings.API_V1_STR}/tags")
+    response = client.get(f"{app_settings.API_V1_STR}/prompts/tags")
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 2
@@ -85,14 +85,14 @@ def test_read_tags_success(client: TestClient, mock_db_session_fixture: MagicMoc
 
 def test_read_tags_empty(client: TestClient, mock_db_session_fixture: MagicMock):
     mock_db_session_fixture.exec.return_value.all.return_value = []
-    response = client.get(f"{app_settings.API_V1_STR}/tags")
+    response = client.get(f"{app_settings.API_V1_STR}/prompts/tags")
     assert response.status_code == 200
     assert response.json() == []
 
 
 def test_read_tags_db_error(client: TestClient, mock_db_session_fixture: MagicMock):
     mock_db_session_fixture.exec.side_effect = SQLAlchemyError("DB error")
-    response = client.get(f"{app_settings.API_V1_STR}/tags")
+    response = client.get(f"{app_settings.API_V1_STR}/prompts/tags")
     assert response.status_code == 500
     error_detail = get_error_detail(response.json())
     assert "获取标签列表失败" in error_detail
@@ -109,7 +109,7 @@ def test_create_tag_success(client: TestClient, mock_db_session_fixture: MagicMo
         obj.id = mock_created_tag.id
 
     mock_db_session_fixture.refresh.side_effect = mock_refresh_effect
-    response = client.post(f"{app_settings.API_V1_STR}/tags", json=tag_in.model_dump())
+    response = client.post(f"{app_settings.API_V1_STR}/prompts/tags", json=tag_in.model_dump())
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == tag_in.name
@@ -123,7 +123,7 @@ def test_create_tag_conflict(client: TestClient, mock_db_session_fixture: MagicM
     mock_db_session_fixture.exec.return_value.first.return_value = Tag(
         id=uuid.uuid4(), name="Existing Tag"
     )
-    response = client.post(f"{app_settings.API_V1_STR}/tags", json=tag_in.model_dump())
+    response = client.post(f"{app_settings.API_V1_STR}/prompts/tags", json=tag_in.model_dump())
     assert response.status_code == 409
 
 
@@ -133,7 +133,7 @@ def test_create_tag_db_error_on_commit(
     tag_in = TagCreate(name="Error Tag")
     mock_db_session_fixture.exec.return_value.first.return_value = None
     mock_db_session_fixture.commit.side_effect = SQLAlchemyError("Commit error")
-    response = client.post(f"{app_settings.API_V1_STR}/tags", json=tag_in.model_dump())
+    response = client.post(f"{app_settings.API_V1_STR}/prompts/tags", json=tag_in.model_dump())
     assert response.status_code == 500
     mock_db_session_fixture.rollback.assert_called_once()
 
@@ -145,7 +145,7 @@ def test_update_tag_success(client: TestClient, mock_db_session_fixture: MagicMo
     tag_update = TagUpdate(name="New")
     mock_db_session_fixture.exec.return_value.first.return_value = None
     response = client.put(
-        f"{app_settings.API_V1_STR}/tags/{tag_id}", json=tag_update.model_dump()
+        f"{app_settings.API_V1_STR}/prompts/tags/{tag_id}", json=tag_update.model_dump()
     )
     assert response.status_code == 200
     assert response.json()["name"] == "New"
@@ -155,7 +155,7 @@ def test_update_tag_not_found(client: TestClient, mock_db_session_fixture: Magic
     tag_id = uuid.uuid4()
     mock_db_session_fixture.get.return_value = None
     response = client.put(
-        f"{app_settings.API_V1_STR}/tags/{tag_id}",
+        f"{app_settings.API_V1_STR}/prompts/tags/{tag_id}",
         json=TagUpdate(name="Any").model_dump(),
     )
     assert response.status_code == 404
@@ -172,7 +172,7 @@ def test_update_tag_name_conflict(
         id=uuid.uuid4(), name="ConflictName"
     )
     response = client.put(
-        f"{app_settings.API_V1_STR}/tags/{tag_id}", json=tag_update.model_dump()
+        f"{app_settings.API_V1_STR}/prompts/tags/{tag_id}", json=tag_update.model_dump()
     )
     assert response.status_code == 409
 
@@ -185,7 +185,7 @@ def test_delete_tag_success_superuser(
     mock_current_user_fixture.is_superuser = True
     tag_id = uuid.uuid4()
     mock_db_session_fixture.get.return_value = Tag(id=tag_id, name="ToDelete")
-    response = client.delete(f"{app_settings.API_V1_STR}/tags/{tag_id}")
+    response = client.delete(f"{app_settings.API_V1_STR}/prompts/tags/{tag_id}")
     assert response.status_code == 204
 
 
@@ -193,7 +193,7 @@ def test_delete_tag_forbidden_non_superuser(
     client: TestClient, mock_current_user_fixture: MagicMock
 ):
     mock_current_user_fixture.is_superuser = False
-    response = client.delete(f"{app_settings.API_V1_STR}/tags/{uuid.uuid4()}")
+    response = client.delete(f"{app_settings.API_V1_STR}/prompts/tags/{uuid.uuid4()}")
     assert response.status_code == 403
 
 
@@ -203,8 +203,9 @@ def test_delete_tag_not_found_superuser(
     mock_current_user_fixture: MagicMock,
 ):
     mock_current_user_fixture.is_superuser = True
+    tag_id = uuid.uuid4()
     mock_db_session_fixture.get.return_value = None
-    response = client.delete(f"{app_settings.API_V1_STR}/tags/{uuid.uuid4()}")
+    response = client.delete(f"{app_settings.API_V1_STR}/prompts/tags/{tag_id}")
     assert response.status_code == 404
 
 
@@ -228,7 +229,7 @@ def test_create_prompt_success_no_tags(
     p_mock.content = p_in.content
     p_mock.input_vars = p_in.input_vars
     MPV.return_value = MagicMock(spec=PromptVersion)
-    response = client.post(f"{app_settings.API_V1_STR}/", json=p_in.model_dump())
+    response = client.post(f"{app_settings.API_V1_STR}/prompts/", json=p_in.model_dump())
     assert response.status_code == 201
     assert response.json()["name"] == p_in.name
 
@@ -271,7 +272,7 @@ def test_create_prompt_with_tags(
     payload = p_in.model_dump()
     if payload.get("tag_ids"):
         payload["tag_ids"] = [str(tag_id) for tag_id in payload["tag_ids"]]
-    response = client.post(f"{app_settings.API_V1_STR}/", json=payload)
+    response = client.post(f"{app_settings.API_V1_STR}/prompts/", json=payload)
     assert response.status_code == 201
     assert len(response.json()["tags"]) == 2
 
@@ -283,7 +284,7 @@ def test_create_prompt_db_error(
     p_in = PromptCreate(name="Error", content="Err", type="simple", visibility="public")
     MPr.return_value = MagicMock(spec=Prompt, id=uuid.uuid4(), tags=[])
     mock_db_session_fixture.add.side_effect = SQLAlchemyError("DB add error")
-    response = client.post(f"{app_settings.API_V1_STR}/", json=p_in.model_dump())
+    response = client.post(f"{app_settings.API_V1_STR}/prompts/", json=p_in.model_dump())
     assert response.status_code == 500
     mock_db_session_fixture.rollback.assert_called_once()
 
@@ -291,7 +292,7 @@ def test_create_prompt_db_error(
 # --- Tests for GET / (Read Prompts) ---
 def test_read_prompts_empty(client: TestClient, mock_db_session_fixture: MagicMock):
     mock_db_session_fixture.exec.return_value.all.return_value = []
-    response = client.get(f"{app_settings.API_V1_STR}/")
+    response = client.get(f"{app_settings.API_V1_STR}/prompts/")
     assert response.status_code == 200
     assert response.json() == []
 
@@ -323,7 +324,7 @@ def test_read_prompts_with_search_and_sort(
     mock_query.where.return_value.order_by.return_value = mock_query
     mock_db_session_fixture.exec.return_value.all.return_value = [mock_p2, mock_p1]
     response = client.get(
-        f"{app_settings.API_V1_STR}/?search=Search&sort=updated_at&order=asc"
+        f"{app_settings.API_V1_STR}/prompts/?search=Search&sort=updated_at&order=asc"
     )
     assert response.status_code == 200
     data = response.json()
@@ -354,7 +355,7 @@ def test_read_prompts_with_tag_filter(
     # Mock database execution
     mock_db_session_fixture.exec.return_value.all.return_value = [mock_p1]
 
-    response = client.get(f"{app_settings.API_V1_STR}/?tag_ids={tag_id1}")
+    response = client.get(f"{app_settings.API_V1_STR}/prompts/?tag_ids={tag_id1}")
     assert response.status_code == 200
     assert len(response.json()) == 1
 
@@ -365,7 +366,7 @@ def test_read_prompts_db_error_main_query(
     client: TestClient,
 ):
     mock_sqlmodel_select.side_effect = Exception("Generic DB error during select")
-    response = client.get(f"{app_settings.API_V1_STR}/")
+    response = client.get(f"{app_settings.API_V1_STR}/prompts/")
     assert response.status_code == 500
     error_detail = get_error_detail(response.json())
     assert "Generic DB error during select" in error_detail
@@ -388,7 +389,7 @@ def test_read_prompt_success(
         tags=[],
     )
     mock_db_session_fixture.get.return_value = mock_p
-    response = client.get(f"{app_settings.API_V1_STR}/{p_id}")
+    response = client.get(f"{app_settings.API_V1_STR}/prompts/{p_id}")
     assert response.status_code == 200
     assert response.json()["name"] == "Test"
 
@@ -396,7 +397,7 @@ def test_read_prompt_success(
 def test_read_prompt_not_found(client: TestClient, mock_db_session_fixture: MagicMock):
     p_id = uuid.uuid4()
     mock_db_session_fixture.get.return_value = None
-    response = client.get(f"{app_settings.API_V1_STR}/{p_id}")
+    response = client.get(f"{app_settings.API_V1_STR}/prompts/{p_id}")
     assert response.status_code == 404
 
 
@@ -409,7 +410,7 @@ def test_read_prompt_access_denied(
         id=p_id, name="Test", content="Test", type="simple", created_by=uuid.uuid4()
     )
     mock_db_session_fixture.get.return_value = mock_p
-    response = client.get(f"{app_settings.API_V1_STR}/{p_id}")
+    response = client.get(f"{app_settings.API_V1_STR}/prompts/{p_id}")
     assert response.status_code == 403
 
 
@@ -418,7 +419,7 @@ def test_read_prompt_db_error_on_get(
 ):
     p_id = uuid.uuid4()
     mock_db_session_fixture.get.side_effect = SQLAlchemyError("Get Error")
-    response = client.get(f"{app_settings.API_V1_STR}/{p_id}")
+    response = client.get(f"{app_settings.API_V1_STR}/prompts/{p_id}")
     assert response.status_code == 500
     error_detail = get_error_detail(response.json())
     assert "Get Error" in error_detail
@@ -464,7 +465,7 @@ def test_update_prompt_success_change_name_and_tags(
         update_payload["tag_ids"] = [
             str(tag_id) for tag_id in update_payload["tag_ids"]
         ]
-    response = client.put(f"{app_settings.API_V1_STR}/{prompt_id}", json=update_payload)
+    response = client.put(f"{app_settings.API_V1_STR}/prompts/{prompt_id}", json=update_payload)
 
     assert response.status_code == 200
     data = response.json()
@@ -484,7 +485,7 @@ def test_update_prompt_not_found(
     prompt_id = uuid.uuid4()
     mock_db_session_fixture.get.return_value = None
     response = client.put(
-        f"{app_settings.API_V1_STR}/{prompt_id}",
+        f"{app_settings.API_V1_STR}/prompts/{prompt_id}",
         json=PromptUpdate(name="Any").model_dump(),
     )
     assert response.status_code == 404
@@ -499,7 +500,7 @@ def test_update_prompt_access_denied(
     prompt_id = uuid.uuid4()
     mock_db_session_fixture.get.return_value = Prompt(id=prompt_id, name="Test")
     response = client.put(
-        f"{app_settings.API_V1_STR}/{prompt_id}",
+        f"{app_settings.API_V1_STR}/prompts/{prompt_id}",
         json=PromptUpdate(name="Any").model_dump(),
     )
     assert response.status_code == 403
@@ -523,7 +524,7 @@ def test_update_prompt_db_error(
     mock_datetime_routes.utcnow.return_value = datetime.utcnow()
     mock_db_session_fixture.commit.side_effect = SQLAlchemyError("DB Update Error")
     update_payload = PromptUpdate(name="New Name").model_dump()
-    response = client.put(f"{app_settings.API_V1_STR}/{prompt_id}", json=update_payload)
+    response = client.put(f"{app_settings.API_V1_STR}/prompts/{prompt_id}", json=update_payload)
     assert response.status_code == 500
     error_detail = get_error_detail(response.json())
     assert "更新提示词失败" in error_detail
@@ -541,7 +542,7 @@ def test_delete_prompt_success(
         id=prompt_id, name="To Delete", created_by=mock_current_user_fixture.id
     )
     mock_db_session_fixture.get.return_value = prompt_to_delete
-    response = client.delete(f"{app_settings.API_V1_STR}/{prompt_id}")
+    response = client.delete(f"{app_settings.API_V1_STR}/prompts/{prompt_id}")
     assert response.status_code == 204
     mock_db_session_fixture.delete.assert_called_once_with(prompt_to_delete)
 
@@ -551,7 +552,7 @@ def test_delete_prompt_not_found(
 ):
     prompt_id = uuid.uuid4()
     mock_db_session_fixture.get.return_value = None
-    response = client.delete(f"{app_settings.API_V1_STR}/{prompt_id}")
+    response = client.delete(f"{app_settings.API_V1_STR}/prompts/{prompt_id}")
     assert response.status_code == 404
 
 
@@ -563,7 +564,7 @@ def test_delete_prompt_access_denied(
 ):
     prompt_id = uuid.uuid4()
     mock_db_session_fixture.get.return_value = Prompt(id=prompt_id, name="Test")
-    response = client.delete(f"{app_settings.API_V1_STR}/{prompt_id}")
+    response = client.delete(f"{app_settings.API_V1_STR}/prompts/{prompt_id}")
     assert response.status_code == 403
 
 
@@ -576,7 +577,7 @@ def test_delete_prompt_db_error(
     p = Prompt(id=prompt_id, name="To Delete", created_by=mock_current_user_fixture.id)
     mock_db_session_fixture.get.return_value = p
     mock_db_session_fixture.commit.side_effect = SQLAlchemyError("DB Delete Error")
-    response = client.delete(f"{app_settings.API_V1_STR}/{prompt_id}")
+    response = client.delete(f"{app_settings.API_V1_STR}/prompts/{prompt_id}")
     assert response.status_code == 500
     mock_db_session_fixture.rollback.assert_called_once()
 
@@ -599,7 +600,7 @@ def test_read_prompt_versions_success(
         mock_query
     )
     mock_db_session_fixture.exec.return_value.all.return_value = [mock_v2, mock_v1]
-    response = client.get(f"{app_settings.API_V1_STR}/{prompt_id}/versions")
+    response = client.get(f"{app_settings.API_V1_STR}/prompts/{prompt_id}/versions")
     assert response.status_code == 200
     assert len(response.json()) == 2
 
@@ -643,7 +644,7 @@ def test_create_prompt_version_success(
 
     v_in = PromptVersionCreate(content="NewV", change_notes="notes")
     response = client.post(
-        f"{app_settings.API_V1_STR}/{p_id}/versions", json=v_in.model_dump()
+        f"{app_settings.API_V1_STR}/prompts/{p_id}/versions", json=v_in.model_dump()
     )
 
     assert response.status_code == 200
@@ -670,7 +671,7 @@ def test_read_prompt_version_success(
     mock_q = MagicMock()
     mock_sqlmodel_select.return_value.where.return_value = mock_q
     mock_db_session_fixture.exec.return_value.first.return_value = mock_v
-    response = client.get(f"{app_settings.API_V1_STR}/{p_id}/versions/{v_num}")
+    response = client.get(f"{app_settings.API_V1_STR}/prompts/{p_id}/versions/{v_num}")
     assert response.status_code == 200
     assert response.json()["version"] == v_num
 
@@ -686,7 +687,7 @@ def test_read_prompt_version_not_found(
     mock_db_session_fixture.get.return_value = mock_prompt
     mock_db_session_fixture.exec.return_value.first.return_value = None
     response = client.get(
-        f"{app_settings.API_V1_STR}/{prompt_id}/versions/{version_num}"
+        f"{app_settings.API_V1_STR}/prompts/{prompt_id}/versions/{version_num}"
     )
     assert response.status_code == 404
     error_detail = get_error_detail(response.json())
@@ -713,7 +714,7 @@ def test_duplicate_prompt_db_error(
         "DB error during duplicate commit"
     )
 
-    response = client.post(f"{app_settings.API_V1_STR}/{prompt_id}/duplicate")
+    response = client.post(f"{app_settings.API_V1_STR}/prompts/{prompt_id}/duplicate")
     assert response.status_code == 500
     error_detail = get_error_detail(response.json())
     assert "复制提示词失败" in error_detail

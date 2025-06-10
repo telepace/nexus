@@ -1,6 +1,25 @@
 import "@testing-library/jest-dom";
 import React from "react";
 
+// Add TextEncoder and TextDecoder polyfill for Jest
+import { TextEncoder, TextDecoder } from "util";
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
+// Add Request polyfill for Jest
+global.Request = class MockRequest {
+  constructor(input: any, init?: any) {
+    this.url = typeof input === 'string' ? input : input.url;
+    this.method = init?.method || 'GET';
+    this.headers = new Headers(init?.headers);
+    this.body = init?.body;
+  }
+  url: string;
+  method: string;
+  headers: Headers;
+  body: any;
+} as any;
+
 // Store the original location object
 const originalLocation = window.location;
 
@@ -192,6 +211,74 @@ jest.mock("next/navigation", () => ({
     return "/";
   },
   redirect: jest.fn(),
+}));
+
+// Mock client-auth module
+jest.mock("@/lib/client-auth", () => ({
+  getCookie: jest.fn((name: string) => {
+    // Return a mock token for accessToken
+    if (name === "accessToken") {
+      return "mock-access-token-for-testing";
+    }
+    return undefined;
+  }),
+  useAuth: jest.fn(() => ({
+    user: null,
+    isLoading: false,
+    error: null,
+    updateUser: jest.fn(),
+    login: jest.fn(),
+    logout: jest.fn(),
+    setCustomToken: jest.fn(),
+    fetchUser: jest.fn(),
+  })),
+}));
+
+// Mock server-auth-bridge module
+jest.mock("@/lib/server-auth-bridge", () => ({
+  requireAuth: jest.fn(() => Promise.resolve({
+    id: "test-user-id",
+    email: "test@example.com",
+    full_name: "Test User"
+  })),
+  getAuthToken: jest.fn(() => Promise.resolve("test-auth-token-12345")),
+}));
+
+// Mock server-auth module
+jest.mock("@/lib/server-auth", () => ({
+  requireAuth: jest.fn(() => Promise.resolve({
+    id: "test-user-id", 
+    email: "test@example.com",
+    full_name: "Test User"
+  })),
+  getAuthToken: jest.fn(() => Promise.resolve("test-auth-token-12345")),
+}));
+
+// Mock Next.js cache
+jest.mock("next/cache", () => ({
+  revalidatePath: jest.fn(),
+  cache: jest.fn((fn) => fn), // Just return the function as-is for testing
+}));
+
+// Mock OpenAPI client
+jest.mock("@/app/openapi-client/index", () => ({
+  contentListContentItemsEndpoint: jest.fn(),
+  contentGetContentItemEndpoint: jest.fn(),
+  itemsDeleteItem: jest.fn(),
+  itemsCreateItem: jest.fn(),
+}));
+
+// Mock OpenAPI SDK
+jest.mock("@/app/openapi-client/sdk.gen", () => ({
+  contentListContentItemsEndpoint: jest.fn(() => Promise.resolve([])),
+  contentGetContentItemEndpoint: jest.fn(() => Promise.resolve(null)),
+  itemsDeleteItem: jest.fn(() => Promise.resolve({ success: true })),
+  itemsCreateItem: jest.fn(() => Promise.resolve({ id: "test-id" })),
+}));
+
+// Mock items-action-client module
+jest.mock("@/components/actions/items-action-client", () => ({
+  fetchItems: jest.fn(() => Promise.resolve([])), // 默认返回空数组
 }));
 
 // Add fetch mock for tests

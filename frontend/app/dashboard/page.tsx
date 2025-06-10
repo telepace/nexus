@@ -14,7 +14,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { fetchItems } from "@/components/actions/items-action";
+import { fetchItems } from "@/components/actions/items-action-client";
 import { DeleteButton } from "./deleteButton";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

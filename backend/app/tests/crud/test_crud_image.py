@@ -2,7 +2,6 @@ import uuid
 from unittest.mock import AsyncMock, MagicMock  # For mocking AsyncSession
 
 import pytest
-import pytest_asyncio  # For async fixtures
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud import crud_image
@@ -11,7 +10,7 @@ from app.schemas.image import ImageCreate, ImageUpdate  # Pydantic schemas
 
 
 # --- Async Mock Session Fixture ---
-@pytest_asyncio.fixture
+@pytest.fixture
 async def mock_db_session() -> AsyncMock:
     session = AsyncMock(spec=AsyncSession)
     session.commit = AsyncMock()

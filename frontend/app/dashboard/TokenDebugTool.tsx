@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/client-auth";
 
 // 后端生成的已知有效token，这应该在生产环境中移除
 const KNOWN_GOOD_TOKEN =
@@ -14,7 +14,7 @@ export function TokenDebugTool() {
   const [customToken, setCustomTokenInput] = useState("");
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-testid="token-debug">
       <div className="flex space-x-2">
         <Button
           variant="outline"
