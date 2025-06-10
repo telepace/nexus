@@ -12,7 +12,7 @@ import {
 import { useState } from "react"
 import { FaPlus } from "react-icons/fa"
 
-import { type ItemCreate, ItemsService } from "@/client"
+import { ItemsService, type ProjectCreate } from "@/client"
 import type { ApiError } from "@/client/core/ApiError"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
@@ -36,7 +36,7 @@ const AddItem = () => {
     handleSubmit,
     reset,
     formState: { errors, isValid, isSubmitting },
-  } = useForm<ItemCreate>({
+  } = useForm<ProjectCreate>({
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {
@@ -46,8 +46,8 @@ const AddItem = () => {
   })
 
   const mutation = useMutation({
-    mutationFn: (data: ItemCreate) =>
-      ItemsService.createItem({ requestBody: data }),
+    mutationFn: (data: ProjectCreate) =>
+      ItemsService.createProject({ requestBody: data }),
     onSuccess: (response) => {
       // 从新的API响应格式中提取消息
       let message = "项目创建成功"
@@ -72,7 +72,7 @@ const AddItem = () => {
     },
   })
 
-  const onSubmit: SubmitHandler<ItemCreate> = (data) => {
+  const onSubmit: SubmitHandler<ProjectCreate> = (data) => {
     mutation.mutate(data)
   }
 
