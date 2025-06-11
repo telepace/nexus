@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from sqlmodel import Session, select
 
@@ -6,6 +7,8 @@ from app import crud
 from app.core.config import settings
 from app.core.db_factory import create_db_engine
 from app.models import (
+    ProcessingJob,
+    Project,
     Prompt,
     PromptType,
     PromptVersion,
@@ -677,6 +680,177 @@ AI在军事领域的应用引发了关于自主武器系统的伦理争议。
 
     # 刷新以获取创建的内容项ID
     session.flush()
+
+    # 创建默认项目数据
+    default_projects = [
+        {
+            "title": "AI与机器学习研究",
+            "description": "收集和整理人工智能、机器学习、深度学习相关的论文、文章和资料",
+            "project_type": "research",
+            "is_active": True,
+            "ai_context": {
+                "domain": "artificial_intelligence",
+                "keywords": ["AI", "机器学习", "深度学习", "神经网络", "算法"],
+                "focus_areas": ["理论研究", "技术应用", "行业趋势"],
+            },
+            "tag_id": created_tags["文章分析"].id
+            if "文章分析" in created_tags
+            else None,
+        },
+        {
+            "title": "技术学习资料",
+            "description": "编程、开发、技术教程等学习资料的收集整理",
+            "project_type": "learning",
+            "is_active": True,
+            "ai_context": {
+                "domain": "technology",
+                "keywords": ["编程", "开发", "教程", "技术", "软件"],
+                "focus_areas": ["基础知识", "实战技能", "最佳实践"],
+            },
+            "tag_id": created_tags["学习辅助"].id
+            if "学习辅助" in created_tags
+            else None,
+        },
+        {
+            "title": "行业分析报告",
+            "description": "收集和分析各行业的发展趋势、市场报告和商业洞察",
+            "project_type": "analysis",
+            "is_active": True,
+            "ai_context": {
+                "domain": "business",
+                "keywords": ["行业分析", "市场趋势", "商业", "报告", "洞察"],
+                "focus_areas": ["趋势分析", "竞争情报", "市场预测"],
+            },
+            "tag_id": created_tags["思维拓展"].id
+            if "思维拓展" in created_tags
+            else None,
+        },
+        {
+            "title": "学术论文集",
+            "description": "重要学术论文的收集、整理和研究笔记",
+            "project_type": "academic",
+            "is_active": True,
+            "ai_context": {
+                "domain": "academic",
+                "keywords": ["论文", "学术", "研究", "理论", "方法"],
+                "focus_areas": ["理论基础", "研究方法", "创新观点"],
+            },
+            "tag_id": created_tags["内容理解"].id
+            if "内容理解" in created_tags
+            else None,
+        },
+    ]
+
+    created_projects = []
+    for project_data in default_projects:
+        existing_project = session.exec(
+            select(Project).where(Project.title == project_data["title"])
+        ).first()
+
+        if not existing_project:
+            project = Project(owner_id=user.id, **project_data)
+            session.add(project)
+            session.flush()  # 获取ID
+            created_projects.append(project)
+            logger.info(f"Created project: {project_data['title']}")
+        else:
+            created_projects.append(existing_project)
+            logger.info(f"Project already exists: {project_data['title']}")
+
+    # 为内容项分配项目并添加ProcessingJob数据
+    content_items = session.exec(
+        select(ContentItem).where(ContentItem.user_id == user.id)
+    ).all()
+
+    if content_items and created_projects:
+        # 为每个内容项分配项目
+        for i, content_item in enumerate(content_items):
+            if content_item.project_id is None:  # 只为未分配项目的内容项分配
+                # 根据内容类型分配合适的项目
+                title_lower = content_item.title.lower() if content_item.title else ""
+                if "transformer" in title_lower or "attention" in title_lower:
+                    content_item.project_id = created_projects[0].id  # AI与机器学习研究
+                elif content_item.title and (
+                    "人工智能" in content_item.title
+                    or "artificial intelligence" in title_lower
+                ):
+                    content_item.project_id = created_projects[0].id  # AI与机器学习研究
+                elif content_item.title and "深度学习" in content_item.title:
+                    content_item.project_id = created_projects[1].id  # 技术学习资料
+                else:
+                    content_item.project_id = created_projects[
+                        i % len(created_projects)
+                    ].id
+
+                logger.info(f"Assigned project to content: {content_item.title}")
+
+        # 为内容项添加ProcessingJob数据
+        processing_jobs_data = [
+            {
+                "processor_name": "summarizer",
+                "status": "completed",
+                "parameters": {"model": "gpt-4", "max_length": 500, "language": "zh"},
+                "result": {
+                    "summary": "AI领域的重要突破性论文，提出了革命性的Transformer架构",
+                    "key_points": ["注意力机制", "并行化", "编码器-解码器"],
+                    "confidence": 0.95,
+                },
+                "started_at": datetime.utcnow(),
+                "completed_at": datetime.utcnow(),
+            },
+            {
+                "processor_name": "vectorizer",
+                "status": "completed",
+                "parameters": {"model": "text-embedding-ada-002", "dimensions": 1536},
+                "result": {
+                    "embedding_model": "text-embedding-ada-002",
+                    "dimensions": 1536,
+                    "chunks_processed": 15,
+                    "success_rate": 1.0,
+                },
+                "started_at": datetime.utcnow(),
+                "completed_at": datetime.utcnow(),
+            },
+            {
+                "processor_name": "keyword_extractor",
+                "status": "completed",
+                "parameters": {"method": "tfidf", "max_keywords": 10},
+                "result": {
+                    "keywords": [
+                        "transformer",
+                        "attention",
+                        "neural network",
+                        "machine learning",
+                        "deep learning",
+                    ],
+                    "scores": [0.95, 0.89, 0.87, 0.85, 0.82],
+                    "confidence": 0.92,
+                },
+                "started_at": datetime.utcnow(),
+                "completed_at": datetime.utcnow(),
+            },
+        ]
+
+        for content_item in content_items[:3]:  # 只为前3个内容项添加处理任务
+            for job_data in processing_jobs_data:
+                # 检查是否已存在相同的处理任务
+                existing_job = session.exec(
+                    select(ProcessingJob).where(
+                        ProcessingJob.content_item_id == content_item.id,
+                        ProcessingJob.processor_name == job_data["processor_name"],
+                    )
+                ).first()
+
+                if not existing_job:
+                    job = ProcessingJob(content_item_id=content_item.id, **job_data)
+                    session.add(job)
+                    logger.info(
+                        f"Created processing job: {job_data['processor_name']} for {content_item.title}"
+                    )
+                else:
+                    logger.info(
+                        f"Processing job already exists: {job_data['processor_name']} for {content_item.title}"
+                    )
 
     # 创建测试AI对话数据
     # 获取第一个内容项用于关联对话

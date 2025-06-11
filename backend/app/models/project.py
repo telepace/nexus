@@ -22,6 +22,9 @@ class ProjectBase(SQLModel):
     project_type: str = Field(default="general", max_length=50)
     is_active: bool = Field(default=True)
     ai_context: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSONB))
+    tag_id: uuid.UUID | None = Field(
+        default=None, index=True
+    )  # 1:n 关系，一个项目可以有一个标签
 
 
 class Project(ProjectBase, table=True):
@@ -44,21 +47,6 @@ class Project(ProjectBase, table=True):
             "foreign_keys": "[Project.owner_id]",
         },
     )
-
-
-class ProjectTag(SQLModel, table=True):
-    """项目标签关联表"""
-
-    __tablename__ = "project_tags"
-
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    project_id: uuid.UUID = Field(index=True, nullable=False)
-    tag_id: uuid.UUID = Field(index=True, nullable=False)
-    confidence_score: float = Field(default=1.0)
-    created_by_ai: bool = Field(default=False, index=True)
-    created_at: datetime = Field(default_factory=now_utc, nullable=False)
-
-    __table_args__ = (UniqueConstraint("project_id", "tag_id", name="uq_project_tag"),)
 
 
 class ContentItemTag(SQLModel, table=True):
@@ -125,6 +113,7 @@ class ProjectUpdate(SQLModel):
     project_type: str | None = None
     is_active: bool | None = None
     ai_context: dict[str, Any] | None = None
+    tag_id: uuid.UUID | None = None
 
 
 class ProjectsPublic(SQLModel):

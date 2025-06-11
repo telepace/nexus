@@ -102,7 +102,7 @@ def setup_test_environment() -> Generator[None, None, None]:
             # 不抛出异常，避免掩盖原始错误
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="function")  # 改为function scope，每个测试函数都有独立的数据库会话
 def db() -> Generator[Session, None, None]:
     """
     Get a database session for testing.
@@ -110,46 +110,98 @@ def db() -> Generator[Session, None, None]:
     This fixture creates a new database session using the test engine,
     initializes the database with necessary data, and cleans up after tests.
     """
-    # Setup test database
-    setup_test_db()
+    # Setup test database and get the test engine
+    test_engine = setup_test_db()
 
-    # Create session and initialize database
-    with Session(engine) as session:
+    # Create session and initialize database using the test engine
+    with Session(test_engine, expire_on_commit=False) as session:
         # Initialize database with initial data
         init_db(session)
-        yield session
-
-    # Cleanup: Since foreign key constraints have been removed,
-    # we can clean up tables in any order
-    with Session(engine) as session:
-        # Clean up all test data - use Project instead of Item
-        session.execute(delete(Project))
-        session.execute(delete(User))
-        # Clean up content-related tables
-        session.execute(delete(AIConversation))
-        session.execute(delete(ProcessingJob))
-        session.execute(delete(ContentAsset))
-        session.execute(delete(ContentShare))  # Added ContentShare
-        session.execute(delete(ContentItem))
+        # 确保初始化数据被提交
         session.commit()
-
-    # Teardown test database
-    teardown_test_db()
+        yield session
+        
+        # 在每个测试结束后清理数据，但保留数据库结构
+        try:
+            # Clean up all test data - use Project instead of Item
+            session.execute(delete(Project))
+            session.execute(delete(User))
+            # Clean up content-related tables
+            session.execute(delete(AIConversation))
+            session.execute(delete(ProcessingJob))
+            session.execute(delete(ContentAsset))
+            session.execute(delete(ContentShare))  # Added ContentShare
+            session.execute(delete(ContentItem))
+            session.commit()
+        except Exception as e:
+            # If cleanup fails, log but don't fail the test
+            print(f"Database cleanup warning: {e}")
+            session.rollback()
 
 
 @pytest.fixture(scope="module")
 def client() -> Generator[TestClient, None, None]:
-    with TestClient(app) as c:
-        yield c
+    """Create a test client with overridden database dependency."""
+    from app.api.deps import get_db
+    
+    def get_test_db():
+        """Override database dependency to use test database."""
+        # 使用测试引擎创建新的数据库会话
+        test_engine = setup_test_db()
+        with Session(test_engine, expire_on_commit=False) as session:
+            yield session
+    
+    # Override the database dependency
+    app.dependency_overrides[get_db] = get_test_db
+    
+    try:
+        with TestClient(app) as c:
+            yield c
+    finally:
+        # Clean up the override
+        app.dependency_overrides.clear()
 
 
-@pytest.fixture(scope="module")
-def superuser_token_headers(client: TestClient) -> dict[str, str]:
+@pytest.fixture(scope="function")  # 改为function scope以匹配db fixture
+def superuser_token_headers(client: TestClient, db: Session) -> dict[str, str]:
+    """Get superuser token headers for testing."""
+    # 确保超级用户存在于测试数据库中
+    from app import crud
+    from app.models import UserCreate
+    from app.core.config import settings
+    
+    # 查找现有超级用户
+    superuser = crud.get_user_by_email(
+        session=db, email=settings.FIRST_SUPERUSER
+    )
+    
+    if not superuser:
+        # 如果超级用户不存在，创建一个
+        user_in = UserCreate(
+            email=settings.FIRST_SUPERUSER,
+            password=settings.FIRST_SUPERUSER_PASSWORD,
+            is_superuser=True,
+        )
+        superuser = crud.create_user(session=db, user_create=user_in)
+        db.commit()
+    
+    # 确保用户是超级用户
+    if not superuser.is_superuser:
+        superuser.is_superuser = True
+        db.add(superuser)
+        db.commit()
+        
+    # 刷新会话以确保数据同步
+    db.refresh(superuser)
+    
+    # 现在获取token
     return get_superuser_token_headers(client)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")  # 改为function scope，确保每个测试都有独立的用户
 def normal_user_token_headers(client: TestClient, db: Session) -> dict[str, str]:
+    # 确保数据库会话提交，使用户对API可见
+    db.commit()
     return authentication_token_from_email(
         client=client, email=settings.EMAIL_TEST_USER, db=db
     )

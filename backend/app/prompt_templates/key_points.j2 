@@ -1,0 +1,128 @@
+You are an expert information extraction specialist. Your mission is to identify and extract the most valuable key points from the following {{ content_type|default("content") }}.
+
+## Source Material
+{% if document_metadata.title %}
+**Document:** {{ document_metadata.title }}
+{% endif %}
+{% if document_metadata.domain %}
+**Domain:** {{ document_metadata.domain }}
+{% endif %}
+
+**Content:**
+{{ content }}
+
+{% if context_history and context_history|length > 0 %}
+## Previous Analysis Context
+{% for item in context_history %}
+- **{{ item.operation_type|title }}:** {{ item.output_summary|truncate(100) }}
+{% endfor %}
+
+**Note:** Build upon the existing analysis to extract complementary key points.
+{% endif %}
+
+{% if extraction_criteria and extraction_criteria|length > 0 %}
+## Extraction Criteria
+{% for criterion in extraction_criteria %}
+- {{ criterion }}
+{% endfor %}
+{% endif %}
+
+## Extraction Guidelines
+1. **Core Concepts:** Identify fundamental ideas, principles, and frameworks
+2. **Actionable Information:** Extract practical steps, methods, and applications  
+3. **Critical Data:** Highlight important statistics, research findings, and metrics
+4. **Novel Insights:** Capture unique perspectives, innovative approaches, and surprising discoveries
+5. **Supporting Evidence:** Note key examples, case studies, and proof points
+{% if context_history %}6. **New Perspectives:** Focus on points not covered in previous analysis{% endif %}
+
+## Priority Levels
+- **High:** Essential information that defines the content's core value
+- **Medium:** Important supporting information and practical applications  
+- **Low:** Interesting but non-essential details and background context
+
+## Output Format
+Provide your analysis in the following JSON structure:
+
+```json
+{
+  "key_points": {
+    "core_concepts": [
+      {
+        "point": "Fundamental concept or principle",
+        "explanation": "Brief explanation of why this matters",
+        "priority": "high",
+        "category": "concept/principle/framework"
+      }
+    ],
+    "actionable_insights": [
+      {
+        "point": "Practical step or method described",
+        "explanation": "How to apply this in practice",
+        "priority": "high/medium/low",
+        "category": "method/tool/strategy"
+      }
+    ],
+    "critical_data": [
+      {
+        "point": "Important statistic or research finding",
+        "explanation": "Context and significance of this data",
+        "priority": "high/medium/low",
+        "category": "statistic/research/metric"
+      }
+    ],
+    "novel_insights": [
+      {
+        "point": "Unique perspective or innovative approach",
+        "explanation": "Why this insight is valuable or surprising",
+        "priority": "high/medium/low",
+        "category": "insight/innovation/perspective"
+      }
+    ]
+  },
+  "supporting_elements": {
+    "key_examples": [
+      "Concrete example or case study that illustrates main points"
+    ],
+    "important_quotes": [
+      {
+        "quote": "Significant quote from the content",
+        "context": "Why this quote is particularly meaningful"
+      }
+    ],
+    "referenced_sources": [
+      "Important sources, studies, or authorities mentioned"
+    ]
+  },
+  "extraction_summary": {
+    "total_points_identified": 12,
+    "high_priority_count": 5,
+    "primary_themes": [
+      "Main theme 1",
+      "Main theme 2"
+    ],
+    "content_density": "high/medium/low",
+    "extraction_confidence": 0.90
+  },
+  "recommendations": {
+    "follow_up_questions": [
+      "Question that would help deepen understanding",
+      "Area that deserves further exploration"
+    ],
+    "related_topics": [
+      "Topic that connects to this content",
+      "Complementary area to explore"
+    ],
+    "application_opportunities": [
+      "Specific context where these points could be applied",
+      "Target audience that would benefit most"
+    ]
+  }
+}
+```
+
+**Quality Standards:**
+- Extract 8-15 key points total across all categories
+- Prioritize practical applicability and unique value
+- Ensure points are specific and actionable rather than vague
+- Maintain accuracy to the source material
+- Avoid redundancy with previous analysis

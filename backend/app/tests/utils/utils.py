@@ -22,6 +22,10 @@ def get_superuser_token_headers(client: TestClient) -> dict[str, str]:
     }
     r = client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
 
+    # 添加基本的错误处理
+    if r.status_code != 200:
+        raise Exception(f"Superuser login failed with status {r.status_code}: {r.text}")
+
     # Handle both old and new response formats
     response_data = r.json()
 
@@ -32,6 +36,9 @@ def get_superuser_token_headers(client: TestClient) -> dict[str, str]:
     else:
         # Old format: {"access_token": "..."}
         tokens = response_data
+    
+    if "access_token" not in tokens:
+        raise Exception(f"No access_token in superuser login response: {response_data}")
 
     a_token = tokens["access_token"]
     headers = {"Authorization": f"Bearer {a_token}"}

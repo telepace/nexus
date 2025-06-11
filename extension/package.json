@@ -16,11 +16,11 @@
     "package": "plasmo package",
     "package:staging": "cross-env PLASMO_PUBLIC_API_URL=https://api-staging.nexus-app.com PLASMO_PUBLIC_FRONTEND_URL=https://staging.nexus-app.com plasmo package",
     "package:prod": "cross-env PLASMO_PUBLIC_API_URL=https://api.nexus-app.com PLASMO_PUBLIC_FRONTEND_URL=https://app.nexus-app.com plasmo package",
-    "test": "playwright test",
-    "test:debug": "playwright test --debug",
-    "test:ui": "playwright test --ui",
-    "test:e2e": "playwright test",
-    "test:coverage": "playwright test --coverage",
+    "test": "cd e2e && pnpm test",
+    "test:debug": "cd e2e && pnpm test --verbose",
+    "test:ui": "cd e2e && pnpm test --watch",
+    "test:e2e": "cd e2e && pnpm test",
+    "test:coverage": "cd e2e && pnpm test --coverage",
     "build:tailwind": "tailwindcss -i ./styles/globals.css -o ./styles/tailwind.css",
     "dev:with-tailwind": "concurrently \"npm run build:tailwind -- --watch\" \"npm run dev:local\"",
     "build:with-tailwind": "npm run build:tailwind && npm run build",
@@ -46,6 +46,7 @@
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "4.1.1",
+    "@playwright/test": "^1.53.0",
     "@types/chrome": "0.0.258",
     "@types/node": "20.11.5",
     "@types/react": "18.2.48",
@@ -82,7 +83,9 @@
           "save-confirm-window.html",
           "notification-popup.html"
         ],
-        "matches": ["<all_urls>"]
+        "matches": [
+          "<all_urls>"
+        ]
       }
     ],
     "side_panel": {

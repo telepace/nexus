@@ -32,7 +32,9 @@ from app.models.prompt import (
 from .content import (
     AIConversation,
     ContentAsset,
+    ContentChunk,
     ContentItem,
+    ContentShare,
     ProcessingJob,
 )
 
@@ -47,7 +49,6 @@ from .project import (
     ProjectCreate,
     ProjectPublic,
     ProjectsPublic,
-    ProjectTag,
     ProjectUpdate,
     QueryRoute,
     QueryRouteBase,
@@ -83,6 +84,8 @@ __all__ = [
     # Content aggregation models
     "ContentItem",
     "ContentAsset",
+    "ContentChunk",
+    "ContentShare",
     "ProcessingJob",
     "AIConversation",
     # Project and routing models
@@ -92,7 +95,6 @@ __all__ = [
     "ProjectPublic",
     "ProjectsPublic",
     "ProjectUpdate",
-    "ProjectTag",
     "ContentItemTag",
     "QueryRoute",
     "QueryRouteBase",
