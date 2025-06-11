@@ -31,7 +31,29 @@ async function checkAuthStatus() {
 
     if (accessToken && user) {
       console.log('User authenticated:', user)
-      return { isAuthenticated: true, user, token: accessToken }
+      
+      // 验证token是否仍然有效
+      try {
+        const response = await fetch(`${process.env.PLASMO_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+        });
+        
+        if (response.ok) {
+          return { isAuthenticated: true, user, token: accessToken }
+        } else if (response.status === 401) {
+          // Token无效，清除存储
+          console.log('Token expired, clearing storage');
+          await chrome.storage.local.remove(['accessToken', 'user']);
+          return { isAuthenticated: false }
+        }
+      } catch (apiError) {
+        console.log('Auth validation API error:', apiError);
+        // API不可用时，仍然信任本地token
+        return { isAuthenticated: true, user, token: accessToken }
+      }
     }
 
     // 尝试从前端网站同步认证状态
@@ -105,6 +127,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // 处理页面内容更新（来自page-observer）
   if (request.type === 'PAGE_CONTENT_UPDATED') {
     handlePageContentUpdated(request.data, sender)
+    return false
+  }
+
+  // 处理历史状态更新
+  if (request.type === 'HISTORY_STATE_UPDATED') {
+    handleHistoryStateUpdated(request.data, sender)
     return false
   }
 
@@ -182,6 +210,22 @@ function handlePageContentUpdated(pageData: any, sender: chrome.runtime.MessageS
         // 忽略错误
       })
     }
+  }
+}
+
+// 处理历史状态更新
+function handleHistoryStateUpdated(data: any, sender: chrome.runtime.MessageSender) {
+  console.log('[Background] History state updated:', data);
+  
+  // 如果有标签ID，清理该标签的缓存数据
+  if (sender.tab?.id) {
+    pageDataCache.delete(sender.tab.id);
+    
+    // 可以选择通知content script页面状态已更改
+    // chrome.tabs.sendMessage(sender.tab.id, {
+    //   type: 'HISTORY_STATE_CHANGED',
+    //   url: data.url
+    // }).catch(() => {});
   }
 }
 
@@ -350,4 +394,6 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 console.log('Nexus background script initialized with unified architecture')
 
 // 启动
-initialize(); 
+initialize().catch(error => {
+  console.error('Background script initialization failed:', error);
+}); 

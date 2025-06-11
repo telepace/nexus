@@ -79,47 +79,38 @@ class PageObserver {
     }
   }
 
-  // 安全的消息发送方法
+  // 安全的消息发送方法（带重试机制）
   private async sendMessageSafely(message: any, maxRetries: number = 3): Promise<any> {
-    let lastError: Error | null = null;
-    
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        // 先检查连接状态
+        // 先检查扩展连接状态
         const isConnected = await this.checkExtensionConnection();
-        if (!isConnected) {
-          throw new Error('Extension context invalidated');
+        if (!isConnected && attempt < maxRetries) {
+          console.log(`Message sending attempt ${attempt}/${maxRetries} failed: Extension not connected`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // 递增延迟
+          continue;
         }
 
         return await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            reject(new Error('Message timeout'));
-          }, 5000); // 5秒超时
-
           chrome.runtime.sendMessage(message, (response) => {
-            clearTimeout(timeout);
-            
             if (chrome.runtime.lastError) {
-              this.isExtensionConnected = false;
-              reject(chrome.runtime.lastError);
+              reject(new Error(chrome.runtime.lastError.message || 'Runtime error'));
             } else {
               resolve(response);
             }
           });
         });
       } catch (error) {
-        lastError = error as Error;
-        console.warn(`Message sending attempt ${attempt}/${maxRetries} failed:`, error);
+        console.log(`Message sending attempt ${attempt}/${maxRetries} failed:`, error);
         
-        // 如果不是最后一次尝试，等待一下再重试
-        if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // 递增延迟
+        if (attempt === maxRetries) {
+          throw new Error(`Failed to notify background: ${error.message}`);
         }
+        
+        // 等待后重试
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
       }
     }
-    
-    // 所有重试都失败了
-    throw lastError || new Error('All message sending attempts failed');
   }
 
   // 设置消息监听器
@@ -147,6 +138,10 @@ class PageObserver {
         case 'GET_PAGE_STATUS':
           this.handleGetPageStatus(sendResponse);
           return true;
+
+        case 'HISTORY_STATE_CHANGED':
+          this.handleHistoryStateChanged(message);
+          return false;
 
         default:
           return false;
@@ -199,11 +194,31 @@ class PageObserver {
     history.pushState = function(...args) {
       originalPushState.apply(history, args);
       window.dispatchEvent(new Event('nexus-navigation'));
+      // 简单通知background script页面状态已更新
+      chrome.runtime.sendMessage({
+        type: 'HISTORY_STATE_UPDATED',
+        data: {
+          url: window.location.href,
+          action: 'pushState'
+        }
+      }).catch(() => {
+        // 忽略连接错误
+      });
     };
 
     history.replaceState = function(...args) {
       originalReplaceState.apply(history, args);
       window.dispatchEvent(new Event('nexus-navigation'));
+      // 简单通知background script页面状态已更新
+      chrome.runtime.sendMessage({
+        type: 'HISTORY_STATE_UPDATED',
+        data: {
+          url: window.location.href,
+          action: 'replaceState'
+        }
+      }).catch(() => {
+        // 忽略连接错误
+      });
     };
 
     window.addEventListener('nexus-navigation', () => {
@@ -430,6 +445,16 @@ class PageObserver {
         hasContent: pageData.content.length > 100
       }
     });
+  }
+
+  // 处理历史状态变更通知
+  private handleHistoryStateChanged(message: any) {
+    console.log('[PageObserver] History state changed:', message.url);
+    
+    // 如果URL发生了变化，重新提取内容
+    if (message.url && message.url !== window.location.href) {
+      this.scheduleContentExtraction();
+    }
   }
 }
 
