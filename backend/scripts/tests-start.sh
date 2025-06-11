@@ -90,13 +90,6 @@ python app/tests_pre_start.py || {
   exit 1
 }
 
-# Debug test superuser configuration
-echo "🔍 Debugging test superuser configuration..."
-TESTING=true TEST_MODE=true python scripts/test-debug.py || {
-  echo "❌ Test superuser configuration verification failed"
-  exit 1
-}
-
 # Run the test script
 echo "🧪 Running tests..."
 # Pass the testing flag to the test script
