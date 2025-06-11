@@ -113,7 +113,9 @@ describe("ContentLibraryPage", () => {
     });
 
     // Check that search is actually present (the test expectation was wrong)
-    expect(screen.getByPlaceholderText("搜索标题或摘要...")).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("搜索标题或摘要..."),
+    ).toBeInTheDocument();
   });
 
   it("should display Open Reader and Download buttons for content items", async () => {
@@ -130,9 +132,7 @@ describe("ContentLibraryPage", () => {
       expect(
         screen.getByRole("button", { name: /阅读内容/i }),
       ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /下载/i }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /下载/i })).toBeInTheDocument();
     });
   });
 

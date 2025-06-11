@@ -1,9 +1,9 @@
 /**
  * items-action.test.ts
- * 
+ *
  * 由于Server Actions的复杂性和缓存机制，
  * 这些测试被简化为基本的单元测试，专注于核心逻辑验证。
- * 
+ *
  * 集成测试在 page-integration.test.tsx 中进行。
  */
 
@@ -18,7 +18,7 @@ describe("fetchItems function", () => {
     // 测试基本的数据类型检查逻辑
     const testArray = [1, 2, 3];
     const testObject = { data: [1, 2, 3] };
-    
+
     expect(Array.isArray(testArray)).toBe(true);
     expect(Array.isArray(testObject)).toBe(false);
     expect("data" in testObject && Array.isArray(testObject.data)).toBe(true);
@@ -28,7 +28,7 @@ describe("fetchItems function", () => {
     // 测试错误对象结构
     const errorResponse = { error: "test error", status: 400 };
     const nullResponse = null;
-    
+
     expect(errorResponse).toHaveProperty("error");
     expect(errorResponse).toHaveProperty("status");
     expect(nullResponse).toBeNull();
@@ -38,18 +38,23 @@ describe("fetchItems function", () => {
     // 测试数据提取逻辑
     const wrappedData = { data: ["item1", "item2"] };
     const directData = ["item1", "item2"];
-    
+
     // 模拟数据提取逻辑
     const extractData = (response: any) => {
       if (Array.isArray(response)) {
         return response;
       }
-      if (response && typeof response === "object" && "data" in response && Array.isArray(response.data)) {
+      if (
+        response &&
+        typeof response === "object" &&
+        "data" in response &&
+        Array.isArray(response.data)
+      ) {
         return response.data;
       }
       return null;
     };
-    
+
     expect(extractData(directData)).toEqual(["item1", "item2"]);
     expect(extractData(wrappedData)).toEqual(["item1", "item2"]);
     expect(extractData(null)).toBeNull();
@@ -63,9 +68,10 @@ describe("fetchItems function", () => {
       { input: null, expected: "null" },
       { input: "string", expected: "string" },
     ];
-    
+
     responses.forEach(({ input, expected }) => {
-      const actualType = input === null ? "null" : Array.isArray(input) ? "array" : typeof input;
+      const actualType =
+        input === null ? "null" : Array.isArray(input) ? "array" : typeof input;
       expect(actualType).toBe(expected);
     });
   });

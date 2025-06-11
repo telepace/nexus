@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -54,65 +54,12 @@ import {
   Plus,
   Sparkles,
   Brain,
-  Users,
-  Target,
 } from "lucide-react";
 import { useAuth } from "@/lib/client-auth";
 import Link from "next/link";
 import { fetchItems } from "@/components/actions/items-action-client";
 import { ContentItemPublic } from "@/app/openapi-client/index";
 import { getCookie } from "@/lib/client-auth";
-import MainLayout from "@/components/layout/MainLayout";
-import {
-  ExternalLink,
-  Download,
-  Trash2,
-  Clock,
-  Star,
-  MessageCircle,
-  Share2,
-  Filter,
-  Search,
-  Tag,
-  Calendar,
-  Video,
-  Music,
-  BookOpen,
-  AlertCircle,
-  CheckCircle,
-  MoreVertical,
-  Bookmark,
-  User,
-  Settings,
-  LogOut,
-  RefreshCw,
-  Eye,
-  Heart,
-  ThumbsUp,
-  Archive,
-  Grid,
-  List,
-  SortAsc,
-  SortDesc,
-  X,
-} from "lucide-react";
-import { useContentEvents } from "@/hooks/useContentEvents";
-import { useRouter } from "next/navigation";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 // 类型定义
 interface DashboardMetrics {

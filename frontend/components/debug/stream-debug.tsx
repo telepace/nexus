@@ -96,7 +96,10 @@ export function StreamDebug() {
         }
       }
     } catch (error) {
-      addLog("error", `错误: ${error instanceof Error ? error.message : String(error)}`);
+      addLog(
+        "error",
+        `错误: ${error instanceof Error ? error.message : String(error)}`,
+      );
     } finally {
       setIsStreaming(false);
     }
@@ -235,4 +238,4 @@ export function StreamDebug() {
       </Card>
     </div>
   );
-} 
+}

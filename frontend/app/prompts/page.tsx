@@ -232,7 +232,12 @@ async function PromptsContent({
 
     // 并行获取数据
     const [promptsResult, tagsResult] = await Promise.all([
-      fetchPrompts({ search: query, tag_ids: selectedTags, sort, order: order as "asc" | "desc" }),
+      fetchPrompts({
+        search: query,
+        tag_ids: selectedTags,
+        sort,
+        order: order as "asc" | "desc",
+      }),
       fetchTags(),
     ]);
 
@@ -241,7 +246,7 @@ async function PromptsContent({
       throw new Error(promptsResult.error || "获取提示词失败");
     }
 
-    // Check if tagsResult is an error  
+    // Check if tagsResult is an error
     if (!Array.isArray(tagsResult)) {
       throw new Error(tagsResult.error || "获取标签失败");
     }
@@ -268,9 +273,7 @@ async function PromptsContent({
               <div className="p-6">
                 <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
                   <div className="flex-1 w-full lg:w-auto">
-                    <SearchForm
-                      tags={tags}
-                    />
+                    <SearchForm tags={tags} />
                   </div>
                   <div className="flex gap-2">
                     <Button
