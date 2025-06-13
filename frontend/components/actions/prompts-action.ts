@@ -879,6 +879,12 @@ export async function addPromptAction(
     const result = await addPrompt(formData);
     return result;
   } catch (error) {
+    // 检查是否是 Next.js 重定向错误
+    if (error instanceof Error && error.message === "NEXT_REDIRECT") {
+      // 重定向是正常行为，直接抛出让Next.js处理
+      throw error;
+    }
+
     console.error("addPromptAction error:", error);
     return {
       genericError: typeof error === "string" ? error : "创建提示词失败",

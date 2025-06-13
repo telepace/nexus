@@ -33,8 +33,8 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   src,
   alt,
   className,
-  width,
-  height,
+  width = 800,
+  height = 600,
   fill = false,
   priority = false,
   quality = 75,
@@ -46,12 +46,16 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   onError,
   onLoad,
   style,
-  inline = false,
+  inline,
   ...props
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [currentSrc, setCurrentSrc] = useState(src);
+
+  // 计算图片尺寸
+  const imageWidth = width;
+  const imageHeight = height;
 
   const handleLoad = () => {
     setIsLoading(false);
@@ -90,55 +94,18 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
     className,
   );
 
-  const imageWidth = width || 800;
-  const imageHeight = height || 600;
-
-  if (inline) {
-    if (hasError && !fallbackSrc) {
-      return (
-        <span className="inline-flex items-center justify-center text-muted-foreground text-sm bg-muted px-2 py-1 rounded">
-          Failed to load image
-        </span>
-      );
-    }
-
-    return fill ? (
-      <Image
-        src={currentSrc}
-        alt={alt}
-        fill
-        className={imageClassName}
-        style={imageStyle}
-        priority={priority}
-        quality={quality}
-        onLoad={handleLoad}
-        onError={handleError}
-        {...props}
-      />
-    ) : (
-      <Image
-        src={currentSrc}
-        alt={alt}
-        width={imageWidth}
-        height={imageHeight}
-        className={imageClassName}
-        style={imageStyle}
-        priority={priority}
-        quality={quality}
-        loading={loading}
-        onLoad={handleLoad}
-        onError={handleError}
-        {...props}
-      />
-    );
-  }
+  // 选择容器元素类型
+  const ContainerElement = inline ? "span" : "div";
+  const containerClassName = inline
+    ? "relative inline-block align-top"
+    : "relative inline-block";
 
   return (
-    <div className="relative inline-block">
+    <ContainerElement className={containerClassName}>
       {showLoader && isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted/50 rounded">
+        <span className="absolute inset-0 flex items-center justify-center bg-muted/50 rounded">
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        </div>
+        </span>
       )}
 
       {fill ? (
@@ -172,11 +139,11 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
       )}
 
       {hasError && !fallbackSrc && (
-        <div className="flex items-center justify-center w-full h-full bg-muted text-muted-foreground text-sm">
+        <span className="flex items-center justify-center w-full h-full bg-muted text-muted-foreground text-sm">
           Failed to load image
-        </div>
+        </span>
       )}
-    </div>
+    </ContainerElement>
   );
 };
 

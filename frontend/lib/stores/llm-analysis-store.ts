@@ -242,7 +242,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
 
           // 调用流式分析API
           const response = await fetch(
-            `${apiUrl}/api/v1/content/${contentId}/analyze`,
+            `${apiUrl}/api/v1/content/${contentId}/analyze-ai-sdk`,
             {
               method: "POST",
               headers: {
@@ -250,9 +250,8 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                system_prompt: systemPrompt,
-                user_prompt: userPrompt,
-                model: "gpt-3.5-turbo",
+                user_prompt: systemPrompt, // 分析指令
+                model: "or-llama-3-1-8b-instruct",
               }),
             },
           );
@@ -293,7 +292,33 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
               const lines = chunk.split("\n");
 
               for (const line of lines) {
-                if (line.startsWith("data: ")) {
+                // 支持 Data Stream Protocol 和 OpenAI SSE 格式
+                if (line.startsWith("0:")) {
+                  // Vercel AI SDK Data Stream Protocol 文本内容
+                  const content = line.slice(3, -1); // 移除 0:" 和末尾的 "
+                  if (content) {
+                    accumulatedContent += content;
+                    // 实时更新内容
+                    updateAnalysis(targetAnalysis.id, {
+                      content: accumulatedContent,
+                    });
+                  }
+                } else if (line.startsWith("8:")) {
+                  // Vercel AI SDK Data Stream Protocol 完成信号
+                  updateAnalysis(targetAnalysis.id, {
+                    isLoading: false,
+                  });
+                  return;
+                } else if (line.startsWith("9:")) {
+                  // Vercel AI SDK Data Stream Protocol 错误信号
+                  try {
+                    const errorData = JSON.parse(line.slice(2));
+                    throw new Error(errorData.error || "Stream error");
+                  } catch {
+                    throw new Error("Stream error");
+                  }
+                } else if (line.startsWith("data: ")) {
+                  // OpenAI SSE 格式（向后兼容）
                   const data = line.slice(6).trim();
 
                   if (data === "[DONE]") {

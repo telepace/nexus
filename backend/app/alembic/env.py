@@ -35,7 +35,7 @@ logger = logging.getLogger("alembic.env")
 # Use explicit imports instead of importing from app.models
 from sqlmodel import SQLModel  # noqa
 # Then import all models, ensuring they are registered to SQLModel.metadata
-from app.models import User, Item  # noqa
+from app.models import User, Project  # noqa
 from app.models.prompt import Prompt, PromptVersion, Tag, PromptTagLink  # noqa
 from app.core.config import settings  # noqa
 from app.core.db_factory import get_engine_args  # noqa

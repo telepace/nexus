@@ -4,12 +4,6 @@
 
 # 从自定义模型导出
 from app.base import (
-    Item,
-    ItemBase,
-    ItemCreate,
-    ItemPublic,
-    ItemsPublic,
-    ItemUpdate,
     Message,
     NewPassword,
     Token,
@@ -34,14 +28,38 @@ from app.models.prompt import (
     Visibility,
 )
 
+# Import content aggregation models
+from .content import (
+    AIConversation,
+    ContentAsset,
+    ContentChunk,
+    ContentItem,
+    ContentShare,
+    ProcessingJob,
+)
+
+# Import the new Image model
+from .image import Image
+
+# Import project and routing models
+from .project import (
+    ContentItemTag,
+    Project,
+    ProjectBase,
+    ProjectCreate,
+    ProjectPublic,
+    ProjectsPublic,
+    ProjectUpdate,
+    QueryRoute,
+    QueryRouteBase,
+    QueryRouteCreate,
+    QueryRoutePublic,
+    SmartRoutingRequest,
+    SmartRoutingResponse,
+)
+
 # 定义__all__列表，包含所有导入的模型
 __all__ = [
-    "Item",
-    "ItemBase",
-    "ItemCreate",
-    "ItemPublic",
-    "ItemsPublic",
-    "ItemUpdate",
     "Message",
     "NewPassword",
     "Token",
@@ -66,17 +84,22 @@ __all__ = [
     # Content aggregation models
     "ContentItem",
     "ContentAsset",
+    "ContentChunk",
+    "ContentShare",
     "ProcessingJob",
     "AIConversation",
+    # Project and routing models
+    "Project",
+    "ProjectBase",
+    "ProjectCreate",
+    "ProjectPublic",
+    "ProjectsPublic",
+    "ProjectUpdate",
+    "ContentItemTag",
+    "QueryRoute",
+    "QueryRouteBase",
+    "QueryRouteCreate",
+    "QueryRoutePublic",
+    "SmartRoutingRequest",
+    "SmartRoutingResponse",
 ]
-
-# Import content aggregation models
-from .content import (
-    AIConversation,
-    ContentAsset,
-    ContentItem,
-    ProcessingJob,
-)
-
-# Import the new Image model
-from .image import Image

@@ -42,6 +42,8 @@ def read_tags(
     """获取标签列表"""
     try:
         tags = db.exec(select(Tag).offset(skip).limit(limit)).all()
+
+        # 直接返回tags列表，让FastAPI处理序列化
         return tags
     except Exception as e:
         logger.error(f"获取标签列表失败: {str(e)}")
@@ -72,6 +74,8 @@ def create_tag(
         db.add(tag)
         db.commit()
         db.refresh(tag)
+
+        # 直接返回tag对象，让FastAPI处理序列化
         return tag
     except HTTPException:
         raise
@@ -199,19 +203,18 @@ def create_prompt(
             created_by=current_user.id,
         )
         db.add(version)
-
         db.commit()
         db.refresh(prompt)
-        # 确保加载标签关系
+
+        # 手动加载标签关系
         db.refresh(prompt, ["tags"])
-        return PromptReadWithTags.model_validate(prompt)
+
+        # 直接返回prompt对象，让FastAPI处理序列化
+        return prompt
     except Exception as e:
         db.rollback()
-        logger.error(f"创建提示词失败: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"创建提示词失败: {str(e)}",
-        )
+        logger.error(f"Error creating prompt: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/", response_model=list[Prompt])
@@ -293,11 +296,15 @@ def read_prompts(
 
         # 执行查询
         prompts = db.exec(query).all()
-        # 手动加载标签
+        # 应用标签加载
         for prompt in prompts:
             db.refresh(prompt, ["tags"])
+
         # 在 Python 中进行分页
-        return list(prompts[skip : skip + limit])
+        paginated_prompts = list(prompts[skip : skip + limit])
+
+        # 直接返回prompts列表，让FastAPI处理序列化
+        return paginated_prompts
     except Exception as e:
         logger.error(f"Error reading prompts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -321,7 +328,9 @@ def read_prompt(
             raise HTTPException(status_code=403, detail="Not enough permissions")
         # 手动加载标签
         db.refresh(prompt, ["tags"])
-        return PromptReadWithTags.model_validate(prompt)
+
+        # 直接返回prompt对象，让FastAPI处理序列化
+        return prompt
     except HTTPException as e:
         # 如果是 HTTPException，直接传递
         logger.error(f"Error reading prompt: {e}")
@@ -370,10 +379,6 @@ def update_prompt(
         if not _check_prompt_access(prompt, current_user):
             raise HTTPException(status_code=403, detail="Not enough permissions")
 
-        # 先保存更新前的内容和输入变量（已移除未使用变量）
-        # pre_content = prompt.content
-        # pre_input_vars = prompt.input_vars
-
         # 更新标签关系
         tag_ids = None
         update_data = prompt_in.model_dump(exclude_unset=True)
@@ -415,18 +420,19 @@ def update_prompt(
             prompt.tags = []
             db.flush()
 
-            # 添加新标签
-            for tag_id in tag_ids:
-                tag = db.get(Tag, tag_id)
-                if tag:
-                    prompt.tags.append(tag)
+            # 添加新的标签关系
+            if tag_ids:
+                for tag_id in tag_ids:
+                    tag = db.get(Tag, tag_id)
+                    if tag:
+                        prompt.tags.append(tag)
 
         db.add(prompt)
         db.commit()
-        db.refresh(prompt)
-        # 确保加载标签关系
         db.refresh(prompt, ["tags"])
-        return PromptReadWithTags.model_validate(prompt)
+
+        # 直接返回prompt对象，让FastAPI处理序列化
+        return prompt
     except HTTPException:
         raise
     except Exception as e:
@@ -480,46 +486,47 @@ def read_prompt_versions(
     prompt_id: UUID,
     current_user: Any = Depends(get_current_user),
 ):
-    """Retrieves the version history of a given prompt.
+    """Get all versions of a prompt.
 
-    This function fetches the version history for a specified prompt by its ID. It
-    first retrieves the prompt from the database and checks if it exists. Then, it
-    verifies the user's permissions to access the prompt. If both steps are
-    successful, it queries the database to get all versions of the prompt, sorted
-    in descending order by version number. If any errors occur during this process,
-    appropriate HTTP exceptions are raised.
+    This function retrieves all versions of a specific prompt. It first checks
+    if the prompt exists and if the user has permission to access it, then
+    returns a list of all versions sorted by version number in descending order.
 
     Args:
-        db (Session): The database session.
-        prompt_id (UUID): The ID of the prompt for which to retrieve version history.
-        current_user (Any): The current authenticated user.
+        db (Session): Database session.
+        prompt_id (UUID): The ID of the prompt to get versions for.
+        current_user (Any): Current user information (dependency).
+
+    Returns:
+        list[PromptVersion]: List of prompt versions sorted by version number.
+
+    Raises:
+        HTTPException: If the prompt is not found, user lacks permissions,
+            or an error occurs during the query.
     """
     try:
-        # 获取提示词
+        # 检查提示词是否存在和权限
         prompt = db.get(Prompt, prompt_id)
         if not prompt:
             raise HTTPException(status_code=404, detail="Prompt not found")
 
-        # 检查权限
         if not _check_prompt_access(prompt, current_user):
             raise HTTPException(status_code=403, detail="Not enough permissions")
 
-        # 获取版本列表，按版本号降序排序
-        query = (
+        # 查询版本
+        versions = db.exec(
             select(PromptVersion)
             .where(PromptVersion.prompt_id == prompt_id)
-            .order_by(PromptVersion.version.desc())  # type: ignore
-        )
-        versions = db.exec(query).all()
+            .order_by(desc(PromptVersion.version))
+        ).all()
+
+        # 直接返回versions列表，让FastAPI处理序列化
         return versions
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"获取版本历史失败: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"获取版本历史失败: {str(e)}",
-        )
+        logger.error(f"Error reading prompt versions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/{prompt_id}/versions", response_model=PromptVersion)
@@ -539,38 +546,43 @@ def create_prompt_version(
     exceptions.
     """
     try:
-        # 获取提示词
+        # 检查提示词是否存在和权限
         prompt = db.get(Prompt, prompt_id)
         if not prompt:
             raise HTTPException(status_code=404, detail="Prompt not found")
 
-        # 检查访问权限
         if not _check_prompt_access(prompt, current_user):
             raise HTTPException(status_code=403, detail="Not enough permissions")
 
-        # 获取当前最大版本号
+        # 查询最大版本号
         max_version_result = db.exec(
             select(func.max(PromptVersion.version)).where(
                 PromptVersion.prompt_id == prompt_id
             )
         ).first()
+
         max_version = max_version_result if max_version_result is not None else 0
 
         # 创建新版本
         version = PromptVersion(
             prompt_id=prompt_id,
-            content=version_in.content,
-            change_notes=version_in.change_notes,
             version=max_version + 1,
-            created_at=datetime.utcnow(),
+            content=version_in.content,
+            input_vars=version_in.input_vars,
+            change_notes=version_in.change_notes,
             created_by=current_user.id,
         )
+
         db.add(version)
         db.commit()
         db.refresh(version)
 
+        # 直接返回version对象，让FastAPI处理序列化
         return version
+    except HTTPException:
+        raise
     except Exception as e:
+        db.rollback()
         logger.error(f"Error creating prompt version: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -112,7 +112,7 @@ class ExtensionHelper {
     // For example, waiting for a specific element in the side panel to be visible.
     console.log('Waiting for extension to be ready (placeholder)...');
     // Example: await page.waitForSelector('#some-element-that-indicates-ready', { visible: true, timeout });
-    await page.waitForTimeout(1000); // Replace with actual readiness check
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Replace with actual readiness check
   }
 }
 

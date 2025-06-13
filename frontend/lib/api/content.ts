@@ -198,15 +198,13 @@ export const contentApi = {
 
   async analyzeContent(
     contentId: string,
-    systemPrompt: string,
-    userPrompt: string,
+    analysisInstruction: string,
   ): Promise<Record<string, unknown>> {
     const response = await client.post<Record<string, unknown>>(
-      `/api/v1/content/${contentId}/analyze`,
+      `/api/v1/content/${contentId}/analyze-ai-sdk`,
       {
-        system_prompt: systemPrompt,
-        user_prompt: userPrompt,
-        model: "gpt-3.5-turbo",
+        user_prompt: analysisInstruction, // 分析指令
+        model: "or-llama-3-1-8b-instruct",
       },
     );
     return response;

@@ -62,6 +62,7 @@ run_tests() {
         --maxfail=10 \
         --durations=10 \
         -v \
+        app/tests/ \
         $test_args \
         || {
         echo "❌ Tests failed or timed out"

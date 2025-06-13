@@ -34,9 +34,44 @@ export const getBrowserTimeZone = (): TimeZone => {
 
 // 获取浏览器默认语言
 export const getBrowserLocale = (): Locale => {
+  // 检查是否在浏览器环境中
+  if (typeof window === "undefined" || typeof navigator === "undefined") {
+    // 服务端默认返回英文
+    return "en-US";
+  }
+
   const browserLocale = navigator.language;
   return browserLocale.startsWith("zh") ? "zh-CN" : "en-US";
 };
+
+/**
+ * 检查日期值是否有效
+ */
+function isValidDateInput(date: string | Date | number): boolean {
+  if (date === null || date === undefined || date === "") {
+    return false;
+  }
+
+  // 检查 NaN
+  if (typeof date === "number" && isNaN(date)) {
+    return false;
+  }
+
+  // 检查是否是无效的 Date 对象
+  if (date instanceof Date && isNaN(date.getTime())) {
+    return false;
+  }
+
+  // 对于字符串，尝试解析
+  if (typeof date === "string") {
+    const parsed = parseISO(date);
+    if (isNaN(parsed.getTime())) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 /**
  * 格式化日期时间
@@ -54,7 +89,10 @@ export function formatDate(
     showTimeZone?: boolean;
   },
 ) {
-  if (!date) return "";
+  // 早期检查无效输入
+  if (!isValidDateInput(date)) {
+    return "";
+  }
 
   const {
     timeZone = getBrowserTimeZone(),
@@ -66,6 +104,11 @@ export function formatDate(
     // 解析日期
     const parsedDate =
       typeof date === "string" ? parseISO(date) : new Date(date);
+
+    // 再次验证解析后的日期
+    if (isNaN(parsedDate.getTime())) {
+      return String(date);
+    }
 
     // 转换到目标时区
     const zonedDate = toZonedTime(parsedDate, timeZone);
@@ -104,7 +147,10 @@ export function formatRelativeTime(
     locale?: Locale;
   },
 ) {
-  if (!date) return "";
+  // 早期检查无效输入
+  if (!isValidDateInput(date)) {
+    return "";
+  }
 
   const { timeZone = getBrowserTimeZone(), locale = getBrowserLocale() } =
     options || {};
@@ -113,6 +159,11 @@ export function formatRelativeTime(
     // 解析日期
     const parsedDate =
       typeof date === "string" ? parseISO(date) : new Date(date);
+
+    // 再次验证解析后的日期
+    if (isNaN(parsedDate.getTime())) {
+      return String(date);
+    }
 
     // 转换到目标时区
     const zonedDate = toZonedTime(parsedDate, timeZone);
@@ -146,7 +197,10 @@ export function formatTimeDistance(
     addSuffix?: boolean;
   },
 ) {
-  if (!date) return "";
+  // 早期检查无效输入
+  if (!isValidDateInput(date)) {
+    return "";
+  }
 
   const {
     timeZone = getBrowserTimeZone(),
@@ -158,6 +212,11 @@ export function formatTimeDistance(
     // 解析日期
     const parsedDate =
       typeof date === "string" ? parseISO(date) : new Date(date);
+
+    // 再次验证解析后的日期
+    if (isNaN(parsedDate.getTime())) {
+      return String(date);
+    }
 
     // 转换到目标时区
     const zonedDate = toZonedTime(parsedDate, timeZone);

@@ -13,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, TokenBlacklist, User
+from app.models import Project, TokenBlacklist, User
 
 # Import from crud_image.py
 from . import crud_image
@@ -139,11 +139,11 @@ def get_items(
     owner_id: uuid.UUID | None = None,
     skip: int = 0,
     limit: int = 100,
-) -> list[Item]:
+) -> list[Project]:
     """获取物品列表"""
-    query = select(Item)
+    query = select(Project)
     if owner_id:
-        query = query.where(Item.owner_id == owner_id)
+        query = query.where(Project.owner_id == owner_id)
     # 先执行查询获取所有结果
     results = session.exec(query).all()
     # 然后在 Python 中进行分页
@@ -226,12 +226,12 @@ def update_user(
     return db_user
 
 
-def create_item(*, session: Session, item_in: Any, owner_id: uuid.UUID) -> Any:
+def create_project(*, session: Session, item_in: Any, owner_id: uuid.UUID) -> Any:
     """创建项目"""
     # 动态导入Item
-    from app.models import Item
+    from app.models import Project
 
-    item = Item(**item_in.model_dump(), owner_id=owner_id)
+    item = Project(**item_in.model_dump(), owner_id=owner_id)
     session.add(item)
     session.commit()
     session.refresh(item)
@@ -241,9 +241,9 @@ def create_item(*, session: Session, item_in: Any, owner_id: uuid.UUID) -> Any:
 def get_item(session: Session, id: uuid.UUID) -> Any | None:
     """获取单个项目"""
     # 动态导入Item
-    from app.models import Item
+    from app.models import Project
 
-    return session.get(Item, id)
+    return session.get(Project, id)
 
 
 def update_item(session: Session, item: Any, item_in: Any) -> Any:
@@ -419,7 +419,7 @@ __all__ = [
     "create_user_oauth",
     "get_user_by_google_id",
     # Item CRUD operations
-    "create_item",
+    "create_project",
     "get_item",
     "get_items",
     "update_item",

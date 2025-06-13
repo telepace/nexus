@@ -9,6 +9,9 @@ import {
 import type {
   HealthGetHealthApiError,
   HealthGetHealthApiResponse,
+  LoginAuthLoginData,
+  LoginAuthLoginError,
+  LoginAuthLoginResponse,
   LoginLoginAccessTokenData,
   LoginLoginAccessTokenError,
   LoginLoginAccessTokenResponse,
@@ -65,9 +68,9 @@ import type {
   ItemsReadItemsData,
   ItemsReadItemsError,
   ItemsReadItemsResponse,
-  ItemsCreateItemData,
-  ItemsCreateItemError,
-  ItemsCreateItemResponse,
+  ItemsCreateProjectData,
+  ItemsCreateProjectError,
+  ItemsCreateProjectResponse,
   ItemsReadItemData,
   ItemsReadItemError,
   ItemsReadItemResponse,
@@ -134,6 +137,13 @@ import type {
   LlmCreateEmbeddingData,
   LlmCreateEmbeddingError,
   LlmCreateEmbeddingResponse,
+  ChatCreateChatCompletionData,
+  ChatCreateChatCompletionError,
+  ChatCreateChatCompletionResponse,
+  ChatListAvailableModelsError,
+  ChatListAvailableModelsResponse,
+  ContentContentEventsEndpointError,
+  ContentContentEventsEndpointResponse,
   ContentCreateContentItemEndpointData,
   ContentCreateContentItemEndpointError,
   ContentCreateContentItemEndpointResponse,
@@ -160,6 +170,12 @@ import type {
   ContentAnalyzeContentStreamData,
   ContentAnalyzeContentStreamError,
   ContentAnalyzeContentStreamResponse,
+  ContentAnalyzeContentAiSdkData,
+  ContentAnalyzeContentAiSdkError,
+  ContentAnalyzeContentAiSdkResponse,
+  ContentContentCompletionStreamData,
+  ContentContentCompletionStreamError,
+  ContentContentCompletionStreamResponse,
   ContentCreateShareLinkEndpointData,
   ContentCreateShareLinkEndpointError,
   ContentCreateShareLinkEndpointResponse,
@@ -184,6 +200,23 @@ import type {
   ImagesDeleteImageData,
   ImagesDeleteImageError,
   ImagesDeleteImageResponse,
+  DashboardAnalyzeQueryData,
+  DashboardAnalyzeQueryError,
+  DashboardAnalyzeQueryResponse,
+  DashboardGetDashboardMetricsError,
+  DashboardGetDashboardMetricsResponse,
+  DashboardGetRecentActivitiesData,
+  DashboardGetRecentActivitiesError,
+  DashboardGetRecentActivitiesResponse,
+  DashboardConfirmRoutingData,
+  DashboardConfirmRoutingError,
+  DashboardConfirmRoutingResponse,
+  DashboardCreateProjectData,
+  DashboardCreateProjectError,
+  DashboardCreateProjectResponse,
+  DashboardGetUserProjectsData,
+  DashboardGetUserProjectsError,
+  DashboardGetUserProjectsResponse,
   PrivateCreateUserData,
   PrivateCreateUserError,
   PrivateCreateUserResponse,
@@ -204,6 +237,23 @@ export const healthGetHealthApi = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/api/v1/health",
+  });
+};
+
+/**
+ * Auth Login
+ * JSON-based login endpoint that matches frontend expectations
+ */
+export const loginAuthLogin = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<LoginAuthLoginData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    LoginAuthLoginResponse,
+    LoginAuthLoginError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/auth/login",
   });
 };
 
@@ -579,15 +629,15 @@ export const itemsReadItems = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create Item
+ * Create Project
  * Create new item.
  */
-export const itemsCreateItem = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<ItemsCreateItemData, ThrowOnError>,
+export const itemsCreateProject = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ItemsCreateProjectData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).post<
-    ItemsCreateItemResponse,
-    ItemsCreateItemError,
+    ItemsCreateProjectResponse,
+    ItemsCreateProjectError,
     ThrowOnError
   >({
     ...options,
@@ -897,19 +947,23 @@ export const promptsDeletePrompt = <ThrowOnError extends boolean = false>(
 
 /**
  * Read Prompt Versions
- * Retrieves the version history of a given prompt.
+ * Get all versions of a prompt.
  *
- * This function fetches the version history for a specified prompt by its ID. It
- * first retrieves the prompt from the database and checks if it exists. Then, it
- * verifies the user's permissions to access the prompt. If both steps are
- * successful, it queries the database to get all versions of the prompt, sorted
- * in descending order by version number. If any errors occur during this process,
- * appropriate HTTP exceptions are raised.
+ * This function retrieves all versions of a specific prompt. It first checks
+ * if the prompt exists and if the user has permission to access it, then
+ * returns a list of all versions sorted by version number in descending order.
  *
  * Args:
- * db (Session): The database session.
- * prompt_id (UUID): The ID of the prompt for which to retrieve version history.
- * current_user (Any): The current authenticated user.
+ * db (Session): Database session.
+ * prompt_id (UUID): The ID of the prompt to get versions for.
+ * current_user (Any): Current user information (dependency).
+ *
+ * Returns:
+ * list[PromptVersion]: List of prompt versions sorted by version number.
+ *
+ * Raises:
+ * HTTPException: If the prompt is not found, user lacks permissions,
+ * or an error occurs during the query.
  */
 export const promptsReadPromptVersions = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<PromptsReadPromptVersionsData, ThrowOnError>,
@@ -1048,8 +1102,63 @@ export const llmCreateEmbedding = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create a New Content Item
- * Uploads and creates a new content item in the system. Requires user authentication.
+ * Create Chat Completion
+ * Create chat completion compatible with Vercel AI SDK.
+ *
+ * Supports Data Stream Protocol format for frontend integration.
+ */
+export const chatCreateChatCompletion = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ChatCreateChatCompletionData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ChatCreateChatCompletionResponse,
+    ChatCreateChatCompletionError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/chat/completions",
+  });
+};
+
+/**
+ * List Available Models
+ * 列出可用的 AI 模型
+ */
+export const chatListAvailableModels = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ChatListAvailableModelsResponse,
+    ChatListAvailableModelsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/chat/models",
+  });
+};
+
+/**
+ * Content Events Stream (SSE)
+ * Server-Sent Events stream for real-time content processing status updates.
+ */
+export const contentContentEventsEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ContentContentEventsEndpointResponse,
+    ContentContentEventsEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/events",
+  });
+};
+
+/**
+ * Create a New Content Item with Automatic Processing
+ * Creates a new content item and automatically starts background processing. Returns immediately for seamless user experience.
  */
 export const contentCreateContentItemEndpoint = <
   ThrowOnError extends boolean = false,
@@ -1247,6 +1356,67 @@ export const contentAnalyzeContentStream = <
 };
 
 /**
+ * Analyze Content Ai Sdk
+ * Stream AI analysis of content using Vercel AI SDK compatible format.
+ *
+ * This endpoint provides Data Stream Protocol compatible responses for
+ * seamless integration with Vercel AI SDK useCompletion hook.
+ *
+ * Args:
+ * content_id: ID of the content to analyze
+ * user_prompt: The analysis instruction/prompt from user
+ * model: AI model to use
+ * temperature: Sampling temperature
+ * max_tokens: Maximum tokens to generate
+ */
+export const contentAnalyzeContentAiSdk = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<ContentAnalyzeContentAiSdkData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ContentAnalyzeContentAiSdkResponse,
+    ContentAnalyzeContentAiSdkError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{content_id}/analyze-ai-sdk",
+  });
+};
+
+/**
+ * Content Completion Stream
+ * Stream content analysis using Vercel AI SDK compatible format.
+ *
+ * This endpoint returns pure text streaming for optimal compatibility
+ * with Vercel AI SDK useCompletion hook.
+ *
+ * Args:
+ * content_id: ID of the content to analyze
+ * prompt: The analysis instruction/prompt from user
+ * model: AI model to use
+ * temperature: Sampling temperature
+ * max_tokens: Maximum tokens to generate
+ */
+export const contentContentCompletionStream = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentContentCompletionStreamData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    ContentContentCompletionStreamResponse,
+    ContentContentCompletionStreamError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{content_id}/completion",
+  });
+};
+
+/**
  * Create a Share Link for a Content Item
  * Generates a shareable link for the specified content item. Requires ownership.
  */
@@ -1399,6 +1569,112 @@ export const imagesDeleteImage = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/api/v1/images/{image_id}",
+  });
+};
+
+/**
+ * Analyze Query
+ * 分析用户问题并推荐项目路由
+ */
+export const dashboardAnalyzeQuery = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<DashboardAnalyzeQueryData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    DashboardAnalyzeQueryResponse,
+    DashboardAnalyzeQueryError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/analyze-query",
+  });
+};
+
+/**
+ * Get Dashboard Metrics
+ * 获取 Dashboard 价值指标
+ */
+export const dashboardGetDashboardMetrics = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    DashboardGetDashboardMetricsResponse,
+    DashboardGetDashboardMetricsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/metrics",
+  });
+};
+
+/**
+ * Get Recent Activities
+ * 获取最近的 AI 处理活动流
+ */
+export const dashboardGetRecentActivities = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<DashboardGetRecentActivitiesData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    DashboardGetRecentActivitiesResponse,
+    DashboardGetRecentActivitiesError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/activities",
+  });
+};
+
+/**
+ * Confirm Routing
+ * 确认或拒绝智能路由建议
+ */
+export const dashboardConfirmRouting = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<DashboardConfirmRoutingData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    DashboardConfirmRoutingResponse,
+    DashboardConfirmRoutingError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/confirm-routing/{route_id}",
+  });
+};
+
+/**
+ * Create Project
+ * 创建新项目（基于智能路由建议）
+ */
+export const dashboardCreateProject = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<DashboardCreateProjectData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    DashboardCreateProjectResponse,
+    DashboardCreateProjectError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/projects",
+  });
+};
+
+/**
+ * Get User Projects
+ * 获取用户项目列表
+ */
+export const dashboardGetUserProjects = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<DashboardGetUserProjectsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    DashboardGetUserProjectsResponse,
+    DashboardGetUserProjectsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/projects",
   });
 };
 

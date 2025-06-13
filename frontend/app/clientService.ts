@@ -9,7 +9,7 @@ import {
   usersDeleteUserMe as deleteUserMe,
   usersUpdatePasswordMe as updatePasswordMe,
   itemsReadItems as readItems,
-  itemsCreateItem as createItem,
+  itemsCreateProject as createItem,
   itemsReadItem as readItem,
   itemsUpdateItem as updateItem,
   itemsDeleteItem as deleteItem,

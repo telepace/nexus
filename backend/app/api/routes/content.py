@@ -17,8 +17,7 @@ from fastapi import (
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session
 
-from app.api.deps import CurrentUser, SessionDep, get_current_user, get_db
-from app.base import User
+from app.api.deps import CurrentUser, SessionDep, get_db
 from app.core import security  # For password verification
 from app.core.config import settings
 from app.crud import crud_content as crud  # Alias for clarity
@@ -45,17 +44,42 @@ from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is
     ContentSharePublic,
 )
 from app.schemas.llm import CompletionRequest, LLMMessage
+from app.utils.background_tasks import background_task_manager
 from app.utils.content_processors import ContentProcessorFactory
+from app.utils.events import create_sse_generator
 
 router = APIRouter()
+
+
+@router.get(
+    "/events",
+    summary="Content Events Stream (SSE)",
+    description="Server-Sent Events stream for real-time content processing status updates.",
+)
+async def content_events_endpoint(
+    current_user: CurrentUser,
+):
+    """
+    SSE endpoint for real-time content processing updates.
+    """
+    return StreamingResponse(
+        create_sse_generator(str(current_user.id)),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Cache-Control",
+        },
+    )
 
 
 @router.post(
     "/create",
     response_model=ContentItemPublic,
     status_code=status.HTTP_201_CREATED,
-    summary="Create a New Content Item",
-    description="Uploads and creates a new content item in the system. Requires user authentication.",
+    summary="Create a New Content Item with Automatic Processing",
+    description="Creates a new content item and automatically starts background processing. Returns immediately for seamless user experience.",
 )
 def create_content_item_endpoint(
     *,
@@ -64,11 +88,18 @@ def create_content_item_endpoint(
     content_in: ContentItemCreate,
 ) -> ContentItemPublic:
     """
-    Create new content item.
+    Create new content item with automatic background processing.
     """
     # Set the user_id from the authenticated user
     content_item_data = content_in.model_dump()
     content_item_data["user_id"] = current_user.id
+
+    # For text content, set status to completed since no processing needed
+    # For URL and other types, set to processing and trigger background task
+    if content_in.type == "text":
+        content_item_data["processing_status"] = "completed"
+    else:
+        content_item_data["processing_status"] = "processing"
 
     # Create a ContentItem model instance
     db_content_item = ContentItem(**content_item_data)
@@ -77,6 +108,12 @@ def create_content_item_endpoint(
     created_item = crud_create_content_item(
         session=session, content_item_in=db_content_item
     )
+
+    # Start background processing for non-text content
+    if content_in.type != "text":
+        background_task_manager.start_content_processing(
+            content_id=str(created_item.id), user_id=str(current_user.id)
+        )
 
     # Convert ContentItem to ContentItemPublic
     public_item = ContentItemPublic(
@@ -532,9 +569,9 @@ def get_content_chunks_summary_endpoint(
 @router.post("/{content_id}/analyze")
 async def analyze_content_stream(
     content_id: str,
+    current_user: CurrentUser,
     system_prompt: str = Body(..., description="System prompt for analysis"),
     user_prompt: str = Body(..., description="User prompt (content text)"),
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -643,6 +680,341 @@ async def analyze_content_stream(
     return StreamingResponse(
         stream_analysis(),
         media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Cache-Control",
+        },
+    )
+
+
+@router.post("/{content_id}/analyze-ai-sdk")
+async def analyze_content_ai_sdk(
+    content_id: str,
+    current_user: CurrentUser,
+    user_prompt: str = Body(..., description="Analysis instruction/prompt"),
+    model: str = Body(default="or-llama-3-1-8b-instruct", description="Model to use"),
+    temperature: float = Body(default=0.7, description="Sampling temperature"),
+    max_tokens: int = Body(default=2000, description="Maximum tokens to generate"),
+    db: Session = Depends(get_db),
+):
+    """
+    Stream AI analysis of content using Vercel AI SDK compatible format.
+
+    This endpoint provides Data Stream Protocol compatible responses for
+    seamless integration with Vercel AI SDK useCompletion hook.
+
+    Args:
+        content_id: ID of the content to analyze
+        user_prompt: The analysis instruction/prompt from user
+        model: AI model to use
+        temperature: Sampling temperature
+        max_tokens: Maximum tokens to generate
+    """
+    # Verify content exists and user has access
+    content_item = crud_get_content_item(session=db, id=uuid.UUID(content_id))
+    if not content_item or content_item.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Content not found")
+
+    # Get the actual content to analyze
+    content_to_analyze = content_item.content_text or ""
+
+    # If content_text is empty, try to fetch from storage
+    if not content_to_analyze and content_item.processing_status == "completed":
+        try:
+            from app.utils.storage import get_storage_service
+
+            storage_service = get_storage_service()
+
+            # Look for markdown file in content assets
+            for asset in content_item.assets:
+                if asset.type == "processed_text" and asset.file_path:
+                    try:
+                        file_content = storage_service.download_file(asset.file_path)
+                        content_to_analyze = file_content.decode("utf-8")
+                        break
+                    except (FileNotFoundError, Exception) as e:
+                        print(f"Failed to download content from storage: {e}")
+                        continue
+        except Exception as e:
+            print(f"Failed to access storage service: {e}")
+
+    # Check if we have content to analyze
+    if not content_to_analyze:
+        if content_item.processing_status == "failed":
+            raise HTTPException(
+                status_code=400,
+                detail="Content processing failed. Please try reprocessing the content.",
+            )
+        elif content_item.processing_status in ["pending", "processing"]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Content is not ready. Status: {content_item.processing_status}. Please wait for processing to complete.",
+            )
+        else:
+            raise HTTPException(
+                status_code=400, detail="No content available for analysis."
+            )
+
+    # Prepare the prompt (instruction first, then content)
+    full_prompt = f"{user_prompt}\n\n以下是要分析的内容：\n{content_to_analyze}"
+
+    # Prepare LiteLLM request
+    completion_request = CompletionRequest(
+        model=model,
+        messages=[LLMMessage(role="user", content=full_prompt)],
+        stream=True,
+        temperature=temperature,
+        max_tokens=max_tokens,
+    )
+
+    async def stream_ai_sdk_analysis() -> AsyncGenerator[str, None]:
+        """Generate Vercel AI SDK compatible analysis stream"""
+        try:
+            import aiohttp
+
+            # LiteLLM 代理配置
+            litellm_url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
+            headers = {"Content-Type": "application/json"}
+
+            if settings.LITELLM_MASTER_KEY:
+                headers["Authorization"] = f"Bearer {settings.LITELLM_MASTER_KEY}"
+
+            payload = completion_request.model_dump(exclude_none=True)
+
+            timeout = aiohttp.ClientTimeout(total=30.0)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.post(
+                    litellm_url, json=payload, headers=headers
+                ) as response:
+                    if response.status != 200:
+                        # 发送错误响应
+                        error_msg = f"LiteLLM error: HTTP {response.status}"
+                        yield f'9:[{{"error":"{error_msg}"}}]\n'
+                        return
+
+                    # 处理流式响应
+                    accumulated_content = ""
+
+                    async for chunk_bytes in response.content.iter_chunked(1024):
+                        if not chunk_bytes:
+                            continue
+
+                        chunk_str = chunk_bytes.decode("utf-8", errors="ignore")
+                        lines = chunk_str.split("\n")
+
+                        for line in lines:
+                            if line.startswith("data: "):
+                                data = line[6:].strip()
+
+                                if data == "[DONE]":
+                                    # 发送完成信号
+                                    yield '8:[{"finishReason":"stop"}]\n'
+                                    return
+
+                                try:
+                                    parsed = json.loads(data)
+
+                                    # 检查错误
+                                    if "error" in parsed:
+                                        yield f'9:[{{"error":"{parsed.get("message", "Unknown error")}"}}]\n'
+                                        return
+
+                                    # 提取内容
+                                    if (
+                                        parsed.get("choices")
+                                        and len(parsed["choices"]) > 0
+                                        and "delta" in parsed["choices"][0]
+                                        and "content" in parsed["choices"][0]["delta"]
+                                    ):
+                                        content = parsed["choices"][0]["delta"][
+                                            "content"
+                                        ]
+                                        if content:
+                                            accumulated_content += content
+
+                                            # 发送文本块 (类型 0)
+                                            yield f'0:"{content}"\n'
+
+                                except json.JSONDecodeError:
+                                    # 忽略非JSON数据
+                                    continue
+
+                    # 确保发送完成信号
+                    if accumulated_content:
+                        yield '8:[{"finishReason":"stop"}]\n'
+
+        except Exception as e:
+            # 发送错误信息
+            error_msg = str(e).replace('"', '\\"')
+            yield f'9:[{{"error":"Stream error: {error_msg}"}}]\n'
+
+    return StreamingResponse(
+        stream_ai_sdk_analysis(),
+        media_type="text/plain",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Cache-Control",
+            "X-Vercel-AI-Data-Stream": "v1",  # Vercel AI SDK 要求的头部
+        },
+    )
+
+
+@router.post("/{content_id}/completion")
+async def content_completion_stream(
+    content_id: str,
+    current_user: CurrentUser,
+    prompt: str = Body(..., description="Analysis prompt"),
+    model: str = Body(default="or-llama-3-1-8b-instruct", description="Model to use"),
+    temperature: float = Body(default=0.7, description="Sampling temperature"),
+    max_tokens: int = Body(default=2000, description="Maximum tokens to generate"),
+    db: Session = Depends(get_db),
+):
+    """
+    Stream content analysis using Vercel AI SDK compatible format.
+
+    This endpoint returns pure text streaming for optimal compatibility
+    with Vercel AI SDK useCompletion hook.
+
+    Args:
+        content_id: ID of the content to analyze
+        prompt: The analysis instruction/prompt from user
+        model: AI model to use
+        temperature: Sampling temperature
+        max_tokens: Maximum tokens to generate
+    """
+    # Verify content exists and user has access
+    content_item = crud_get_content_item(session=db, id=uuid.UUID(content_id))
+    if not content_item or content_item.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Content not found")
+
+    # Get the actual content to analyze
+    content_to_analyze = content_item.content_text or ""
+
+    # If content_text is empty, try to fetch from storage
+    if not content_to_analyze and content_item.processing_status == "completed":
+        try:
+            from app.utils.storage import get_storage_service
+
+            storage_service = get_storage_service()
+
+            # Look for markdown file in content assets
+            for asset in content_item.assets:
+                if asset.type == "processed_text" and asset.file_path:
+                    try:
+                        file_content = storage_service.download_file(asset.file_path)
+                        content_to_analyze = file_content.decode("utf-8")
+                        break
+                    except (FileNotFoundError, Exception) as e:
+                        print(f"Failed to download content from storage: {e}")
+                        continue
+        except Exception as e:
+            print(f"Failed to access storage service: {e}")
+
+    # Check if we have content to analyze
+    if not content_to_analyze:
+        if content_item.processing_status == "failed":
+            raise HTTPException(
+                status_code=400,
+                detail="Content processing failed. Please try reprocessing the content.",
+            )
+        elif content_item.processing_status in ["pending", "processing"]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Content is not ready. Status: {content_item.processing_status}. Please wait for processing to complete.",
+            )
+        else:
+            raise HTTPException(
+                status_code=400, detail="No content available for analysis."
+            )
+
+    # Prepare the full prompt
+    full_prompt = f"{prompt}\n\n以下是要分析的内容：\n{content_to_analyze}"
+
+    # Prepare LiteLLM request
+    completion_request = CompletionRequest(
+        model=model,
+        messages=[LLMMessage(role="user", content=full_prompt)],
+        stream=True,
+        temperature=temperature,
+        max_tokens=max_tokens,
+    )
+
+    async def stream_pure_text() -> AsyncGenerator[str, None]:
+        """Generate pure text stream for Vercel AI SDK"""
+        try:
+            import aiohttp
+
+            # LiteLLM 代理配置
+            litellm_url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
+            headers = {"Content-Type": "application/json"}
+
+            if settings.LITELLM_MASTER_KEY:
+                headers["Authorization"] = f"Bearer {settings.LITELLM_MASTER_KEY}"
+
+            payload = completion_request.model_dump(exclude_none=True)
+
+            timeout = aiohttp.ClientTimeout(total=30.0)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.post(
+                    litellm_url, json=payload, headers=headers
+                ) as response:
+                    if response.status != 200:
+                        # 发送错误并结束
+                        yield f"Error: LiteLLM service returned HTTP {response.status}"
+                        return
+
+                    # 处理流式响应，只输出纯文本
+                    async for chunk_bytes in response.content.iter_chunked(1024):
+                        if not chunk_bytes:
+                            continue
+
+                        chunk_str = chunk_bytes.decode("utf-8", errors="ignore")
+                        lines = chunk_str.split("\n")
+
+                        for line in lines:
+                            if line.startswith("data: "):
+                                data = line[6:].strip()
+
+                                if data == "[DONE]":
+                                    return
+
+                                try:
+                                    parsed = json.loads(data)
+
+                                    # 检查错误
+                                    if "error" in parsed:
+                                        yield f"Error: {parsed.get('message', 'Unknown error')}"
+                                        return
+
+                                    # 提取内容并直接输出纯文本
+                                    if (
+                                        parsed.get("choices")
+                                        and len(parsed["choices"]) > 0
+                                        and "delta" in parsed["choices"][0]
+                                        and "content" in parsed["choices"][0]["delta"]
+                                    ):
+                                        content = parsed["choices"][0]["delta"][
+                                            "content"
+                                        ]
+                                        if content:
+                                            # 直接输出纯文本，不加任何格式
+                                            yield content
+
+                                except json.JSONDecodeError:
+                                    # 忽略非JSON数据
+                                    continue
+
+        except Exception as e:
+            # 发送错误信息
+            yield f"Stream error: {str(e)}"
+
+    return StreamingResponse(
+        stream_pure_text(),
+        media_type="text/plain; charset=utf-8",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",

@@ -17,6 +17,7 @@ import {
 import { RefreshCw, Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { logout } from "@/components/actions/logout-action";
+import { Toaster } from "sonner";
 
 export interface MainLayoutProps {
   children: React.ReactNode;
@@ -174,6 +175,9 @@ export default function MainLayout({
           onClose={() => setAddContentOpen(false)}
         />
       </div>
+
+      {/* Toast notifications */}
+      <Toaster position="top-right" richColors />
     </SidebarProvider>
   );
 }

@@ -144,6 +144,28 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     [handleContentChange],
   );
 
+  // 处理快捷键提交
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !isLoading) {
+        if (content || selectedFiles.length > 0 || detectedUrls.length > 0) {
+          handleAddContent();
+        }
+      }
+    },
+    [content, selectedFiles, detectedUrls, isLoading],
+  );
+
+  // 监听快捷键
+  useEffect(() => {
+    if (open) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [open, handleKeyDown]);
+
   // 监听粘贴事件
   useEffect(() => {
     if (open) {
@@ -213,11 +235,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   };
 
   /**
-   * Handles the addition of content through an asynchronous process.
-   *
-   * This function creates content items by calling the backend API,
-   * handles different content types (text, URL, file), and manages
-   * error states and loading indicators.
+   * Handles the submission of content addition with optimistic UI updates.
+   * Creates content items and immediately closes modal for seamless experience.
+   * Background processing and status updates are handled via SSE.
    */
   const handleAddContent = async () => {
     setIsLoading(true);
@@ -263,23 +283,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
           const createdItem = await response.json();
           console.log("URL内容创建成功:", createdItem);
-
-          // 自动开始处理
-          const processResponse = await fetch(
-            `${apiUrl}/api/v1/content/process/${createdItem.id || createdItem.data?.id}`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              credentials: "include",
-            },
-          );
-
-          if (processResponse.ok) {
-            console.log("内容处理已开始");
-          }
+          // Note: Background processing is automatically started by the backend
         }
       } else if (contentType === "text" && content.trim()) {
         // 处理文本类型内容
@@ -310,23 +314,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
         const createdItem = await response.json();
         console.log("文本内容创建成功:", createdItem);
-
-        // 自动开始处理
-        const processResponse = await fetch(
-          `${apiUrl}/api/v1/content/process/${createdItem.id || createdItem.data?.id}`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-          },
-        );
-
-        if (processResponse.ok) {
-          console.log("内容处理已开始");
-        }
+        // Text content is immediately completed, no background processing needed
       } else if (contentType === "file" && selectedFiles.length > 0) {
         // 处理文件类型内容（暂时显示提示信息）
         setError("文件上传功能正在开发中，敬请期待。");
@@ -336,15 +324,12 @@ export const AddContentModal: FC<AddContentModalProps> = ({
         return;
       }
 
-      // 清空表单并关闭模态窗口
+      // 立即清空表单并关闭模态窗口 - 乐观UI更新
       resetForm();
       onClose();
 
-      // 可以在这里触发页面刷新或者通知父组件更新内容列表
-      if (typeof window !== "undefined") {
-        // 简单的页面刷新，实际项目中可以使用更优雅的状态管理
-        window.location.reload();
-      }
+      // Note: Content status updates will be handled via SSE in the content library
+      // No need to refresh the page or manually update the UI
     } catch (error) {
       console.error("添加内容时发生错误:", error);
       setError(
@@ -375,8 +360,8 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
   return (
     <AlertDialog open={open}>
-      <AlertDialogContent className="max-w-2xl">
-        <AlertDialogHeader>
+      <AlertDialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+        <AlertDialogHeader className="flex-shrink-0">
           <AlertDialogTitle className="text-xl">添加新内容</AlertDialogTitle>
           <Button
             variant="ghost"
@@ -388,11 +373,15 @@ export const AddContentModal: FC<AddContentModalProps> = ({
             <X className="h-4 w-4" />
           </Button>
         </AlertDialogHeader>
-        <AlertDialogDescription>
+        <AlertDialogDescription className="flex-shrink-0">
           粘贴链接、输入文本或上传文件来添加新内容。支持多个链接同时添加。
+          <br />
+          <span className="text-xs text-muted-foreground mt-1 inline-block">
+            💡 提示：使用 Ctrl+Enter (Mac: Cmd+Enter) 快速添加内容
+          </span>
         </AlertDialogDescription>
 
-        <div className="space-y-6 py-4">
+        <div className="flex-1 overflow-y-auto space-y-6 py-4">
           {/* 主拖放区域 */}
           <div
             data-testid="drop-area"
@@ -485,7 +474,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                       id="url-input"
                       role="textbox"
                       placeholder="粘贴一个或多个链接，支持空格、分号、逗号或换行分隔"
-                      className="min-h-[80px]"
+                      className="min-h-[80px] max-h-[200px] resize-none"
                       value={content}
                       onChange={(e) => handleContentChange(e.target.value)}
                     />
@@ -511,10 +500,22 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                     id="text-content"
                     role="textbox"
                     placeholder="输入您想要添加的文本内容"
-                    className="min-h-[120px]"
+                    className="min-h-[120px] max-h-[300px] resize-none"
                     value={content}
                     onChange={(e) => handleContentChange(e.target.value)}
                   />
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {content.length > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span>字符数: {content.length}</span>
+                        {content.length > 5000 && (
+                          <span className="text-amber-600 dark:text-amber-400">
+                            ⚠️ 内容较长，建议分段添加
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="text-title">标题 (可选)</Label>
@@ -601,7 +602,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           )}
         </div>
 
-        <AlertDialogFooter>
+        <AlertDialogFooter className="flex-shrink-0">
           <AlertDialogCancel onClick={handleCancel} disabled={isLoading}>
             取消
           </AlertDialogCancel>

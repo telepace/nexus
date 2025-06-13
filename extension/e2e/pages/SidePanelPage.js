@@ -8,21 +8,21 @@ class SidePanelPage {
     this.page = page;
     this.extensionId = extensionId; // Useful if navigating directly or constructing URLs
 
-    // Common Selectors - placeholders, update with actuals
-    this.container = '#nexus-sidepanel-container'; // Main container for the side panel
-    this.userInfoDisplay = '#nexus-user-info'; // Element showing logged-in user info
-    this.logoutButton = '#nexus-logout-button'; // Logout button
-    this.dashboardLink = '#nexus-dashboard-link'; // Link/button to open dashboard
-    this.loadingSpinner = '.nexus-loading-spinner'; // Example loading indicator
-    this.contentExtractionResults = '#nexus-extraction-results'; // For extracted content
-    this.summarizeButton = '#nexus-summarize-button'; // Button to trigger summarization
-    this.saveToLibraryButton = '#nexus-save-to-library-button'; // Button to save to library
+    // Common Selectors - updated to match actual implementation
+    this.container = '#__plasmo'; // Main Plasmo container
+    this.userInfoDisplay = '.text-gray-600'; // Element showing user info or loading text
+    this.logoutButton = 'button[type="submit"]'; // Logout button (generic for now)
+    this.dashboardLink = 'a[href*="dashboard"]'; // Link/button to open dashboard
+    this.loadingSpinner = '.animate-spin'; // Loading spinner
+    this.contentExtractionResults = '.bg-white'; // For extracted content areas
+    this.summarizeButton = 'button:contains("总结")'; // Button to trigger summarization
+    this.saveToLibraryButton = 'button:contains("保存")'; // Button to save to library
 
     // Add these within the constructor:
-    this.keypointsButton = '#nexus-keypoints-button'; // Placeholder
-    this.summaryResults = '#nexus-summary-results'; // Placeholder
-    this.keypointsResults = '#nexus-keypoints-results'; // Placeholder
-    this.saveStatusMessage = '#nexus-save-status-message'; // Placeholder
+    this.keypointsButton = 'button:contains("关键点")'; // Placeholder
+    this.summaryResults = '.summary-result'; // Placeholder
+    this.keypointsResults = '.keypoints-result'; // Placeholder
+    this.saveStatusMessage = '.status-message'; // Placeholder
   }
 
   // This method might be handled by ExtensionHelper.openSidePanel()
@@ -34,8 +34,10 @@ class SidePanelPage {
 
   async waitForLoad(timeout = testConfig.defaultTimeout) {
     if (!this.page) throw new Error("Page not initialized for SidePanelPage.");
-    // Wait for a general container or a key element that indicates the side panel has loaded.
+    // Wait for the main Plasmo container to load
     await this.page.waitForSelector(this.container, { visible: true, timeout });
+    // Wait a bit for React components to render
+    await new Promise(resolve => setTimeout(resolve, 2000));
     // Optionally, wait for any initial loading spinners to disappear
     try {
         await this.page.waitForSelector(this.loadingSpinner, { hidden: true, timeout: 5000 });

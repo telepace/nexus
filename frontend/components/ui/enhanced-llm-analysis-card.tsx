@@ -177,13 +177,13 @@ export function EnhancedLLMAnalysisCard({
           <StreamingText
             title="AI 正在分析中..."
             placeholder="正在生成分析内容..."
-            url={`${apiUrl}/api/v1/content/${analysis.contentId}/analyze`}
+            url={`${apiUrl}/api/v1/content/${analysis.contentId}/analyze-ai-sdk`}
             requestOptions={{
               method: "POST",
               body: JSON.stringify({
-                system_prompt: analysis.prompt || "请分析以下内容",
-                user_prompt: "请进行详细分析",
-                model: "gpt-3.5-turbo",
+                system_prompt: "原文内容将由后端获取",
+                user_prompt: analysis.prompt || "请分析以下内容",
+                model: "or-llama-3-1-8b-instruct",
               }),
             }}
             streamingOptions={{
@@ -191,7 +191,6 @@ export function EnhancedLLMAnalysisCard({
               enableTypewriter: true,
               maxRetries: 3,
               onComplete: (content) => {
-                // 这里可以更新分析内容
                 console.log("分析完成:", content);
               },
               onError: (error) => {

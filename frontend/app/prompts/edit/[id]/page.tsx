@@ -13,9 +13,12 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata({
+  params,
+}: { params: Promise<{ id: string }> }) {
   try {
-    const promptData = await fetchPrompt(params.id);
+    const { id } = await params;
+    const promptData = await fetchPrompt(id);
 
     if ("error" in promptData) {
       return {
@@ -41,8 +44,10 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 export default async function EditPromptPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
+
   // 获取认证状态
   const authState = await getAuthState();
 
@@ -92,7 +97,7 @@ export default async function EditPromptPage({
           </div>
         }
       >
-        <EditPromptContent id={params.id} />
+        <EditPromptContent id={id} />
       </Suspense>
     </ErrorBoundary>
   );

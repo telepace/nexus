@@ -79,47 +79,38 @@ class PageObserver {
     }
   }
 
-  // 安全的消息发送方法
+  // 安全的消息发送方法（带重试机制）
   private async sendMessageSafely(message: any, maxRetries: number = 3): Promise<any> {
-    let lastError: Error | null = null;
-    
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        // 先检查连接状态
+        // 先检查扩展连接状态
         const isConnected = await this.checkExtensionConnection();
-        if (!isConnected) {
-          throw new Error('Extension context invalidated');
+        if (!isConnected && attempt < maxRetries) {
+          console.log(`Message sending attempt ${attempt}/${maxRetries} failed: Extension not connected`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // 递增延迟
+          continue;
         }
 
         return await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            reject(new Error('Message timeout'));
-          }, 5000); // 5秒超时
-
           chrome.runtime.sendMessage(message, (response) => {
-            clearTimeout(timeout);
-            
             if (chrome.runtime.lastError) {
-              this.isExtensionConnected = false;
-              reject(chrome.runtime.lastError);
+              reject(new Error(chrome.runtime.lastError.message || 'Runtime error'));
             } else {
               resolve(response);
             }
           });
         });
       } catch (error) {
-        lastError = error as Error;
-        console.warn(`Message sending attempt ${attempt}/${maxRetries} failed:`, error);
+        console.log(`Message sending attempt ${attempt}/${maxRetries} failed:`, error);
         
-        // 如果不是最后一次尝试，等待一下再重试
-        if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // 递增延迟
+        if (attempt === maxRetries) {
+          throw new Error(`Failed to notify background: ${error.message}`);
         }
+        
+        // 等待后重试
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
       }
     }
-    
-    // 所有重试都失败了
-    throw lastError || new Error('All message sending attempts failed');
   }
 
   // 设置消息监听器
@@ -147,6 +138,10 @@ class PageObserver {
         case 'GET_PAGE_STATUS':
           this.handleGetPageStatus(sendResponse);
           return true;
+
+        case 'HISTORY_STATE_CHANGED':
+          this.handleHistoryStateChanged(message);
+          return false;
 
         default:
           return false;
@@ -199,11 +194,37 @@ class PageObserver {
     history.pushState = function(...args) {
       originalPushState.apply(history, args);
       window.dispatchEvent(new Event('nexus-navigation'));
+      // 简单通知background script页面状态已更新
+      setTimeout(() => {
+        chrome.runtime.sendMessage({
+          type: 'HISTORY_STATE_UPDATED',
+          data: {
+            url: window.location.href,
+            action: 'pushState'
+          }
+        }).catch((error) => {
+          // 静默处理连接错误
+          console.log('[PageObserver] History state update message failed (pushState):', error.message);
+        });
+      }, 100); // 小延迟确保页面状态稳定
     };
 
     history.replaceState = function(...args) {
       originalReplaceState.apply(history, args);
       window.dispatchEvent(new Event('nexus-navigation'));
+      // 简单通知background script页面状态已更新
+      setTimeout(() => {
+        chrome.runtime.sendMessage({
+          type: 'HISTORY_STATE_UPDATED',
+          data: {
+            url: window.location.href,
+            action: 'replaceState'
+          }
+        }).catch((error) => {
+          // 静默处理连接错误
+          console.log('[PageObserver] History state update message failed (replaceState):', error.message);
+        });
+      }, 100); // 小延迟确保页面状态稳定
     };
 
     window.addEventListener('nexus-navigation', () => {
@@ -237,15 +258,20 @@ class PageObserver {
             type: 'PAGE_CONTENT_UPDATED',
             data: pageData
           });
+          console.log('[PageObserver] Successfully notified background of content update');
         } catch (error) {
           // 静默处理连接错误，避免在控制台产生过多噪音
-          if (error.message !== 'Extension context invalidated') {
-            console.warn('Failed to notify background:', error.message);
+          if (error.message.includes('Extension context invalidated') || 
+              error.message.includes('message port closed') ||
+              error.message.includes('runtime.lastError')) {
+            console.log('[PageObserver] Extension connection lost, this is normal during page navigation');
+          } else {
+            console.warn('[PageObserver] Failed to notify background:', error.message);
           }
         }
       }
     } catch (error) {
-      console.error('Content extraction failed:', error);
+      console.error('[PageObserver] Content extraction failed:', error);
     }
   }
 
@@ -319,24 +345,122 @@ class PageObserver {
     for (const selector of contentSelectors) {
       const contentEl = element.querySelector(selector);
       if (contentEl) {
-        const text = contentEl.textContent || '';
-        if (text.length > 200) {
-          return this.cleanText(text);
+        const markdownContent = this.convertToMarkdown(contentEl);
+        if (markdownContent.length > 200) {
+          return markdownContent;
         }
       }
     }
     
     // 如果没找到，使用整个body
-    return this.cleanText(element.textContent || '');
+    return this.convertToMarkdown(element);
   }
 
-  // 清理文本
-  private cleanText(text: string): string {
-    return text
-      .replace(/\s+/g, ' ')           // 合并空白字符
-      .replace(/\n\s*\n/g, '\n')      // 移除多余换行
+  // 将HTML转换为Markdown格式
+  private convertToMarkdown(element: HTMLElement): string {
+    const walker = document.createTreeWalker(
+      element,
+      NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+      null
+    );
+
+    let markdown = '';
+    let node: Node | null;
+    const headingStack: number[] = [];
+    
+    while (node = walker.nextNode()) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent?.trim();
+        if (text) {
+          markdown += text + ' ';
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const elem = node as HTMLElement;
+        const tagName = elem.tagName.toLowerCase();
+        
+        switch (tagName) {
+          case 'h1':
+          case 'h2':
+          case 'h3':
+          case 'h4':
+          case 'h5':
+          case 'h6':
+            const level = parseInt(tagName.charAt(1));
+            markdown += '\n' + '#'.repeat(level) + ' ' + elem.textContent?.trim() + '\n\n';
+            break;
+            
+          case 'p':
+            markdown += '\n' + elem.textContent?.trim() + '\n\n';
+            break;
+            
+          case 'br':
+            markdown += '\n';
+            break;
+            
+          case 'strong':
+          case 'b':
+            markdown += '**' + elem.textContent?.trim() + '**';
+            break;
+            
+          case 'em':
+          case 'i':
+            markdown += '*' + elem.textContent?.trim() + '*';
+            break;
+            
+          case 'code':
+            markdown += '`' + elem.textContent?.trim() + '`';
+            break;
+            
+          case 'pre':
+            markdown += '\n```\n' + elem.textContent?.trim() + '\n```\n\n';
+            break;
+            
+          case 'blockquote':
+            const quoteText = elem.textContent?.trim().split('\n').map(line => '> ' + line).join('\n');
+            markdown += '\n' + quoteText + '\n\n';
+            break;
+            
+          case 'ul':
+          case 'ol':
+            // 列表处理在li中完成
+            break;
+            
+          case 'li':
+            const isOrdered = elem.parentElement?.tagName.toLowerCase() === 'ol';
+            const marker = isOrdered ? '1. ' : '- ';
+            markdown += marker + elem.textContent?.trim() + '\n';
+            break;
+            
+          case 'a':
+            const href = elem.getAttribute('href');
+            const linkText = elem.textContent?.trim();
+            if (href && linkText) {
+              markdown += `[${linkText}](${href})`;
+            }
+            break;
+            
+          case 'img':
+            const src = elem.getAttribute('src');
+            const alt = elem.getAttribute('alt') || '图片';
+            if (src) {
+              markdown += `![${alt}](${src})`;
+            }
+            break;
+        }
+      }
+    }
+    
+    return this.cleanMarkdown(markdown);
+  }
+
+  // 清理Markdown文本
+  private cleanMarkdown(markdown: string): string {
+    return markdown
+      .replace(/\n{3,}/g, '\n\n')        // 移除多余的空行
+      .replace(/\s+$/gm, '')            // 移除行尾空格
+      .replace(/^\s+/gm, '')            // 移除行首空格
       .trim()
-      .substring(0, 50000);           // 限制长度
+      .substring(0, 50000);             // 限制长度
   }
 
   // 检测语言（简单版本）
@@ -430,6 +554,16 @@ class PageObserver {
         hasContent: pageData.content.length > 100
       }
     });
+  }
+
+  // 处理历史状态变更通知
+  private handleHistoryStateChanged(message: any) {
+    console.log('[PageObserver] History state changed:', message.url);
+    
+    // 如果URL发生了变化，重新提取内容
+    if (message.url && message.url !== window.location.href) {
+      this.scheduleContentExtraction();
+    }
   }
 }
 
