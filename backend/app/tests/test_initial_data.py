@@ -1,6 +1,3 @@
-import os
-import subprocess
-import sys
 from unittest import mock
 
 import pytest
@@ -100,13 +97,13 @@ def test_direct_execution():
     # Instead of running external process, we simulate the module being run directly
     # by testing the __name__ == "__main__" condition
     import app.initial_data
-    
+
     # Mock the main function to prevent actual database operations
-    with mock.patch('app.initial_data.main') as mock_main:
+    with mock.patch("app.initial_data.main") as mock_main:
         # Simulate what happens when the module is executed directly
         # This covers the if __name__ == "__main__": main() line
         if "__main__" == "__main__":  # This condition is always true
             app.initial_data.main()
-        
+
         # Verify the main function was called
         mock_main.assert_called_once()

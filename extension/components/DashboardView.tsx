@@ -111,16 +111,21 @@ export function DashboardView({ user }: DashboardViewProps) {
             if (response?.success) {
               console.log('Page saved successfully');
               setConnectionError(null);
-              // 可以添加成功提示
+              // 显示成功消息
+              setConnectionError('✅ 页面已成功保存到内容库');
+              // 3秒后清除成功消息
+              setTimeout(() => {
+                setConnectionError(null);
+              }, 3000);
             } else {
               console.log('Save page failed:', response?.error);
-              setConnectionError(`保存失败：${response?.error || '未知错误'}`);
+              setConnectionError(`❌ 保存失败：${response?.error || '未知错误'}`);
             }
           }
         );
       } else {
         setIsLoading(false);
-        setConnectionError('无法获取当前标签页');
+        setConnectionError('❌ 无法获取当前标签页');
       }
     });
   };
@@ -206,21 +211,39 @@ export function DashboardView({ user }: DashboardViewProps) {
 
       {/* 错误提示 */}
       {connectionError && (
-        <div className="bg-yellow-50 border border-yellow-200 mx-4 mt-4 rounded-lg p-3">
+        <div className={`mx-4 mt-4 rounded-lg p-3 ${
+          connectionError.startsWith('✅') 
+            ? 'bg-green-50 border border-green-200' 
+            : 'bg-yellow-50 border border-yellow-200'
+        }`}>
           <div className="flex items-start">
             <div className="flex-shrink-0">
-              <svg className="w-5 h-5 text-yellow-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              {connectionError.startsWith('✅') ? (
+                <svg className="w-5 h-5 text-green-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 text-yellow-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
             </div>
             <div className="ml-3">
-              <p className="text-yellow-800 text-sm font-medium">{connectionError}</p>
-              <button
-                onClick={getCurrentPageInfo}
-                className="text-yellow-600 hover:text-yellow-800 text-xs underline mt-1"
-              >
-                重试
-              </button>
+              <p className={`text-sm font-medium ${
+                connectionError.startsWith('✅') 
+                  ? 'text-green-800' 
+                  : 'text-yellow-800'
+              }`}>
+                {connectionError}
+              </p>
+              {!connectionError.startsWith('✅') && (
+                <button
+                  onClick={getCurrentPageInfo}
+                  className="text-yellow-600 hover:text-yellow-800 text-xs underline mt-1"
+                >
+                  重试
+                </button>
+              )}
             </div>
           </div>
         </div>

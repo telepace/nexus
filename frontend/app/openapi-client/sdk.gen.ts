@@ -9,6 +9,9 @@ import {
 import type {
   HealthGetHealthApiError,
   HealthGetHealthApiResponse,
+  LoginAuthLoginData,
+  LoginAuthLoginError,
+  LoginAuthLoginResponse,
   LoginLoginAccessTokenData,
   LoginLoginAccessTokenError,
   LoginLoginAccessTokenResponse,
@@ -234,6 +237,23 @@ export const healthGetHealthApi = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/api/v1/health",
+  });
+};
+
+/**
+ * Auth Login
+ * JSON-based login endpoint that matches frontend expectations
+ */
+export const loginAuthLogin = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<LoginAuthLoginData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    LoginAuthLoginResponse,
+    LoginAuthLoginError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/auth/login",
   });
 };
 

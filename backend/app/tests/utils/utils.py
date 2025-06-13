@@ -36,7 +36,7 @@ def get_superuser_token_headers(client: TestClient) -> dict[str, str]:
     else:
         # Old format: {"access_token": "..."}
         tokens = response_data
-    
+
     if "access_token" not in tokens:
         raise Exception(f"No access_token in superuser login response: {response_data}")
 

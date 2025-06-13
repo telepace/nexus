@@ -36,6 +36,20 @@ export type ApiResponse_SmartRoutingResponse_ = {
 } | null);
 };
 
+/**
+ * 创建项目的请求模型
+ */
+export type app__models__project__ProjectCreate = {
+    title: string;
+    description?: (string | null);
+    project_type?: string;
+    is_active?: boolean;
+    ai_context?: {
+        [key: string]: unknown;
+    };
+    tag_id?: (string | null);
+};
+
 export type app__schemas__common__ApiResponse_ProjectPublic_ = {
     data: ProjectPublic;
     message?: string;
@@ -50,6 +64,19 @@ export type app__schemas__common__ApiResponse_ProjectsPublic_ = {
     meta?: ({
     [key: string]: unknown;
 } | null);
+};
+
+/**
+ * 创建项目的请求模型
+ */
+export type app__schemas__projects__ProjectCreate = {
+    title: string;
+    description?: (string | null);
+    project_type?: string;
+    is_active?: boolean;
+    ai_context?: {
+        [key: string]: unknown;
+    };
 };
 
 export type app__utils__response__ApiResponse_ProjectPublic_ = {
@@ -280,6 +307,11 @@ export type LLMMessage = {
     content: string;
 };
 
+export type LoginRequest = {
+    email: string;
+    password: string;
+};
+
 export type Message = {
     message: string;
 };
@@ -304,19 +336,6 @@ export type PrivateUserCreate = {
     password: string;
     full_name: string;
     is_verified?: boolean;
-};
-
-/**
- * 创建项目的请求模型
- */
-export type ProjectCreate = {
-    title: string;
-    description?: (string | null);
-    project_type?: string;
-    is_active?: boolean;
-    ai_context?: {
-        [key: string]: unknown;
-    };
 };
 
 /**
@@ -355,6 +374,7 @@ export type ProjectUpdate = {
     ai_context?: ({
     [key: string]: unknown;
 } | null);
+    tag_id?: (string | null);
 };
 
 export type Prompt = {
@@ -717,7 +737,7 @@ export type DashboardConfirmRoutingData = {
 export type DashboardConfirmRoutingResponse = (unknown);
 
 export type DashboardCreateProjectData = {
-    requestBody: ProjectCreate;
+    requestBody: app__schemas__projects__ProjectCreate;
 };
 
 export type DashboardCreateProjectResponse = (app__schemas__common__ApiResponse_ProjectPublic_);
@@ -791,7 +811,7 @@ export type ItemsReadItemsData = {
 export type ItemsReadItemsResponse = (app__utils__response__ApiResponse_ProjectsPublic_);
 
 export type ItemsCreateProjectData = {
-    requestBody: ProjectCreate;
+    requestBody: app__models__project__ProjectCreate;
 };
 
 export type ItemsCreateProjectResponse = (app__utils__response__ApiResponse_ProjectPublic_);
@@ -826,6 +846,12 @@ export type LlmCreateEmbeddingData = {
 };
 
 export type LlmCreateEmbeddingResponse = (EmbeddingResponse);
+
+export type LoginAuthLoginData = {
+    requestBody: LoginRequest;
+};
+
+export type LoginAuthLoginResponse = (Token);
 
 export type LoginLoginAccessTokenData = {
     formData: Body_login_login_access_token;

@@ -334,24 +334,122 @@ class PageObserver {
     for (const selector of contentSelectors) {
       const contentEl = element.querySelector(selector);
       if (contentEl) {
-        const text = contentEl.textContent || '';
-        if (text.length > 200) {
-          return this.cleanText(text);
+        const markdownContent = this.convertToMarkdown(contentEl);
+        if (markdownContent.length > 200) {
+          return markdownContent;
         }
       }
     }
     
     // 如果没找到，使用整个body
-    return this.cleanText(element.textContent || '');
+    return this.convertToMarkdown(element);
   }
 
-  // 清理文本
-  private cleanText(text: string): string {
-    return text
-      .replace(/\s+/g, ' ')           // 合并空白字符
-      .replace(/\n\s*\n/g, '\n')      // 移除多余换行
+  // 将HTML转换为Markdown格式
+  private convertToMarkdown(element: HTMLElement): string {
+    const walker = document.createTreeWalker(
+      element,
+      NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+      null
+    );
+
+    let markdown = '';
+    let node: Node | null;
+    const headingStack: number[] = [];
+    
+    while (node = walker.nextNode()) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent?.trim();
+        if (text) {
+          markdown += text + ' ';
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const elem = node as HTMLElement;
+        const tagName = elem.tagName.toLowerCase();
+        
+        switch (tagName) {
+          case 'h1':
+          case 'h2':
+          case 'h3':
+          case 'h4':
+          case 'h5':
+          case 'h6':
+            const level = parseInt(tagName.charAt(1));
+            markdown += '\n' + '#'.repeat(level) + ' ' + elem.textContent?.trim() + '\n\n';
+            break;
+            
+          case 'p':
+            markdown += '\n' + elem.textContent?.trim() + '\n\n';
+            break;
+            
+          case 'br':
+            markdown += '\n';
+            break;
+            
+          case 'strong':
+          case 'b':
+            markdown += '**' + elem.textContent?.trim() + '**';
+            break;
+            
+          case 'em':
+          case 'i':
+            markdown += '*' + elem.textContent?.trim() + '*';
+            break;
+            
+          case 'code':
+            markdown += '`' + elem.textContent?.trim() + '`';
+            break;
+            
+          case 'pre':
+            markdown += '\n```\n' + elem.textContent?.trim() + '\n```\n\n';
+            break;
+            
+          case 'blockquote':
+            const quoteText = elem.textContent?.trim().split('\n').map(line => '> ' + line).join('\n');
+            markdown += '\n' + quoteText + '\n\n';
+            break;
+            
+          case 'ul':
+          case 'ol':
+            // 列表处理在li中完成
+            break;
+            
+          case 'li':
+            const isOrdered = elem.parentElement?.tagName.toLowerCase() === 'ol';
+            const marker = isOrdered ? '1. ' : '- ';
+            markdown += marker + elem.textContent?.trim() + '\n';
+            break;
+            
+          case 'a':
+            const href = elem.getAttribute('href');
+            const linkText = elem.textContent?.trim();
+            if (href && linkText) {
+              markdown += `[${linkText}](${href})`;
+            }
+            break;
+            
+          case 'img':
+            const src = elem.getAttribute('src');
+            const alt = elem.getAttribute('alt') || '图片';
+            if (src) {
+              markdown += `![${alt}](${src})`;
+            }
+            break;
+        }
+      }
+    }
+    
+    return this.cleanMarkdown(markdown);
+  }
+
+  // 清理Markdown文本
+  private cleanMarkdown(markdown: string): string {
+    return markdown
+      .replace(/\n{3,}/g, '\n\n')        // 移除多余的空行
+      .replace(/\s+$/gm, '')            // 移除行尾空格
+      .replace(/^\s+/gm, '')            // 移除行首空格
       .trim()
-      .substring(0, 50000);           // 限制长度
+      .substring(0, 50000);             // 限制长度
   }
 
   // 检测语言（简单版本）

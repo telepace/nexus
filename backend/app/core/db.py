@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 from sqlmodel import Session, select
 
@@ -18,6 +17,7 @@ from app.models import (
     Visibility,
 )
 from app.models.content import AIConversation, ContentItem
+from app.utils.timezone import now_utc
 
 # Get the logger
 logger = logging.getLogger("app.db")
@@ -795,8 +795,8 @@ AI在军事领域的应用引发了关于自主武器系统的伦理争议。
                     "key_points": ["注意力机制", "并行化", "编码器-解码器"],
                     "confidence": 0.95,
                 },
-                "started_at": datetime.utcnow(),
-                "completed_at": datetime.utcnow(),
+                "started_at": now_utc(),
+                "completed_at": now_utc(),
             },
             {
                 "processor_name": "vectorizer",
@@ -808,8 +808,8 @@ AI在军事领域的应用引发了关于自主武器系统的伦理争议。
                     "chunks_processed": 15,
                     "success_rate": 1.0,
                 },
-                "started_at": datetime.utcnow(),
-                "completed_at": datetime.utcnow(),
+                "started_at": now_utc(),
+                "completed_at": now_utc(),
             },
             {
                 "processor_name": "keyword_extractor",
@@ -826,8 +826,8 @@ AI在军事领域的应用引发了关于自主武器系统的伦理争议。
                     "scores": [0.95, 0.89, 0.87, 0.85, 0.82],
                     "confidence": 0.92,
                 },
-                "started_at": datetime.utcnow(),
-                "completed_at": datetime.utcnow(),
+                "started_at": now_utc(),
+                "completed_at": now_utc(),
             },
         ]
 

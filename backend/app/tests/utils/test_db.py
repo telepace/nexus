@@ -18,16 +18,13 @@ import importlib.util
 import logging
 import os
 import warnings
-from typing import Any
 
-import psycopg
-from sqlalchemy import Engine, create_engine, text
-from sqlalchemy.exc import OperationalError, ProgrammingError
-from sqlmodel import Session, SQLModel
-
-from app.core.config import settings
 from alembic import command
 from alembic.config import Config
+from sqlalchemy import Engine, create_engine, text
+from sqlmodel import SQLModel
+
+from app.core.config import settings
 
 # Suppress Alembic warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="alembic")
@@ -66,7 +63,6 @@ def get_connection_string() -> str:
 
 def create_test_database() -> None:
     """Create the test database if it doesn't exist."""
-    db_url = get_test_db_url()
     admin_db_url = None
 
     if settings.POSTGRES_SERVER:
@@ -80,21 +76,21 @@ def create_test_database() -> None:
         try:
             # Create an engine to connect to the admin database
             admin_engine = create_engine(
-                admin_db_url, 
+                admin_db_url,
                 isolation_level="AUTOCOMMIT",
                 pool_pre_ping=True,
                 pool_recycle=300,
-                connect_args={"connect_timeout": 10}
+                connect_args={"connect_timeout": 10},
             )
 
             # Check if test database exists and create if it doesn't
             db_name = f"{settings.POSTGRES_DB}_test"
-            
+
             with admin_engine.connect() as conn:
                 # Check if database exists - use text() for raw SQL
                 result = conn.execute(
-                    text("SELECT 1 FROM pg_database WHERE datname = :db_name"), 
-                    {"db_name": db_name}
+                    text("SELECT 1 FROM pg_database WHERE datname = :db_name"),
+                    {"db_name": db_name},
                 )
                 if not result.fetchone():
                     # Use text() for raw SQL when creating database
@@ -102,7 +98,7 @@ def create_test_database() -> None:
                     logger.info(f"Test database '{db_name}' created successfully")
                 else:
                     logger.info(f"Test database '{db_name}' already exists")
-            
+
             admin_engine.dispose()
 
         except Exception as e:
@@ -130,36 +126,36 @@ def drop_test_database() -> None:
     admin_engine = None
     try:
         admin_engine = create_engine(
-            admin_db_url, 
+            admin_db_url,
             isolation_level="AUTOCOMMIT",
             pool_pre_ping=True,
             pool_recycle=300,
-            connect_args={"connect_timeout": 10}
+            connect_args={"connect_timeout": 10},
         )
 
         db_name = f"{settings.POSTGRES_DB}_test"
-        
+
         with admin_engine.connect() as conn:
             # Terminate all connections to the test database - use text() for raw SQL
             conn.execute(
                 text("""
-                    SELECT pg_terminate_backend(pg_stat_activity.pid) 
-                    FROM pg_stat_activity 
-                    WHERE pg_stat_activity.datname = :db_name 
+                    SELECT pg_terminate_backend(pg_stat_activity.pid)
+                    FROM pg_stat_activity
+                    WHERE pg_stat_activity.datname = :db_name
                     AND pid <> pg_backend_pid()
                 """),
-                {"db_name": db_name}
+                {"db_name": db_name},
             )
-            
+
             # Check if database exists before dropping - use text() for raw SQL
             result = conn.execute(
                 text("SELECT 1 FROM pg_database WHERE datname = :db_name"),
-                {"db_name": db_name}
+                {"db_name": db_name},
             )
             if result.fetchone():
                 conn.execute(text(f'DROP DATABASE "{db_name}"'))
                 logger.info(f"Test database '{db_name}' dropped successfully")
-        
+
         admin_engine.dispose()
 
     except Exception as e:
@@ -175,15 +171,6 @@ def apply_migrations(db_url: str = None) -> None:
 
     try:
         # 确保所有模型被导入
-        from app.models import (
-            ContentChunk,
-            ContentItem,
-            ContentItemTag,
-            ContentShare,
-            Project,
-            QueryRoute,
-            User,
-        )
 
         # Configure Alembic
         alembic_cfg = Config("alembic.ini")
@@ -192,7 +179,7 @@ def apply_migrations(db_url: str = None) -> None:
         # Apply migrations
         command.upgrade(alembic_cfg, "head")
         logger.info("Migrations applied successfully")
-        
+
     except Exception as e:
         logger.error(f"Error applying migrations: {e}")
         raise
@@ -202,15 +189,6 @@ def apply_migrations_with_engine(engine: Engine) -> None:
     """Apply Alembic migrations using an existing engine."""
     try:
         # 确保所有模型被导入
-        from app.models import (
-            ContentChunk,
-            ContentItem,
-            ContentItemTag,
-            ContentShare,
-            Project,
-            QueryRoute,
-            User,
-        )
 
         # Get the database URL from the engine
         db_url = str(engine.url)
@@ -222,7 +200,7 @@ def apply_migrations_with_engine(engine: Engine) -> None:
         # Apply migrations
         command.upgrade(alembic_cfg, "head")
         logger.info("Migrations applied successfully using existing engine")
-        
+
     except Exception as e:
         logger.error(f"Error applying migrations with engine: {e}")
         raise
@@ -232,20 +210,11 @@ def create_tables(engine: Engine) -> None:
     """Create all tables using SQLModel metadata (fallback if migrations fail)."""
     try:
         # 确保所有模型被导入
-        from app.models import (
-            ContentChunk,
-            ContentItem,
-            ContentItemTag,
-            ContentShare,
-            Project,
-            QueryRoute,
-            User,
-        )
 
         # Create all tables
         SQLModel.metadata.create_all(engine)
         logger.info("Tables created successfully using SQLModel metadata")
-        
+
     except Exception as e:
         logger.error(f"Error creating tables: {e}")
         raise
@@ -254,7 +223,7 @@ def create_tables(engine: Engine) -> None:
 def setup_test_db() -> Engine:
     """
     Set up the test database.
-    
+
     1. Create the test database
     2. Apply migrations or create tables
     3. Return the engine for use in tests
@@ -271,11 +240,11 @@ def setup_test_db() -> Engine:
             pool_recycle=300,
             pool_size=5,
             max_overflow=10,
-            connect_args={"connect_timeout": 10} if settings.POSTGRES_SERVER else {}
+            connect_args={"connect_timeout": 10} if settings.POSTGRES_SERVER else {},
         )
 
         # Test the connection
-        with test_engine.connect() as conn:
+        with test_engine.connect():
             pass  # Just test if we can connect
 
         # Try to apply migrations first, fall back to creating tables if that fails
@@ -289,7 +258,7 @@ def setup_test_db() -> Engine:
         return test_engine
 
     except Exception as e:
-        logger.error(f"Failed to set up test database: {e}")  
+        logger.error(f"Failed to set up test database: {e}")
         raise
 
 

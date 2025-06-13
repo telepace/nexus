@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, delete
 
 from app.core.config import settings
-from app.core.db import engine, init_db
+from app.core.db import init_db
 from app.main import app
 from app.models import User
 from app.models.content import (
@@ -102,7 +102,9 @@ def setup_test_environment() -> Generator[None, None, None]:
             # 不抛出异常，避免掩盖原始错误
 
 
-@pytest.fixture(scope="function")  # 改为function scope，每个测试函数都有独立的数据库会话
+@pytest.fixture(
+    scope="function"
+)  # 改为function scope，每个测试函数都有独立的数据库会话
 def db() -> Generator[Session, None, None]:
     """
     Get a database session for testing.
@@ -120,7 +122,7 @@ def db() -> Generator[Session, None, None]:
         # 确保初始化数据被提交
         session.commit()
         yield session
-        
+
         # 在每个测试结束后清理数据，但保留数据库结构
         try:
             # Clean up all test data - use Project instead of Item
@@ -139,21 +141,21 @@ def db() -> Generator[Session, None, None]:
             session.rollback()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")  # 改为function scope以确保测试隔离
 def client() -> Generator[TestClient, None, None]:
     """Create a test client with overridden database dependency."""
     from app.api.deps import get_db
-    
+
     def get_test_db():
         """Override database dependency to use test database."""
         # 使用测试引擎创建新的数据库会话
         test_engine = setup_test_db()
         with Session(test_engine, expire_on_commit=False) as session:
             yield session
-    
+
     # Override the database dependency
     app.dependency_overrides[get_db] = get_test_db
-    
+
     try:
         with TestClient(app) as c:
             yield c
@@ -167,14 +169,12 @@ def superuser_token_headers(client: TestClient, db: Session) -> dict[str, str]:
     """Get superuser token headers for testing."""
     # 确保超级用户存在于测试数据库中
     from app import crud
-    from app.models import UserCreate
     from app.core.config import settings
-    
+    from app.models import UserCreate
+
     # 查找现有超级用户
-    superuser = crud.get_user_by_email(
-        session=db, email=settings.FIRST_SUPERUSER
-    )
-    
+    superuser = crud.get_user_by_email(session=db, email=settings.FIRST_SUPERUSER)
+
     if not superuser:
         # 如果超级用户不存在，创建一个
         user_in = UserCreate(
@@ -184,16 +184,16 @@ def superuser_token_headers(client: TestClient, db: Session) -> dict[str, str]:
         )
         superuser = crud.create_user(session=db, user_create=user_in)
         db.commit()
-    
+
     # 确保用户是超级用户
     if not superuser.is_superuser:
         superuser.is_superuser = True
         db.add(superuser)
         db.commit()
-        
+
     # 刷新会话以确保数据同步
     db.refresh(superuser)
-    
+
     # 现在获取token
     return get_superuser_token_headers(client)
 
