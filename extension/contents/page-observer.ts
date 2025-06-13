@@ -195,30 +195,36 @@ class PageObserver {
       originalPushState.apply(history, args);
       window.dispatchEvent(new Event('nexus-navigation'));
       // 简单通知background script页面状态已更新
-      chrome.runtime.sendMessage({
-        type: 'HISTORY_STATE_UPDATED',
-        data: {
-          url: window.location.href,
-          action: 'pushState'
-        }
-      }).catch(() => {
-        // 忽略连接错误
-      });
+      setTimeout(() => {
+        chrome.runtime.sendMessage({
+          type: 'HISTORY_STATE_UPDATED',
+          data: {
+            url: window.location.href,
+            action: 'pushState'
+          }
+        }).catch((error) => {
+          // 静默处理连接错误
+          console.log('[PageObserver] History state update message failed (pushState):', error.message);
+        });
+      }, 100); // 小延迟确保页面状态稳定
     };
 
     history.replaceState = function(...args) {
       originalReplaceState.apply(history, args);
       window.dispatchEvent(new Event('nexus-navigation'));
       // 简单通知background script页面状态已更新
-      chrome.runtime.sendMessage({
-        type: 'HISTORY_STATE_UPDATED',
-        data: {
-          url: window.location.href,
-          action: 'replaceState'
-        }
-      }).catch(() => {
-        // 忽略连接错误
-      });
+      setTimeout(() => {
+        chrome.runtime.sendMessage({
+          type: 'HISTORY_STATE_UPDATED',
+          data: {
+            url: window.location.href,
+            action: 'replaceState'
+          }
+        }).catch((error) => {
+          // 静默处理连接错误
+          console.log('[PageObserver] History state update message failed (replaceState):', error.message);
+        });
+      }, 100); // 小延迟确保页面状态稳定
     };
 
     window.addEventListener('nexus-navigation', () => {

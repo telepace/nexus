@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User } from '../lib/auth';
+import type { User } from '../lib/auth';
 import { useAuth } from '../lib/useAuth';
 
 interface DashboardViewProps {
