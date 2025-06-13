@@ -4,14 +4,14 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
-from app.core.security import get_password_hash, verify_password
+from app.core.security import get_password_hash
 from app.models import User
 from app.tests.conftest import get_api_response_data
 from app.tests.utils.utils import random_email, random_lower_string
 from app.utils import generate_password_reset_token
 
 
-def test_get_access_token(client: TestClient, db: Session) -> None:
+def test_get_access_token(client: TestClient) -> None:
     login_data = {
         "username": settings.FIRST_SUPERUSER,
         "password": settings.FIRST_SUPERUSER_PASSWORD,
