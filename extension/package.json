@@ -1,8 +1,8 @@
 {
   "name": "nexus-browser-extension",
-  "displayName": "Nexus Browser Extension",
+  "displayName": "Nexus Browser Extension (BETA)",
   "version": "0.1.0",
-  "description": "AI-powered reading assistant that helps you understand, save, and interact with web content.",
+  "description": "AI-powered reading assistant that helps you understand, save, and interact with web content. 此扩展程序目前处于Beta版测试阶段.",
   "author": "Nexus Team",
   "scripts": {
     "dev": "plasmo dev",
@@ -60,7 +60,7 @@
       "<all_urls>"
     ],
     "name": "Nexus",
-    "description": "AI-powered reading assistant that helps you understand, save, and interact with web content.",
+    "description": "AI-powered reading assistant that helps you understand, save, and interact with web content. 此扩展程序目前处于Beta版测试阶段.",
     "version": "0.1.0",
     "permissions": [
       "storage",
