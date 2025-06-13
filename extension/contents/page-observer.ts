@@ -252,15 +252,20 @@ class PageObserver {
             type: 'PAGE_CONTENT_UPDATED',
             data: pageData
           });
+          console.log('[PageObserver] Successfully notified background of content update');
         } catch (error) {
           // 静默处理连接错误，避免在控制台产生过多噪音
-          if (error.message !== 'Extension context invalidated') {
-            console.warn('Failed to notify background:', error.message);
+          if (error.message.includes('Extension context invalidated') || 
+              error.message.includes('message port closed') ||
+              error.message.includes('runtime.lastError')) {
+            console.log('[PageObserver] Extension connection lost, this is normal during page navigation');
+          } else {
+            console.warn('[PageObserver] Failed to notify background:', error.message);
           }
         }
       }
     } catch (error) {
-      console.error('Content extraction failed:', error);
+      console.error('[PageObserver] Content extraction failed:', error);
     }
   }
 
