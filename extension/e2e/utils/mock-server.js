@@ -92,19 +92,22 @@ const start = () => {
 
 const stop = () => {
   return new Promise((resolve, reject) => {
-    if (server) {
-      server.close((err) => {
-        isServerRunning = false;
-        if (err) {
-          console.error('Error stopping mock server:', err);
-          return reject(err);
-        }
-        console.log('Mock API server stopped.');
-        resolve();
-      });
-    } else {
-      resolve(); // No server to stop
+    if (!server || !isServerRunning) {
+      console.log('Mock server is not running or already stopped');
+      isServerRunning = false;
+      return resolve();
     }
+    
+    server.close((err) => {
+      isServerRunning = false;
+      server = null;
+      if (err && err.code !== 'ERR_SERVER_NOT_RUNNING') {
+        console.error('Error stopping mock server:', err);
+        return reject(err);
+      }
+      console.log('Mock API server stopped.');
+      resolve();
+    });
   });
 };
 
