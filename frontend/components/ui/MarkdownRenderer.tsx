@@ -303,7 +303,7 @@ export function MarkdownRenderer({
             const isExternalUrl =
               srcString.startsWith("http://") ||
               srcString.startsWith("https://");
-            
+
             // 检查是否为localhost
             const isLocalhost =
               srcString.includes("localhost") ||
@@ -311,7 +311,7 @@ export function MarkdownRenderer({
 
             // 检查是否为绝对路径（以/开头）
             const isAbsolutePath = srcString.startsWith("/");
-            
+
             // 检查是否为相对路径（不以/开头，也不是URL）
             const isRelativePath = !isExternalUrl && !isAbsolutePath;
 
