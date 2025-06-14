@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/ProcessingStatusBadge";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { contentCache } from "@/lib/services/content-cache";
+import { navigationState } from "@/lib/services/navigation-state";
 
 // Define the ContentItemPublic type based on backend schema
 interface ContentItemPublic {
@@ -57,6 +59,18 @@ const getContentIcon = (type: string) => {
   }
 };
 
+// 简单的防抖函数
+function debounce<T extends (...args: never[]) => void>(
+  func: T,
+  delay: number,
+) {
+  let timeoutId: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+}
+
 export default function ContentLibraryPage() {
   const [items, setItems] = useState<ContentItemPublic[]>([]);
   const [filteredItems, setFilteredItems] = useState<ContentItemPublic[]>([]);
@@ -74,6 +88,62 @@ export default function ContentLibraryPage() {
 
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
+
+  // 恢复导航状态
+  useEffect(() => {
+    const savedState = navigationState.getLibraryState();
+    if (savedState) {
+      setSearchQuery(savedState.searchQuery || "");
+      setStatusFilter(savedState.statusFilter || "all");
+      setTypeFilter(savedState.typeFilter || "all");
+    }
+  }, []);
+
+  // 保存状态变化
+  useEffect(() => {
+    navigationState.saveLibraryState({
+      searchQuery,
+      statusFilter,
+      typeFilter,
+      selectedItem: selectedItem?.id || null,
+    });
+  }, [searchQuery, statusFilter, typeFilter, selectedItem]);
+
+  // 在数据加载完成后恢复滚动位置
+  useEffect(() => {
+    if (!loading && items.length > 0) {
+      const savedState = navigationState.getLibraryState();
+      if (savedState.scrollPosition > 0) {
+        setTimeout(() => {
+          window.scrollTo({ top: savedState.scrollPosition, behavior: "auto" });
+        }, 100);
+      }
+
+      // 恢复选中的项目
+      if (savedState.selectedItem) {
+        const item = items.find((item) => item.id === savedState.selectedItem);
+        if (item) {
+          setSelectedItem(item);
+        }
+      }
+    }
+  }, [loading, items]);
+
+  // 保存滚动位置
+  useEffect(() => {
+    const handleScroll = () => {
+      navigationState.saveLibraryState({
+        scrollPosition: window.scrollY,
+      });
+    };
+
+    const debouncedHandleScroll = debounce(handleScroll, 300);
+    window.addEventListener("scroll", debouncedHandleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", debouncedHandleScroll);
+    };
+  }, []);
 
   // Filter items based on search and filters
   useEffect(() => {
@@ -157,6 +227,66 @@ export default function ContentLibraryPage() {
     router.push(`/content-library/reader/${item.id}`);
   };
 
+  // 预加载内容详情
+  const prefetchContent = useCallback(
+    async (item: ContentItemPublic) => {
+      // 如果已经缓存了，不需要重复预加载
+      if (contentCache.has(`content-detail-${item.id}`)) {
+        return;
+      }
+
+      try {
+        const token = user?.token || getCookie("accessToken");
+        if (!token) return;
+
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+        // 预加载内容详情和markdown
+        const [contentResponse, markdownResponse] = await Promise.allSettled([
+          fetch(`${apiUrl}/api/v1/content/${item.id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          }),
+          fetch(`${apiUrl}/api/v1/content/${item.id}/markdown`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          }),
+        ]);
+
+        // 缓存结果
+        if (
+          contentResponse.status === "fulfilled" &&
+          contentResponse.value.ok
+        ) {
+          const contentData = await contentResponse.value.json();
+          contentCache.setContentDetail(item.id, contentData);
+        }
+
+        if (
+          markdownResponse.status === "fulfilled" &&
+          markdownResponse.value.ok
+        ) {
+          const markdownData = await markdownResponse.value.json();
+          contentCache.setMarkdownContent(
+            item.id,
+            markdownData.markdown_content,
+          );
+        }
+      } catch (error) {
+        console.debug("Prefetch failed:", error);
+        // 预加载失败不影响用户体验
+      }
+    },
+    [user],
+  );
+
   // Handle Share
   const handleShare = (item: ContentItemPublic) => {
     setSelectedItem(item);
@@ -213,6 +343,14 @@ export default function ContentLibraryPage() {
         setLoading(true);
         setError(null);
 
+        // 先尝试从缓存获取数据
+        const cachedItems = contentCache.getContentList();
+        if (cachedItems) {
+          setItems(cachedItems);
+          setLoading(false);
+          return;
+        }
+
         // Get token from user object or cookie
         const token = user?.token || getCookie("accessToken");
 
@@ -247,6 +385,8 @@ export default function ContentLibraryPage() {
 
         const data = await response.json();
         setItems(data);
+        // 缓存内容列表
+        contentCache.setContentList(data);
       } catch (e: unknown) {
         console.error("Error fetching content items:", e);
         if (e instanceof Error) {
@@ -396,6 +536,7 @@ export default function ContentLibraryPage() {
                             : ""
                         }`}
                         onClick={() => setSelectedItem(item)}
+                        onMouseEnter={() => prefetchContent(item)}
                       >
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between">

@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ChatCreateChatCompletionData, ChatCreateChatCompletionResponse, ChatListAvailableModelsResponse, ContentContentEventsEndpointResponse, ContentCreateContentItemEndpointData, ContentCreateContentItemEndpointResponse, ContentProcessContentItemEndpointData, ContentProcessContentItemEndpointResponse, ContentListContentItemsEndpointData, ContentListContentItemsEndpointResponse, ContentGetContentItemEndpointData, ContentGetContentItemEndpointResponse, ContentGetContentMarkdownEndpointData, ContentGetContentMarkdownEndpointResponse, ContentGetSupportedProcessorsResponse, ContentGetContentChunksEndpointData, ContentGetContentChunksEndpointResponse, ContentGetContentChunksSummaryEndpointData, ContentGetContentChunksSummaryEndpointResponse, ContentAnalyzeContentStreamData, ContentAnalyzeContentStreamResponse, ContentAnalyzeContentAiSdkData, ContentAnalyzeContentAiSdkResponse, ContentContentCompletionStreamData, ContentContentCompletionStreamResponse, ContentCreateShareLinkEndpointData, ContentCreateShareLinkEndpointResponse, ContentDeactivateShareLinkEndpointData, ContentDeactivateShareLinkEndpointResponse, ContentGetSharedContentEndpointData, ContentGetSharedContentEndpointResponse, DashboardAnalyzeQueryData, DashboardAnalyzeQueryResponse, DashboardGetDashboardMetricsResponse, DashboardGetRecentActivitiesData, DashboardGetRecentActivitiesResponse, DashboardConfirmRoutingData, DashboardConfirmRoutingResponse, DashboardCreateProjectData, DashboardCreateProjectResponse, DashboardGetUserProjectsData, DashboardGetUserProjectsResponse, GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ImagesGetUploadUrlData, ImagesGetUploadUrlResponse, ImagesCreateImageRecordData, ImagesCreateImageRecordResponse, ImagesListImagesData, ImagesListImagesResponse, ImagesReadImageData, ImagesReadImageResponse, ImagesDeleteImageData, ImagesDeleteImageResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateProjectData, ItemsCreateProjectResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LlmCreateCompletionData, LlmCreateCompletionResponse, LlmCreateEmbeddingData, LlmCreateEmbeddingResponse, LoginAuthLoginData, LoginAuthLoginResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginLoginAccessTokenHeadResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, PromptsTogglePromptEnabledData, PromptsTogglePromptEnabledResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersReadUserMeHeadResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { ChatCreateChatCompletionData, ChatCreateChatCompletionResponse, ChatListAvailableModelsResponse, ContentContentEventsEndpointResponse, ContentCreateContentItemEndpointData, ContentCreateContentItemEndpointResponse, ContentProcessContentItemEndpointData, ContentProcessContentItemEndpointResponse, ContentListContentItemsEndpointData, ContentListContentItemsEndpointResponse, ContentGetContentItemEndpointData, ContentGetContentItemEndpointResponse, ContentGetContentMarkdownEndpointData, ContentGetContentMarkdownEndpointResponse, ContentGetSupportedProcessorsResponse, ContentGetContentChunksEndpointData, ContentGetContentChunksEndpointResponse, ContentGetContentChunksSummaryEndpointData, ContentGetContentChunksSummaryEndpointResponse, ContentAnalyzeContentStreamData, ContentAnalyzeContentStreamResponse, ContentAnalyzeContentAiSdkData, ContentAnalyzeContentAiSdkResponse, ContentContentCompletionStreamData, ContentContentCompletionStreamResponse, ContentAnalyzeContentAiSdkUpdatedData, ContentAnalyzeContentAiSdkUpdatedResponse, ContentContentCompletionStreamUpdatedData, ContentContentCompletionStreamUpdatedResponse, ContentCreateShareLinkEndpointData, ContentCreateShareLinkEndpointResponse, ContentDeactivateShareLinkEndpointData, ContentDeactivateShareLinkEndpointResponse, ContentGetSharedContentEndpointData, ContentGetSharedContentEndpointResponse, DashboardAnalyzeQueryData, DashboardAnalyzeQueryResponse, DashboardGetDashboardMetricsResponse, DashboardGetRecentActivitiesData, DashboardGetRecentActivitiesResponse, DashboardConfirmRoutingData, DashboardConfirmRoutingResponse, DashboardCreateProjectData, DashboardCreateProjectResponse, DashboardGetUserProjectsData, DashboardGetUserProjectsResponse, GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ImagesGetUploadUrlData, ImagesGetUploadUrlResponse, ImagesCreateImageRecordData, ImagesCreateImageRecordResponse, ImagesListImagesData, ImagesListImagesResponse, ImagesReadImageData, ImagesReadImageResponse, ImagesDeleteImageData, ImagesDeleteImageResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateProjectData, ItemsCreateProjectResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LlmCreateCompletionData, LlmCreateCompletionResponse, LlmCreateEmbeddingData, LlmCreateEmbeddingResponse, LoginAuthLoginData, LoginAuthLoginResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginLoginAccessTokenHeadResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, PromptsTogglePromptEnabledData, PromptsTogglePromptEnabledResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersReadUserMeHeadResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class ChatService {
     /**
@@ -315,6 +315,76 @@ export class ContentService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/content/{content_id}/completion',
+            path: {
+                content_id: data.contentId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Analyze Content Ai Sdk Updated
+     * Stream AI analysis with updated prompt structure: system=content, user=instruction.
+     *
+     * This endpoint implements the adjusted LLM logic where:
+     * - System message contains the article content (provides context)
+     * - User message contains the analysis instruction (provides task)
+     *
+     * Args:
+     * content_id: ID of the content to analyze
+     * analysis_instruction: The analysis instruction from user (user prompt)
+     * model: AI model to use
+     * temperature: Sampling temperature
+     * max_tokens: Maximum tokens to generate
+     * @param data The data for the request.
+     * @param data.contentId
+     * @param data.requestBody
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static analyzeContentAiSdkUpdated(data: ContentAnalyzeContentAiSdkUpdatedData): CancelablePromise<ContentAnalyzeContentAiSdkUpdatedResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/content/{content_id}/analyze-ai-sdk-updated',
+            path: {
+                content_id: data.contentId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Content Completion Stream Updated
+     * Stream content analysis with updated prompt structure: system=content, user=instruction.
+     *
+     * This endpoint implements the adjusted LLM logic where:
+     * - System message contains the article content (provides context)
+     * - User message contains the analysis instruction (provides task)
+     *
+     * Args:
+     * content_id: ID of the content to analyze
+     * analysis_instruction: The analysis instruction from user (user prompt)
+     * model: AI model to use
+     * temperature: Sampling temperature
+     * max_tokens: Maximum tokens to generate
+     * @param data The data for the request.
+     * @param data.contentId
+     * @param data.requestBody
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static contentCompletionStreamUpdated(data: ContentContentCompletionStreamUpdatedData): CancelablePromise<ContentContentCompletionStreamUpdatedResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/content/{content_id}/completion-updated',
             path: {
                 content_id: data.contentId
             },

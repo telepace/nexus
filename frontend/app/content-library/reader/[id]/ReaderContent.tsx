@@ -18,6 +18,8 @@ import { useAuth, getCookie } from "@/lib/auth";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
 import { ShareContentModal } from "@/components/share/ShareContentModal";
+import { contentCache } from "@/lib/services/content-cache";
+import { navigationState } from "@/lib/services/navigation-state";
 
 interface ContentDetail {
   id: string;
@@ -277,10 +279,12 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
   // 添加分享状态管理
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
-  // 解析参数
+  // 解析参数并记录访问
   useEffect(() => {
     params.then(({ id }) => {
       setContentId(id);
+      // 记录访问这个reader页面
+      navigationState.saveReaderVisit(id);
     });
   }, [params]);
 
@@ -294,7 +298,29 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
 
     async function fetchContentDetail() {
       try {
-        setLoading(true);
+        // 先尝试从缓存获取数据
+        const cachedContent = contentCache.getContentDetail(contentId);
+        const cachedMarkdown = contentCache.getMarkdownContent(contentId);
+
+        if (cachedContent) {
+          setContent(cachedContent);
+          if (cachedMarkdown) {
+            setMarkdownContent(cachedMarkdown);
+          }
+          // 如果有缓存，快速显示内容，然后在后台检查更新
+          setLoading(false);
+
+          // 检查内容是否需要更新（简单的时间戳检查）
+          const cacheTime = Date.now() - 2 * 60 * 1000; // 2分钟
+          const contentUpdated = new Date(cachedContent.updated_at).getTime();
+          if (contentUpdated > cacheTime) {
+            // 内容较新，不需要重新获取
+            return;
+          }
+        } else {
+          setLoading(true);
+        }
+
         setError(null);
 
         const token = user?.token || getCookie("accessToken");
@@ -307,58 +333,68 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-        // Fetch content details
-        const contentResponse = await fetch(
-          `${apiUrl}/api/v1/content/${contentId}`,
-          {
+        // 并行请求内容详情和markdown内容
+        const [contentResponse, markdownResponse] = await Promise.allSettled([
+          fetch(`${apiUrl}/api/v1/content/${contentId}`, {
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
             credentials: "include",
-          },
-        );
+          }),
+          fetch(`${apiUrl}/api/v1/content/${contentId}/markdown`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          }),
+        ]);
 
-        if (!contentResponse.ok) {
-          if (contentResponse.status === 404) {
+        // 处理内容详情请求结果
+        if (
+          contentResponse.status === "fulfilled" &&
+          contentResponse.value.ok
+        ) {
+          const contentData = await contentResponse.value.json();
+          setContent(contentData);
+          // 缓存内容详情
+          contentCache.setContentDetail(contentId, contentData);
+        } else {
+          if (
+            contentResponse.status === "fulfilled" &&
+            contentResponse.value.status === 404
+          ) {
             setError("Content not found.");
             return;
           }
           throw new Error(
-            `HTTP ${contentResponse.status}: ${await contentResponse.text()}`,
+            contentResponse.status === "fulfilled"
+              ? `HTTP ${contentResponse.value.status}: ${await contentResponse.value.text()}`
+              : "Failed to fetch content",
           );
         }
 
-        const contentData = await contentResponse.json();
-        setContent(contentData);
-
-        // 如果内容已处理完成，尝试获取 markdown 内容
-        if (contentData.processing_status === "completed") {
-          try {
-            const markdownResponse = await fetch(
-              `${apiUrl}/api/v1/content/${contentId}/markdown`,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-                credentials: "include",
-              },
-            );
-
-            if (markdownResponse.ok) {
-              const markdownData = await markdownResponse.json();
-              setMarkdownContent(markdownData.markdown_content);
-            } else {
-              console.warn(
-                "Failed to fetch markdown content:",
-                markdownResponse.status,
-              );
-            }
-          } catch (markdownError) {
-            console.warn("Error fetching markdown content:", markdownError);
-            // 不设置错误，因为这不是致命错误
-          }
+        // 处理markdown内容请求结果
+        if (
+          markdownResponse.status === "fulfilled" &&
+          markdownResponse.value.ok
+        ) {
+          const markdownData = await markdownResponse.value.json();
+          setMarkdownContent(markdownData.markdown_content);
+          // 缓存markdown内容
+          contentCache.setMarkdownContent(
+            contentId,
+            markdownData.markdown_content,
+          );
+        } else {
+          console.warn(
+            "Failed to fetch markdown content:",
+            markdownResponse.status === "fulfilled"
+              ? markdownResponse.value.status
+              : "Request failed",
+          );
+          // 不设置错误，因为这不是致命错误
         }
       } catch (e: unknown) {
         console.error("Error fetching content:", e);

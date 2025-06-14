@@ -139,6 +139,25 @@ export type Body_content_analyze_content_ai_sdk = {
   max_tokens?: number;
 };
 
+export type Body_content_analyze_content_ai_sdk_updated = {
+  /**
+   * Analysis instruction/prompt from user
+   */
+  analysis_instruction: string;
+  /**
+   * Model to use
+   */
+  model?: string;
+  /**
+   * Sampling temperature
+   */
+  temperature?: number;
+  /**
+   * Maximum tokens to generate
+   */
+  max_tokens?: number;
+};
+
 export type Body_content_analyze_content_stream = {
   /**
    * System prompt for analysis
@@ -155,6 +174,25 @@ export type Body_content_content_completion_stream = {
    * Analysis prompt
    */
   prompt: string;
+  /**
+   * Model to use
+   */
+  model?: string;
+  /**
+   * Sampling temperature
+   */
+  temperature?: number;
+  /**
+   * Maximum tokens to generate
+   */
+  max_tokens?: number;
+};
+
+export type Body_content_content_completion_stream_updated = {
+  /**
+   * Analysis instruction/prompt from user
+   */
+  analysis_instruction: string;
   /**
    * Model to use
    */
@@ -1143,6 +1181,28 @@ export type ContentContentCompletionStreamData = {
 export type ContentContentCompletionStreamResponse = unknown;
 
 export type ContentContentCompletionStreamError = HTTPValidationError;
+
+export type ContentAnalyzeContentAiSdkUpdatedData = {
+  body: Body_content_analyze_content_ai_sdk_updated;
+  path: {
+    content_id: string;
+  };
+};
+
+export type ContentAnalyzeContentAiSdkUpdatedResponse = unknown;
+
+export type ContentAnalyzeContentAiSdkUpdatedError = HTTPValidationError;
+
+export type ContentContentCompletionStreamUpdatedData = {
+  body: Body_content_content_completion_stream_updated;
+  path: {
+    content_id: string;
+  };
+};
+
+export type ContentContentCompletionStreamUpdatedResponse = unknown;
+
+export type ContentContentCompletionStreamUpdatedError = HTTPValidationError;
 
 export type ContentCreateShareLinkEndpointData = {
   body: ContentShareCreate;

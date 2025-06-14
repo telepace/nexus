@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { FC, useState, useRef, useCallback, useEffect } from "react";
 import {
   X,
   Upload,
@@ -61,9 +61,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 检测URL的正则表达式
-  const urlRegex = useMemo(() => /(https?:\/\/[^\s]+)/g, []);
-
   /**
    * Checks if the provided text is a valid URL.
    */
@@ -76,61 +73,24 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     }
   };
 
-  /**
-   * 从文本中提取所有URL
-   */
-  const extractUrls = useCallback(
-    (text: string): string[] => {
-      // 支持多种分割符：空格、分号、逗号、换行符
-      const separators = /[\s;,\n\r]+/;
-      const parts = text.split(separators).filter((part) => part.trim());
-
-      const urls: string[] = [];
-
-      // 检查每个部分是否为有效URL
-      parts.forEach((part) => {
-        const trimmed = part.trim();
-        if (trimmed && isURL(trimmed)) {
-          urls.push(trimmed);
-        }
-      });
-
-      // 同时使用正则表达式提取URL（防止遗漏）
-      const regexMatches = text.match(urlRegex) || [];
-      regexMatches.forEach((url) => {
-        if (!urls.includes(url)) {
-          urls.push(url);
-        }
-      });
-
-      return urls;
-    },
-    [urlRegex],
-  );
-
   // 处理内容变化
-  const handleContentChange = useCallback(
-    (value: string) => {
-      setContent(value);
+  const handleContentChange = useCallback((text: string) => {
+    setContent(text);
 
-      if (!value.trim()) {
-        setContentType(null);
-        setDetectedUrls([]);
-        return;
-      }
-
-      // 提取URL
-      const urls = extractUrls(value);
-      setDetectedUrls(urls);
-
-      if (urls.length > 0) {
+    // Auto-detect URLs in the content
+    const urls = text.match(/https?:\/\/[^\s]+/g) || [];
+    if (urls.length > 0) {
+      const validUrls = urls.filter((url) => isURL(url));
+      if (validUrls.length > 0) {
+        setDetectedUrls((prev) => {
+          const allUrls = [...prev, ...validUrls];
+          // Remove duplicates
+          return Array.from(new Set(allUrls));
+        });
         setContentType("url");
-      } else if (value.trim() && contentType !== "text") {
-        setContentType("text");
       }
-    },
-    [contentType, extractUrls],
-  );
+    }
+  }, []);
 
   // 处理粘贴事件
   const handlePaste = useCallback(
@@ -143,38 +103,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     },
     [handleContentChange],
   );
-
-  // 处理快捷键提交
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !isLoading) {
-        if (content || selectedFiles.length > 0 || detectedUrls.length > 0) {
-          handleAddContent();
-        }
-      }
-    },
-    [content, selectedFiles, detectedUrls, isLoading],
-  );
-
-  // 监听快捷键
-  useEffect(() => {
-    if (open) {
-      document.addEventListener("keydown", handleKeyDown);
-      return () => {
-        document.removeEventListener("keydown", handleKeyDown);
-      };
-    }
-  }, [open, handleKeyDown]);
-
-  // 监听粘贴事件
-  useEffect(() => {
-    if (open) {
-      document.addEventListener("paste", handlePaste);
-      return () => {
-        document.removeEventListener("paste", handlePaste);
-      };
-    }
-  }, [open, handlePaste]);
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -239,7 +167,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
    * Creates content items and immediately closes modal for seamless experience.
    * Background processing and status updates are handled via SSE.
    */
-  const handleAddContent = async () => {
+  const handleAddContent = useCallback(async () => {
     setIsLoading(true);
     setError("");
 
@@ -338,7 +266,18 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [contentType, detectedUrls, title, content, selectedFiles, user, onClose]);
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !isLoading) {
+        if (content || selectedFiles.length > 0 || detectedUrls.length > 0) {
+          handleAddContent();
+        }
+      }
+    },
+    [content, selectedFiles, detectedUrls, isLoading, handleAddContent],
+  );
 
   const resetForm = () => {
     setContentType(null);
@@ -353,6 +292,26 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     resetForm();
     onClose();
   };
+
+  // 监听快捷键
+  useEffect(() => {
+    if (open) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [open, handleKeyDown]);
+
+  // 监听粘贴事件
+  useEffect(() => {
+    if (open) {
+      document.addEventListener("paste", handlePaste);
+      return () => {
+        document.removeEventListener("paste", handlePaste);
+      };
+    }
+  }, [open, handlePaste]);
 
   if (!open) {
     return null;

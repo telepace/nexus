@@ -294,18 +294,29 @@ export function MarkdownRenderer({
             // 确保src是string类型
             const srcString = typeof src === "string" ? src : "";
 
+            // 如果没有src，返回空
+            if (!srcString) {
+              return null;
+            }
+
             // 检查是否为外部URL
             const isExternalUrl =
-              srcString &&
-              (srcString.startsWith("http://") ||
-                srcString.startsWith("https://"));
+              srcString.startsWith("http://") ||
+              srcString.startsWith("https://");
+            
+            // 检查是否为localhost
             const isLocalhost =
-              srcString &&
-              (srcString.includes("localhost") ||
-                srcString.includes("127.0.0.1"));
+              srcString.includes("localhost") ||
+              srcString.includes("127.0.0.1");
 
-            // 对于外部URL（非localhost），使用普通img标签避免Next.js域名限制
-            if (isExternalUrl && !isLocalhost) {
+            // 检查是否为绝对路径（以/开头）
+            const isAbsolutePath = srcString.startsWith("/");
+            
+            // 检查是否为相对路径（不以/开头，也不是URL）
+            const isRelativePath = !isExternalUrl && !isAbsolutePath;
+
+            // 对于外部URL（非localhost）或相对路径，使用普通img标签
+            if ((isExternalUrl && !isLocalhost) || isRelativePath) {
               return (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -328,7 +339,7 @@ export function MarkdownRenderer({
               );
             }
 
-            // 对于本地图片或相对路径，使用OptimizedImage组件
+            // 对于本地绝对路径图片，使用OptimizedImage组件
             const optimizedImageProps = {
               src: srcString,
               alt: alt || "",
@@ -341,6 +352,7 @@ export function MarkdownRenderer({
               preserveAspectRatio: true,
               showLoader: true,
               fallbackSrc: "/images/image-placeholder.svg", // 提供回退图片
+              inline: true, // 使用inline模式避免div嵌套在p标签中
             };
 
             return <OptimizedImage {...optimizedImageProps} />;

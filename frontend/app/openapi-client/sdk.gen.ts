@@ -176,6 +176,12 @@ import type {
   ContentContentCompletionStreamData,
   ContentContentCompletionStreamError,
   ContentContentCompletionStreamResponse,
+  ContentAnalyzeContentAiSdkUpdatedData,
+  ContentAnalyzeContentAiSdkUpdatedError,
+  ContentAnalyzeContentAiSdkUpdatedResponse,
+  ContentContentCompletionStreamUpdatedData,
+  ContentContentCompletionStreamUpdatedError,
+  ContentContentCompletionStreamUpdatedResponse,
   ContentCreateShareLinkEndpointData,
   ContentCreateShareLinkEndpointError,
   ContentCreateShareLinkEndpointResponse,
@@ -1413,6 +1419,72 @@ export const contentContentCompletionStream = <
   >({
     ...options,
     url: "/api/v1/content/{content_id}/completion",
+  });
+};
+
+/**
+ * Analyze Content Ai Sdk Updated
+ * Stream AI analysis with updated prompt structure: system=content, user=instruction.
+ *
+ * This endpoint implements the adjusted LLM logic where:
+ * - System message contains the article content (provides context)
+ * - User message contains the analysis instruction (provides task)
+ *
+ * Args:
+ * content_id: ID of the content to analyze
+ * analysis_instruction: The analysis instruction from user (user prompt)
+ * model: AI model to use
+ * temperature: Sampling temperature
+ * max_tokens: Maximum tokens to generate
+ */
+export const contentAnalyzeContentAiSdkUpdated = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentAnalyzeContentAiSdkUpdatedData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    ContentAnalyzeContentAiSdkUpdatedResponse,
+    ContentAnalyzeContentAiSdkUpdatedError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{content_id}/analyze-ai-sdk-updated",
+  });
+};
+
+/**
+ * Content Completion Stream Updated
+ * Stream content analysis with updated prompt structure: system=content, user=instruction.
+ *
+ * This endpoint implements the adjusted LLM logic where:
+ * - System message contains the article content (provides context)
+ * - User message contains the analysis instruction (provides task)
+ *
+ * Args:
+ * content_id: ID of the content to analyze
+ * analysis_instruction: The analysis instruction from user (user prompt)
+ * model: AI model to use
+ * temperature: Sampling temperature
+ * max_tokens: Maximum tokens to generate
+ */
+export const contentContentCompletionStreamUpdated = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentContentCompletionStreamUpdatedData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    ContentContentCompletionStreamUpdatedResponse,
+    ContentContentCompletionStreamUpdatedError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{content_id}/completion-updated",
   });
 };
 
