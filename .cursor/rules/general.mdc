@@ -8,6 +8,7 @@ alwaysApply: true
   `export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890;`
 - All code comments, prompts, and code completions should be in English.
 - Use `ts` instead of `js`
+- Pay attention to operating or creating files in the corresponding directory. Do not randomly create files that are not conducive to project maintenance
 - All Chat replies should be in Chinese.
 - The LLM instructions should be placed in the `prompt_templates/` directory in the format with the `.j2` extension, rather than being hardcoded into the code.
 - Adhere to the DIY principle
