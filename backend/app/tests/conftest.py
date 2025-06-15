@@ -1,9 +1,4 @@
 import os
-
-# Set testing environment variables as early as possible
-os.environ["TESTING"] = "true"
-os.environ["TEST_MODE"] = "true"
-
 from collections.abc import Generator
 from typing import Any
 
@@ -11,21 +6,27 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, delete
 
+from app import crud
 from app.core.config import settings
 from app.core.db import init_db
 from app.main import app
-from app.models import User
+from app.models import User, UserCreate
 from app.models.content import (
-    AIConversation,  # Added ContentShare
+    AIConversation,
     ContentAsset,
     ContentItem,
     ContentShare,
     ProcessingJob,
 )
 from app.models.project import Project
+from app.models.prompt import Prompt, Tag
 from app.tests.utils.test_db import setup_test_db, teardown_test_db
 from app.tests.utils.user import authentication_token_from_email
 from app.tests.utils.utils import get_superuser_token_headers
+
+# Set testing environment variables as early as possible
+os.environ["TESTING"] = "true"
+os.environ["TEST_MODE"] = "true"
 
 
 # This runs before all tests to set up the test environmen
@@ -117,6 +118,26 @@ def db() -> Generator[Session, None, None]:
 
     # Create session and initialize database using the test engine
     with Session(test_engine, expire_on_commit=False) as session:
+        # 先清理所有数据，确保测试隔离
+        try:
+            # Clean up all test data - use Project instead of Item
+            session.execute(delete(Project))
+            session.execute(delete(User))
+            # Clean up content-related tables
+            session.execute(delete(AIConversation))
+            session.execute(delete(ProcessingJob))
+            session.execute(delete(ContentAsset))
+            session.execute(delete(ContentShare))
+            session.execute(delete(ContentItem))
+            # Clean up prompt-related tables
+            session.execute(delete(Prompt))
+            session.execute(delete(Tag))
+            session.commit()
+        except Exception as e:
+            # If cleanup fails, log but don't fail the test
+            print(f"Database pre-cleanup warning: {e}")
+            session.rollback()
+
         # Initialize database with initial data
         init_db(session)
         # 确保初始化数据被提交
@@ -134,6 +155,9 @@ def db() -> Generator[Session, None, None]:
             session.execute(delete(ContentAsset))
             session.execute(delete(ContentShare))  # Added ContentShare
             session.execute(delete(ContentItem))
+            # Clean up prompt-related tables
+            session.execute(delete(Prompt))
+            session.execute(delete(Tag))
             session.commit()
         except Exception as e:
             # If cleanup fails, log but don't fail the test
@@ -168,9 +192,7 @@ def client() -> Generator[TestClient, None, None]:
 def superuser_token_headers(client: TestClient, db: Session) -> dict[str, str]:
     """Get superuser token headers for testing."""
     # 确保超级用户存在于测试数据库中
-    from app import crud
     from app.core.config import settings
-    from app.models import UserCreate
 
     # 查找现有超级用户
     superuser = crud.get_user_by_email(session=db, email=settings.FIRST_SUPERUSER)
@@ -193,6 +215,18 @@ def superuser_token_headers(client: TestClient, db: Session) -> dict[str, str]:
 
     # 刷新会话以确保数据同步
     db.refresh(superuser)
+
+    # 确保密码匹配
+    from app.core.security import get_password_hash, verify_password
+
+    if not verify_password(
+        settings.FIRST_SUPERUSER_PASSWORD, superuser.hashed_password
+    ):
+        # 如果密码不匹配，更新密码
+        superuser.hashed_password = get_password_hash(settings.FIRST_SUPERUSER_PASSWORD)
+        db.add(superuser)
+        db.commit()
+        db.refresh(superuser)
 
     # 现在获取token
     return get_superuser_token_headers(client)

@@ -144,15 +144,23 @@ console.error = (...args: any[]) => {
       args[0].includes("Login API error:") ||
       args[0].includes("Login error:") ||
       args[0].includes("Registration error:") ||
+      args[0].includes("An update to") ||
+      args[0].includes("inside a test was not wrapped in act") ||
       args[0].includes(
         "Warning: An update to Root inside a test was not wrapped in act",
       ) ||
       args[0].includes("Warning: It looks like you're using the wrong act()") ||
       args[0].includes(
         "act(...) is not supported in production builds of React",
-      ))
+      ) ||
+      args[0].includes("React does not recognize the `richColors` prop") ||
+      args[0].includes("Failed to fetch share links:") ||
+      args[0].includes("Failed to fetch shared content:") ||
+      args[0].includes("Failed to generate share link:") ||
+      args[0].includes("Failed to fetch shared content with password:") ||
+      args[0].includes("Encryption key is not defined"))
   ) {
-    return; // Suppress expected login credential errors, registration errors and act warnings
+    return; // Suppress expected login credential errors, registration errors, act warnings, and richColors warnings
   }
   originalConsoleError(...args);
 };
@@ -504,10 +512,19 @@ jest.mock("sonner", () => {
       loading: jest.fn(),
       dismiss: jest.fn(),
     },
-    Toaster: jest.fn(({ ...props }) => {
+    Toaster: jest.fn(({ richColors, ...props }) => {
+      // Remove richColors and other non-standard DOM props before passing to div
+      const {
+        theme,
+        position,
+        expand,
+        visibleToasts,
+        closeButton,
+        ...divProps
+      } = props;
       return React.createElement("div", {
         "data-testid": "mock-toaster",
-        ...props,
+        ...divProps,
       });
     }),
   };

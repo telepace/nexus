@@ -1,33 +1,33 @@
 import uuid
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app import crud
 from app.core.config import settings
-from app.models import ContentItem
+from app.models.content import ContentItem
 
 
 class TestContentLLMAnalysisUpdated:
-    """测试调整后的LLM分析逻辑 - system prompt为内容，user prompt为指令"""
+    """测试内容LLM分析的更新版本"""
 
     def test_analyze_ai_sdk_updated_prompt_structure(
         self, client: TestClient, db: Session, normal_user_token_headers: dict
     ):
-        """测试更新后的analyze-ai-sdk端点使用正确的prompt结构"""
+        """测试更新后的analyze端点使用正确的prompt结构"""
         # 获取测试用户
         test_user = crud.get_user_by_email(session=db, email=settings.EMAIL_TEST_USER)
 
         # 创建模拟的内容项
-        content_text = """# 人工智能的发展趋势
+        content_text = """# 机器学习基础
 
-        人工智能技术正在快速发展，包括：
-        1. 大语言模型的突破
-        2. 多模态AI的兴起
-        3. AI在各行业的应用
+        机器学习是人工智能的一个重要分支，包括：
+        1. 监督学习
+        2. 无监督学习
+        3. 强化学习
 
-        这些发展为未来带来了巨大机遇。"""
+        这些方法可以用于解决各种实际问题。"""
 
         mock_content_item = ContentItem(
             id=uuid.uuid4(),
@@ -47,25 +47,30 @@ class TestContentLLMAnalysisUpdated:
             # 模拟内容获取
             mock_get_content.return_value = mock_content_item
 
-            # 模拟aiohttp.ClientSession
-            mock_session = Mock()
-            MockSession.return_value.__aenter__.return_value = mock_session
-            MockSession.return_value.__aexit__.return_value = None
-
-            # 模拟LiteLLM响应
-            mock_response = Mock()
+            # 创建异步mock会话和响应
+            mock_session_instance = AsyncMock()
+            mock_response = AsyncMock()
             mock_response.status = 200
 
+            # 模拟流式响应
             async def mock_iter_chunked(_size):
                 yield 'data: {"choices": [{"delta": {"content": "这是分析结果"}}]}\n'.encode()
                 yield b"data: [DONE]\n"
 
             mock_response.content.iter_chunked = mock_iter_chunked
-            mock_session.post.return_value.__aenter__.return_value = mock_response
-            mock_session.post.return_value.__aexit__.return_value = None
+
+            # 设置 session.post 返回 mock_response
+            mock_session_instance.post.return_value.__aenter__.return_value = (
+                mock_response
+            )
+            mock_session_instance.post.return_value.__aexit__.return_value = None
+
+            # 设置 ClientSession 返回 mock_session_instance
+            MockSession.return_value.__aenter__.return_value = mock_session_instance
+            MockSession.return_value.__aexit__.return_value = None
 
             # 发送请求
-            client.post(
+            response = client.post(
                 f"/api/v1/content/{mock_content_item.id}/analyze-ai-sdk-updated",
                 headers=normal_user_token_headers,
                 json={
@@ -74,9 +79,12 @@ class TestContentLLMAnalysisUpdated:
                 },
             )
 
+            # 验证响应
+            assert response.status_code == 200
+
             # 验证调用了LiteLLM
-            mock_session.post.assert_called_once()
-            call_args = mock_session.post.call_args
+            mock_session_instance.post.assert_called_once()
+            call_args = mock_session_instance.post.call_args
 
             # 验证请求payload
             payload = call_args[1]["json"]
@@ -124,25 +132,30 @@ class TestContentLLMAnalysisUpdated:
             # 模拟内容获取
             mock_get_content.return_value = mock_content_item
 
-            # 模拟aiohttp.ClientSession
-            mock_session = Mock()
-            MockSession.return_value.__aenter__.return_value = mock_session
-            MockSession.return_value.__aexit__.return_value = None
-
-            # 模拟LiteLLM响应
-            mock_response = Mock()
+            # 创建异步mock会话和响应
+            mock_session_instance = AsyncMock()
+            mock_response = AsyncMock()
             mock_response.status = 200
 
+            # 模拟流式响应
             async def mock_iter_chunked(_size):
                 yield 'data: {"choices": [{"delta": {"content": "分析完成"}}]}\n'.encode()
                 yield b"data: [DONE]\n"
 
             mock_response.content.iter_chunked = mock_iter_chunked
-            mock_session.post.return_value.__aenter__.return_value = mock_response
-            mock_session.post.return_value.__aexit__.return_value = None
+
+            # 设置 session.post 返回 mock_response
+            mock_session_instance.post.return_value.__aenter__.return_value = (
+                mock_response
+            )
+            mock_session_instance.post.return_value.__aexit__.return_value = None
+
+            # 设置 ClientSession 返回 mock_session_instance
+            MockSession.return_value.__aenter__.return_value = mock_session_instance
+            MockSession.return_value.__aexit__.return_value = None
 
             # 发送请求
-            client.post(
+            response = client.post(
                 f"/api/v1/content/{mock_content_item.id}/completion-updated",
                 headers=normal_user_token_headers,
                 json={
@@ -151,9 +164,12 @@ class TestContentLLMAnalysisUpdated:
                 },
             )
 
+            # 验证响应
+            assert response.status_code == 200
+
             # 验证调用了LiteLLM
-            mock_session.post.assert_called_once()
-            call_args = mock_session.post.call_args
+            mock_session_instance.post.assert_called_once()
+            call_args = mock_session_instance.post.call_args
 
             # 验证请求payload
             payload = call_args[1]["json"]
