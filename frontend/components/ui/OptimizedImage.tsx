@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 interface OptimizedImageProps {
   src: string;
@@ -137,7 +137,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
     <div className="relative inline-block">
       {showLoader && isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted/50 rounded">
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <Spinner size="sm" />
         </div>
       )}
 

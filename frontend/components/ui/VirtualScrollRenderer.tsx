@@ -7,7 +7,8 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { Loader2, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import {
   contentApi,
@@ -243,7 +244,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
     return (
       <div className="flex justify-center items-center h-64">
         <div className="flex items-center space-x-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
+          <Spinner size="sm" />
           <p className="text-lg">Loading content...</p>
         </div>
       </div>
@@ -311,7 +312,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
         >
           {loadingMore ? (
             <div className="flex items-center space-x-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Spinner size="sm" />
               <p className="text-sm text-gray-600">Loading more content...</p>
             </div>
           ) : (

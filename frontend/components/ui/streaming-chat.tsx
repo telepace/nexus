@@ -14,7 +14,6 @@ import {
   Send,
   Bot,
   User,
-  Loader2,
   AlertCircle,
   RotateCcw,
   Trash2,
@@ -22,6 +21,7 @@ import {
   Download,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Spinner } from "@/components/ui/spinner";
 
 export interface ChatMessage {
   id: string;
@@ -335,7 +335,7 @@ export const StreamingChat = forwardRef<HTMLDivElement, StreamingChatProps>(
               )}
               {message.isStreaming && (
                 <Badge variant="outline" className="text-xs">
-                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                     <Spinner size="sm" className="mr-1" />
                   输入中
                 </Badge>
               )}
@@ -451,7 +451,7 @@ export const StreamingChat = forwardRef<HTMLDivElement, StreamingChatProps>(
                 size="sm"
               >
                 {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Spinner size="sm" />
                 ) : (
                   <Send className="h-4 w-4" />
                 )}

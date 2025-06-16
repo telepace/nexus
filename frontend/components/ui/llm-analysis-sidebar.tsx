@@ -1,8 +1,9 @@
 "use client";
 
 import { FC, useEffect } from "react";
-import { Trash2, Loader2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { LLMAnalysisCard } from "@/components/ui/llm-analysis-card";
 import { PromptRecommendations } from "@/components/ui/prompt-recommendations";
 import { PromptCommandDialog } from "@/components/ui/prompt-command-dialog";
@@ -168,7 +169,7 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
       >
         <div className="flex items-center justify-center h-full">
           <div className="flex items-center gap-2 text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Spinner size="sm" />
             <span className="text-sm">加载中...</span>
           </div>
         </div>

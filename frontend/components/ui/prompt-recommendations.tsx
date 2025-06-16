@@ -2,7 +2,7 @@
 
 import { FC } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { PromptRecommendation } from "@/lib/stores/llm-analysis-store";
 
 interface PromptRecommendationsProps {
@@ -41,7 +41,7 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
                       {recommendation.name}
                     </span>
                     {isGenerating && (
-                      <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                      <Spinner size="sm" className="text-primary" />
                     )}
                   </div>
                 </div>
@@ -54,7 +54,7 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
       {isGenerating && (
         <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
           <div className="flex items-center gap-2 text-sm text-primary">
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Spinner size="sm" />
             <span className="font-medium">正在生成 AI 分析...</span>
           </div>
         </div>

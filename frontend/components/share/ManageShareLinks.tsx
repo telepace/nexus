@@ -33,7 +33,8 @@ interface ContentSharePublic {
   content_item_id?: string;
   // 其他必要的属性
 }
-import { AlertCircle, Trash2, RefreshCw, Loader2 } from "lucide-react"; // 移除未使用的 Eye
+import { AlertCircle, Trash2, RefreshCw } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { format } from "date-fns";
 // import { ShareContentModal } from "./ShareContentModal"; // 未使用，暂时注释掉
 
@@ -154,7 +155,7 @@ export const ManageShareLinks: React.FC<ManageShareLinksProps> = ({
   if (isLoading && shares.length === 0) {
     return (
       <div className="flex items-center justify-center py-10">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                     <Spinner size="sm" />
         <p className="ml-2">Loading share links...</p>
       </div>
     );

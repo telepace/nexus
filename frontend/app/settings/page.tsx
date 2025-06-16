@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 /**
  * Renders a user settings page with user profile management and configuration tabs.
@@ -65,7 +65,7 @@ export default function SettingsPage() {
     return (
       <div className="container mx-auto py-8">
         <div className="flex items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                                                     <Spinner size="sm" className="mr-2" />
           <p>Loading user data...</p>
         </div>
       </div>
@@ -164,7 +164,7 @@ export default function SettingsPage() {
                       <div className="flex gap-2">
                         <Button type="submit" disabled={isSubmitting}>
                           {isSubmitting && (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Spinner size="sm" className="mr-2" />
                           )}
                           Save
                         </Button>

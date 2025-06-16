@@ -8,11 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   ArrowLeft,
-  Loader2,
   AlertCircle,
   ExternalLink,
   Download,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { useAuth, getCookie } from "@/lib/auth";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
@@ -53,7 +53,7 @@ const LazyOriginalContent = memo(
       return (
         <div className="flex justify-center items-center h-64">
           <div className="flex items-center space-x-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Spinner size="sm" />
             <p className="text-sm">Loading original content...</p>
           </div>
         </div>
@@ -162,7 +162,7 @@ const ContentRenderer = memo(
           fallback={
             <div className="flex justify-center items-center h-64">
               <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Spinner size="sm" />
                 <p className="text-sm">Loading original content...</p>
               </div>
             </div>
@@ -270,7 +270,7 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
   const [markdownContent, setMarkdownContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("processed"); // 默认选择processed
+  const [activeTab, setActiveTab] = useState("original"); // 默认选择original
   const [contentId, setContentId] = useState<string | null>(null);
 
   // 添加分享状态管理
@@ -378,7 +378,7 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="flex items-center space-x-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
+          <Spinner size="sm" />
           <p className="text-lg">Loading content...</p>
         </div>
       </div>

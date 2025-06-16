@@ -4,12 +4,12 @@ import { FC } from "react";
 import {
   ChevronDown,
   ChevronRight,
-  Loader2,
   Trash2,
   RefreshCw,
   Copy,
   AlertCircle,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -94,7 +94,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
 
           <div className="flex items-center gap-1">
             {analysis.isLoading && (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <Spinner size="sm" />
             )}
 
             {!analysis.isLoading && !analysis.error && (
@@ -151,7 +151,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
           {analysis.isLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Spinner size="sm" />
                 <span className="text-sm">正在生成分析...</span>
               </div>
             </div>

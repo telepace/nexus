@@ -14,13 +14,14 @@ import {
   RotateCcw,
   Copy,
   FastForward,
-  Loader2,
+
   AlertCircle,
   CheckCircle2,
   Wifi,
   WifiOff,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Spinner } from "@/components/ui/spinner";
 
 export interface StreamingTextProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, "content"> {
@@ -312,7 +313,7 @@ export const StreamingText = forwardRef<HTMLDivElement, StreamingTextProps>(
         return (
           <div className="flex items-center justify-center p-8">
             <div className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Spinner size="sm" />
               <span className="text-sm text-muted-foreground">正在连接...</span>
             </div>
           </div>

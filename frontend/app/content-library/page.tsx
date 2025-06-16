@@ -11,9 +11,9 @@ import {
   FileText,
   Link,
   AlertCircle,
-  Loader2,
   Download,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { useAuth, getCookie } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import MainLayout from "@/components/layout/MainLayout";
@@ -192,7 +192,7 @@ export default function ContentLibraryPage() {
       <MainLayout pageTitle="Content Library">
         <div className="flex justify-center items-center h-64">
           <div className="flex items-center space-x-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
+            <Spinner size="sm" />
             <p className="text-lg">Loading...</p>
           </div>
         </div>
@@ -206,7 +206,7 @@ export default function ContentLibraryPage() {
       <MainLayout pageTitle="Content Library">
         <div className="flex justify-center items-center h-64">
           <div className="flex items-center space-x-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
+            <Spinner size="sm" />
             <p className="text-lg">Loading content library...</p>
           </div>
         </div>

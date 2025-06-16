@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import ReaderLayout from "@/components/layout/ReaderLayout";
 import { ReaderContent } from "./ReaderContent";
 
@@ -23,7 +23,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="flex items-center space-x-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
+          <Spinner size="sm" />
           <p className="text-lg">Loading...</p>
         </div>
       </div>
@@ -39,7 +39,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
         fallback={
           <div className="flex justify-center items-center h-64">
             <div className="flex items-center space-x-2">
-              <Loader2 className="h-6 w-6 animate-spin" />
+              <Spinner size="sm" />
               <p className="text-lg">Loading content...</p>
             </div>
           </div>
