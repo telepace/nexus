@@ -6,13 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  BookOpen,
-  FileText,
-  Link,
-  AlertCircle,
-  Download,
-} from "lucide-react";
+import { BookOpen, FileText, Link, AlertCircle, Download } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth, getCookie } from "@/lib/auth";
 import { useRouter } from "next/navigation";

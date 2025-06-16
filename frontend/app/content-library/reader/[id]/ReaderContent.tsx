@@ -6,12 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  ArrowLeft,
-  AlertCircle,
-  ExternalLink,
-  Download,
-} from "lucide-react";
+import { ArrowLeft, AlertCircle, ExternalLink, Download } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth, getCookie } from "@/lib/auth";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";

@@ -155,7 +155,7 @@ export const ManageShareLinks: React.FC<ManageShareLinksProps> = ({
   if (isLoading && shares.length === 0) {
     return (
       <div className="flex items-center justify-center py-10">
-                                     <Spinner size="sm" />
+        <Spinner size="sm" />
         <p className="ml-2">Loading share links...</p>
       </div>
     );

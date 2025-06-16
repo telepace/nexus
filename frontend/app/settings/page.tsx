@@ -65,7 +65,7 @@ export default function SettingsPage() {
     return (
       <div className="container mx-auto py-8">
         <div className="flex items-center justify-center">
-                                                     <Spinner size="sm" className="mr-2" />
+          <Spinner size="sm" className="mr-2" />
           <p>Loading user data...</p>
         </div>
       </div>

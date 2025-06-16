@@ -335,7 +335,7 @@ export const StreamingChat = forwardRef<HTMLDivElement, StreamingChatProps>(
               )}
               {message.isStreaming && (
                 <Badge variant="outline" className="text-xs">
-                                     <Spinner size="sm" className="mr-1" />
+                  <Spinner size="sm" className="mr-1" />
                   输入中
                 </Badge>
               )}

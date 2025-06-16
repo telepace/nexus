@@ -93,9 +93,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
           </Button>
 
           <div className="flex items-center gap-1">
-            {analysis.isLoading && (
-              <Spinner size="sm" />
-            )}
+            {analysis.isLoading && <Spinner size="sm" />}
 
             {!analysis.isLoading && !analysis.error && (
               <>
