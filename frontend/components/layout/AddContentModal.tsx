@@ -485,7 +485,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                       id="url-input"
                       role="textbox"
                       placeholder="粘贴一个或多个链接，支持空格、分号、逗号或换行分隔"
-                      className="min-h-[80px]"
+                      className="min-h-[80px] max-h-[200px] overflow-y-auto resize-none"
                       value={content}
                       onChange={(e) => handleContentChange(e.target.value)}
                     />
@@ -511,7 +511,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                     id="text-content"
                     role="textbox"
                     placeholder="输入您想要添加的文本内容"
-                    className="min-h-[120px]"
+                    className="min-h-[120px] max-h-[300px] overflow-y-auto resize-none"
                     value={content}
                     onChange={(e) => handleContentChange(e.target.value)}
                   />
