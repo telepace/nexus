@@ -224,6 +224,7 @@ def read_prompts(
     tag_ids: list[UUID] | None = Query(None),
     search: str | None = None,
     sort: str | None = None,
+    enabled: bool | None = None,
     order: str = "desc",
 ) -> list[Prompt]:
     """Read and return a list of prompts based on specified filters and sorting.
@@ -241,6 +242,7 @@ def read_prompts(
         tag_ids (list[UUID] | None?): List of UUIDs for tags to filter prompts by.
         search (str | None?): Search term to filter prompts by name, description, or content.
         sort (str | None?): Field to sort the results by ('created_at' or 'updated_at'). Defaults to None.
+        enabled (bool | None?): Filter prompts by enabled status.
         order (str?): Order of sorting ('asc' or 'desc'). Defaults to "desc".
 
     Returns:
@@ -277,6 +279,10 @@ def read_prompts(
                     else False,
                 )
             )
+
+        # 启用状态过滤
+        if enabled is not None:
+            query = query.where(Prompt.enabled == enabled)  # type: ignore
 
         # 排序
         if sort == "created_at":
