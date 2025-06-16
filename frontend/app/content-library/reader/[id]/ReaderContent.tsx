@@ -409,52 +409,67 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
 
   return (
     <div className="h-full flex flex-col p-2">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b">
-        <div className="flex items-center space-x-4">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="h-full flex flex-col"
+      >
+        {/* Header */}
+        <div className="flex items-center gap-3 border-b px-4 py-3">
+          {/* Back button */}
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={() => router.push("/content-library")}
+            className="p-1"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Library
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold">
-              {content.title || "Untitled"}
-            </h1>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant="outline">{content.type.toUpperCase()}</Badge>
-              <Badge variant="secondary">{content.processing_status}</Badge>
-              {content.source_uri && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => window.open(content.source_uri!, "_blank")}
-                >
-                  <ExternalLink className="h-3 w-3 mr-1" />
-                  Source
-                </Button>
-              )}
-            </div>
+
+          {/* Title */}
+          <h1 className="text-lg font-semibold truncate">
+            {content.title || "Untitled"}
+          </h1>
+
+          {/* Type & status badges */}
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">{content.type.toUpperCase()}</Badge>
+            <Badge variant="secondary">{content.processing_status}</Badge>
+            {content.source_uri && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.open(content.source_uri!, "_blank")}
+                className="px-1"
+              >
+                <ExternalLink className="h-3 w-3 mr-1" />
+                Source
+              </Button>
+            )}
+          </div>
+
+          {/* Tabs switcher */}
+          <div className="ml-auto">
+            <TabsList className="grid grid-cols-2 h-7">
+              <TabsTrigger
+                value="processed"
+                className="px-1.5 py-0.5 text-xs font-normal"
+              >
+                Reader
+              </TabsTrigger>
+              <TabsTrigger
+                value="original"
+                className="px-1.5 py-0.5 text-xs font-normal"
+              >
+                Original
+              </TabsTrigger>
+            </TabsList>
           </div>
         </div>
-      </div>
 
-      {/* Main Content - 现在占据剩余空间 */}
-      <div className="flex-1 p-6 min-h-0">
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="h-full flex flex-col"
-        >
-          <TabsList className="grid w-full max-w-[12rem] grid-cols-2">
-            <TabsTrigger value="processed">Processed</TabsTrigger>
-            <TabsTrigger value="original">Original</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="processed" className="flex-1 mt-4 min-h-0">
+        {/* Main Content */}
+        <div className="flex-1 p-6 min-h-0">
+          <TabsContent value="processed" className="flex-1 min-h-0">
             <ContentRenderer
               content={content}
               type="processed"
@@ -463,7 +478,7 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
             />
           </TabsContent>
 
-          <TabsContent value="original" className="flex-1 mt-4 min-h-0">
+          <TabsContent value="original" className="flex-1 min-h-0">
             <ContentRenderer
               content={content}
               type="original"
@@ -471,8 +486,8 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
               markdownContent={markdownContent}
             />
           </TabsContent>
-        </Tabs>
-      </div>
+        </div>
+      </Tabs>
 
       {/* 分享弹窗 */}
       {content && (

@@ -1,9 +1,8 @@
 "use client";
 
 import { FC, useEffect } from "react";
-import { Brain, Trash2, Loader2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { LLMAnalysisCard } from "@/components/ui/llm-analysis-card";
 import { PromptRecommendations } from "@/components/ui/prompt-recommendations";
 import { PromptCommandDialog } from "@/components/ui/prompt-command-dialog";
@@ -178,12 +177,11 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
   }
 
   return (
-    <Card className={`flex flex-col h-full ${className}`}>
-      <CardHeader className="flex-shrink-0 pb-3">
+    <div className={`flex flex-col h-full border ${className}`}>
+      <div className="flex-shrink-0 pb-3 pt-4 px-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg font-semibold">AI 分析</CardTitle>
+            <h3 className="text-lg font-semibold">AI 分析</h3>
             {contentAnalyses.length > 0 && (
               <span className="text-sm text-muted-foreground">
                 ({contentAnalyses.length})
@@ -240,7 +238,7 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
             {isGenerating ? "分析中..." : "🧪 测试分析功能"}
           </Button>
         )}
-      </CardHeader>
+      </div>
 
       {/* Content - 占据剩余空间，可滚动 */}
       <div className="flex-1 min-h-0 overflow-auto px-4 py-4">
@@ -259,9 +257,7 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
           {/* 空状态提示 */}
           {contentAnalyses.length === 0 && !isGenerating && (
             <div className="text-center py-12 text-muted-foreground">
-              <Brain className="h-16 w-16 mx-auto mb-6 opacity-30" />
-              <p className="text-lg font-medium mb-2">还没有 AI 分析</p>
-              <p className="text-sm">选择下方的分析类型或使用对话框开始</p>
+              <p className="text-sm">还没有AI分析，选择下方按钮开始</p>
             </div>
           )}
         </div>
@@ -306,6 +302,6 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 };
