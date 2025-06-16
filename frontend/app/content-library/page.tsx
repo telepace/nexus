@@ -13,7 +13,6 @@ import {
   AlertCircle,
   Loader2,
   Download,
-  Share2,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
 import { useRouter } from "next/navigation";
@@ -401,7 +400,7 @@ export default function ContentLibraryPage() {
                         <BookOpen className="h-4 w-4 mr-2" />
                         Open Reader
                       </Button>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 gap-2">
                         <Button
                           variant="outline"
                           onClick={() => handleDownload(selectedItem)}
@@ -411,16 +410,6 @@ export default function ContentLibraryPage() {
                         >
                           <Download className="h-4 w-4 mr-2" />
                           Download
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => handleShare(selectedItem)}
-                          disabled={
-                            selectedItem.processing_status !== "completed"
-                          }
-                        >
-                          <Share2 className="h-4 w-4 mr-2" />
-                          Share
                         </Button>
                       </div>
                     </div>

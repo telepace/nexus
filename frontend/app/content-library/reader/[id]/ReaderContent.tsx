@@ -12,7 +12,6 @@ import {
   AlertCircle,
   ExternalLink,
   Download,
-  Share2,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
@@ -440,21 +439,6 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
               )}
             </div>
           </div>
-        </div>
-
-        {/* 添加右侧操作区域 */}
-        <div className="flex items-center gap-2">
-          {content?.processing_status === "completed" && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsShareModalOpen(true)}
-              title="分享内容"
-            >
-              <Share2 className="h-4 w-4 mr-2" />
-              分享
-            </Button>
-          )}
         </div>
       </div>
 
