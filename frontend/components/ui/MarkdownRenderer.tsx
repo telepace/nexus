@@ -291,6 +291,8 @@ export function MarkdownRenderer({
           ),
           img: ({ src, alt, ...props }) => {
             // 直接使用原始的 img 标签，避免 Next.js 图片代理
+            // 这里需要使用原始img标签来处理markdown中的外部图片URL
+            // eslint-disable-next-line @next/next/no-img-element
             return (
               <img
                 src={src}

@@ -76,10 +76,10 @@ export default function ContentLibraryPage() {
   };
 
   // Handle Share
-  const handleShare = (item: ContentItemPublic) => {
-    setSelectedItem(item);
-    setIsShareModalOpen(true);
-  };
+  // const handleShare = (item: ContentItemPublic) => {
+  //   setSelectedItem(item);
+  //   setIsShareModalOpen(true);
+  // };
 
   // Handle Download
   const handleDownload = async (item: ContentItemPublic) => {
