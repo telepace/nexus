@@ -221,7 +221,7 @@ def create_prompt(
 def read_prompts(
     *,
     db: Session = Depends(get_db),
-    _current_user: Any = Depends(get_current_user),
+    current_user: Any = Depends(get_current_user),
     skip: int = 0,
     limit: int = 100,
     tag_ids: list[UUID] | None = Query(None),
@@ -238,7 +238,7 @@ def read_prompts(
 
     Args:
         db (Session): Database session.
-        _current_user (Any): Current user information (dependency).
+        current_user (Any): Current user information (dependency).
         skip (int?): Number of records to skip. Defaults to 0.
         limit (int?): Maximum number of records to return. Defaults to 100.
         tag_ids (list[UUID] | None?): List of UUIDs for tags to filter prompts by.
@@ -296,14 +296,19 @@ def read_prompts(
 
         # 执行查询
         prompts = db.exec(query).all()
+
+        # 根据当前用户过滤无访问权限的提示词
+        accessible_prompts: list[Prompt] = [
+            prompt for prompt in prompts if _check_prompt_access(prompt, current_user)
+        ]
+
         # 应用标签加载
-        for prompt in prompts:
+        for prompt in accessible_prompts:
             db.refresh(prompt, ["tags"])
 
-        # 在 Python 中进行分页
-        paginated_prompts = list(prompts[skip : skip + limit])
+        # 在 Python 中进行分页（对过滤后的结果）
+        paginated_prompts = accessible_prompts[skip : skip + limit]
 
-        # 直接返回prompts列表，让FastAPI处理序列化
         return paginated_prompts
     except Exception as e:
         logger.error(f"Error reading prompts: {e}")
@@ -376,7 +381,7 @@ def update_prompt(
             raise HTTPException(status_code=404, detail="Prompt not found")
 
         # 检查权限
-        if not _check_prompt_access(prompt, current_user):
+        if not _check_prompt_access(prompt, current_user, write=True):
             raise HTTPException(status_code=403, detail="Not enough permissions")
 
         # 更新标签关系
@@ -459,7 +464,7 @@ def delete_prompt(
             raise HTTPException(status_code=404, detail="Prompt not found")
 
         # 检查权限
-        if not _check_prompt_access(prompt, current_user):
+        if not _check_prompt_access(prompt, current_user, write=True):
             raise HTTPException(status_code=403, detail="Not enough permissions")
 
         # 删除提示词
@@ -551,7 +556,7 @@ def create_prompt_version(
         if not prompt:
             raise HTTPException(status_code=404, detail="Prompt not found")
 
-        if not _check_prompt_access(prompt, current_user):
+        if not _check_prompt_access(prompt, current_user, write=True):
             raise HTTPException(status_code=403, detail="Not enough permissions")
 
         # 查询最大版本号
@@ -728,7 +733,7 @@ def toggle_prompt_enabled(
             raise HTTPException(status_code=404, detail="Prompt not found")
 
         # 检查权限
-        if not _check_prompt_access(prompt, current_user):
+        if not _check_prompt_access(prompt, current_user, write=True):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Not enough permissions to modify this prompt",
@@ -759,31 +764,39 @@ def toggle_prompt_enabled(
 
 
 # ===== 辅助函数 =====
-def _check_prompt_access(prompt: Prompt, user: Any) -> bool:
+def _check_prompt_access(prompt: Prompt, user: Any, write: bool = False) -> bool:
     """检查用户是否有权限访问提示词
 
     Args:
         prompt: 提示词对象
         user: 用户对象
+        write: 是否为写操作（更新/删除等）
 
     Returns:
         bool: 是否有权限访问
     """
-    # 超级用户可以访问所有提示词
+    # 超级用户拥有所有权限
     if getattr(user, "is_superuser", False):
         return True
 
-    # 创建者可以访问自己的提示词
+    # 写操作仅限于创建者（或超级用户，上方已返回）
+    if write:
+        return prompt.created_by == user.id
+
+    # 以下为只读访问权限判断
+
+    # 创建者始终可以读取
     if prompt.created_by == user.id:
         return True
 
-    # 公开提示词任何人都可以访问
+    # 公开提示词对任何用户可见
     if prompt.visibility == "public":
         return True
 
-    # 团队提示词需要检查团队权限
+    # 团队提示词需确认用户所属团队
     if prompt.visibility == "team" and prompt.team_id:
         user_teams = [team.id for team in getattr(user, "teams", [])]
-        return bool(user_teams and prompt.team_id in user_teams)
+        return prompt.team_id in user_teams
 
+    # 私有提示词默认拒绝
     return False

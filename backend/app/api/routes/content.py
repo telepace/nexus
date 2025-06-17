@@ -1,4 +1,5 @@
 import json
+import logging
 import uuid
 from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
@@ -45,10 +46,11 @@ from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is
 )
 from app.schemas.llm import CompletionRequest, LLMMessage
 from app.utils.background_tasks import background_task_manager
-from app.utils.content_processors import ContentProcessorFactory
-from app.utils.events import create_sse_generator
+from app.utils.content_processors import ProcessingPipeline
+from app.utils.events import content_event_manager, create_sse_generator
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.get(
@@ -129,6 +131,20 @@ def create_content_item_endpoint(
         updated_at=created_item.updated_at,
     )
 
+    # 通知前端新内容已创建
+    import asyncio
+
+    try:
+        loop = asyncio.get_event_loop()
+        loop.create_task(
+            content_event_manager.notify_content_created(
+                user_id=str(current_user.id), content_item=public_item.model_dump()
+            )
+        )
+    except Exception as e:
+        # 不影响主流程，只记录错误
+        print(f"Failed to send SSE notification: {e}")
+
     return public_item
 
 
@@ -138,7 +154,7 @@ def create_content_item_endpoint(
     summary="Process Content Item",
     description="Process a content item to convert it to Markdown format using appropriate processor.",
 )
-def process_content_item_endpoint(
+async def process_content_item_endpoint(
     *,
     session: SessionDep,
     current_user: CurrentUser,
@@ -146,7 +162,7 @@ def process_content_item_endpoint(
     background_tasks: BackgroundTasks,
 ) -> ContentItemPublic:
     """
-    Process content item to convert to Markdown format.
+    Process content item to convert to Markdown format and perform AI analysis.
     """
     # Get the content item
     item = crud_get_content_item(session=session, id=id)
@@ -179,14 +195,11 @@ def process_content_item_endpoint(
         )
         return public_item
 
-    # Get appropriate processor
-    try:
-        processor = ContentProcessorFactory.get_processor(item.type)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    # Use the new processing pipeline
+    pipeline = ProcessingPipeline()
 
-    # Process in background
-    background_tasks.add_task(process_content_background, processor, item, session)
+    # Process in background with new pipeline
+    background_tasks.add_task(process_content_background_async, pipeline, item, session)
 
     # Update status to processing
     item.processing_status = "processing"
@@ -211,8 +224,45 @@ def process_content_item_endpoint(
     return public_item
 
 
+async def process_content_background_async(
+    pipeline, content_item: ContentItem, session
+):
+    """异步后台任务处理内容，支持AI分析"""
+    try:
+        # 使用新的异步处理管道
+        result = await pipeline.process_async(content_item, session)
+
+        if result.success:
+            logger.info(
+                f"Content processing completed successfully for {content_item.id}"
+            )
+
+            # 检查是否有AI分析结果
+            if result.metadata:
+                ai_results = {}
+                for key, value in result.metadata.items():
+                    if key.endswith("_result"):
+                        ai_results[key] = value
+
+                if ai_results:
+                    logger.info(
+                        f"AI analysis results available for {content_item.id}: {list(ai_results.keys())}"
+                    )
+        else:
+            logger.error(
+                f"Content processing failed for {content_item.id}: {result.error_message}"
+            )
+
+    except Exception as e:
+        logger.error(f"Background processing failed for {content_item.id}: {str(e)}")
+        content_item.processing_status = "failed"
+        content_item.error_message = str(e)
+        session.add(content_item)
+        session.commit()
+
+
 def process_content_background(processor, content_item: ContentItem, session):
-    """Background task to process content."""
+    """Legacy background task to process content (kept for backward compatibility)."""
     try:
         result = processor.process_content(content_item, session)
         if result.success:
@@ -251,9 +301,12 @@ def list_content_items_endpoint(
         session=session, skip=skip, limit=limit, user_id=current_user.id
     )
 
-    # Convert ContentItem objects to ContentItemPublic objects
+    # Convert ContentItem objects to ContentItemPublic objects with AI analysis
     public_items = []
     for item in items:
+        # 获取AI分析结果
+        ai_analysis = get_ai_analysis_for_content(session, item.id)
+
         public_item = ContentItemPublic(
             id=item.id,
             user_id=item.user_id,
@@ -265,6 +318,7 @@ def list_content_items_endpoint(
             processing_status=item.processing_status,
             created_at=item.created_at,
             updated_at=item.updated_at,
+            ai_analysis=ai_analysis if ai_analysis else None,
         )
         public_items.append(public_item)
 
@@ -694,7 +748,7 @@ async def analyze_content_ai_sdk(
     content_id: str,
     current_user: CurrentUser,
     user_prompt: str = Body(..., description="Analysis instruction/prompt"),
-    model: str = Body(default="or-llama-3-1-8b-instruct", description="Model to use"),
+    model: str = Body(default="gemini-2.5-flash-preview-05-20", description="Model to use"),
     temperature: float = Body(default=0.7, description="Sampling temperature"),
     max_tokens: int = Body(default=2000, description="Maximum tokens to generate"),
     db: Session = Depends(get_db),
@@ -868,7 +922,7 @@ async def content_completion_stream(
     content_id: str,
     current_user: CurrentUser,
     prompt: str = Body(..., description="Analysis prompt"),
-    model: str = Body(default="or-llama-3-1-8b-instruct", description="Model to use"),
+    model: str = Body(default="gemini-2.5-flash-preview-05-20", description="Model to use"),
     temperature: float = Body(default=0.7, description="Sampling temperature"),
     max_tokens: int = Body(default=2000, description="Maximum tokens to generate"),
     db: Session = Depends(get_db),
@@ -1031,7 +1085,7 @@ async def analyze_content_ai_sdk_updated(
     analysis_instruction: str = Body(
         ..., description="Analysis instruction/prompt from user"
     ),
-    model: str = Body(default="or-llama-3-1-8b-instruct", description="Model to use"),
+    model: str = Body(default="gemini-2.5-flash-preview-05-20", description="Model to use"),
     temperature: float = Body(default=0.7, description="Sampling temperature"),
     max_tokens: int = Body(default=2000, description="Maximum tokens to generate"),
     db: Session = Depends(get_db),
@@ -1208,7 +1262,7 @@ async def content_completion_stream_updated(
     analysis_instruction: str = Body(
         ..., description="Analysis instruction/prompt from user"
     ),
-    model: str = Body(default="or-llama-3-1-8b-instruct", description="Model to use"),
+    model: str = Body(default="gemini-2.5-flash-preview-05-20", description="Model to use"),
     temperature: float = Body(default=0.7, description="Sampling temperature"),
     max_tokens: int = Body(default=2000, description="Maximum tokens to generate"),
     db: Session = Depends(get_db),
@@ -1363,6 +1417,88 @@ async def content_completion_stream_updated(
             "Access-Control-Allow-Headers": "Cache-Control",
         },
     )
+
+
+@router.get(
+    "/{id}/processing-jobs",
+    summary="Get Content Processing Jobs",
+    description="Get all processing jobs and their results for a content item, including AI analysis results.",
+)
+def get_content_processing_jobs(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID,
+) -> dict[str, Any]:
+    """
+    Get processing jobs and AI analysis results for a content item.
+    """
+    item = crud_get_content_item(session=session, id=id)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="ContentItem not found"
+        )
+
+    # Check if the item belongs to the current user
+    if item.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to access this content item",
+        )
+
+    # Get all processing jobs for this content item
+    from app.models.content import ProcessingJob
+
+    processing_jobs = (
+        session.query(ProcessingJob)
+        .filter(ProcessingJob.content_item_id == id)
+        .order_by(ProcessingJob.created_at.desc())
+        .all()
+    )
+
+    # Format the response
+    jobs_data = []
+    for job in processing_jobs:
+        job_data = {
+            "id": str(job.id),
+            "processor_name": job.processor_name,
+            "status": job.status,
+            "started_at": job.started_at.isoformat() if job.started_at else None,
+            "completed_at": job.completed_at.isoformat() if job.completed_at else None,
+            "error_message": job.error_message,
+            "parameters": json.loads(job.parameters) if job.parameters else None,
+            "result": json.loads(job.result) if job.result else None,
+        }
+        jobs_data.append(job_data)
+
+    # Separate AI analysis results for easier access
+    ai_analysis = {}
+    for job in processing_jobs:
+        if (
+            job.processor_name in ["summarizer", "key_points_extractor"]
+            and job.status == "completed"
+            and job.result
+        ):
+            try:
+                result_data = json.loads(job.result)
+                ai_analysis[job.processor_name] = result_data.get("analysis_result", {})
+            except json.JSONDecodeError:
+                continue
+
+    return {
+        "content_item_id": str(id),
+        "processing_status": item.processing_status,
+        "total_jobs": len(jobs_data),
+        "jobs": jobs_data,
+        "ai_analysis": ai_analysis,
+        "summary": {
+            "completed_jobs": len([j for j in jobs_data if j["status"] == "completed"]),
+            "failed_jobs": len([j for j in jobs_data if j["status"] == "failed"]),
+            "in_progress_jobs": len(
+                [j for j in jobs_data if j["status"] == "in_progress"]
+            ),
+        },
+    }
 
 
 # Note: Update and Delete endpoints can be added later if needed
@@ -1546,3 +1682,60 @@ def deactivate_share_link_endpoint(
 print(
     "API routes for ContentItem and ContentShare created in backend/app/api/routes/content.py"
 )
+
+
+def get_ai_analysis_for_content(
+    session: Session, content_id: uuid.UUID
+) -> dict[str, Any]:
+    """
+    获取内容项的AI分析结果
+    """
+    from app.models.content import ProcessingJob
+
+    # 查询AI分析相关的处理任务
+    ai_jobs = (
+        session.query(ProcessingJob)
+        .filter(
+            ProcessingJob.content_item_id == content_id,
+            ProcessingJob.processor_name.in_(["summarizer", "key_points_extractor"]),
+            ProcessingJob.status == "completed",
+        )
+        .all()
+    )
+
+    ai_analysis = {}
+    for job in ai_jobs:
+        if job.result:
+            try:
+                result_data = json.loads(job.result)
+                analysis_result = result_data.get("analysis_result", {})
+
+                # 处理可能的JSON解析错误，提取raw_response
+                if (
+                    isinstance(analysis_result, dict)
+                    and "raw_response" in analysis_result
+                ):
+                    # 尝试从raw_response中提取结构化数据
+                    raw_response = analysis_result["raw_response"]
+                    if isinstance(
+                        raw_response, str
+                    ) and raw_response.strip().startswith("{"):
+                        try:
+                            # 尝试解析raw_response中的JSON
+                            parsed_response = json.loads(
+                                raw_response.replace("```json", "")
+                                .replace("```", "")
+                                .strip()
+                            )
+                            ai_analysis[job.processor_name] = parsed_response
+                        except json.JSONDecodeError:
+                            # 如果解析失败，使用原始响应
+                            ai_analysis[job.processor_name] = {"raw_text": raw_response}
+                    else:
+                        ai_analysis[job.processor_name] = analysis_result
+                else:
+                    ai_analysis[job.processor_name] = analysis_result
+            except json.JSONDecodeError:
+                continue
+
+    return ai_analysis

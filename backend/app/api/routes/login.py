@@ -26,6 +26,7 @@ router = APIRouter(tags=["login"])
 class LoginRequest(BaseModel):
     email: str
     password: str
+    from_source: str | None = None  # 添加来源字段
 
 
 @router.post("/auth/login")
@@ -40,6 +41,18 @@ def auth_login(login_request: LoginRequest, session: SessionDep) -> Token:
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+    
+    # 根据登录来源设置 setup 状态
+    # 如果是来自 Web 端的首次登录，直接标记为 setup 完成
+    # 如果是来自插件的登录，保持 setup 未完成状态，需要用户完成插件设置
+    if login_request.from_source != "extension":
+        # Web 端登录，自动完成 setup
+        if not user.is_setup_complete:
+            user.is_setup_complete = True
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+    
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return Token(
         access_token=security.create_access_token(

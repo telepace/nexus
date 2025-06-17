@@ -93,6 +93,7 @@ async def google_callback_api(
 async def google_login(
     request: Request,
     extension_callback: str | None = None,  # 添加扩展回调链接参数
+    from_source: str | None = None,  # 添加来源参数
 ):
     """
     Initiate Google OAuth2 authentication flow
@@ -119,6 +120,11 @@ async def google_login(
     if extension_callback:
         request.session["extension_callback"] = extension_callback
         logger.info(f"Extension callback URL registered: {extension_callback}")
+    
+    # 保存来源信息
+    if from_source:
+        request.session["from_source"] = from_source
+        logger.info(f"Login source registered: {from_source}")
 
     # u6253u5370u5f53u524du7684 session u72b6u6001
     logger.info(f"Generated OAuth state: {state}")
@@ -209,6 +215,9 @@ async def google_callback(
 
         # Find or create user based on email
         user = crud.get_user_by_email(session=session, email=user_info["email"])
+        
+        # 获取登录来源
+        from_source = request.session.get("from_source", None)
 
         if not user:
             # Create a new user
@@ -217,9 +226,11 @@ async def google_callback(
                 "full_name": user_info.get("name", ""),
                 "is_active": True,
                 "google_id": user_info["sub"],
+                # 根据来源设置 setup 状态：插件用户需要完成 setup，Web 用户直接完成
+                "is_setup_complete": from_source != "extension",
             }
             user = crud.create_user_oauth(session=session, obj_in=User(**user_data))
-            logger.info(f"Created new user for Google account: {user_info['email']}")
+            logger.info(f"Created new user for Google account: {user_info['email']}, setup_complete: {user_data['is_setup_complete']}")
         elif not user.google_id:
             # Update existing user with Google ID
             user.google_id = user_info["sub"]
@@ -229,6 +240,17 @@ async def google_callback(
             logger.info(f"Updated existing user with Google ID: {user_info['email']}")
         else:
             logger.info(f"User already exists: {user_info['email']}")
+        
+        # 根据登录来源设置 setup 状态
+        from_source = request.session.pop("from_source", None)
+        if from_source != "extension":
+            # Web 端登录，自动完成 setup
+            if not user.is_setup_complete:
+                user.is_setup_complete = True
+                session.add(user)
+                session.commit()
+                session.refresh(user)
+                logger.info(f"Auto-completed setup for web login: {user_info['email']}")
 
         # Create access token for the user
         if not user:

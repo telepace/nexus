@@ -95,6 +95,20 @@ export type app__utils__response__ApiResponse_ProjectsPublic_ = {
   error?: string | null;
 };
 
+/**
+ * 批量预处理请求模型
+ */
+export type BatchPreprocessingRequest = {
+  /**
+   * 批量处理项目
+   */
+  items: Array<PreprocessingRequest>;
+  /**
+   * 是否并行处理
+   */
+  parallel_processing?: boolean;
+};
+
 export type Body_chat_create_chat_completion = {
   /**
    * Chat messages in OpenAI format
@@ -255,6 +269,9 @@ export type ContentItemPublic = {
   content_text?: string | null;
   created_at: string;
   updated_at: string;
+  ai_analysis?: {
+    [key: string]: unknown;
+  } | null;
 };
 
 export type ContentShareCreate = {
@@ -357,6 +374,40 @@ export type Message = {
 export type NewPassword = {
   token: string;
   new_password: string;
+};
+
+/**
+ * 预处理请求模型
+ */
+export type PreprocessingRequest = {
+  /**
+   * 要预处理的内容
+   */
+  content: string;
+  /**
+   * 文档元数据
+   */
+  metadata?: {
+    [key: string]: unknown;
+  };
+  /**
+   * 用户偏好设置
+   */
+  user_preferences?: {
+    [key: string]: unknown;
+  } | null;
+};
+
+/**
+ * 预处理响应模型
+ */
+export type PreprocessingResponse = {
+  success: boolean;
+  message: string;
+  data?: {
+    [key: string]: unknown;
+  } | null;
+  error_details?: Array<string> | null;
 };
 
 export type PresignedURLRequest = {
@@ -1204,6 +1255,18 @@ export type ContentContentCompletionStreamUpdatedResponse = unknown;
 
 export type ContentContentCompletionStreamUpdatedError = HTTPValidationError;
 
+export type ContentGetContentProcessingJobsData = {
+  path: {
+    id: string;
+  };
+};
+
+export type ContentGetContentProcessingJobsResponse = {
+  [key: string]: unknown;
+};
+
+export type ContentGetContentProcessingJobsError = HTTPValidationError;
+
 export type ContentCreateShareLinkEndpointData = {
   body: ContentShareCreate;
   path: {
@@ -1354,6 +1417,52 @@ export type DashboardGetUserProjectsResponse =
   app__schemas__common__ApiResponse_ProjectsPublic_;
 
 export type DashboardGetUserProjectsError = HTTPValidationError;
+
+export type PreprocessingProcessContentData = {
+  body: PreprocessingRequest;
+};
+
+export type PreprocessingProcessContentResponse = PreprocessingResponse;
+
+export type PreprocessingProcessContentError = HTTPValidationError;
+
+export type PreprocessingBatchProcessContentData = {
+  body: BatchPreprocessingRequest;
+};
+
+export type PreprocessingBatchProcessContentResponse = PreprocessingResponse;
+
+export type PreprocessingBatchProcessContentError = HTTPValidationError;
+
+export type PreprocessingGetProcessingStatusData = {
+  path: {
+    content_id: string;
+  };
+};
+
+export type PreprocessingGetProcessingStatusResponse = unknown;
+
+export type PreprocessingGetProcessingStatusError = HTTPValidationError;
+
+export type PreprocessingGetContentSegmentsData = {
+  path: {
+    content_id: string;
+  };
+};
+
+export type PreprocessingGetContentSegmentsResponse = unknown;
+
+export type PreprocessingGetContentSegmentsError = HTTPValidationError;
+
+export type PreprocessingValidateContentData = {
+  body: {
+    [key: string]: unknown;
+  };
+};
+
+export type PreprocessingValidateContentResponse = unknown;
+
+export type PreprocessingValidateContentError = HTTPValidationError;
 
 export type PrivateCreateUserData = {
   body: PrivateUserCreate;

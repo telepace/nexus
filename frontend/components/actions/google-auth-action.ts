@@ -7,12 +7,21 @@ import { redirect } from "next/navigation";
  * Redirects the user to the backend Google OAuth login endpoint
  * This is the recommended approach as it keeps OAuth secrets on the backend
  */
-export async function initiateGoogleLogin() {
+export async function initiateGoogleLogin(fromSource?: string) {
   // Get the backend API URL from environment variables
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
+  // 构建 URL 参数
+  const params = new URLSearchParams();
+  if (fromSource) {
+    params.set("from_source", fromSource);
+  }
+
+  const queryString = params.toString();
+  const url = `${apiUrl}/api/v1/login/google${queryString ? `?${queryString}` : ""}`;
+
   // Redirect to the backend Google OAuth endpoint
-  redirect(`${apiUrl}/api/v1/login/google`);
+  redirect(url);
 }
 
 /**

@@ -424,6 +424,12 @@ backend-reinit-data:
 backend-admin-jwt:
 	@cd $(BACKEND_DIR) && ./scripts/get-admin-jwt.py
 
+## backend-migrate-passwords: Migrate user passwords after encryption fix
+.PHONY: backend-migrate-passwords
+backend-migrate-passwords:
+	@echo "===========> Migrating user passwords"
+	@cd $(BACKEND_DIR) && python scripts/migrate_user_passwords.py
+
 # ==============================================================================
 # FRONTEND TARGETS
 # ==============================================================================

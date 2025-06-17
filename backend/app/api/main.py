@@ -9,6 +9,7 @@ from app.api.routes import (
     items,
     llm_service,
     login,
+    preprocessing,  # Add preprocessing router
     private,
     prompts,
     users,
@@ -36,6 +37,9 @@ api_router.include_router(
 api_router.include_router(
     dashboard.router, prefix="/dashboard", tags=["dashboard"]
 )  # Include dashboard router
+api_router.include_router(
+    preprocessing.router, prefix="/preprocessing", tags=["preprocessing"]
+)  # Include preprocessing router
 
 
 if settings.ENVIRONMENT == "local":

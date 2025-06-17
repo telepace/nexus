@@ -8,15 +8,18 @@ This module provides a modern, extensible content processing system that:
 4. Provides extensibility for tools like jina.ai, TAVILY, etc.
 """
 
+import asyncio
 import json
+import logging
 import os
 import tempfile
 import uuid
 from abc import ABC, abstractmethod
+from collections.abc import Coroutine
 from dataclasses import dataclass
 from datetime import datetime
 from io import BytesIO
-from typing import Any
+from typing import Any, cast
 
 import requests
 from markitdown import MarkItDown
@@ -26,6 +29,8 @@ from app.core.config import settings
 from app.models.content import ContentAsset, ContentItem, ProcessingJob
 from app.utils.content_chunker import chunk_content_for_item
 from app.utils.storage import get_storage_service
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -56,8 +61,8 @@ class ProcessingStep(ABC):
     @abstractmethod
     def process(
         self, context: ProcessingContext, result: ProcessingResult
-    ) -> ProcessingResult:
-        """Process the content and return updated result."""
+    ) -> ProcessingResult | Coroutine[Any, Any, ProcessingResult]:
+        """Process the content and return updated result (sync or async)."""
         pass
 
     @abstractmethod
@@ -80,7 +85,7 @@ class JinaProcessor(ProcessingStep):
 
     def process(
         self, context: ProcessingContext, result: ProcessingResult
-    ) -> ProcessingResult:
+    ) -> ProcessingResult | Coroutine[Any, Any, ProcessingResult]:
         """Process URL content using Jina AI."""
         if not self.api_key:
             result.success = False
@@ -267,7 +272,7 @@ class MarkItDownProcessor(ProcessingStep):
 
     def process(
         self, context: ProcessingContext, result: ProcessingResult
-    ) -> ProcessingResult:
+    ) -> ProcessingResult | Coroutine[Any, Any, ProcessingResult]:
         """Process content using MarkItDown."""
         try:
             content_item = context.content_item
@@ -286,7 +291,7 @@ class MarkItDownProcessor(ProcessingStep):
 
     def _process_url(
         self, context: ProcessingContext, result: ProcessingResult
-    ) -> ProcessingResult:
+    ) -> ProcessingResult | Coroutine[Any, Any, ProcessingResult]:
         """Process URL content."""
         content_item = context.content_item
 
@@ -373,7 +378,7 @@ class MarkItDownProcessor(ProcessingStep):
 
     def _process_text(
         self, context: ProcessingContext, result: ProcessingResult
-    ) -> ProcessingResult:
+    ) -> ProcessingResult | Coroutine[Any, Any, ProcessingResult]:
         """Process plain text content."""
         content_item = context.content_item
 
@@ -406,7 +411,7 @@ class MarkItDownProcessor(ProcessingStep):
 
     def _process_file(
         self, context: ProcessingContext, result: ProcessingResult
-    ) -> ProcessingResult:
+    ) -> ProcessingResult | Coroutine[Any, Any, ProcessingResult]:
         """Process uploaded file content."""
         # This would be implemented when we have file upload functionality
         # For now, return a placeholder
@@ -539,6 +544,7 @@ class ProcessingPipeline:
 
     def __init__(self):
         self.steps: list[ProcessingStep] = []
+        self.ai_steps: list[ProcessingStep] = []
         self._register_default_steps()
 
     def _register_default_steps(self):
@@ -550,16 +556,28 @@ class ProcessingPipeline:
         # Add MarkItDown processor as fallback
         self.add_step(MarkItDownProcessor())
 
-        # Future steps can be added here:
-        # self.add_step(LLMScoringStep())
-        # self.add_step(TAVILYStep())
+        # Add AI analysis steps (imported dynamically to avoid circular imports)
+        if hasattr(settings, "LITELLM_PROXY_URL") and settings.LITELLM_PROXY_URL:
+            try:
+                from app.utils.ai_processors import KeyPointsProcessor, SummaryProcessor
+
+                self.add_ai_step(SummaryProcessor())
+                self.add_ai_step(KeyPointsProcessor())
+            except ImportError as e:
+                logger.warning(f"Failed to import AI processors: {e}")
 
     def add_step(self, step: ProcessingStep):
         """Add a processing step to the pipeline."""
         self.steps.append(step)
 
-    def process(self, content_item: ContentItem, session: Session) -> ProcessingResult:
-        """Process content through the pipeline."""
+    def add_ai_step(self, step: ProcessingStep):
+        """Add an AI analysis step to the pipeline."""
+        self.ai_steps.append(step)
+
+    async def process_async(
+        self, content_item: ContentItem, session: Session
+    ) -> ProcessingResult:
+        """异步处理内容（支持AI分析步骤）"""
         # Create processing context
         storage_service = get_storage_service()
         context = ProcessingContext(
@@ -572,7 +590,7 @@ class ProcessingPipeline:
         # Initialize result
         result = ProcessingResult(success=False)
 
-        # Create processing job
+        # Create main processing job
         job = ProcessingJob(
             content_item_id=content_item.id,
             processor_name="processing_pipeline",
@@ -588,14 +606,39 @@ class ProcessingPipeline:
             session.add(content_item)
             session.commit()
 
-            # Process through pipeline steps
+            # Phase 1: Basic content processing (markdown conversion)
             for step in self.steps:
                 if step.can_handle(content_item.type):
-                    result = step.process(context, result)
+                    if hasattr(step, "process") and asyncio.iscoroutinefunction(
+                        step.process
+                    ):
+                        step_result = await step.process(context, result)
+                        result = cast(ProcessingResult, step_result)
+                    else:
+                        step_result = step.process(context, result)
+                        result = cast(ProcessingResult, step_result)
                     if result.success:
                         # Stop processing after first successful step
                         break
-                    # If this step failed, continue to next step
+
+            # Phase 2: AI analysis steps (only if basic processing succeeded)
+            if result.success and self.ai_steps:
+                logger.info(f"Starting AI analysis for content {content_item.id}")
+                for ai_step in self.ai_steps:
+                    try:
+                        if hasattr(ai_step, "process") and asyncio.iscoroutinefunction(
+                            ai_step.process
+                        ):
+                            ai_result = await ai_step.process(context, result)
+                            result = cast(ProcessingResult, ai_result)
+                        else:
+                            ai_result = ai_step.process(context, result)
+                            result = cast(ProcessingResult, ai_result)
+                    except Exception as e:
+                        logger.error(
+                            f"AI step {ai_step.__class__.__name__} failed: {e}"
+                        )
+                        # Continue with other AI steps even if one fails
 
             # Update content item with results
             if result.success:
@@ -605,13 +648,13 @@ class ProcessingPipeline:
                     content_item.meta_info = json.dumps(result.metadata)
 
                 job.status = "completed"
-                job.result = json.dumps(
-                    {
-                        "success": True,
-                        "assets_created": result.assets_created or [],
-                        "metadata": result.metadata,
-                    }
-                )
+                job_result = {
+                    "success": True,
+                    "assets_created": result.assets_created or [],
+                    "metadata": result.metadata,
+                    "ai_analysis_completed": len(self.ai_steps) > 0,
+                }
+                job.result = json.dumps(job_result)
             else:
                 content_item.processing_status = "failed"
                 content_item.error_message = result.error_message
@@ -641,6 +684,25 @@ class ProcessingPipeline:
             result.error_message = str(e)
 
         return result
+
+    def process(self, content_item: ContentItem, session: Session) -> ProcessingResult:
+        """同步处理内容（保持向后兼容）"""
+        import asyncio
+
+        # Check if we're already in an async context
+        try:
+            asyncio.get_running_loop()
+            # If we're in an async context, we need to run in a new thread
+            import concurrent.futures
+
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(
+                    asyncio.run, self.process_async(content_item, session)
+                )
+                return future.result()
+        except RuntimeError:
+            # No running loop, we can use asyncio.run
+            return asyncio.run(self.process_async(content_item, session))
 
 
 # Legacy compatibility - maintain existing factory pattern

@@ -17,6 +17,9 @@ import {
   Search,
   Calendar,
   Clock,
+  Brain,
+  Lightbulb,
+  Target,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/client-auth";
 import { useRouter } from "next/navigation";
@@ -31,6 +34,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
+import { eventBus } from "@/lib/event-bus";
 
 // Define the ContentItemPublic type based on backend schema
 interface ContentItemPublic {
@@ -43,6 +47,24 @@ interface ContentItemPublic {
   processing_status: string;
   created_at: string;
   updated_at: string;
+  ai_analysis?: {
+    summarizer?: {
+      summary?: {
+        main_thesis?: string;
+        key_insights?: string[];
+        conclusion?: string;
+      };
+      raw_text?: string;
+    };
+    key_points_extractor?: {
+      key_points?: {
+        core_concepts?: Array<{ point: string; explanation?: string }>;
+        important_facts?: Array<{ fact: string; context?: string }>;
+        actionable_insights?: Array<{ insight: string; application?: string }>;
+      };
+      raw_text?: string;
+    };
+  } | null;
 }
 
 // Content type icons mapping
@@ -70,6 +92,82 @@ function debounce<T extends (...args: never[]) => void>(
     timeoutId = setTimeout(() => func(...args), delay);
   };
 }
+
+// AI分析结果展示组件
+const AIAnalysisCard = ({
+  analysis,
+}: { analysis: ContentItemPublic["ai_analysis"] }) => {
+  if (!analysis) return null;
+
+  const { summarizer, key_points_extractor } = analysis;
+
+  return (
+    <div className="space-y-3 mt-3 pt-3 border-t border-border/50">
+      {/* AI分析标题 */}
+      <div className="flex items-center gap-2 text-sm font-medium text-primary">
+        <Brain className="h-4 w-4" />
+        AI 智能分析
+      </div>
+
+      {/* 总结部分 */}
+      {summarizer && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 p-3 rounded-lg border border-blue-200/50 dark:border-blue-800/50">
+          <div className="flex items-center gap-2 mb-2">
+            <FileText className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+            <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+              智能总结
+            </span>
+          </div>
+          {summarizer.summary?.main_thesis ? (
+            <p className="text-xs text-blue-800 dark:text-blue-200 leading-relaxed line-clamp-3">
+              {summarizer.summary.main_thesis}
+            </p>
+          ) : summarizer.raw_text ? (
+            <p className="text-xs text-blue-800 dark:text-blue-200 leading-relaxed line-clamp-3">
+              {summarizer.raw_text.substring(0, 150)}...
+            </p>
+          ) : null}
+        </div>
+      )}
+
+      {/* 关键要点部分 */}
+      {key_points_extractor && (
+        <div className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20 p-3 rounded-lg border border-emerald-200/50 dark:border-emerald-800/50">
+          <div className="flex items-center gap-2 mb-2">
+            <Target className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+              关键要点
+            </span>
+          </div>
+          {key_points_extractor.key_points?.core_concepts ? (
+            <div className="space-y-1">
+              {key_points_extractor.key_points.core_concepts
+                .slice(0, 2)
+                .map((concept, index) => (
+                  <div key={index} className="flex items-start gap-1">
+                    <Lightbulb className="h-2 w-2 text-emerald-600 dark:text-emerald-400 mt-1 flex-shrink-0" />
+                    <span className="text-xs text-emerald-800 dark:text-emerald-200 leading-relaxed line-clamp-2">
+                      {concept.point}
+                    </span>
+                  </div>
+                ))}
+              {key_points_extractor.key_points.core_concepts.length > 2 && (
+                <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                  +{key_points_extractor.key_points.core_concepts.length - 2}{" "}
+                  更多要点
+                </div>
+              )}
+            </div>
+          ) : key_points_extractor.raw_text ? (
+            <p className="text-xs text-emerald-800 dark:text-emerald-200 leading-relaxed line-clamp-3">
+              {key_points_extractor.raw_text.substring(0, 150)}...
+            </p>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function ContentLibraryPage() {
   const [items, setItems] = useState<ContentItemPublic[]>([]);
@@ -203,6 +301,24 @@ export default function ContentLibraryPage() {
       } else if (event.status === "failed") {
         toast.error(`内容处理失败: ${event.error_message || "未知错误"}`);
       }
+    } else if (event.type === "content_created" && event.content_item) {
+      // 处理新内容创建事件
+      const newItem = event.content_item as ContentItemPublic;
+      setItems((prevItems) => {
+        // 检查是否已存在，避免重复添加
+        const exists = prevItems.some((item) => item.id === newItem.id);
+        if (!exists) {
+          // 将新项目添加到列表开头
+          return [newItem, ...prevItems];
+        }
+        return prevItems;
+      });
+
+      // 清除内容缓存以确保数据一致性
+      contentCache.clearContentList();
+
+      // 显示成功通知
+      toast.success(`新内容已添加: ${newItem.title || "未知内容"}`);
     }
   }, []);
 
@@ -328,6 +444,31 @@ export default function ContentLibraryPage() {
     }
   };
 
+  // 订阅来自 AddContentModal 的本地事件，立即更新内容列表
+  useEffect(() => {
+    const handler = (item: ContentItemPublic) => {
+      setItems((prev) => {
+        // 避免重复插入
+        if (prev.some((existing) => existing.id === item.id)) {
+          return prev;
+        }
+        // 将新项目添加到顶部
+        return [item, ...prev];
+      });
+
+      // 清除缓存，确保后续刷新数据准确
+      contentCache.clearContentList();
+
+      toast.success(`新内容已添加: ${item.title || "未知内容"}`);
+    };
+
+    eventBus.on("contentCreated", handler);
+
+    return () => {
+      eventBus.off("contentCreated", handler);
+    };
+  }, []);
+
   useEffect(() => {
     // Wait for auth to complete
     if (authLoading) return;
@@ -342,6 +483,9 @@ export default function ContentLibraryPage() {
       try {
         setLoading(true);
         setError(null);
+
+        // 暂时清除缓存进行调试
+        contentCache.clearContentList();
 
         // 先尝试从缓存获取数据
         const cachedItems = contentCache.getContentList();
@@ -363,6 +507,13 @@ export default function ContentLibraryPage() {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
+        console.log("🚀 Fetching content items...", {
+          apiUrl: `${apiUrl}/api/v1/content/`,
+          hasToken: !!token,
+          tokenLength: token?.length,
+          userEmail: user?.email,
+        });
+
         // Use the correct API endpoint with authentication
         const response = await fetch(`${apiUrl}/api/v1/content/`, {
           headers: {
@@ -372,18 +523,34 @@ export default function ContentLibraryPage() {
           credentials: "include",
         });
 
+        console.log("📡 API Response:", {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok,
+        });
+
         if (!response.ok) {
           if (response.status === 401) {
+            console.error("🔒 Authentication failed");
             setError("Authentication failed. Please log in again.");
             router.push("/login");
             return;
           }
 
           const errorData = await response.text();
+          console.error("❌ API Error:", errorData);
           throw new Error(`HTTP ${response.status}: ${errorData}`);
         }
 
         const data = await response.json();
+        console.log("✅ Content items loaded:", {
+          count: data.length,
+          items: data.map((item: ContentItemPublic) => ({
+            id: item.id,
+            title: item.title,
+            type: item.type,
+          })),
+        });
         setItems(data);
         // 缓存内容列表
         contentCache.setContentList(data);
@@ -568,6 +735,9 @@ export default function ContentLibraryPage() {
                                     ).toLocaleDateString("zh-CN")}
                                   </div>
                                 </div>
+
+                                {/* AI分析结果预览 */}
+                                <AIAnalysisCard analysis={item.ai_analysis} />
                               </div>
                             </div>
                           </div>
@@ -700,6 +870,10 @@ export default function ContentLibraryPage() {
                             </Button>
                           </div>
                         </div>
+
+                        <Separator />
+
+                        <AIAnalysisCard analysis={selectedItem.ai_analysis} />
                       </div>
                     ) : (
                       <div className="text-center py-12">

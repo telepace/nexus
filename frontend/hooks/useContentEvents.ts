@@ -4,12 +4,17 @@ import { useAuth } from "@/lib/auth";
 export interface ContentEvent {
   id: string;
   timestamp: string;
-  type: "content_status_update" | "connection_established" | "heartbeat";
+  type:
+    | "content_status_update"
+    | "content_created"
+    | "connection_established"
+    | "heartbeat";
   content_id?: string;
   status?: string;
   title?: string;
   error_message?: string;
   progress?: number;
+  content_item?: any;
 }
 
 interface UseContentEventsOptions {
@@ -96,6 +101,9 @@ export function useContentEvents(options: UseContentEventsOptions = {}) {
                     onConnectionEstablished?.();
                     break;
                   case "content_status_update":
+                    onContentUpdate?.(eventData);
+                    break;
+                  case "content_created":
                     onContentUpdate?.(eventData);
                     break;
                   case "heartbeat":

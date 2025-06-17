@@ -21,7 +21,7 @@ router = APIRouter()
 @router.post("/completions")
 async def create_chat_completion(
     messages: list[dict] = Body(..., description="Chat messages in OpenAI format"),
-    model: str = Body(default="or-llama-3-1-8b-instruct", description="Model to use"),
+    model: str = Body(default="or-gemini-2.5-flash-preview-05-20", description="Model to use"),
     stream: bool = Body(default=True, description="Whether to stream the response"),
     temperature: float = Body(default=0.7, description="Sampling temperature"),
     max_tokens: int = Body(default=2000, description="Maximum tokens to generate"),
@@ -200,6 +200,9 @@ async def list_available_models(
     """
     # 从 LiteLLM 配置中获取可用模型
     available_models = [
+        {"id": "gemini-2.5-flash-preview-05-20", "name": "Gemini 2.5 Flash Preview"},
+        {"id": "gemini-2.5-pro", "name": "Gemini 2.5 Pro"},
+        {"id": "gemini-2.0-flash", "name": "Gemini 2.0 Flash"},
         {"id": "or-llama-3-1-8b-instruct", "name": "Llama 3.1 8B Instruct"},
         {"id": "or-llama-3-3-70b-instruct", "name": "Llama 3.3 70B Instruct"},
         {"id": "github-llama-3-2-11b-vision", "name": "Llama 3.2 11B Vision"},

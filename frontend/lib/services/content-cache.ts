@@ -92,6 +92,10 @@ class ContentCacheService {
     return this.get<ContentItemPublic[]>("content-list");
   }
 
+  clearContentList(): void {
+    this.delete("content-list");
+  }
+
   // 内容详情缓存
   setContentDetail(id: string, detail: ContentDetail, ttl?: number): void {
     this.set(`content-detail-${id}`, detail, ttl);

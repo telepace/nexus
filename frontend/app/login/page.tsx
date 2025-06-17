@@ -42,7 +42,15 @@ function CallbackUrlHandler({
   setExtensionCallback: (url: string | null) => void;
 }) {
   const searchParams = useSearchParams();
-  const callbackUrlFromQuery = searchParams.get("callbackUrl") || "/setup";
+
+  // Check if this is from extension
+  const isFromExtension = searchParams.get("from") === "extension";
+
+  // Set different default callback URLs based on source
+  const defaultCallbackUrl = isFromExtension ? "/setup" : "/content-library";
+  const callbackUrlFromQuery =
+    searchParams.get("callbackUrl") || defaultCallbackUrl;
+
   const extensionCallbackUrl = searchParams.get("extension_callback");
 
   useEffect(() => {
@@ -80,12 +88,12 @@ function AuthRedirectHandler() {
 function LoginContent() {
   const { isLoading } = useAuth();
   const router = useRouter();
-  const [callbackUrl, setCallbackUrl] = useState("/setup");
+  const [callbackUrl, setCallbackUrl] = useState("/content-library");
   const [extensionCallback, setExtensionCallback] = useState<string | null>(
     null,
   );
-  const [email, setEmail] = useState("test@example.com"); // 预填测试用户
-  const [password, setPassword] = useState("password"); // 预填测试用户密码
+  const [email, setEmail] = useState(""); // 移除预填测试用户
+  const [password, setPassword] = useState(""); // 移除预填测试用户密码
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [error, setError] = useState("");
 
@@ -102,12 +110,20 @@ function LoginContent() {
     setError("");
 
     try {
+      // 检查是否来自插件
+      const urlParams = new URLSearchParams(window.location.search);
+      const isFromExtension = urlParams.get("from") === "extension";
+
       const response = await fetch("/api/v1/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email,
+          password,
+          from_source: isFromExtension ? "extension" : "web",
+        }),
       });
 
       if (response.ok) {
@@ -182,7 +198,12 @@ function LoginContent() {
               variant="outline"
               className="w-full py-6 border-slate-200 dark:border-slate-700 flex items-center justify-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all duration-300 mb-6 relative group overflow-hidden"
               type="button"
-              onClick={() => initiateGoogleLogin()}
+              onClick={() => {
+                // 检查是否来自插件
+                const urlParams = new URLSearchParams(window.location.search);
+                const isFromExtension = urlParams.get("from") === "extension";
+                initiateGoogleLogin(isFromExtension ? "extension" : "web");
+              }}
             >
               <div className="absolute inset-0 w-0 bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/30 dark:to-transparent transition-all duration-500 group-hover:w-full"></div>
               <svg
@@ -291,23 +312,6 @@ function LoginContent() {
                 </Button>
               </div>
             </form>
-
-            {/* 测试用户信息 */}
-            {process.env.NODE_ENV === "development" && (
-              <div className="mt-4 p-3 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-                <p className="text-xs text-blue-600 dark:text-blue-400 mb-2 font-medium">
-                  开发环境测试账号：
-                </p>
-                <div className="space-y-1">
-                  <p className="text-xs text-blue-700 dark:text-blue-300">
-                    邮箱: test@example.com
-                  </p>
-                  <p className="text-xs text-blue-700 dark:text-blue-300">
-                    密码: password
-                  </p>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
 

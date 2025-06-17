@@ -2,55 +2,23 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PromptCommandDialog } from "@/components/ui/prompt-command-dialog";
 import { Prompt } from "@/lib/api/services/prompts";
+import {
+  createMockPrompt,
+  createMockPromptWithType,
+} from "@/lib/utils/prompt-utils";
 
-// Mock prompts data
+// Mock prompts data - 使用抽象的测试数据，不复制真实业务内容
 const mockPrompts: Prompt[] = [
-  {
-    id: "prompt-1",
-    name: "生成摘要",
-    content: "请为以下内容生成一个简洁明了的摘要：{content}",
-    description: "为内容生成简洁的摘要",
-    visibility: "public",
-    version: 1,
-    enabled: false,
-    updated_at: "2025-05-26T14:50:56.230373",
-    type: "template",
-    input_vars: [
-      {
-        name: "content",
-        description: "内容",
-        required: true,
-      },
-    ],
-    meta_data: null,
-    team_id: null,
-    created_at: "2025-05-26T14:37:39.172214",
-    embedding: null,
-    created_by: "user-1",
-  },
-  {
-    id: "prompt-2",
-    name: "深度洞察",
-    content: "请对以下内容进行深度分析：{content}",
-    description: "提供深度分析和洞察",
-    visibility: "public",
-    version: 1,
-    enabled: false,
-    updated_at: "2025-05-26T14:50:56.230373",
-    type: "template",
-    input_vars: [
-      {
-        name: "content",
-        description: "内容",
-        required: true,
-      },
-    ],
-    meta_data: null,
-    team_id: null,
-    created_at: "2025-05-26T14:37:39.172214",
-    embedding: null,
-    created_by: "user-1",
-  },
+  createMockPromptWithType("summary", {
+    id: "test-prompt-1",
+    name: "测试摘要功能",
+    description: "用于测试摘要功能的提示词",
+  }),
+  createMockPromptWithType("insights", {
+    id: "test-prompt-2",
+    name: "测试洞察功能",
+    description: "用于测试洞察功能的提示词",
+  }),
 ];
 
 describe("PromptCommandDialog", () => {
@@ -85,8 +53,8 @@ describe("PromptCommandDialog", () => {
     await user.type(input, "/");
 
     await waitFor(() => {
-      expect(screen.getByText("生成摘要")).toBeInTheDocument();
-      expect(screen.getByText("深度洞察")).toBeInTheDocument();
+      expect(screen.getByText("测试摘要功能")).toBeInTheDocument();
+      expect(screen.getByText("测试洞察功能")).toBeInTheDocument();
     });
   });
 
@@ -98,8 +66,8 @@ describe("PromptCommandDialog", () => {
     await user.type(input, "/摘要");
 
     await waitFor(() => {
-      expect(screen.getByText("生成摘要")).toBeInTheDocument();
-      expect(screen.queryByText("深度洞察")).not.toBeInTheDocument();
+      expect(screen.getByText("测试摘要功能")).toBeInTheDocument();
+      expect(screen.queryByText("测试洞察功能")).not.toBeInTheDocument();
     });
   });
 
@@ -111,10 +79,10 @@ describe("PromptCommandDialog", () => {
     await user.type(input, "/");
 
     await waitFor(() => {
-      expect(screen.getByText("生成摘要")).toBeInTheDocument();
+      expect(screen.getByText("测试摘要功能")).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText("生成摘要"));
+    await user.click(screen.getByText("测试摘要功能"));
 
     expect(mockOnPromptSelect).toHaveBeenCalledWith(mockPrompts[0]);
   });
@@ -141,9 +109,9 @@ describe("PromptCommandDialog", () => {
     // Select a prompt first
     await user.type(input, "/");
     await waitFor(() => {
-      expect(screen.getByText("生成摘要")).toBeInTheDocument();
+      expect(screen.getByText("测试摘要功能")).toBeInTheDocument();
     });
-    await user.click(screen.getByText("生成摘要"));
+    await user.click(screen.getByText("测试摘要功能"));
 
     // Clear and type content
     await user.clear(input);
@@ -171,14 +139,46 @@ describe("PromptCommandDialog", () => {
     await user.type(input, "/");
 
     await waitFor(() => {
-      expect(screen.getByText("生成摘要")).toBeInTheDocument();
+      expect(screen.getByText("测试摘要功能")).toBeInTheDocument();
     });
 
     // Click outside the input
     await user.click(document.body);
 
     await waitFor(() => {
-      expect(screen.queryByText("生成摘要")).not.toBeInTheDocument();
+      expect(screen.queryByText("测试摘要功能")).not.toBeInTheDocument();
+    });
+  });
+
+  // 测试组件对不同状态 prompts 的处理
+  it("should handle empty prompts list", () => {
+    render(<PromptCommandDialog {...defaultProps} availablePrompts={[]} />);
+
+    const input = screen.getByPlaceholderText("chat with content");
+    expect(input).toBeInTheDocument();
+  });
+
+  // 测试组件对大量 prompts 的处理
+  it("should handle large number of prompts", async () => {
+    const manyPrompts = Array.from({ length: 20 }, (_, i) =>
+      createMockPrompt({
+        id: `prompt-${i}`,
+        name: `测试提示词 ${i}`,
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(
+      <PromptCommandDialog {...defaultProps} availablePrompts={manyPrompts} />,
+    );
+
+    const input = screen.getByPlaceholderText("chat with content");
+    await user.type(input, "/");
+
+    await waitFor(() => {
+      // 应该显示所有的提示词
+      expect(screen.getByText("测试提示词 0")).toBeInTheDocument();
+      expect(screen.getByText("测试提示词 19")).toBeInTheDocument();
     });
   });
 });

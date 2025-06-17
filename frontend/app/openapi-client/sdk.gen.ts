@@ -182,6 +182,9 @@ import type {
   ContentContentCompletionStreamUpdatedData,
   ContentContentCompletionStreamUpdatedError,
   ContentContentCompletionStreamUpdatedResponse,
+  ContentGetContentProcessingJobsData,
+  ContentGetContentProcessingJobsError,
+  ContentGetContentProcessingJobsResponse,
   ContentCreateShareLinkEndpointData,
   ContentCreateShareLinkEndpointError,
   ContentCreateShareLinkEndpointResponse,
@@ -223,6 +226,21 @@ import type {
   DashboardGetUserProjectsData,
   DashboardGetUserProjectsError,
   DashboardGetUserProjectsResponse,
+  PreprocessingProcessContentData,
+  PreprocessingProcessContentError,
+  PreprocessingProcessContentResponse,
+  PreprocessingBatchProcessContentData,
+  PreprocessingBatchProcessContentError,
+  PreprocessingBatchProcessContentResponse,
+  PreprocessingGetProcessingStatusData,
+  PreprocessingGetProcessingStatusError,
+  PreprocessingGetProcessingStatusResponse,
+  PreprocessingGetContentSegmentsData,
+  PreprocessingGetContentSegmentsError,
+  PreprocessingGetContentSegmentsResponse,
+  PreprocessingValidateContentData,
+  PreprocessingValidateContentError,
+  PreprocessingValidateContentResponse,
   PrivateCreateUserData,
   PrivateCreateUserError,
   PrivateCreateUserResponse,
@@ -1489,6 +1507,28 @@ export const contentContentCompletionStreamUpdated = <
 };
 
 /**
+ * Get Content Processing Jobs
+ * Get all processing jobs and their results for a content item, including AI analysis results.
+ */
+export const contentGetContentProcessingJobs = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentGetContentProcessingJobsData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetContentProcessingJobsResponse,
+    ContentGetContentProcessingJobsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{id}/processing-jobs",
+  });
+};
+
+/**
  * Create a Share Link for a Content Item
  * Generates a shareable link for the specified content item. Requires ownership.
  */
@@ -1747,6 +1787,126 @@ export const dashboardGetUserProjects = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/api/v1/dashboard/projects",
+  });
+};
+
+/**
+ * Process Content
+ * 处理单个内容
+ *
+ * 执行完整的6层预处理流水线：
+ * 1. 输入层：内容验证和规范化
+ * 2. 解析层：转换为统一Markdown格式
+ * 3. 智能分段层：长文本分段处理
+ * 4. AI初始化层：生成摘要、要点等
+ * 5. 存储层：持久化数据
+ * 6. 输出层：格式化结果
+ */
+export const preprocessingProcessContent = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<PreprocessingProcessContentData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    PreprocessingProcessContentResponse,
+    PreprocessingProcessContentError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/preprocessing/preprocessing/process",
+  });
+};
+
+/**
+ * Batch Process Content
+ * 批量处理内容
+ *
+ * 支持并行或串行处理多个内容项目
+ */
+export const preprocessingBatchProcessContent = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    PreprocessingBatchProcessContentData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    PreprocessingBatchProcessContentResponse,
+    PreprocessingBatchProcessContentError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/preprocessing/preprocessing/batch-process",
+  });
+};
+
+/**
+ * Get Processing Status
+ * 获取处理状态
+ *
+ * 查询特定内容的预处理状态
+ */
+export const preprocessingGetProcessingStatus = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    PreprocessingGetProcessingStatusData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    PreprocessingGetProcessingStatusResponse,
+    PreprocessingGetProcessingStatusError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/preprocessing/preprocessing/status/{content_id}",
+  });
+};
+
+/**
+ * Get Content Segments
+ * 获取内容分段
+ *
+ * 返回特定内容的所有分段信息
+ */
+export const preprocessingGetContentSegments = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    PreprocessingGetContentSegmentsData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    PreprocessingGetContentSegmentsResponse,
+    PreprocessingGetContentSegmentsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/preprocessing/preprocessing/content/{content_id}/segments",
+  });
+};
+
+/**
+ * Validate Content
+ * 验证内容格式
+ *
+ * 在正式处理前验证内容是否符合要求
+ */
+export const preprocessingValidateContent = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<PreprocessingValidateContentData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    PreprocessingValidateContentResponse,
+    PreprocessingValidateContentError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/preprocessing/preprocessing/validate",
   });
 };
 

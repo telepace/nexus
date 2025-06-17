@@ -12,7 +12,7 @@ from typing import Any, Protocol, TypeVar
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
-from app.core.security import get_password_hash, verify_password
+from app.core.security import get_password_hash, verify_password, decrypt_password
 from app.models import Project, TokenBlacklist, User
 
 # Import from crud_image.py
@@ -160,12 +160,20 @@ def create_user(
     # 添加这个检查，确保 is_superuser 字段被正确设置
     is_superuser = getattr(user_create, "is_superuser", False)
 
+    # 解密密码然后哈希
+    try:
+        decrypted_password = decrypt_password(user_create.password)
+    except Exception:
+        # 如果解密失败，假设密码已经是明文（用于测试或向后兼容）
+        decrypted_password = user_create.password
+
     # 创建用户数据字典
     user_data = {
         "email": user_create.email,
-        "hashed_password": get_password_hash(user_create.password),
+        "hashed_password": get_password_hash(decrypted_password),
         "full_name": user_create.full_name,
         "is_superuser": is_superuser,
+        "is_setup_complete": True,  # Web 用户默认完成 setup
     }
 
     # 如果提供了自定义ID，则使用它
@@ -193,10 +201,20 @@ def get_user(*, session: Session, user_id: uuid.UUID) -> Any | None:
 
 def authenticate(*, session: Session, email: str, password: str) -> Any | None:
     """验证用户"""
+    from app.core.security import decrypt_password
+    
     user = get_user_by_email(session=session, email=email)
     if not user or not user.hashed_password:
         return None
-    if not verify_password(password, user.hashed_password):
+    
+    # 解密密码然后验证
+    try:
+        decrypted_password = decrypt_password(password)
+    except Exception:
+        # 如果解密失败，假设密码已经是明文（用于测试或向后兼容）
+        decrypted_password = password
+    
+    if not verify_password(decrypted_password, user.hashed_password):
         return None
     return user
 
@@ -345,6 +363,17 @@ def create_user_oauth(*, session: Session, obj_in: Any) -> Any:
     # 动态导入User
     """Create a new user for OAuth authentication without a password."""
     from app.models import User
+
+    # 确保 OAuth 用户也默认完成 setup（除非明确指定为 extension 来源）
+    if hasattr(obj_in, 'is_setup_complete'):
+        # 如果已经设置了 setup 状态，保持不变
+        pass
+    else:
+        # 默认设置为完成状态
+        if hasattr(obj_in, '__dict__'):
+            obj_in.__dict__['is_setup_complete'] = True
+        elif isinstance(obj_in, dict):
+            obj_in['is_setup_complete'] = True
 
     db_obj = User.model_validate(obj_in)
     session.add(db_obj)

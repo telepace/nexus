@@ -498,15 +498,20 @@ export async function addPrompt(formData: FormData) {
     promptsCache = null;
     lastPromptsFetchTime = 0;
 
-    // 重新验证路径
+    // 重新验证提示词相关路径缓存
     revalidatePath("/prompts");
 
-    // 创建成功，重定向到prompt详情页
+    // 创建成功后，告知调用方跳转到提示词首页，而不是立即在服务器端重定向
     if (data && "id" in data) {
-      redirect(`/prompts/${data.id}`);
+      return {
+        success: true,
+        data: { id: String(data.id) },
+        redirectUrl: "/prompts",
+      };
     }
 
-    return { success: true };
+    // 如果没有返回数据，也保持成功并跳转到首页
+    return { success: true, redirectUrl: "/prompts" };
   } catch (error: unknown) {
     console.error("创建prompt出错:", error);
     // Fallback for unexpected errors during the try block execution

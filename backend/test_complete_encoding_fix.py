@@ -18,8 +18,19 @@ def test_complete_encoding_fix():
 
     print("🔧 完整的端到端中文编码测试...")
 
-    # 模拟一个有编码问题的中文网站HTML
-    problematic_html = """<!DOCTYPE html>
+    try:
+        with Session(engine) as session:
+            print("🌐 模拟problematic网站请求...")
+
+            # 模拟requests.get的返回，故意设置错误的编码
+            def mock_requests_get(*_args, **_kwargs):
+                response = Mock()
+                response.status_code = 200
+                response.headers = {'content-type': 'text/html; charset=utf-8'}
+                response.url = 'https://example.com'
+
+                # 创建一个包含中文的HTML内容
+                problematic_html = """<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <title>中文网站测试</title>
@@ -88,26 +99,11 @@ print("模型创建成功！")
 </body>
 </html>"""
 
-    try:
-        with Session(engine) as session:
-            print("🌐 模拟problematic网站请求...")
-
-            # 模拟requests.get的返回，故意设置错误的编码
-            def mock_requests_get(url, timeout=None):
-                response = Mock()
-                response.status_code = 200
-                response.headers = {'content-type': 'text/html'}  # 没有charset
-                response.encoding = None  # 没有编码信息
-
-                # 模拟服务器返回的字节内容
-                response.content = problematic_html.encode('utf-8')
-
-                # 模拟requests.text的错误行为（使用latin-1解码UTF-8内容会产生乱码）
                 try:
-                    # 这会导致中文字符变成乱码
+                    # 故意使用错误的编码来模拟编码问题
                     garbled_text = problematic_html.encode('utf-8').decode('latin-1')
                     response.text = garbled_text
-                except:
+                except Exception:
                     response.text = problematic_html
 
                 response.raise_for_status = Mock()

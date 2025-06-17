@@ -25,6 +25,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuth, getCookie } from "@/lib/auth";
+import { contentCache } from "@/lib/services/content-cache";
+import { eventBus } from "@/lib/event-bus";
 
 interface AddContentModalProps {
   open: boolean;
@@ -32,6 +34,20 @@ interface AddContentModalProps {
 }
 
 type ContentType = "url" | "text" | "file" | null;
+
+// 与内容库页面保持一致的公共内容项类型定义
+interface ContentItemPublic {
+  id: string;
+  type: string;
+  source_uri?: string | null;
+  title?: string | null;
+  summary?: string | null;
+  user_id: string;
+  processing_status: string;
+  created_at: string;
+  updated_at: string;
+  ai_analysis?: unknown | null;
+}
 
 /**
  * Add Content Modal component.
@@ -182,6 +198,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
+      // 用于收集已创建的内容项，便于后续一次性广播事件
+      const newlyCreatedItems: ContentItemPublic[] = [];
+
       if (contentType === "url" && detectedUrls.length > 0) {
         // 处理URL类型内容
         for (const url of detectedUrls) {
@@ -209,8 +228,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
             );
           }
 
-          const createdItem = await response.json();
+          const createdItem: ContentItemPublic = await response.json();
           console.log("URL内容创建成功:", createdItem);
+          newlyCreatedItems.push(createdItem);
           // Note: Background processing is automatically started by the backend
         }
       } else if (contentType === "text" && content.trim()) {
@@ -240,8 +260,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           );
         }
 
-        const createdItem = await response.json();
+        const createdItem: ContentItemPublic = await response.json();
         console.log("文本内容创建成功:", createdItem);
+        newlyCreatedItems.push(createdItem);
         // Text content is immediately completed, no background processing needed
       } else if (contentType === "file" && selectedFiles.length > 0) {
         // 处理文件类型内容（暂时显示提示信息）
@@ -256,8 +277,16 @@ export const AddContentModal: FC<AddContentModalProps> = ({
       resetForm();
       onClose();
 
-      // Note: Content status updates will be handled via SSE in the content library
-      // No need to refresh the page or manually update the UI
+      // 清除内容缓存，确保content-library页面能获取到最新数据
+      contentCache.clearContentList();
+
+      // 通过事件总线通知内容库页面及时更新
+      newlyCreatedItems.forEach((item) => {
+        eventBus.emit("contentCreated", item);
+      });
+
+      // Note: Content status updates will also be handled via SSE in the content library
+      // 这里主动广播可以让用户立即看到新内容，无需等待SSE
     } catch (error) {
       console.error("添加内容时发生错误:", error);
       setError(

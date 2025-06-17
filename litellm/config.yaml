@@ -1,6 +1,6 @@
 # LiteLLM Configuration File
 general_settings:
-  completion_model: or-llama-3-1-8b-instruct
+  completion_model: or-gemini-2.5-flash-preview-05-20
   database_url: "os.environ/DATABASE_URL"
   drop_params: false
   environment_variables:
@@ -10,8 +10,25 @@ general_settings:
     GITHUB_API_KEY: "os.environ/GITHUB_API_KEY"
     VOLCENGINE_API_KEY: "os.environ/VOLCENGINE_API_KEY"
     VOLCENGINE_BASE_URL: "os.environ/VOLCENGINE_BASE_URL"
+    GEMINI_API_KEY: "os.environ/GEMINI_API_KEY"
 
 model_list:
+  # OpenRouter Gemini Models
+  - model_name: or-gemini-2.5-flash-preview-05-20
+    litellm_params:
+      model: openrouter/google/gemini-2.5-flash-preview-05-20
+      api_key: "os.environ/OR_API_KEY"
+
+  - model_name: or-gemini-2.5-pro
+    litellm_params:
+      model: openrouter/google/gemini-2.5-pro
+      api_key: "os.environ/OR_API_KEY"
+
+  - model_name: or-gemini-2.0-flash
+    litellm_params:
+      model: openrouter/google/gemini-2.0-flash
+      api_key: "os.environ/OR_API_KEY"
+
   # OpenAI Models (暂时注释掉，因为连接有问题)
   # - model_name: gpt-3.5-turbo
   #   litellm_params:

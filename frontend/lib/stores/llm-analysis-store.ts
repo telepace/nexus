@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { promptsApi, Prompt } from "@/lib/api/services/prompts";
 import { getCookie } from "@/lib/auth";
+import { convertPromptToRecommendation } from "@/lib/utils/prompt-utils";
 
 export interface LLMAnalysis {
   id: string;
@@ -80,43 +81,10 @@ interface LLMAnalysisState {
     promptId: string,
     title: string,
   ) => Promise<void>;
-}
 
-// 默认的prompt推荐
-export const defaultPromptRecommendations: PromptRecommendation[] = [
-  {
-    id: "summary",
-    name: "生成摘要",
-    description: "为内容生成简洁的摘要",
-    prompt: "请为以下内容生成一个简洁明了的摘要，突出主要观点和关键信息：",
-    type: "summary",
-    icon: "📝",
-  },
-  {
-    id: "key_points",
-    name: "提取要点",
-    description: "提取内容中的关键要点",
-    prompt: "请从以下内容中提取关键要点，以清晰的列表形式呈现：",
-    type: "key_points",
-    icon: "🎯",
-  },
-  {
-    id: "questions",
-    name: "生成问题",
-    description: "基于内容生成思考问题",
-    prompt: "基于以下内容，生成一些深入思考的问题，帮助更好地理解和分析：",
-    type: "questions",
-    icon: "❓",
-  },
-  {
-    id: "insights",
-    name: "深度洞察",
-    description: "提供深度分析和洞察",
-    prompt: "请对以下内容进行深度分析，提供有价值的洞察和观点：",
-    type: "insights",
-    icon: "💡",
-  },
-];
+  // Get prompt recommendations (从 enabled prompts 转换)
+  getPromptRecommendations: () => PromptRecommendation[];
+}
 
 export const useLLMAnalysisStore = create<LLMAnalysisState>()(
   devtools(
@@ -665,6 +633,12 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
         } finally {
           setGenerating(false);
         }
+      },
+
+      // Get prompt recommendations (从 enabled prompts 转换)
+      getPromptRecommendations: () => {
+        const { enabledPrompts } = get();
+        return enabledPrompts.map(convertPromptToRecommendation);
       },
     }),
     {

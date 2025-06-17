@@ -200,7 +200,7 @@ def test_encoding_edge_cases():
                 # 模拟requests的默认行为（可能使用latin-1）
                 try:
                     mock_response.text = case['content'].encode('utf-8').decode('latin-1')
-                except:
+                except Exception:
                     mock_response.text = case['content']
             else:
                 mock_response.text = case['content']

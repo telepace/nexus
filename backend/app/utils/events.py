@@ -79,6 +79,18 @@ class ContentEventManager:
         }
         await self.broadcast_to_user(user_id, event_data)
 
+    async def notify_content_created(
+        self,
+        user_id: str,
+        content_item: dict,
+    ):
+        """通知新内容已创建"""
+        event_data = {
+            "type": "content_created",
+            "content_item": content_item,
+        }
+        await self.broadcast_to_user(user_id, event_data)
+
 
 # 全局事件管理器实例
 content_event_manager = ContentEventManager()
