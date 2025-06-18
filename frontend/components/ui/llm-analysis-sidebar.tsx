@@ -1,9 +1,17 @@
 "use client";
 
 import { FC, useEffect } from "react";
-import { Brain, Trash2, Loader2 } from "lucide-react";
+import {
+  Brain,
+  Trash2,
+  Loader2,
+  Sparkles,
+  Lightbulb,
+  Target,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { LLMAnalysisCard } from "@/components/ui/llm-analysis-card";
 import { PromptRecommendations } from "@/components/ui/prompt-recommendations";
 import { PromptCommandDialog } from "@/components/ui/prompt-command-dialog";
@@ -162,10 +170,18 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
     }
   };
 
+  // 计算分析完成度
+  const completedAnalyses = contentAnalyses.filter(
+    (a) => !a.isLoading && !a.error,
+  ).length;
+  const totalAnalyses = contentAnalyses.length;
+  const analysisProgress =
+    totalAnalyses > 0 ? (completedAnalyses / totalAnalyses) * 100 : 0;
+
   if (isLoadingPrompts) {
     return (
       <div
-        className={`h-full bg-sidebar text-sidebar-foreground border-l flex flex-col ${className}`}
+        className={`h-full bg-background border-l flex flex-col ${className}`}
       >
         <div className="flex items-center justify-center h-full">
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -178,25 +194,19 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
   }
 
   return (
-    <Card className={`flex flex-col h-full ${className}`}>
-      <CardHeader className="flex-shrink-0 pb-3">
-        <div className="flex items-center justify-between">
+    <div className={`flex flex-col h-full bg-background ${className}`}>
+      {/* Header - 优化的标题区域 */}
+      <div className="flex-shrink-0 p-4 border-b bg-gradient-to-r from-primary/5 to-blue-50 dark:from-primary/5 dark:to-blue-950/20">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg font-semibold">AI 分析</CardTitle>
-            {contentAnalyses.length > 0 && (
-              <span className="text-sm text-muted-foreground">
-                ({contentAnalyses.length})
-              </span>
-            )}
-          </div>
-
-          {/* 添加内容状态提示 */}
-          {process.env.NODE_ENV === "development" && (
-            <div className="text-xs text-muted-foreground">
-              内容ID: {contentId} | 内容长度: {contentText.length} 字符
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Brain className="h-5 w-5 text-primary" />
             </div>
-          )}
+            <div>
+              <h2 className="text-lg font-semibold">AI 智能分析</h2>
+              <p className="text-xs text-muted-foreground">深度理解文档内容</p>
+            </div>
+          </div>
 
           {contentAnalyses.length > 0 && (
             <Button
@@ -210,41 +220,31 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
           )}
         </div>
 
-        {/* 测试按钮 */}
-        {process.env.NODE_ENV === "development" && contentText && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              handleEnabledPromptClick({
-                id: "test",
-                name: "测试分析",
-                content: "请对以下内容进行简要分析，提取主要观点：",
-                description: "测试用的分析提示",
-                visibility: "public" as const,
-                version: 1,
-                enabled: true,
-                type: "template" as const,
-                input_vars: [],
-                meta_data: {},
-                team_id: null,
-                updated_at: new Date().toISOString(),
-                created_at: new Date().toISOString(),
-                embedding: {},
-                created_by: "test",
-              })
-            }
-            disabled={isGenerating}
-            className="w-full"
-          >
-            {isGenerating ? "分析中..." : "🧪 测试分析功能"}
-          </Button>
+        {/* 分析状态指示器 */}
+        {(contentAnalyses.length > 0 || isGenerating) && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">分析进度</span>
+              <div className="flex items-center gap-2">
+                {isGenerating && (
+                  <div className="flex items-center gap-1 text-primary">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span className="text-xs">分析中...</span>
+                  </div>
+                )}
+                <Badge variant="outline" className="text-xs">
+                  {completedAnalyses}/{totalAnalyses + (isGenerating ? 1 : 0)}
+                </Badge>
+              </div>
+            </div>
+            <Progress value={analysisProgress} className="h-2" />
+          </div>
         )}
-      </CardHeader>
+      </div>
 
-      {/* Content - 占据剩余空间，可滚动 */}
-      <div className="flex-1 min-h-0 overflow-auto px-4 py-4">
-        <div className="space-y-4">
+      {/* Content - 分析结果区域 */}
+      <div className="flex-1 min-h-0 overflow-auto">
+        <div className="p-4 space-y-4">
           {contentAnalyses.map((analysis) => (
             <LLMAnalysisCard
               key={analysis.id}
@@ -256,34 +256,64 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
             />
           ))}
 
-          {/* 空状态提示 */}
+          {/* 空状态 - 优化的引导界面 */}
           {contentAnalyses.length === 0 && !isGenerating && (
-            <div className="text-center py-12 text-muted-foreground">
-              <Brain className="h-16 w-16 mx-auto mb-6 opacity-30" />
-              <p className="text-lg font-medium mb-2">还没有 AI 分析</p>
-              <p className="text-sm">选择下方的分析类型或使用对话框开始</p>
+            <div className="text-center py-8">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-32 h-32 bg-gradient-to-br from-primary/10 to-blue-100 dark:to-blue-900/20 rounded-full" />
+                </div>
+                <div className="relative">
+                  <Brain className="h-16 w-16 mx-auto mb-4 text-primary opacity-80" />
+                </div>
+              </div>
+              <h3 className="text-lg font-medium mb-2">开始智能分析</h3>
+              <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
+                选择下方的分析类型，让 AI 帮你深度理解文档内容
+              </p>
+
+              {/* 快速分析建议 */}
+              <div className="grid grid-cols-1 gap-2 max-w-sm mx-auto mb-4">
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
+                  <Sparkles className="h-4 w-4 text-yellow-500" />
+                  <span>智能总结 - 提取核心观点</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
+                  <Target className="h-4 w-4 text-green-500" />
+                  <span>关键要点 - 梳理重要信息</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
+                  <Lightbulb className="h-4 w-4 text-blue-500" />
+                  <span>深度洞察 - 发现隐含价值</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Footer - 固定不缩放 */}
-      <div className="shrink-0 px-4 pb-4">
-        <div className="space-y-1">
-          {/* 启用的 Prompt 推荐 */}
+      {/* Footer - 智能推荐区域 */}
+      <div className="shrink-0 p-4 border-t bg-muted/20">
+        <div className="space-y-3">
+          {/* 快速分析推荐 */}
           {enabledPrompts.length > 0 && (
-            <div className="bg-transparent">
-              {/* 直接使用滚动容器，移除多余的padding */}
-              <div className="max-h-[160px] overflow-y-auto">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">推荐分析</span>
+              </div>
+              <div className="max-h-[120px] overflow-y-auto">
                 <PromptRecommendations
-                  recommendations={getAvailablePrompts().map((prompt) => ({
-                    id: prompt.id,
-                    name: prompt.name,
-                    description: prompt.description,
-                    prompt: prompt.content,
-                    type: "custom" as const,
-                    icon: "🤖",
-                  }))}
+                  recommendations={getAvailablePrompts()
+                    .slice(0, 4)
+                    .map((prompt) => ({
+                      id: prompt.id,
+                      name: prompt.name,
+                      description: prompt.description,
+                      prompt: prompt.content,
+                      type: "custom" as const,
+                      icon: "🤖",
+                    }))}
                   onPromptClick={(rec) => {
                     const prompt = enabledPrompts.find((p) => p.id === rec.id);
                     if (prompt) handleEnabledPromptClick(prompt);
@@ -295,8 +325,8 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
             </div>
           )}
 
-          {/* 对话框 */}
-          <div className="bg-transparent">
+          {/* 自定义分析对话框 */}
+          <div>
             <PromptCommandDialog
               availablePrompts={disabledPrompts}
               isExecuting={isGenerating}
@@ -306,6 +336,6 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 };

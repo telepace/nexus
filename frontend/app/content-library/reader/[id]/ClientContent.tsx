@@ -1,18 +1,17 @@
 "use client";
 
-import { useEffect, useState, memo, Suspense } from "react";
+import { useEffect, useState, memo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   ArrowLeft,
   Loader2,
   AlertCircle,
   ExternalLink,
-  Download,
   Share2,
+  FileText,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
@@ -43,12 +42,6 @@ const ReaderSkeleton = () => {
 
       {/* Main Content Skeleton */}
       <div className="flex-1 p-6">
-        {/* Tabs Skeleton */}
-        <div className="flex space-x-1 mb-4">
-          <div className="w-24 h-10 bg-muted rounded"></div>
-          <div className="w-20 h-10 bg-muted rounded"></div>
-        </div>
-
         {/* Content Area Skeleton */}
         <div className="space-y-4">
           {/* 模拟文章内容的骨架 */}
@@ -90,166 +83,41 @@ interface ContentDetail {
   updated_at: string;
 }
 
-// 懒加载的原始内容组件
-const LazyOriginalContent = memo(
+// 优化的内容渲染器 - 专注于处理后的内容
+const ProcessedContentRenderer = memo(
   ({
     content,
-    sourceUri,
-  }: {
-    content: ContentDetail;
-    sourceUri?: string | null;
-  }) => {
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-      // 模拟加载延迟，避免立即渲染重型内容
-      const timer = setTimeout(() => setIsLoading(false), 100);
-      return () => clearTimeout(timer);
-    }, []);
-
-    if (isLoading) {
-      return (
-        <div className="flex justify-center items-center h-64">
-          <div className="flex items-center space-x-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <p className="text-sm">Loading original content...</p>
-          </div>
-        </div>
-      );
-    }
-
-    if (content.type === "pdf" && sourceUri) {
-      return (
-        <div className="h-full flex flex-col animate-in fade-in duration-300">
-          <div className="flex items-center justify-between mb-4 p-2 bg-muted rounded animate-in slide-in-from-top duration-200">
-            <span className="text-small">PDF Document</span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(sourceUri, "_blank")}
-              >
-                <ExternalLink className="h-4 w-4 mr-1" />
-                Open Original
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const link = document.createElement("a");
-                  link.href = sourceUri;
-                  link.download = content.title || "document.pdf";
-                  link.click();
-                }}
-              >
-                <Download className="h-4 w-4 mr-1" />
-                Download
-              </Button>
-            </div>
-          </div>
-          <div className="flex-1 border rounded animate-in fade-in duration-300 delay-100">
-            <iframe
-              src={`${sourceUri}#toolbar=1&navpanes=1&scrollbar=1`}
-              className="w-full h-full"
-              title="PDF Viewer"
-              loading="lazy"
-            />
-          </div>
-        </div>
-      );
-    }
-
-    if (content.type === "url" && sourceUri) {
-      return (
-        <div className="h-full flex flex-col animate-in fade-in duration-300">
-          <div className="flex items-center justify-between mb-4 p-2 bg-muted rounded animate-in slide-in-from-top duration-200">
-            <span className="text-small">Web Page</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.open(sourceUri, "_blank")}
-            >
-              <ExternalLink className="h-4 w-4 mr-1" />
-              Open Original
-            </Button>
-          </div>
-          <div className="flex-1 border rounded animate-in fade-in duration-300 delay-100">
-            <iframe
-              src={sourceUri}
-              className="w-full h-full"
-              title="Web Page"
-              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-              loading="lazy"
-            />
-          </div>
-        </div>
-      );
-    }
-
-    // 默认文本渲染
-    return (
-      <div className="prose prose-sm max-w-none dark:prose-invert h-full overflow-auto animate-in fade-in duration-300">
-        <div className="whitespace-pre-wrap text-sm leading-relaxed">
-          {content.content_text || "Original content not available"}
-        </div>
-      </div>
-    );
-  },
-);
-
-LazyOriginalContent.displayName = "LazyOriginalContent";
-
-// 优化的内容渲染器
-const ContentRenderer = memo(
-  ({
-    content,
-    type,
-    sourceUri,
     markdownContent,
     contentId,
   }: {
     content: ContentDetail;
-    type: "original" | "processed";
-    sourceUri?: string | null;
     markdownContent?: string | null;
-    contentId?: string;
+    contentId: string;
   }) => {
-    if (type === "original") {
-      return (
-        <Suspense
-          fallback={
-            <div className="flex justify-center items-center h-64">
-              <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <p className="text-sm">Loading original content...</p>
-              </div>
-            </div>
-          }
-        >
-          <LazyOriginalContent content={content} sourceUri={sourceUri} />
-        </Suspense>
-      );
-    }
-
-    // Processed content - 优先使用虚拟滚动渲染
-    if (
-      type === "processed" &&
-      contentId &&
-      content.processing_status === "completed"
-    ) {
+    // 优先使用虚拟滚动渲染
+    if (contentId && content.processing_status === "completed") {
       return (
         <div className="relative h-full">
-          {/* 渲染模式切换 */}
-          <div className="absolute top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur-sm border-b animate-in slide-in-from-top duration-200">
+          {/* 内容类型指示器 */}
+          <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-r from-green-50/80 to-emerald-50/80 dark:from-green-950/20 dark:to-emerald-950/20 backdrop-blur-sm border-b border-green-200/50 dark:border-green-800/50 animate-in slide-in-from-top duration-200">
             <div className="flex items-center justify-between p-3">
-              <span className="text-small">Processed Content</span>
-              <span className="text-xs text-muted-foreground">
-                Optimized rendering enabled
-              </span>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                  AI 处理版本
+                </span>
+                <span className="text-xs text-green-600 dark:text-green-400">
+                  优化渲染已启用
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
+                <FileText className="h-3 w-3" />
+                <span>智能分段显示</span>
+              </div>
             </div>
           </div>
 
-          {/* 虚拟滚动渲染器 - 使用绝对定位 */}
+          {/* 虚拟滚动渲染器 */}
           <div className="absolute top-[60px] left-0 right-0 bottom-0 animate-in fade-in duration-300 delay-100">
             <VirtualScrollRenderer
               contentId={contentId}
@@ -262,7 +130,7 @@ const ContentRenderer = memo(
       );
     }
 
-    // 回退到传统渲染（向后兼容）
+    // 回退到传统渲染
     const contentToRender =
       markdownContent || content.processed_content || content.content_text;
 
@@ -273,23 +141,34 @@ const ContentRenderer = memo(
             <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">
               {content.processing_status === "completed"
-                ? "Processed content not available"
-                : `Content is being processed. Status: ${content.processing_status}`}
+                ? "处理后的内容暂不可用"
+                : `内容正在处理中，状态：${content.processing_status}`}
             </p>
+            {content.processing_status !== "completed" && (
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span className="text-xs text-primary">AI 正在处理内容...</span>
+              </div>
+            )}
           </div>
         </div>
       );
     }
 
-    // 传统 markdown 渲染（作为回退）
+    // 传统 markdown 渲染
     return (
       <div className="relative h-full animate-in fade-in duration-300">
-        <div className="absolute top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur-sm border-b animate-in slide-in-from-top duration-200">
+        <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-r from-green-50/80 to-emerald-50/80 dark:from-green-950/20 dark:to-emerald-950/20 backdrop-blur-sm border-b border-green-200/50 dark:border-green-800/50 animate-in slide-in-from-top duration-200">
           <div className="flex items-center justify-between p-3">
-            <span className="text-small">Processed Content</span>
-            <span className="text-xs text-muted-foreground">
-              Legacy rendering mode
-            </span>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                AI 处理版本
+              </span>
+              <span className="text-xs text-green-600 dark:text-green-400">
+                标准渲染模式
+              </span>
+            </div>
           </div>
         </div>
 
@@ -314,7 +193,7 @@ const ContentRenderer = memo(
   },
 );
 
-ContentRenderer.displayName = "ContentRenderer";
+ProcessedContentRenderer.displayName = "ProcessedContentRenderer";
 
 interface ClientContentProps {
   contentId: string;
@@ -338,7 +217,6 @@ export const ClientContent = ({
   );
   const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("processed"); // 默认选择processed
 
   // 添加分享状态管理
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -554,22 +432,38 @@ export const ClientContent = ({
             </h1>
             <div className="flex items-center gap-2 mt-1">
               <Badge variant="outline">{content.type.toUpperCase()}</Badge>
-              <Badge variant="secondary">{content.processing_status}</Badge>
+              <Badge
+                variant={
+                  content.processing_status === "completed"
+                    ? "default"
+                    : "secondary"
+                }
+                className={
+                  content.processing_status === "completed"
+                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                    : ""
+                }
+              >
+                {content.processing_status === "completed"
+                  ? "AI 已处理"
+                  : content.processing_status}
+              </Badge>
               {content.source_uri && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => window.open(content.source_uri!, "_blank")}
+                  title="查看原始内容"
                 >
                   <ExternalLink className="h-3 w-3 mr-1" />
-                  Source
+                  原始内容
                 </Button>
               )}
             </div>
           </div>
         </div>
 
-        {/* 添加右侧操作区域 */}
+        {/* 右侧操作区域 */}
         <div className="flex items-center gap-2">
           {content?.processing_status === "completed" && (
             <Button
@@ -585,36 +479,15 @@ export const ClientContent = ({
         </div>
       </div>
 
-      {/* Main Content - 现在占据剩余空间 */}
+      {/* Main Content - 专注显示AI处理后的内容 */}
       <div className="flex-1 p-6 min-h-0">
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="h-full flex flex-col"
-        >
-          <TabsList className="grid w-full max-w-[12rem] grid-cols-2">
-            <TabsTrigger value="processed">Processed</TabsTrigger>
-            <TabsTrigger value="original">Original</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="processed" className="flex-1 mt-4 min-h-0">
-            <ContentRenderer
-              content={content}
-              type="processed"
-              markdownContent={markdownContent}
-              contentId={contentId}
-            />
-          </TabsContent>
-
-          <TabsContent value="original" className="flex-1 mt-4 min-h-0">
-            <ContentRenderer
-              content={content}
-              type="original"
-              sourceUri={content.source_uri}
-              markdownContent={markdownContent}
-            />
-          </TabsContent>
-        </Tabs>
+        <div className="h-full border rounded-lg bg-gradient-to-br from-green-50/30 to-emerald-50/30 dark:from-green-950/10 dark:to-emerald-950/10">
+          <ProcessedContentRenderer
+            content={content}
+            markdownContent={markdownContent}
+            contentId={contentId}
+          />
+        </div>
       </div>
 
       {/* 分享弹窗 */}
