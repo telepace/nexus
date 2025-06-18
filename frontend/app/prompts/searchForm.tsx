@@ -7,11 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Search, 
-  X, 
-  Filter
-} from "lucide-react";
+import { Search, X, Filter } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -56,7 +52,7 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
     const newSelectedTags = selectedTags.includes(tagId)
       ? selectedTags.filter((id) => id !== tagId)
       : [...selectedTags, tagId];
-    
+
     setSelectedTags(newSelectedTags);
 
     // 立即更新URL
@@ -133,14 +129,14 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
               {/* 标签筛选 */}
               <Popover open={isTagsOpen} onOpenChange={setIsTagsOpen}>
                 <PopoverTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="flex items-center gap-2"
-                  >
+                  <Button variant="outline" className="flex items-center gap-2">
                     <Filter className="h-4 w-4" />
                     标签筛选
                     {selectedTags.length > 0 && (
-                      <Badge variant="secondary" className="ml-1 px-1.5 py-0.5 text-xs">
+                      <Badge
+                        variant="secondary"
+                        className="ml-1 px-1.5 py-0.5 text-xs"
+                      >
                         {selectedTags.length}
                       </Badge>
                     )}
@@ -157,7 +153,9 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
                           className="h-6 px-2 text-xs"
                           onClick={() => {
                             setSelectedTags([]);
-                            const params = new URLSearchParams(searchParams.toString());
+                            const params = new URLSearchParams(
+                              searchParams.toString(),
+                            );
                             params.delete("tags");
                             router.push(`/prompts?${params.toString()}`);
                           }}
@@ -166,9 +164,9 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
                         </Button>
                       )}
                     </div>
-                    
+
                     <Separator className="mb-3" />
-                    
+
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                       {tags.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-4">
@@ -179,18 +177,21 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
                           <div
                             key={tag.id}
                             className={`flex items-center justify-between p-2 rounded-md cursor-pointer transition-colors
-                              ${selectedTags.includes(tag.id) 
-                                ? 'bg-primary/10 border border-primary/20' 
-                                : 'hover:bg-muted'
+                              ${
+                                selectedTags.includes(tag.id)
+                                  ? "bg-primary/10 border border-primary/20"
+                                  : "hover:bg-muted"
                               }`}
                             onClick={() => toggleTag(tag.id)}
                           >
                             <div className="flex items-center gap-2">
-                              <div 
+                              <div
                                 className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: tag.color || '#666' }}
+                                style={{ backgroundColor: tag.color || "#666" }}
                               />
-                              <span className="text-sm font-medium">{tag.name}</span>
+                              <span className="text-sm font-medium">
+                                {tag.name}
+                              </span>
                             </div>
                             {selectedTags.includes(tag.id) && (
                               <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
@@ -206,8 +207,8 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
               </Popover>
 
               {/* 搜索按钮 */}
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 onClick={handleSubmit}
                 className="flex items-center gap-2"
               >
@@ -233,12 +234,12 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
                   清除全部
                 </Button>
               </div>
-              
+
               <div className="flex flex-wrap gap-2">
                 {/* 搜索关键词 */}
                 {searchQuery && (
-                  <Badge 
-                    variant="secondary" 
+                  <Badge
+                    variant="secondary"
                     className="flex items-center gap-1.5 px-2.5 py-1"
                   >
                     <Search className="h-3 w-3" />
@@ -260,14 +261,14 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
                     key={tag.id}
                     variant="secondary"
                     className="flex items-center gap-1.5 px-2.5 py-1"
-                    style={{ 
-                      backgroundColor: `${tag.color}15` || '#f3f3f3',
-                      borderColor: `${tag.color}30` || '#e0e0e0'
+                    style={{
+                      backgroundColor: `${tag.color}15` || "#f3f3f3",
+                      borderColor: `${tag.color}30` || "#e0e0e0",
                     }}
                   >
-                    <div 
+                    <div
                       className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: tag.color || '#666' }}
+                      style={{ backgroundColor: tag.color || "#666" }}
                     />
                     <span className="text-xs">{tag.name}</span>
                     <Button

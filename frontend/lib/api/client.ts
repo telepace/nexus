@@ -113,13 +113,14 @@ class APIClient {
     } catch (error) {
       // 如果URL构造失败，直接使用endpoint
       console.warn("URL构造失败，使用原始endpoint:", endpoint, error);
-      const queryString = params 
-        ? '?' + new URLSearchParams(
+      const queryString = params
+        ? "?" +
+          new URLSearchParams(
             Object.entries(params)
               .filter(([, value]) => value !== undefined && value !== null)
-              .map(([key, value]) => [key, String(value)])
+              .map(([key, value]) => [key, String(value)]),
           ).toString()
-        : '';
+        : "";
       return this.request<T>(endpoint + queryString);
     }
   }

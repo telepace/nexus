@@ -15,12 +15,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { TimeZoneSelector } from "@/components/ui/TimeZoneSelector";
 import { toast } from "@/components/ui/use-toast";
-import { 
-  Loader2, 
-  User as UserIcon, 
-  Lock, 
-  Palette, 
-  Bell, 
+import {
+  Loader2,
+  User as UserIcon,
+  Lock,
+  Palette,
+  Bell,
   Shield,
   Sun,
   Moon,
@@ -30,7 +30,7 @@ import {
   Smartphone,
   Eye,
   Trash2,
-  Upload
+  Upload,
 } from "lucide-react";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
@@ -40,35 +40,36 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 export default function SettingsPage() {
   const { user, isLoading, error, updateUser } = useAuth();
   const { theme, setTheme } = useTheme();
-  const { timeZone, setTimeZone, isAutoTimeZone, setIsAutoTimeZone } = useTimeZone();
-  
+  const { timeZone, setTimeZone, isAutoTimeZone, setIsAutoTimeZone } =
+    useTimeZone();
+
   // UI 状态
   const [activeTab, setActiveTab] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mounted, setMounted] = useState(false);
-  
+
   // 密码修改状态
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  
+
   // 通知设置状态
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
     appNotifications: true,
     marketingEmails: false,
-    securityAlerts: true
+    securityAlerts: true,
   });
-  
+
   // 隐私设置状态
   const [privacySettings, setPrivacySettings] = useState({
     dataSharing: false,
     analytics: true,
-    profileVisibility: "public" as "public" | "private" | "friends"
+    profileVisibility: "public" as "public" | "private" | "friends",
   });
 
   // 头像上传相关状态
@@ -114,7 +115,7 @@ export default function SettingsPage() {
   // 处理密码修改
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast({
         title: "密码不匹配",
@@ -134,21 +135,21 @@ export default function SettingsPage() {
     }
 
     setIsChangingPassword(true);
-    
+
     try {
       // 这里应该调用实际的密码修改 API
       // 暂时模拟一个成功的响应
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       toast({
         title: "密码已更新",
         description: "您的密码已成功修改。",
       });
-      
+
       setPasswordData({
         currentPassword: "",
         newPassword: "",
-        confirmPassword: ""
+        confirmPassword: "",
       });
     } catch (err) {
       console.error("Password change error:", err);
@@ -163,14 +164,17 @@ export default function SettingsPage() {
   };
 
   // 处理通知设置更新
-  const handleNotificationUpdate = async (key: keyof typeof notificationSettings, value: boolean) => {
+  const handleNotificationUpdate = async (
+    key: keyof typeof notificationSettings,
+    value: boolean,
+  ) => {
     const newSettings = { ...notificationSettings, [key]: value };
     setNotificationSettings(newSettings);
-    
+
     try {
       // 这里应该调用实际的设置更新 API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       toast({
         title: "通知设置已更新",
         description: "您的通知偏好已保存。",
@@ -188,14 +192,17 @@ export default function SettingsPage() {
   };
 
   // 处理隐私设置更新
-  const handlePrivacyUpdate = async (key: keyof typeof privacySettings, value: string | boolean) => {
+  const handlePrivacyUpdate = async (
+    key: keyof typeof privacySettings,
+    value: string | boolean,
+  ) => {
     const newSettings = { ...privacySettings, [key]: value };
     setPrivacySettings(newSettings);
-    
+
     try {
       // 这里应该调用实际的设置更新 API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       toast({
         title: "隐私设置已更新",
         description: "您的隐私偏好已保存。",
@@ -220,8 +227,8 @@ export default function SettingsPage() {
 
     try {
       // 这里应该调用实际的账户删除 API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       toast({
         title: "账户删除请求已提交",
         description: "我们将在24小时内处理您的删除请求。",
@@ -309,12 +316,14 @@ export default function SettingsPage() {
     <div className="container mx-auto py-8 space-y-8">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">用户设置</h1>
-        <p className="text-muted-foreground">
-          管理您的账户设置和偏好
-        </p>
+        <p className="text-muted-foreground">管理您的账户设置和偏好</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <UserIcon className="h-4 w-4" />
@@ -328,7 +337,10 @@ export default function SettingsPage() {
             <Palette className="h-4 w-4" />
             外观
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
+          <TabsTrigger
+            value="notifications"
+            className="flex items-center gap-2"
+          >
             <Bell className="h-4 w-4" />
             通知
           </TabsTrigger>
@@ -354,7 +366,10 @@ export default function SettingsPage() {
                   <div className="flex flex-col lg:flex-row gap-6">
                     <div className="flex flex-col items-center gap-2">
                       <UserAvatar
-                        user={{ ...user, avatar_url: localAvatarUrl || user.avatar_url }}
+                        user={{
+                          ...user,
+                          avatar_url: localAvatarUrl || user.avatar_url,
+                        }}
                         size="xl"
                       />
                       <div>
@@ -375,7 +390,8 @@ export default function SettingsPage() {
                           {isUploadingAvatar && (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           )}
-                          <Upload className="h-4 w-4 mr-2" />上传头像
+                          <Upload className="h-4 w-4 mr-2" />
+                          上传头像
                         </Button>
                       </div>
                     </div>
@@ -429,17 +445,27 @@ export default function SettingsPage() {
                     <UserAvatar user={user} size="xl" />
                     <div className="space-y-3">
                       <div>
-                        <Label className="text-sm font-medium text-muted-foreground">姓名</Label>
-                        <p className="text-lg font-medium">{user.full_name || "未设置"}</p>
+                        <Label className="text-sm font-medium text-muted-foreground">
+                          姓名
+                        </Label>
+                        <p className="text-lg font-medium">
+                          {user.full_name || "未设置"}
+                        </p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-muted-foreground">邮箱</Label>
+                        <Label className="text-sm font-medium text-muted-foreground">
+                          邮箱
+                        </Label>
                         <p className="text-lg">{user.email}</p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-muted-foreground">注册时间</Label>
+                        <Label className="text-sm font-medium text-muted-foreground">
+                          注册时间
+                        </Label>
                         <p className="text-sm text-muted-foreground">
-                          {new Date(user.created_at).toLocaleDateString("zh-CN")}
+                          {new Date(user.created_at).toLocaleDateString(
+                            "zh-CN",
+                          )}
                         </p>
                       </div>
                     </div>
@@ -468,7 +494,12 @@ export default function SettingsPage() {
                     id="current_password"
                     type="password"
                     value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    onChange={(e) =>
+                      setPasswordData((prev) => ({
+                        ...prev,
+                        currentPassword: e.target.value,
+                      }))
+                    }
                     placeholder="请输入当前密码"
                     disabled={isChangingPassword}
                   />
@@ -479,7 +510,12 @@ export default function SettingsPage() {
                     id="new_password"
                     type="password"
                     value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                    onChange={(e) =>
+                      setPasswordData((prev) => ({
+                        ...prev,
+                        newPassword: e.target.value,
+                      }))
+                    }
                     placeholder="请输入新密码（至少8个字符）"
                     disabled={isChangingPassword}
                   />
@@ -490,16 +526,28 @@ export default function SettingsPage() {
                     id="confirm_password"
                     type="password"
                     value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    onChange={(e) =>
+                      setPasswordData((prev) => ({
+                        ...prev,
+                        confirmPassword: e.target.value,
+                      }))
+                    }
                     placeholder="请再次输入新密码"
                     disabled={isChangingPassword}
                   />
                 </div>
-                <Button 
-                  type="submit" 
-                  disabled={isChangingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+                <Button
+                  type="submit"
+                  disabled={
+                    isChangingPassword ||
+                    !passwordData.currentPassword ||
+                    !passwordData.newPassword ||
+                    !passwordData.confirmPassword
+                  }
                 >
-                  {isChangingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isChangingPassword && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   更新密码
                 </Button>
               </form>
@@ -520,24 +568,37 @@ export default function SettingsPage() {
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <Label className="text-base font-medium">选择主题</Label>
-                  <RadioGroup value={theme} onValueChange={setTheme} className="grid grid-cols-3 gap-4">
+                  <RadioGroup
+                    value={theme}
+                    onValueChange={setTheme}
+                    className="grid grid-cols-3 gap-4"
+                  >
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="light" id="theme-light" />
-                      <Label htmlFor="theme-light" className="flex items-center gap-2 cursor-pointer">
+                      <Label
+                        htmlFor="theme-light"
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
                         <Sun className="h-4 w-4" />
                         浅色
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="dark" id="theme-dark" />
-                      <Label htmlFor="theme-dark" className="flex items-center gap-2 cursor-pointer">
+                      <Label
+                        htmlFor="theme-dark"
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
                         <Moon className="h-4 w-4" />
                         深色
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="system" id="theme-system" />
-                      <Label htmlFor="theme-system" className="flex items-center gap-2 cursor-pointer">
+                      <Label
+                        htmlFor="theme-system"
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
                         <Monitor className="h-4 w-4" />
                         系统
                       </Label>
@@ -557,19 +618,21 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <Label className="text-base font-medium">自动检测时区</Label>
+                    <Label className="text-base font-medium">
+                      自动检测时区
+                    </Label>
                     <p className="text-sm text-muted-foreground">
                       根据浏览器自动检测您的时区
                     </p>
                   </div>
-                  <Switch 
-                    checked={isAutoTimeZone} 
+                  <Switch
+                    checked={isAutoTimeZone}
                     onCheckedChange={setIsAutoTimeZone}
                   />
                 </div>
                 {!isAutoTimeZone && (
-                  <TimeZoneSelector 
-                    value={timeZone} 
+                  <TimeZoneSelector
+                    value={timeZone}
                     onChange={setTimeZone}
                     label="手动选择时区"
                   />
@@ -600,32 +663,38 @@ export default function SettingsPage() {
                       接收重要更新的邮件通知
                     </p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={notificationSettings.emailNotifications}
-                    onCheckedChange={(checked) => handleNotificationUpdate('emailNotifications', checked)}
+                    onCheckedChange={(checked) =>
+                      handleNotificationUpdate("emailNotifications", checked)
+                    }
                   />
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <Smartphone className="h-4 w-4" />
-                      <Label className="text-base font-medium">应用内通知</Label>
+                      <Label className="text-base font-medium">
+                        应用内通知
+                      </Label>
                     </div>
                     <p className="text-sm text-muted-foreground">
                       在应用内显示通知消息
                     </p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={notificationSettings.appNotifications}
-                    onCheckedChange={(checked) => handleNotificationUpdate('appNotifications', checked)}
+                    onCheckedChange={(checked) =>
+                      handleNotificationUpdate("appNotifications", checked)
+                    }
                   />
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <Label className="text-base font-medium">营销邮件</Label>
@@ -633,14 +702,16 @@ export default function SettingsPage() {
                       接收产品更新和推广信息
                     </p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={notificationSettings.marketingEmails}
-                    onCheckedChange={(checked) => handleNotificationUpdate('marketingEmails', checked)}
+                    onCheckedChange={(checked) =>
+                      handleNotificationUpdate("marketingEmails", checked)
+                    }
                   />
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <Label className="text-base font-medium">安全警报</Label>
@@ -648,9 +719,11 @@ export default function SettingsPage() {
                       账户安全相关的重要通知
                     </p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={notificationSettings.securityAlerts}
-                    onCheckedChange={(checked) => handleNotificationUpdate('securityAlerts', checked)}
+                    onCheckedChange={(checked) =>
+                      handleNotificationUpdate("securityAlerts", checked)
+                    }
                   />
                 </div>
               </div>
@@ -676,14 +749,16 @@ export default function SettingsPage() {
                       允许匿名数据共享以改进服务
                     </p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={privacySettings.dataSharing}
-                    onCheckedChange={(checked) => handlePrivacyUpdate('dataSharing', checked)}
+                    onCheckedChange={(checked) =>
+                      handlePrivacyUpdate("dataSharing", checked)
+                    }
                   />
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <Label className="text-base font-medium">使用分析</Label>
@@ -691,24 +766,33 @@ export default function SettingsPage() {
                       帮助我们了解产品使用情况
                     </p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={privacySettings.analytics}
-                    onCheckedChange={(checked) => handlePrivacyUpdate('analytics', checked)}
+                    onCheckedChange={(checked) =>
+                      handlePrivacyUpdate("analytics", checked)
+                    }
                   />
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="space-y-3">
-                  <Label className="text-base font-medium">个人资料可见性</Label>
-                  <RadioGroup 
-                    value={privacySettings.profileVisibility} 
-                    onValueChange={(value) => handlePrivacyUpdate('profileVisibility', value)}
+                  <Label className="text-base font-medium">
+                    个人资料可见性
+                  </Label>
+                  <RadioGroup
+                    value={privacySettings.profileVisibility}
+                    onValueChange={(value) =>
+                      handlePrivacyUpdate("profileVisibility", value)
+                    }
                     className="space-y-2"
                   >
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="public" id="visibility-public" />
-                      <Label htmlFor="visibility-public" className="flex items-center gap-2">
+                      <Label
+                        htmlFor="visibility-public"
+                        className="flex items-center gap-2"
+                      >
                         <Eye className="h-4 w-4" />
                         公开 - 所有人可见
                       </Label>
@@ -744,8 +828,8 @@ export default function SettingsPage() {
                     永久删除您的账户和所有相关数据。此操作无法撤销。
                   </p>
                 </div>
-                <Button 
-                  variant="destructive" 
+                <Button
+                  variant="destructive"
                   onClick={handleDeleteAccount}
                   className="w-full sm:w-auto"
                 >

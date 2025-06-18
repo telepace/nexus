@@ -20,7 +20,6 @@ import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
 import { ShareContentModal } from "@/components/share/ShareContentModal";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
-import { toast } from "sonner";
 
 // 骨架屏组件
 const ReaderSkeleton = () => {
@@ -58,14 +57,14 @@ const ReaderSkeleton = () => {
             <div className="w-5/6 h-4 bg-muted rounded"></div>
             <div className="w-4/5 h-4 bg-muted rounded"></div>
           </div>
-          
+
           <div className="space-y-3">
             <div className="w-full h-4 bg-muted rounded"></div>
             <div className="w-3/4 h-4 bg-muted rounded"></div>
             <div className="w-5/6 h-4 bg-muted rounded"></div>
             <div className="w-2/3 h-4 bg-muted rounded"></div>
           </div>
-          
+
           <div className="space-y-3">
             <div className="w-4/5 h-4 bg-muted rounded"></div>
             <div className="w-full h-4 bg-muted rounded"></div>
@@ -317,38 +316,49 @@ const ContentRenderer = memo(
 
 ContentRenderer.displayName = "ContentRenderer";
 
-interface ReaderContentProps {
-  params: Promise<{ id: string }>;
+interface ClientContentProps {
+  contentId: string;
+  initialData?: ContentDetail | null;
+  initialMarkdown?: string | null;
 }
 
-export const ReaderContent = ({ params }: ReaderContentProps) => {
+export const ClientContent = ({
+  contentId,
+  initialData,
+  initialMarkdown,
+}: ClientContentProps) => {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
 
-  const [content, setContent] = useState<ContentDetail | null>(null);
-  const [markdownContent, setMarkdownContent] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [content, setContent] = useState<ContentDetail | null>(
+    initialData || null,
+  );
+  const [markdownContent, setMarkdownContent] = useState<string | null>(
+    initialMarkdown || null,
+  );
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("processed"); // 默认选择processed
-  const [contentId, setContentId] = useState<string | null>(null);
 
   // 添加分享状态管理
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
-  // 解析参数并记录访问
+  // 记录访问
   useEffect(() => {
-    params.then(({ id }) => {
-      setContentId(id);
-      // 记录访问这个reader页面
-      navigationState.saveReaderVisit(id);
-    });
-  }, [params]);
+    navigationState.saveReaderVisit(contentId);
+  }, [contentId]);
 
   useEffect(() => {
-    if (authLoading || !contentId) return;
+    if (authLoading) return;
 
     if (!user) {
       router.push("/login");
+      return;
+    }
+
+    // 如果已有初始数据，不需要重新获取
+    if (initialData && initialMarkdown) {
+      console.log(`⚡ 使用服务器端预加载数据: ${initialData.title}`);
       return;
     }
 
@@ -358,31 +368,22 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
         const cachedContent = contentCache.getContentDetail(contentId);
         const cachedMarkdown = contentCache.getMarkdownContent(contentId);
 
-        if (cachedContent) {
+        if (cachedContent && !initialData) {
           console.log(`⚡ 从缓存快速加载内容: ${cachedContent.title}`);
           setContent(cachedContent);
-          // 内容加载完成，关闭loading toast
-          toast.dismiss(`loading-${contentId}`);
-          // 显示缓存加载成功的反馈
-          toast.success("内容已准备就绪", {
-            duration: 1500,
-            description: "缓存加载，体验更快"
-          });
           if (cachedMarkdown) {
             setMarkdownContent(cachedMarkdown);
             console.log(`⚡ 从缓存快速加载Markdown内容`);
           }
-          // 如果有缓存，快速显示内容，然后在后台检查更新
           setLoading(false);
           // 检查内容是否需要更新（简单的时间戳检查）
           const cacheTime = Date.now() - 2 * 60 * 1000; // 2分钟
           const contentUpdated = new Date(cachedContent.updated_at).getTime();
           if (contentUpdated > cacheTime) {
-            // 内容较新，不需要重新获取
             console.log(`✅ 缓存内容较新，无需重新获取`);
             return;
           }
-        } else {
+        } else if (!initialData) {
           console.log(`🔄 缓存未命中，从服务器获取内容: ${contentId}`);
           setLoading(true);
         }
@@ -400,40 +401,55 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
           process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
         // 并行请求内容详情和markdown内容
-        const [contentResponse, markdownResponse] = await Promise.allSettled([
-          fetch(`${apiUrl}/api/v1/content/${contentId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-          }),
-          fetch(`${apiUrl}/api/v1/content/${contentId}/markdown`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-          }),
-        ]);
+        const requests = [];
+
+        if (!content) {
+          requests.push(
+            fetch(`${apiUrl}/api/v1/content/${contentId}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+            }),
+          );
+        }
+
+        if (!markdownContent) {
+          requests.push(
+            fetch(`${apiUrl}/api/v1/content/${contentId}/markdown`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+            }),
+          );
+        }
+
+        if (requests.length === 0) return;
+
+        const responses = await Promise.allSettled(requests);
+        let contentResponse, markdownResponse;
+
+        if (!content) {
+          contentResponse = responses[0];
+          markdownResponse = responses[1];
+        } else {
+          markdownResponse = responses[0];
+        }
 
         // 处理内容详情请求结果
         if (
+          contentResponse &&
           contentResponse.status === "fulfilled" &&
           contentResponse.value.ok
         ) {
           const contentData = await contentResponse.value.json();
           setContent(contentData);
-          // 内容加载完成，关闭loading toast
-          toast.dismiss(`loading-${contentId}`);
-          // 显示服务器加载成功的反馈
-          toast.success("内容已准备就绪", {
-            duration: 1500,
-            description: "已从服务器获取最新内容"
-          });
           // 缓存内容详情
           contentCache.setContentDetail(contentId, contentData);
-        } else {
+        } else if (contentResponse) {
           if (
             contentResponse.status === "fulfilled" &&
             contentResponse.value.status === 404
@@ -450,6 +466,7 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
 
         // 处理markdown内容请求结果
         if (
+          markdownResponse &&
           markdownResponse.status === "fulfilled" &&
           markdownResponse.value.ok
         ) {
@@ -460,14 +477,13 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
             contentId,
             markdownData.markdown_content,
           );
-        } else {
+        } else if (markdownResponse) {
           console.warn(
             "Failed to fetch markdown content:",
             markdownResponse.status === "fulfilled"
               ? markdownResponse.value.status
               : "Request failed",
           );
-          // 不设置错误，因为这不是致命错误
         }
       } catch (e: unknown) {
         console.error("Error fetching content:", e);
@@ -482,12 +498,19 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
     }
 
     fetchContentDetail();
-  }, [contentId, user, authLoading, router]);
+  }, [
+    contentId,
+    user,
+    authLoading,
+    router,
+    initialData,
+    initialMarkdown,
+    content,
+    markdownContent,
+  ]);
 
-  if (authLoading || loading || !contentId) {
-    return (
-      <ReaderSkeleton />
-    );
+  if (authLoading || loading) {
+    return <ReaderSkeleton />;
   }
 
   if (error) {

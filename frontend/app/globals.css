@@ -340,18 +340,122 @@
     @apply space-y-8;
   }
 
+  /* Button group spacing utilities - 按钮组合间距规范 */
+  .button-group {
+    @apply flex items-center gap-3 justify-end;
+  }
+
+  .button-group-sm {
+    @apply flex items-center gap-2 justify-end;
+  }
+
+  .button-group-lg {
+    @apply flex items-center gap-4 justify-end;
+  }
+
+  /* Button group alignment variants */
+  .button-group-start {
+    @apply flex items-center gap-3 justify-start;
+  }
+
+  .button-group-center {
+    @apply flex items-center gap-3 justify-center;
+  }
+
+  .button-group-between {
+    @apply flex items-center gap-3 justify-between;
+  }
+
+  /* Button group vertical variants */
+  .button-group-vertical {
+    @apply flex flex-col gap-3 items-stretch;
+  }
+
+  .button-group-vertical-sm {
+    @apply flex flex-col gap-2 items-stretch;
+  }
+
+  .button-group-vertical-lg {
+    @apply flex flex-col gap-4 items-stretch;
+  }
+
+  /* Card footer button spacing - 卡片底部按钮间距规范 */
+  .card-actions {
+    @apply flex items-center justify-end gap-3 pt-4 pb-2;
+  }
+
+  .card-actions-start {
+    @apply flex items-center justify-start gap-3 pt-4 pb-2;
+  }
+
+  .card-actions-center {
+    @apply flex items-center justify-center gap-3 pt-4 pb-2;
+  }
+
+  .card-actions-between {
+    @apply flex items-center justify-between gap-3 pt-4 pb-2;
+  }
+
+  /* Modal/Dialog footer button spacing */
+  .modal-actions {
+    @apply flex items-center justify-end gap-3 pt-6;
+  }
+
+  .modal-actions-start {
+    @apply flex items-center justify-start gap-3 pt-6;
+  }
+
+  .modal-actions-center {
+    @apply flex items-center justify-center gap-3 pt-6;
+  }
+
+  /* 优雅的底部边界留白 */
+  .elegant-bottom-spacing {
+    @apply pb-6 mb-6 border-b border-border/50;
+  }
+
+  .elegant-bottom-spacing-sm {
+    @apply pb-4 mb-4 border-b border-border/30;
+  }
+
+  .elegant-bottom-spacing-lg {
+    @apply pb-8 mb-8 border-b border-border/50;
+  }
+
+  /* 无边框的优雅间距 */
+  .elegant-spacing {
+    @apply pb-6 mb-6;
+  }
+
+  .elegant-spacing-sm {
+    @apply pb-4 mb-4;
+  }
+
+  .elegant-spacing-lg {
+    @apply pb-8 mb-8;
+  }
+
+  /* Form section spacing */
+  .form-section {
+    @apply space-y-6 pb-8 mb-8 border-b border-border/30 last:border-b-0 last:pb-0 last:mb-0;
+  }
+
+  .form-section-sm {
+    @apply space-y-4 pb-6 mb-6 border-b border-border/30 last:border-b-0 last:pb-0 last:mb-0;
+  }
+
   /* Elevation utilities */
   .elevation-low {
-    @apply shadow-sm;
+    @apply shadow-sm hover:shadow-md transition-shadow duration-200;
   }
   .elevation-medium {
-    @apply shadow-md;
+    @apply shadow-md hover:shadow-lg transition-shadow duration-200;
   }
   .elevation-high {
-    @apply shadow-lg;
+    @apply shadow-lg hover:shadow-xl transition-shadow duration-200;
   }
   .elevation-highest {
-    @apply shadow-2xl;
+    @apply shadow-xl hover:shadow-2xl transition-shadow duration-300;
   }
 
   /* Interactive states */

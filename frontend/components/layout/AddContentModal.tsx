@@ -110,11 +110,11 @@ export const AddContentModal: FC<AddContentModalProps> = ({
       const validUrls = urls
         .map((url: string) => {
           // Remove trailing punctuation that might be captured by regex
-          const cleanedUrl = url.replace(/[.,;:!?]+$/, '');
+          const cleanedUrl = url.replace(/[.,;:!?]+$/, "");
           return isURL(cleanedUrl) ? cleanedUrl : null;
         })
         .filter((url): url is string => url !== null);
-      
+
       if (validUrls.length > 0) {
         setDetectedUrls((prev) => {
           const allUrls = [...prev, ...validUrls];

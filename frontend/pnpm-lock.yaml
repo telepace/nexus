@@ -98,6 +98,12 @@ importers:
       '@tailwindcss/typography':
         specifier: ^0.5.16
         version: 0.5.16(tailwindcss@4.1.7)
+      '@tanstack/react-query':
+        specifier: ^5.80.7
+        version: 5.80.7(react@19.1.0)
+      '@tanstack/react-query-devtools':
+        specifier: ^5.80.7
+        version: 5.80.7(@tanstack/react-query@5.80.7(react@19.1.0))(react@19.1.0)
       ai:
         specifier: ^4.3.16
         version: 4.3.16(react@19.1.0)(zod@3.25.28)
@@ -143,6 +149,9 @@ importers:
       next-i18next:
         specifier: ^15.4.2
         version: 15.4.2(i18next@25.2.0(typescript@5.8.3))(next@15.1.0(@babel/core@7.27.1)(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-i18next@15.5.2(i18next@25.2.0(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3))(react@19.1.0)
+      next-nprogress-bar:
+        specifier: ^2.4.7
+        version: 2.4.7
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -1947,6 +1956,23 @@ packages:
     resolution: {integrity: sha512-0wDLwCVF5V3x3b1SGXPCDcdsbDHMBe+lkFzBRaHeLvNi+nrrnZ1lA18u+OTWO8iSWU2GxUOCvlXtDuqftc1oiA==}
     peerDependencies:
       tailwindcss: '>=3.0.0 || insiders || >=4.0.0-alpha.20 || >=4.0.0-beta.1'
+
+  '@tanstack/query-core@5.80.7':
+    resolution: {integrity: sha512-s09l5zeUKC8q7DCCCIkVSns8zZrK4ZDT6ryEjxNBFi68G4z2EBobBS7rdOY3r6W1WbUDpc1fe5oY+YO/+2UVUg==}
+
+  '@tanstack/query-devtools@5.80.0':
+    resolution: {integrity: sha512-D6gH4asyjaoXrCOt5vG5Og/YSj0D/TxwNQgtLJIgWbhbWCC/emu2E92EFoVHh4ppVWg1qT2gKHvKyQBEFZhCuA==}
+
+  '@tanstack/react-query-devtools@5.80.7':
+    resolution: {integrity: sha512-7Dz/19fVo0i+jgLVBabV5vfGOlLyN5L1w8w1/ogFhe6ItNNsNA+ZgNTbtiKpbR3CcX2WDRRTInz1uMSmHzTsoQ==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.80.7
+      react: ^18 || ^19
+
+  '@tanstack/react-query@5.80.7':
+    resolution: {integrity: sha512-u2F0VK6+anItoEvB3+rfvTO9GEh2vb00Je05OwlUe/A0lkJBgW1HckiY3f9YZa+jx6IOe4dHPh10dyp9aY3iRQ==}
+    peerDependencies:
+      react: ^18 || ^19
 
   '@testing-library/dom@9.3.4':
     resolution: {integrity: sha512-FlS4ZWlp97iiNWig0Muq8p+3rVDjRiYE+YKGbAqXOu9nwJFFOdL00kFpz42M+4huzYi86vAK1sOOfyOG45muIQ==}
@@ -4449,6 +4475,9 @@ packages:
       react: '>= 17.0.2'
       react-i18next: '>= 13.5.0'
 
+  next-nprogress-bar@2.4.7:
+    resolution: {integrity: sha512-OeveNQYFBhQhZ+RgrDnvHNUEQfHCmipymmD4AfAVE9pFV4jeWi7/nNK5f0lIk7ODRrtjyyr/n2YpkRbs5kUoMg==}
+
   next-themes@0.4.6:
     resolution: {integrity: sha512-pZvgD5L0IEvX5/9GWyHMf3m8BKiVQwsCMHfoFosXtXBMnaS0ZnIJ9ST4b4NqLVKDEm8QBxoNNGNaBv2JNF6XNA==}
     peerDependencies:
@@ -4507,6 +4536,9 @@ packages:
   npm-run-path@4.0.1:
     resolution: {integrity: sha512-S48WzZW777zhNIrn7gxOlISNAqi9ZC/uQFnRdbeIHhZhCA6UqpkOT8T1G7BvfdgP4Er8gF4sUbaS0i7QvIfCWw==}
     engines: {node: '>=8'}
+
+  nprogress-v2@1.1.10:
+    resolution: {integrity: sha512-MypWLNIPIM07SS0bAc/oac0vhVFz9vAHm7d1sj//Pnf3J03LQ3CuWrlDteIu6exq0fIvkDJ6tUDRWLaifsIt5w==}
 
   nwsapi@2.2.20:
     resolution: {integrity: sha512-/ieB+mDe4MrrKMT8z+mQL8klXydZWGR5Dowt4RAGKbJ3kIGEx3X4ljUo+6V73IXtUPWgfOlU5B9MlGxFO5T+cA==}
@@ -7392,6 +7424,21 @@ snapshots:
       lodash.merge: 4.6.2
       postcss-selector-parser: 6.0.10
       tailwindcss: 4.1.7
+
+  '@tanstack/query-core@5.80.7': {}
+
+  '@tanstack/query-devtools@5.80.0': {}
+
+  '@tanstack/react-query-devtools@5.80.7(@tanstack/react-query@5.80.7(react@19.1.0))(react@19.1.0)':
+    dependencies:
+      '@tanstack/query-devtools': 5.80.0
+      '@tanstack/react-query': 5.80.7(react@19.1.0)
+      react: 19.1.0
+
+  '@tanstack/react-query@5.80.7(react@19.1.0)':
+    dependencies:
+      '@tanstack/query-core': 5.80.7
+      react: 19.1.0
 
   '@testing-library/dom@9.3.4':
     dependencies:
@@ -10629,6 +10676,10 @@ snapshots:
       react: 19.1.0
       react-i18next: 15.5.2(i18next@25.2.0(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
 
+  next-nprogress-bar@2.4.7:
+    dependencies:
+      nprogress-v2: 1.1.10
+
   next-themes@0.4.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
       react: 19.1.0
@@ -10689,6 +10740,8 @@ snapshots:
   npm-run-path@4.0.1:
     dependencies:
       path-key: 3.1.1
+
+  nprogress-v2@1.1.10: {}
 
   nwsapi@2.2.20: {}
 

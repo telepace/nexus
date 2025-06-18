@@ -43,8 +43,8 @@ const createRipple = (event: React.MouseEvent<HTMLElement>) => {
   const size = Math.max(rect.width, rect.height);
   const x = event.clientX - rect.left - size / 2;
   const y = event.clientY - rect.top - size / 2;
-  
-  const ripple = document.createElement('span');
+
+  const ripple = document.createElement("span");
   ripple.style.cssText = `
     position: absolute;
     border-radius: 50%;
@@ -57,11 +57,11 @@ const createRipple = (event: React.MouseEvent<HTMLElement>) => {
     height: ${size}px;
     pointer-events: none;
   `;
-  
-  button.style.position = 'relative';
-  button.style.overflow = 'hidden';
+
+  button.style.position = "relative";
+  button.style.overflow = "hidden";
   button.appendChild(ripple);
-  
+
   setTimeout(() => {
     ripple.remove();
   }, 600);
@@ -219,7 +219,7 @@ export default function ContentLibraryPage() {
   const [prefetchStats, setPrefetchStats] = useState({
     total: 0,
     cached: 0,
-    inProgress: false
+    inProgress: false,
   });
 
   const { user, isLoading: authLoading } = useAuth();
@@ -377,22 +377,13 @@ export default function ContentLibraryPage() {
   });
 
   // Handle Open Reader
-  const handleOpenReader = (item: ContentItemPublic) => {
-    // 立即显示加载状态 - 不等待任何异步操作
-    toast.loading("正在打开内容...", { 
-      id: `loading-${item.id}`,
-      duration: 3000,
-      description: "正在为您准备阅读体验"
-    });
-    
-    // 预取路由以提升导航性能
-    router.prefetch(`/content-library/reader/${item.id}`);
-    
-    // 添加轻微延迟，让用户感受到点击反馈
-    setTimeout(() => {
+  const handleOpenReader = useCallback(
+    (item: ContentItemPublic) => {
+      // 快速跳转，让服务器端预取和骨架屏处理加载状态
       router.push(`/content-library/reader/${item.id}`);
-    }, 50);
-  };
+    },
+    [router],
+  );
 
   // 预加载内容详情
   const prefetchContent = useCallback(
@@ -461,26 +452,26 @@ export default function ContentLibraryPage() {
       if (!token) return;
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      
+
       // 只预加载已完成处理的前15个内容
       const itemsToPrefetch = items
-        .filter(item => item.processing_status === "completed")
+        .filter((item) => item.processing_status === "completed")
         .slice(0, 15);
 
       console.log(`🚀 开始批量预加载 ${itemsToPrefetch.length} 个内容...`);
-      
-      setPrefetchStats(prev => ({
+
+      setPrefetchStats((prev) => ({
         ...prev,
         total: itemsToPrefetch.length,
-        inProgress: true
+        inProgress: true,
       }));
-      
+
       const prefetchPromises = itemsToPrefetch.map(async (item) => {
         // 跳过已缓存的内容
         if (contentCache.has(`content-detail-${item.id}`)) {
-          setPrefetchStats(prev => ({
+          setPrefetchStats((prev) => ({
             ...prev,
-            cached: prev.cached + 1
+            cached: prev.cached + 1,
           }));
           return;
         }
@@ -522,10 +513,10 @@ export default function ContentLibraryPage() {
               markdownData.markdown_content,
             );
           }
-          
-          setPrefetchStats(prev => ({
+
+          setPrefetchStats((prev) => ({
             ...prev,
-            cached: prev.cached + 1
+            cached: prev.cached + 1,
           }));
         } catch (error) {
           console.debug(`预加载内容 ${item.id} 失败:`, error);
@@ -534,10 +525,12 @@ export default function ContentLibraryPage() {
 
       // 并行执行所有预加载，但不阻塞主流程
       Promise.allSettled(prefetchPromises).then(() => {
-        console.log(`✅ 批量预加载完成，已缓存 ${itemsToPrefetch.length} 个内容`);
-        setPrefetchStats(prev => ({
+        console.log(
+          `✅ 批量预加载完成，已缓存 ${itemsToPrefetch.length} 个内容`,
+        );
+        setPrefetchStats((prev) => ({
           ...prev,
-          inProgress: false
+          inProgress: false,
         }));
       });
     },
@@ -548,40 +541,43 @@ export default function ContentLibraryPage() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!filteredItems.length) return;
-      
-      const currentIndex = selectedItem 
-        ? filteredItems.findIndex(item => item.id === selectedItem.id)
+
+      const currentIndex = selectedItem
+        ? filteredItems.findIndex((item) => item.id === selectedItem.id)
         : -1;
-      
+
       switch (e.key) {
-        case 'ArrowDown':
+        case "ArrowDown":
           e.preventDefault();
-          const nextIndex = Math.min(currentIndex + 1, filteredItems.length - 1);
+          const nextIndex = Math.min(
+            currentIndex + 1,
+            filteredItems.length - 1,
+          );
           setSelectedItem(filteredItems[nextIndex]);
           break;
-        
-        case 'ArrowUp':
+
+        case "ArrowUp":
           e.preventDefault();
           const prevIndex = Math.max(currentIndex - 1, 0);
           setSelectedItem(filteredItems[prevIndex]);
           break;
-        
-        case 'Enter':
+
+        case "Enter":
           e.preventDefault();
-          if (selectedItem && selectedItem.processing_status === 'completed') {
+          if (selectedItem && selectedItem.processing_status === "completed") {
             handleOpenReader(selectedItem);
           }
           break;
-        
-        case 'Escape':
+
+        case "Escape":
           e.preventDefault();
           setSelectedItem(null);
           break;
       }
     };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [filteredItems, selectedItem, handleOpenReader]);
 
   // Handle Share
@@ -671,7 +667,7 @@ export default function ContentLibraryPage() {
           console.log(`📦 从缓存加载 ${cachedItems.length} 个内容项`);
           setItems(cachedItems);
           setLoading(false);
-          
+
           // 即使有缓存，也在后台启动批量预加载以更新数据
           setTimeout(() => {
             batchPrefetchContent(cachedItems);
@@ -756,7 +752,7 @@ export default function ContentLibraryPage() {
     }
 
     fetchItems();
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, batchPrefetchContent]);
 
   // Show loading while auth is loading
   if (authLoading) {
@@ -816,11 +812,19 @@ export default function ContentLibraryPage() {
               {false && (
                 <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
-                    <div className={`w-2 h-2 rounded-full ${prefetchStats.inProgress ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'}`} />
-                    <span>预加载: {prefetchStats.cached}/{prefetchStats.total}</span>
+                    <div
+                      className={`w-2 h-2 rounded-full ${prefetchStats.inProgress ? "bg-yellow-500 animate-pulse" : "bg-green-500"}`}
+                    />
+                    <span>
+                      预加载: {prefetchStats.cached}/{prefetchStats.total}
+                    </span>
                   </div>
                   <div className="text-xs">
-                    缓存命中率: {Math.round((prefetchStats.cached / prefetchStats.total) * 100)}%
+                    缓存命中率:{" "}
+                    {Math.round(
+                      (prefetchStats.cached / prefetchStats.total) * 100,
+                    )}
+                    %
                   </div>
                 </div>
               )}

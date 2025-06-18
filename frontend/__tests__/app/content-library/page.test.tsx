@@ -118,42 +118,32 @@ describe("ContentLibraryPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("should display Open Reader and Download buttons for content items", async () => {
+  it("should navigate to reader page when content item is clicked", async () => {
     render(<ContentLibraryPage />);
 
     await waitFor(() => {
       expect(screen.getByText("Test Document")).toBeInTheDocument();
     });
 
-    // Click on the content item to select it
-    fireEvent.click(screen.getByText("Test Document"));
+    // Click on the content item card to navigate
+    const contentCard =
+      screen.getByText("Test Document").closest("[role='button']") ||
+      screen.getByText("Test Document").closest(".cursor-pointer") ||
+      screen.getByText("Test Document").closest("div");
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole("button", { name: /阅读内容/i }),
-      ).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /下载/i })).toBeInTheDocument();
-    });
+    if (contentCard) {
+      fireEvent.click(contentCard);
+      expect(mockPush).toHaveBeenCalledWith("/content-library/reader/1");
+    }
   });
 
-  it("should navigate to reader page when Open Reader is clicked", async () => {
+  it("should display content items in card format", async () => {
     render(<ContentLibraryPage />);
 
     await waitFor(() => {
       expect(screen.getByText("Test Document")).toBeInTheDocument();
-    });
-
-    // Click on the content item to select it
-    fireEvent.click(screen.getByText("Test Document"));
-
-    await waitFor(() => {
-      const openReaderButton = screen.getByRole("button", {
-        name: /阅读内容/i,
-      });
-      expect(openReaderButton).toBeInTheDocument();
-
-      fireEvent.click(openReaderButton);
-      expect(mockPush).toHaveBeenCalledWith("/content-library/reader/1");
+      expect(screen.getByText("Test summary")).toBeInTheDocument();
+      expect(screen.getAllByText("PDF")).toHaveLength(2);
     });
   });
 

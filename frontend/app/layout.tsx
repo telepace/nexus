@@ -1,8 +1,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
-import { ThemeProvider } from "next-themes";
 import { TimeZoneProvider } from "@/lib/time-zone-context";
-import { Toaster } from "@/components/ui/toaster";
+import { Providers } from "./providers";
 
 // 配置 Inter 字体
 const inter = Inter({
@@ -24,15 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
       <body className="font-sans antialiased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <Providers>
           <TimeZoneProvider>{children}</TimeZoneProvider>
-        </ThemeProvider>
-        <Toaster />
+        </Providers>
         <script
           dangerouslySetInnerHTML={{
             __html: `

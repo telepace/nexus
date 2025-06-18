@@ -1,7 +1,16 @@
 "use client";
 
 import { FC, useState, useRef, ChangeEvent, useEffect } from "react";
-import { X, User, Lock, Eye, Bell, Shield, ChevronRight, Loader2 } from "lucide-react";
+import {
+  X,
+  User,
+  Lock,
+  Eye,
+  Bell,
+  Shield,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -93,7 +102,11 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
    */
   const normalizeSrc = (src: string | undefined | null) => {
     if (!src) return "/images/vinta.png";
-    if (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("/")) {
+    if (
+      src.startsWith("http://") ||
+      src.startsWith("https://") ||
+      src.startsWith("/")
+    ) {
       return src;
     }
     return `/${src}`;
@@ -160,7 +173,8 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
           formData.append("avatar", file);
 
           // 发送请求到服务器
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+          const apiUrl =
+            process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
           const response = await fetch(`${apiUrl}/api/v1/users/me/avatar`, {
             method: "POST",
             headers: {
@@ -176,7 +190,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
           }
 
           const updatedUser = await response.json();
-          
+
           // 更新用户信息，只更新头像相关字段
           await updateUser({ avatar_url: updatedUser.avatar_url });
 
@@ -188,7 +202,10 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
           console.error("上传头像失败:", error);
           toast({
             title: "上传失败",
-            description: error instanceof Error ? error.message : "头像无法保存到服务器，请稍后重试",
+            description:
+              error instanceof Error
+                ? error.message
+                : "头像无法保存到服务器，请稍后重试",
             variant: "destructive",
           });
         } finally {
@@ -317,7 +334,10 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
                           id="name"
                           value={profileForm.full_name}
                           onChange={(e) =>
-                            setProfileForm((p) => ({ ...p, full_name: e.target.value }))
+                            setProfileForm((p) => ({
+                              ...p,
+                              full_name: e.target.value,
+                            }))
                           }
                         />
                       </div>
@@ -347,8 +367,12 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
                             full_name: profileForm.full_name,
                             email: profileForm.email,
                           });
-                          toast({ title: "已保存", description: "个人资料已更新" });
+                          toast({
+                            title: "已保存",
+                            description: "个人资料已更新",
+                          });
                         } catch (err) {
+                          console.error("Profile update failed:", err);
                           toast({
                             title: "保存失败",
                             description: "无法更新资料，请稍后重试",
@@ -360,7 +384,9 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
                       }}
                       disabled={isSavingProfile}
                     >
-                      {isSavingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {isSavingProfile && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
                       保存
                     </Button>
                   </div>
@@ -439,11 +465,13 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
                       主题
                     </h4>
                     <div className="flex items-center space-x-4">
-                      {([
-                        { value: "light", label: "浅色" },
-                        { value: "dark", label: "深色" },
-                        { value: "system", label: "自动" },
-                      ] as const).map((opt) => (
+                      {(
+                        [
+                          { value: "light", label: "浅色" },
+                          { value: "dark", label: "深色" },
+                          { value: "system", label: "自动" },
+                        ] as const
+                      ).map((opt) => (
                         <Button
                           key={opt.value}
                           variant={theme === opt.value ? "default" : "outline"}

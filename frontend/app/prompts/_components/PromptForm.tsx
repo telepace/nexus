@@ -10,7 +10,15 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
-import { X, Trash, Plus as PlusIcon, Eye, EyeOff, AlertCircle, ToggleLeft } from "lucide-react";
+import {
+  X,
+  Trash,
+  Plus as PlusIcon,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  ToggleLeft,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -309,7 +317,7 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
                 <Eye className="h-4 w-4 text-muted-foreground" />
                 <Label className="text-base font-medium">可见性设置</Label>
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div
                   className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all ${
@@ -320,18 +328,22 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
                   onClick={() => setCurrentVisibility("public")}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-4 h-4 rounded-full border-2 ${
-                      currentVisibility === "public" 
-                        ? "border-primary bg-primary" 
-                        : "border-muted-foreground"
-                    }`}>
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 ${
+                        currentVisibility === "public"
+                          ? "border-primary bg-primary"
+                          : "border-muted-foreground"
+                      }`}
+                    >
                       {currentVisibility === "public" && (
                         <div className="w-2 h-2 bg-white rounded-full m-0.5" />
                       )}
                     </div>
                     <div className="flex-1">
                       <h4 className="font-medium text-sm">公开</h4>
-                      <p className="text-xs text-muted-foreground">所有人都可以查看和使用</p>
+                      <p className="text-xs text-muted-foreground">
+                        所有人都可以查看和使用
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -345,18 +357,22 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
                   onClick={() => setCurrentVisibility("private")}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-4 h-4 rounded-full border-2 ${
-                      currentVisibility === "private" 
-                        ? "border-primary bg-primary" 
-                        : "border-muted-foreground"
-                    }`}>
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 ${
+                        currentVisibility === "private"
+                          ? "border-primary bg-primary"
+                          : "border-muted-foreground"
+                      }`}
+                    >
                       {currentVisibility === "private" && (
                         <div className="w-2 h-2 bg-white rounded-full m-0.5" />
                       )}
                     </div>
                     <div className="flex-1">
                       <h4 className="font-medium text-sm">私有</h4>
-                      <p className="text-xs text-muted-foreground">仅您自己可以查看</p>
+                      <p className="text-xs text-muted-foreground">
+                        仅您自己可以查看
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -370,25 +386,34 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
                   onClick={() => setCurrentVisibility("team")}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-4 h-4 rounded-full border-2 ${
-                      currentVisibility === "team" 
-                        ? "border-primary bg-primary" 
-                        : "border-muted-foreground"
-                    }`}>
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 ${
+                        currentVisibility === "team"
+                          ? "border-primary bg-primary"
+                          : "border-muted-foreground"
+                      }`}
+                    >
                       {currentVisibility === "team" && (
                         <div className="w-2 h-2 bg-white rounded-full m-0.5" />
                       )}
                     </div>
                     <div className="flex-1">
                       <h4 className="font-medium text-sm">团队</h4>
-                      <p className="text-xs text-muted-foreground">团队成员可以查看</p>
+                      <p className="text-xs text-muted-foreground">
+                        团队成员可以查看
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* 隐藏的 select 用于表单提交 */}
-              <select name="visibility" value={currentVisibility} onChange={() => {}} className="hidden">
+              <select
+                name="visibility"
+                value={currentVisibility}
+                onChange={() => {}}
+                className="hidden"
+              >
                 <option value="public">公开</option>
                 <option value="private">私有</option>
                 <option value="team">团队</option>
@@ -409,7 +434,9 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <ToggleLeft className="h-4 w-4 text-muted-foreground" />
-                  <Label htmlFor="enabled" className="text-base font-medium">启用状态</Label>
+                  <Label htmlFor="enabled" className="text-base font-medium">
+                    启用状态
+                  </Label>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   启用后，此提示词将可以在系统中使用
@@ -535,9 +562,15 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
                             const created = (result as { data?: TagData }).data;
                             if (created) {
                               setAvailableTags((prev) => [...prev, created]);
-                              setSelectedTagIds((prev) => [...prev, created.id]);
+                              setSelectedTagIds((prev) => [
+                                ...prev,
+                                created.id,
+                              ]);
                             }
-                            toast({ title: "创建成功", description: "标签已创建" });
+                            toast({
+                              title: "创建成功",
+                              description: "标签已创建",
+                            });
                             setNewTagName("");
                             setNewTagColor("#3B82F6");
                             setOpenTagDialog(false);

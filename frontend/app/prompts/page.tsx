@@ -283,12 +283,14 @@ async function PromptsContent({
             <div className="space-y-4">
               {/* 搜索区域 */}
               <SearchForm tags={tags} />
-              
+
               {/* 操作按钮和统计信息 */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <span className="font-medium text-foreground">{prompts.length}</span>
+                    <span className="font-medium text-foreground">
+                      {prompts.length}
+                    </span>
                     个提示词
                   </span>
                   {(query || selectedTags.length > 0) && (
@@ -298,7 +300,7 @@ async function PromptsContent({
                     </span>
                   )}
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <Button
                     asChild
