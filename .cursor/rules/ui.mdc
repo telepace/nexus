@@ -1,22 +1,21 @@
 ---
-description: 
+description: Guidelines that UI design needs to follow
 globs: 
 alwaysApply: false
 ---
-## 📙 Front-End Implementation Guide — v1.2
+## 📙 Front-End Implementation Guide — v1.3
 
-> **Scope** All React code in `frontend/` and `extension/`.
-> **Stack** Tailwind CSS v4 · shadcn/ui · Radix UI · strict TypeScript.
-> **Design Sources**
-> • **Token CSS** → `frontend/app/globals.css`
-> • **UI Library** → `frontend/components/ui/`
-> No visual, typographic, motion, or layout rule may originate elsewhere.
+> Scope All React code in frontend/ and extension/.
+Stack Tailwind CSS v4 · shadcn/ui · Radix UI · strict TypeScript.
+Design Sources
+• Token CSS → frontend/app/globals.css
+• UI Library → frontend/components/ui/
+No visual, typographic, motion, or layout rule may originate elsewhere.
+> 
 
----
+### Directory & Path Aliases ⬆️
 
-### Directory & Path Aliases  ⬆️
-
-```text
+```
 frontend/
 ├─ app/
 │   ├─ globals.css
@@ -27,8 +26,6 @@ frontend/
 │   └─ features/            # Business composites
 ├─ lib/                     # Utilities, i18n, helpers
 └─ tailwind.config.ts
-```
-
 ```jsonc
 // tsconfig.json – excerpt
 {
@@ -42,8 +39,6 @@ frontend/
     }
   }
 }
-```
-
 ```js
 // next.config.js – excerpt
 module.exports = {
@@ -52,66 +47,63 @@ module.exports = {
     return cfg;
   }
 };
+
 ```
 
-> Always import with an alias, e.g. `import { Button } from "@/ui";`
-
----
+> Always import with an alias, e.g. import { Button } from "@/ui";
+> 
 
 ### 0 · Authoring Principles
 
 1. **Single source of truth** – never duplicate CSS, variables, or components.
-2. **Token-driven** – colors, spacing, fonts, radii, shadows come from `--*` tokens.
+2. **Token-driven** – colors, spacing, fonts, radii, shadows come from `-*` tokens.
 3. **Component-first** – compose existing UI-library parts; missing pieces → add to library first.
 4. **Zero inline styles** (`style=` / `style={{…}}`).
 5. **Tailwind utilities only** – complex rules belong in `@apply` classes inside token CSS.
 6. **Dark mode** via `.dark`; never use `prefers-color-scheme`.
-
----
+7. **Predictable Visual Flow** ⬆️ ***new*** – Structure components to guide the user's eye logically down a strong alignment axis. Avoid breaking established alignment patterns, especially for primary actions.
 
 ### 1 · Color & Semantics
 
-* Tokens: `--color-background`, `--color-primary`, …
-* Usage (JIT):
+- Tokens: `-color-background`, `-color-primary`, …
+- Usage (JIT):
 
-```tsx
+```
 className="bg-[oklch(var(--color-primary))] text-[oklch(var(--color-primary-foreground))]"
+
 ```
 
-* Never hard-code `oklch()` / `hsl()` values.
-* Charts → `--color-chart-1`…`-5`; loop if more needed.
-* Sidebar/overlay → `--color-sidebar-*`.
-
----
+- Never hard-code `oklch()` / `hsl()` values.
+- Charts → `-color-chart-1`…`5`; loop if more needed.
+- Sidebar/overlay → `-color-sidebar-*`.
 
 ### 2 · Typography
 
-```tsx
+```
 <h1 className="text-4xl md:text-5xl font-bold leading-[var(--line-height-4xl)]">
   Dashboard
 </h1>
 <p className="text-base leading-[var(--line-height-base)] text-muted">
   Welcome back, Jane!
 </p>
+
 ```
 
-* Families: `font-sans`, `font-mono`.
-* Heading scale: `h1`, `h2`, `h3` (see snippet).
-* Helpers: `.text-lead`, `.text-large`, `.text-small`, `.text-muted`.
-
----
+- Families: `font-sans`, `font-mono`.
+- Heading scale: `h1`, `h2`, `h3` (see snippet).
+- Helpers: `.text-lead`, `.text-large`, `.text-small`, `.text-muted`.
 
 ### 3 · Spacing & Layout
 
-* **Core scale**: `--spacing-*`.
-* **Page gutters**: `<md px-4 · md px-6 · lg+ px-8`.
-* **Vertical rhythm**: paragraph `mt-4`; section `mt-12 md:mt-16`.
-* **Grid**: 12-column fluid, max-width `lg:mx-auto max-w-[theme(screens.lg)]`.
-* **Sidebar**: `w-64 md:w-72`, hidden in drawer on mobile.
+- **Core scale**: `-spacing-*`.
+- **Page gutters**: `<md px-4 · md px-6 · lg+ px-8`.
+- **Vertical rhythm**: paragraph `mt-4`; section `mt-12 md:mt-16`.
+- **Grid**: 12-column fluid, max-width `lg:mx-auto max-w-[theme(screens.lg)]`.
+- **Sidebar**: `w-64 md:w-72`, hidden in drawer on mobile.
 
-#### Responsive two-column → one-column
+### Responsive two-column → one-column
 
-```tsx
+```
 <div className="grid gap-6 lg:grid-cols-12">
   {/* Left column (lg = 4/12) */}
   <aside className="lg:col-span-4 space-y-6">
@@ -125,13 +117,14 @@ className="bg-[oklch(var(--color-primary))] text-[oklch(var(--color-primary-fore
     <RecentTransactions />
   </main>
 </div>
+
 ```
 
 *< lg screens stack; `lg:` breakpoint activates split.*
 
-#### Responsive three-column → two-column → one-column  ⬆️ *new*
+### Responsive three-column → two-column → one-column ⬆️ *new*
 
-```tsx
+```
 <div
   /* Mobile: single column
      md ≥ 768 px: two columns (8/12 + 4/12)
@@ -155,96 +148,143 @@ className="bg-[oklch(var(--color-primary))] text-[oklch(var(--color-primary-fore
     <NewsletterSignup />
   </aside>
 </div>
+
 ```
 
 *Explanation*
 
-* **Mobile (< md)** → one column (`grid-cols-1` implicit).
-* **Tablet (md)** → two columns: 8/12 main + 4/12 secondary.
-* **Desktop (lg)** → three equal 4/12 columns.
-
----
+- **Mobile (< md)** → one column (`grid-cols-1` implicit).
+- **Tablet (md)** → two columns: 8/12 main + 4/12 secondary.
+- **Desktop (lg)** → three equal 4/12 columns.
 
 ### 4 · Component Guidelines
 
-#### 4.1 Button
+### 4.1 Button
 
-```tsx
+```
 <Button variant="outline">Secondary</Button>
 <Button variant="primary">Save</Button>
 <Button variant="destructive" className="h-10 w-10 p-0" aria-label="Delete">
   <Trash className="h-5 w-5" />
   <span className="sr-only">Delete</span>
 </Button>
+
 ```
 
-* Default = outline; one **Primary** per view; **Destructive** for irreversible actions.
+- Default = outline; one **Primary** per view; **Destructive** for irreversible actions.
 
-#### 4.2 Forms
+### 4.2 Forms
 
-* Focus ring → `focus-ring`.
-* Field spacing → `space-y-4`; block gap `mt-8`.
-* Error text:
+- Focus ring → `focus-ring`.
+- Field spacing → `space-y-4`; block gap `mt-8`.
+- Error text:
 
-```tsx
+```
 <span className="text-[oklch(var(--color-destructive))] text-sm mt-1">
   Password is too short
 </span>
+
 ```
 
-#### 4.3 Card
+### 4.3 Card ⬆️ ***updated & crucial section***
 
-```tsx
-<Card className="p-6 space-y-4 md:space-y-6">
-  <CardHeader>Subscription</CardHeader>
-  <CardBody>
-    <PlanDetails />
-  </CardBody>
-</Card>
+The `Card` component is structured into `CardHeader`, `CardContent`, and `CardFooter`. This enforces a consistent and stable layout.
+
+**Always place primary actions for the card's content inside `CardFooter`.**
+
+```
+// ✅ GOOD: Actions are in a predictable, stable footer.
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/ui/card";
+import { Button } from "@/ui/button";
+
+function ProfileCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Content Details</CardTitle>
+        <CardDescription>
+          Last updated on June 14, 2025
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p>This is the main content of the card, providing details and information.</p>
+      </CardContent>
+      <CardFooter className="flex justify-end gap-2">
+        <Button variant="outline">Share</Button>
+        <Button variant="secondary">Download</Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
 ```
 
-#### 4.4 Modal / Drawer
+- **Rationale**: The `CardFooter` acts as a stable "base" for the card, respecting the component's established vertical flow. Using `flex justify-end` inside the footer correctly aligns actions to the right without breaking the overall component alignment. This prevents the "floating" and unbalanced look of arbitrarily placed buttons.
+- **Implementation**: The `CardFooter` component (in `frontend/components/ui/card.tsx`) is a simple `div` with appropriate padding applied, designed to be used with flexbox for alignment.
 
-* Use `<Modal>` wrapper (Radix Dialog).
-* Sizes: alert `sm:max-w-md`; form/wizard `sm:max-w-lg`.
+```
+// ❌ BAD: Anti-pattern. Do not do this.
+function BadCard() {
+  return (
+    <Card className="relative p-6"> {/* The relative positioning is a red flag */}
+      <CardHeader>...</CardHeader>
+      <CardContent>...</CardContent>
 
----
+      {/* This creates an unpredictable, "floating" element that breaks the visual flow. */}
+      <div className="absolute bottom-6 right-6 flex gap-2">
+        <Button>Share</Button>
+        <Button>Download</Button>
+      </div>
+    </Card>
+  );
+}
+
+```
+
+### 4.4 Modal / Drawer
+
+- Use `<Modal>` wrapper (Radix Dialog).
+- Sizes: alert `sm:max-w-md`; form/wizard `sm:max-w-lg`.
 
 ### 5 · Motion & Performance
 
-* **Animation tokens**: `ultrafast` → `ultraslow` (≤ 400 ms).
-* Pre-defined keyframes: `accordion-up`, `accordion-down`, `spin`, `pulse`, `bounce`.
-* Performance rules:
+- **Animation tokens**: `ultrafast` → `ultraslow` (≤ 400 ms).
+- Pre-defined keyframes: `accordion-up`, `accordion-down`, `spin`, `pulse`, `bounce`.
+- Performance rules:
+    - Animate `transform`/`opacity`; avoid `box-shadow`/`filter`.
+    - Add `will-change: transform` for transforms > 120 ms.
+    - Review loops > 400 ms.
 
-  * Animate `transform`/`opacity`; avoid `box-shadow`/`filter`.
-  * Add `will-change: transform` for transforms > 120 ms.
-  * Review loops > 400 ms.
-
-```tsx
+```
 <div
   className="transition-transform duration-300 will-change-transform
              hover:translate-y-[-2px]"
 >
   <Card />
 </div>
-```
 
----
+```
 
 ### 6 · Accessibility (a11y)
 
-* Focusable via `.focus-ring`.
-* Labels: `htmlFor` + `id` or Radix `<Label>`.
-* Live regions: `aria-live="polite"`.
-* Images require `alt`.
-* `axe-core` runs in tests.
-
----
+- Focusable via `.focus-ring`.
+- Labels: `htmlFor` + `id` or Radix `<Label>`.
+- Live regions: `aria-live="polite"`.
+- Images require `alt`.
+- `axe-core` runs in tests.
 
 ### 7 · Checklist
 
 1. No new `.css/.scss` or inline styles.
 2. Colors/spacing/shadows from tokens.
-3. Look in `@/ui` first; 
-
-> **Remember** If the UI looks like it was built by different people, the guide is incomplete—file an issue and help refine it.
+3. Look in `@/ui` first; if a component is missing, add it.
+4. **Card actions must be inside `<CardFooter>`.** ⬆️ ***new***
+> Remember If the UI looks like it was built by different people, the guide is incomplete—file an issue and help refine it.
+>

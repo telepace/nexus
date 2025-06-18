@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Tag as TagIcon, Clock } from "lucide-react";
+import { AlertCircle, Tag as TagIcon, Clock, Plus } from "lucide-react";
 import { getAuthState } from "@/lib/server-auth-bridge";
 import { Suspense } from "react";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -280,39 +280,45 @@ async function PromptsContent({
             </div>
 
             {/* Search and Actions */}
-            <Card className="border-0 shadow-lg bg-card/60 backdrop-blur-sm">
-              <div className="p-6">
-                <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-                  <div className="flex-1 w-full lg:w-auto">
-                    <SearchForm tags={tags} />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      asChild
-                      className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-                    >
-                      <Link href="/prompts/create">
-                        <span className="mr-2">+</span>
-                        创建提示词
-                      </Link>
-                    </Button>
-                    <Button variant="outline" asChild>
-                      <Link href="/prompts/tags">
-                        <TagIcon className="mr-2 h-4 w-4" />
-                        管理标签
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-                  <span>共 {prompts.length} 个提示词</span>
+            <div className="space-y-4">
+              {/* 搜索区域 */}
+              <SearchForm tags={tags} />
+              
+              {/* 操作按钮和统计信息 */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <span className="font-medium text-foreground">{prompts.length}</span>
+                    个提示词
+                  </span>
                   {(query || selectedTags.length > 0) && (
-                    <span>已应用筛选条件</span>
+                    <span className="flex items-center gap-1">
+                      <div className="w-1 h-1 rounded-full bg-muted-foreground" />
+                      已应用筛选条件
+                    </span>
                   )}
                 </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button
+                    asChild
+                    size="sm"
+                    className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-sm"
+                  >
+                    <Link href="/prompts/create">
+                      <Plus className="mr-2 h-4 w-4" />
+                      创建提示词
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/prompts/tags">
+                      <TagIcon className="mr-2 h-4 w-4" />
+                      管理标签
+                    </Link>
+                  </Button>
+                </div>
               </div>
-            </Card>
+            </div>
 
             {/* Content */}
             {prompts.length === 0 ? (

@@ -67,7 +67,14 @@ export const TopNavigation: FC<TopNavigationProps> = ({
               <Avatar className="h-8 w-8" data-testid="user-avatar">
                 {user?.avatar_url ? (
                   <AvatarImage
-                    src={`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}${user.avatar_url}`}
+                    src={
+                      user.avatar_url.startsWith("http")
+                        ? user.avatar_url
+                        : `${
+                            process.env.NEXT_PUBLIC_API_URL ||
+                            "http://127.0.0.1:8000"
+                          }${user.avatar_url}`
+                    }
                     alt={user.full_name || user.email}
                   />
                 ) : null}

@@ -52,6 +52,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "cookies-next": "^6.0.0",
     "copy-to-clipboard": "^3.3.3",
     "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",

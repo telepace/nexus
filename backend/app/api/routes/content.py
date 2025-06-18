@@ -1707,7 +1707,15 @@ def get_ai_analysis_for_content(
     for job in ai_jobs:
         if job.result:
             try:
-                result_data = json.loads(job.result)
+                # 检查 job.result 的类型，如果已经是字典则直接使用，否则解析 JSON
+                if isinstance(job.result, dict):
+                    result_data = job.result
+                elif isinstance(job.result, str):
+                    result_data = json.loads(job.result)
+                else:
+                    # 尝试将其他类型转换为字符串再解析
+                    result_data = json.loads(str(job.result))
+                
                 analysis_result = result_data.get("analysis_result", {})
 
                 # 处理可能的JSON解析错误，提取raw_response
@@ -1735,7 +1743,9 @@ def get_ai_analysis_for_content(
                         ai_analysis[job.processor_name] = analysis_result
                 else:
                     ai_analysis[job.processor_name] = analysis_result
-            except json.JSONDecodeError:
+            except (json.JSONDecodeError, TypeError, AttributeError) as e:
+                # 记录错误但继续处理其他任务
+                print(f"Error processing job result for job {job.id}: {e}")
                 continue
 
     return ai_analysis

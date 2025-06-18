@@ -89,14 +89,32 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     }
   };
 
+  /**
+   * Safely extracts hostname from URL, returns fallback if invalid
+   */
+  const getUrlHostname = (url: string, fallback: string = "网站"): string => {
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return fallback;
+    }
+  };
+
   // 处理内容变化
   const handleContentChange = useCallback((text: string) => {
     setContent(text);
 
-    // Auto-detect URLs in the content
-    const urls = text.match(/https?:\/\/[^\s]+/g) || [];
+    // Auto-detect URLs in the content with improved regex
+    const urls = text.match(/https?:\/\/[^\s<>"{}|\\^`\[\]]+/g) || [];
     if (urls.length > 0) {
-      const validUrls = urls.filter((url) => isURL(url));
+      const validUrls = urls
+        .map((url: string) => {
+          // Remove trailing punctuation that might be captured by regex
+          const cleanedUrl = url.replace(/[.,;:!?]+$/, '');
+          return isURL(cleanedUrl) ? cleanedUrl : null;
+        })
+        .filter((url): url is string => url !== null);
+      
       if (validUrls.length > 0) {
         setDetectedUrls((prev) => {
           const allUrls = [...prev, ...validUrls];
@@ -207,7 +225,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           const contentData = {
             type: "url",
             source_uri: url,
-            title: title || `网页内容 - ${new URL(url).hostname}`,
+            title: title || `网页内容 - ${getUrlHostname(url)}`,
             summary: `从 ${url} 获取的网页内容`,
           };
 

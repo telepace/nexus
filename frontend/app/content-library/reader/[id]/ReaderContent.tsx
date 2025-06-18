@@ -20,6 +20,62 @@ import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
 import { ShareContentModal } from "@/components/share/ShareContentModal";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
+import { toast } from "sonner";
+
+// 骨架屏组件
+const ReaderSkeleton = () => {
+  return (
+    <div className="h-full flex flex-col p-2 animate-pulse">
+      {/* Header Skeleton */}
+      <div className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="flex items-center space-x-4">
+          <div className="w-24 h-8 bg-muted rounded"></div>
+          <div>
+            <div className="w-64 h-8 bg-muted rounded mb-2"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-12 h-5 bg-muted rounded"></div>
+              <div className="w-16 h-5 bg-muted rounded"></div>
+              <div className="w-20 h-5 bg-muted rounded"></div>
+            </div>
+          </div>
+        </div>
+        <div className="w-20 h-8 bg-muted rounded"></div>
+      </div>
+
+      {/* Main Content Skeleton */}
+      <div className="flex-1 p-6">
+        {/* Tabs Skeleton */}
+        <div className="flex space-x-1 mb-4">
+          <div className="w-24 h-10 bg-muted rounded"></div>
+          <div className="w-20 h-10 bg-muted rounded"></div>
+        </div>
+
+        {/* Content Area Skeleton */}
+        <div className="space-y-4">
+          {/* 模拟文章内容的骨架 */}
+          <div className="space-y-3">
+            <div className="w-full h-4 bg-muted rounded"></div>
+            <div className="w-5/6 h-4 bg-muted rounded"></div>
+            <div className="w-4/5 h-4 bg-muted rounded"></div>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="w-full h-4 bg-muted rounded"></div>
+            <div className="w-3/4 h-4 bg-muted rounded"></div>
+            <div className="w-5/6 h-4 bg-muted rounded"></div>
+            <div className="w-2/3 h-4 bg-muted rounded"></div>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="w-4/5 h-4 bg-muted rounded"></div>
+            <div className="w-full h-4 bg-muted rounded"></div>
+            <div className="w-3/5 h-4 bg-muted rounded"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface ContentDetail {
   id: string;
@@ -65,8 +121,8 @@ const LazyOriginalContent = memo(
 
     if (content.type === "pdf" && sourceUri) {
       return (
-        <div className="h-full flex flex-col">
-          <div className="flex items-center justify-between mb-4 p-2 bg-muted rounded">
+        <div className="h-full flex flex-col animate-in fade-in duration-300">
+          <div className="flex items-center justify-between mb-4 p-2 bg-muted rounded animate-in slide-in-from-top duration-200">
             <span className="text-small">PDF Document</span>
             <div className="flex gap-2">
               <Button
@@ -92,7 +148,7 @@ const LazyOriginalContent = memo(
               </Button>
             </div>
           </div>
-          <div className="flex-1 border rounded">
+          <div className="flex-1 border rounded animate-in fade-in duration-300 delay-100">
             <iframe
               src={`${sourceUri}#toolbar=1&navpanes=1&scrollbar=1`}
               className="w-full h-full"
@@ -106,8 +162,8 @@ const LazyOriginalContent = memo(
 
     if (content.type === "url" && sourceUri) {
       return (
-        <div className="h-full flex flex-col">
-          <div className="flex items-center justify-between mb-4 p-2 bg-muted rounded">
+        <div className="h-full flex flex-col animate-in fade-in duration-300">
+          <div className="flex items-center justify-between mb-4 p-2 bg-muted rounded animate-in slide-in-from-top duration-200">
             <span className="text-small">Web Page</span>
             <Button
               variant="outline"
@@ -118,7 +174,7 @@ const LazyOriginalContent = memo(
               Open Original
             </Button>
           </div>
-          <div className="flex-1 border rounded">
+          <div className="flex-1 border rounded animate-in fade-in duration-300 delay-100">
             <iframe
               src={sourceUri}
               className="w-full h-full"
@@ -133,7 +189,7 @@ const LazyOriginalContent = memo(
 
     // 默认文本渲染
     return (
-      <div className="prose prose-sm max-w-none dark:prose-invert h-full overflow-auto">
+      <div className="prose prose-sm max-w-none dark:prose-invert h-full overflow-auto animate-in fade-in duration-300">
         <div className="whitespace-pre-wrap text-sm leading-relaxed">
           {content.content_text || "Original content not available"}
         </div>
@@ -185,7 +241,7 @@ const ContentRenderer = memo(
       return (
         <div className="relative h-full">
           {/* 渲染模式切换 */}
-          <div className="absolute top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur-sm border-b">
+          <div className="absolute top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur-sm border-b animate-in slide-in-from-top duration-200">
             <div className="flex items-center justify-between p-3">
               <span className="text-small">Processed Content</span>
               <span className="text-xs text-muted-foreground">
@@ -195,7 +251,7 @@ const ContentRenderer = memo(
           </div>
 
           {/* 虚拟滚动渲染器 - 使用绝对定位 */}
-          <div className="absolute top-[60px] left-0 right-0 bottom-0">
+          <div className="absolute top-[60px] left-0 right-0 bottom-0 animate-in fade-in duration-300 delay-100">
             <VirtualScrollRenderer
               contentId={contentId}
               className="w-full h-full"
@@ -228,8 +284,8 @@ const ContentRenderer = memo(
 
     // 传统 markdown 渲染（作为回退）
     return (
-      <div className="relative h-full">
-        <div className="absolute top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur-sm border-b">
+      <div className="relative h-full animate-in fade-in duration-300">
+        <div className="absolute top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur-sm border-b animate-in slide-in-from-top duration-200">
           <div className="flex items-center justify-between p-3">
             <span className="text-small">Processed Content</span>
             <span className="text-xs text-muted-foreground">
@@ -238,7 +294,7 @@ const ContentRenderer = memo(
           </div>
         </div>
 
-        <div className="absolute top-[60px] left-0 right-0 bottom-0 overflow-auto">
+        <div className="absolute top-[60px] left-0 right-0 bottom-0 overflow-auto animate-in fade-in duration-300 delay-100">
           {markdownContent ||
           contentToRender.includes("#") ||
           contentToRender.includes("**") ? (
@@ -303,21 +359,31 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
         const cachedMarkdown = contentCache.getMarkdownContent(contentId);
 
         if (cachedContent) {
+          console.log(`⚡ 从缓存快速加载内容: ${cachedContent.title}`);
           setContent(cachedContent);
+          // 内容加载完成，关闭loading toast
+          toast.dismiss(`loading-${contentId}`);
+          // 显示缓存加载成功的反馈
+          toast.success("内容已准备就绪", {
+            duration: 1500,
+            description: "缓存加载，体验更快"
+          });
           if (cachedMarkdown) {
             setMarkdownContent(cachedMarkdown);
+            console.log(`⚡ 从缓存快速加载Markdown内容`);
           }
           // 如果有缓存，快速显示内容，然后在后台检查更新
           setLoading(false);
-
           // 检查内容是否需要更新（简单的时间戳检查）
           const cacheTime = Date.now() - 2 * 60 * 1000; // 2分钟
           const contentUpdated = new Date(cachedContent.updated_at).getTime();
           if (contentUpdated > cacheTime) {
             // 内容较新，不需要重新获取
+            console.log(`✅ 缓存内容较新，无需重新获取`);
             return;
           }
         } else {
+          console.log(`🔄 缓存未命中，从服务器获取内容: ${contentId}`);
           setLoading(true);
         }
 
@@ -358,6 +424,13 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
         ) {
           const contentData = await contentResponse.value.json();
           setContent(contentData);
+          // 内容加载完成，关闭loading toast
+          toast.dismiss(`loading-${contentId}`);
+          // 显示服务器加载成功的反馈
+          toast.success("内容已准备就绪", {
+            duration: 1500,
+            description: "已从服务器获取最新内容"
+          });
           // 缓存内容详情
           contentCache.setContentDetail(contentId, contentData);
         } else {
@@ -413,12 +486,7 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
 
   if (authLoading || loading || !contentId) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <p className="text-lg">Loading content...</p>
-        </div>
-      </div>
+      <ReaderSkeleton />
     );
   }
 
@@ -445,7 +513,7 @@ export const ReaderContent = ({ params }: ReaderContentProps) => {
   }
 
   return (
-    <div className="h-full flex flex-col p-2">
+    <div className="h-full flex flex-col p-2 animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b">
         <div className="flex items-center space-x-4">

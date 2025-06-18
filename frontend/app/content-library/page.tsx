@@ -36,6 +36,37 @@ import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
 import { eventBus } from "@/lib/event-bus";
 
+// Ripple effect function
+const createRipple = (event: React.MouseEvent<HTMLElement>) => {
+  const button = event.currentTarget;
+  const rect = button.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  const x = event.clientX - rect.left - size / 2;
+  const y = event.clientY - rect.top - size / 2;
+  
+  const ripple = document.createElement('span');
+  ripple.style.cssText = `
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(var(--primary), 0.3);
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+    left: ${x}px;
+    top: ${y}px;
+    width: ${size}px;
+    height: ${size}px;
+    pointer-events: none;
+  `;
+  
+  button.style.position = 'relative';
+  button.style.overflow = 'hidden';
+  button.appendChild(ripple);
+  
+  setTimeout(() => {
+    ripple.remove();
+  }, 600);
+};
+
 // Define the ContentItemPublic type based on backend schema
 interface ContentItemPublic {
   id: string;
@@ -119,11 +150,11 @@ const AIAnalysisCard = ({
             </span>
           </div>
           {summarizer.summary?.main_thesis ? (
-            <p className="text-xs text-blue-800 dark:text-blue-200 leading-relaxed line-clamp-3">
+            <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed line-clamp-3">
               {summarizer.summary.main_thesis}
             </p>
           ) : summarizer.raw_text ? (
-            <p className="text-xs text-blue-800 dark:text-blue-200 leading-relaxed line-clamp-3">
+            <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed line-clamp-3">
               {summarizer.raw_text.substring(0, 150)}...
             </p>
           ) : null}
@@ -146,7 +177,7 @@ const AIAnalysisCard = ({
                 .map((concept, index) => (
                   <div key={index} className="flex items-start gap-1">
                     <Lightbulb className="h-2 w-2 text-emerald-600 dark:text-emerald-400 mt-1 flex-shrink-0" />
-                    <span className="text-xs text-emerald-800 dark:text-emerald-200 leading-relaxed line-clamp-2">
+                    <span className="text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed line-clamp-2">
                       {concept.point}
                     </span>
                   </div>
@@ -159,7 +190,7 @@ const AIAnalysisCard = ({
               )}
             </div>
           ) : key_points_extractor.raw_text ? (
-            <p className="text-xs text-emerald-800 dark:text-emerald-200 leading-relaxed line-clamp-3">
+            <p className="text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed line-clamp-3">
               {key_points_extractor.raw_text.substring(0, 150)}...
             </p>
           ) : null}
@@ -183,6 +214,13 @@ export default function ContentLibraryPage() {
 
   // 添加分享状态管理
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // 添加性能监控状态
+  const [prefetchStats, setPrefetchStats] = useState({
+    total: 0,
+    cached: 0,
+    inProgress: false
+  });
 
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -340,7 +378,20 @@ export default function ContentLibraryPage() {
 
   // Handle Open Reader
   const handleOpenReader = (item: ContentItemPublic) => {
-    router.push(`/content-library/reader/${item.id}`);
+    // 立即显示加载状态 - 不等待任何异步操作
+    toast.loading("正在打开内容...", { 
+      id: `loading-${item.id}`,
+      duration: 3000,
+      description: "正在为您准备阅读体验"
+    });
+    
+    // 预取路由以提升导航性能
+    router.prefetch(`/content-library/reader/${item.id}`);
+    
+    // 添加轻微延迟，让用户感受到点击反馈
+    setTimeout(() => {
+      router.push(`/content-library/reader/${item.id}`);
+    }, 50);
   };
 
   // 预加载内容详情
@@ -402,6 +453,136 @@ export default function ContentLibraryPage() {
     },
     [user],
   );
+
+  // 批量预加载内容详情
+  const batchPrefetchContent = useCallback(
+    async (items: ContentItemPublic[]) => {
+      const token = user?.token || getCookie("accessToken");
+      if (!token) return;
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      
+      // 只预加载已完成处理的前15个内容
+      const itemsToPrefetch = items
+        .filter(item => item.processing_status === "completed")
+        .slice(0, 15);
+
+      console.log(`🚀 开始批量预加载 ${itemsToPrefetch.length} 个内容...`);
+      
+      setPrefetchStats(prev => ({
+        ...prev,
+        total: itemsToPrefetch.length,
+        inProgress: true
+      }));
+      
+      const prefetchPromises = itemsToPrefetch.map(async (item) => {
+        // 跳过已缓存的内容
+        if (contentCache.has(`content-detail-${item.id}`)) {
+          setPrefetchStats(prev => ({
+            ...prev,
+            cached: prev.cached + 1
+          }));
+          return;
+        }
+
+        try {
+          const [contentResponse, markdownResponse] = await Promise.allSettled([
+            fetch(`${apiUrl}/api/v1/content/${item.id}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+            }),
+            fetch(`${apiUrl}/api/v1/content/${item.id}/markdown`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+            }),
+          ]);
+
+          // 缓存结果
+          if (
+            contentResponse.status === "fulfilled" &&
+            contentResponse.value.ok
+          ) {
+            const contentData = await contentResponse.value.json();
+            contentCache.setContentDetail(item.id, contentData);
+          }
+
+          if (
+            markdownResponse.status === "fulfilled" &&
+            markdownResponse.value.ok
+          ) {
+            const markdownData = await markdownResponse.value.json();
+            contentCache.setMarkdownContent(
+              item.id,
+              markdownData.markdown_content,
+            );
+          }
+          
+          setPrefetchStats(prev => ({
+            ...prev,
+            cached: prev.cached + 1
+          }));
+        } catch (error) {
+          console.debug(`预加载内容 ${item.id} 失败:`, error);
+        }
+      });
+
+      // 并行执行所有预加载，但不阻塞主流程
+      Promise.allSettled(prefetchPromises).then(() => {
+        console.log(`✅ 批量预加载完成，已缓存 ${itemsToPrefetch.length} 个内容`);
+        setPrefetchStats(prev => ({
+          ...prev,
+          inProgress: false
+        }));
+      });
+    },
+    [user],
+  );
+
+  // 键盘快捷键支持
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!filteredItems.length) return;
+      
+      const currentIndex = selectedItem 
+        ? filteredItems.findIndex(item => item.id === selectedItem.id)
+        : -1;
+      
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          const nextIndex = Math.min(currentIndex + 1, filteredItems.length - 1);
+          setSelectedItem(filteredItems[nextIndex]);
+          break;
+        
+        case 'ArrowUp':
+          e.preventDefault();
+          const prevIndex = Math.max(currentIndex - 1, 0);
+          setSelectedItem(filteredItems[prevIndex]);
+          break;
+        
+        case 'Enter':
+          e.preventDefault();
+          if (selectedItem && selectedItem.processing_status === 'completed') {
+            handleOpenReader(selectedItem);
+          }
+          break;
+        
+        case 'Escape':
+          e.preventDefault();
+          setSelectedItem(null);
+          break;
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [filteredItems, selectedItem, handleOpenReader]);
 
   // Handle Share
   const handleShare = (item: ContentItemPublic) => {
@@ -484,14 +665,17 @@ export default function ContentLibraryPage() {
         setLoading(true);
         setError(null);
 
-        // 暂时清除缓存进行调试
-        contentCache.clearContentList();
-
         // 先尝试从缓存获取数据
         const cachedItems = contentCache.getContentList();
         if (cachedItems) {
+          console.log(`📦 从缓存加载 ${cachedItems.length} 个内容项`);
           setItems(cachedItems);
           setLoading(false);
+          
+          // 即使有缓存，也在后台启动批量预加载以更新数据
+          setTimeout(() => {
+            batchPrefetchContent(cachedItems);
+          }, 1000);
           return;
         }
 
@@ -523,7 +707,7 @@ export default function ContentLibraryPage() {
           credentials: "include",
         });
 
-        console.log("📡 API Response:", {
+        console.log(" API Response:", {
           status: response.status,
           statusText: response.statusText,
           ok: response.ok,
@@ -554,6 +738,11 @@ export default function ContentLibraryPage() {
         setItems(data);
         // 缓存内容列表
         contentCache.setContentList(data);
+
+        // 批量预加载内容详情（在后台进行，不阻塞UI）
+        setTimeout(() => {
+          batchPrefetchContent(data);
+        }, 500); // 延迟500ms开始预加载，确保主要UI已渲染完成
       } catch (e: unknown) {
         console.error("Error fetching content items:", e);
         if (e instanceof Error) {
@@ -616,12 +805,25 @@ export default function ContentLibraryPage() {
           <div className="space-y-8">
             {/* Header */}
             <div className="text-center space-y-4">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                 内容库
               </h1>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
+              <p className="text-muted-foreground text-base max-w-2xl mx-auto leading-relaxed">
                 管理和浏览你的所有内容，快速找到需要的信息
               </p>
+
+              {/* 性能指示器 - 暂时隐藏 */}
+              {false && (
+                <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <div className={`w-2 h-2 rounded-full ${prefetchStats.inProgress ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'}`} />
+                    <span>预加载: {prefetchStats.cached}/{prefetchStats.total}</span>
+                  </div>
+                  <div className="text-xs">
+                    缓存命中率: {Math.round((prefetchStats.cached / prefetchStats.total) * 100)}%
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Search and Filters */}
@@ -663,11 +865,16 @@ export default function ContentLibraryPage() {
                 </div>
                 <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
                   <span>共 {items.length} 项内容</span>
-                  {(searchQuery ||
-                    statusFilter !== "all" ||
-                    typeFilter !== "all") && (
-                    <span>筛选后显示 {filteredItems.length} 项</span>
-                  )}
+                  <div className="flex items-center gap-4">
+                    {(searchQuery ||
+                      statusFilter !== "all" ||
+                      typeFilter !== "all") && (
+                      <span>筛选后显示 {filteredItems.length} 项</span>
+                    )}
+                    <span className="text-xs text-muted-foreground/70">
+                      提示: 使用 ↑↓ 选择，Enter 阅读，Esc 取消
+                    </span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -697,13 +904,18 @@ export default function ContentLibraryPage() {
                     {filteredItems.map((item) => (
                       <Card
                         key={item.id}
-                        className={`cursor-pointer transition-all duration-300 border-0 shadow-lg hover:shadow-xl hover:scale-[1.02] ${
+                        className={`cursor-pointer transition-all duration-200 ease-out border-0 shadow-lg hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1 active:scale-[0.98] active:shadow-md active:translate-y-0 ${
                           selectedItem?.id === item.id
-                            ? "ring-2 ring-primary shadow-xl scale-[1.02]"
+                            ? "ring-2 ring-primary shadow-xl scale-[1.02] -translate-y-1"
                             : ""
                         }`}
-                        onClick={() => setSelectedItem(item)}
-                        onMouseEnter={() => prefetchContent(item)}
+                        onClick={() => handleOpenReader(item)}
+                        onMouseDown={createRipple}
+                        onMouseEnter={() => {
+                          setSelectedItem(item);
+                          prefetchContent(item);
+                        }}
+                        onMouseLeave={() => {}}
                       >
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between">
@@ -735,9 +947,6 @@ export default function ContentLibraryPage() {
                                     ).toLocaleDateString("zh-CN")}
                                   </div>
                                 </div>
-
-                                {/* AI分析结果预览 */}
-                                <AIAnalysisCard analysis={item.ai_analysis} />
                               </div>
                             </div>
                           </div>
@@ -871,16 +1080,20 @@ export default function ContentLibraryPage() {
                           </div>
                         </div>
 
-                        <Separator />
-
+                        {/* AI 智能分析 */}
                         <AIAnalysisCard analysis={selectedItem.ai_analysis} />
                       </div>
                     ) : (
                       <div className="text-center py-12">
                         <FileText className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-4" />
-                        <p className="text-sm text-muted-foreground">
-                          选择一个内容项目查看详情
-                        </p>
+                        <div className="space-y-2">
+                          <p className="text-sm text-muted-foreground">
+                            悬停内容卡片查看预览
+                          </p>
+                          <p className="text-xs text-muted-foreground/70">
+                            点击卡片直接开始阅读
+                          </p>
+                        </div>
                       </div>
                     )}
                   </CardContent>
