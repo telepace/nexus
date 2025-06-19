@@ -3,16 +3,14 @@ Model Management API routes for LiteLLM hot reload functionality.
 支持动态添加、删除、更新模型配置而无需重启服务。
 """
 
-import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import BaseModel
-from sqlmodel import Session
 
-from app.api.deps import get_current_user, get_db
+from app.api.deps import get_current_user
 from app.core.config import settings
 from app.models import User
 
@@ -23,36 +21,37 @@ router = APIRouter()
 
 class ModelConfig(BaseModel):
     """模型配置结构"""
+
     model_name: str
-    litellm_params: Dict[str, Any]
+    litellm_params: dict[str, Any]
 
 
 class ModelListResponse(BaseModel):
     """模型列表响应结构"""
-    models: List[Dict[str, Any]]
+
+    models: list[dict[str, Any]]
 
 
 class ModelOperationResponse(BaseModel):
     """模型操作响应结构"""
+
     success: bool
     message: str
-    model_name: Optional[str] = None
+    model_name: str | None = None
 
 
 async def _call_litellm_admin_api(
-    method: str,
-    endpoint: str,
-    data: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
+    method: str, endpoint: str, data: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """调用 LiteLLM 管理 API"""
     try:
         base_url = str(settings.LITELLM_PROXY_URL).rstrip("/")
         url = f"{base_url}/{endpoint.lstrip('/')}"
-        
+
         headers = {"Content-Type": "application/json"}
         if settings.LITELLM_MASTER_KEY:
             headers["Authorization"] = f"Bearer {settings.LITELLM_MASTER_KEY}"
-        
+
         async with httpx.AsyncClient(timeout=30.0) as client:
             if method.upper() == "GET":
                 response = await client.get(url, headers=headers)
@@ -64,21 +63,21 @@ async def _call_litellm_admin_api(
                 response = await client.put(url, json=data, headers=headers)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
-            
+
             response.raise_for_status()
             return response.json()
-            
+
     except httpx.HTTPStatusError as e:
         logger.error(f"LiteLLM API error: {e.response.status_code} - {e.response.text}")
         raise HTTPException(
             status_code=e.response.status_code,
-            detail=f"LiteLLM API error: {e.response.text}"
+            detail=f"LiteLLM API error: {e.response.text}",
         )
     except Exception as e:
         logger.error(f"Failed to call LiteLLM API: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to communicate with LiteLLM service: {str(e)}"
+            detail=f"Failed to communicate with LiteLLM service: {str(e)}",
         )
 
 
@@ -109,23 +108,23 @@ async def add_model(
         # 准备 LiteLLM 模型配置格式
         litellm_config = {
             "model_name": model_config.model_name,
-            "litellm_params": model_config.litellm_params
+            "litellm_params": model_config.litellm_params,
         }
-        
-        result = await _call_litellm_admin_api("POST", "/model/new", litellm_config)
-        
+
+        await _call_litellm_admin_api("POST", "/model/new", litellm_config)
+
         return ModelOperationResponse(
             success=True,
             message=f"Model '{model_config.model_name}' added successfully",
-            model_name=model_config.model_name
+            model_name=model_config.model_name,
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to add model {model_config.model_name}: {str(e)}")
         return ModelOperationResponse(
             success=False,
             message=f"Failed to add model: {str(e)}",
-            model_name=model_config.model_name
+            model_name=model_config.model_name,
         )
 
 
@@ -138,20 +137,20 @@ async def delete_model(
     动态删除模型配置
     """
     try:
-        result = await _call_litellm_admin_api("POST", "/model/delete", {"id": model_name})
-        
+        await _call_litellm_admin_api("POST", "/model/delete", {"id": model_name})
+
         return ModelOperationResponse(
             success=True,
             message=f"Model '{model_name}' deleted successfully",
-            model_name=model_name
+            model_name=model_name,
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to delete model {model_name}: {str(e)}")
         return ModelOperationResponse(
             success=False,
             message=f"Failed to delete model: {str(e)}",
-            model_name=model_name
+            model_name=model_name,
         )
 
 
@@ -168,29 +167,29 @@ async def update_model(
         # 先删除旧配置
         try:
             await _call_litellm_admin_api("POST", "/model/delete", {"id": model_name})
-        except:
+        except Exception:
             pass  # 如果模型不存在，忽略删除错误
-        
+
         # 添加新配置
         litellm_config = {
             "model_name": model_config.model_name,
-            "litellm_params": model_config.litellm_params
+            "litellm_params": model_config.litellm_params,
         }
-        
-        result = await _call_litellm_admin_api("POST", "/model/new", litellm_config)
-        
+
+        await _call_litellm_admin_api("POST", "/model/new", litellm_config)
+
         return ModelOperationResponse(
             success=True,
             message=f"Model '{model_name}' updated successfully",
-            model_name=model_name
+            model_name=model_name,
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to update model {model_name}: {str(e)}")
         return ModelOperationResponse(
             success=False,
             message=f"Failed to update model: {str(e)}",
-            model_name=model_name
+            model_name=model_name,
         )
 
 
@@ -208,25 +207,25 @@ async def add_latest_gemini_models(
                 "model_name": "gemini-2.5-flash-preview-05-20",
                 "litellm_params": {
                     "model": "gemini/gemini-2.5-flash-preview-05-20",
-                    "api_key": "os.environ/GEMINI_API_KEY"
-                }
+                    "api_key": "os.environ/GEMINI_API_KEY",
+                },
             },
             {
                 "model_name": "gemini-2.5-pro",
                 "litellm_params": {
                     "model": "gemini/gemini-2.5-pro",
-                    "api_key": "os.environ/GEMINI_API_KEY"
-                }
+                    "api_key": "os.environ/GEMINI_API_KEY",
+                },
             },
             {
                 "model_name": "gemini-2.0-flash",
                 "litellm_params": {
                     "model": "gemini/gemini-2.0-flash",
-                    "api_key": "os.environ/GEMINI_API_KEY"
-                }
-            }
+                    "api_key": "os.environ/GEMINI_API_KEY",
+                },
+            },
         ]
-        
+
         added_models = []
         for model_config in gemini_models:
             try:
@@ -234,17 +233,16 @@ async def add_latest_gemini_models(
                 added_models.append(model_config["model_name"])
             except Exception as e:
                 logger.warning(f"Failed to add {model_config['model_name']}: {str(e)}")
-        
+
         return ModelOperationResponse(
             success=True,
-            message=f"Successfully added Gemini models: {', '.join(added_models)}"
+            message=f"Successfully added Gemini models: {', '.join(added_models)}",
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to add Gemini models: {str(e)}")
         return ModelOperationResponse(
-            success=False,
-            message=f"Failed to add Gemini models: {str(e)}"
+            success=False, message=f"Failed to add Gemini models: {str(e)}"
         )
 
 
@@ -260,4 +258,4 @@ async def check_models_health(
         return result
     except Exception as e:
         logger.error(f"Failed to check models health: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))

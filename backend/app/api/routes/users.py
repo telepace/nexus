@@ -263,53 +263,53 @@ async def upload_user_avatar(
     # 验证文件类型
     if not avatar.content_type or not avatar.content_type.startswith("image/"):
         raise HTTPException(
-            status_code=400,
-            detail="Invalid file type. Only image files are allowed."
+            status_code=400, detail="Invalid file type. Only image files are allowed."
         )
-    
+
     # 验证文件大小 (限制为 2MB)
     avatar.file.seek(0, 2)  # 移动到文件末尾
     file_size = avatar.file.tell()
     avatar.file.seek(0)  # 重置到文件开头
-    
+
     if file_size > 2 * 1024 * 1024:  # 2MB
         raise HTTPException(
-            status_code=400,
-            detail="File too large. Maximum size is 2MB."
+            status_code=400, detail="File too large. Maximum size is 2MB."
         )
-    
+
     try:
         # 生成唯一的文件名
-        file_extension = avatar.filename.split(".")[-1] if avatar.filename and "." in avatar.filename else "jpg"
+        file_extension = (
+            avatar.filename.split(".")[-1]
+            if avatar.filename and "." in avatar.filename
+            else "jpg"
+        )
         unique_filename = f"{uuid.uuid4()}.{file_extension}"
         blob_name = f"avatars/{current_user.id}/{unique_filename}"
-        
+
         # 读取文件内容
         file_content = await avatar.read()
-        
+
         # 上传到存储服务
         avatar_url = await storage_service.upload_file(
             file_content=file_content,
             destination_blob_name=blob_name,
-            content_type=avatar.content_type
+            content_type=avatar.content_type,
         )
-        
+
         if not avatar_url:
             raise HTTPException(
-                status_code=500,
-                detail="Failed to upload avatar to storage service."
+                status_code=500, detail="Failed to upload avatar to storage service."
             )
-        
+
         # 更新用户的头像URL
         current_user.avatar_url = avatar_url
         session.add(current_user)
         session.commit()
         session.refresh(current_user)
-        
+
         return current_user
-        
+
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to upload avatar: {str(e)}"
+            status_code=500, detail=f"Failed to upload avatar: {str(e)}"
         )

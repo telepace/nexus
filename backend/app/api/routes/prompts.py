@@ -260,7 +260,7 @@ def read_prompts(
         # When this function is invoked internally, the default value of tag_ids can be a
         # fastapi.params.Query object instead of a real list. To avoid TypeError, we
         # normalise it to either None or a list of UUIDs.
-        if not tag_ids or not isinstance(tag_ids, (list, tuple, set)):
+        if not tag_ids or not isinstance(tag_ids, list | tuple | set):
             tag_ids_list: list[UUID] | None = None
         else:
             tag_ids_list = list(tag_ids)  # type: ignore[arg-type]
@@ -318,12 +318,15 @@ def read_prompts(
             db.refresh(prompt, ["tags"])
 
         # 获取包含用户设置的 prompt 数据
-        prompts_with_settings = _get_prompts_with_user_settings(db, accessible_prompts, current_user.id)
+        prompts_with_settings = _get_prompts_with_user_settings(
+            db, accessible_prompts, current_user.id
+        )
 
         # 根据用户启用状态过滤
         if user_enabled is not None:
             prompts_with_settings = [
-                prompt for prompt in prompts_with_settings 
+                prompt
+                for prompt in prompts_with_settings
                 if prompt["user_enabled"] == user_enabled
             ]
 
@@ -391,8 +394,10 @@ def read_prompt(
         db.refresh(prompt, ["tags"])
 
         # 获取包含用户设置的 prompt 数据
-        prompts_with_settings = _get_prompts_with_user_settings(db, [prompt], current_user.id)
-        
+        prompts_with_settings = _get_prompts_with_user_settings(
+            db, [prompt], current_user.id
+        )
+
         return prompts_with_settings[0] if prompts_with_settings else {}
     except HTTPException as e:
         # 如果是 HTTPException，直接传递
@@ -800,16 +805,20 @@ def toggle_prompt_enabled(
         # 获取当前用户设置
         current_setting = _get_user_prompt_setting(db, current_user.id, prompt_id)
         current_enabled = current_setting.enabled if current_setting else False
-        
+
         # 切换用户启用状态
         new_enabled = not current_enabled
         _set_user_prompt_enabled(db, current_user.id, prompt_id, new_enabled)
 
-        logger.info(f"Toggled user prompt setting for user {current_user.id}, prompt {prompt_id}, enabled: {new_enabled}")
-        
+        logger.info(
+            f"Toggled user prompt setting for user {current_user.id}, prompt {prompt_id}, enabled: {new_enabled}"
+        )
+
         # 返回更新后的 prompt 信息（包含用户设置）
-        prompts_with_settings = _get_prompts_with_user_settings(db, [prompt], current_user.id)
-        
+        prompts_with_settings = _get_prompts_with_user_settings(
+            db, [prompt], current_user.id
+        )
+
         return prompts_with_settings[0] if prompts_with_settings else {}
 
     except HTTPException:
@@ -824,7 +833,9 @@ def toggle_prompt_enabled(
 
 
 # ===== 辅助函数 =====
-def _check_prompt_access(prompt: Prompt, user: Any, write: bool = False, toggle_only: bool = False) -> bool:
+def _check_prompt_access(
+    prompt: Prompt, user: Any, write: bool = False, toggle_only: bool = False
+) -> bool:
     """检查用户是否有权限访问提示词
 
     Args:
@@ -845,11 +856,11 @@ def _check_prompt_access(prompt: Prompt, user: Any, write: bool = False, toggle_
         # 创建者始终可以进行写操作
         if prompt.created_by == user.id:
             return True
-        
+
         # 对于公开的 prompt，如果只是切换启用状态，允许所有用户操作
         if toggle_only and prompt.visibility == "public":
             return True
-        
+
         # 其他写操作仅限于创建者
         return False
 
@@ -872,20 +883,24 @@ def _check_prompt_access(prompt: Prompt, user: Any, write: bool = False, toggle_
     return False
 
 
-def _get_user_prompt_setting(db: Session, user_id: UUID, prompt_id: UUID) -> UserPromptSettings | None:
+def _get_user_prompt_setting(
+    db: Session, user_id: UUID, prompt_id: UUID
+) -> UserPromptSettings | None:
     """获取用户对特定 prompt 的设置"""
     return db.exec(
         select(UserPromptSettings).where(
             UserPromptSettings.user_id == user_id,
-            UserPromptSettings.prompt_id == prompt_id
+            UserPromptSettings.prompt_id == prompt_id,
         )
     ).first()
 
 
-def _set_user_prompt_enabled(db: Session, user_id: UUID, prompt_id: UUID, enabled: bool) -> UserPromptSettings:
+def _set_user_prompt_enabled(
+    db: Session, user_id: UUID, prompt_id: UUID, enabled: bool
+) -> UserPromptSettings:
     """设置用户对特定 prompt 的启用状态"""
     setting = _get_user_prompt_setting(db, user_id, prompt_id)
-    
+
     if setting:
         # 更新现有设置
         setting.enabled = enabled
@@ -893,34 +908,34 @@ def _set_user_prompt_enabled(db: Session, user_id: UUID, prompt_id: UUID, enable
     else:
         # 创建新设置
         setting = UserPromptSettings(
-            user_id=user_id,
-            prompt_id=prompt_id,
-            enabled=enabled
+            user_id=user_id, prompt_id=prompt_id, enabled=enabled
         )
         db.add(setting)
-    
+
     db.commit()
     db.refresh(setting)
     return setting
 
 
-def _get_prompts_with_user_settings(db: Session, prompts: list[Prompt], user_id: UUID) -> list[dict]:
+def _get_prompts_with_user_settings(
+    db: Session, prompts: list[Prompt], user_id: UUID
+) -> list[dict]:
     """为 prompt 列表添加用户设置信息"""
     if not prompts:
         return []
-    
+
     # 批量获取用户设置
     prompt_ids = [prompt.id for prompt in prompts]
     user_settings = db.exec(
         select(UserPromptSettings).where(
             UserPromptSettings.user_id == user_id,
-            UserPromptSettings.prompt_id.in_(prompt_ids)
+            UserPromptSettings.prompt_id.in_(prompt_ids),
         )
     ).all()
-    
+
     # 创建设置映射
     settings_map = {setting.prompt_id: setting.enabled for setting in user_settings}
-    
+
     # 为每个 prompt 添加用户启用状态
     result = []
     for prompt in prompts:
@@ -933,5 +948,5 @@ def _get_prompts_with_user_settings(db: Session, prompts: list[Prompt], user_id:
             # 用户从未设置过，使用 prompt 默认的 enabled 状态
             prompt_dict["user_enabled"] = prompt.enabled
         result.append(prompt_dict)
-    
+
     return result

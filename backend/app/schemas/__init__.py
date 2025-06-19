@@ -1,3 +1,8 @@
+from .ai_conversations import (
+    AIConversationCreate,
+    AIConversationDetail,
+    AIConversationPublic,
+)
 from .image import (
     ImageBase,
     ImageCreate,
@@ -5,11 +10,6 @@ from .image import (
     ImageUpdate,
     PresignedURLRequest,
     PresignedURLResponse,
-)
-from .ai_conversations import (
-    AIConversationCreate,
-    AIConversationPublic,
-    AIConversationDetail,
 )
 
 # You would also export other schemas from other files here

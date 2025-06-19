@@ -3,7 +3,8 @@
 集中管理所有默认的 prompt 模板，避免在多个地方重复定义
 """
 
-from typing import List, Dict, Any
+from typing import Any
+
 from app.models import PromptType, Visibility
 
 # 默认标签配置
@@ -14,7 +15,7 @@ DEFAULT_TAGS = [
         "color": "#3B82F6",
     },
     {
-        "name": "内容理解", 
+        "name": "内容理解",
         "description": "帮助理解复杂内容的提示词",
         "color": "#10B981",
     },
@@ -25,7 +26,7 @@ DEFAULT_TAGS = [
     },
     {
         "name": "思维拓展",
-        "description": "拓展思维和讨论的提示词", 
+        "description": "拓展思维和讨论的提示词",
         "color": "#8B5CF6",
     },
 ]
@@ -122,9 +123,7 @@ DEFAULT_PROMPTS = [
         "type": PromptType.TEMPLATE,
         "visibility": Visibility.PUBLIC,
         "enabled": True,
-        "input_vars": [
-            {"name": "content", "description": "内容", "required": True}
-        ],
+        "input_vars": [{"name": "content", "description": "内容", "required": True}],
         "tags": ["文章分析", "内容理解"],
     },
     {
@@ -134,9 +133,7 @@ DEFAULT_PROMPTS = [
         "type": PromptType.TEMPLATE,
         "visibility": Visibility.PUBLIC,
         "enabled": True,
-        "input_vars": [
-            {"name": "content", "description": "内容", "required": True}
-        ],
+        "input_vars": [{"name": "content", "description": "内容", "required": True}],
         "tags": ["文章分析", "学习辅助"],
     },
     {
@@ -146,9 +143,7 @@ DEFAULT_PROMPTS = [
         "type": PromptType.TEMPLATE,
         "visibility": Visibility.PUBLIC,
         "enabled": True,
-        "input_vars": [
-            {"name": "content", "description": "内容", "required": True}
-        ],
+        "input_vars": [{"name": "content", "description": "内容", "required": True}],
         "tags": ["思维拓展", "学习辅助"],
     },
     {
@@ -158,29 +153,27 @@ DEFAULT_PROMPTS = [
         "type": PromptType.TEMPLATE,
         "visibility": Visibility.PUBLIC,
         "enabled": True,
-        "input_vars": [
-            {"name": "content", "description": "内容", "required": True}
-        ],
+        "input_vars": [{"name": "content", "description": "内容", "required": True}],
         "tags": ["文章分析", "思维拓展"],
     },
 ]
 
 
-def get_default_tags() -> List[Dict[str, Any]]:
+def get_default_tags() -> list[dict[str, Any]]:
     """获取默认标签配置"""
     return DEFAULT_TAGS.copy()
 
 
-def get_default_prompts() -> List[Dict[str, Any]]:
+def get_default_prompts() -> list[dict[str, Any]]:
     """获取默认 prompts 配置"""
     return DEFAULT_PROMPTS.copy()
 
 
-def get_enabled_prompts() -> List[Dict[str, Any]]:
+def get_enabled_prompts() -> list[dict[str, Any]]:
     """获取默认启用的 prompts"""
     return [prompt for prompt in DEFAULT_PROMPTS if prompt.get("enabled", False)]
 
 
-def get_disabled_prompts() -> List[Dict[str, Any]]:
+def get_disabled_prompts() -> list[dict[str, Any]]:
     """获取默认禁用的 prompts"""
-    return [prompt for prompt in DEFAULT_PROMPTS if not prompt.get("enabled", False)] 
+    return [prompt for prompt in DEFAULT_PROMPTS if not prompt.get("enabled", False)]

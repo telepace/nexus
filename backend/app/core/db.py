@@ -5,17 +5,15 @@ from sqlmodel import Session, select
 from app import crud
 from app.core.config import settings
 from app.core.db_factory import create_db_engine
-from app.core.default_prompts import get_default_tags, get_default_prompts
+from app.core.default_prompts import get_default_prompts, get_default_tags
 from app.models import (
     ProcessingJob,
     Project,
     Prompt,
-    PromptType,
     PromptVersion,
     Tag,
     User,
     UserCreate,
-    Visibility,
 )
 from app.models.content import AIConversation, ContentItem
 from app.utils.timezone import now_utc

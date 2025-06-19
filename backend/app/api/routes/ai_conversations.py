@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status, Body
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
 
 from app.api.deps import get_current_user, get_db
@@ -11,8 +11,8 @@ from app.crud import crud_ai_conversation as crud
 from app.models import User
 from app.schemas.ai_conversations import (
     AIConversationCreate,
-    AIConversationPublic,
     AIConversationDetail,
+    AIConversationPublic,
 )
 
 router = APIRouter(tags=["ai-conversations"])
@@ -53,7 +53,9 @@ def list_ai_conversations(
     return results
 
 
-@router.post("/", response_model=AIConversationDetail, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=AIConversationDetail, status_code=status.HTTP_201_CREATED
+)
 def create_ai_conversation(
     *,
     db: Session = Depends(get_db),
@@ -62,7 +64,9 @@ def create_ai_conversation(
 ):
     """Create a new AI conversation."""
 
-    db_obj = crud.create_ai_conversation(db, conversation_in=conv_in, user_id=current_user.id)
+    db_obj = crud.create_ai_conversation(
+        db, conversation_in=conv_in, user_id=current_user.id
+    )
 
     return _to_detail_schema(db_obj)
 
@@ -74,9 +78,13 @@ def get_ai_conversation_detail(
     current_user: User = Depends(get_current_user),
     conversation_id: uuid.UUID,
 ):
-    conv = crud.get_ai_conversation(db, user_id=current_user.id, conversation_id=conversation_id)
+    conv = crud.get_ai_conversation(
+        db, user_id=current_user.id, conversation_id=conversation_id
+    )
     if not conv:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found"
+        )
 
     return _to_detail_schema(conv)
 
@@ -88,12 +96,20 @@ def get_ai_conversation_messages(
     current_user: User = Depends(get_current_user),
     conversation_id: uuid.UUID,
 ):
-    conv = crud.get_ai_conversation(db, user_id=current_user.id, conversation_id=conversation_id)
+    conv = crud.get_ai_conversation(
+        db, user_id=current_user.id, conversation_id=conversation_id
+    )
     if not conv:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found"
+        )
 
     try:
-        messages = json.loads(conv.messages) if isinstance(conv.messages, str) else conv.messages
+        messages = (
+            json.loads(conv.messages)
+            if isinstance(conv.messages, str)
+            else conv.messages
+        )
     except json.JSONDecodeError:
         messages = []
     return messages
@@ -103,14 +119,23 @@ def get_ai_conversation_messages(
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _to_detail_schema(conv) -> AIConversationDetail:
     try:
-        messages = json.loads(conv.messages) if isinstance(conv.messages, str) else conv.messages
+        messages = (
+            json.loads(conv.messages)
+            if isinstance(conv.messages, str)
+            else conv.messages
+        )
     except json.JSONDecodeError:
         messages = []
 
     try:
-        meta = json.loads(conv.meta_info) if isinstance(conv.meta_info, str) else conv.meta_info
+        meta = (
+            json.loads(conv.meta_info)
+            if isinstance(conv.meta_info, str)
+            else conv.meta_info
+        )
     except json.JSONDecodeError:
         meta = None
 
@@ -124,4 +149,4 @@ def _to_detail_schema(conv) -> AIConversationDetail:
         updated_at=conv.updated_at,
         messages=messages,
         meta_info=meta,
-    ) 
+    )

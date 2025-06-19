@@ -36,8 +36,8 @@ from app.crud.crud_content import (
     get_content_items_sync as crud_get_content_items,
 )
 from app.models.content import (
-    ContentItem,  # For converting ContentItemCreate to ContentItem model for CRUD
     AIConversation,  # Added for conversation storage
+    ContentItem,  # For converting ContentItemCreate to ContentItem model for CRUD
 )
 from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is just base + id and audit fields
     ContentItemCreate,
@@ -67,7 +67,7 @@ def create_ai_conversation(
 ) -> AIConversation:
     """
     创建AIConversation记录来存储AI分析对话
-    
+
     Args:
         session: 数据库会话
         user_id: 用户ID
@@ -78,16 +78,16 @@ def create_ai_conversation(
         model: AI模型名称
         temperature: 温度参数
         max_tokens: 最大token数
-        
+
     Returns:
         AIConversation: 创建的对话记录
     """
     # 准备对话消息
     conversation_messages = [
         {"role": "system", "content": content_to_analyze},
-        {"role": "user", "content": analysis_instruction}
+        {"role": "user", "content": analysis_instruction},
     ]
-    
+
     # 创建AIConversation记录
     ai_conversation = AIConversation(
         user_id=user_id,
@@ -95,20 +95,24 @@ def create_ai_conversation(
         title=f"AI分析: {content_item_title or '内容分析'}",
         ai_model_name=model,
         messages=json.dumps(conversation_messages),
-        summary=analysis_instruction[:200] + "..." if len(analysis_instruction) > 200 else analysis_instruction,
-        meta_info=json.dumps({
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "analysis_type": "content_analysis",
-            "content_length": len(content_to_analyze)
-        })
+        summary=analysis_instruction[:200] + "..."
+        if len(analysis_instruction) > 200
+        else analysis_instruction,
+        meta_info=json.dumps(
+            {
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "analysis_type": "content_analysis",
+                "content_length": len(content_to_analyze),
+            }
+        ),
     )
-    
+
     # 保存到数据库
     session.add(ai_conversation)
     session.commit()
     session.refresh(ai_conversation)
-    
+
     return ai_conversation
 
 
@@ -117,11 +121,11 @@ def update_ai_conversation_response(
     ai_conversation: AIConversation,
     ai_response: str,
     status: str = "completed",
-    error: str = None,
+    error: str | None = None,
 ) -> None:
     """
     更新AIConversation记录，添加AI响应
-    
+
     Args:
         session: 数据库会话
         ai_conversation: AI对话记录
@@ -132,25 +136,22 @@ def update_ai_conversation_response(
     try:
         # 获取现有消息
         conversation_messages = json.loads(ai_conversation.messages)
-        
+
         # 添加AI响应
         conversation_messages.append({"role": "assistant", "content": ai_response})
-        
+
         # 更新记录
         ai_conversation.messages = json.dumps(conversation_messages)
-        
+
         # 更新元信息
         meta_info = json.loads(ai_conversation.meta_info)
-        meta_info.update({
-            "status": status,
-            "response_length": len(ai_response)
-        })
-        
+        meta_info.update({"status": status, "response_length": len(ai_response)})
+
         if error:
             meta_info["error"] = error
-            
+
         ai_conversation.meta_info = json.dumps(meta_info)
-        
+
         session.add(ai_conversation)
         session.commit()
     except Exception as e:
@@ -855,7 +856,9 @@ async def analyze_content_ai_sdk(
     content_id: str,
     current_user: CurrentUser,
     user_prompt: str = Body(..., description="Analysis instruction/prompt"),
-    model: str = Body(default="gemini-2.5-flash-preview-05-20", description="Model to use"),
+    model: str = Body(
+        default="gemini-2.5-flash-preview-05-20", description="Model to use"
+    ),
     temperature: float = Body(default=0.7, description="Sampling temperature"),
     max_tokens: int = Body(default=2000, description="Maximum tokens to generate"),
     db: Session = Depends(get_db),
@@ -918,14 +921,16 @@ async def analyze_content_ai_sdk(
         content_to_analyze,
         model,
         temperature,
-        max_tokens
+        max_tokens,
     )
 
     completion_request = CompletionRequest(
         model=model,
         messages=[
             LLMMessage(role="system", content="You are a helpful content analyst."),
-            LLMMessage(role="user", content=f"{user_prompt}\n\n内容：\n{content_to_analyze}"),
+            LLMMessage(
+                role="user", content=f"{user_prompt}\n\n内容：\n{content_to_analyze}"
+            ),
         ],
         stream=True,
         temperature=temperature,
@@ -938,7 +943,7 @@ async def analyze_content_ai_sdk(
     async def stream_ai_sdk_analysis() -> AsyncGenerator[str, None]:
         """Generate Vercel AI SDK compatible analysis stream"""
         nonlocal full_ai_response
-        
+
         try:
             import aiohttp
 
@@ -961,13 +966,10 @@ async def analyze_content_ai_sdk(
                         # 发送错误响应
                         error_msg = f"LiteLLM error: HTTP {response.status}"
                         yield f'9:[{{"error":"{error_msg}"}}]\n'
-                        
+
                         # 更新AIConversation记录错误信息
                         update_ai_conversation_response(
-                            db,
-                            ai_conversation,
-                            error_msg,
-                            "failed"
+                            db, ai_conversation, error_msg, "failed"
                         )
                         return
 
@@ -986,13 +988,13 @@ async def analyze_content_ai_sdk(
                                 if data == "[DONE]":
                                     # 发送完成信号
                                     yield '8:[{"finishReason":"stop"}]\n'
-                                    
+
                                     # 更新AIConversation记录
                                     update_ai_conversation_response(
                                         db,
                                         ai_conversation,
                                         full_ai_response,
-                                        "completed"
+                                        "completed",
                                     )
                                     return
 
@@ -1001,15 +1003,14 @@ async def analyze_content_ai_sdk(
 
                                     # 检查错误
                                     if "error" in parsed:
-                                        error_msg = parsed.get("message", "Unknown error")
+                                        error_msg = parsed.get(
+                                            "message", "Unknown error"
+                                        )
                                         yield f'9:[{{"error":"{error_msg}"}}]\n'
-                                        
+
                                         # 更新AIConversation记录错误信息
                                         update_ai_conversation_response(
-                                            db,
-                                            ai_conversation,
-                                            error_msg,
-                                            "failed"
+                                            db, ai_conversation, error_msg, "failed"
                                         )
                                         return
 
@@ -1029,8 +1030,9 @@ async def analyze_content_ai_sdk(
 
                                             # 发送文本块 (类型 0) - 正确转义 JSON
                                             import json as json_module
+
                                             escaped_content = json_module.dumps(content)
-                                            yield f'0:{escaped_content}\n'
+                                            yield f"0:{escaped_content}\n"
 
                                 except json.JSONDecodeError:
                                     # 忽略非JSON数据
@@ -1040,13 +1042,10 @@ async def analyze_content_ai_sdk(
             # 发送错误信息
             error_msg = str(e).replace('"', '\\"')
             yield f'9:[{{"error":"Stream error: {error_msg}"}}]\n'
-            
+
             # 更新AIConversation记录错误信息
             update_ai_conversation_response(
-                db,
-                ai_conversation,
-                f"Stream error: {str(e)}",
-                "failed"
+                db, ai_conversation, f"Stream error: {str(e)}", "failed"
             )
 
     return StreamingResponse(
@@ -1067,7 +1066,9 @@ async def content_completion_stream(
     content_id: str,
     current_user: CurrentUser,
     prompt: str = Body(..., description="Analysis prompt"),
-    model: str = Body(default="gemini-2.5-flash-preview-05-20", description="Model to use"),
+    model: str = Body(
+        default="gemini-2.5-flash-preview-05-20", description="Model to use"
+    ),
     temperature: float = Body(default=0.7, description="Sampling temperature"),
     max_tokens: int = Body(default=2000, description="Maximum tokens to generate"),
     db: Session = Depends(get_db),
@@ -1141,7 +1142,7 @@ async def content_completion_stream(
         content_to_analyze,
         model,
         temperature,
-        max_tokens
+        max_tokens,
     )
 
     # Prepare the full prompt
@@ -1162,7 +1163,7 @@ async def content_completion_stream(
     async def stream_pure_text() -> AsyncGenerator[str, None]:
         """Generate pure text stream for Vercel AI SDK"""
         nonlocal full_ai_response
-        
+
         try:
             import aiohttp
 
@@ -1182,15 +1183,14 @@ async def content_completion_stream(
                 ) as response:
                     if response.status != 200:
                         # 发送错误并结束
-                        error_msg = f"Error: LiteLLM service returned HTTP {response.status}"
+                        error_msg = (
+                            f"Error: LiteLLM service returned HTTP {response.status}"
+                        )
                         yield error_msg
-                        
+
                         # 更新AIConversation记录错误信息
                         update_ai_conversation_response(
-                            db,
-                            ai_conversation,
-                            error_msg,
-                            "failed"
+                            db, ai_conversation, error_msg, "failed"
                         )
                         return
 
@@ -1212,7 +1212,7 @@ async def content_completion_stream(
                                         db,
                                         ai_conversation,
                                         full_ai_response,
-                                        "completed"
+                                        "completed",
                                     )
                                     return
 
@@ -1223,13 +1223,10 @@ async def content_completion_stream(
                                     if "error" in parsed:
                                         error_msg = f"Error: {parsed.get('message', 'Unknown error')}"
                                         yield error_msg
-                                        
+
                                         # 更新AIConversation记录错误信息
                                         update_ai_conversation_response(
-                                            db,
-                                            ai_conversation,
-                                            error_msg,
-                                            "failed"
+                                            db, ai_conversation, error_msg, "failed"
                                         )
                                         return
 
@@ -1257,14 +1254,9 @@ async def content_completion_stream(
             # 发送错误信息
             error_msg = f"Stream error: {str(e)}"
             yield error_msg
-            
+
             # 更新AIConversation记录错误信息
-            update_ai_conversation_response(
-                db,
-                ai_conversation,
-                error_msg,
-                "failed"
-            )
+            update_ai_conversation_response(db, ai_conversation, error_msg, "failed")
 
     return StreamingResponse(
         stream_pure_text(),
@@ -1285,7 +1277,9 @@ async def analyze_content_ai_sdk_updated(
     analysis_instruction: str = Body(
         ..., description="Analysis instruction/prompt from user"
     ),
-    model: str = Body(default="gemini-2.5-flash-preview-05-20", description="Model to use"),
+    model: str = Body(
+        default="gemini-2.5-flash-preview-05-20", description="Model to use"
+    ),
     temperature: float = Body(default=0.7, description="Sampling temperature"),
     max_tokens: int = Body(default=2000, description="Maximum tokens to generate"),
     db: Session = Depends(get_db),
@@ -1359,7 +1353,7 @@ async def analyze_content_ai_sdk_updated(
         content_to_analyze,
         model,
         temperature,
-        max_tokens
+        max_tokens,
     )
 
     # Updated prompt structure: system=content, user=instruction
@@ -1380,7 +1374,7 @@ async def analyze_content_ai_sdk_updated(
     async def stream_pure_text_updated() -> AsyncGenerator[str, None]:
         """Generate pure text stream for Vercel AI SDK with updated prompt structure"""
         nonlocal full_ai_response
-        
+
         try:
             import aiohttp
 
@@ -1400,15 +1394,14 @@ async def analyze_content_ai_sdk_updated(
                 ) as response:
                     if response.status != 200:
                         # 发送错误并结束
-                        error_msg = f"Error: LiteLLM service returned HTTP {response.status}"
+                        error_msg = (
+                            f"Error: LiteLLM service returned HTTP {response.status}"
+                        )
                         yield error_msg
-                        
+
                         # 更新AIConversation记录错误信息
                         update_ai_conversation_response(
-                            db,
-                            ai_conversation,
-                            error_msg,
-                            "failed"
+                            db, ai_conversation, error_msg, "failed"
                         )
                         return
 
@@ -1430,7 +1423,7 @@ async def analyze_content_ai_sdk_updated(
                                         db,
                                         ai_conversation,
                                         full_ai_response,
-                                        "completed"
+                                        "completed",
                                     )
                                     return
 
@@ -1441,13 +1434,10 @@ async def analyze_content_ai_sdk_updated(
                                     if "error" in parsed:
                                         error_msg = f"Error: {parsed.get('message', 'Unknown error')}"
                                         yield error_msg
-                                        
+
                                         # 更新AIConversation记录错误信息
                                         update_ai_conversation_response(
-                                            db,
-                                            ai_conversation,
-                                            error_msg,
-                                            "failed"
+                                            db, ai_conversation, error_msg, "failed"
                                         )
                                         return
 
@@ -1475,14 +1465,9 @@ async def analyze_content_ai_sdk_updated(
             # 发送错误信息
             error_msg = f"Stream error: {str(e)}"
             yield error_msg
-            
+
             # 更新AIConversation记录错误信息
-            update_ai_conversation_response(
-                db,
-                ai_conversation,
-                error_msg,
-                "failed"
-            )
+            update_ai_conversation_response(db, ai_conversation, error_msg, "failed")
 
     return StreamingResponse(
         stream_pure_text_updated(),
@@ -1767,8 +1752,9 @@ def get_ai_analysis_for_content(
     """
     获取内容项的AI分析结果，优先从AIConversation表获取最新的分析结果
     """
-    from app.models.content import ProcessingJob
     from sqlmodel import select  # 添加缺失的导入
+
+    from app.models.content import ProcessingJob
 
     # 首先从AIConversation表获取最新的AI分析结果
     conversations = session.exec(
@@ -1778,7 +1764,7 @@ def get_ai_analysis_for_content(
     ).all()
 
     ai_analysis = {}
-    
+
     # 如果有AI对话记录，从中提取分析结果
     if conversations:
         # 为每个对话创建唯一的键，避免覆盖
@@ -1789,47 +1775,53 @@ def get_ai_analysis_for_content(
                     messages = json.loads(conv.messages)
                 else:
                     messages = conv.messages
-                
+
                 # 解析元信息
                 if isinstance(conv.meta_info, str):
                     meta_info = json.loads(conv.meta_info)
                 else:
                     meta_info = conv.meta_info or {}
-                
+
                 # 获取AI响应（assistant角色的最后一条消息）
                 ai_response = None
                 for msg in reversed(messages):
-                    if msg.get('role') == 'assistant':
-                        ai_response = msg.get('content', '')
+                    if msg.get("role") == "assistant":
+                        ai_response = msg.get("content", "")
                         break
-                
+
                 if ai_response:
                     # 根据分析指令判断分析类型
                     user_instruction = ""
                     for msg in messages:
-                        if msg.get('role') == 'user':
-                            user_instruction = msg.get('content', '')
+                        if msg.get("role") == "user":
+                            user_instruction = msg.get("content", "")
                             break
-                    
+
                     # 判断分析类型
                     user_lower = user_instruction.lower()
                     analysis_type = "custom"  # 默认类型
-                    if any(keyword in user_lower for keyword in ["总结", "摘要", "概括"]):
+                    if any(
+                        keyword in user_lower for keyword in ["总结", "摘要", "概括"]
+                    ):
                         analysis_type = "summarizer"
-                    elif any(keyword in user_lower for keyword in ["要点", "关键", "重点"]):
+                    elif any(
+                        keyword in user_lower for keyword in ["要点", "关键", "重点"]
+                    ):
                         analysis_type = "key_points_extractor"
-                    elif any(keyword in user_lower for keyword in ["洞察", "深度", "分析"]):
+                    elif any(
+                        keyword in user_lower for keyword in ["洞察", "深度", "分析"]
+                    ):
                         analysis_type = "insights"
                     elif any(keyword in user_lower for keyword in ["问题", "思考"]):
                         analysis_type = "questions"
-                    
+
                     # 创建唯一的键，如果同一类型有多个分析，添加序号
                     unique_key = analysis_type
                     counter = 1
                     while unique_key in ai_analysis:
                         counter += 1
                         unique_key = f"{analysis_type}_{counter}"
-                    
+
                     ai_analysis[unique_key] = {
                         "analysis_result": ai_response,
                         "raw_text": ai_response,
@@ -1839,41 +1831,49 @@ def get_ai_analysis_for_content(
                         "instruction": user_instruction,
                         "meta_info": meta_info,
                         "analysis_type": analysis_type,  # 保存原始分析类型
-                        "sequence": i + 1  # 序号，最新的是1
+                        "sequence": i + 1,  # 序号，最新的是1
                     }
-                    
+
                     # 为了兼容前端，也提供结构化格式
                     if analysis_type == "summarizer":
                         ai_analysis[unique_key]["summary"] = {
-                            "main_thesis": ai_response[:300] + "..." if len(ai_response) > 300 else ai_response
+                            "main_thesis": ai_response[:300] + "..."
+                            if len(ai_response) > 300
+                            else ai_response
                         }
                     elif analysis_type == "key_points_extractor":
                         # 尝试从响应中提取要点
-                        lines = ai_response.split('\n')
+                        lines = ai_response.split("\n")
                         key_points = []
                         for line in lines:
                             line = line.strip()
-                            if line and (line.startswith('•') or line.startswith('-') or line.startswith('*') or 
-                                       any(line.startswith(f'{i}.') for i in range(1, 10))):
+                            if line and (
+                                line.startswith("•")
+                                or line.startswith("-")
+                                or line.startswith("*")
+                                or any(line.startswith(f"{i}.") for i in range(1, 10))
+                            ):
                                 # 清理格式标记
-                                clean_point = line.lstrip('•-*').strip()
+                                clean_point = line.lstrip("•-*").strip()
                                 # 移除数字序号
                                 for num in range(1, 10):
-                                    if clean_point.startswith(f'{num}.'):
+                                    if clean_point.startswith(f"{num}."):
                                         clean_point = clean_point[2:].strip()
                                         break
-                                if clean_point and len(clean_point) > 10:  # 过滤太短的点
+                                if (
+                                    clean_point and len(clean_point) > 10
+                                ):  # 过滤太短的点
                                     key_points.append({"point": clean_point})
-                        
+
                         if key_points:
                             ai_analysis[unique_key]["key_points"] = {
                                 "core_concepts": key_points[:5]  # 最多显示5个要点
                             }
-            
+
             except (json.JSONDecodeError, TypeError, KeyError) as e:
                 logger.warning(f"Failed to parse conversation {conv.id}: {e}")
                 continue
-    
+
     # 如果AIConversation表中没有数据，回退到ProcessingJob表（向后兼容）
     if not ai_analysis:
         # 查询AI分析相关的处理任务
@@ -1881,7 +1881,9 @@ def get_ai_analysis_for_content(
             session.query(ProcessingJob)
             .filter(
                 ProcessingJob.content_item_id == content_id,
-                ProcessingJob.processor_name.in_(["summarizer", "key_points_extractor"]),
+                ProcessingJob.processor_name.in_(
+                    ["summarizer", "key_points_extractor"]
+                ),
                 ProcessingJob.status == "completed",
             )
             .all()
@@ -1898,7 +1900,7 @@ def get_ai_analysis_for_content(
                     else:
                         # 尝试将其他类型转换为字符串再解析
                         result_data = json.loads(str(job.result))
-                    
+
                     analysis_result = result_data.get("analysis_result", {})
 
                     # 处理可能的JSON解析错误，提取raw_response
@@ -1921,7 +1923,9 @@ def get_ai_analysis_for_content(
                                 ai_analysis[job.processor_name] = parsed_response
                             except json.JSONDecodeError:
                                 # 如果解析失败，使用原始响应
-                                ai_analysis[job.processor_name] = {"raw_text": raw_response}
+                                ai_analysis[job.processor_name] = {
+                                    "raw_text": raw_response
+                                }
                         else:
                             ai_analysis[job.processor_name] = analysis_result
                     else:
@@ -1956,16 +1960,16 @@ def get_content_ai_conversations(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
         )
-    
+
     if content_item.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to access this content item"
+            detail="You don't have permission to access this content item",
         )
 
     # 查询AI对话记录
     from sqlmodel import select
-    
+
     statement = (
         select(AIConversation)
         .where(AIConversation.content_item_id == content_id)
@@ -1973,34 +1977,46 @@ def get_content_ai_conversations(
         .offset(skip)
         .limit(limit)
     )
-    
+
     conversations = session.exec(statement).all()
-    
+
     # 转换为字典格式
     conversation_list = []
     for conv in conversations:
         try:
-            messages = json.loads(conv.messages) if isinstance(conv.messages, str) else conv.messages
-            meta_info = json.loads(conv.meta_info) if isinstance(conv.meta_info, str) else conv.meta_info
+            messages = (
+                json.loads(conv.messages)
+                if isinstance(conv.messages, str)
+                else conv.messages
+            )
+            meta_info = (
+                json.loads(conv.meta_info)
+                if isinstance(conv.meta_info, str)
+                else conv.meta_info
+            )
         except json.JSONDecodeError:
             messages = []
             meta_info = {}
-            
-        conversation_list.append({
-            "id": str(conv.id),
-            "title": conv.title,
-            "ai_model_name": conv.ai_model_name,
-            "messages": messages,
-            "summary": conv.summary,
-            "meta_info": meta_info,
-            "created_at": conv.created_at.isoformat(),
-            "updated_at": conv.updated_at.isoformat(),
-        })
-    
+
+        conversation_list.append(
+            {
+                "id": str(conv.id),
+                "title": conv.title,
+                "ai_model_name": conv.ai_model_name,
+                "messages": messages,
+                "summary": conv.summary,
+                "meta_info": meta_info,
+                "created_at": conv.created_at.isoformat(),
+                "updated_at": conv.updated_at.isoformat(),
+            }
+        )
+
     # 获取总数
-    count_statement = select(AIConversation).where(AIConversation.content_item_id == content_id)
+    count_statement = select(AIConversation).where(
+        AIConversation.content_item_id == content_id
+    )
     total_count = len(session.exec(count_statement).all())
-    
+
     return {
         "conversations": conversation_list,
         "total": total_count,
@@ -2026,34 +2042,44 @@ def get_ai_conversation_details(
     """
     # 查询对话记录
     from sqlmodel import select
-    
+
     statement = select(AIConversation).where(AIConversation.id == conversation_id)
     conversation = session.exec(statement).first()
-    
+
     if not conversation:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found"
         )
-    
+
     # 验证用户权限
     if conversation.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to access this conversation"
+            detail="You don't have permission to access this conversation",
         )
-    
+
     # 解析JSON字段
     try:
-        messages = json.loads(conversation.messages) if isinstance(conversation.messages, str) else conversation.messages
-        meta_info = json.loads(conversation.meta_info) if isinstance(conversation.meta_info, str) else conversation.meta_info
+        messages = (
+            json.loads(conversation.messages)
+            if isinstance(conversation.messages, str)
+            else conversation.messages
+        )
+        meta_info = (
+            json.loads(conversation.meta_info)
+            if isinstance(conversation.meta_info, str)
+            else conversation.meta_info
+        )
     except json.JSONDecodeError:
         messages = []
         meta_info = {}
-    
+
     return {
         "id": str(conversation.id),
         "user_id": str(conversation.user_id),
-        "content_item_id": str(conversation.content_item_id) if conversation.content_item_id else None,
+        "content_item_id": str(conversation.content_item_id)
+        if conversation.content_item_id
+        else None,
         "title": conversation.title,
         "ai_model_name": conversation.ai_model_name,
         "messages": messages,

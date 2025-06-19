@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Sequence, Any
+from collections.abc import Sequence
 
 from sqlmodel import Session, select
 
@@ -61,5 +61,7 @@ def get_ai_conversations(
     statement = select(AIConversation).where(AIConversation.user_id == user_id)
     if content_item_id:
         statement = statement.where(AIConversation.content_item_id == content_item_id)
-    statement = statement.order_by(AIConversation.created_at.desc()).offset(skip).limit(limit)
-    return session.exec(statement).all() 
+    statement = (
+        statement.order_by(AIConversation.created_at.desc()).offset(skip).limit(limit)
+    )
+    return session.exec(statement).all()

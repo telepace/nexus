@@ -337,13 +337,13 @@ def test_read_prompts_with_search_and_sort(
     mock_sqlmodel_select.return_value = mock_query
     mock_query.where.return_value.order_by.return_value = mock_query
     mock_db_session_fixture.exec.return_value.all.return_value = [mock_p2, mock_p1]
-    
+
     # Mock the user settings function to return proper format
     mock_get_prompts_with_user_settings.return_value = [
         {**mock_p2.model_dump(), "user_enabled": False},
-        {**mock_p1.model_dump(), "user_enabled": False}
+        {**mock_p1.model_dump(), "user_enabled": False},
     ]
-    
+
     response = client.get(
         f"{app_settings.API_V1_STR}/prompts/?search=Search&sort=updated_at&order=asc"
     )
@@ -377,7 +377,7 @@ def test_read_prompts_with_tag_filter(
 
     # Mock database execution
     mock_db_session_fixture.exec.return_value.all.return_value = [mock_p1]
-    
+
     # Mock the user settings function to return proper format
     mock_get_prompts_with_user_settings.return_value = [
         {**mock_p1.model_dump(), "user_enabled": False}

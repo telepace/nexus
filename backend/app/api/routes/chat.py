@@ -21,7 +21,9 @@ router = APIRouter()
 @router.post("/completions")
 async def create_chat_completion(
     messages: list[dict] = Body(..., description="Chat messages in OpenAI format"),
-    model: str = Body(default="or-gemini-2.5-flash-preview-05-20", description="Model to use"),
+    model: str = Body(
+        default="or-gemini-2.5-flash-preview-05-20", description="Model to use"
+    ),
     stream: bool = Body(default=True, description="Whether to stream the response"),
     temperature: float = Body(default=0.7, description="Sampling temperature"),
     max_tokens: int = Body(default=2000, description="Maximum tokens to generate"),

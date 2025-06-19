@@ -120,7 +120,7 @@ async def google_login(
     if extension_callback:
         request.session["extension_callback"] = extension_callback
         logger.info(f"Extension callback URL registered: {extension_callback}")
-    
+
     # 保存来源信息
     if from_source:
         request.session["from_source"] = from_source
@@ -215,7 +215,7 @@ async def google_callback(
 
         # Find or create user based on email
         user = crud.get_user_by_email(session=session, email=user_info["email"])
-        
+
         # 获取登录来源
         from_source = request.session.get("from_source", None)
 
@@ -230,7 +230,9 @@ async def google_callback(
                 "is_setup_complete": from_source != "extension",
             }
             user = crud.create_user_oauth(session=session, obj_in=User(**user_data))
-            logger.info(f"Created new user for Google account: {user_info['email']}, setup_complete: {user_data['is_setup_complete']}")
+            logger.info(
+                f"Created new user for Google account: {user_info['email']}, setup_complete: {user_data['is_setup_complete']}"
+            )
         elif not user.google_id:
             # Update existing user with Google ID
             user.google_id = user_info["sub"]
@@ -240,7 +242,7 @@ async def google_callback(
             logger.info(f"Updated existing user with Google ID: {user_info['email']}")
         else:
             logger.info(f"User already exists: {user_info['email']}")
-        
+
         # 根据登录来源设置 setup 状态
         from_source = request.session.pop("from_source", None)
         if from_source != "extension":

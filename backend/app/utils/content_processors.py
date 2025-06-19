@@ -100,12 +100,12 @@ class JinaProcessor(ProcessingStep):
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
                 # Add X-Remove-Selector to remove unwanted elements
-                "X-Remove-Selector": "header, nav, footer, .sidebar, .navigation, .breadcrumb, .copyright, .pagination, .menu, .toc, .table-of-contents, .doc-sidebar, .navbar, .header, .footer-wrapper, .site-footer, .site-header, .skip-link, .version-selector, .language-selector, .ads, .advertisement, .social-share, .comments, .related-posts, .recommended, .popup, .modal, .overlay, .banner, .promotion"
+                "X-Remove-Selector": "header, nav, footer, .sidebar, .navigation, .breadcrumb, .copyright, .pagination, .menu, .toc, .table-of-contents, .doc-sidebar, .navbar, .header, .footer-wrapper, .site-footer, .site-header, .skip-link, .version-selector, .language-selector, .ads, .advertisement, .social-share, .comments, .related-posts, .recommended, .popup, .modal, .overlay, .banner, .promotion",
             }
 
             # Use GET request with URL as path parameter (following the curl example pattern)
             full_url = f"{self.api_url}{content_item.source_uri}"
-            
+
             # Make request to Jina AI
             response = requests.get(
                 full_url,

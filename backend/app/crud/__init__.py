@@ -12,24 +12,24 @@ from typing import Any, Protocol, TypeVar
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
-from app.core.security import get_password_hash, verify_password, decrypt_password
+from app.core.security import decrypt_password, get_password_hash, verify_password
 from app.models import Project, TokenBlacklist, User
 
 # Import from crud_image.py
 from . import crud_image
-
-# Import from crud_content.py
-from .crud_content import (
-    create_content_item,
-    get_content_item,
-    get_content_items,
-)
 
 # Import from crud_ai_conversation.py
 from .crud_ai_conversation import (
     create_ai_conversation,
     get_ai_conversation,
     get_ai_conversations,
+)
+
+# Import from crud_content.py
+from .crud_content import (
+    create_content_item,
+    get_content_item,
+    get_content_items,
 )
 
 ModelType = TypeVar("ModelType")
@@ -209,18 +209,18 @@ def get_user(*, session: Session, user_id: uuid.UUID) -> Any | None:
 def authenticate(*, session: Session, email: str, password: str) -> Any | None:
     """验证用户"""
     from app.core.security import decrypt_password
-    
+
     user = get_user_by_email(session=session, email=email)
     if not user or not user.hashed_password:
         return None
-    
+
     # 解密密码然后验证
     try:
         decrypted_password = decrypt_password(password)
     except Exception:
         # 如果解密失败，假设密码已经是明文（用于测试或向后兼容）
         decrypted_password = password
-    
+
     if not verify_password(decrypted_password, user.hashed_password):
         return None
     return user
@@ -372,15 +372,15 @@ def create_user_oauth(*, session: Session, obj_in: Any) -> Any:
     from app.models import User
 
     # 确保 OAuth 用户也默认完成 setup（除非明确指定为 extension 来源）
-    if hasattr(obj_in, 'is_setup_complete'):
+    if hasattr(obj_in, "is_setup_complete"):
         # 如果已经设置了 setup 状态，保持不变
         pass
     else:
         # 默认设置为完成状态
-        if hasattr(obj_in, '__dict__'):
-            obj_in.__dict__['is_setup_complete'] = True
+        if hasattr(obj_in, "__dict__"):
+            obj_in.__dict__["is_setup_complete"] = True
         elif isinstance(obj_in, dict):
-            obj_in['is_setup_complete'] = True
+            obj_in["is_setup_complete"] = True
 
     db_obj = User.model_validate(obj_in)
     session.add(db_obj)
@@ -439,48 +439,39 @@ def update_tag(db: Session, tag: Any, tag_in: Any):
     return tag
 
 
+# 添加到__all__以避免未使用导入的警告
 __all__ = [
-    # Generic CRUD operations
+    "create_ai_conversation",
+    "get_ai_conversation",
+    "get_ai_conversations",
+    "create_content_item",
+    "get_content_item",
+    "get_content_items",
+    "crud_image",
     "get_by_id",
     "get_multi",
     "create",
     "update",
     "delete",
-    # User CRUD operations
-    "authenticate",
+    "get_user_by_email",
+    "get_items",
     "create_user",
     "get_user",
-    "get_user_by_email",
+    "authenticate",
     "update_user",
-    "create_user_oauth",
-    "get_user_by_google_id",
-    # Item CRUD operations
     "create_project",
     "get_item",
-    "get_items",
     "update_item",
     "delete_item",
-    # Token blacklist operations
     "create_token_blacklist",
     "check_token_in_blacklist",
     "add_token_to_blacklist",
     "is_token_blacklisted",
     "clean_expired_tokens",
-    # Tag operations
+    "create_user_oauth",
+    "get_user_by_google_id",
     "get_tags",
     "get_tag",
     "create_tag",
     "update_tag",
-    # Content operations
-    "create_content_item",
-    "get_content_item",
-    "get_content_items",
-    # Image CRUD operations
-    "crud_image",  # Add the module itself for access like crud.crud_image.create_image
-    # Or list individual functions if preferred:
-    # "create_image",
-    # "get_image",
-    # "get_multi_images_by_owner",
-    # "update_image",
-    # "remove_image",
 ]

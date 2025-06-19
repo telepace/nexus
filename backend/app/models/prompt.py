@@ -199,14 +199,15 @@ class TagUpdate(BaseModel):
 
 class UserPromptSettings(SQLModel, table=True):
     """用户对 Prompt 的个人设置"""
+
     __tablename__ = "user_prompt_settings"
-    
+
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     user_id: uuid.UUID = Field(foreign_key="user.id", description="用户ID")
-    prompt_id: uuid.UUID = Field(foreign_key="prompts.id", description="Prompt ID") 
+    prompt_id: uuid.UUID = Field(foreign_key="prompts.id", description="Prompt ID")
     enabled: bool = Field(default=False, description="用户是否启用此 Prompt")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
     # 确保每个用户对每个 prompt 只有一个设置记录
-    __table_args__ = (UniqueConstraint('user_id', 'prompt_id'),)
+    __table_args__ = (UniqueConstraint("user_id", "prompt_id"),)

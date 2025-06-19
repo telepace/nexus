@@ -41,7 +41,7 @@ def auth_login(login_request: LoginRequest, session: SessionDep) -> Token:
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
-    
+
     # 根据登录来源设置 setup 状态
     # 如果是来自 Web 端的首次登录，直接标记为 setup 完成
     # 如果是来自插件的登录，保持 setup 未完成状态，需要用户完成插件设置
@@ -52,7 +52,7 @@ def auth_login(login_request: LoginRequest, session: SessionDep) -> Token:
             session.add(user)
             session.commit()
             session.refresh(user)
-    
+
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return Token(
         access_token=security.create_access_token(
