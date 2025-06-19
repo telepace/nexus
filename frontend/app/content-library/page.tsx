@@ -97,7 +97,7 @@ interface ContentItemPublic {
       raw_text?: string;
     };
     // 允许其他动态分析类型
-    [key: string]: any;
+    [key: string]: unknown;
   } | null;
 }
 
@@ -142,17 +142,28 @@ const AIAnalysisCard = ({
 
   const renderGenericAnalysis = (
     title: string,
-    content: any,
+    content: unknown,
     index: number,
   ) => {
     if (!content) return null;
 
+    // 类型保护和安全访问
+    const isObject = typeof content === "object" && content !== null;
+    const contentObj = isObject ? (content as Record<string, unknown>) : null;
+
     // 尽量使用结构化字段，否则回退到 raw_text
     const preview =
       (typeof content === "string" && content) ||
-      content.analysis_result ||
-      content.raw_text ||
-      JSON.stringify(content).substring(0, 150);
+      (contentObj?.analysis_result &&
+      typeof contentObj.analysis_result === "string"
+        ? contentObj.analysis_result
+        : null) ||
+      (contentObj?.raw_text && typeof contentObj.raw_text === "string"
+        ? contentObj.raw_text
+        : null) ||
+      (isObject ? JSON.stringify(content).substring(0, 150) : null);
+
+    if (!preview) return null;
 
     return (
       <div
@@ -166,7 +177,9 @@ const AIAnalysisCard = ({
           </span>
         </div>
         <p className="text-sm text-purple-800 dark:text-purple-200 leading-relaxed line-clamp-3">
-          {typeof preview === "string" ? preview.substring(0, 150) + "..." : "(unsupported format)"}
+          {typeof preview === "string"
+            ? preview.substring(0, 150) + "..."
+            : "(unsupported format)"}
         </p>
       </div>
     );

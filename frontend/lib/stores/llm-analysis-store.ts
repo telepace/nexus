@@ -151,7 +151,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
 
         try {
           console.log("[LLM Analysis Store] 开始加载 prompts...");
-          
+
           const [enabled, disabled] = await Promise.all([
             promptsApi.getEnabledPrompts(),
             promptsApi.getDisabledPrompts(),
@@ -161,7 +161,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
             enabledCount: enabled?.length || 0,
             disabledCount: disabled?.length || 0,
             enabledPrompts: enabled,
-            disabledPrompts: disabled
+            disabledPrompts: disabled,
           });
 
           set({
@@ -226,7 +226,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
 
           // 调用流式分析API
           const response = await fetch(
-            `${apiUrl}/api/v1/content/${contentId}/analyze-ai-sdk`,
+            `${apiUrl}/api/v1/content/${contentId}/analyze-stream`,
             {
               method: "POST",
               headers: {
@@ -234,8 +234,9 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                user_prompt: systemPrompt, // 分析指令
-                model: "or-llama-3-1-8b-instruct",
+                system_prompt: systemPrompt,
+                user_prompt: userPrompt,
+                model: "gemini-2.5-flash-preview-05-20",
               }),
             },
           );
@@ -295,17 +296,19 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                   // 解析 JSON 转义的内容
                   const jsonContent = line.slice(2); // 移除 "0:"
                   let content = "";
-                  
+
                   try {
                     // 使用 JSON.parse 正确解析转义字符
                     content = JSON.parse(jsonContent);
-                  } catch (error) {
+                  } catch (_parseError) {
+                    void _parseError; // 明确标记参数已被处理
                     // 如果解析失败，尝试简单的字符串处理（向后兼容）
-                    content = jsonContent.startsWith('"') && jsonContent.endsWith('"') 
-                      ? jsonContent.slice(1, -1) 
-                      : jsonContent;
+                    content =
+                      jsonContent.startsWith('"') && jsonContent.endsWith('"')
+                        ? jsonContent.slice(1, -1)
+                        : jsonContent;
                   }
-                  
+
                   if (content) {
                     accumulatedContent += content;
                     // 使用防抖更新
@@ -471,12 +474,13 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
       getAvailablePrompts: () => {
         const { enabledPrompts } = get();
         // 确保始终返回数组，并过滤掉无效的prompt
-        return (enabledPrompts || []).filter(prompt => 
-          prompt && 
-          typeof prompt === 'object' && 
-          prompt.id && 
-          prompt.name && 
-          prompt.content
+        return (enabledPrompts || []).filter(
+          (prompt) =>
+            prompt &&
+            typeof prompt === "object" &&
+            prompt.id &&
+            prompt.name &&
+            prompt.content,
         );
       },
 
@@ -494,10 +498,8 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
           markPromptAsUsed,
         } = get();
 
-        // 如果有promptId，标记为已使用
-        if (promptId) {
-          markPromptAsUsed(promptId);
-        }
+        // 标记prompt为已使用
+        markPromptAsUsed(promptId);
 
         // 创建一个loading状态的分析
         const loadingAnalysis = {
@@ -525,9 +527,9 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
           const apiUrl =
             process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-          // 调用更新后的流式分析API
+          // 调用流式分析API
           const response = await fetch(
-            `${apiUrl}/api/v1/content/${contentId}/analyze-ai-sdk-updated`,
+            `${apiUrl}/api/v1/content/${contentId}/analyze-ai-sdk`,
             {
               method: "POST",
               headers: {
@@ -535,7 +537,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                analysis_instruction: analysisInstruction, // 分析指令作为用户消息
+                user_prompt: analysisInstruction, // 分析指令
                 model: "or-llama-3-1-8b-instruct",
               }),
             },
@@ -596,17 +598,19 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                   // 解析 JSON 转义的内容
                   const jsonContent = line.slice(2); // 移除 "0:"
                   let content = "";
-                  
+
                   try {
                     // 使用 JSON.parse 正确解析转义字符
                     content = JSON.parse(jsonContent);
-                  } catch (error) {
+                  } catch (_parseError) {
+                    void _parseError; // 明确标记参数已被处理
                     // 如果解析失败，尝试简单的字符串处理（向后兼容）
-                    content = jsonContent.startsWith('"') && jsonContent.endsWith('"') 
-                      ? jsonContent.slice(1, -1) 
-                      : jsonContent;
+                    content =
+                      jsonContent.startsWith('"') && jsonContent.endsWith('"')
+                        ? jsonContent.slice(1, -1)
+                        : jsonContent;
                   }
-                  
+
                   if (content) {
                     accumulatedContent += content;
                     // 使用防抖更新
@@ -736,15 +740,3 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
     },
   ),
 );
-
-// 生成模拟内容的辅助函数
-// const generateMockContent = (type: LLMAnalysis['type']): string => {
-//   const mockContents = {
-//     summary: "这是一个关于人工智能发展的文章摘要。文章详细介绍了AI技术的历史演进、当前应用场景以及未来发展趋势。",
-//     key_points: "• AI技术正在快速发展\n• 机器学习是核心技术\n• 应用场景日益广泛\n• 需要关注伦理问题",
-//     questions: "1. AI技术的发展会对就业产生什么影响？\n2. 如何确保AI系统的安全性和可靠性？\n3. AI在医疗领域的应用前景如何？",
-//     insights: "通过分析可以看出，AI技术的发展呈现出加速趋势，但同时也面临着技术、伦理和社会层面的挑战。",
-//     custom: "基于自定义提示词生成的分析内容，展示了内容的深度理解和独特见解。"
-//   };
-//   return mockContents[type] || "分析内容";
-// };

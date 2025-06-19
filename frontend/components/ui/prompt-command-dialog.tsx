@@ -37,14 +37,14 @@ export function PromptCommandDialog({
   useEffect(() => {
     if (input.startsWith("/")) {
       const searchTerm = input.slice(1).toLowerCase();
-      const filtered = (availablePrompts || [])
-        .filter(prompt => 
-          prompt && 
-          prompt.name && 
+      const filtered = (availablePrompts || []).filter(
+        (prompt) =>
+          prompt &&
+          prompt.name &&
           prompt.description &&
           (prompt.name.toLowerCase().includes(searchTerm) ||
-           prompt.description.toLowerCase().includes(searchTerm))
-        );
+            prompt.description.toLowerCase().includes(searchTerm)),
+      );
       setFilteredPrompts(filtered);
       setShowSuggestions(true);
     } else {
@@ -160,10 +160,10 @@ export function PromptCommandDialog({
                           <Command className="h-4 w-4 text-muted-foreground" />
                           <div>
                             <div className="font-medium text-sm">
-                              {prompt?.name || '未命名 Prompt'}
+                              {prompt?.name || "未命名 Prompt"}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {prompt?.description || '无描述'}
+                              {prompt?.description || "无描述"}
                             </div>
                           </div>
                         </div>

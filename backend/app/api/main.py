@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.routes import (
+    ai_conversations,  # Add AI conversations router
     chat,  # Add chat router
     content,  # Add content router
     dashboard,  # Add dashboard router
@@ -40,6 +41,9 @@ api_router.include_router(
 api_router.include_router(
     preprocessing.router, prefix="/preprocessing", tags=["preprocessing"]
 )  # Include preprocessing router
+api_router.include_router(
+    ai_conversations.router, prefix="/ai/conversations", tags=["ai-conversations"]
+)  # Include AI conversations router
 
 
 if settings.ENVIRONMENT == "local":

@@ -61,14 +61,19 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
       enabledPrompts,
       disabledPrompts,
       availablePrompts: getAvailablePrompts(),
-      error
+      error,
     });
-  }, [enabledPrompts, disabledPrompts, isLoadingPrompts, error, getAvailablePrompts]);
+  }, [
+    enabledPrompts,
+    disabledPrompts,
+    isLoadingPrompts,
+    error,
+    getAvailablePrompts,
+  ]);
 
   // 过滤当前内容的分析
-  const contentAnalyses = analyses?.filter(
-    (analysis) => analysis?.contentId === contentId,
-  ) || [];
+  const contentAnalyses =
+    analyses?.filter((analysis) => analysis?.contentId === contentId) || [];
 
   // 清理错误状态
   useEffect(() => {
@@ -138,7 +143,7 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
       await generateAnalysis(
         contentId,
         analysis.prompt,
-        contentText || '',
+        contentText || "",
         analysis.promptId,
         analysis.title,
       );
@@ -295,18 +300,23 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
               <div className="max-h-[120px] overflow-y-auto">
                 <PromptRecommendations
                   recommendations={(getAvailablePrompts() || [])
-                    .filter(prompt => prompt && prompt.id && prompt.name && prompt.content) // 过滤掉无效的 prompt
+                    .filter(
+                      (prompt) =>
+                        prompt && prompt.id && prompt.name && prompt.content,
+                    ) // 过滤掉无效的 prompt
                     .slice(0, 4)
                     .map((prompt) => ({
                       id: prompt.id,
                       name: prompt.name,
-                      description: prompt.description || '',
+                      description: prompt.description || "",
                       prompt: prompt.content,
                       type: "custom" as const,
                       icon: "🤖",
                     }))}
                   onPromptClick={(rec) => {
-                    const prompt = enabledPrompts?.find((p) => p?.id === rec.id);
+                    const prompt = enabledPrompts?.find(
+                      (p) => p?.id === rec.id,
+                    );
                     if (prompt) handleEnabledPromptClick(prompt);
                   }}
                   isGenerating={isGenerating}

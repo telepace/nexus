@@ -15,6 +15,7 @@ from .prompts import router as prompts_router
 # from .profile import router as profile_router
 # from .upload import router as upload_router
 from .users import router as users_router
+from .ai_conversations import router as ai_conversations_router
 
 api_router = APIRouter()
 api_router.include_router(login_router)
@@ -30,3 +31,4 @@ api_router.include_router(content_router, prefix="/content")
 api_router.include_router(llm_service_router, prefix="/llm")
 api_router.include_router(model_management_router, prefix="/model-management", tags=["model-management"])
 api_router.include_router(dashboard_router)
+api_router.include_router(ai_conversations_router, prefix="/ai/conversations")

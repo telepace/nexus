@@ -231,9 +231,8 @@ async function PromptDetailContent({ id }: { id: string }) {
             <Card className="p-4">
               <div className="flex items-center text-sm">
                 {
-                  visibilityMap[
-                    prompt.visibility as keyof typeof visibilityMap
-                  ]?.icon
+                  visibilityMap[prompt.visibility as keyof typeof visibilityMap]
+                    ?.icon
                 }
                 <span className="font-medium">可见性:</span>
                 <span className="ml-auto">

@@ -25,6 +25,13 @@ from .crud_content import (
     get_content_items,
 )
 
+# Import from crud_ai_conversation.py
+from .crud_ai_conversation import (
+    create_ai_conversation,
+    get_ai_conversation,
+    get_ai_conversations,
+)
+
 ModelType = TypeVar("ModelType")
 CreateSchemaType = TypeVar("CreateSchemaType")
 UpdateSchemaType = TypeVar("UpdateSchemaType")

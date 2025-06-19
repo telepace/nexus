@@ -255,40 +255,42 @@ export const fetchPrompts = async (options?: {
 type FetchPromptReturn = PromptData | ApiErrorResponse;
 
 // 获取单个Prompt
-export const fetchPrompt = cache(async (id: string): Promise<FetchPromptReturn> => {
-  // 验证用户
-  const user = await requireAuth();
-  if (!user) {
-    redirect("/login");
-  }
-
-  const token = await getAuthToken();
-  if (!token) {
-    redirect("/login");
-  }
-
-  try {
-    const { data, error } = await readPrompt({
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      path: {
-        prompt_id: id,
-      },
-    });
-
-    if (error) {
-      return {
-        error: typeof error === "string" ? error : JSON.stringify(error),
-      };
+export const fetchPrompt = cache(
+  async (id: string): Promise<FetchPromptReturn> => {
+    // 验证用户
+    const user = await requireAuth();
+    if (!user) {
+      redirect("/login");
     }
 
-    return data as unknown as PromptData;
-  } catch (error) {
-    console.error("获取prompt详情出错:", error);
-    return { error: "获取数据失败" };
-  }
-});
+    const token = await getAuthToken();
+    if (!token) {
+      redirect("/login");
+    }
+
+    try {
+      const { data, error } = await readPrompt({
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        path: {
+          prompt_id: id,
+        },
+      });
+
+      if (error) {
+        return {
+          error: typeof error === "string" ? error : JSON.stringify(error),
+        };
+      }
+
+      return data as unknown as PromptData;
+    } catch (error) {
+      console.error("获取prompt详情出错:", error);
+      return { error: "获取数据失败" };
+    }
+  },
+);
 
 // 获取所有Tags
 export const fetchTags = cache(async (): Promise<FetchTagsReturn> => {
@@ -938,7 +940,9 @@ interface TogglePromptEnabledResult {
   data?: PromptData;
 }
 
-export async function togglePromptEnabled(id: string): Promise<TogglePromptEnabledResult> {
+export async function togglePromptEnabled(
+  id: string,
+): Promise<TogglePromptEnabledResult> {
   // 验证用户
   const user = await requireAuth();
   if (!user) {

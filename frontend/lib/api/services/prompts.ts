@@ -55,10 +55,9 @@ export const promptsApi = {
   async getEnabledPrompts(): Promise<Prompt[]> {
     // 使用自定义 APIClient，自动附带认证 Token
     try {
-      const data = await client.get<Prompt[]>(
-        "/api/v1/prompts/user-enabled",
-        { limit: 100 },
-      );
+      const data = await client.get<Prompt[]>("/api/v1/prompts/user-enabled", {
+        limit: 100,
+      });
       return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error("[promptsApi] 获取启用的 prompts 失败:", error);
@@ -69,10 +68,9 @@ export const promptsApi = {
   async getDisabledPrompts(): Promise<Prompt[]> {
     // 使用自定义 APIClient，自动附带认证 Token
     try {
-      const data = await client.get<Prompt[]>(
-        "/api/v1/prompts/user-disabled",
-        { limit: 100 },
-      );
+      const data = await client.get<Prompt[]>("/api/v1/prompts/user-disabled", {
+        limit: 100,
+      });
       return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error("[promptsApi] 获取未启用的 prompts 失败:", error);

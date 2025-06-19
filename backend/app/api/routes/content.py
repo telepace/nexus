@@ -456,6 +456,9 @@ def get_content_item_endpoint(
             detail="You don't have permission to access this content item",
         )
 
+    # Get AI analysis data
+    ai_analysis = get_ai_analysis_for_content(session, id)
+
     # Convert ContentItem to ContentItemPublic
     public_item = ContentItemPublic(
         id=item.id,
@@ -468,6 +471,7 @@ def get_content_item_endpoint(
         processing_status=item.processing_status,
         created_at=item.created_at,
         updated_at=item.updated_at,
+        ai_analysis=ai_analysis if ai_analysis else None,
     )
 
     return public_item

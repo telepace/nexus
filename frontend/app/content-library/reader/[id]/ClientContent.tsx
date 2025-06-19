@@ -19,6 +19,7 @@ import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
 import { ShareContentModal } from "@/components/share/ShareContentModal";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
+import { useReaderContext } from "@/components/layout/ReaderLayout";
 
 // 骨架屏组件
 const ReaderSkeleton = () => {
@@ -206,6 +207,7 @@ export const ClientContent = ({
 }: ClientContentProps) => {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
+  const { onContentChange } = useReaderContext();
 
   const [content, setContent] = useState<ContentDetail | null>(
     initialData || null,
@@ -223,6 +225,19 @@ export const ClientContent = ({
   useEffect(() => {
     navigationState.saveReaderVisit(contentId);
   }, [contentId]);
+
+  // 当内容加载完成后，通知 ReaderLayout 更新内容文本
+  useEffect(() => {
+    if (content && onContentChange) {
+      const contentText =
+        markdownContent ||
+        content.processed_content ||
+        content.content_text ||
+        content.title ||
+        "";
+      onContentChange(contentText);
+    }
+  }, [content, markdownContent, onContentChange]);
 
   useEffect(() => {
     if (authLoading) return;

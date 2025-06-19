@@ -5,7 +5,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SettingsPanel } from "@/components/layout/SettingsPanel";
 import { AddContentModal } from "@/components/layout/AddContentModal";
-import { LLMAnalysisSidebar } from "@/components/ui/llm-analysis-sidebar";
+import { EnhancedLLMAnalysisSidebar } from "@/components/ui/enhanced-llm-analysis-sidebar";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -88,7 +88,7 @@ export default function ReaderLayout({
               maxSize={70}
               className="flex flex-col"
             >
-              <LLMAnalysisSidebar
+              <EnhancedLLMAnalysisSidebar
                 contentId={contentId}
                 contentText={contentText}
                 className="border-l-0" // 移除左边框，因为已有分割线
