@@ -5,6 +5,7 @@ import {
   createConfig,
   type OptionsLegacyParser,
   urlSearchParamsBodySerializer,
+  formDataBodySerializer,
 } from "@hey-api/client-axios";
 import type {
   HealthGetHealthApiError,
@@ -60,6 +61,9 @@ import type {
   UsersDeleteUserData,
   UsersDeleteUserError,
   UsersDeleteUserResponse,
+  UsersUploadUserAvatarData,
+  UsersUploadUserAvatarError,
+  UsersUploadUserAvatarResponse,
   UtilsTestEmailData,
   UtilsTestEmailError,
   UtilsTestEmailResponse,
@@ -131,6 +135,12 @@ import type {
   PromptsTogglePromptEnabledData,
   PromptsTogglePromptEnabledError,
   PromptsTogglePromptEnabledResponse,
+  PromptsGetUserEnabledPromptsData,
+  PromptsGetUserEnabledPromptsError,
+  PromptsGetUserEnabledPromptsResponse,
+  PromptsGetUserDisabledPromptsData,
+  PromptsGetUserDisabledPromptsError,
+  PromptsGetUserDisabledPromptsResponse,
   LlmCreateCompletionData,
   LlmCreateCompletionError,
   LlmCreateCompletionResponse,
@@ -603,6 +613,28 @@ export const usersDeleteUser = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Upload User Avatar
+ * Upload and update user avatar.
+ */
+export const usersUploadUserAvatar = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UsersUploadUserAvatarData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    UsersUploadUserAvatarResponse,
+    UsersUploadUserAvatarError,
+    ThrowOnError
+  >({
+    ...options,
+    ...formDataBodySerializer,
+    headers: {
+      "Content-Type": null,
+      ...options?.headers,
+    },
+    url: "/api/v1/users/me/avatar",
+  });
+};
+
+/**
  * Test Email
  * Test emails.
  */
@@ -872,16 +904,17 @@ export const promptsCreatePrompt = <ThrowOnError extends boolean = false>(
  *
  * Args:
  * db (Session): Database session.
- * _current_user (Any): Current user information (dependency).
+ * current_user (Any): Current user information (dependency).
  * skip (int?): Number of records to skip. Defaults to 0.
  * limit (int?): Maximum number of records to return. Defaults to 100.
  * tag_ids (list[UUID] | None?): List of UUIDs for tags to filter prompts by.
  * search (str | None?): Search term to filter prompts by name, description, or content.
  * sort (str | None?): Field to sort the results by ('created_at' or 'updated_at'). Defaults to None.
  * order (str?): Order of sorting ('asc' or 'desc'). Defaults to "desc".
+ * user_enabled (bool | None?): Filter by user's enabled status. Defaults to None.
  *
  * Returns:
- * list[Prompt]: List of prompts matching the filters and sorted as specified.
+ * list[dict]: List of prompts with user settings matching the filters and sorted as specified.
  *
  * Raises:
  * HTTPException: If an error occurs during database query execution.
@@ -1074,7 +1107,7 @@ export const promptsDuplicatePrompt = <ThrowOnError extends boolean = false>(
 
 /**
  * Toggle Prompt Enabled
- * 快速切换提示词的启用状态
+ * 快速切换用户对提示词的启用状态
  */
 export const promptsTogglePromptEnabled = <
   ThrowOnError extends boolean = false,
@@ -1088,6 +1121,47 @@ export const promptsTogglePromptEnabled = <
   >({
     ...options,
     url: "/api/v1/prompts/{prompt_id}/toggle-enabled",
+  });
+};
+
+/**
+ * Get User Enabled Prompts
+ * 获取用户启用的 prompts
+ */
+export const promptsGetUserEnabledPrompts = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<PromptsGetUserEnabledPromptsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    PromptsGetUserEnabledPromptsResponse,
+    PromptsGetUserEnabledPromptsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/user-enabled",
+  });
+};
+
+/**
+ * Get User Disabled Prompts
+ * 获取用户未启用的 prompts
+ */
+export const promptsGetUserDisabledPrompts = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<
+    PromptsGetUserDisabledPromptsData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    PromptsGetUserDisabledPromptsResponse,
+    PromptsGetUserDisabledPromptsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/user-disabled",
   });
 };
 

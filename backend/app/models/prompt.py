@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel
-from sqlalchemy import Column
+from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy.types import JSON, String
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -177,6 +177,7 @@ class PromptReadWithTags(PromptBase):
     updated_at: datetime
     embedding: list[float] | None = None
     tags: list[Tag] = []  # 显式定义标签列表，默认为空列表
+    user_enabled: bool = Field(default=False, description="用户是否启用此提示词")
 
     class Config:
         from_attributes = True
@@ -194,3 +195,18 @@ class TagUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
     color: str | None = None
+
+
+class UserPromptSettings(SQLModel, table=True):
+    """用户对 Prompt 的个人设置"""
+    __tablename__ = "user_prompt_settings"
+    
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id", description="用户ID")
+    prompt_id: uuid.UUID = Field(foreign_key="prompts.id", description="Prompt ID") 
+    enabled: bool = Field(default=False, description="用户是否启用此 Prompt")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # 确保每个用户对每个 prompt 只有一个设置记录
+    __table_args__ = (UniqueConstraint('user_id', 'prompt_id'),)

@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { LLMAnalysis } from "@/lib/stores/llm-analysis-store";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 
 interface LLMAnalysisCardProps {
   analysis: LLMAnalysis;
@@ -59,10 +60,15 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
   onRegenerate,
   onCopy,
 }) => {
+  // 添加安全检查
+  if (!analysis || !analysis.id) {
+    return null;
+  }
+
   const handleCopy = () => {
-    if (onCopy) {
+    if (onCopy && analysis.content) {
       onCopy(analysis.content);
-    } else {
+    } else if (analysis.content) {
       navigator.clipboard.writeText(analysis.content);
     }
   };
@@ -89,7 +95,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
               <ChevronRight className="h-4 w-4" />
             )}
             <span className="text-lg">{getAnalysisIcon(analysis.type)}</span>
-            <span className="font-medium text-sm">{analysis.title}</span>
+            <span className="font-medium text-sm">{analysis.title || '未命名分析'}</span>
           </Button>
 
           <div className="flex items-center gap-1">
@@ -105,6 +111,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
                   onClick={handleCopy}
                   className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
                   title="复制内容"
+                  disabled={!analysis.content}
                 >
                   <Copy className="h-3 w-3" />
                 </Button>
@@ -149,11 +156,20 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
       {analysis.isExpanded && (
         <CardContent className="pt-0">
           {analysis.isLoading ? (
-            <div className="flex items-center justify-center py-8">
+            <div className="space-y-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">正在生成分析...</span>
+                <span className="text-sm">AI 正在分析中...</span>
               </div>
+
+              {/* 流式内容实时渲染 */}
+              {analysis.content && (
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <MarkdownRenderer content={analysis.content} />
+                  {/* 打字机光标效果 */}
+                  <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1 align-bottom opacity-75" />
+                </div>
+              )}
             </div>
           ) : analysis.error ? (
             <div className="py-4">
@@ -177,9 +193,11 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
             <div className="space-y-3">
               {/* 分析内容 */}
               <div className="prose prose-sm max-w-none dark:prose-invert">
-                <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                  {analysis.content}
-                </div>
+                {analysis.content ? (
+                  <MarkdownRenderer content={analysis.content} />
+                ) : (
+                  <div className="text-sm text-muted-foreground">暂无内容</div>
+                )}
               </div>
 
               {/* 使用的prompt - 暂时隐藏，未来可能启用 */}

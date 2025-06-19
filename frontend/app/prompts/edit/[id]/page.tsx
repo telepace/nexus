@@ -20,22 +20,26 @@ export async function generateMetadata({
     const { id } = await params;
     const promptData = await fetchPrompt(id);
 
+    // 处理错误情况
     if ("error" in promptData) {
       return {
-        title: "编辑提示词 - 错误",
-        description: "无法加载提示词详情",
+        title: "编辑提示词",
+        description: "编辑提示词页面",
       };
     }
 
+    // 此时 promptData 是 PromptData 类型
+    const prompt = promptData as PromptData;
+
     return {
-      title: `编辑提示词 - ${promptData.name}`,
-      description: `编辑提示词 ${promptData.name}`,
+      title: `编辑提示词 - ${prompt.name}`,
+      description: `编辑提示词 ${prompt.name}`,
     };
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     return {
       title: "编辑提示词",
-      description: "编辑提示词",
+      description: "编辑提示词页面",
     };
   }
 }

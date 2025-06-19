@@ -1,6 +1,7 @@
 import {
   fetchPrompt,
   fetchPromptVersions,
+  type PromptData,
 } from "@/components/actions/prompts-action";
 import { getAuthState } from "@/lib/server-auth-bridge";
 import { Suspense } from "react";
@@ -35,22 +36,26 @@ export async function generateMetadata({
     const { id } = await params;
     const promptData = await fetchPrompt(id);
 
+    // 处理错误情况
     if ("error" in promptData) {
       return {
-        title: "提示词 - 错误",
-        description: "无法加载提示词详情",
+        title: "提示词详情",
+        description: "提示词详情页面",
       };
     }
 
+    // 此时 promptData 是 PromptData 类型
+    const prompt = promptData as PromptData;
+
     return {
-      title: `${promptData.name} - 提示词详情`,
-      description: promptData.description || "提示词详情页面",
+      title: `${prompt.name} - 提示词详情`,
+      description: prompt.description || "提示词详情页面",
     };
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     return {
-      title: "提示词 - 错误",
-      description: "无法加载提示词详情",
+      title: "提示词详情",
+      description: "提示词详情页面",
     };
   }
 }
@@ -166,7 +171,7 @@ async function PromptDetailContent({ id }: { id: string }) {
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>加载错误</AlertTitle>
-            <AlertDescription>{promptData.error}</AlertDescription>
+            <AlertDescription>{promptData.error as string}</AlertDescription>
           </Alert>
           <Button asChild>
             <Link href="/prompts">返回提示词列表</Link>
@@ -174,6 +179,9 @@ async function PromptDetailContent({ id }: { id: string }) {
         </div>
       );
     }
+
+    // 此时 promptData 是 PromptData 类型
+    const prompt = promptData as PromptData;
 
     // 版本列表
     const versions = Array.isArray(versionsData) ? versionsData : [];
@@ -191,18 +199,18 @@ async function PromptDetailContent({ id }: { id: string }) {
           {/* 标题和操作按钮 */}
           <div className="flex justify-between items-start mb-6">
             <div>
-              <h1 className="text-2xl font-bold">{promptData.name}</h1>
+              <h1 className="text-2xl font-bold">{prompt.name}</h1>
               <p className="text-muted-foreground mt-1">
-                {promptData.description || "无描述"}
+                {prompt.description || "无描述"}
               </p>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" asChild>
                 <Link href="/prompts">返回列表</Link>
               </Button>
-              <DuplicateButton promptId={promptData.id} />
+              <DuplicateButton promptId={prompt.id} />
               <Button asChild>
-                <Link href={`/prompts/edit/${promptData.id}`}>
+                <Link href={`/prompts/edit/${prompt.id}`}>
                   <Edit className="h-4 w-4 mr-2" />
                   编辑
                 </Link>
@@ -216,7 +224,7 @@ async function PromptDetailContent({ id }: { id: string }) {
               <div className="flex items-center text-sm">
                 <TagIcon className="h-4 w-4 mr-2 text-muted-foreground" />
                 <span className="font-medium">类型:</span>
-                <span className="ml-auto">{promptData.type}</span>
+                <span className="ml-auto">{prompt.type}</span>
               </div>
             </Card>
 
@@ -224,14 +232,14 @@ async function PromptDetailContent({ id }: { id: string }) {
               <div className="flex items-center text-sm">
                 {
                   visibilityMap[
-                    promptData.visibility as keyof typeof visibilityMap
+                    prompt.visibility as keyof typeof visibilityMap
                   ]?.icon
                 }
                 <span className="font-medium">可见性:</span>
                 <span className="ml-auto">
                   {visibilityMap[
-                    promptData.visibility as keyof typeof visibilityMap
-                  ]?.label || promptData.visibility}
+                    prompt.visibility as keyof typeof visibilityMap
+                  ]?.label || prompt.visibility}
                 </span>
               </div>
             </Card>
@@ -242,10 +250,10 @@ async function PromptDetailContent({ id }: { id: string }) {
                 <span className="font-medium">更新时间:</span>
                 <span
                   className="ml-auto"
-                  title={parseTimeValue(promptData.updated_at).toLocaleString()}
+                  title={parseTimeValue(prompt.updated_at).toLocaleString()}
                 >
                   {formatDistance(
-                    parseTimeValue(promptData.updated_at),
+                    parseTimeValue(prompt.updated_at),
                     new Date(),
                     {
                       addSuffix: true,
@@ -262,20 +270,20 @@ async function PromptDetailContent({ id }: { id: string }) {
                   <span className="font-medium">启用状态:</span>
                 </div>
                 <PromptToggle
-                  promptId={promptData.id}
-                  enabled={promptData.enabled ?? false}
-                  promptName={promptData.name}
+                  promptId={prompt.id}
+                  enabled={prompt.user_enabled ?? false}
+                  promptName={prompt.name}
                 />
               </div>
             </Card>
           </div>
 
           {/* 标签 */}
-          {promptData.tags && promptData.tags.length > 0 && (
+          {prompt.tags && prompt.tags.length > 0 && (
             <div className="mb-6">
               <h2 className="text-sm font-medium mb-2">标签:</h2>
               <div className="flex flex-wrap gap-2">
-                {promptData.tags.map((tag) => (
+                {prompt.tags.map((tag) => (
                   <Badge
                     key={tag.id}
                     variant="outline"
@@ -297,9 +305,9 @@ async function PromptDetailContent({ id }: { id: string }) {
           <Tabs defaultValue="content">
             <TabsList className="mb-4">
               <TabsTrigger value="content">提示词内容</TabsTrigger>
-              {promptData.input_vars && promptData.input_vars.length > 0 && (
+              {prompt.input_vars && prompt.input_vars.length > 0 && (
                 <TabsTrigger value="variables">
-                  输入变量 ({promptData.input_vars.length})
+                  输入变量 ({prompt.input_vars.length})
                 </TabsTrigger>
               )}
               {versions.length > 0 && (
@@ -313,19 +321,19 @@ async function PromptDetailContent({ id }: { id: string }) {
             <TabsContent value="content">
               <Card className="mb-6">
                 <pre className="p-4 overflow-auto whitespace-pre-wrap bg-muted/30 rounded-md font-mono text-sm">
-                  {promptData.content}
+                  {prompt.content}
                 </pre>
               </Card>
 
               <div className="flex justify-end">
-                <CopyToClipboardButton content={promptData.content} />
+                <CopyToClipboardButton content={prompt.content} />
               </div>
             </TabsContent>
 
-            {promptData.input_vars && promptData.input_vars.length > 0 && (
+            {prompt.input_vars && prompt.input_vars.length > 0 && (
               <TabsContent value="variables">
                 <div className="space-y-4">
-                  {promptData.input_vars.map((variable, index) => (
+                  {prompt.input_vars.map((variable, index) => (
                     <Card key={index} className="p-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>

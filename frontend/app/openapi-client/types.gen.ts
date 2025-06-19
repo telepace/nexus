@@ -230,6 +230,10 @@ export type Body_login_login_access_token = {
   client_secret?: string | null;
 };
 
+export type Body_users_upload_user_avatar = {
+  avatar: Blob | File;
+};
+
 export type CompletionRequest = {
   model?: string | null;
   messages: Array<LLMMessage>;
@@ -365,6 +369,7 @@ export type LLMMessage = {
 export type LoginRequest = {
   email: string;
   password: string;
+  from_source?: string | null;
 };
 
 export type Message = {
@@ -530,6 +535,10 @@ export type PromptReadWithTags = {
   updated_at: string;
   embedding?: Array<number> | null;
   tags?: Array<Tag>;
+  /**
+   * 用户是否启用此提示词
+   */
+  user_enabled?: boolean;
 };
 
 export type PromptType = "simple" | "chat" | "template" | "system" | "function";
@@ -826,6 +835,14 @@ export type UsersDeleteUserResponse = Message;
 
 export type UsersDeleteUserError = HTTPValidationError;
 
+export type UsersUploadUserAvatarData = {
+  body: Body_users_upload_user_avatar;
+};
+
+export type UsersUploadUserAvatarResponse = UserPublic;
+
+export type UsersUploadUserAvatarError = HTTPValidationError;
+
 export type UtilsTestEmailData = {
   query: {
     email_to: string;
@@ -905,6 +922,7 @@ export type GoogleOauthGoogleCallbackApiError = HTTPValidationError;
 export type GoogleOauthGoogleLoginData = {
   query?: {
     extension_callback?: string | null;
+    from_source?: string | null;
   };
 };
 
@@ -980,10 +998,13 @@ export type PromptsReadPromptsData = {
     skip?: number;
     sort?: string | null;
     tag_ids?: Array<string> | null;
+    user_enabled?: boolean | null;
   };
 };
 
-export type PromptsReadPromptsResponse = Array<Prompt>;
+export type PromptsReadPromptsResponse = Array<{
+  [key: string]: unknown;
+}>;
 
 export type PromptsReadPromptsError = HTTPValidationError;
 
@@ -993,7 +1014,9 @@ export type PromptsReadPromptData = {
   };
 };
 
-export type PromptsReadPromptResponse = PromptReadWithTags;
+export type PromptsReadPromptResponse = {
+  [key: string]: unknown;
+};
 
 export type PromptsReadPromptError = HTTPValidationError;
 
@@ -1069,9 +1092,35 @@ export type PromptsTogglePromptEnabledData = {
   };
 };
 
-export type PromptsTogglePromptEnabledResponse = PromptReadWithTags;
+export type PromptsTogglePromptEnabledResponse = {
+  [key: string]: unknown;
+};
 
 export type PromptsTogglePromptEnabledError = HTTPValidationError;
+
+export type PromptsGetUserEnabledPromptsData = {
+  query?: {
+    limit?: number;
+  };
+};
+
+export type PromptsGetUserEnabledPromptsResponse = Array<{
+  [key: string]: unknown;
+}>;
+
+export type PromptsGetUserEnabledPromptsError = HTTPValidationError;
+
+export type PromptsGetUserDisabledPromptsData = {
+  query?: {
+    limit?: number;
+  };
+};
+
+export type PromptsGetUserDisabledPromptsResponse = Array<{
+  [key: string]: unknown;
+}>;
+
+export type PromptsGetUserDisabledPromptsError = HTTPValidationError;
 
 export type LlmCreateCompletionData = {
   body: CompletionRequest;

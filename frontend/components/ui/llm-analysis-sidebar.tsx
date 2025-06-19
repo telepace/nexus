@@ -54,10 +54,23 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
     loadPrompts();
   }, [loadPrompts]);
 
+  // 调试信息
+  useEffect(() => {
+    console.log("[LLMAnalysisSidebar] Prompts 状态更新:", {
+      isLoadingPrompts,
+      enabledPromptsCount: enabledPrompts?.length || 0,
+      disabledPromptsCount: disabledPrompts?.length || 0,
+      enabledPrompts,
+      disabledPrompts,
+      availablePrompts: getAvailablePrompts(),
+      error
+    });
+  }, [enabledPrompts, disabledPrompts, isLoadingPrompts, error, getAvailablePrompts]);
+
   // 过滤当前内容的分析
-  const contentAnalyses = analyses.filter(
-    (analysis) => analysis.contentId === contentId,
-  );
+  const contentAnalyses = analyses?.filter(
+    (analysis) => analysis?.contentId === contentId,
+  ) || [];
 
   // 清理错误状态
   useEffect(() => {
@@ -116,7 +129,7 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
   };
 
   const handleRegenerate = async (analysisId: string) => {
-    const analysis = contentAnalyses.find((a) => a.id === analysisId);
+    const analysis = contentAnalyses.find((a) => a?.id === analysisId);
     if (!analysis || !analysis.prompt) return;
 
     // 移除旧的分析
@@ -127,7 +140,7 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
       await generateAnalysis(
         contentId,
         analysis.prompt,
-        contentText,
+        contentText || '',
         analysis.promptId,
         analysis.title,
       );
@@ -172,7 +185,7 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
 
   // 计算分析完成度
   const completedAnalyses = contentAnalyses.filter(
-    (a) => !a.isLoading && !a.error,
+    (a) => a && !a.isLoading && !a.error,
   ).length;
   const totalAnalyses = contentAnalyses.length;
   const analysisProgress =
@@ -208,7 +221,7 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
             </div>
           </div>
 
-          {contentAnalyses.length > 0 && (
+          {contentAnalyses?.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
@@ -221,7 +234,7 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
         </div>
 
         {/* 分析状态指示器 */}
-        {(contentAnalyses.length > 0 || isGenerating) && (
+        {(contentAnalyses?.length > 0 || isGenerating) && (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">分析进度</span>
@@ -245,9 +258,9 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
       {/* Content - 分析结果区域 */}
       <div className="flex-1 min-h-0 overflow-auto">
         <div className="p-4 space-y-4">
-          {contentAnalyses.map((analysis) => (
+          {(contentAnalyses || []).map((analysis) => (
             <LLMAnalysisCard
-              key={analysis.id}
+              key={analysis?.id || `analysis-${Math.random()}`}
               analysis={analysis}
               onToggleExpanded={toggleExpanded}
               onRemove={removeAnalysis}
@@ -257,7 +270,7 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
           ))}
 
           {/* 空状态 - 优化的引导界面 */}
-          {contentAnalyses.length === 0 && !isGenerating && (
+          {contentAnalyses?.length === 0 && !isGenerating && (
             <div className="text-center py-8">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -296,7 +309,7 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
       <div className="shrink-0 p-4 border-t bg-muted/20">
         <div className="space-y-3">
           {/* 快速分析推荐 */}
-          {enabledPrompts.length > 0 && (
+          {enabledPrompts?.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="h-4 w-4 text-primary" />
@@ -304,18 +317,19 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
               </div>
               <div className="max-h-[120px] overflow-y-auto">
                 <PromptRecommendations
-                  recommendations={getAvailablePrompts()
+                  recommendations={(getAvailablePrompts() || [])
+                    .filter(prompt => prompt && prompt.id && prompt.name && prompt.content) // 过滤掉无效的 prompt
                     .slice(0, 4)
                     .map((prompt) => ({
                       id: prompt.id,
                       name: prompt.name,
-                      description: prompt.description,
+                      description: prompt.description || '',
                       prompt: prompt.content,
                       type: "custom" as const,
                       icon: "🤖",
                     }))}
                   onPromptClick={(rec) => {
-                    const prompt = enabledPrompts.find((p) => p.id === rec.id);
+                    const prompt = enabledPrompts?.find((p) => p?.id === rec.id);
                     if (prompt) handleEnabledPromptClick(prompt);
                   }}
                   isGenerating={isGenerating}
@@ -328,7 +342,7 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
           {/* 自定义分析对话框 */}
           <div>
             <PromptCommandDialog
-              availablePrompts={disabledPrompts}
+              availablePrompts={disabledPrompts || []}
               isExecuting={isGenerating}
               onPromptSelect={handlePromptSelect}
               onExecute={handleExecute}

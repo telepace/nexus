@@ -150,10 +150,19 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
         set({ isLoadingPrompts: true, error: null });
 
         try {
+          console.log("[LLM Analysis Store] 开始加载 prompts...");
+          
           const [enabled, disabled] = await Promise.all([
             promptsApi.getEnabledPrompts(),
             promptsApi.getDisabledPrompts(),
           ]);
+
+          console.log("[LLM Analysis Store] 加载结果:", {
+            enabledCount: enabled?.length || 0,
+            disabledCount: disabled?.length || 0,
+            enabledPrompts: enabled,
+            disabledPrompts: disabled
+          });
 
           set({
             enabledPrompts: enabled,
@@ -423,9 +432,14 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
 
       getAvailablePrompts: () => {
         const { enabledPrompts } = get();
-        // 返回所有enabled prompts，不再根据used状态过滤
-        // 保留used状态追踪机制，但不在UI层面隐藏已使用的prompts
-        return enabledPrompts;
+        // 确保始终返回数组，并过滤掉无效的prompt
+        return (enabledPrompts || []).filter(prompt => 
+          prompt && 
+          typeof prompt === 'object' && 
+          prompt.id && 
+          prompt.name && 
+          prompt.content
+        );
       },
 
       generateAnalysisUpdated: async (

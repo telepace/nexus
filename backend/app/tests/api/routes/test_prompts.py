@@ -307,32 +307,43 @@ def test_read_prompts_empty(client: TestClient, mock_db_session_fixture: MagicMo
     assert response.json() == []
 
 
+@patch("app.api.routes.prompts._get_prompts_with_user_settings")
 @patch("app.api.routes.prompts.select")
 def test_read_prompts_with_search_and_sort(
     mock_sqlmodel_select: MagicMock,
+    mock_get_prompts_with_user_settings: MagicMock,
     client: TestClient,
     mock_db_session_fixture: MagicMock,
 ):
     mock_p1 = Prompt(
         id=uuid.uuid4(),
-        name="Alpha Search",
-        content="Content A",
-        created_at=datetime(2023, 1, 1),
-        updated_at=datetime(2023, 1, 2),
+        name="Alpha",
+        content="Test",
+        type="simple",
+        created_by=uuid.uuid4(),
+        visibility="public",
         tags=[],
     )
     mock_p2 = Prompt(
         id=uuid.uuid4(),
         name="Beta",
-        content="Search Content B",
-        created_at=datetime(2023, 1, 3),
-        updated_at=datetime(2023, 1, 3),
+        content="Test",
+        type="simple",
+        created_by=uuid.uuid4(),
+        visibility="public",
         tags=[],
     )
     mock_query = MagicMock()
     mock_sqlmodel_select.return_value = mock_query
     mock_query.where.return_value.order_by.return_value = mock_query
     mock_db_session_fixture.exec.return_value.all.return_value = [mock_p2, mock_p1]
+    
+    # Mock the user settings function to return proper format
+    mock_get_prompts_with_user_settings.return_value = [
+        {**mock_p2.model_dump(), "user_enabled": False},
+        {**mock_p1.model_dump(), "user_enabled": False}
+    ]
+    
     response = client.get(
         f"{app_settings.API_V1_STR}/prompts/?search=Search&sort=updated_at&order=asc"
     )
@@ -342,11 +353,13 @@ def test_read_prompts_with_search_and_sort(
     assert data[0]["name"] == "Beta"
 
 
+@patch("app.api.routes.prompts._get_prompts_with_user_settings")
 @patch("app.api.routes.prompts.select")
 @patch("app.api.routes.prompts.func")
 def test_read_prompts_with_tag_filter(
     mock_sql_func: MagicMock,
     mock_sqlmodel_select: MagicMock,
+    mock_get_prompts_with_user_settings: MagicMock,
     client: TestClient,
     mock_db_session_fixture: MagicMock,
 ):
@@ -364,6 +377,11 @@ def test_read_prompts_with_tag_filter(
 
     # Mock database execution
     mock_db_session_fixture.exec.return_value.all.return_value = [mock_p1]
+    
+    # Mock the user settings function to return proper format
+    mock_get_prompts_with_user_settings.return_value = [
+        {**mock_p1.model_dump(), "user_enabled": False}
+    ]
 
     response = client.get(f"{app_settings.API_V1_STR}/prompts/?tag_ids={tag_id1}")
     assert response.status_code == 200

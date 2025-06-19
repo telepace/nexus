@@ -12,8 +12,8 @@ import {
   deleteTag,
   readPromptVersions,
   duplicatePrompt,
-  togglePromptEnabledApi,
 } from "@/app/clientService";
+import { promptsTogglePromptEnabled } from "@/app/openapi-client/sdk.gen";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -72,6 +72,7 @@ export interface PromptData {
   created_at: string;
   updated_at: string;
   enabled?: boolean;
+  user_enabled?: boolean;
   tags?: TagData[];
   creator?: {
     id?: string;
@@ -250,8 +251,11 @@ export const fetchPrompts = async (options?: {
   }
 };
 
+// 定义 fetchPrompt 的返回类型
+type FetchPromptReturn = PromptData | ApiErrorResponse;
+
 // 获取单个Prompt
-export const fetchPrompt = cache(async (id: string) => {
+export const fetchPrompt = cache(async (id: string): Promise<FetchPromptReturn> => {
   // 验证用户
   const user = await requireAuth();
   if (!user) {
@@ -279,7 +283,7 @@ export const fetchPrompt = cache(async (id: string) => {
       };
     }
 
-    return data;
+    return data as unknown as PromptData;
   } catch (error) {
     console.error("获取prompt详情出错:", error);
     return { error: "获取数据失败" };
@@ -927,7 +931,14 @@ export async function updatePromptFormAction(
 // 导出类型
 export type { PromptVersionData, ApiErrorResponse };
 
-export async function togglePromptEnabled(id: string) {
+// 定义 togglePromptEnabled 的返回类型
+interface TogglePromptEnabledResult {
+  success?: boolean;
+  error?: string;
+  data?: PromptData;
+}
+
+export async function togglePromptEnabled(id: string): Promise<TogglePromptEnabledResult> {
   // 验证用户
   const user = await requireAuth();
   if (!user) {
@@ -940,7 +951,7 @@ export async function togglePromptEnabled(id: string) {
   }
 
   try {
-    const { data, error } = await togglePromptEnabledApi({
+    const { data, error } = await promptsTogglePromptEnabled({
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -964,7 +975,7 @@ export async function togglePromptEnabled(id: string) {
     revalidatePath(`/prompts/${id}`);
     revalidatePath("/prompts");
 
-    return { success: true, data };
+    return { success: true, data: data as unknown as PromptData };
   } catch (error) {
     console.error("切换prompt启用状态出错:", error);
     return { error: "操作失败" };

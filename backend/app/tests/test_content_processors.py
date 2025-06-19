@@ -356,10 +356,10 @@ class TestJinaProcessor:
             assert not processor.can_handle("url")
             assert not processor.can_handle("text")
 
-    @patch("app.utils.content_processors.requests.post")
+    @patch("app.utils.content_processors.requests.get")
     @patch("app.utils.content_processors.get_storage_service")
     def test_jina_processor_url_processing_success(
-        self, mock_storage_service, mock_requests_post
+        self, mock_storage_service, mock_requests_get
     ):
         """Test JinaProcessor successfully processes URL content."""
         # Mock settings
@@ -378,7 +378,7 @@ class TestJinaProcessor:
                 "# Test Article\n\nThis is a test article from Jina AI."
             )
             mock_response.raise_for_status.return_value = None
-            mock_requests_post.return_value = mock_response
+            mock_requests_get.return_value = mock_response
 
             processor = JinaProcessor()
             mock_session = Mock(spec=Session)
@@ -409,15 +409,23 @@ class TestJinaProcessor:
             assert result.metadata is not None
             assert result.metadata["processor"] == "jina"
             assert result.metadata["content_type"] == "url"
+            assert result.metadata["selectors_removed"] is True
 
-            # Verify Jina API was called correctly
-            mock_requests_post.assert_called_once()
-            call_args = mock_requests_post.call_args
-            assert call_args[1]["json"]["url"] == "https://example.com"
+            # Verify Jina API was called correctly with GET request
+            mock_requests_get.assert_called_once()
+            call_args = mock_requests_get.call_args
+            assert call_args[0][0] == "https://r.jina.ai/https://example.com"
             assert "Bearer test_api_key" in call_args[1]["headers"]["Authorization"]
+            assert "X-Remove-Selector" in call_args[1]["headers"]
+            # Verify X-Remove-Selector contains key selectors
+            remove_selector = call_args[1]["headers"]["X-Remove-Selector"]
+            assert "header" in remove_selector
+            assert "nav" in remove_selector
+            assert "footer" in remove_selector
+            assert ".sidebar" in remove_selector
 
-    @patch("app.utils.content_processors.requests.post")
-    def test_jina_processor_api_failure(self, mock_requests_post):
+    @patch("app.utils.content_processors.requests.get")
+    def test_jina_processor_api_failure(self, mock_requests_get):
         """Test JinaProcessor handles API failures gracefully."""
         # Mock settings
         with patch("app.utils.content_processors.settings") as mock_settings:
@@ -429,7 +437,7 @@ class TestJinaProcessor:
             mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
                 "401 Unauthorized"
             )
-            mock_requests_post.return_value = mock_response
+            mock_requests_get.return_value = mock_response
 
             processor = JinaProcessor()
             mock_session = Mock(spec=Session)

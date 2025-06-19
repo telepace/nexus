@@ -95,19 +95,21 @@ class JinaProcessor(ProcessingStep):
         content_item = context.content_item
 
         try:
-            # Prepare request to Jina AI
+            # Prepare request to Jina AI with enhanced headers
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
+                # Add X-Remove-Selector to remove unwanted elements
+                "X-Remove-Selector": "header, nav, footer, .sidebar, .navigation, .breadcrumb, .copyright, .pagination, .menu, .toc, .table-of-contents, .doc-sidebar, .navbar, .header, .footer-wrapper, .site-footer, .site-header, .skip-link, .version-selector, .language-selector, .ads, .advertisement, .social-share, .comments, .related-posts, .recommended, .popup, .modal, .overlay, .banner, .promotion"
             }
 
-            payload = {"url": content_item.source_uri}
-
+            # Use GET request with URL as path parameter (following the curl example pattern)
+            full_url = f"{self.api_url}{content_item.source_uri}"
+            
             # Make request to Jina AI
-            response = requests.post(
-                self.api_url,
+            response = requests.get(
+                full_url,
                 headers=headers,
-                json=payload,
                 timeout=60,  # Jina might take longer than regular requests
             )
             response.raise_for_status()
@@ -147,6 +149,8 @@ class JinaProcessor(ProcessingStep):
                 "processed_at": datetime.utcnow().isoformat(),
                 "processor": "jina",
                 "content_type": "url",
+                "selectors_removed": True,  # 标记已移除不需要的元素
+                "jina_api_version": "r.jina.ai",
             }
 
             # Store processed markdown to R2

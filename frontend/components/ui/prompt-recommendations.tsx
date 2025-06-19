@@ -18,10 +18,18 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
   isGenerating = false,
   disabled = false,
 }) => {
+  const safeRecommendations = recommendations || [];
+  
+  if (safeRecommendations.length === 0 && !isGenerating) {
+    return null;
+  }
+
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-1 gap-2">
-        {recommendations.map((recommendation) => {
+        {safeRecommendations
+          .filter(rec => rec && rec.id && rec.name)
+          .map((recommendation) => {
           return (
             <Button
               key={recommendation.id}
@@ -33,7 +41,7 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
             >
               <div className="flex items-center gap-2 w-full">
                 <div className="flex-shrink-0 w-4 h-4 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <span className="text-lg">{recommendation.icon}</span>
+                  <span className="text-lg">{recommendation.icon || '🤖'}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
