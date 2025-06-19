@@ -10,8 +10,6 @@ import {
   Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { LLMAnalysisCard } from "@/components/ui/llm-analysis-card";
 import { PromptRecommendations } from "@/components/ui/prompt-recommendations";
 import { PromptCommandDialog } from "@/components/ui/prompt-command-dialog";
@@ -183,14 +181,6 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
     }
   };
 
-  // 计算分析完成度
-  const completedAnalyses = contentAnalyses.filter(
-    (a) => a && !a.isLoading && !a.error,
-  ).length;
-  const totalAnalyses = contentAnalyses.length;
-  const analysisProgress =
-    totalAnalyses > 0 ? (completedAnalyses / totalAnalyses) * 100 : 0;
-
   if (isLoadingPrompts) {
     return (
       <div
@@ -217,7 +207,7 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-semibold">AI 智能分析</h2>
-              <p className="text-xs text-muted-foreground">深度理解文档内容</p>
+              {/* Subtitle removed for a cleaner look */}
             </div>
           </div>
 
@@ -234,23 +224,10 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
         </div>
 
         {/* 分析状态指示器 */}
-        {(contentAnalyses?.length > 0 || isGenerating) && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">分析进度</span>
-              <div className="flex items-center gap-2">
-                {isGenerating && (
-                  <div className="flex items-center gap-1 text-primary">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    <span className="text-xs">分析中...</span>
-                  </div>
-                )}
-                <Badge variant="outline" className="text-xs">
-                  {completedAnalyses}/{totalAnalyses + (isGenerating ? 1 : 0)}
-                </Badge>
-              </div>
-            </div>
-            <Progress value={analysisProgress} className="h-2" />
+        {isGenerating && (
+          <div className="flex items-center gap-1 text-primary mt-2">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            <span className="text-xs">分析中...</span>
           </div>
         )}
       </div>
@@ -271,22 +248,22 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
 
           {/* 空状态 - 优化的引导界面 */}
           {contentAnalyses?.length === 0 && !isGenerating && (
-            <div className="text-center py-8">
+            <div className="text-center py-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-32 h-32 bg-gradient-to-br from-primary/10 to-blue-100 dark:to-blue-900/20 rounded-full" />
+                  <div className="w-24 h-24 bg-gradient-to-br from-primary/10 to-blue-100 dark:to-blue-900/20 rounded-full" />
                 </div>
                 <div className="relative">
-                  <Brain className="h-16 w-16 mx-auto mb-4 text-primary opacity-80" />
+                  <Brain className="h-12 w-12 mx-auto mb-3 text-primary opacity-80" />
                 </div>
               </div>
-              <h3 className="text-lg font-medium mb-2">开始智能分析</h3>
-              <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
+              <h3 className="text-base font-medium mb-2">开始智能分析</h3>
+              <p className="text-sm text-muted-foreground mb-4 max-w-xs mx-auto">
                 选择下方的分析类型，让 AI 帮你深度理解文档内容
               </p>
 
               {/* 快速分析建议 */}
-              <div className="grid grid-cols-1 gap-2 max-w-sm mx-auto mb-4">
+              <div className="grid grid-cols-1 gap-1.5 max-w-sm mx-auto mb-3">
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
                   <Sparkles className="h-4 w-4 text-yellow-500" />
                   <span>智能总结 - 提取核心观点</span>

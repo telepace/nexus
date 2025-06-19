@@ -1,6 +1,6 @@
 "use client";
 
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -64,6 +64,48 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
   if (!analysis || !analysis.id) {
     return null;
   }
+
+  // 优化流式内容显示，确保内容格式正确
+  const formattedContent = useMemo(() => {
+    if (!analysis.content) return "";
+    
+    // 优化内容格式，确保 Markdown 渲染正确
+    let content = analysis.content.trim();
+    
+    // 1. 确保标题前后有适当的换行
+    content = content
+      // 标题前确保有换行（除非是文档开头）
+      .replace(/([^\n])\n(#{1,6}\s)/g, '$1\n\n$2')
+      // 标题后确保有换行
+      .replace(/(#{1,6}[^\n]*)\n([^#\n\s])/g, '$1\n\n$2');
+    
+    // 2. 确保列表项格式正确
+    content = content
+      // 列表项前确保有换行
+      .replace(/([^\n])\n([*+-]|\d+\.)\s/g, '$1\n\n$2 ')
+      // 子列表项处理
+      .replace(/\n(\s{2,})([*+-]|\d+\.)\s/g, '\n$1$2 ');
+    
+    // 3. 处理段落分隔（中文句号后的换行）
+    content = content
+      .replace(/([。！？])\s*([^。！？\n\s])/g, '$1\n$2');
+    
+    // 4. 处理代码块和引用块
+    content = content
+      // 代码块前后确保有换行
+      .replace(/([^\n])\n```/g, '$1\n```')
+      .replace(/```\n([^`])/g, '```\n$1')
+      // 引用块前确保有换行
+      .replace(/([^\n])\n>/g, '$1\n>');
+    
+    // 5. 清理多余的空行（保持最多一个换行符）
+    content = content.replace(/\n{2,}/g, '\n');
+    
+    // 6. 确保文档末尾没有多余换行符
+    content = content.replace(/\n+$/, '');
+    
+    return content;
+  }, [analysis.content]);
 
   const handleCopy = () => {
     if (onCopy && analysis.content) {
@@ -163,11 +205,17 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
               </div>
 
               {/* 流式内容实时渲染 */}
-              {analysis.content && (
-                <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <MarkdownRenderer content={analysis.content} />
-                  {/* 打字机光标效果 */}
-                  <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1 align-bottom opacity-75" />
+              {formattedContent && (
+                <div className="relative">
+                  {/* 流式内容区域 */}
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <MarkdownRenderer content={formattedContent} />
+                  </div>
+                  {/* 打字机光标效果 - 放在独立的行 */}
+                  <div className="flex items-center justify-start mt-2">
+                    <span className="inline-block w-2 h-4 bg-primary animate-pulse opacity-75 rounded-sm" />
+                    <span className="ml-2 text-xs text-muted-foreground">正在生成...</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -193,8 +241,8 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
             <div className="space-y-3">
               {/* 分析内容 */}
               <div className="prose prose-sm max-w-none dark:prose-invert">
-                {analysis.content ? (
-                  <MarkdownRenderer content={analysis.content} />
+                {formattedContent ? (
+                  <MarkdownRenderer content={formattedContent} />
                 ) : (
                   <div className="text-sm text-muted-foreground">暂无内容</div>
                 )}

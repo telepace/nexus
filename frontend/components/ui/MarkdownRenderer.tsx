@@ -79,16 +79,16 @@ export function MarkdownRenderer({
       className={cn(
         "prose prose-slate dark:prose-invert max-w-none",
         // 自定义样式
-        "prose-headings:scroll-m-20 prose-headings:tracking-tight",
-        "prose-h1:text-4xl prose-h1:font-extrabold prose-h1:lg:text-5xl",
-        "prose-h2:border-b prose-h2:pb-2 prose-h2:text-3xl prose-h2:font-semibold prose-h2:tracking-tight prose-h2:first:mt-0",
-        "prose-h3:text-2xl prose-h3:font-semibold prose-h3:tracking-tight",
-        "prose-h4:text-xl prose-h4:font-semibold prose-h4:tracking-tight",
-        "prose-p:leading-7 prose-p:[&:not(:first-child)]:mt-6",
-        "prose-blockquote:mt-6 prose-blockquote:border-l-2 prose-blockquote:pl-6 prose-blockquote:italic",
-        "prose-ul:my-6 prose-ul:ml-6 prose-ul:list-disc prose-ul:[&>li]:mt-2",
-        "prose-ol:my-6 prose-ol:ml-6 prose-ol:list-decimal prose-ol:[&>li]:mt-2",
-        "prose-li:mt-2",
+        "prose-headings:scroll-m-16 prose-headings:tracking-tight",
+        "prose-h1:text-3xl prose-h1:font-bold prose-h1:lg:text-4xl",
+        "prose-h2:border-b prose-h2:pb-1.5 prose-h2:text-2xl prose-h2:font-semibold prose-h2:tracking-tight prose-h2:first:mt-0",
+        "prose-h3:text-xl prose-h3:font-semibold prose-h3:tracking-tight",
+        "prose-h4:text-lg prose-h4:font-semibold prose-h4:tracking-tight",
+        "prose-p:leading-6 prose-p:[&:not(:first-child)]:mt-4",
+        "prose-blockquote:mt-4 prose-blockquote:border-l-2 prose-blockquote:pl-4 prose-blockquote:italic",
+        "prose-ul:my-4 prose-ul:ml-4 prose-ul:list-disc prose-ul:[&>li]:mt-1",
+        "prose-ol:my-4 prose-ol:ml-4 prose-ol:list-decimal prose-ol:[&>li]:mt-1",
+        "prose-li:mt-1",
         "prose-table:my-6 prose-table:w-full prose-table:overflow-y-auto",
         "prose-thead:border-b",
         "prose-th:border prose-th:px-4 prose-th:py-2 prose-th:text-left prose-th:font-bold prose-th:[&[align=center]]:text-center prose-th:[&[align=right]]:text-right",
@@ -119,7 +119,7 @@ export function MarkdownRenderer({
           // 自定义组件渲染
           h1: ({ children, ...props }) => (
             <h1
-              className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl"
+              className="scroll-m-16 text-3xl font-bold tracking-tight lg:text-4xl"
               {...props}
             >
               {children}
@@ -127,7 +127,7 @@ export function MarkdownRenderer({
           ),
           h2: ({ children, ...props }) => (
             <h2
-              className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0"
+              className="scroll-m-16 border-b pb-1.5 text-2xl font-semibold tracking-tight first:mt-0"
               {...props}
             >
               {children}
@@ -135,7 +135,7 @@ export function MarkdownRenderer({
           ),
           h3: ({ children, ...props }) => (
             <h3
-              className="scroll-m-20 text-2xl font-semibold tracking-tight"
+              className="scroll-m-16 text-xl font-semibold tracking-tight"
               {...props}
             >
               {children}
@@ -143,34 +143,34 @@ export function MarkdownRenderer({
           ),
           h4: ({ children, ...props }) => (
             <h4
-              className="scroll-m-20 text-xl font-semibold tracking-tight"
+              className="scroll-m-16 text-lg font-semibold tracking-tight"
               {...props}
             >
               {children}
             </h4>
           ),
           p: ({ children, ...props }) => (
-            <p className="leading-7 [&:not(:first-child)]:mt-6" {...props}>
+            <p className="leading-6 [&:not(:first-child)]:mt-4" {...props}>
               {children}
             </p>
           ),
           blockquote: ({ children, ...props }) => (
-            <blockquote className="mt-6 border-l-2 pl-6 italic" {...props}>
+            <blockquote className="mt-4 border-l-2 pl-4 italic" {...props}>
               {children}
             </blockquote>
           ),
           ul: ({ children, ...props }) => (
-            <ul className="my-6 ml-6 list-disc [&>li]:mt-2" {...props}>
+            <ul className="my-4 ml-4 list-disc [&>li]:mt-1" {...props}>
               {children}
             </ul>
           ),
           ol: ({ children, ...props }) => (
-            <ol className="my-6 ml-6 list-decimal [&>li]:mt-2" {...props}>
+            <ol className="my-4 ml-4 list-decimal [&>li]:mt-1" {...props}>
               {children}
             </ol>
           ),
           li: ({ children, ...props }) => (
-            <li className="mt-2" {...props}>
+            <li className="mt-1" {...props}>
               {children}
             </li>
           ),

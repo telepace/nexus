@@ -336,8 +336,8 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
 const ChunkItem = React.memo<{
   chunk: ContentChunk & { key: string };
 }>(({ chunk }) => (
-  <div className="chunk-item border-b border-gray-100 dark:border-gray-800 py-6 px-4 bg-white dark:bg-gray-900">
-    <div className="chunk-header mb-3 text-xs text-gray-500 flex justify-between items-center">
+  <div className="chunk-item border-b border-gray-100 dark:border-gray-800 py-4 px-4 bg-white dark:bg-gray-900">
+    <div className="chunk-header mb-2 text-xs text-gray-500 flex justify-between items-center">
       <span className="font-medium">
         Chunk {chunk.index + 1} • {chunk.type}
       </span>
@@ -348,7 +348,7 @@ const ChunkItem = React.memo<{
     <div className="chunk-content">
       <MarkdownRenderer
         content={chunk.content}
-        className="prose prose-sm max-w-none dark:prose-invert"
+        className="prose prose-sm max-w-none dark:prose-invert [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
       />
     </div>
   </div>

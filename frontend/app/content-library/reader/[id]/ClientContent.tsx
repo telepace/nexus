@@ -106,9 +106,7 @@ const ProcessedContentRenderer = memo(
                 <span className="text-sm font-medium text-green-800 dark:text-green-200">
                   AI 处理版本
                 </span>
-                <span className="text-xs text-green-600 dark:text-green-400">
-                  优化渲染已启用
-                </span>
+                {/* Removed '优化渲染已启用' for cleaner UI */}
               </div>
               <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
                 <FileText className="h-3 w-3" />
@@ -178,10 +176,10 @@ const ProcessedContentRenderer = memo(
           contentToRender.includes("**") ? (
             <MarkdownRenderer
               content={contentToRender}
-              className="prose prose-sm max-w-none dark:prose-invert p-4"
+              className="prose prose-sm max-w-none dark:prose-invert p-4 [&>*:first-child]:mt-0"
             />
           ) : (
-            <div className="prose prose-sm max-w-none dark:prose-invert p-4">
+            <div className="prose prose-sm max-w-none dark:prose-invert p-4 [&>*:first-child]:mt-0">
               <div className="whitespace-pre-wrap text-sm leading-relaxed">
                 {contentToRender}
               </div>
@@ -416,7 +414,7 @@ export const ClientContent = ({
   return (
     <div className="h-full flex flex-col p-2 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b">
+      <div className="flex items-center justify-between px-4 py-2 border-b">
         <div className="flex items-center space-x-4">
           <Button
             variant="ghost"
@@ -427,7 +425,7 @@ export const ClientContent = ({
             Back to Library
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-lg md:text-xl font-semibold">
               {content.title || "Untitled"}
             </h1>
             <div className="flex items-center gap-2 mt-1">

@@ -252,6 +252,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
 
           const decoder = new TextDecoder();
           let accumulatedContent = "";
+          let updateTimer: NodeJS.Timeout | null = null;
 
           // 找到刚创建的分析
           const currentAnalyses = get().analyses;
@@ -266,6 +267,18 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
             throw new Error("无法找到目标分析");
           }
 
+          // 防抖更新函数，避免过于频繁的渲染
+          const debouncedUpdate = (content: string) => {
+            if (updateTimer) {
+              clearTimeout(updateTimer);
+            }
+            updateTimer = setTimeout(() => {
+              updateAnalysis(targetAnalysis.id, {
+                content,
+              });
+            }, 50); // 50ms 防抖
+          };
+
           try {
             while (true) {
               const { done, value } = await reader.read();
@@ -279,22 +292,41 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                 // 支持 Data Stream Protocol 和 OpenAI SSE 格式
                 if (line.startsWith("0:")) {
                   // Vercel AI SDK Data Stream Protocol 文本内容
-                  const content = line.slice(3, -1); // 移除 0:" 和末尾的 "
+                  // 解析 JSON 转义的内容
+                  const jsonContent = line.slice(2); // 移除 "0:"
+                  let content = "";
+                  
+                  try {
+                    // 使用 JSON.parse 正确解析转义字符
+                    content = JSON.parse(jsonContent);
+                  } catch (error) {
+                    // 如果解析失败，尝试简单的字符串处理（向后兼容）
+                    content = jsonContent.startsWith('"') && jsonContent.endsWith('"') 
+                      ? jsonContent.slice(1, -1) 
+                      : jsonContent;
+                  }
+                  
                   if (content) {
                     accumulatedContent += content;
-                    // 实时更新内容
-                    updateAnalysis(targetAnalysis.id, {
-                      content: accumulatedContent,
-                    });
+                    // 使用防抖更新
+                    debouncedUpdate(accumulatedContent);
                   }
                 } else if (line.startsWith("8:")) {
                   // Vercel AI SDK Data Stream Protocol 完成信号
+                  // 清除防抖定时器，立即更新最终内容
+                  if (updateTimer) {
+                    clearTimeout(updateTimer);
+                  }
                   updateAnalysis(targetAnalysis.id, {
+                    content: accumulatedContent,
                     isLoading: false,
                   });
                   return;
                 } else if (line.startsWith("9:")) {
                   // Vercel AI SDK Data Stream Protocol 错误信号
+                  if (updateTimer) {
+                    clearTimeout(updateTimer);
+                  }
                   try {
                     const errorData = JSON.parse(line.slice(2));
                     throw new Error(errorData.error || "Stream error");
@@ -307,7 +339,11 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
 
                   if (data === "[DONE]") {
                     // 流结束
+                    if (updateTimer) {
+                      clearTimeout(updateTimer);
+                    }
                     updateAnalysis(targetAnalysis.id, {
+                      content: accumulatedContent,
                       isLoading: false,
                     });
                     return;
@@ -331,10 +367,8 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                       if (delta.content) {
                         accumulatedContent += delta.content;
 
-                        // 实时更新内容
-                        updateAnalysis(targetAnalysis.id, {
-                          content: accumulatedContent,
-                        });
+                        // 使用防抖更新
+                        debouncedUpdate(accumulatedContent);
                       }
                     }
                   } catch (parseError) {
@@ -354,6 +388,10 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
             }
           } finally {
             reader.releaseLock();
+            // 清理定时器
+            if (updateTimer) {
+              clearTimeout(updateTimer);
+            }
           }
 
           // 确保最终状态正确
@@ -515,6 +553,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
 
           const decoder = new TextDecoder();
           let accumulatedContent = "";
+          let updateTimer: NodeJS.Timeout | null = null;
 
           // 找到刚创建的分析
           const currentAnalyses = get().analyses;
@@ -529,6 +568,18 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
             throw new Error("无法找到目标分析");
           }
 
+          // 防抖更新函数，避免过于频繁的渲染
+          const debouncedUpdate = (content: string) => {
+            if (updateTimer) {
+              clearTimeout(updateTimer);
+            }
+            updateTimer = setTimeout(() => {
+              updateAnalysis(targetAnalysis.id, {
+                content,
+              });
+            }, 50); // 50ms 防抖
+          };
+
           try {
             while (true) {
               const { done, value } = await reader.read();
@@ -542,22 +593,41 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                 // 支持 Data Stream Protocol 和 OpenAI SSE 格式
                 if (line.startsWith("0:")) {
                   // Vercel AI SDK Data Stream Protocol 文本内容
-                  const content = line.slice(3, -1); // 移除 0:" 和末尾的 "
+                  // 解析 JSON 转义的内容
+                  const jsonContent = line.slice(2); // 移除 "0:"
+                  let content = "";
+                  
+                  try {
+                    // 使用 JSON.parse 正确解析转义字符
+                    content = JSON.parse(jsonContent);
+                  } catch (error) {
+                    // 如果解析失败，尝试简单的字符串处理（向后兼容）
+                    content = jsonContent.startsWith('"') && jsonContent.endsWith('"') 
+                      ? jsonContent.slice(1, -1) 
+                      : jsonContent;
+                  }
+                  
                   if (content) {
                     accumulatedContent += content;
-                    // 实时更新内容
-                    updateAnalysis(targetAnalysis.id, {
-                      content: accumulatedContent,
-                    });
+                    // 使用防抖更新
+                    debouncedUpdate(accumulatedContent);
                   }
                 } else if (line.startsWith("8:")) {
                   // Vercel AI SDK Data Stream Protocol 完成信号
+                  // 清除防抖定时器，立即更新最终内容
+                  if (updateTimer) {
+                    clearTimeout(updateTimer);
+                  }
                   updateAnalysis(targetAnalysis.id, {
+                    content: accumulatedContent,
                     isLoading: false,
                   });
                   return;
                 } else if (line.startsWith("9:")) {
                   // Vercel AI SDK Data Stream Protocol 错误信号
+                  if (updateTimer) {
+                    clearTimeout(updateTimer);
+                  }
                   try {
                     const errorData = JSON.parse(line.slice(2));
                     throw new Error(errorData.error || "Stream error");
@@ -570,7 +640,11 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
 
                   if (data === "[DONE]") {
                     // 流结束
+                    if (updateTimer) {
+                      clearTimeout(updateTimer);
+                    }
                     updateAnalysis(targetAnalysis.id, {
+                      content: accumulatedContent,
                       isLoading: false,
                     });
                     return;
@@ -594,10 +668,8 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                       if (delta.content) {
                         accumulatedContent += delta.content;
 
-                        // 实时更新内容
-                        updateAnalysis(targetAnalysis.id, {
-                          content: accumulatedContent,
-                        });
+                        // 使用防抖更新
+                        debouncedUpdate(accumulatedContent);
                       }
                     }
                   } catch (parseError) {
@@ -617,6 +689,10 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
             }
           } finally {
             reader.releaseLock();
+            // 清理定时器
+            if (updateTimer) {
+              clearTimeout(updateTimer);
+            }
           }
 
           // 确保最终状态正确

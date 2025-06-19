@@ -20,6 +20,7 @@ import {
   Brain,
   Lightbulb,
   Target,
+  Sparkles,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/client-auth";
 import { useRouter } from "next/navigation";
@@ -95,6 +96,8 @@ interface ContentItemPublic {
       };
       raw_text?: string;
     };
+    // 允许其他动态分析类型
+    [key: string]: any;
   } | null;
 }
 
@@ -130,7 +133,44 @@ const AIAnalysisCard = ({
 }: { analysis: ContentItemPublic["ai_analysis"] }) => {
   if (!analysis) return null;
 
-  const { summarizer, key_points_extractor } = analysis;
+  const { summarizer, key_points_extractor, ...restAnalyses } = analysis;
+
+  // 提取其他分析类型（如 insights、questions 等）
+  const otherEntries = Object.entries(restAnalyses).filter(
+    ([, value]) => value && typeof value === "object",
+  );
+
+  const renderGenericAnalysis = (
+    title: string,
+    content: any,
+    index: number,
+  ) => {
+    if (!content) return null;
+
+    // 尽量使用结构化字段，否则回退到 raw_text
+    const preview =
+      (typeof content === "string" && content) ||
+      content.analysis_result ||
+      content.raw_text ||
+      JSON.stringify(content).substring(0, 150);
+
+    return (
+      <div
+        key={index}
+        className="bg-gradient-to-r from-purple-50 to-fuchsia-50 dark:from-purple-950/20 dark:to-fuchsia-950/20 p-3 rounded-lg border border-purple-200/50 dark:border-purple-800/50"
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <Sparkles className="h-3 w-3 text-purple-600 dark:text-purple-400" />
+          <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
+            {title}
+          </span>
+        </div>
+        <p className="text-sm text-purple-800 dark:text-purple-200 leading-relaxed line-clamp-3">
+          {typeof preview === "string" ? preview.substring(0, 150) + "..." : "(unsupported format)"}
+        </p>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-3 mt-3 pt-3 border-t border-border/50">
@@ -195,6 +235,11 @@ const AIAnalysisCard = ({
             </p>
           ) : null}
         </div>
+      )}
+
+      {/* 其他分析类型 */}
+      {otherEntries.map(([key, value], idx) =>
+        renderGenericAnalysis(key, value, idx),
       )}
     </div>
   );
