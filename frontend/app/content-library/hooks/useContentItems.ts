@@ -97,7 +97,7 @@ export const useContentItems = () => {
 
   /** 打开阅读器 */
   const handleOpenReader = useCallback((item: ContentItemPublic) => {
-    router.push(`/reader/${item.id}`)
+    router.push(`/content-library/reader/${item.id}`)
   }, [router])
 
   /** 单个内容预加载 */

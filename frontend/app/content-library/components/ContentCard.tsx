@@ -32,7 +32,7 @@ export const ContentCard = ({ item, selected, onSelect, prefetchContent }: Props
   const router = useRouter()
 
   const handleClick = () => {
-    router.push(`/reader/${item.id}`)
+    router.push(`/content-library/reader/${item.id}`)
   }
 
   return (

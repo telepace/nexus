@@ -57,7 +57,6 @@ export default function ContentLibraryPage() {
 
   return (
     <MainLayout pageTitle="Content Library">
-      <LibraryHeader />
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <div className="container mx-auto px-4 py-8">
           {/* 搜索 + 过滤 */}
