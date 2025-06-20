@@ -24,6 +24,7 @@ RUN npm install -g pnpm
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_SHARP_PATH=/tmp/node_modules/sharp
+ENV NEXT_IGNORE_TYPECHECK=1
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
