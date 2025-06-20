@@ -100,7 +100,7 @@ const ProcessedContentRenderer = memo(
       return (
         <div className="relative h-full">
           {/* 内容类型指示器 */}
-          <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-r from-green-50/80 to-emerald-50/80 dark:from-green-950/20 dark:to-emerald-950/20 backdrop-blur-sm border-b border-green-200/50 dark:border-green-800/50 animate-in slide-in-from-top duration-200">
+          <div className="hidden">
             <div className="flex items-center justify-between p-3">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-green-500"></div>
@@ -117,7 +117,7 @@ const ProcessedContentRenderer = memo(
           </div>
 
           {/* 虚拟滚动渲染器 */}
-          <div className="absolute top-[60px] left-0 right-0 bottom-0 animate-in fade-in duration-300 delay-100">
+          <div className="absolute inset-0 animate-in fade-in duration-300 delay-100">
             <VirtualScrollRenderer
               contentId={contentId}
               className="w-full h-full"
@@ -157,7 +157,7 @@ const ProcessedContentRenderer = memo(
     // 传统 markdown 渲染
     return (
       <div className="relative h-full animate-in fade-in duration-300">
-        <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-r from-green-50/80 to-emerald-50/80 dark:from-green-950/20 dark:to-emerald-950/20 backdrop-blur-sm border-b border-green-200/50 dark:border-green-800/50 animate-in slide-in-from-top duration-200">
+        <div className="hidden">
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-500"></div>
@@ -171,7 +171,7 @@ const ProcessedContentRenderer = memo(
           </div>
         </div>
 
-        <div className="absolute top-[60px] left-0 right-0 bottom-0 overflow-auto animate-in fade-in duration-300 delay-100">
+        <div className="absolute inset-0 overflow-auto animate-in fade-in duration-300 delay-100">
           {markdownContent ||
           contentToRender.includes("#") ||
           contentToRender.includes("**") ? (
@@ -427,7 +427,7 @@ export const ClientContent = ({
   }
 
   return (
-    <div className="h-full flex flex-col p-2 animate-in fade-in duration-300">
+    <div className="h-full flex flex-col animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b">
         <div className="flex items-center space-x-4">
@@ -436,8 +436,7 @@ export const ClientContent = ({
             size="sm"
             onClick={() => router.push("/content-library")}
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Library
+            <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
             <h1 className="text-lg md:text-xl font-semibold">
@@ -475,26 +474,11 @@ export const ClientContent = ({
             </div>
           </div>
         </div>
-
-        {/* 右侧操作区域 */}
-        <div className="flex items-center gap-2">
-          {content?.processing_status === "completed" && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsShareModalOpen(true)}
-              title="分享内容"
-            >
-              <Share2 className="h-4 w-4 mr-2" />
-              分享
-            </Button>
-          )}
-        </div>
       </div>
 
       {/* Main Content - 专注显示AI处理后的内容 */}
-      <div className="flex-1 p-6 min-h-0">
-        <div className="h-full border rounded-lg bg-gradient-to-br from-green-50/30 to-emerald-50/30 dark:from-green-950/10 dark:to-emerald-950/10">
+      <div className="flex-1 min-h-0">
+        <div className="h-full p-2">
           <ProcessedContentRenderer
             content={content}
             markdownContent={markdownContent}
@@ -502,24 +486,6 @@ export const ClientContent = ({
           />
         </div>
       </div>
-
-      {/* 分享弹窗 */}
-      {content && (
-        <ShareContentModal
-          open={isShareModalOpen}
-          onOpenChange={setIsShareModalOpen}
-          contentItem={{
-            id: content.id,
-            title: content.title || "Untitled",
-            content_text: content.content_text,
-            user_id: content.user_id,
-            type: content.type,
-            processing_status: content.processing_status,
-            created_at: content.created_at,
-            updated_at: content.updated_at,
-          }}
-        />
-      )}
     </div>
   );
 };

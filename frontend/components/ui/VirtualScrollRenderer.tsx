@@ -261,7 +261,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`overflow-auto border border-gray-200 dark:border-gray-700 ${className}`}
+      className={`overflow-auto ${className}`}
       style={{
         height: "100%",
         maxHeight: "100%",
@@ -336,7 +336,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
 const ChunkItem = React.memo<{
   chunk: ContentChunk & { key: string };
 }>(({ chunk }) => (
-  <div className="chunk-item border-b border-gray-100 dark:border-gray-800 py-4 px-4 bg-white dark:bg-gray-900">
+  <div className="chunk-item py-4 px-4">
     <div className="chunk-header mb-2 text-xs text-gray-500 flex justify-between items-center">
       <span className="font-medium">
         Chunk {chunk.index + 1} • {chunk.type}
