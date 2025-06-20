@@ -51,7 +51,7 @@ export const ContentCard = ({ item, selected, onSelect, prefetchContent }: Props
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-4 flex-1">
-            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-lg bg-transparent flex items-center justify-center">
               {getContentIcon(item.type)}
             </div>
             <div className="flex-1 min-w-0">

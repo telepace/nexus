@@ -28,9 +28,6 @@ export const ContentPreview = ({ item }: Props) => {
                 {item.title || '无标题'}
               </h3>
               <div className="flex items-center gap-2 mb-4 flex-wrap">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <FileText className="h-4 w-4" />
-                </div>
                 <Badge variant="outline" className="text-xs">
                   {item.type.toUpperCase()}
                 </Badge>
