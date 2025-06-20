@@ -5,11 +5,15 @@ from sqlalchemy import CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import JSON, Column, Field, Relationship, SQLModel
 
+# 导入时区工具
+from app.utils.timezone import now_utc
+
 
 class ContentItemBase(SQLModel):
     """Base model for content items, containing common fields."""
 
     user_id: uuid.UUID = Field(index=True)
+    project_id: uuid.UUID | None = Field(default=None, index=True)
     type: str = Field(
         sa_column_args=[
             CheckConstraint("type IN ('url', 'pdf', 'docx', 'text', 'plugin')")
@@ -34,11 +38,11 @@ class ContentItemBase(SQLModel):
         index=True,
     )
     error_message: str | None = Field(default=None)
-    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    created_at: datetime = Field(default_factory=now_utc, nullable=False)
     updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=now_utc,
         nullable=False,
-        sa_column_kwargs={"onupdate": datetime.utcnow},
+        sa_column_kwargs={"onupdate": now_utc},
     )
 
 
@@ -99,11 +103,11 @@ class ContentAssetBase(SQLModel):
     mime_type: str | None = Field(default=None, max_length=100)
     size_bytes: int | None = Field(default=None)
     meta_info: str | None = Field(default=None, sa_column=Column(JSON))
-    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    created_at: datetime = Field(default_factory=now_utc, nullable=False)
     updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=now_utc,
         nullable=False,
-        sa_column_kwargs={"onupdate": datetime.utcnow},
+        sa_column_kwargs={"onupdate": now_utc},
     )
 
 
@@ -142,11 +146,11 @@ class ProcessingJobBase(SQLModel):
     error_message: str | None = Field(default=None)
     started_at: datetime | None = Field(default=None)
     completed_at: datetime | None = Field(default=None)
-    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    created_at: datetime = Field(default_factory=now_utc, nullable=False)
     updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=now_utc,
         nullable=False,
-        sa_column_kwargs={"onupdate": datetime.utcnow},
+        sa_column_kwargs={"onupdate": now_utc},
     )
 
 
@@ -177,11 +181,11 @@ class AIConversationBase(SQLModel):
     )
     summary: str | None = Field(default=None)
     meta_info: str | None = Field(default=None, sa_column=Column(JSON))
-    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    created_at: datetime = Field(default_factory=now_utc, nullable=False)
     updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=now_utc,
         nullable=False,
-        sa_column_kwargs={"onupdate": datetime.utcnow},
+        sa_column_kwargs={"onupdate": now_utc},
     )
 
 
@@ -219,7 +223,7 @@ class ContentChunkBase(SQLModel):
     meta_info: str | None = Field(
         default=None, sa_column=Column(JSON)
     )  # Additional metadata
-    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    created_at: datetime = Field(default_factory=now_utc, nullable=False)
 
 
 class ContentChunk(ContentChunkBase, table=True):
@@ -242,7 +246,7 @@ class ContentShareBase(SQLModel):
         default=None, foreign_key="contentitem.id", index=True
     )
     share_token: str = Field(max_length=255, unique=True, index=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    created_at: datetime = Field(default_factory=now_utc, nullable=False)
     expires_at: datetime | None = Field(default=None)
     access_count: int = Field(default=0)
     max_access_count: int | None = Field(default=None)

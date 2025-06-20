@@ -158,21 +158,12 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
   }, [loadChunks]);
 
   // 优化的滚动处理
-  const handleScroll = useThrottle((e: React.UIEvent<HTMLDivElement>) => {
-    const target = e.currentTarget;
-    const scrollTop = target.scrollTop;
-    const scrollHeight = target.scrollHeight;
-    const clientHeight = target.clientHeight;
-
-    // 使用requestAnimationFrame优化滚动处理
-    requestAnimationFrame(() => {
-      console.log("Scroll position:", {
-        scrollTop,
-        scrollHeight,
-        clientHeight,
-        remaining: scrollHeight - scrollTop - clientHeight,
-      });
-    });
+  const handleScroll = useThrottle(() => {
+    // const target = e.currentTarget;
+    // const scrollTop = target.scrollTop;
+    // const scrollHeight = target.scrollHeight;
+    // const clientHeight = target.clientHeight;
+    // 可以在这里添加滚动相关的逻辑，如果需要的话
   }, 100);
 
   // Intersection Observer for loading more content
@@ -279,18 +270,6 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
       }}
       onScroll={handleScroll}
     >
-      {/* Debug info */}
-      <div className="sticky top-0 z-20 bg-neutral-100 dark:bg-neutral-900 text-xs p-2 border-b">
-        <div>
-          Chunks loaded: {chunks?.length || 0} | Total: {totalChunks} | Has
-          more: {hasMore ? "Yes" : "No"}
-        </div>
-        <div>
-          Current page: {currentPage} | Loading: {loading ? "Yes" : "No"} |
-          Loading more: {loadingMore ? "Yes" : "No"}
-        </div>
-      </div>
-
       {/* Top sentinel for DOM cleanup */}
       {visibleStartIndex > 0 && (
         <div ref={topSentinelRef} className="h-1 bg-red-200" />
@@ -357,8 +336,8 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
 const ChunkItem = React.memo<{
   chunk: ContentChunk & { key: string };
 }>(({ chunk }) => (
-  <div className="chunk-item border-b border-gray-100 dark:border-gray-800 py-6 px-4 bg-white dark:bg-gray-900">
-    <div className="chunk-header mb-3 text-xs text-gray-500 flex justify-between items-center">
+  <div className="chunk-item border-b border-gray-100 dark:border-gray-800 py-4 px-4 bg-white dark:bg-gray-900">
+    <div className="chunk-header mb-2 text-xs text-gray-500 flex justify-between items-center">
       <span className="font-medium">
         Chunk {chunk.index + 1} • {chunk.type}
       </span>
@@ -369,7 +348,7 @@ const ChunkItem = React.memo<{
     <div className="chunk-content">
       <MarkdownRenderer
         content={chunk.content}
-        className="prose prose-sm max-w-none dark:prose-invert"
+        className="prose prose-sm max-w-none dark:prose-invert [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
       />
     </div>
   </div>

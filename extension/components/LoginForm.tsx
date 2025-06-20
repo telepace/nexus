@@ -70,7 +70,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
 
   const openWebLogin = () => {
     const frontendUrl = process.env.PLASMO_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
-    const loginUrl = `${frontendUrl}/login?extension_callback=true`;
+    const loginUrl = `${frontendUrl}/login?from=extension`;
     console.log('[LoginForm] 打开Web登录页面:', loginUrl);
     chrome.tabs.create({ url: loginUrl });
   };

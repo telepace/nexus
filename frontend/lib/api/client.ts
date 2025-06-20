@@ -1,4 +1,5 @@
 import { getCookie } from "@/lib/auth";
+import { getBrowserTimeZone } from "@/lib/date";
 
 // 请求配置类型
 interface RequestConfig {
@@ -37,6 +38,12 @@ class APIClient {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
+  // 获取时区头
+  private getTimezoneHeaders(): Record<string, string> {
+    const userTimeZone = getBrowserTimeZone();
+    return { "X-User-Timezone": userTimeZone };
+  }
+
   // 构建完整URL
   private buildURL(endpoint: string): string {
     const cleanEndpoint = endpoint.startsWith("/")
@@ -54,6 +61,7 @@ class APIClient {
     const headers = {
       ...this.defaultHeaders,
       ...this.getAuthHeaders(),
+      ...this.getTimezoneHeaders(),
       ...options.headers,
     };
 
@@ -91,16 +99,30 @@ class APIClient {
     endpoint: string,
     params?: Record<string, unknown>,
   ): Promise<T> {
-    const url = new URL(this.buildURL(endpoint));
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          url.searchParams.append(key, String(value));
-        }
-      });
-    }
+    try {
+      const url = new URL(this.buildURL(endpoint));
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            url.searchParams.append(key, String(value));
+          }
+        });
+      }
 
-    return this.request<T>(url.pathname + url.search);
+      return this.request<T>(url.pathname + url.search);
+    } catch (error) {
+      // 如果URL构造失败，直接使用endpoint
+      console.warn("URL构造失败，使用原始endpoint:", endpoint, error);
+      const queryString = params
+        ? "?" +
+          new URLSearchParams(
+            Object.entries(params)
+              .filter(([, value]) => value !== undefined && value !== null)
+              .map(([key, value]) => [key, String(value)]),
+          ).toString()
+        : "";
+      return this.request<T>(endpoint + queryString);
+    }
   }
 
   // POST 请求

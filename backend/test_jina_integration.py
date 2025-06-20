@@ -34,18 +34,19 @@ def test_jina_api_direct():
 
         headers = {
             "Authorization": f"Bearer {settings.JINA_API_KEY}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            # Add X-Remove-Selector to remove unwanted elements
+            "X-Remove-Selector": "header, nav, footer, .sidebar, .navigation, .breadcrumb, .copyright, .pagination, .menu, .toc, .table-of-contents, .doc-sidebar, .navbar, .header, .footer-wrapper, .site-footer, .site-header, .skip-link, .version-selector, .language-selector, .ads, .advertisement, .social-share, .comments, .related-posts, .recommended, .popup, .modal, .overlay, .banner, .promotion"
         }
 
-        payload = {
-            "url": test_url
-        }
+        # Use GET request with URL as path parameter
+        full_url = f"https://r.jina.ai/{test_url}"
 
         print(f"📡 正在调用Jina API处理URL: {test_url}")
-        response = requests.post(
-            "https://r.jina.ai/",
+        print(f"🔗 API调用地址: {full_url}")
+        response = requests.get(
+            full_url,
             headers=headers,
-            json=payload,
             timeout=60
         )
 
@@ -54,6 +55,7 @@ def test_jina_api_direct():
             print("✅ Jina API调用成功!")
             print(f"📝 返回的Markdown内容长度: {len(markdown_content)}")
             print(f"📄 内容预览: {markdown_content[:200]}...")
+            print("✅ 已使用X-Remove-Selector头部移除不需要的页面元素")
             return True
         else:
             print(f"❌ Jina API调用失败: {response.status_code}")

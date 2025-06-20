@@ -1,116 +1,32 @@
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import {
   fetchPrompts,
   fetchTags,
   type PromptData,
-  type TagData,
 } from "@/components/actions/prompts-action";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import {
-  AlertCircle,
-  Tag as TagIcon,
-  Clock,
-  SortDesc,
-  SortAsc,
-} from "lucide-react";
+import { AlertCircle, Plus, Tag as TagIcon } from "lucide-react";
 import { getAuthState } from "@/lib/server-auth-bridge";
 import { Suspense } from "react";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Card } from "@/components/ui/card";
-import { DateDisplay } from "@/components/ui/DateDisplay";
 
-// 导入删除按钮组件
-import { DeleteButton } from "./deleteButton";
+// 导入组件
 import { SearchForm } from "./searchForm";
-import { PromptToggle } from "./promptToggle";
+import { PromptCards } from "./_components/PromptCards";
 
 export const metadata = {
   title: "Prompt Hub",
   description: "查看和管理提示词",
 };
 
-// 展示卡片视图的提示词列表
-function PromptCards({ prompts }: { prompts: PromptData[] }) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {prompts.map((prompt) => (
-        <Card key={prompt.id} className="p-4 hover:shadow-md transition-shadow">
-          <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold truncate">{prompt.name}</h3>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    ⋯
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link href={`/prompts/${prompt.id}`}>查看详情</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/prompts/edit/${prompt.id}`}>编辑</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <DeleteButton promptId={prompt.id} />
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+// 服务器组件：提示词卡片容器
+async function PromptCardsContainer({ prompts }: { prompts: PromptData[] }) {
+  const auth = await getAuthState();
+  const currentUser = auth.user;
 
-            <p className="text-sm text-muted-foreground mb-3 flex-grow">
-              {prompt.description || "无描述"}
-            </p>
-
-            {/* 启用状态控件 */}
-            <div className="mb-3 pb-2 border-b">
-              <PromptToggle
-                promptId={prompt.id}
-                enabled={prompt.enabled ?? false}
-                promptName={prompt.name}
-              />
-            </div>
-
-            <div className="mt-auto">
-              <div className="flex flex-wrap gap-1 mb-2">
-                {prompt.tags && prompt.tags.length > 0 ? (
-                  prompt.tags.map((tag) => (
-                    <Badge key={tag.id} variant="outline" className="text-xs">
-                      <TagIcon className="h-3 w-3 mr-1" />
-                      {tag.name}
-                    </Badge>
-                  ))
-                ) : (
-                  <span className="text-xs text-muted-foreground">无标签</span>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
-                <div className="flex items-center">
-                  <Clock className="h-3 w-3 mr-1" />
-                  <DateDisplay
-                    date={prompt.updated_at}
-                    format="distance"
-                    className="text-xs"
-                  />
-                </div>
-                <div>作者: {prompt.creator?.name || "未知"}</div>
-              </div>
-            </div>
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
+  return <PromptCards prompts={prompts} currentUser={currentUser} />;
 }
 
 // Prompts 顶级页面组件，增加错误边界和Suspense
@@ -191,172 +107,143 @@ async function PromptsContent({
     order?: string;
   }>;
 }) {
-  // 使用唯一ID标识这次渲染，帮助调试
-  const renderID = Math.random().toString(36).substring(7);
-  console.log(`[prompts-${renderID}] 开始渲染 Prompts 内容`);
-
   try {
     // 使用安全的方式处理 searchParams - 异步等待
     const resolvedSearchParams = searchParams ? await searchParams : {};
-    const params = resolvedSearchParams || {};
 
-    // 准备查询参数
-    const search = params.query || undefined;
-    const tagIds = params.tags ? params.tags.split(",") : undefined;
-    const sort = params.sort || undefined;
-    const order = (params.order || "desc") as "asc" | "desc";
+    const query = resolvedSearchParams.query || "";
+    const selectedTags = resolvedSearchParams.tags
+      ? resolvedSearchParams.tags.split(",")
+      : [];
+    const sort = resolvedSearchParams.sort || "updated_at";
+    const order = resolvedSearchParams.order || "desc";
 
-    // 获取提示词和标签数据
-    const [promptsResponse, tagsResponse] = await Promise.all([
-      fetchPrompts({ search, tag_ids: tagIds, sort, order }),
+    // 并行获取数据
+    const [promptsResult, tagsResult] = await Promise.all([
+      fetchPrompts({
+        search: query,
+        tag_ids: selectedTags,
+        sort,
+        order: order as "asc" | "desc",
+      }),
       fetchTags(),
     ]);
 
-    // 处理标签数据
-    let tagsList: TagData[] = [];
-    let tagsErrorMessage: string | null = null;
-
-    if (Array.isArray(tagsResponse)) {
-      tagsList = tagsResponse;
-    } else if (
-      tagsResponse &&
-      typeof tagsResponse === "object" &&
-      "error" in tagsResponse
-    ) {
-      tagsErrorMessage = String(tagsResponse.error);
+    // Check if promptsResult is an error
+    if (!Array.isArray(promptsResult)) {
+      throw new Error(promptsResult.error || "获取提示词失败");
     }
 
-    // 处理提示词数据
-    let promptsList: PromptData[] = [];
-    let errorMessage: string | null = null;
-    let errorStatus: number | null = null;
-
-    if (Array.isArray(promptsResponse)) {
-      promptsList = promptsResponse;
-      console.log(
-        `[prompts-${renderID}] 成功获取 ${promptsList.length} 个提示词`,
-      );
-    } else if (
-      promptsResponse &&
-      typeof promptsResponse === "object" &&
-      "error" in promptsResponse
-    ) {
-      // 处理可能的错误响应
-      errorMessage = String(promptsResponse.error);
-      errorStatus = promptsResponse.status || 500;
-      console.error(
-        `[prompts-${renderID}] 获取提示词出错:`,
-        errorMessage,
-        "状态:",
-        errorStatus,
-      );
+    // Check if tagsResult is an error
+    if (!Array.isArray(tagsResult)) {
+      throw new Error(tagsResult.error || "获取标签失败");
     }
 
-    // 当有错误时显示错误信息
-    if (errorMessage) {
-      return (
-        <div className="container py-10">
-          <h1 className="text-2xl font-bold mb-6">Prompt Hub</h1>
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>错误 {errorStatus}</AlertTitle>
-            <AlertDescription>{errorMessage}</AlertDescription>
-          </Alert>
-          <Button asChild>
-            <Link href="/prompts/create">创建提示词</Link>
-          </Button>
-        </div>
-      );
-    }
+    const prompts = promptsResult;
+    const tags = tagsResult;
 
-    // 渲染页面内容
     return (
-      <div className="container py-10">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Prompt Hub</h1>
-          <Button asChild>
-            <Link href="/prompts/create">创建提示词</Link>
-          </Button>
-        </div>
-
-        {/* 搜索和过滤区域 */}
-        <div className="mb-6 bg-muted/50 p-4 rounded-lg">
-          <SearchForm tags={tagsList} />
-        </div>
-
-        {/* 显示标签列表 */}
-        {tagsErrorMessage ? (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>获取标签出错</AlertTitle>
-            <AlertDescription>{tagsErrorMessage}</AlertDescription>
-          </Alert>
-        ) : tagsList.length > 0 ? (
-          <div className="mb-6">
-            <h2 className="text-sm font-medium mb-2 flex items-center">
-              <TagIcon className="h-4 w-4 mr-1" />
-              标签过滤
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {tagsList.map((tag) => (
-                <Link key={tag.id} href={`/prompts?tags=${tag.id}`}>
-                  <Badge
-                    variant="outline"
-                    className="cursor-pointer hover:bg-muted"
-                    style={{
-                      borderColor: tag.color || "#888",
-                      color: tag.color || "#888",
-                    }}
-                  >
-                    {tag.name}
-                  </Badge>
-                </Link>
-              ))}
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <div className="container mx-auto px-4 py-8">
+          <div className="space-y-8">
+            {/* Header */}
+            <div className="text-center space-y-4">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                AI 提示词库
+              </h1>
+              <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
+                创建、管理和分享你的AI提示词，提升工作效率
+              </p>
             </div>
-          </div>
-        ) : null}
 
-        <Separator className="my-6" />
+            {/* Search and Actions */}
+            <div className="space-y-4">
+              {/* 搜索区域 */}
+              <SearchForm tags={tags} />
 
-        {/* 排序控制区域 */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="text-sm text-muted-foreground">
-            共 {promptsList.length} 个提示词
-          </div>
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/prompts?sort=${params.sort || "updated_at"}&order=${params.order === "asc" ? "desc" : "asc"}`}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
-            >
-              {order === "asc" ? (
-                <SortAsc className="h-4 w-4" />
-              ) : (
-                <SortDesc className="h-4 w-4" />
-              )}
-              {params.sort === "created_at" ? "创建时间" : "更新时间"}
-            </Link>
+              {/* 操作按钮和统计信息 */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <span className="font-medium text-foreground">
+                      {prompts.length}
+                    </span>
+                    个提示词
+                  </span>
+                  {(query || selectedTags.length > 0) && (
+                    <span className="flex items-center gap-1">
+                      <div className="w-1 h-1 rounded-full bg-muted-foreground" />
+                      已应用筛选条件
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    asChild
+                    size="sm"
+                    className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-sm"
+                  >
+                    <Link href="/prompts/create">
+                      <Plus className="mr-2 h-4 w-4" />
+                      创建提示词
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/prompts/tags">
+                      <TagIcon className="mr-2 h-4 w-4" />
+                      管理标签
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            {prompts.length === 0 ? (
+              <Card className="border-0 shadow-lg">
+                <div className="p-12 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                    <TagIcon className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">
+                    {query || selectedTags.length > 0
+                      ? "未找到匹配的提示词"
+                      : "暂无提示词"}
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    {query || selectedTags.length > 0
+                      ? "尝试调整搜索条件或清除筛选器"
+                      : "创建你的第一个AI提示词，开始构建专属的提示词库"}
+                  </p>
+                  <Button asChild>
+                    <Link href="/prompts/create">创建提示词</Link>
+                  </Button>
+                </div>
+              </Card>
+            ) : (
+              <PromptCardsContainer prompts={prompts} />
+            )}
           </div>
         </div>
-
-        {/* 没有错误但也没有数据 */}
-        {promptsList.length === 0 ? (
-          <div className="bg-muted p-8 text-center rounded-lg mb-6">
-            <h2 className="text-xl mb-2">暂无提示词</h2>
-            <p className="text-muted-foreground mb-4">
-              您当前没有任何提示词，请创建一个新提示词开始使用。
-            </p>
-            <Button asChild>
-              <Link href="/prompts/create">创建提示词</Link>
-            </Button>
-          </div>
-        ) : (
-          // 卡片视图显示提示词
-          <PromptCards prompts={promptsList} />
-        )}
       </div>
     );
   } catch (error) {
-    console.error(`[prompts-${renderID}] 渲染过程出错:`, error);
-    throw error; // 让错误边界处理
+    console.error("PromptsContent error:", error);
+    return (
+      <div className="container py-10">
+        <h1 className="text-2xl font-bold mb-6">Prompt Hub</h1>
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>加载失败</AlertTitle>
+          <AlertDescription>
+            {error instanceof Error ? error.message : "未知错误"}
+          </AlertDescription>
+        </Alert>
+        <Button asChild>
+          <Link href="/prompts/create">创建提示词</Link>
+        </Button>
+      </div>
+    );
   }
 }

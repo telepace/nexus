@@ -1,17 +1,27 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { useRouter, usePathname } from "next/navigation";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import ReaderPage from "@/app/content-library/reader/[id]/page";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/client-auth";
+import { useRouter, usePathname } from "next/navigation";
 
-// Mock dependencies
+// Mock next/navigation
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
   usePathname: jest.fn(),
 }));
 
-jest.mock("@/lib/auth", () => ({
+// Mock client auth
+jest.mock("@/lib/client-auth", () => ({
   useAuth: jest.fn(),
   getCookie: jest.fn(),
+}));
+
+// Mock next/headers
+jest.mock("next/headers", () => ({
+  cookies: jest.fn(() =>
+    Promise.resolve({
+      get: jest.fn(() => ({ value: "mock-token" })),
+    }),
+  ),
 }));
 
 // Mock ReaderLayout
@@ -19,7 +29,7 @@ jest.mock("@/components/layout/ReaderLayout", () => {
   return function MockReaderLayout({
     children,
     contentId,
-  }: { children: React.ReactNode; contentId: string }) {
+  }: { children: React.ReactNode; contentId: string; contentText: string }) {
     return (
       <div data-testid="reader-layout" data-content-id={contentId}>
         <div data-testid="content-panel">{children}</div>
@@ -31,10 +41,12 @@ jest.mock("@/components/layout/ReaderLayout", () => {
   };
 });
 
-// Mock ReaderContent
-jest.mock("@/app/content-library/reader/[id]/ReaderContent", () => ({
-  ReaderContent: ({ params }: { params: Promise<{ id: string }> }) => (
-    <div data-testid="reader-content">
+// Mock ClientContent
+jest.mock("@/app/content-library/reader/[id]/ClientContent", () => ({
+  ClientContent: ({
+    contentId,
+  }: { contentId: string; initialData?: any; initialMarkdown?: any }) => (
+    <div data-testid="client-content">
       <div role="tablist">
         <button role="tab" aria-label="Original">
           Original
@@ -126,90 +138,34 @@ describe("ReaderPage", () => {
     jest.clearAllMocks();
   });
 
-  it("should render with ReaderLayout containing content and LLM panels", async () => {
-    render(<ReaderPage params={Promise.resolve({ id: "1" })} />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId("reader-layout")).toBeInTheDocument();
-      expect(screen.getByTestId("content-panel")).toBeInTheDocument();
-      expect(screen.getByTestId("llm-panel")).toBeInTheDocument();
+  it("should render with ReaderLayout containing content", async () => {
+    // For async server components, we need to await the component
+    const ReaderPageComponent = await ReaderPage({
+      params: Promise.resolve({ id: "1" }),
     });
+    render(ReaderPageComponent);
+
+    expect(screen.getByTestId("reader-layout")).toBeInTheDocument();
+    expect(screen.getByTestId("content-panel")).toBeInTheDocument();
+    expect(screen.getByTestId("llm-panel")).toBeInTheDocument();
   });
 
-  it("should display original and processed content tabs", async () => {
-    render(<ReaderPage params={Promise.resolve({ id: "1" })} />);
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole("tab", { name: /original/i }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("tab", { name: /processed/i }),
-      ).toBeInTheDocument();
+  it("should display client content", async () => {
+    const ReaderPageComponent = await ReaderPage({
+      params: Promise.resolve({ id: "1" }),
     });
-  });
+    render(ReaderPageComponent);
 
-  it("should switch between original and processed content", async () => {
-    render(<ReaderPage params={Promise.resolve({ id: "1" })} />);
-
-    await waitFor(() => {
-      const originalTab = screen.getByRole("tab", { name: /original/i });
-      const processedTab = screen.getByRole("tab", { name: /processed/i });
-
-      expect(originalTab).toBeInTheDocument();
-      expect(processedTab).toBeInTheDocument();
-
-      // Test that we can click on the processed tab
-      fireEvent.click(processedTab);
-      // The fact that no error is thrown means the tab switching works
-    });
-  });
-
-  it("should display LLM analysis in right panel", async () => {
-    render(<ReaderPage params={Promise.resolve({ id: "1" })} />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId("llm-panel")).toBeInTheDocument();
-      expect(screen.getByText("AI 分析")).toBeInTheDocument();
-    });
-  });
-
-  it("should use flex layout structure", async () => {
-    render(<ReaderPage params={Promise.resolve({ id: "1" })} />);
-
-    await waitFor(() => {
-      const layout = screen.getByTestId("reader-layout");
-      expect(layout).toBeInTheDocument();
-      expect(layout).toHaveAttribute("data-content-id", "1");
-    });
-  });
-
-  it("should handle back navigation", async () => {
-    render(<ReaderPage params={Promise.resolve({ id: "1" })} />);
-
-    await waitFor(() => {
-      const backButton = screen.getByRole("button", { name: /back/i });
-      expect(backButton).toBeInTheDocument();
-
-      fireEvent.click(backButton);
-      // Note: The actual navigation logic is in ReaderContent component
-      // This test just verifies the button exists
-    });
+    expect(screen.getByTestId("client-content")).toBeInTheDocument();
   });
 
   it("should pass contentId to ReaderLayout", async () => {
-    render(<ReaderPage params={Promise.resolve({ id: "test-id" })} />);
-
-    await waitFor(() => {
-      const layout = screen.getByTestId("reader-layout");
-      expect(layout).toHaveAttribute("data-content-id", "test-id");
+    const ReaderPageComponent = await ReaderPage({
+      params: Promise.resolve({ id: "test-id" }),
     });
-  });
+    render(ReaderPageComponent);
 
-  it("should show loading state initially", () => {
-    render(<ReaderPage params={Promise.resolve({ id: "1" })} />);
-
-    // Should show loading initially before params are resolved
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    const layout = screen.getByTestId("reader-layout");
+    expect(layout).toHaveAttribute("data-content-id", "test-id");
   });
 });

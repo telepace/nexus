@@ -63,30 +63,51 @@ app.post(`${baseUrl}/library/save`, (req, res) => {
 
 
 let server;
+let isServerRunning = false;
 
 const start = () => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    if (isServerRunning && server) {
+      console.log(`Mock API server is already running on port ${port}`);
+      return resolve();
+    }
+    
     server = app.listen(port, () => {
+      isServerRunning = true;
       console.log(`Mock API server listening on port ${port}`);
       resolve();
+    });
+    
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.log(`Port ${port} is already in use, assuming mock server is already running`);
+        isServerRunning = true;
+        resolve();
+      } else {
+        reject(err);
+      }
     });
   });
 };
 
 const stop = () => {
   return new Promise((resolve, reject) => {
-    if (server) {
-      server.close((err) => {
-        if (err) {
-          console.error('Error stopping mock server:', err);
-          return reject(err);
-        }
-        console.log('Mock API server stopped.');
-        resolve();
-      });
-    } else {
-      resolve(); // No server to stop
+    if (!server || !isServerRunning) {
+      console.log('Mock server is not running or already stopped');
+      isServerRunning = false;
+      return resolve();
     }
+    
+    server.close((err) => {
+      isServerRunning = false;
+      server = null;
+      if (err && err.code !== 'ERR_SERVER_NOT_RUNNING') {
+        console.error('Error stopping mock server:', err);
+        return reject(err);
+      }
+      console.log('Mock API server stopped.');
+      resolve();
+    });
   });
 };
 

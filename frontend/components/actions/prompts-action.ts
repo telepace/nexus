@@ -12,8 +12,8 @@ import {
   deleteTag,
   readPromptVersions,
   duplicatePrompt,
-  togglePromptEnabledApi,
 } from "@/app/clientService";
+import { promptsTogglePromptEnabled } from "@/app/openapi-client/sdk.gen";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -72,6 +72,7 @@ export interface PromptData {
   created_at: string;
   updated_at: string;
   enabled?: boolean;
+  user_enabled?: boolean;
   tags?: TagData[];
   creator?: {
     id?: string;
@@ -250,41 +251,46 @@ export const fetchPrompts = async (options?: {
   }
 };
 
+// 定义 fetchPrompt 的返回类型
+type FetchPromptReturn = PromptData | ApiErrorResponse;
+
 // 获取单个Prompt
-export const fetchPrompt = cache(async (id: string) => {
-  // 验证用户
-  const user = await requireAuth();
-  if (!user) {
-    redirect("/login");
-  }
-
-  const token = await getAuthToken();
-  if (!token) {
-    redirect("/login");
-  }
-
-  try {
-    const { data, error } = await readPrompt({
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      path: {
-        prompt_id: id,
-      },
-    });
-
-    if (error) {
-      return {
-        error: typeof error === "string" ? error : JSON.stringify(error),
-      };
+export const fetchPrompt = cache(
+  async (id: string): Promise<FetchPromptReturn> => {
+    // 验证用户
+    const user = await requireAuth();
+    if (!user) {
+      redirect("/login");
     }
 
-    return data;
-  } catch (error) {
-    console.error("获取prompt详情出错:", error);
-    return { error: "获取数据失败" };
-  }
-});
+    const token = await getAuthToken();
+    if (!token) {
+      redirect("/login");
+    }
+
+    try {
+      const { data, error } = await readPrompt({
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        path: {
+          prompt_id: id,
+        },
+      });
+
+      if (error) {
+        return {
+          error: typeof error === "string" ? error : JSON.stringify(error),
+        };
+      }
+
+      return data as unknown as PromptData;
+    } catch (error) {
+      console.error("获取prompt详情出错:", error);
+      return { error: "获取数据失败" };
+    }
+  },
+);
 
 // 获取所有Tags
 export const fetchTags = cache(async (): Promise<FetchTagsReturn> => {
@@ -498,15 +504,20 @@ export async function addPrompt(formData: FormData) {
     promptsCache = null;
     lastPromptsFetchTime = 0;
 
-    // 重新验证路径
+    // 重新验证提示词相关路径缓存
     revalidatePath("/prompts");
 
-    // 创建成功，重定向到prompt详情页
+    // 创建成功后，告知调用方跳转到提示词首页，而不是立即在服务器端重定向
     if (data && "id" in data) {
-      redirect(`/prompts/${data.id}`);
+      return {
+        success: true,
+        data: { id: String(data.id) },
+        redirectUrl: "/prompts",
+      };
     }
 
-    return { success: true };
+    // 如果没有返回数据，也保持成功并跳转到首页
+    return { success: true, redirectUrl: "/prompts" };
   } catch (error: unknown) {
     console.error("创建prompt出错:", error);
     // Fallback for unexpected errors during the try block execution
@@ -879,6 +890,12 @@ export async function addPromptAction(
     const result = await addPrompt(formData);
     return result;
   } catch (error) {
+    // 检查是否是 Next.js 重定向错误
+    if (error instanceof Error && error.message === "NEXT_REDIRECT") {
+      // 重定向是正常行为，直接抛出让Next.js处理
+      throw error;
+    }
+
     console.error("addPromptAction error:", error);
     return {
       genericError: typeof error === "string" ? error : "创建提示词失败",
@@ -916,7 +933,16 @@ export async function updatePromptFormAction(
 // 导出类型
 export type { PromptVersionData, ApiErrorResponse };
 
-export async function togglePromptEnabled(id: string) {
+// 定义 togglePromptEnabled 的返回类型
+interface TogglePromptEnabledResult {
+  success?: boolean;
+  error?: string;
+  data?: PromptData;
+}
+
+export async function togglePromptEnabled(
+  id: string,
+): Promise<TogglePromptEnabledResult> {
   // 验证用户
   const user = await requireAuth();
   if (!user) {
@@ -929,7 +955,7 @@ export async function togglePromptEnabled(id: string) {
   }
 
   try {
-    const { data, error } = await togglePromptEnabledApi({
+    const { data, error } = await promptsTogglePromptEnabled({
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -953,7 +979,7 @@ export async function togglePromptEnabled(id: string) {
     revalidatePath(`/prompts/${id}`);
     revalidatePath("/prompts");
 
-    return { success: true, data };
+    return { success: true, data: data as unknown as PromptData };
   } catch (error) {
     console.error("切换prompt启用状态出错:", error);
     return { error: "操作失败" };

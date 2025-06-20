@@ -16,10 +16,9 @@ class ContentPage {
     // Ensure full URL for local fixture files
     let fullUrl = url;
     if (url.startsWith('fixtures/')) {
-        // Assuming test runner is started from a directory where 'fixtures' is accessible relative to 'testConfig.testsBaseUrl'
-        // Or, more robustly, construct file path URL
+        // Construct correct file path URL from current e2e directory
         const path = require('path');
-        fullUrl = 'file://' + path.resolve(process.cwd(), 'extension/e2e', url);
+        fullUrl = 'file://' + path.resolve(process.cwd(), url);
     } else if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('file://')) {
         fullUrl = `http://${url}`; // Default to http if no scheme
     }

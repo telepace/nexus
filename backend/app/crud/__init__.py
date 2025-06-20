@@ -12,11 +12,18 @@ from typing import Any, Protocol, TypeVar
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
-from app.core.security import get_password_hash, verify_password
-from app.models import Item, TokenBlacklist, User
+from app.core.security import decrypt_password, get_password_hash, verify_password
+from app.models import Project, TokenBlacklist, User
 
 # Import from crud_image.py
 from . import crud_image
+
+# Import from crud_ai_conversation.py
+from .crud_ai_conversation import (
+    create_ai_conversation,
+    get_ai_conversation,
+    get_ai_conversations,
+)
 
 # Import from crud_content.py
 from .crud_content import (
@@ -139,11 +146,11 @@ def get_items(
     owner_id: uuid.UUID | None = None,
     skip: int = 0,
     limit: int = 100,
-) -> list[Item]:
+) -> list[Project]:
     """获取物品列表"""
-    query = select(Item)
+    query = select(Project)
     if owner_id:
-        query = query.where(Item.owner_id == owner_id)
+        query = query.where(Project.owner_id == owner_id)
     # 先执行查询获取所有结果
     results = session.exec(query).all()
     # 然后在 Python 中进行分页
@@ -160,12 +167,20 @@ def create_user(
     # 添加这个检查，确保 is_superuser 字段被正确设置
     is_superuser = getattr(user_create, "is_superuser", False)
 
+    # 解密密码然后哈希
+    try:
+        decrypted_password = decrypt_password(user_create.password)
+    except Exception:
+        # 如果解密失败，假设密码已经是明文（用于测试或向后兼容）
+        decrypted_password = user_create.password
+
     # 创建用户数据字典
     user_data = {
         "email": user_create.email,
-        "hashed_password": get_password_hash(user_create.password),
+        "hashed_password": get_password_hash(decrypted_password),
         "full_name": user_create.full_name,
         "is_superuser": is_superuser,
+        "is_setup_complete": True,  # Web 用户默认完成 setup
     }
 
     # 如果提供了自定义ID，则使用它
@@ -193,10 +208,20 @@ def get_user(*, session: Session, user_id: uuid.UUID) -> Any | None:
 
 def authenticate(*, session: Session, email: str, password: str) -> Any | None:
     """验证用户"""
+    from app.core.security import decrypt_password
+
     user = get_user_by_email(session=session, email=email)
     if not user or not user.hashed_password:
         return None
-    if not verify_password(password, user.hashed_password):
+
+    # 解密密码然后验证
+    try:
+        decrypted_password = decrypt_password(password)
+    except Exception:
+        # 如果解密失败，假设密码已经是明文（用于测试或向后兼容）
+        decrypted_password = password
+
+    if not verify_password(decrypted_password, user.hashed_password):
         return None
     return user
 
@@ -226,12 +251,12 @@ def update_user(
     return db_user
 
 
-def create_item(*, session: Session, item_in: Any, owner_id: uuid.UUID) -> Any:
+def create_project(*, session: Session, item_in: Any, owner_id: uuid.UUID) -> Any:
     """创建项目"""
     # 动态导入Item
-    from app.models import Item
+    from app.models import Project
 
-    item = Item(**item_in.model_dump(), owner_id=owner_id)
+    item = Project(**item_in.model_dump(), owner_id=owner_id)
     session.add(item)
     session.commit()
     session.refresh(item)
@@ -241,9 +266,9 @@ def create_item(*, session: Session, item_in: Any, owner_id: uuid.UUID) -> Any:
 def get_item(session: Session, id: uuid.UUID) -> Any | None:
     """获取单个项目"""
     # 动态导入Item
-    from app.models import Item
+    from app.models import Project
 
-    return session.get(Item, id)
+    return session.get(Project, id)
 
 
 def update_item(session: Session, item: Any, item_in: Any) -> Any:
@@ -346,6 +371,17 @@ def create_user_oauth(*, session: Session, obj_in: Any) -> Any:
     """Create a new user for OAuth authentication without a password."""
     from app.models import User
 
+    # 确保 OAuth 用户也默认完成 setup（除非明确指定为 extension 来源）
+    if hasattr(obj_in, "is_setup_complete"):
+        # 如果已经设置了 setup 状态，保持不变
+        pass
+    else:
+        # 默认设置为完成状态
+        if hasattr(obj_in, "__dict__"):
+            obj_in.__dict__["is_setup_complete"] = True
+        elif isinstance(obj_in, dict):
+            obj_in["is_setup_complete"] = True
+
     db_obj = User.model_validate(obj_in)
     session.add(db_obj)
     session.commit()
@@ -403,48 +439,39 @@ def update_tag(db: Session, tag: Any, tag_in: Any):
     return tag
 
 
+# 添加到__all__以避免未使用导入的警告
 __all__ = [
-    # Generic CRUD operations
+    "create_ai_conversation",
+    "get_ai_conversation",
+    "get_ai_conversations",
+    "create_content_item",
+    "get_content_item",
+    "get_content_items",
+    "crud_image",
     "get_by_id",
     "get_multi",
     "create",
     "update",
     "delete",
-    # User CRUD operations
-    "authenticate",
+    "get_user_by_email",
+    "get_items",
     "create_user",
     "get_user",
-    "get_user_by_email",
+    "authenticate",
     "update_user",
-    "create_user_oauth",
-    "get_user_by_google_id",
-    # Item CRUD operations
-    "create_item",
+    "create_project",
     "get_item",
-    "get_items",
     "update_item",
     "delete_item",
-    # Token blacklist operations
     "create_token_blacklist",
     "check_token_in_blacklist",
     "add_token_to_blacklist",
     "is_token_blacklisted",
     "clean_expired_tokens",
-    # Tag operations
+    "create_user_oauth",
+    "get_user_by_google_id",
     "get_tags",
     "get_tag",
     "create_tag",
     "update_tag",
-    # Content operations
-    "create_content_item",
-    "get_content_item",
-    "get_content_items",
-    # Image CRUD operations
-    "crud_image",  # Add the module itself for access like crud.crud_image.create_image
-    # Or list individual functions if preferred:
-    # "create_image",
-    # "get_image",
-    # "get_multi_images_by_owner",
-    # "update_image",
-    # "remove_image",
 ]

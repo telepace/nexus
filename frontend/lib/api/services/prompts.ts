@@ -1,4 +1,5 @@
 import { client } from "../client";
+import { promptsTogglePromptEnabled } from "@/app/openapi-client/sdk.gen";
 
 export interface Prompt {
   id: string;
@@ -8,6 +9,7 @@ export interface Prompt {
   visibility: "public" | "private";
   version: number;
   enabled: boolean;
+  user_enabled?: boolean;
   updated_at: string;
   type: "template";
   input_vars: Array<{
@@ -44,18 +46,45 @@ export const promptsApi = {
       searchParams.append("limit", params.limit.toString());
     if (params.order) searchParams.append("order", params.order);
     if (params.enabled !== undefined)
-      searchParams.append("enabled", params.enabled.toString());
+      searchParams.append("user_enabled", params.enabled.toString());
 
     const endpoint = `/api/v1/prompts/?${searchParams.toString()}`;
     return client.get<Prompt[]>(endpoint);
   },
 
   async getEnabledPrompts(): Promise<Prompt[]> {
-    return this.getPrompts({ enabled: true, limit: 100 });
+    // 使用自定义 APIClient，自动附带认证 Token
+    try {
+      const data = await client.get<Prompt[]>("/api/v1/prompts/user-enabled", {
+        limit: 100,
+      });
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error("[promptsApi] 获取启用的 prompts 失败:", error);
+      return [];
+    }
   },
 
   async getDisabledPrompts(): Promise<Prompt[]> {
-    return this.getPrompts({ enabled: false, limit: 100 });
+    // 使用自定义 APIClient，自动附带认证 Token
+    try {
+      const data = await client.get<Prompt[]>("/api/v1/prompts/user-disabled", {
+        limit: 100,
+      });
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error("[promptsApi] 获取未启用的 prompts 失败:", error);
+      return [];
+    }
+  },
+
+  async togglePromptEnabled(
+    promptId: string,
+  ): Promise<{ user_enabled: boolean }> {
+    const response = await promptsTogglePromptEnabled({
+      path: { prompt_id: promptId },
+    });
+    return response.data as { user_enabled: boolean };
   },
 
   async executePrompt(

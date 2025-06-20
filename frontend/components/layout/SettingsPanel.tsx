@@ -1,7 +1,16 @@
 "use client";
 
-import { FC, useState, useRef, ChangeEvent } from "react";
-import { X, User, Lock, Eye, Bell, Shield, ChevronRight } from "lucide-react";
+import { FC, useState, useRef, ChangeEvent, useEffect } from "react";
+import {
+  X,
+  User,
+  Lock,
+  Eye,
+  Bell,
+  Shield,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -13,6 +22,8 @@ import { TimeZoneSelector } from "@/components/ui/TimeZoneSelector";
 import { useTimeZone } from "../../lib/time-zone-context";
 import Image from "next/image";
 import { toast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/auth";
+import { getCookie } from "cookies-next";
 
 // 添加时区设置组件
 const TimeZoneSettings = () => {
@@ -54,12 +65,52 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarSrc, setAvatarSrc] = useState("/images/vinta.png");
   const [isUploading, setIsUploading] = useState(false);
-  useTheme();
+  const { theme, setTheme } = useTheme();
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,
     updates: true,
   });
+  const { user, updateUser } = useAuth();
+
+  // 表单字段状态
+  const [profileForm, setProfileForm] = useState({
+    full_name: user?.full_name || "",
+    email: user?.email || "",
+  });
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // 当 user 变化时填充表单
+  useEffect(() => {
+    if (user) {
+      setProfileForm({
+        full_name: user.full_name || "",
+        email: user.email || "",
+      });
+      if (user.avatar_url) {
+        setAvatarSrc(user.avatar_url);
+      }
+    }
+  }, [user]);
+
+  /**
+   * Normalize image source so that it is always a valid URL for Next.js <Image> component.
+   * - If src already starts with "http://", "https://" or "/", return as-is.
+   * - Otherwise, prefix with a leading slash so that it is treated as an absolute
+   *   path from the web root (e.g. when we receive something like
+   *   "mock_r2_url/mock-bucket/avatars/..." from the backend mock storage layer).
+   */
+  const normalizeSrc = (src: string | undefined | null) => {
+    if (!src) return "/images/vinta.png";
+    if (
+      src.startsWith("http://") ||
+      src.startsWith("https://") ||
+      src.startsWith("/")
+    ) {
+      return src;
+    }
+    return `/${src}`;
+  };
 
   if (!open) {
     return <div className="hidden" />;
@@ -104,27 +155,44 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
 
     // 创建一个本地预览
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const base64Image = e.target?.result as string;
       setAvatarSrc(base64Image);
 
       // 上传到服务器
       const uploadAvatar = async () => {
         try {
+          // 获取认证token
+          const token = getCookie("accessToken");
+          if (!token) {
+            throw new Error("未找到认证token，请重新登录");
+          }
+
           // 创建FormData对象
           const formData = new FormData();
           formData.append("avatar", file);
 
           // 发送请求到服务器
-          const response = await fetch("/api/v1/users/me/avatar", {
+          const apiUrl =
+            process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+          const response = await fetch(`${apiUrl}/api/v1/users/me/avatar`, {
             method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
             body: formData,
             credentials: "include",
           });
 
           if (!response.ok) {
-            throw new Error("上传失败");
+            const errorText = await response.text();
+            throw new Error(`上传失败: ${response.status} ${errorText}`);
           }
+
+          const updatedUser = await response.json();
+
+          // 更新用户信息，只更新头像相关字段
+          await updateUser({ avatar_url: updatedUser.avatar_url });
 
           toast({
             title: "头像已更新",
@@ -134,7 +202,10 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
           console.error("上传头像失败:", error);
           toast({
             title: "上传失败",
-            description: "头像无法保存到服务器，请稍后重试",
+            description:
+              error instanceof Error
+                ? error.message
+                : "头像无法保存到服务器，请稍后重试",
             variant: "destructive",
           });
         } finally {
@@ -231,7 +302,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
                   <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
                     <div className="h-24 w-24 relative rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
                       <Image
-                        src={avatarSrc || "/images/vinta.png"}
+                        src={normalizeSrc(avatarSrc) || "/images/vinta.png"}
                         alt="Profile"
                         className="object-contain w-full h-full"
                         width={96}
@@ -259,11 +330,16 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
                     <div className="flex-1 space-y-4">
                       <div className="grid gap-2">
                         <Label htmlFor="name">姓名</Label>
-                        <Input id="name" defaultValue="用户名" />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="bio">简介</Label>
-                        <Input id="bio" defaultValue="用户简介" />
+                        <Input
+                          id="name"
+                          value={profileForm.full_name}
+                          onChange={(e) =>
+                            setProfileForm((p) => ({
+                              ...p,
+                              full_name: e.target.value,
+                            }))
+                          }
+                        />
                       </div>
                     </div>
                   </div>
@@ -273,22 +349,45 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
                     <Input
                       id="email"
                       type="email"
-                      defaultValue="user@example.com"
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="company">公司/组织</Label>
-                    <Input
-                      id="company"
-                      defaultValue=""
-                      placeholder="输入您的公司或组织名称"
+                      value={profileForm.email}
+                      onChange={(e) =>
+                        setProfileForm((p) => ({ ...p, email: e.target.value }))
+                      }
                     />
                   </div>
 
                   <div className="flex justify-end">
-                    <Button className="bg-primary hover:bg-primary/90">
-                      保存更改
+                    <Button
+                      className="bg-primary hover:bg-primary/90"
+                      onClick={async () => {
+                        if (isSavingProfile) return;
+                        setIsSavingProfile(true);
+                        try {
+                          await updateUser({
+                            full_name: profileForm.full_name,
+                            email: profileForm.email,
+                          });
+                          toast({
+                            title: "已保存",
+                            description: "个人资料已更新",
+                          });
+                        } catch (err) {
+                          console.error("Profile update failed:", err);
+                          toast({
+                            title: "保存失败",
+                            description: "无法更新资料，请稍后重试",
+                            variant: "destructive",
+                          });
+                        } finally {
+                          setIsSavingProfile(false);
+                        }
+                      }}
+                      disabled={isSavingProfile}
+                    >
+                      {isSavingProfile && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      保存
                     </Button>
                   </div>
                 </div>
@@ -365,11 +464,23 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
                     <h4 className="font-medium text-gray-900 dark:text-white">
                       主题
                     </h4>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="theme" className="text-sm font-normal">
-                        深色模式
-                      </Label>
-                      <Switch id="theme" />
+                    <div className="flex items-center space-x-4">
+                      {(
+                        [
+                          { value: "light", label: "浅色" },
+                          { value: "dark", label: "深色" },
+                          { value: "system", label: "自动" },
+                        ] as const
+                      ).map((opt) => (
+                        <Button
+                          key={opt.value}
+                          variant={theme === opt.value ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setTheme(opt.value)}
+                        >
+                          {opt.label}
+                        </Button>
+                      ))}
                     </div>
                   </div>
 
@@ -400,12 +511,6 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
                         <option value="large">大</option>
                       </select>
                     </div>
-                  </div>
-
-                  <div className="flex justify-end">
-                    <Button className="bg-primary hover:bg-primary/90">
-                      保存更改
-                    </Button>
                   </div>
                 </div>
               </div>

@@ -12,7 +12,6 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
 import { ExtensionLauncher } from "./ExtensionLauncher";
 import { useAuth } from "@/lib/auth"; // useAuth provides user and updateUser
 import { getCookie } from "@/lib/client-auth"; // To get accessToken if needed, though user.token is preferred
@@ -190,44 +189,31 @@ export function SetupContent() {
   const [currentStep, setCurrentStep] = useState(0);
   const router = useRouter();
   const { user, updateUser } = useAuth(); // Destructure updateUser from useAuth
-  const searchParamsObj = useSearchParams();
   const [extensionPluginId, setExtensionPluginId] = useState<string | null>(
     null,
   );
-  const [extensionCallback, setExtensionCallback] = useState<string | null>(
-    null,
-  );
+  const [extensionCallback] = useState<string | null>(null);
   const [tokenSent, setTokenSent] = useState(false);
   const { toast } = useToast();
 
-  // 检查URL参数中是否包含plugin_id和extension_callback
   useEffect(() => {
-    // 确保 searchParamsObj 存在
-    if (searchParamsObj) {
-      const pluginId = searchParamsObj.get?.("plugin_id") || null;
-      const callback = searchParamsObj.get?.("extension_callback") || null;
-
-      // 如果URL中有plugin_id，则保存它
-      if (pluginId) {
-        console.log("Setup页面从URL获取了plugin_id:", pluginId);
-        setExtensionPluginId(pluginId);
-      } else {
-        // 尝试从扩展中获取plugin_id
-        async function fetchPluginId() {
-          const id = await getExtensionPluginId();
-          if (id) {
-            console.log("Setup页面从扩展获取了plugin_id:", id);
-            setExtensionPluginId(id);
-          }
-        }
-        fetchPluginId();
-      }
-
-      if (callback) {
-        setExtensionCallback(callback);
-      }
+    const urlParams = new URLSearchParams(window.location.search);
+    const pluginId = urlParams.get("plugin_id");
+    if (pluginId) {
+      setExtensionPluginId(pluginId);
     }
-  }, [searchParamsObj]);
+
+    // 尝试从扩展获取plugin_id
+    getExtensionPluginId()
+      .then((id) => {
+        if (id) {
+          setExtensionPluginId(id);
+        }
+      })
+      .catch(() => {
+        // 扩展未安装或获取失败，这是正常的
+      });
+  }, []);
 
   // 在完成设置时向扩展发送Token
   /**
@@ -245,9 +231,6 @@ export function SetupContent() {
 
     // 1. Persist setup completion status
     try {
-      console.log(
-        "[SetupContent] Attempting to mark setup as complete via API.",
-      );
       const token = user?.token || getCookie("accessToken");
 
       if (!token) {
@@ -277,9 +260,6 @@ export function SetupContent() {
         );
       }
 
-      console.log(
-        "[SetupContent] Setup successfully marked as complete via API.",
-      );
       // Update local auth state
       await updateUser({ is_setup_complete: true });
       toast({
@@ -301,9 +281,6 @@ export function SetupContent() {
     // 2. Existing logic for extension token sending (if applicable)
     if (user?.token && extensionPluginId) {
       try {
-        console.log(
-          "[SetupContent] Setup page attempting to send Token to extension",
-        );
         const success = await saveTokenToExtension(
           user.token,
           extensionPluginId,
@@ -319,9 +296,6 @@ export function SetupContent() {
 
           // If there's an extension callback, redirect there
           if (extensionCallback) {
-            console.log(
-              `[SetupContent] Redirecting to extension callback: ${extensionCallback}`,
-            );
             window.location.href = `${extensionCallback}?token=${encodeURIComponent(user.token)}`;
             return; // Important to return after redirection
           }
@@ -342,7 +316,6 @@ export function SetupContent() {
     }
 
     // 3. Redirect to content library (if not redirected to extension callback)
-    console.log("[SetupContent] Redirecting to /content-library");
     router.push("/content-library");
   };
 

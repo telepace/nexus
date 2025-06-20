@@ -1,0 +1,102 @@
+You are a professional content analyst specializing in creating precise, insightful summaries. Your task is to analyze and summarize the following {{ content_type|default("document") }}.
+
+## Document Information
+{% if document_metadata.title %}
+**Title:** {{ document_metadata.title }}
+{% endif %}
+{% if document_metadata.author %}
+**Author:** {{ document_metadata.author }}
+{% endif %}
+{% if document_metadata.source_url %}
+**Source:** {{ document_metadata.source_url }}
+{% endif %}
+{% if document_metadata.publication_date %}
+**Date:** {{ document_metadata.publication_date }}
+{% endif %}
+
+## Content to Analyze
+{{ content }}
+
+{% if context_history and context_history|length > 0 %}
+## Context from Previous Analysis
+{% for item in context_history %}
+- **{{ item.operation_type|title }}:** {{ item.output_summary|truncate(150) }}
+{% endfor %}
+{% endif %}
+
+{% if user_preferences %}
+## User Preferences
+{% if user_preferences.summary_style %}
+- **Style:** {{ user_preferences.summary_style }} (concise/detailed/bullet-points)
+{% endif %}
+{% if user_preferences.target_length %}
+- **Target Length:** {{ user_preferences.target_length }} words
+{% endif %}
+{% if user_preferences.focus_areas %}
+- **Focus Areas:** {{ user_preferences.focus_areas|join(", ") }}
+{% endif %}
+{% endif %}
+
+## Analysis Requirements
+1. Extract the core thesis and main arguments presented in the content
+2. Identify key supporting evidence, data, and examples
+3. Capture the document's unique value proposition and insights
+4. Assess the target audience and practical applications
+5. Maintain objectivity while highlighting the author's perspective
+{% if context_history %}6. Build upon previous analysis to provide complementary insights{% endif %}
+
+## Output Format
+Please provide your analysis in the following JSON structure:
+
+```json
+{
+  "summary": {
+    "main_thesis": "The central argument or main point of the document",
+    "key_arguments": [
+      "Primary supporting argument 1",
+      "Primary supporting argument 2",
+      "Primary supporting argument 3"
+    ],
+    "supporting_evidence": [
+      "Key data point, example, or evidence 1",
+      "Key data point, example, or evidence 2"
+    ],
+    "unique_insights": [
+      "Novel perspective or insight 1",
+      "Novel perspective or insight 2"
+    ]
+  },
+  "document_analysis": {
+    "content_type": "article/research_paper/blog_post/book_chapter/etc",
+    "complexity_level": "beginner/intermediate/advanced",
+    "estimated_reading_time": "X minutes",
+    "target_audience": "Description of intended readers"
+  },
+  "value_assessment": {
+    "practical_applications": [
+      "How this content can be applied in practice",
+      "Actionable takeaways for readers"
+    ],
+    "relevance_score": 0.85,
+    "credibility_indicators": [
+      "Factors that support the content's reliability",
+      "Sources, expertise, or methodology mentioned"
+    ]
+  },
+  "reading_recommendation": {
+    "should_read_full": true,
+    "priority_level": "high/medium/low",
+    "recommended_for": [
+      "Type of reader who would benefit most",
+      "Specific use cases or scenarios"
+    ],
+    "time_investment": "Worth the full read / Quick scan sufficient / Skip unless specifically relevant"
+  }
+}
+```
+
+**Quality Standards:**
+- Summary should be {{ target_length|default("200-300") }} words
+- Focus on actionable insights and practical value
+- Maintain the original tone and perspective
+- Ensure accuracy and avoid interpretation bias

@@ -11,6 +11,7 @@ import remarkMath from "remark-math"; // Added
 import rehypeKatex from "rehype-katex"; // Added
 import mediumZoom from "medium-zoom"; // Added
 import copy from "copy-to-clipboard"; // Added
+import { OptimizedImage } from "./OptimizedImage"; // 添加OptimizedImage组件导入
 
 // 移除 rehypeRaw 插件，避免未知HTML标签错误
 // import rehypeRaw from 'rehype-raw'
@@ -78,16 +79,16 @@ export function MarkdownRenderer({
       className={cn(
         "prose prose-slate dark:prose-invert max-w-none",
         // 自定义样式
-        "prose-headings:scroll-m-20 prose-headings:tracking-tight",
-        "prose-h1:text-4xl prose-h1:font-extrabold prose-h1:lg:text-5xl",
-        "prose-h2:border-b prose-h2:pb-2 prose-h2:text-3xl prose-h2:font-semibold prose-h2:tracking-tight prose-h2:first:mt-0",
-        "prose-h3:text-2xl prose-h3:font-semibold prose-h3:tracking-tight",
-        "prose-h4:text-xl prose-h4:font-semibold prose-h4:tracking-tight",
-        "prose-p:leading-7 prose-p:[&:not(:first-child)]:mt-6",
-        "prose-blockquote:mt-6 prose-blockquote:border-l-2 prose-blockquote:pl-6 prose-blockquote:italic",
-        "prose-ul:my-6 prose-ul:ml-6 prose-ul:list-disc prose-ul:[&>li]:mt-2",
-        "prose-ol:my-6 prose-ol:ml-6 prose-ol:list-decimal prose-ol:[&>li]:mt-2",
-        "prose-li:mt-2",
+        "prose-headings:scroll-m-16 prose-headings:tracking-tight",
+        "prose-h1:text-3xl prose-h1:font-bold prose-h1:lg:text-4xl",
+        "prose-h2:border-b prose-h2:pb-1.5 prose-h2:text-2xl prose-h2:font-semibold prose-h2:tracking-tight prose-h2:first:mt-0",
+        "prose-h3:text-xl prose-h3:font-semibold prose-h3:tracking-tight",
+        "prose-h4:text-lg prose-h4:font-semibold prose-h4:tracking-tight",
+        "prose-p:leading-6 prose-p:[&:not(:first-child)]:mt-4",
+        "prose-blockquote:mt-4 prose-blockquote:border-l-2 prose-blockquote:pl-4 prose-blockquote:italic",
+        "prose-ul:my-4 prose-ul:ml-4 prose-ul:list-disc prose-ul:[&>li]:mt-1",
+        "prose-ol:my-4 prose-ol:ml-4 prose-ol:list-decimal prose-ol:[&>li]:mt-1",
+        "prose-li:mt-1",
         "prose-table:my-6 prose-table:w-full prose-table:overflow-y-auto",
         "prose-thead:border-b",
         "prose-th:border prose-th:px-4 prose-th:py-2 prose-th:text-left prose-th:font-bold prose-th:[&[align=center]]:text-center prose-th:[&[align=right]]:text-right",
@@ -118,7 +119,7 @@ export function MarkdownRenderer({
           // 自定义组件渲染
           h1: ({ children, ...props }) => (
             <h1
-              className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl"
+              className="scroll-m-16 text-3xl font-bold tracking-tight lg:text-4xl"
               {...props}
             >
               {children}
@@ -126,7 +127,7 @@ export function MarkdownRenderer({
           ),
           h2: ({ children, ...props }) => (
             <h2
-              className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0"
+              className="scroll-m-16 border-b pb-1.5 text-2xl font-semibold tracking-tight first:mt-0"
               {...props}
             >
               {children}
@@ -134,7 +135,7 @@ export function MarkdownRenderer({
           ),
           h3: ({ children, ...props }) => (
             <h3
-              className="scroll-m-20 text-2xl font-semibold tracking-tight"
+              className="scroll-m-16 text-xl font-semibold tracking-tight"
               {...props}
             >
               {children}
@@ -142,34 +143,34 @@ export function MarkdownRenderer({
           ),
           h4: ({ children, ...props }) => (
             <h4
-              className="scroll-m-20 text-xl font-semibold tracking-tight"
+              className="scroll-m-16 text-lg font-semibold tracking-tight"
               {...props}
             >
               {children}
             </h4>
           ),
           p: ({ children, ...props }) => (
-            <p className="leading-7 [&:not(:first-child)]:mt-6" {...props}>
+            <p className="leading-6 [&:not(:first-child)]:mt-4" {...props}>
               {children}
             </p>
           ),
           blockquote: ({ children, ...props }) => (
-            <blockquote className="mt-6 border-l-2 pl-6 italic" {...props}>
+            <blockquote className="mt-4 border-l-2 pl-4 italic" {...props}>
               {children}
             </blockquote>
           ),
           ul: ({ children, ...props }) => (
-            <ul className="my-6 ml-6 list-disc [&>li]:mt-2" {...props}>
+            <ul className="my-4 ml-4 list-disc [&>li]:mt-1" {...props}>
               {children}
             </ul>
           ),
           ol: ({ children, ...props }) => (
-            <ol className="my-6 ml-6 list-decimal [&>li]:mt-2" {...props}>
+            <ol className="my-4 ml-4 list-decimal [&>li]:mt-1" {...props}>
               {children}
             </ol>
           ),
           li: ({ children, ...props }) => (
-            <li className="mt-2" {...props}>
+            <li className="mt-1" {...props}>
               {children}
             </li>
           ),
@@ -289,29 +290,72 @@ export function MarkdownRenderer({
               {children}
             </a>
           ),
-          img: ({ src, alt, ...props }) => {
-            // 直接使用原始的 img 标签，避免 Next.js 图片代理
-            return (
-              <img
-                src={src}
-                alt={alt || ""}
-                className="rounded-md border w-full h-auto object-contain max-w-full block mx-auto"
-                style={{ aspectRatio: "auto", maxHeight: "80vh" }}
-                loading="lazy"
-                onError={(e) => {
-                  // 图片加载失败时的处理
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = "none";
-                  // 可以选择显示一个占位符
-                  const placeholder = document.createElement("div");
-                  placeholder.className =
-                    "flex items-center justify-center w-full h-32 bg-gray-100 border rounded-md text-gray-500";
-                  placeholder.textContent = `图片加载失败: ${src}`;
-                  target.parentNode?.insertBefore(placeholder, target);
-                }}
-                {...props}
-              />
-            );
+          img: ({ src, alt }) => {
+            // 确保src是string类型
+            const srcString = typeof src === "string" ? src : "";
+
+            // 如果没有src，返回空
+            if (!srcString) {
+              return null;
+            }
+
+            // 检查是否为外部URL
+            const isExternalUrl =
+              srcString.startsWith("http://") ||
+              srcString.startsWith("https://");
+
+            // 检查是否为localhost
+            const isLocalhost =
+              srcString.includes("localhost") ||
+              srcString.includes("127.0.0.1");
+
+            // 检查是否为绝对路径（以/开头）
+            const isAbsolutePath = srcString.startsWith("/");
+
+            // 检查是否为相对路径（不以/开头，也不是URL）
+            const isRelativePath = !isExternalUrl && !isAbsolutePath;
+
+            // 对于外部URL（非localhost）或相对路径，使用普通img标签
+            if ((isExternalUrl && !isLocalhost) || isRelativePath) {
+              return (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={srcString}
+                  alt={alt || ""}
+                  className="rounded-md border max-w-full h-auto object-contain block mx-auto"
+                  loading="lazy"
+                  style={{
+                    aspectRatio: "auto",
+                    maxHeight: "80vh",
+                    width: "auto",
+                    height: "auto",
+                  }}
+                  onError={(e) => {
+                    // 如果图片加载失败，显示占位符
+                    e.currentTarget.src = "/images/image-placeholder.svg";
+                    e.currentTarget.alt = "Image failed to load";
+                  }}
+                />
+              );
+            }
+
+            // 对于本地绝对路径图片，使用OptimizedImage组件
+            const optimizedImageProps = {
+              src: srcString,
+              alt: alt || "",
+              width: 800, // 提供默认宽度
+              height: 600, // 提供默认高度
+              className:
+                "rounded-md border max-w-full h-auto object-contain block mx-auto",
+              loading: "lazy" as const,
+              objectFit: "contain" as const,
+              preserveAspectRatio: true,
+              showLoader: true,
+              fallbackSrc: "/images/image-placeholder.svg", // 提供回退图片
+              inline: true, // 使用inline模式避免div嵌套在p标签中
+            };
+
+            return <OptimizedImage {...optimizedImageProps} />;
           },
           hr: ({ ...props }) => <hr className="my-4 md:my-8" {...props} />,
         }}

@@ -89,13 +89,17 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 /**
- * Renders a card footer component with optional additional props.
+ * Renders a card footer component with optimal button spacing and elegant bottom margin.
+ * 渲染卡片底部组件，提供最佳的按钮间距和优雅的底部边距
  */
 function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-footer"
-      className={cn("flex items-center px-6 [.border-t]:pt-6", className)}
+      className={cn(
+        "flex items-center justify-end gap-3 px-6 pt-4 pb-6 [.border-t]:pt-6",
+        className,
+      )}
       {...props}
     />
   );

@@ -4,7 +4,7 @@ import {
   contentListContentItemsEndpoint,
   contentGetContentItemEndpoint,
   itemsDeleteItem,
-  itemsCreateItem,
+  itemsCreateProject,
 } from "@/app/openapi-client/index";
 import { ContentItemPublic } from "@/app/openapi-client/index";
 import { revalidatePath } from "next/cache";
@@ -31,12 +31,12 @@ interface DataResponse {
 // 定义 fetchItems 的可能返回类型
 type FetchItemsReturn = ContentItemPublic[] | ApiErrorResponse;
 
-// 缓存结果和上次请求时间
-let itemsCache: FetchItemsReturn | null = null;
+// Cache for items to avoid redundant API calls
+let itemsCache: ContentItemPublic[] | ApiErrorResponse | null = null;
 let lastFetchTime = 0;
-const CACHE_TTL = 3000; // 3秒缓存
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-// 使用 React cache 和认证缓存
+// Fetch items from content API with caching and error handling
 export const fetchItems = cache(async (): Promise<FetchItemsReturn> => {
   const now = Date.now();
   const requestId = `fetchItems-${Math.random().toString(36).substring(7)}`;
@@ -51,7 +51,7 @@ export const fetchItems = cache(async (): Promise<FetchItemsReturn> => {
   }
 
   // 使用缓存如果在有效期内
-  if (itemsCache && now - lastFetchTime < CACHE_TTL) {
+  if (itemsCache && now - lastFetchTime < CACHE_DURATION) {
     console.log(
       `[${requestId}] 返回缓存的物品数据，缓存时间: ${new Date(lastFetchTime).toISOString()}`,
     );
@@ -86,7 +86,7 @@ export const fetchItems = cache(async (): Promise<FetchItemsReturn> => {
       return errorResult;
     }
 
-    // content API 直接返回 ContentItemPublic[]
+    // 处理直接数组格式 - 这是期望的格式
     if (Array.isArray(response)) {
       itemsCache = response;
       lastFetchTime = now;
@@ -94,13 +94,64 @@ export const fetchItems = cache(async (): Promise<FetchItemsReturn> => {
         `[${requestId}] fetchItems 执行完成，数据长度: ${response.length}`,
       );
       return response;
-    } else {
-      console.warn(`[${requestId}] 意外的 API 响应格式:`, response);
-      const errorResult = { error: "API返回了意外的数据格式", status: 400 };
+    }
+
+    // 处理包装格式的响应（例如 {data: [...], meta: {...}}）
+    if (response && typeof response === "object") {
+      // 检查是否有 data 字段包含数组
+      if ("data" in response && Array.isArray(response.data)) {
+        console.log(`[${requestId}] 检测到包装格式响应，提取 data 字段`);
+        itemsCache = response.data;
+        lastFetchTime = now;
+        return response.data;
+      }
+
+      // 检查是否有 items 字段包含数组
+      if ("items" in response && Array.isArray(response.items)) {
+        console.log(`[${requestId}] 检测到包装格式响应，提取 items 字段`);
+        itemsCache = response.items;
+        lastFetchTime = now;
+        return response.items;
+      }
+
+      // 检查是否是错误响应格式
+      const errorResponse = response as ApiErrorResponse;
+      let errorMessage = "未知错误";
+
+      if (errorResponse.error) {
+        errorMessage = String(errorResponse.error);
+      } else if (errorResponse.message) {
+        errorMessage = String(errorResponse.message);
+      } else if (errorResponse.meta && errorResponse.meta.message) {
+        errorMessage = String(errorResponse.meta.message);
+      } else {
+        // 如果不是明确的错误格式，但也不是数组，记录详细信息
+        console.warn(
+          `[${requestId}] 意外的 API 响应格式:`,
+          JSON.stringify(response, null, 2),
+        );
+        errorMessage = `API返回了意外的数据格式: ${typeof response}`;
+      }
+
+      const errorResult = { error: errorMessage, status: 400 };
       itemsCache = errorResult;
       lastFetchTime = now;
       return errorResult;
     }
+
+    // 其他类型的响应
+    console.warn(
+      `[${requestId}] 完全意外的响应类型:`,
+      typeof response,
+      response,
+    );
+    const errorResult = {
+      error: `API返回了完全意外的数据类型: ${typeof response}`,
+      status: 400,
+    };
+    itemsCache = errorResult;
+    lastFetchTime = now;
+    return errorResult;
   } catch (error) {
     console.error(`[${requestId}] 获取物品数据出错:`, error);
     const errorMessage = error instanceof Error ? error.message : "未知错误";
@@ -236,7 +287,7 @@ export async function addItem(
   const { title, description } = validatedFields.data;
 
   try {
-    const response = await itemsCreateItem({
+    const response = await itemsCreateProject({
       headers: {
         Authorization: `Bearer ${token}`,
       },

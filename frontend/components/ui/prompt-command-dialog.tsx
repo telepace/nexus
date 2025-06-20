@@ -37,10 +37,13 @@ export function PromptCommandDialog({
   useEffect(() => {
     if (input.startsWith("/")) {
       const searchTerm = input.slice(1).toLowerCase();
-      const filtered = availablePrompts.filter(
+      const filtered = (availablePrompts || []).filter(
         (prompt) =>
-          prompt.name.toLowerCase().includes(searchTerm) ||
-          prompt.description.toLowerCase().includes(searchTerm),
+          prompt &&
+          prompt.name &&
+          prompt.description &&
+          (prompt.name.toLowerCase().includes(searchTerm) ||
+            prompt.description.toLowerCase().includes(searchTerm)),
       );
       setFilteredPrompts(filtered);
       setShowSuggestions(true);
@@ -140,7 +143,7 @@ export function PromptCommandDialog({
               />
 
               {/* 命令建议列表 */}
-              {showSuggestions && filteredPrompts.length > 0 && (
+              {showSuggestions && filteredPrompts?.length > 0 && (
                 <Card
                   ref={suggestionsRef}
                   className="absolute top-full left-0 right-0 z-50 mt-2 max-h-64 overflow-y-auto bg-transparent border-input"
@@ -148,7 +151,7 @@ export function PromptCommandDialog({
                   <CardContent className="p-2">
                     {filteredPrompts.map((prompt) => (
                       <button
-                        key={prompt.id}
+                        key={prompt?.id || `prompt-${Math.random()}`}
                         type="button"
                         onClick={() => handlePromptClick(prompt)}
                         className="w-full p-2 text-left rounded-md hover:bg-muted transition-colors"
@@ -157,10 +160,10 @@ export function PromptCommandDialog({
                           <Command className="h-4 w-4 text-muted-foreground" />
                           <div>
                             <div className="font-medium text-sm">
-                              {prompt.name}
+                              {prompt?.name || "未命名 Prompt"}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {prompt.description}
+                              {prompt?.description || "无描述"}
                             </div>
                           </div>
                         </div>

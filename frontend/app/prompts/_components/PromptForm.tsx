@@ -1,23 +1,37 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
 
-import { useState, useEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useActionState,
+} from "react";
 import { useRouter } from "next/navigation";
-import { useFormState, useFormStatus } from "react-dom";
-import { X, Trash, Plus as PlusIcon } from "lucide-react";
+import { useFormStatus } from "react-dom";
+import {
+  X,
+  Trash,
+  Plus as PlusIcon,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  ToggleLeft,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
@@ -26,6 +40,7 @@ import type {
   InputVariable,
   PromptData,
 } from "@/components/actions/prompts-action";
+import { addTag } from "@/components/actions/prompts-action";
 
 // Define the expected shape of the state from useFormState
 interface FormState {
@@ -71,7 +86,7 @@ function SubmitButton({ isEditing }: { isEditing: boolean }) {
 
 export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
   const router = useRouter();
-  const [state, formAction] = useFormState(actionToCall, initialState);
+  const [state, formAction] = useActionState(actionToCall, initialState);
 
   const { fieldErrors, genericError, success, message, redirectUrl, data } =
     state || {};
@@ -85,6 +100,79 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
   const [currentVisibility, setCurrentVisibility] = useState<string>(
     prompt?.visibility || "public",
   );
+  const [content, setContent] = useState<string>(prompt?.content || "");
+  const [showVariablePreview, setShowVariablePreview] =
+    useState<boolean>(false);
+
+  // 标签相关状态
+  const [availableTags, setAvailableTags] = useState<TagData[]>(tags);
+  const [openTagDialog, setOpenTagDialog] = useState(false);
+  const [newTagName, setNewTagName] = useState("");
+  const [newTagColor, setNewTagColor] = useState("#3B82F6");
+  const [creatingTag, setCreatingTag] = useState(false);
+
+  // 解析内容中的变量
+  const parseVariablesFromContent = useCallback((contentText: string) => {
+    const variableRegex = /\{\{([^}]+)\}\}/g;
+    const matches = contentText.matchAll(variableRegex);
+    const variables = new Set<string>();
+
+    for (const match of matches) {
+      const variableName = match[1].trim();
+      if (variableName) {
+        variables.add(variableName);
+      }
+    }
+
+    return Array.from(variables);
+  }, []);
+
+  // 自动更新输入变量
+  const autoUpdateInputVars = useCallback(
+    (contentText: string) => {
+      const parsedVars = parseVariablesFromContent(contentText);
+      const existingVarNames = inputVars.map((v) => v.name);
+
+      // 添加新变量
+      const newVars = parsedVars.filter(
+        (varName) => !existingVarNames.includes(varName),
+      );
+      if (newVars.length > 0) {
+        const newInputVars = newVars.map((name) => ({
+          name,
+          description: `自动识别的变量: ${name}`,
+          required: false,
+        }));
+        setInputVars((prev) => [...prev, ...newInputVars]);
+      }
+
+      // 可选：移除不再使用的变量（注释掉以避免意外删除用户手动添加的变量）
+      // const unusedVars = existingVarNames.filter(varName => !parsedVars.includes(varName));
+      // if (unusedVars.length > 0) {
+      //   setInputVars(prev => prev.filter(v => parsedVars.includes(v.name)));
+      // }
+    },
+    [inputVars, parseVariablesFromContent],
+  );
+
+  // 处理内容变化
+  const handleContentChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const newContent = e.target.value;
+      setContent(newContent);
+      autoUpdateInputVars(newContent);
+    },
+    [autoUpdateInputVars],
+  );
+
+  // 高亮显示变量的内容
+  const highlightedContent = useMemo(() => {
+    if (!showVariablePreview) return content;
+
+    return content.replace(/(\{\{[^}]+\}\})/g, (match) => {
+      return `<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold">${match}</span>`;
+    });
+  }, [content, showVariablePreview]);
 
   useEffect(() => {
     if (success) {
@@ -168,6 +256,8 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
         name="meta_data"
         value={JSON.stringify({ version_notes: "", last_edited_by: "" })}
       />
+      {/* 默认类型 simple (隐藏) */}
+      <input type="hidden" name="type" value="simple" />
 
       {genericError && (
         <Alert variant="destructive" className="mb-4">
@@ -218,81 +308,147 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
           </div>
         </div>
 
-        {/* 类型和可见性 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="type">类型</Label>
-            <Select name="type" defaultValue={prompt?.type || "simple"}>
-              <SelectTrigger
-                className={fieldErrors?.type ? "border-destructive" : ""}
-                aria-describedby="type-error"
-              >
-                <SelectValue placeholder="选择提示词类型" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="simple">简单提示词</SelectItem>
-                <SelectItem value="chat">聊天提示词</SelectItem>
-                <SelectItem value="template">模板提示词</SelectItem>
-                <SelectItem value="system">系统提示词</SelectItem>
-                <SelectItem value="function">函数提示词</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground mt-1">
-              提示词的类型决定了它的用途和格式
-            </p>
-            {fieldErrors?.type && (
-              <p id="type-error" className="text-sm text-destructive mt-1">
-                {fieldErrors.type}
-              </p>
-            )}
-          </div>
+        {/* 设置和配置 */}
+        <div className="space-y-6">
+          {/* 可见性设置 */}
+          <Card className="p-4">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Eye className="h-4 w-4 text-muted-foreground" />
+                <Label className="text-base font-medium">可见性设置</Label>
+              </div>
 
-          <div>
-            <Label htmlFor="visibility">可见性</Label>
-            <Select
-              name="visibility"
-              defaultValue={currentVisibility}
-              onValueChange={setCurrentVisibility}
-            >
-              <SelectTrigger
-                className={fieldErrors?.visibility ? "border-destructive" : ""}
-                aria-describedby="visibility-error"
-              >
-                <SelectValue placeholder="选择可见性" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="public">公开</SelectItem>
-                <SelectItem value="private">私有</SelectItem>
-                <SelectItem value="team">团队</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground mt-1">
-              控制谁可以查看和使用此提示词
-            </p>
-            {fieldErrors?.visibility && (
-              <p
-                id="visibility-error"
-                className="text-sm text-destructive mt-1"
-              >
-                {fieldErrors.visibility}
-              </p>
-            )}
-          </div>
-        </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div
+                  className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    currentVisibility === "public"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  onClick={() => setCurrentVisibility("public")}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 ${
+                        currentVisibility === "public"
+                          ? "border-primary bg-primary"
+                          : "border-muted-foreground"
+                      }`}
+                    >
+                      {currentVisibility === "public" && (
+                        <div className="w-2 h-2 bg-white rounded-full m-0.5" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">公开</h4>
+                      <p className="text-xs text-muted-foreground">
+                        所有人都可以查看和使用
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-        {/* 启用状态 */}
-        <div className="flex flex-row items-center justify-between space-x-3 space-y-0 rounded-md border p-4">
-          <div className="space-y-1 leading-none">
-            <Label htmlFor="enabled">启用状态</Label>
-            <p className="text-sm text-muted-foreground">
-              启用后，此提示词将可以在系统中使用
-            </p>
-          </div>
-          <Switch
-            id="enabled"
-            name="enabled"
-            defaultChecked={prompt?.enabled || false}
-          />
+                <div
+                  className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    currentVisibility === "private"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  onClick={() => setCurrentVisibility("private")}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 ${
+                        currentVisibility === "private"
+                          ? "border-primary bg-primary"
+                          : "border-muted-foreground"
+                      }`}
+                    >
+                      {currentVisibility === "private" && (
+                        <div className="w-2 h-2 bg-white rounded-full m-0.5" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">私有</h4>
+                      <p className="text-xs text-muted-foreground">
+                        仅您自己可以查看
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    currentVisibility === "team"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  onClick={() => setCurrentVisibility("team")}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 ${
+                        currentVisibility === "team"
+                          ? "border-primary bg-primary"
+                          : "border-muted-foreground"
+                      }`}
+                    >
+                      {currentVisibility === "team" && (
+                        <div className="w-2 h-2 bg-white rounded-full m-0.5" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">团队</h4>
+                      <p className="text-xs text-muted-foreground">
+                        团队成员可以查看
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 隐藏的 select 用于表单提交 */}
+              <select
+                name="visibility"
+                value={currentVisibility}
+                onChange={() => {}}
+                className="hidden"
+              >
+                <option value="public">公开</option>
+                <option value="private">私有</option>
+                <option value="team">团队</option>
+              </select>
+
+              {fieldErrors?.visibility && (
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {fieldErrors.visibility}
+                </p>
+              )}
+            </div>
+          </Card>
+
+          {/* 启用状态 */}
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <ToggleLeft className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="enabled" className="text-base font-medium">
+                    启用状态
+                  </Label>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  启用后，此提示词将可以在系统中使用
+                </p>
+              </div>
+              <Switch
+                id="enabled"
+                name="enabled"
+                defaultChecked={prompt?.enabled || false}
+              />
+            </div>
+          </Card>
         </div>
 
         {/* 标签选择 */}
@@ -305,7 +461,7 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
           />
           <div className="space-y-2 mt-1">
             <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
+              {availableTags.map((tag) => (
                 <div
                   key={tag.id}
                   className={`flex items-center px-3 py-1 rounded-full text-sm cursor-pointer 
@@ -340,8 +496,98 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
                   )}
                 </div>
               ))}
+
+              {/* 新建标签按钮 */}
+              <Dialog open={openTagDialog} onOpenChange={setOpenTagDialog}>
+                <DialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1"
+                  >
+                    <PlusIcon className="h-4 w-4" />
+                    新建标签
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>创建标签</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="new-tag-name">名称</Label>
+                      <Input
+                        id="new-tag-name"
+                        value={newTagName}
+                        onChange={(e) => setNewTagName(e.target.value)}
+                        placeholder="输入标签名称"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="new-tag-color">颜色</Label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          id="new-tag-color"
+                          type="color"
+                          value={newTagColor}
+                          onChange={(e) => setNewTagColor(e.target.value)}
+                          className="h-8 w-8 rounded-full border"
+                        />
+                        <Input
+                          type="text"
+                          value={newTagColor}
+                          onChange={(e) => setNewTagColor(e.target.value)}
+                          className="w-24"
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      disabled={creatingTag || newTagName.trim().length === 0}
+                      onClick={async () => {
+                        try {
+                          setCreatingTag(true);
+                          const formData = new FormData();
+                          formData.append("name", newTagName.trim());
+                          formData.append("description", "");
+                          formData.append("color", newTagColor);
+                          const result = await addTag(formData);
+                          if (result && (result as { error?: string }).error) {
+                            toast({
+                              title: "创建失败",
+                              description: (result as { error: string }).error,
+                              variant: "destructive",
+                            });
+                          } else {
+                            const created = (result as { data?: TagData }).data;
+                            if (created) {
+                              setAvailableTags((prev) => [...prev, created]);
+                              setSelectedTagIds((prev) => [
+                                ...prev,
+                                created.id,
+                              ]);
+                            }
+                            toast({
+                              title: "创建成功",
+                              description: "标签已创建",
+                            });
+                            setNewTagName("");
+                            setNewTagColor("#3B82F6");
+                            setOpenTagDialog(false);
+                          }
+                        } finally {
+                          setCreatingTag(false);
+                        }
+                      }}
+                      className="w-full"
+                    >
+                      {creatingTag ? "创建中..." : "创建标签"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
-            {tags.length === 0 && (
+            {availableTags.length === 0 && (
               <p className="text-sm text-muted-foreground">
                 暂无可用标签，请先创建标签
               </p>
@@ -359,19 +605,68 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
 
         {/* 提示词内容 */}
         <div>
-          <Label htmlFor="content">提示词内容</Label>
-          <Textarea
-            id="content"
-            name="content"
-            placeholder="输入提示词内容"
-            rows={10}
-            className={`font-mono text-sm ${fieldErrors?.content ? "border-destructive" : ""}`}
-            defaultValue={prompt?.content || ""}
-            aria-describedby="content-error"
-          />
-          <p className="text-sm text-muted-foreground mt-1">
-            提示词的主体内容，可以包含文本、指令和输入变量
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <Label htmlFor="content">提示词内容</Label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowVariablePreview(!showVariablePreview)}
+              className="text-sm"
+            >
+              {showVariablePreview ? (
+                <>
+                  <EyeOff className="h-4 w-4 mr-1" />
+                  隐藏变量预览
+                </>
+              ) : (
+                <>
+                  <Eye className="h-4 w-4 mr-1" />
+                  显示变量预览
+                </>
+              )}
+            </Button>
+          </div>
+
+          <div className="relative">
+            <Textarea
+              id="content"
+              name="content"
+              placeholder="输入提示词内容，使用 {{变量名}} 格式插入变量"
+              rows={10}
+              className={`font-mono text-sm ${fieldErrors?.content ? "border-destructive" : ""} ${showVariablePreview ? "opacity-50" : ""}`}
+              value={content}
+              onChange={handleContentChange}
+              aria-describedby="content-error"
+            />
+
+            {/* 变量高亮预览层 */}
+            {showVariablePreview && (
+              <div
+                className="absolute inset-0 pointer-events-none font-mono text-sm p-3 whitespace-pre-wrap overflow-auto rounded-md border bg-background/80 backdrop-blur-sm"
+                style={{
+                  lineHeight: "1.5",
+                  fontSize: "14px",
+                  fontFamily:
+                    'ui-monospace, SFMono-Regular, "SF Mono", monospace',
+                }}
+                dangerouslySetInnerHTML={{ __html: highlightedContent }}
+              />
+            )}
+          </div>
+
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-sm text-muted-foreground">
+              提示词的主体内容，可以包含文本、指令和输入变量
+            </p>
+            {parseVariablesFromContent(content).length > 0 && (
+              <p className="text-sm text-blue-600">
+                检测到 {parseVariablesFromContent(content).length} 个变量:{" "}
+                {parseVariablesFromContent(content).join(", ")}
+              </p>
+            )}
+          </div>
+
           {fieldErrors?.content && (
             <p id="content-error" className="text-sm text-destructive mt-1">
               {fieldErrors.content}

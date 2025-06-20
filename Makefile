@@ -195,10 +195,20 @@ check-extension-env:
 all: env-init check-conflicts format lint backend-build frontend-build admin-build
 	@echo "===========> Attempting to build extension (optional)"
 	@$(MAKE) extension-build || echo "===========> Extension build failed, but continuing"
-	@echo "===========> Running tests (optional)"
-	@$(MAKE) test || echo "===========> Some tests failed, but continuing"
+	@echo "===========> Running tests (will fail if any tests fail)"
+	@$(MAKE) test
 	@$(MAKE) generate-client
 	@echo "===========> All builds completed successfully"
+
+## all-continue-on-failure: Run all components but continue even if tests fail (for development)
+.PHONY: all-continue-on-failure
+all-continue-on-failure: env-init check-conflicts format lint backend-build frontend-build admin-build
+	@echo "===========> Attempting to build extension (optional)"
+	@$(MAKE) extension-build || echo "===========> Extension build failed, but continuing"
+	@echo "===========> Running tests (will continue even if tests fail)"
+	@$(MAKE) test || echo "===========> Some tests failed, but continuing"
+	@$(MAKE) generate-client
+	@echo "===========> All builds completed (some may have failed)"
 
 ## dev: Start development environment
 .PHONY: dev
@@ -414,6 +424,12 @@ backend-reinit-data:
 backend-admin-jwt:
 	@cd $(BACKEND_DIR) && ./scripts/get-admin-jwt.py
 
+## backend-migrate-passwords: Migrate user passwords after encryption fix
+.PHONY: backend-migrate-passwords
+backend-migrate-passwords:
+	@echo "===========> Migrating user passwords"
+	@cd $(BACKEND_DIR) && python scripts/migrate_user_passwords.py
+
 # ==============================================================================
 # FRONTEND TARGETS
 # ==============================================================================
@@ -482,10 +498,10 @@ frontend-test: frontend-install
 		mkdir -p $(FRONTEND_DIR)/.next/types 2>/dev/null || true; \
 		echo "{}" > $(FRONTEND_DIR)/.next/types/package.json 2>/dev/null || true; \
 		echo "===========> Running frontend tests"; \
-		cd $(FRONTEND_DIR) && NODE_ENV=test $(PNPM) test -- --passWithNoTests || true; \
-		echo "===========> Note: Some tests may have failed, but we're continuing with the build process"; \
+		cd $(FRONTEND_DIR) && NODE_ENV=test $(PNPM) test -- --passWithNoTests || (echo "===========> Frontend tests failed" && exit 1); \
 	else \
 		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
+		exit 1; \
 	fi
 
 ## frontend-lint: Run frontend linters
@@ -751,7 +767,7 @@ help: Makefile
 	@printf "\033[1mUsage: \033[0mmake \033[1;37m<TARGETS>\033[0m\n\n"
 	
 	@printf "\033[1;34m┌─ PRIMARY COMMANDS ───────────────────────────────────────────────────┐\033[0m\n"
-	@grep -E '^## (all:|dev:|lint:|test:|format:|clean:)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
+	@grep -E '^## (all:|all-continue-on-failure:|dev:|lint:|test:|format:|clean:)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'
 	
 	@printf "\n\033[1;34m┌─ ENV MANAGEMENT ────────────────────────────────────────────────────┐\033[0m\n"
 	@grep -E '^## (env|check-doppler|doppler)' $(MAKEFILE_LIST) | awk -F':' '{printf "  \033[1;37m%-25s\033[0m %s\n", $$1, $$2}' | sed -e 's/^##//'

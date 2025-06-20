@@ -2,7 +2,6 @@ import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-import pytest_asyncio  # For async fixtures if needed later
 
 from app.core.storage import StorageInterface  # For type hinting mocks
 from app.schemas.image import ImageCreate
@@ -93,8 +92,8 @@ def test_extract_images_from_pdf_no_fitz():
 
 
 # --- Tests for process_web_image ---
-@pytest_asyncio.fixture
-async def mock_storage_service():
+@pytest.fixture
+def mock_storage_service():
     return MockStorage()
 
 

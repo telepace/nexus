@@ -5,16 +5,18 @@ from sqlmodel import Session, select
 from app import crud
 from app.core.config import settings
 from app.core.db_factory import create_db_engine
+from app.core.default_prompts import get_default_prompts, get_default_tags
 from app.models import (
+    ProcessingJob,
+    Project,
     Prompt,
-    PromptType,
     PromptVersion,
     Tag,
     User,
     UserCreate,
-    Visibility,
 )
 from app.models.content import AIConversation, ContentItem
+from app.utils.timezone import now_utc
 
 # Get the logger
 logger = logging.getLogger("app.db")
@@ -117,29 +119,8 @@ def init_db(session: Session, db_url: str | None = None) -> None:
 
     logger.info(f"Superuser ready: {settings.FIRST_SUPERUSER} with ID: {user.id}")
 
-    # 创建默认标签
-    default_tags = [
-        {
-            "name": "文章分析",
-            "description": "用于分析文章内容的提示词",
-            "color": "#3B82F6",
-        },
-        {
-            "name": "内容理解",
-            "description": "帮助理解复杂内容的提示词",
-            "color": "#10B981",
-        },
-        {
-            "name": "学习辅助",
-            "description": "辅助学习和记忆的提示词",
-            "color": "#F59E0B",
-        },
-        {
-            "name": "思维拓展",
-            "description": "拓展思维和讨论的提示词",
-            "color": "#8B5CF6",
-        },
-    ]
+    # 创建默认标签 - 使用集中配置
+    default_tags = get_default_tags()
 
     created_tags = {}
     for tag_data in default_tags:
@@ -156,140 +137,8 @@ def init_db(session: Session, db_url: str | None = None) -> None:
             created_tags[tag_data["name"]] = existing_tag
             logger.info(f"Tag already exists: {tag_data['name']}")
 
-    # 创建默认提示词
-    default_prompts = [
-        {
-            "name": "总结全文",
-            "description": "快速为当前文章生成一段简洁明了的核心内容摘要，帮助用户在短时间内把握文章主旨和关键信息。",
-            "content": """请将以下文章浓缩成一段150-250字的摘要，突出其核心论点、主要发现/信息和结论。摘要应清晰、连贯，避免不必要的细节和专业术语（除非是文章核心概念）。
-
-目标是快速理解"这篇文章讲了什么？"以及"最重要的信息是什么？"
-
-文章内容：
-{content}
-
-请提供简洁明了的摘要：""",
-            "type": PromptType.TEMPLATE,
-            "visibility": Visibility.PUBLIC,
-            "enabled": False,
-            "input_vars": [
-                {"name": "content", "description": "文章内容", "required": True}
-            ],
-            "tags": ["文章分析", "内容理解"],
-        },
-        {
-            "name": "提取核心要点",
-            "description": "从文章中识别并列出最重要的几个核心观点、论据、数据或洞察，以项目符号或编号列表的形式呈现，方便用户快速浏览和记忆。",
-            "content": """请从以下文章中提取3-7个最核心的要点。每个要点应简明扼要，能独立表达一个清晰的观点或信息。请使用项目符号列表（bullet points）或编号列表（numbered list）格式输出。
-
-目标是结构化地展示文章的"精华骨架"。
-
-文章内容：
-{content}
-
-请提取核心要点：""",
-            "type": PromptType.TEMPLATE,
-            "visibility": Visibility.PUBLIC,
-            "enabled": False,
-            "input_vars": [
-                {"name": "content", "description": "文章内容", "required": True}
-            ],
-            "tags": ["文章分析", "学习辅助"],
-        },
-        {
-            "name": "用大白话解释",
-            "description": "当用户圈选文章中的特定词语、句子或段落时，或针对全文，用通俗易懂、简单明了的语言解释其含义，尤其适用于复杂概念、专业术语或晦涩难懂的表达。",
-            "content": """请用简单易懂的语言解释以下选定文本。假设解释对象是对该领域不熟悉的人。可以使用类比、简化示例等方式来帮助理解。
-
-目标是帮助用户"扫清理解障碍"。
-
-需要解释的内容：
-{content}
-
-请用大白话解释：""",
-            "type": PromptType.TEMPLATE,
-            "visibility": Visibility.PUBLIC,
-            "enabled": False,
-            "input_vars": [
-                {"name": "content", "description": "需要解释的内容", "required": True}
-            ],
-            "tags": ["内容理解", "学习辅助"],
-        },
-        {
-            "name": "生成讨论问题",
-            "description": "基于文章内容，生成若干具有启发性的开放式问题，帮助用户深入思考文章主题、检验理解程度，或作为后续讨论、研究的起点。",
-            "content": """请根据以下文章内容，提出3-5个能激发深入思考的讨论问题。这些问题应鼓励批判性思维，探讨文章的潜在含义、局限性或不同观点。
-
-问题可以涉及：
-- 文章观点的延伸
-- 对不同情境的应用
-- 潜在的反驳观点
-- 作者未明确说明的假设
-
-目标是"促进深度思考和互动"。
-
-文章内容：
-{content}
-
-请生成讨论问题：""",
-            "type": PromptType.TEMPLATE,
-            "visibility": Visibility.PUBLIC,
-            "enabled": False,
-            "input_vars": [
-                {"name": "content", "description": "文章内容", "required": True}
-            ],
-            "tags": ["思维拓展", "学习辅助"],
-        },
-        # 新增启用的 prompt
-        {
-            "name": "生成摘要",
-            "description": "为内容生成简洁的摘要",
-            "content": "请为以下内容生成一个简洁明了的摘要，突出主要观点和关键信息：\n\n{content}",
-            "type": PromptType.TEMPLATE,
-            "visibility": Visibility.PUBLIC,
-            "enabled": True,
-            "input_vars": [
-                {"name": "content", "description": "内容", "required": True}
-            ],
-            "tags": ["文章分析", "内容理解"],
-        },
-        {
-            "name": "提取要点",
-            "description": "提取内容中的关键要点",
-            "content": "请从以下内容中提取关键要点，以清晰的列表形式呈现：\n\n{content}",
-            "type": PromptType.TEMPLATE,
-            "visibility": Visibility.PUBLIC,
-            "enabled": True,
-            "input_vars": [
-                {"name": "content", "description": "内容", "required": True}
-            ],
-            "tags": ["文章分析", "学习辅助"],
-        },
-        {
-            "name": "生成问题",
-            "description": "基于内容生成思考问题",
-            "content": "基于以下内容，生成一些深入思考的问题，帮助更好地理解和分析：\n\n{content}",
-            "type": PromptType.TEMPLATE,
-            "visibility": Visibility.PUBLIC,
-            "enabled": True,
-            "input_vars": [
-                {"name": "content", "description": "内容", "required": True}
-            ],
-            "tags": ["思维拓展", "学习辅助"],
-        },
-        {
-            "name": "深度洞察",
-            "description": "提供深度分析和洞察",
-            "content": "请对以下内容进行深度分析，提供有价值的洞察和观点：\n\n{content}",
-            "type": PromptType.TEMPLATE,
-            "visibility": Visibility.PUBLIC,
-            "enabled": True,
-            "input_vars": [
-                {"name": "content", "description": "内容", "required": True}
-            ],
-            "tags": ["文章分析", "思维拓展"],
-        },
-    ]
+    # 创建默认提示词 - 使用集中配置
+    default_prompts = get_default_prompts()
 
     for prompt_data in default_prompts:
         existing_prompt = session.exec(
@@ -677,6 +526,177 @@ AI在军事领域的应用引发了关于自主武器系统的伦理争议。
 
     # 刷新以获取创建的内容项ID
     session.flush()
+
+    # 创建默认项目数据
+    default_projects = [
+        {
+            "title": "AI与机器学习研究",
+            "description": "收集和整理人工智能、机器学习、深度学习相关的论文、文章和资料",
+            "project_type": "research",
+            "is_active": True,
+            "ai_context": {
+                "domain": "artificial_intelligence",
+                "keywords": ["AI", "机器学习", "深度学习", "神经网络", "算法"],
+                "focus_areas": ["理论研究", "技术应用", "行业趋势"],
+            },
+            "tag_id": created_tags["文章分析"].id
+            if "文章分析" in created_tags
+            else None,
+        },
+        {
+            "title": "技术学习资料",
+            "description": "编程、开发、技术教程等学习资料的收集整理",
+            "project_type": "learning",
+            "is_active": True,
+            "ai_context": {
+                "domain": "technology",
+                "keywords": ["编程", "开发", "教程", "技术", "软件"],
+                "focus_areas": ["基础知识", "实战技能", "最佳实践"],
+            },
+            "tag_id": created_tags["学习辅助"].id
+            if "学习辅助" in created_tags
+            else None,
+        },
+        {
+            "title": "行业分析报告",
+            "description": "收集和分析各行业的发展趋势、市场报告和商业洞察",
+            "project_type": "analysis",
+            "is_active": True,
+            "ai_context": {
+                "domain": "business",
+                "keywords": ["行业分析", "市场趋势", "商业", "报告", "洞察"],
+                "focus_areas": ["趋势分析", "竞争情报", "市场预测"],
+            },
+            "tag_id": created_tags["思维拓展"].id
+            if "思维拓展" in created_tags
+            else None,
+        },
+        {
+            "title": "学术论文集",
+            "description": "重要学术论文的收集、整理和研究笔记",
+            "project_type": "academic",
+            "is_active": True,
+            "ai_context": {
+                "domain": "academic",
+                "keywords": ["论文", "学术", "研究", "理论", "方法"],
+                "focus_areas": ["理论基础", "研究方法", "创新观点"],
+            },
+            "tag_id": created_tags["内容理解"].id
+            if "内容理解" in created_tags
+            else None,
+        },
+    ]
+
+    created_projects = []
+    for project_data in default_projects:
+        existing_project = session.exec(
+            select(Project).where(Project.title == project_data["title"])
+        ).first()
+
+        if not existing_project:
+            project = Project(owner_id=user.id, **project_data)
+            session.add(project)
+            session.flush()  # 获取ID
+            created_projects.append(project)
+            logger.info(f"Created project: {project_data['title']}")
+        else:
+            created_projects.append(existing_project)
+            logger.info(f"Project already exists: {project_data['title']}")
+
+    # 为内容项分配项目并添加ProcessingJob数据
+    content_items = session.exec(
+        select(ContentItem).where(ContentItem.user_id == user.id)
+    ).all()
+
+    if content_items and created_projects:
+        # 为每个内容项分配项目
+        for i, content_item in enumerate(content_items):
+            if content_item.project_id is None:  # 只为未分配项目的内容项分配
+                # 根据内容类型分配合适的项目
+                title_lower = content_item.title.lower() if content_item.title else ""
+                if "transformer" in title_lower or "attention" in title_lower:
+                    content_item.project_id = created_projects[0].id  # AI与机器学习研究
+                elif content_item.title and (
+                    "人工智能" in content_item.title
+                    or "artificial intelligence" in title_lower
+                ):
+                    content_item.project_id = created_projects[0].id  # AI与机器学习研究
+                elif content_item.title and "深度学习" in content_item.title:
+                    content_item.project_id = created_projects[1].id  # 技术学习资料
+                else:
+                    content_item.project_id = created_projects[
+                        i % len(created_projects)
+                    ].id
+
+                logger.info(f"Assigned project to content: {content_item.title}")
+
+        # 为内容项添加ProcessingJob数据
+        processing_jobs_data = [
+            {
+                "processor_name": "summarizer",
+                "status": "completed",
+                "parameters": {"model": "gpt-4", "max_length": 500, "language": "zh"},
+                "result": {
+                    "summary": "AI领域的重要突破性论文，提出了革命性的Transformer架构",
+                    "key_points": ["注意力机制", "并行化", "编码器-解码器"],
+                    "confidence": 0.95,
+                },
+                "started_at": now_utc(),
+                "completed_at": now_utc(),
+            },
+            {
+                "processor_name": "vectorizer",
+                "status": "completed",
+                "parameters": {"model": "text-embedding-ada-002", "dimensions": 1536},
+                "result": {
+                    "embedding_model": "text-embedding-ada-002",
+                    "dimensions": 1536,
+                    "chunks_processed": 15,
+                    "success_rate": 1.0,
+                },
+                "started_at": now_utc(),
+                "completed_at": now_utc(),
+            },
+            {
+                "processor_name": "keyword_extractor",
+                "status": "completed",
+                "parameters": {"method": "tfidf", "max_keywords": 10},
+                "result": {
+                    "keywords": [
+                        "transformer",
+                        "attention",
+                        "neural network",
+                        "machine learning",
+                        "deep learning",
+                    ],
+                    "scores": [0.95, 0.89, 0.87, 0.85, 0.82],
+                    "confidence": 0.92,
+                },
+                "started_at": now_utc(),
+                "completed_at": now_utc(),
+            },
+        ]
+
+        for content_item in content_items[:3]:  # 只为前3个内容项添加处理任务
+            for job_data in processing_jobs_data:
+                # 检查是否已存在相同的处理任务
+                existing_job = session.exec(
+                    select(ProcessingJob).where(
+                        ProcessingJob.content_item_id == content_item.id,
+                        ProcessingJob.processor_name == job_data["processor_name"],
+                    )
+                ).first()
+
+                if not existing_job:
+                    job = ProcessingJob(content_item_id=content_item.id, **job_data)
+                    session.add(job)
+                    logger.info(
+                        f"Created processing job: {job_data['processor_name']} for {content_item.title}"
+                    )
+                else:
+                    logger.info(
+                        f"Processing job already exists: {job_data['processor_name']} for {content_item.title}"
+                    )
 
     # 创建测试AI对话数据
     # 获取第一个内容项用于关联对话
