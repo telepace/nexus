@@ -38,7 +38,7 @@ async function getContentData(id: string) {
         },
         cache: "no-cache",
         next: { tags: [`content-${id}`] },
-      }),
+      } as RequestInit & { next?: { tags?: string[] } }),
       fetch(`${apiUrl}/api/v1/content/${id}/markdown`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -46,7 +46,7 @@ async function getContentData(id: string) {
         },
         cache: "no-cache",
         next: { tags: [`content-markdown-${id}`] },
-      }),
+      } as RequestInit & { next?: { tags?: string[] } }),
     ]);
 
     let content: ContentDetail | null = null;
