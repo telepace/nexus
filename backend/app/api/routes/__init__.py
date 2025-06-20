@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 
+from .ai_conversations import router as ai_conversations_router
 from .content import router as content_router
+from .dashboard import router as dashboard_router
 from .extension_auth import router as extension_auth_router
 
 # from .github import router as github_router
@@ -8,6 +10,7 @@ from .google_oauth import router as google_oauth_router
 from .items import router as items_router
 from .llm_service import router as llm_service_router
 from .login import router as login_router
+from .model_management import router as model_management_router
 from .prompts import router as prompts_router
 
 # from .profile import router as profile_router
@@ -26,3 +29,8 @@ api_router.include_router(extension_auth_router)
 api_router.include_router(prompts_router, prefix="/prompts")
 api_router.include_router(content_router, prefix="/content")
 api_router.include_router(llm_service_router, prefix="/llm")
+api_router.include_router(
+    model_management_router, prefix="/model-management", tags=["model-management"]
+)
+api_router.include_router(dashboard_router)
+api_router.include_router(ai_conversations_router, prefix="/ai/conversations")

@@ -18,37 +18,47 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
   isGenerating = false,
   disabled = false,
 }) => {
+  const safeRecommendations = recommendations || [];
+
+  if (safeRecommendations.length === 0 && !isGenerating) {
+    return null;
+  }
+
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-1 gap-2">
-        {recommendations.map((recommendation) => {
-          return (
-            <Button
-              key={recommendation.id}
-              variant="ghost"
-              size="sm"
-              onClick={() => onPromptClick(recommendation)}
-              disabled={disabled || isGenerating}
-              className="justify-start h-auto p-2.5 text-left bg-transparent border border-border shadow-md rounded-sm hover:bg-muted/30 transition-all duration-200 "
-            >
-              <div className="flex items-center gap-2 w-full">
-                <div className="flex-shrink-0 w-4 h-4 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <span className="text-lg">{recommendation.icon}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-xs text-foreground">
-                      {recommendation.name}
+        {safeRecommendations
+          .filter((rec) => rec && rec.id && rec.name)
+          .map((recommendation) => {
+            return (
+              <Button
+                key={recommendation.id}
+                variant="ghost"
+                size="sm"
+                onClick={() => onPromptClick(recommendation)}
+                disabled={disabled || isGenerating}
+                className="justify-start h-auto p-2.5 text-left bg-transparent border border-border shadow-md rounded-sm hover:bg-muted/30 transition-all duration-200 "
+              >
+                <div className="flex items-center gap-2 w-full">
+                  <div className="flex-shrink-0 w-4 h-4 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <span className="text-lg">
+                      {recommendation.icon || "🤖"}
                     </span>
-                    {isGenerating && (
-                      <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-xs text-foreground">
+                        {recommendation.name}
+                      </span>
+                      {isGenerating && (
+                        <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Button>
-          );
-        })}
+              </Button>
+            );
+          })}
       </div>
 
       {isGenerating && (

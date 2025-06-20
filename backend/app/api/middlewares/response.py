@@ -32,7 +32,7 @@ class ApiResponseMiddleware(BaseHTTPMiddleware):
         # 如果是字节串或memoryview，则解码
         if isinstance(response_body, bytes):
             try:
-                content = response_body.decode()
+                content = response_body.decode("utf-8")  # 明确指定UTF-8编码
                 import json
 
                 content = json.loads(content)
@@ -40,7 +40,7 @@ class ApiResponseMiddleware(BaseHTTPMiddleware):
                 return response
         elif isinstance(response_body, memoryview):
             try:
-                content = bytes(response_body).decode()
+                content = bytes(response_body).decode("utf-8")  # 明确指定UTF-8编码
                 import json
 
                 content = json.loads(content)

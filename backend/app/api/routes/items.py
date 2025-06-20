@@ -6,11 +6,11 @@ from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import (
-    Item,
-    ItemCreate,
-    ItemPublic,
-    ItemsPublic,
-    ItemUpdate,
+    Project,
+    ProjectCreate,
+    ProjectPublic,
+    ProjectsPublic,
+    ProjectUpdate,
 )
 from app.utils.error import NotFoundError, PermissionError
 from app.utils.response import ApiResponse
@@ -18,7 +18,7 @@ from app.utils.response import ApiResponse
 router = APIRouter(prefix="/items", tags=["items"])
 
 
-@router.get("/", response_model=ApiResponse[ItemsPublic])
+@router.get("/", response_model=ApiResponse[ProjectsPublic])
 def read_items(
     session: SessionDep, current_user: CurrentUser, skip: int = 0, limit: int = 100
 ) -> Any:
@@ -27,35 +27,35 @@ def read_items(
     """
 
     if current_user.is_superuser:
-        count_statement = select(func.count()).select_from(Item)
+        count_statement = select(func.count()).select_from(Project)
         count = session.exec(count_statement).one()
-        statement = select(Item).offset(skip).limit(limit)
+        statement = select(Project).offset(skip).limit(limit)
         items = session.exec(statement).all()
     else:
         count_statement = (
             select(func.count())
-            .select_from(Item)
-            .where(Item.owner_id == current_user.id)
+            .select_from(Project)
+            .where(Project.owner_id == current_user.id)
         )
         count = session.exec(count_statement).one()
         statement = (
-            select(Item)
-            .where(Item.owner_id == current_user.id)
+            select(Project)
+            .where(Project.owner_id == current_user.id)
             .offset(skip)
             .limit(limit)
         )
         items = session.exec(statement).all()
 
-    items_data = ItemsPublic(data=items, count=count)
+    items_data = ProjectsPublic(data=items, count=count)
     return ApiResponse(data=items_data, meta={"skip": skip, "limit": limit})
 
 
-@router.get("/{id}", response_model=ApiResponse[ItemPublic])
+@router.get("/{id}", response_model=ApiResponse[ProjectPublic])
 def read_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> Any:
     """
     Get item by ID.
     """
-    item = session.get(Item, id)
+    item = session.get(Project, id)
     if not item:
         raise NotFoundError(message=f"找不到ID为{id}的项目")
 
@@ -65,32 +65,32 @@ def read_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> 
     return ApiResponse(data=item)
 
 
-@router.post("/", response_model=ApiResponse[ItemPublic])
-def create_item(
-    *, session: SessionDep, current_user: CurrentUser, item_in: ItemCreate
+@router.post("/", response_model=ApiResponse[ProjectPublic])
+def create_project(
+    *, session: SessionDep, current_user: CurrentUser, item_in: ProjectCreate
 ) -> Any:
     """
     Create new item.
     """
-    item = Item.model_validate(item_in, update={"owner_id": current_user.id})
+    item = Project.model_validate(item_in, update={"owner_id": current_user.id})
     session.add(item)
     session.commit()
     session.refresh(item)
     return ApiResponse(data=item, meta={"message": "项目创建成功"})
 
 
-@router.put("/{id}", response_model=ApiResponse[ItemPublic])
+@router.put("/{id}", response_model=ApiResponse[ProjectPublic])
 def update_item(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     id: uuid.UUID,
-    item_in: ItemUpdate,
+    item_in: ProjectUpdate,
 ) -> Any:
     """
     Update an item.
     """
-    item = session.get(Item, id)
+    item = session.get(Project, id)
     if not item:
         raise NotFoundError(message=f"找不到ID为{id}的项目")
 
@@ -110,7 +110,7 @@ def delete_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -
     """
     Delete an item.
     """
-    item = session.get(Item, id)
+    item = session.get(Project, id)
     if not item:
         raise NotFoundError(message=f"找不到ID为{id}的项目")
 

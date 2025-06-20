@@ -73,11 +73,21 @@ class MockStorage(StorageInterface):
         destination_blob_name: str,
         content_type: str | None = None,
     ) -> str:
+        # 先将文件内容写入 mock_db
         self.mock_db[destination_blob_name] = file_content
-        public_url = f"mock_r2_url/{self.bucket_name}/{destination_blob_name}"
+
+        # 使用 get_public_url 生成公开可访问的绝对 URL，确保前端请求地址正确
+        public_url = await self.get_public_url(destination_blob_name)
+
         logger.info(
-            f"Mock Upload: File '{destination_blob_name}' (content_type: {content_type}, size: {len(file_content)} bytes) "
-            f"uploaded to {public_url}. Content stored in mock_db."
+            (
+                "Mock Upload: File '%s' (content_type: %s, size: %d bytes) "
+                "uploaded. Public URL: %s. Content stored in mock_db."
+            ),
+            destination_blob_name,
+            content_type,
+            len(file_content),
+            public_url,
         )
         return public_url
 

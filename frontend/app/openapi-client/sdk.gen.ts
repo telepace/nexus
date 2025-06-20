@@ -5,10 +5,14 @@ import {
   createConfig,
   type OptionsLegacyParser,
   urlSearchParamsBodySerializer,
+  formDataBodySerializer,
 } from "@hey-api/client-axios";
 import type {
   HealthGetHealthApiError,
   HealthGetHealthApiResponse,
+  LoginAuthLoginData,
+  LoginAuthLoginError,
+  LoginAuthLoginResponse,
   LoginLoginAccessTokenData,
   LoginLoginAccessTokenError,
   LoginLoginAccessTokenResponse,
@@ -57,6 +61,9 @@ import type {
   UsersDeleteUserData,
   UsersDeleteUserError,
   UsersDeleteUserResponse,
+  UsersUploadUserAvatarData,
+  UsersUploadUserAvatarError,
+  UsersUploadUserAvatarResponse,
   UtilsTestEmailData,
   UtilsTestEmailError,
   UtilsTestEmailResponse,
@@ -65,9 +72,9 @@ import type {
   ItemsReadItemsData,
   ItemsReadItemsError,
   ItemsReadItemsResponse,
-  ItemsCreateItemData,
-  ItemsCreateItemError,
-  ItemsCreateItemResponse,
+  ItemsCreateProjectData,
+  ItemsCreateProjectError,
+  ItemsCreateProjectResponse,
   ItemsReadItemData,
   ItemsReadItemError,
   ItemsReadItemResponse,
@@ -104,6 +111,12 @@ import type {
   PromptsReadPromptsData,
   PromptsReadPromptsError,
   PromptsReadPromptsResponse,
+  PromptsGetUserEnabledPromptsData,
+  PromptsGetUserEnabledPromptsError,
+  PromptsGetUserEnabledPromptsResponse,
+  PromptsGetUserDisabledPromptsData,
+  PromptsGetUserDisabledPromptsError,
+  PromptsGetUserDisabledPromptsResponse,
   PromptsReadPromptData,
   PromptsReadPromptError,
   PromptsReadPromptResponse,
@@ -134,6 +147,13 @@ import type {
   LlmCreateEmbeddingData,
   LlmCreateEmbeddingError,
   LlmCreateEmbeddingResponse,
+  ChatCreateChatCompletionData,
+  ChatCreateChatCompletionError,
+  ChatCreateChatCompletionResponse,
+  ChatListAvailableModelsError,
+  ChatListAvailableModelsResponse,
+  ContentContentEventsEndpointError,
+  ContentContentEventsEndpointResponse,
   ContentCreateContentItemEndpointData,
   ContentCreateContentItemEndpointError,
   ContentCreateContentItemEndpointResponse,
@@ -160,6 +180,21 @@ import type {
   ContentAnalyzeContentStreamData,
   ContentAnalyzeContentStreamError,
   ContentAnalyzeContentStreamResponse,
+  ContentAnalyzeContentAiSdkData,
+  ContentAnalyzeContentAiSdkError,
+  ContentAnalyzeContentAiSdkResponse,
+  ContentContentCompletionStreamData,
+  ContentContentCompletionStreamError,
+  ContentContentCompletionStreamResponse,
+  ContentAnalyzeContentAiSdkUpdatedData,
+  ContentAnalyzeContentAiSdkUpdatedError,
+  ContentAnalyzeContentAiSdkUpdatedResponse,
+  ContentContentCompletionStreamUpdatedData,
+  ContentContentCompletionStreamUpdatedError,
+  ContentContentCompletionStreamUpdatedResponse,
+  ContentGetContentProcessingJobsData,
+  ContentGetContentProcessingJobsError,
+  ContentGetContentProcessingJobsResponse,
   ContentCreateShareLinkEndpointData,
   ContentCreateShareLinkEndpointError,
   ContentCreateShareLinkEndpointResponse,
@@ -169,6 +204,12 @@ import type {
   ContentGetSharedContentEndpointData,
   ContentGetSharedContentEndpointError,
   ContentGetSharedContentEndpointResponse,
+  ContentGetContentAiConversationsData,
+  ContentGetContentAiConversationsError,
+  ContentGetContentAiConversationsResponse,
+  ContentGetAiConversationDetailsData,
+  ContentGetAiConversationDetailsError,
+  ContentGetAiConversationDetailsResponse,
   ImagesGetUploadUrlData,
   ImagesGetUploadUrlError,
   ImagesGetUploadUrlResponse,
@@ -184,6 +225,50 @@ import type {
   ImagesDeleteImageData,
   ImagesDeleteImageError,
   ImagesDeleteImageResponse,
+  DashboardAnalyzeQueryData,
+  DashboardAnalyzeQueryError,
+  DashboardAnalyzeQueryResponse,
+  DashboardGetDashboardMetricsError,
+  DashboardGetDashboardMetricsResponse,
+  DashboardGetRecentActivitiesData,
+  DashboardGetRecentActivitiesError,
+  DashboardGetRecentActivitiesResponse,
+  DashboardConfirmRoutingData,
+  DashboardConfirmRoutingError,
+  DashboardConfirmRoutingResponse,
+  DashboardCreateProjectData,
+  DashboardCreateProjectError,
+  DashboardCreateProjectResponse,
+  DashboardGetUserProjectsData,
+  DashboardGetUserProjectsError,
+  DashboardGetUserProjectsResponse,
+  PreprocessingProcessContentData,
+  PreprocessingProcessContentError,
+  PreprocessingProcessContentResponse,
+  PreprocessingBatchProcessContentData,
+  PreprocessingBatchProcessContentError,
+  PreprocessingBatchProcessContentResponse,
+  PreprocessingGetProcessingStatusData,
+  PreprocessingGetProcessingStatusError,
+  PreprocessingGetProcessingStatusResponse,
+  PreprocessingGetContentSegmentsData,
+  PreprocessingGetContentSegmentsError,
+  PreprocessingGetContentSegmentsResponse,
+  PreprocessingValidateContentData,
+  PreprocessingValidateContentError,
+  PreprocessingValidateContentResponse,
+  AiConversationsListAiConversationsData,
+  AiConversationsListAiConversationsError,
+  AiConversationsListAiConversationsResponse,
+  AiConversationsCreateAiConversationData,
+  AiConversationsCreateAiConversationError,
+  AiConversationsCreateAiConversationResponse,
+  AiConversationsGetAiConversationDetailData,
+  AiConversationsGetAiConversationDetailError,
+  AiConversationsGetAiConversationDetailResponse,
+  AiConversationsGetAiConversationMessagesData,
+  AiConversationsGetAiConversationMessagesError,
+  AiConversationsGetAiConversationMessagesResponse,
   PrivateCreateUserData,
   PrivateCreateUserError,
   PrivateCreateUserResponse,
@@ -204,6 +289,23 @@ export const healthGetHealthApi = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/api/v1/health",
+  });
+};
+
+/**
+ * Auth Login
+ * JSON-based login endpoint that matches frontend expectations
+ */
+export const loginAuthLogin = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<LoginAuthLoginData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    LoginAuthLoginResponse,
+    LoginAuthLoginError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/auth/login",
   });
 };
 
@@ -529,6 +631,28 @@ export const usersDeleteUser = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Upload User Avatar
+ * Upload and update user avatar.
+ */
+export const usersUploadUserAvatar = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<UsersUploadUserAvatarData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    UsersUploadUserAvatarResponse,
+    UsersUploadUserAvatarError,
+    ThrowOnError
+  >({
+    ...options,
+    ...formDataBodySerializer,
+    headers: {
+      "Content-Type": null,
+      ...options?.headers,
+    },
+    url: "/api/v1/users/me/avatar",
+  });
+};
+
+/**
  * Test Email
  * Test emails.
  */
@@ -579,15 +703,15 @@ export const itemsReadItems = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create Item
+ * Create Project
  * Create new item.
  */
-export const itemsCreateItem = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<ItemsCreateItemData, ThrowOnError>,
+export const itemsCreateProject = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ItemsCreateProjectData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).post<
-    ItemsCreateItemResponse,
-    ItemsCreateItemError,
+    ItemsCreateProjectResponse,
+    ItemsCreateProjectError,
     ThrowOnError
   >({
     ...options,
@@ -798,16 +922,17 @@ export const promptsCreatePrompt = <ThrowOnError extends boolean = false>(
  *
  * Args:
  * db (Session): Database session.
- * _current_user (Any): Current user information (dependency).
+ * current_user (Any): Current user information (dependency).
  * skip (int?): Number of records to skip. Defaults to 0.
  * limit (int?): Maximum number of records to return. Defaults to 100.
  * tag_ids (list[UUID] | None?): List of UUIDs for tags to filter prompts by.
  * search (str | None?): Search term to filter prompts by name, description, or content.
  * sort (str | None?): Field to sort the results by ('created_at' or 'updated_at'). Defaults to None.
  * order (str?): Order of sorting ('asc' or 'desc'). Defaults to "desc".
+ * user_enabled (bool | None?): Filter by user's enabled status. Defaults to None.
  *
  * Returns:
- * list[Prompt]: List of prompts matching the filters and sorted as specified.
+ * list[dict]: List of prompts with user settings matching the filters and sorted as specified.
  *
  * Raises:
  * HTTPException: If an error occurs during database query execution.
@@ -822,6 +947,47 @@ export const promptsReadPrompts = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/api/v1/prompts/",
+  });
+};
+
+/**
+ * Get User Enabled Prompts
+ * 获取用户启用的 prompts
+ */
+export const promptsGetUserEnabledPrompts = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<PromptsGetUserEnabledPromptsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    PromptsGetUserEnabledPromptsResponse,
+    PromptsGetUserEnabledPromptsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/user-enabled",
+  });
+};
+
+/**
+ * Get User Disabled Prompts
+ * 获取用户未启用的 prompts
+ */
+export const promptsGetUserDisabledPrompts = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<
+    PromptsGetUserDisabledPromptsData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    PromptsGetUserDisabledPromptsResponse,
+    PromptsGetUserDisabledPromptsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/user-disabled",
   });
 };
 
@@ -897,19 +1063,23 @@ export const promptsDeletePrompt = <ThrowOnError extends boolean = false>(
 
 /**
  * Read Prompt Versions
- * Retrieves the version history of a given prompt.
+ * Get all versions of a prompt.
  *
- * This function fetches the version history for a specified prompt by its ID. It
- * first retrieves the prompt from the database and checks if it exists. Then, it
- * verifies the user's permissions to access the prompt. If both steps are
- * successful, it queries the database to get all versions of the prompt, sorted
- * in descending order by version number. If any errors occur during this process,
- * appropriate HTTP exceptions are raised.
+ * This function retrieves all versions of a specific prompt. It first checks
+ * if the prompt exists and if the user has permission to access it, then
+ * returns a list of all versions sorted by version number in descending order.
  *
  * Args:
- * db (Session): The database session.
- * prompt_id (UUID): The ID of the prompt for which to retrieve version history.
- * current_user (Any): The current authenticated user.
+ * db (Session): Database session.
+ * prompt_id (UUID): The ID of the prompt to get versions for.
+ * current_user (Any): Current user information (dependency).
+ *
+ * Returns:
+ * list[PromptVersion]: List of prompt versions sorted by version number.
+ *
+ * Raises:
+ * HTTPException: If the prompt is not found, user lacks permissions,
+ * or an error occurs during the query.
  */
 export const promptsReadPromptVersions = <ThrowOnError extends boolean = false>(
   options: OptionsLegacyParser<PromptsReadPromptVersionsData, ThrowOnError>,
@@ -996,7 +1166,7 @@ export const promptsDuplicatePrompt = <ThrowOnError extends boolean = false>(
 
 /**
  * Toggle Prompt Enabled
- * 快速切换提示词的启用状态
+ * 快速切换用户对提示词的启用状态
  */
 export const promptsTogglePromptEnabled = <
   ThrowOnError extends boolean = false,
@@ -1048,8 +1218,63 @@ export const llmCreateEmbedding = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create a New Content Item
- * Uploads and creates a new content item in the system. Requires user authentication.
+ * Create Chat Completion
+ * Create chat completion compatible with Vercel AI SDK.
+ *
+ * Supports Data Stream Protocol format for frontend integration.
+ */
+export const chatCreateChatCompletion = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ChatCreateChatCompletionData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ChatCreateChatCompletionResponse,
+    ChatCreateChatCompletionError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/chat/completions",
+  });
+};
+
+/**
+ * List Available Models
+ * 列出可用的 AI 模型
+ */
+export const chatListAvailableModels = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ChatListAvailableModelsResponse,
+    ChatListAvailableModelsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/chat/models",
+  });
+};
+
+/**
+ * Content Events Stream (SSE)
+ * Server-Sent Events stream for real-time content processing status updates.
+ */
+export const contentContentEventsEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ContentContentEventsEndpointResponse,
+    ContentContentEventsEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/events",
+  });
+};
+
+/**
+ * Create a New Content Item with Automatic Processing
+ * Creates a new content item and automatically starts background processing. Returns immediately for seamless user experience.
  */
 export const contentCreateContentItemEndpoint = <
   ThrowOnError extends boolean = false,
@@ -1247,6 +1472,147 @@ export const contentAnalyzeContentStream = <
 };
 
 /**
+ * Analyze Content Ai Sdk
+ * 使用 Vercel AI SDK 兼容格式分析内容，同时将对话存储到AIConversation表中
+ */
+export const contentAnalyzeContentAiSdk = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<ContentAnalyzeContentAiSdkData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ContentAnalyzeContentAiSdkResponse,
+    ContentAnalyzeContentAiSdkError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{content_id}/analyze-ai-sdk",
+  });
+};
+
+/**
+ * Content Completion Stream
+ * Stream content analysis using Vercel AI SDK compatible format，
+ * 同时将对话存储到AIConversation表中
+ *
+ * This endpoint returns pure text streaming for optimal compatibility
+ * with Vercel AI SDK useCompletion hook.
+ *
+ * Args:
+ * content_id: ID of the content to analyze
+ * prompt: The analysis instruction/prompt from user
+ * model: AI model to use
+ * temperature: Sampling temperature
+ * max_tokens: Maximum tokens to generate
+ */
+export const contentContentCompletionStream = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentContentCompletionStreamData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    ContentContentCompletionStreamResponse,
+    ContentContentCompletionStreamError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{content_id}/completion",
+  });
+};
+
+/**
+ * Analyze Content Ai Sdk Updated
+ * Stream AI analysis with updated prompt structure: system=content, user=instruction.
+ *
+ * This endpoint implements the adjusted LLM logic where:
+ * - System message contains the article content (provides context)
+ * - User message contains the analysis instruction (provides task)
+ *
+ * Args:
+ * content_id: ID of the content to analyze
+ * analysis_instruction: The analysis instruction from user (user prompt)
+ * model: AI model to use
+ * temperature: Sampling temperature
+ * max_tokens: Maximum tokens to generate
+ */
+export const contentAnalyzeContentAiSdkUpdated = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentAnalyzeContentAiSdkUpdatedData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    ContentAnalyzeContentAiSdkUpdatedResponse,
+    ContentAnalyzeContentAiSdkUpdatedError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{content_id}/analyze-ai-sdk-updated",
+  });
+};
+
+/**
+ * Content Completion Stream Updated
+ * Stream content analysis using updated prompt structure: system=content, user=instruction.
+ * Compatible with Vercel AI SDK useCompletion hook.
+ *
+ * This endpoint implements the adjusted LLM logic where:
+ * - System message contains the article content (provides context)
+ * - User message contains the analysis instruction (provides task)
+ *
+ * Args:
+ * content_id: ID of the content to analyze
+ * analysis_instruction: The analysis instruction from user (user prompt)
+ * model: AI model to use
+ * temperature: Sampling temperature
+ * max_tokens: Maximum tokens to generate
+ */
+export const contentContentCompletionStreamUpdated = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentContentCompletionStreamUpdatedData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    ContentContentCompletionStreamUpdatedResponse,
+    ContentContentCompletionStreamUpdatedError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{content_id}/completion-updated",
+  });
+};
+
+/**
+ * Get Content Processing Jobs
+ * Get all processing jobs and their results for a content item, including AI analysis results.
+ */
+export const contentGetContentProcessingJobs = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentGetContentProcessingJobsData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetContentProcessingJobsResponse,
+    ContentGetContentProcessingJobsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{id}/processing-jobs",
+  });
+};
+
+/**
  * Create a Share Link for a Content Item
  * Generates a shareable link for the specified content item. Requires ownership.
  */
@@ -1309,6 +1675,50 @@ export const contentGetSharedContentEndpoint = <
   >({
     ...options,
     url: "/api/v1/content/share/{token}",
+  });
+};
+
+/**
+ * Get AI Conversations for Content
+ * 获取指定内容项的所有AI对话记录
+ */
+export const contentGetContentAiConversations = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentGetContentAiConversationsData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetContentAiConversationsResponse,
+    ContentGetContentAiConversationsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{content_id}/conversations",
+  });
+};
+
+/**
+ * Get AI Conversation Details
+ * 获取指定AI对话的详细信息
+ */
+export const contentGetAiConversationDetails = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentGetAiConversationDetailsData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetAiConversationDetailsResponse,
+    ContentGetAiConversationDetailsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/conversations/{conversation_id}",
   });
 };
 
@@ -1399,6 +1809,318 @@ export const imagesDeleteImage = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: "/api/v1/images/{image_id}",
+  });
+};
+
+/**
+ * Analyze Query
+ * 分析用户问题并推荐项目路由
+ */
+export const dashboardAnalyzeQuery = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<DashboardAnalyzeQueryData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    DashboardAnalyzeQueryResponse,
+    DashboardAnalyzeQueryError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/analyze-query",
+  });
+};
+
+/**
+ * Get Dashboard Metrics
+ * 获取 Dashboard 价值指标
+ */
+export const dashboardGetDashboardMetrics = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    DashboardGetDashboardMetricsResponse,
+    DashboardGetDashboardMetricsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/metrics",
+  });
+};
+
+/**
+ * Get Recent Activities
+ * 获取最近的 AI 处理活动流
+ */
+export const dashboardGetRecentActivities = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<DashboardGetRecentActivitiesData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    DashboardGetRecentActivitiesResponse,
+    DashboardGetRecentActivitiesError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/activities",
+  });
+};
+
+/**
+ * Confirm Routing
+ * 确认或拒绝智能路由建议
+ */
+export const dashboardConfirmRouting = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<DashboardConfirmRoutingData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    DashboardConfirmRoutingResponse,
+    DashboardConfirmRoutingError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/confirm-routing/{route_id}",
+  });
+};
+
+/**
+ * Create Project
+ * 创建新项目（基于智能路由建议）
+ */
+export const dashboardCreateProject = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<DashboardCreateProjectData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    DashboardCreateProjectResponse,
+    DashboardCreateProjectError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/projects",
+  });
+};
+
+/**
+ * Get User Projects
+ * 获取用户项目列表
+ */
+export const dashboardGetUserProjects = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<DashboardGetUserProjectsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    DashboardGetUserProjectsResponse,
+    DashboardGetUserProjectsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/dashboard/projects",
+  });
+};
+
+/**
+ * Process Content
+ * 处理单个内容
+ *
+ * 执行完整的6层预处理流水线：
+ * 1. 输入层：内容验证和规范化
+ * 2. 解析层：转换为统一Markdown格式
+ * 3. 智能分段层：长文本分段处理
+ * 4. AI初始化层：生成摘要、要点等
+ * 5. 存储层：持久化数据
+ * 6. 输出层：格式化结果
+ */
+export const preprocessingProcessContent = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<PreprocessingProcessContentData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    PreprocessingProcessContentResponse,
+    PreprocessingProcessContentError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/preprocessing/preprocessing/process",
+  });
+};
+
+/**
+ * Batch Process Content
+ * 批量处理内容
+ *
+ * 支持并行或串行处理多个内容项目
+ */
+export const preprocessingBatchProcessContent = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    PreprocessingBatchProcessContentData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    PreprocessingBatchProcessContentResponse,
+    PreprocessingBatchProcessContentError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/preprocessing/preprocessing/batch-process",
+  });
+};
+
+/**
+ * Get Processing Status
+ * 获取处理状态
+ *
+ * 查询特定内容的预处理状态
+ */
+export const preprocessingGetProcessingStatus = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    PreprocessingGetProcessingStatusData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    PreprocessingGetProcessingStatusResponse,
+    PreprocessingGetProcessingStatusError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/preprocessing/preprocessing/status/{content_id}",
+  });
+};
+
+/**
+ * Get Content Segments
+ * 获取内容分段
+ *
+ * 返回特定内容的所有分段信息
+ */
+export const preprocessingGetContentSegments = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    PreprocessingGetContentSegmentsData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    PreprocessingGetContentSegmentsResponse,
+    PreprocessingGetContentSegmentsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/preprocessing/preprocessing/content/{content_id}/segments",
+  });
+};
+
+/**
+ * Validate Content
+ * 验证内容格式
+ *
+ * 在正式处理前验证内容是否符合要求
+ */
+export const preprocessingValidateContent = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<PreprocessingValidateContentData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    PreprocessingValidateContentResponse,
+    PreprocessingValidateContentError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/preprocessing/preprocessing/validate",
+  });
+};
+
+/**
+ * List Ai Conversations
+ * Retrieve conversations of current user. Optionally filter by content_item_id.
+ */
+export const aiConversationsListAiConversations = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<
+    AiConversationsListAiConversationsData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    AiConversationsListAiConversationsResponse,
+    AiConversationsListAiConversationsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/ai/conversations/",
+  });
+};
+
+/**
+ * Create Ai Conversation
+ * Create a new AI conversation.
+ */
+export const aiConversationsCreateAiConversation = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    AiConversationsCreateAiConversationData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    AiConversationsCreateAiConversationResponse,
+    AiConversationsCreateAiConversationError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/ai/conversations/",
+  });
+};
+
+/**
+ * Get Ai Conversation Detail
+ */
+export const aiConversationsGetAiConversationDetail = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    AiConversationsGetAiConversationDetailData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    AiConversationsGetAiConversationDetailResponse,
+    AiConversationsGetAiConversationDetailError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/ai/conversations/{conversation_id}",
+  });
+};
+
+/**
+ * Get Ai Conversation Messages
+ */
+export const aiConversationsGetAiConversationMessages = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    AiConversationsGetAiConversationMessagesData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    AiConversationsGetAiConversationMessagesResponse,
+    AiConversationsGetAiConversationMessagesError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/ai/conversations/{conversation_id}/messages",
   });
 };
 

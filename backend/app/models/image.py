@@ -4,6 +4,9 @@ from typing import TYPE_CHECKING, Optional
 
 from sqlmodel import Field, Relationship, SQLModel
 
+# 导入时区工具
+from app.utils.timezone import now_utc
+
 # 避免循环导入
 if TYPE_CHECKING:
     from app.base import User
@@ -35,8 +38,8 @@ class Image(SQLModel, table=True):
     # Relationship to User
     owner: Optional["User"] = Relationship(back_populates="images")
 
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now_utc)
+    updated_at: datetime = Field(default_factory=now_utc)
 
     def __repr__(self):
         return f"<Image(id={self.id}, type='{self.type}', format='{self.format}', owner_id='{self.owner_id}')>"

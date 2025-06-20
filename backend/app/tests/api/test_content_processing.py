@@ -71,7 +71,10 @@ class TestContentProcessingAPI:
         content_item = create_response.json()
         content_id = extract_content_id(content_item)
 
-        # Process the content item
+        # Text content should already be completed after creation
+        assert extract_data(content_item, "processing_status") == "completed"
+
+        # Process the content item - should return already completed
         process_response = client.post(
             f"/api/v1/content/process/{content_id}",
             headers=normal_user_token_headers,
@@ -79,7 +82,8 @@ class TestContentProcessingAPI:
         assert process_response.status_code == 200
 
         processed_item = process_response.json()
-        assert extract_data(processed_item, "processing_status") == "processing"
+        # Since text content is already completed, process should return completed status
+        assert extract_data(processed_item, "processing_status") == "completed"
 
     @patch("app.utils.content_processors.requests.get")
     def test_process_content_item_url(

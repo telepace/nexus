@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { promptsApi, Prompt } from "@/lib/api/services/prompts";
 import { getCookie } from "@/lib/auth";
+import { convertPromptToRecommendation } from "@/lib/utils/prompt-utils";
 
 export interface LLMAnalysis {
   id: string;
@@ -73,43 +74,17 @@ interface LLMAnalysisState {
     content: string,
     selectedPrompt?: Prompt | null,
   ) => Promise<void>;
-}
 
-// 默认的prompt推荐
-export const defaultPromptRecommendations: PromptRecommendation[] = [
-  {
-    id: "summary",
-    name: "生成摘要",
-    description: "为内容生成简洁的摘要",
-    prompt: "请为以下内容生成一个简洁明了的摘要，突出主要观点和关键信息：",
-    type: "summary",
-    icon: "📝",
-  },
-  {
-    id: "key_points",
-    name: "提取要点",
-    description: "提取内容中的关键要点",
-    prompt: "请从以下内容中提取关键要点，以清晰的列表形式呈现：",
-    type: "key_points",
-    icon: "🎯",
-  },
-  {
-    id: "questions",
-    name: "生成问题",
-    description: "基于内容生成思考问题",
-    prompt: "基于以下内容，生成一些深入思考的问题，帮助更好地理解和分析：",
-    type: "questions",
-    icon: "❓",
-  },
-  {
-    id: "insights",
-    name: "深度洞察",
-    description: "提供深度分析和洞察",
-    prompt: "请对以下内容进行深度分析，提供有价值的洞察和观点：",
-    type: "insights",
-    icon: "💡",
-  },
-];
+  generateAnalysisUpdated: (
+    contentId: string,
+    analysisInstruction: string,
+    promptId: string,
+    title: string,
+  ) => Promise<void>;
+
+  // Get prompt recommendations (从 enabled prompts 转换)
+  getPromptRecommendations: () => PromptRecommendation[];
+}
 
 export const useLLMAnalysisStore = create<LLMAnalysisState>()(
   devtools(
@@ -175,10 +150,19 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
         set({ isLoadingPrompts: true, error: null });
 
         try {
+          console.log("[LLM Analysis Store] 开始加载 prompts...");
+
           const [enabled, disabled] = await Promise.all([
             promptsApi.getEnabledPrompts(),
             promptsApi.getDisabledPrompts(),
           ]);
+
+          console.log("[LLM Analysis Store] 加载结果:", {
+            enabledCount: enabled?.length || 0,
+            disabledCount: disabled?.length || 0,
+            enabledPrompts: enabled,
+            disabledPrompts: disabled,
+          });
 
           set({
             enabledPrompts: enabled,
@@ -242,7 +226,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
 
           // 调用流式分析API
           const response = await fetch(
-            `${apiUrl}/api/v1/content/${contentId}/analyze`,
+            `${apiUrl}/api/v1/content/${contentId}/analyze-stream`,
             {
               method: "POST",
               headers: {
@@ -252,7 +236,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
               body: JSON.stringify({
                 system_prompt: systemPrompt,
                 user_prompt: userPrompt,
-                model: "gpt-3.5-turbo",
+                model: "gemini-2.5-flash-preview-05-20",
               }),
             },
           );
@@ -269,6 +253,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
 
           const decoder = new TextDecoder();
           let accumulatedContent = "";
+          let updateTimer: NodeJS.Timeout | null = null;
 
           // 找到刚创建的分析
           const currentAnalyses = get().analyses;
@@ -283,6 +268,18 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
             throw new Error("无法找到目标分析");
           }
 
+          // 防抖更新函数，避免过于频繁的渲染
+          const debouncedUpdate = (content: string) => {
+            if (updateTimer) {
+              clearTimeout(updateTimer);
+            }
+            updateTimer = setTimeout(() => {
+              updateAnalysis(targetAnalysis.id, {
+                content,
+              });
+            }, 50); // 50ms 防抖
+          };
+
           try {
             while (true) {
               const { done, value } = await reader.read();
@@ -293,12 +290,63 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
               const lines = chunk.split("\n");
 
               for (const line of lines) {
-                if (line.startsWith("data: ")) {
+                // 支持 Data Stream Protocol 和 OpenAI SSE 格式
+                if (line.startsWith("0:")) {
+                  // Vercel AI SDK Data Stream Protocol 文本内容
+                  // 解析 JSON 转义的内容
+                  const jsonContent = line.slice(2); // 移除 "0:"
+                  let content = "";
+
+                  try {
+                    // 使用 JSON.parse 正确解析转义字符
+                    content = JSON.parse(jsonContent);
+                  } catch (_parseError) {
+                    void _parseError; // 明确标记参数已被处理
+                    // 如果解析失败，尝试简单的字符串处理（向后兼容）
+                    content =
+                      jsonContent.startsWith('"') && jsonContent.endsWith('"')
+                        ? jsonContent.slice(1, -1)
+                        : jsonContent;
+                  }
+
+                  if (content) {
+                    accumulatedContent += content;
+                    // 使用防抖更新
+                    debouncedUpdate(accumulatedContent);
+                  }
+                } else if (line.startsWith("8:")) {
+                  // Vercel AI SDK Data Stream Protocol 完成信号
+                  // 清除防抖定时器，立即更新最终内容
+                  if (updateTimer) {
+                    clearTimeout(updateTimer);
+                  }
+                  updateAnalysis(targetAnalysis.id, {
+                    content: accumulatedContent,
+                    isLoading: false,
+                  });
+                  return;
+                } else if (line.startsWith("9:")) {
+                  // Vercel AI SDK Data Stream Protocol 错误信号
+                  if (updateTimer) {
+                    clearTimeout(updateTimer);
+                  }
+                  try {
+                    const errorData = JSON.parse(line.slice(2));
+                    throw new Error(errorData.error || "Stream error");
+                  } catch {
+                    throw new Error("Stream error");
+                  }
+                } else if (line.startsWith("data: ")) {
+                  // OpenAI SSE 格式（向后兼容）
                   const data = line.slice(6).trim();
 
                   if (data === "[DONE]") {
                     // 流结束
+                    if (updateTimer) {
+                      clearTimeout(updateTimer);
+                    }
                     updateAnalysis(targetAnalysis.id, {
+                      content: accumulatedContent,
                       isLoading: false,
                     });
                     return;
@@ -322,10 +370,8 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                       if (delta.content) {
                         accumulatedContent += delta.content;
 
-                        // 实时更新内容
-                        updateAnalysis(targetAnalysis.id, {
-                          content: accumulatedContent,
-                        });
+                        // 使用防抖更新
+                        debouncedUpdate(accumulatedContent);
                       }
                     }
                   } catch (parseError) {
@@ -345,6 +391,10 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
             }
           } finally {
             reader.releaseLock();
+            // 清理定时器
+            if (updateTimer) {
+              clearTimeout(updateTimer);
+            }
           }
 
           // 确保最终状态正确
@@ -423,9 +473,266 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
 
       getAvailablePrompts: () => {
         const { enabledPrompts } = get();
-        // 返回所有enabled prompts，不再根据used状态过滤
-        // 保留used状态追踪机制，但不在UI层面隐藏已使用的prompts
-        return enabledPrompts;
+        // 确保始终返回数组，并过滤掉无效的prompt
+        return (enabledPrompts || []).filter(
+          (prompt) =>
+            prompt &&
+            typeof prompt === "object" &&
+            prompt.id &&
+            prompt.name &&
+            prompt.content,
+        );
+      },
+
+      generateAnalysisUpdated: async (
+        contentId,
+        analysisInstruction,
+        promptId,
+        title,
+      ) => {
+        const {
+          addAnalysis,
+          updateAnalysis,
+          setGenerating,
+          setError,
+          markPromptAsUsed,
+        } = get();
+
+        // 标记prompt为已使用
+        markPromptAsUsed(promptId);
+
+        // 创建一个loading状态的分析
+        const loadingAnalysis = {
+          type: "custom" as const,
+          title: title || "AI 分析",
+          content: "",
+          prompt: analysisInstruction,
+          promptId,
+          isExpanded: true,
+          isLoading: true,
+          contentId,
+        };
+
+        addAnalysis(loadingAnalysis);
+        setGenerating(true);
+        setError(null);
+
+        try {
+          // 获取认证token
+          const token = getCookie("accessToken");
+          if (!token) {
+            throw new Error("未找到认证令牌，请重新登录");
+          }
+
+          const apiUrl =
+            process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+          // 调用流式分析API
+          const response = await fetch(
+            `${apiUrl}/api/v1/content/${contentId}/analyze-ai-sdk`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                user_prompt: analysisInstruction, // 分析指令
+                model: "or-llama-3-1-8b-instruct",
+              }),
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          // 处理流式响应
+          const reader = response.body?.getReader();
+          if (!reader) {
+            throw new Error("无法获取响应流");
+          }
+
+          const decoder = new TextDecoder();
+          let accumulatedContent = "";
+          let updateTimer: NodeJS.Timeout | null = null;
+
+          // 找到刚创建的分析
+          const currentAnalyses = get().analyses;
+          const targetAnalysis = currentAnalyses.find(
+            (a) =>
+              a.contentId === contentId &&
+              a.isLoading &&
+              a.promptId === promptId,
+          );
+
+          if (!targetAnalysis) {
+            throw new Error("无法找到目标分析");
+          }
+
+          // 防抖更新函数，避免过于频繁的渲染
+          const debouncedUpdate = (content: string) => {
+            if (updateTimer) {
+              clearTimeout(updateTimer);
+            }
+            updateTimer = setTimeout(() => {
+              updateAnalysis(targetAnalysis.id, {
+                content,
+              });
+            }, 50); // 50ms 防抖
+          };
+
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+
+              if (done) break;
+
+              const chunk = decoder.decode(value, { stream: true });
+              const lines = chunk.split("\n");
+
+              for (const line of lines) {
+                // 支持 Data Stream Protocol 和 OpenAI SSE 格式
+                if (line.startsWith("0:")) {
+                  // Vercel AI SDK Data Stream Protocol 文本内容
+                  // 解析 JSON 转义的内容
+                  const jsonContent = line.slice(2); // 移除 "0:"
+                  let content = "";
+
+                  try {
+                    // 使用 JSON.parse 正确解析转义字符
+                    content = JSON.parse(jsonContent);
+                  } catch (_parseError) {
+                    void _parseError; // 明确标记参数已被处理
+                    // 如果解析失败，尝试简单的字符串处理（向后兼容）
+                    content =
+                      jsonContent.startsWith('"') && jsonContent.endsWith('"')
+                        ? jsonContent.slice(1, -1)
+                        : jsonContent;
+                  }
+
+                  if (content) {
+                    accumulatedContent += content;
+                    // 使用防抖更新
+                    debouncedUpdate(accumulatedContent);
+                  }
+                } else if (line.startsWith("8:")) {
+                  // Vercel AI SDK Data Stream Protocol 完成信号
+                  // 清除防抖定时器，立即更新最终内容
+                  if (updateTimer) {
+                    clearTimeout(updateTimer);
+                  }
+                  updateAnalysis(targetAnalysis.id, {
+                    content: accumulatedContent,
+                    isLoading: false,
+                  });
+                  return;
+                } else if (line.startsWith("9:")) {
+                  // Vercel AI SDK Data Stream Protocol 错误信号
+                  if (updateTimer) {
+                    clearTimeout(updateTimer);
+                  }
+                  try {
+                    const errorData = JSON.parse(line.slice(2));
+                    throw new Error(errorData.error || "Stream error");
+                  } catch {
+                    throw new Error("Stream error");
+                  }
+                } else if (line.startsWith("data: ")) {
+                  // OpenAI SSE 格式（向后兼容）
+                  const data = line.slice(6).trim();
+
+                  if (data === "[DONE]") {
+                    // 流结束
+                    if (updateTimer) {
+                      clearTimeout(updateTimer);
+                    }
+                    updateAnalysis(targetAnalysis.id, {
+                      content: accumulatedContent,
+                      isLoading: false,
+                    });
+                    return;
+                  }
+
+                  try {
+                    const parsed = JSON.parse(data);
+
+                    // 检查是否是错误
+                    if (parsed.error) {
+                      throw new Error(parsed.message || "LLM 服务错误");
+                    }
+
+                    // 提取内容
+                    if (
+                      parsed.choices &&
+                      parsed.choices[0] &&
+                      parsed.choices[0].delta
+                    ) {
+                      const delta = parsed.choices[0].delta;
+                      if (delta.content) {
+                        accumulatedContent += delta.content;
+
+                        // 使用防抖更新
+                        debouncedUpdate(accumulatedContent);
+                      }
+                    }
+                  } catch (parseError) {
+                    // 检查是否是JSON解析错误还是业务错误
+                    if (
+                      parseError instanceof Error &&
+                      parseError.message.includes("LLM 服务错误")
+                    ) {
+                      // 这是业务错误，需要抛出
+                      throw parseError;
+                    }
+                    // 其他情况是JSON解析错误，可能是不完整的JSON，继续处理
+                    console.warn("解析流数据失败:", parseError);
+                  }
+                }
+              }
+            }
+          } finally {
+            reader.releaseLock();
+            // 清理定时器
+            if (updateTimer) {
+              clearTimeout(updateTimer);
+            }
+          }
+
+          // 确保最终状态正确
+          updateAnalysis(targetAnalysis.id, {
+            content: accumulatedContent || "分析完成，但未收到内容",
+            isLoading: false,
+          });
+        } catch (error) {
+          console.error("生成分析失败:", error);
+          setError(error instanceof Error ? error.message : "生成分析失败");
+
+          // 更新失败的分析
+          const currentAnalyses = get().analyses;
+          const targetAnalysis = currentAnalyses.find(
+            (a) =>
+              a.contentId === contentId &&
+              a.isLoading &&
+              a.promptId === promptId,
+          );
+
+          if (targetAnalysis) {
+            updateAnalysis(targetAnalysis.id, {
+              content: "分析生成失败",
+              isLoading: false,
+              error: error instanceof Error ? error.message : "分析生成失败",
+            });
+          }
+        } finally {
+          setGenerating(false);
+        }
+      },
+
+      // Get prompt recommendations (从 enabled prompts 转换)
+      getPromptRecommendations: () => {
+        const { enabledPrompts } = get();
+        return enabledPrompts.map(convertPromptToRecommendation);
       },
     }),
     {
@@ -433,15 +740,3 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
     },
   ),
 );
-
-// 生成模拟内容的辅助函数
-// const generateMockContent = (type: LLMAnalysis['type']): string => {
-//   const mockContents = {
-//     summary: "这是一个关于人工智能发展的文章摘要。文章详细介绍了AI技术的历史演进、当前应用场景以及未来发展趋势。",
-//     key_points: "• AI技术正在快速发展\n• 机器学习是核心技术\n• 应用场景日益广泛\n• 需要关注伦理问题",
-//     questions: "1. AI技术的发展会对就业产生什么影响？\n2. 如何确保AI系统的安全性和可靠性？\n3. AI在医疗领域的应用前景如何？",
-//     insights: "通过分析可以看出，AI技术的发展呈现出加速趋势，但同时也面临着技术、伦理和社会层面的挑战。",
-//     custom: "基于自定义提示词生成的分析内容，展示了内容的深度理解和独特见解。"
-//   };
-//   return mockContents[type] || "分析内容";
-// };

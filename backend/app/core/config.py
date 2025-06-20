@@ -135,6 +135,9 @@ class Settings(BaseSettings):
     LITELLM_PROXY_URL: str = "http://litellm:4000"
     LITELLM_MASTER_KEY: str | None = None
 
+    # LLM 配置
+    DEFAULT_LLM_MODEL: str = "or-gemini-2.5-flash-preview-05-20"
+
     # Database configuration
     DATABASE_TYPE: Literal["postgres", "supabase"] = "postgres"
 

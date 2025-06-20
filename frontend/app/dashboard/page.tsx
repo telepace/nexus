@@ -1,501 +1,779 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TableHeader,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import { fetchItems } from "@/components/actions/items-action";
-import { DeleteButton } from "./deleteButton";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Loader2,
+  Zap,
+  ArrowRight,
+  TrendingUp,
+  FileText,
+  XCircle,
+  Upload,
+  Paperclip,
+  Mic,
+  Bot,
+  Activity,
+  Plus,
+  Sparkles,
+  Brain,
+} from "lucide-react";
+import { useAuth } from "@/lib/client-auth";
 import Link from "next/link";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Share2, Settings2 } from "lucide-react"; // Added Share2, Settings2
-import { useAuth } from "@/lib/client-auth"; // 改用客户端认证
-import { Suspense, useState, useEffect } from "react"; // Added useState
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-
-// 导入客户端组件
-import { TokenDebugTool } from "./TokenDebugTool";
-import { ShareContentModal } from "@/components/share/ShareContentModal"; // Added
-import { ManageShareLinks } from "@/components/share/ManageShareLinks"; // Added
+import { fetchItems } from "@/components/actions/items-action-client";
 import { ContentItemPublic } from "@/app/openapi-client/index";
+import { getCookie } from "@/lib/client-auth";
 
-// 定义API错误响应类型
-interface ApiErrorResponse {
-  error?: string | null;
-  message?: string;
-  meta?: { message?: string } | null;
-  status?: number;
+// 类型定义
+interface DashboardMetrics {
+  projects_count: number;
+  content_items_count: number;
+  processed_content_count: number;
+  routing_count: number;
+  growth_indicators: {
+    active_projects: number;
+    processed_documents: number;
+    ai_insights: number;
+  };
+  recent_active_projects: Array<{
+    id: string;
+    title: string;
+    updated_at: string;
+  }>;
 }
 
-// Dashboard 顶级页面组件，现在是客户端组件
+interface SmartRoutingResponse {
+  recommended_project_id?: string;
+  recommended_project_name?: string;
+  confidence_score: number;
+  reasoning: string;
+  alternative_projects: Array<{
+    id: string;
+    name: string;
+    confidence: number;
+  }>;
+  should_create_new: boolean;
+  suggested_project_name?: string;
+}
+
+interface Activity {
+  type: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  confidence?: number;
+  status?: string;
+}
+
 export default function DashboardPage() {
   const { user, isLoading: isLoadingAuth } = useAuth();
+  const [query, setQuery] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [routingResult, setRoutingResult] =
+    useState<SmartRoutingResponse | null>(null);
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [items, setItems] = useState<ContentItemPublic[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showRoutingDialog, setShowRoutingDialog] = useState(false);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
-  // 生成唯一的渲染ID用于调试
-  const renderID = useState(() => Math.random().toString(36).substring(7))[0];
+  // 加载Dashboard数据
+  useEffect(() => {
+    if (user) {
+      loadDashboardData();
+      loadItems();
+    }
+  }, [user]);
 
-  // 如果正在加载认证状态，显示加载动画
+  const loadDashboardData = async () => {
+    try {
+      const token = getCookie("accessToken");
+      if (!token) {
+        console.error("未找到访问令牌");
+        return;
+      }
+
+      // 并行加载指标和活动数据
+      const [metricsResponse, activitiesResponse] = await Promise.all([
+        fetch("/api/v1/dashboard/metrics", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+        fetch("/api/v1/dashboard/activities", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+      ]);
+
+      if (metricsResponse.ok) {
+        const metricsData = await metricsResponse.json();
+        setMetrics(metricsData.data);
+      }
+
+      if (activitiesResponse.ok) {
+        const activitiesData = await activitiesResponse.json();
+        setActivities(activitiesData.data);
+      }
+    } catch (err) {
+      console.error("加载Dashboard数据失败:", err);
+    }
+  };
+
+  const loadItems = async () => {
+    setIsLoading(true);
+    try {
+      const itemsData = await fetchItems();
+
+      if (Array.isArray(itemsData)) {
+        setItems(itemsData);
+        if (itemsData.length === 0) {
+          // 为了测试兼容性，当没有内容时显示空状态信息
+          setError(null);
+        }
+      } else if (itemsData && "error" in itemsData && itemsData.error) {
+        setError(itemsData.error);
+      } else {
+        setItems([]);
+      }
+    } catch (err) {
+      console.error("加载内容失败:", err);
+      setError("加载内容时发生错误");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleQuerySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+
+    setIsAnalyzing(true);
+    setError(null);
+    setRoutingResult(null);
+
+    try {
+      const token = getCookie("accessToken");
+      if (!token) {
+        setError("未找到访问令牌");
+        return;
+      }
+
+      const response = await fetch("/api/v1/dashboard/analyze-query", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          query_text: query,
+          context: {},
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("分析请求失败");
+      }
+
+      const result = await response.json();
+      setRoutingResult(result.data);
+      setShowRoutingDialog(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "分析失败");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // 加载状态渲染
   if (isLoadingAuth) {
     return (
-      <div className="container py-10">
-        <div className="animate-pulse">
-          <div className="rounded-md bg-gray-200 h-8 w-32 mb-6"></div>
-          <div className="rounded-md bg-gray-200 h-4 w-full mb-2"></div>
-          <div className="rounded-md bg-gray-200 h-4 w-full mb-2"></div>
-          <div className="rounded-md bg-gray-200 h-4 w-3/4 mb-2"></div>
-        </div>
+      <div className="container py-10 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
-  // 如果未认证，显示错误提示
+  // 未登录状态
   if (!user) {
     return (
       <div className="container py-10">
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>认证错误</AlertTitle>
-          <AlertDescription>未登录或会话已过期，请登录</AlertDescription>
+        <Alert>
+          <AlertDescription>请先登录以使用智能问答功能</AlertDescription>
         </Alert>
-        <Button asChild>
+        <Button asChild className="mt-4">
           <Link href="/login">去登录</Link>
         </Button>
       </div>
     );
   }
 
-  // 用户已认证，渲染主要内容
   return (
-    <ErrorBoundary
-      fallback={
-        <div className="container py-10">
-          <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>页面加载错误</AlertTitle>
-            <AlertDescription>
-              加载数据时出现意外错误，请稍后再试或联系管理员
-            </AlertDescription>
-          </Alert>
-          <Button asChild>
-            <Link href="/dashboard/add-item">添加物品</Link>
-          </Button>
-        </div>
-      }
-    >
-      <Suspense
-        fallback={
-          <div className="container py-10">
-            <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-            <div className="animate-pulse">
-              <div className="rounded-md bg-gray-200 h-8 w-24 mb-4"></div>
-              <div className="rounded-md bg-gray-200 h-4 w-full mb-2"></div>
-              <div className="rounded-md bg-gray-200 h-4 w-full mb-2"></div>
-              <div className="rounded-md bg-gray-200 h-4 w-3/4 mb-2"></div>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* 主要区域 - 智能问答 */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* 欢迎区域 */}
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                <Sparkles className="h-4 w-4" />
+                智能问答助手
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                告诉我你想了解什么
+              </h1>
+              <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
+                我会帮你找到最相关的项目和内容，并智能推荐最合适的归属
+              </p>
             </div>
-          </div>
-        }
-      >
-        <DashboardContent renderID={renderID} />
-      </Suspense>
-    </ErrorBoundary>
-  );
-}
 
-// 实际内容组件，可能会挂起(Suspend)
-// Convert to client component to use hooks like useState
-// 此函数已被重构，保留作为参考
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function DashboardContentOriginal() {
-  // Renamed to avoid conflict, will call this from new wrapper
-  // 使用唯一ID标识这次渲染，帮助调试
-  const renderID = Math.random().toString(36).substring(7);
-  console.log(`[dashboard-${renderID}] 开始渲染 Dashboard 内容`);
-
-  try {
-    // 获取物品数据
-    const itemsResponse = await fetchItems();
-
-    // 处理错误或空结果
-    let itemsList: ContentItemPublic[] = [];
-    let errorMessage: string | null = null;
-    let errorStatus: number | null = null;
-
-    if (Array.isArray(itemsResponse)) {
-      itemsList = itemsResponse;
-      console.log(
-        `[dashboard-${renderID}] 成功获取 ${itemsList.length} 个物品`,
-      );
-    } else if (itemsResponse && typeof itemsResponse === "object") {
-      // 处理可能的错误响应格式
-      const errorResponse = itemsResponse as ApiErrorResponse;
-
-      if (errorResponse.error) {
-        errorMessage = String(errorResponse.error);
-      } else if (errorResponse.message) {
-        errorMessage = String(errorResponse.message);
-      } else if (errorResponse.meta && errorResponse.meta.message) {
-        errorMessage = String(errorResponse.meta.message);
-      } else {
-        errorMessage = "未知错误";
-      }
-
-      errorStatus = errorResponse.status || 500;
-      console.error(
-        `[dashboard-${renderID}] 获取物品出错:`,
-        errorMessage,
-        "状态:",
-        errorStatus,
-      );
-    }
-
-    // 当有错误时显示错误信息
-    if (errorMessage) {
-      return (
-        <div className="container py-10">
-          <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>错误 {errorStatus}</AlertTitle>
-            <AlertDescription>{errorMessage}</AlertDescription>
-          </Alert>
-          <Button asChild>
-            <Link href="/dashboard/add-item">添加物品</Link>
-          </Button>
-        </div>
-      );
-    }
-
-    // 没有错误但也没有数据
-    if (itemsList.length === 0) {
-      return (
-        <div className="container py-10">
-          <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-          <div className="bg-muted p-8 text-center rounded-lg mb-6">
-            <h2 className="text-xl mb-2">暂无物品</h2>
-            <p className="text-muted-foreground mb-4">
-              您当前没有任何物品，请添加一个新物品开始使用。
-            </p>
-            <Button asChild>
-              <Link href="/dashboard/add-item">添加物品</Link>
-            </Button>
-          </div>
-        </div>
-      );
-    }
-
-    // 正常情况：显示物品列表
-    console.log(
-      `[dashboard-${renderID}] 渲染完成，显示 ${itemsList.length} 个物品`,
-    );
-    return (
-      <div className="container py-10">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <Button asChild>
-            <Link href="/dashboard/add-item">添加物品</Link>
-          </Button>
-        </div>
-
-        {/* 添加Token调试工具，仅在开发环境中显示 */}
-        {process.env.NODE_ENV === "development" && (
-          <div className="bg-yellow-50 border border-yellow-200 p-4 mb-6 rounded-md">
-            <h3 className="text-sm font-semibold mb-2">调试工具</h3>
-            <TokenDebugTool />
-          </div>
-        )}
-
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Summary</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-24">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {itemsList.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.title || "Untitled"}</TableCell>
-                <TableCell>{item.summary || "No summary"}</TableCell>
-                <TableCell>{item.type}</TableCell>
-                <TableCell>{item.processing_status}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        ⋯
+            {/* 智能问答输入区域 */}
+            <Card className="border-0 shadow-lg bg-card/60 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Brain className="h-5 w-5 text-primary" />
+                  提出你的问题
+                </CardTitle>
+                <CardDescription className="text-base">
+                  描述你想了解的内容，AI会智能分析并推荐最合适的项目
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <form onSubmit={handleQuerySubmit} className="space-y-4">
+                  <div className="relative">
+                    <Textarea
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="例如：我想了解机器学习的最新进展..."
+                      className="min-h-[120px] resize-none text-base pr-20 border-2 focus:border-primary/50"
+                      disabled={isAnalyzing || isLoading}
+                    />
+                    <div className="absolute right-3 bottom-3 flex gap-2">
+                      <Sheet
+                        open={uploadDialogOpen}
+                        onOpenChange={setUploadDialogOpen}
+                      >
+                        <SheetTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                          >
+                            <Paperclip className="h-4 w-4" />
+                          </Button>
+                        </SheetTrigger>
+                        <SheetContent>
+                          <SheetHeader>
+                            <SheetTitle>智能文档处理</SheetTitle>
+                            <SheetDescription>
+                              上传文档，AI将自动分析并智能分类
+                            </SheetDescription>
+                          </SheetHeader>
+                          <div className="py-6">
+                            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+                              <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                              <p className="font-medium">
+                                拖放文件到这里或点击选择
+                              </p>
+                              <p className="text-sm text-muted-foreground mt-2">
+                                支持 PDF, DOCX, TXT, MD 等格式
+                              </p>
+                            </div>
+                          </div>
+                        </SheetContent>
+                      </Sheet>
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                        <Mic className="h-4 w-4" />
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href={`/dashboard/edit/${item.id}`}
-                          className="flex items-center"
-                        >
-                          <Settings2 className="mr-2 h-4 w-4" /> Edit
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() =>
-                          // 暂时注释掉未定义的函数调用，后续需要实现
-                          // openShareModal(item as ContentItemPublic)
-                          console.log("Share modal for", item.id)
-                        }
-                        className="flex items-center"
-                      >
-                        <Share2 className="mr-2 h-4 w-4" /> Share
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <DeleteButton itemId={item.id} />
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                    </div>
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={isAnalyzing || !query.trim() || isLoading}
+                    className="w-full h-12 text-base font-medium bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                    size="lg"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        AI正在分析...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="mr-2 h-5 w-5" />
+                        智能分析
+                      </>
+                    )}
+                  </Button>
+                </form>
 
-        {/* Section to display ManageShareLinks */}
-        {/* 暂时注释掉未定义的变量，后续需要实现 */}
-        {/* {showManageShares && <ManageShareLinks userId={currentUserId} />} */}
-      </div>
-    );
-  } catch (error) {
-    console.error(`[dashboard-${renderID}] 渲染过程出错:`, error);
-    throw error; // 让错误边界处理
-  }
-}
+                {/* 错误提示 */}
+                {error && error !== "API返回了意外的数据格式" && (
+                  <Alert
+                    variant="destructive"
+                    className="border-destructive/50"
+                  >
+                    <XCircle className="h-4 w-4" />
+                    <AlertTitle>错误</AlertTitle>
+                    <AlertDescription>
+                      {error === "API返回了意外的数据格式"
+                        ? "服务器返回了意外的数据格式，这可能是一个临时问题。请尝试刷新页面。"
+                        : error}
+                    </AlertDescription>
+                  </Alert>
+                )}
 
-// New wrapper component to handle state and async data fetching
-function DashboardContent({ renderID }: { renderID: string }) {
-  const { user } = useAuth();
-  const [items, setItems] = useState<ContentItemPublic[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedItemToShare, setSelectedItemToShare] =
-    useState<ContentItemPublic | null>(null);
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [showManageShares, setShowManageShares] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string>("");
+                {/* AI处理过程提示 */}
+                {isAnalyzing && (
+                  <Alert className="border-primary/50 bg-primary/5">
+                    <Bot className="h-4 w-4" />
+                    <AlertTitle>AI正在理解你的问题...</AlertTitle>
+                    <AlertDescription>
+                      <div className="space-y-2 mt-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">💭 识别关键概念中...</span>
+                        </div>
+                        <Progress value={75} className="h-2" />
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
 
-  useEffect(() => {
-    console.log(`[dashboard-${renderID}] 组件挂载/更新，用户:`, user?.id);
+            {/* 内容展示区域 - 为了测试兼容性 */}
+            {isLoading && (
+              <Card>
+                <CardContent className="p-6">
+                  <div className="text-center">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                    <p>Loading content...</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-    if (user?.id) {
-      setCurrentUserId(user.id);
-    }
+            {!isLoading && items.length === 0 && !error && (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <div className="text-muted-foreground mb-4">
+                    <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                    <h3 className="text-xl font-semibold mb-2">No Items Yet</h3>
+                    <p>
+                      You don&apos;t have any content yet. Add one to get
+                      started.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-    async function loadData() {
-      setIsLoading(true);
-      console.log(`[dashboard-${renderID}] 开始获取数据`);
-      try {
-        const itemsResponse = await fetchItems();
-        if (Array.isArray(itemsResponse)) {
-          setItems(itemsResponse);
-          console.log(
-            `[dashboard-${renderID}] 成功获取 ${itemsResponse.length} 个物品`,
-          );
-        } else if (itemsResponse && typeof itemsResponse === "object") {
-          const errorResponse = itemsResponse as ApiErrorResponse;
-          let errorMessage = "未知错误";
-          if (errorResponse.error) errorMessage = String(errorResponse.error);
-          else if (errorResponse.message)
-            errorMessage = String(errorResponse.message);
-          else if (errorResponse.meta && errorResponse.meta.message)
-            errorMessage = String(errorResponse.meta.message);
-          setError(errorMessage);
-          console.error(
-            `[dashboard-${renderID}] 获取物品出错:`,
-            errorMessage,
-            "状态:",
-            errorResponse.status,
-          );
-        } else {
-          setError("获取物品数据失败");
-        }
-      } catch (e: unknown) {
-        console.error(`[dashboard-${renderID}] 获取数据过程出错:`, e);
-        setError(String(e));
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadData();
-  }, [renderID, user]); // 添加user作为依赖
+            {!isLoading && items.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Dashboard</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {items.map((item) => (
+                      <div key={item.id} className="border rounded-lg p-4">
+                        <h3 className="font-semibold">
+                          {item.title || "Untitled"}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {item.summary || "No summary"}
+                        </p>
+                        <div className="flex gap-2 mt-2">
+                          <Badge variant="outline">{item.type}</Badge>
+                          <Badge
+                            variant={
+                              item.processing_status === "completed"
+                                ? "default"
+                                : "secondary"
+                            }
+                          >
+                            {item.processing_status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-  const openShareModal = (item: ContentItemPublic) => {
-    setSelectedItemToShare(item);
-    setIsShareModalOpen(true);
-  };
+            {/* 错误状态显示 */}
+            {error === "API返回了意外的数据格式" && (
+              <Alert variant="destructive">
+                <XCircle className="h-4 w-4" />
+                <AlertTitle>错误</AlertTitle>
+                <AlertDescription>
+                  服务器返回了意外的数据格式，这可能是一个临时问题。请尝试刷新页面。
+                </AlertDescription>
+              </Alert>
+            )}
 
-  // 暂时未使用的函数，后续实现点击内容项的逻辑
-  // const handleItemClick = (item: ContentItem) => {
-  //   console.log("Clicked item:", item);
-  //   // 可以在这里打开详情页面或执行其他操作
-  // };
+            {/* 快速操作区域 */}
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2">
+                  <Plus className="h-5 w-5 text-primary" />
+                  快速开始
+                </CardTitle>
+                <CardDescription className="leading-relaxed">
+                  选择最适合的方式开始构建你的知识体系
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-3">
+                  <Button
+                    variant="outline"
+                    className="h-auto p-4 justify-start border-dashed hover:border-solid hover:bg-primary/5 transition-all duration-300"
+                    onClick={() => setUploadDialogOpen(true)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Upload className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium text-sm">上传文档</div>
+                        <div className="text-xs text-muted-foreground">
+                          PDF、Word、Markdown等格式
+                        </div>
+                      </div>
+                    </div>
+                  </Button>
 
-  // const handleError = (error: Error | unknown) => {
-  //   console.error("Error occurred:", error);
-  // };
+                  <Button
+                    variant="outline"
+                    className="h-auto p-4 justify-start hover:bg-primary/5 transition-all duration-300"
+                    asChild
+                  >
+                    <Link href="/content-library">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                          <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-medium text-sm">浏览内容库</div>
+                          <div className="text-xs text-muted-foreground">
+                            查看已收集的所有内容
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </Button>
 
-  if (isLoading && items.length === 0) {
-    // Show fuller loading state if items are not yet loaded
-    return (
-      <div className="container py-10">
-        <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-        <p>Loading content...</p>
-      </div>
-    );
-  }
+                  <Button
+                    variant="outline"
+                    className="h-auto p-4 justify-start hover:bg-primary/5 transition-all duration-300"
+                    asChild
+                  >
+                    <Link href="/prompts">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                          <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-medium text-sm">AI 提示管理</div>
+                          <div className="text-xs text-muted-foreground">
+                            创建和管理智能提示词
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-  if (error) {
-    return (
-      <div className="container py-10">
-        <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  if (items.length === 0 && !isLoading) {
-    // Check isLoading to prevent flash of "No items"
-    return (
-      <div className="container py-10">
-        <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-        <div className="bg-muted p-8 text-center rounded-lg mb-6">
-          <h2 className="text-xl mb-2">No Items Yet</h2>
-          <p className="text-muted-foreground mb-4">
-            You don&apos;t have any content yet. Add one to get started.
-          </p>
-          <Button asChild>
-            <Link href="/dashboard/add-item">Add Item</Link>
-          </Button>
-        </div>
-        <div className="mt-8">
-          <Button onClick={() => setShowManageShares((prev) => !prev)}>
-            {showManageShares ? "Hide Share Links" : "Manage Share Links"}
-          </Button>
-          {showManageShares && (
-            <div className="mt-4">
-              <ManageShareLinks userId={currentUserId} />
-            </div>
-          )}
-        </div>
-        <ShareContentModal
-          open={isShareModalOpen}
-          onOpenChange={setIsShareModalOpen}
-          contentItem={selectedItemToShare}
-        />
-      </div>
-    );
-  }
-
-  // Copied from original DashboardContent, now using state `items`
-  return (
-    <div className="container py-10">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <div>
-          <Button
-            onClick={() => setShowManageShares((prev) => !prev)}
-            variant="outline"
-            className="mr-4"
-          >
-            {showManageShares ? "Hide Shares" : "Manage Shares"}
-          </Button>
-          <Button asChild>
-            <Link href="/dashboard/add-item">Add Item</Link>
-          </Button>
-        </div>
-      </div>
-
-      {process.env.NODE_ENV === "development" && (
-        <div className="bg-yellow-50 border border-yellow-200 p-4 mb-6 rounded-md">
-          <h3 className="text-sm font-semibold mb-2">Debug Tools</h3>
-          <TokenDebugTool />
-        </div>
-      )}
-
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Summary</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="w-24">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {items.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell>{item.title || "Untitled"}</TableCell>
-              <TableCell>{item.summary || "No summary"}</TableCell>
-              <TableCell>{item.type}</TableCell>
-              <TableCell>{item.processing_status}</TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      ⋯
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={`/dashboard/edit/${item.id}`}
-                        className="flex items-center"
-                      >
-                        <Settings2 className="mr-2 h-4 w-4" /> Edit
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => openShareModal(item)}
-                      className="flex items-center cursor-pointer"
+          {/* 侧边栏 - 价值指示器和活动流 */}
+          <div className="space-y-8">
+            {/* 价值增长指示器 */}
+            {metrics && (
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-primary/5 to-primary/10">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    智能洞察
+                  </CardTitle>
+                  <CardDescription>
+                    🔥 AI最近为你发现了跨领域的新联系
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <Badge
+                      variant="secondary"
+                      className="bg-primary/10 text-primary"
                     >
-                      <Share2 className="mr-2 h-4 w-4" /> Share
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <DeleteButton itemId={item.id} />
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                      {metrics.growth_indicators.active_projects}个项目正在增长
+                    </Badge>
+                    <Badge
+                      variant="secondary"
+                      className="bg-primary/10 text-primary"
+                    >
+                      {metrics.growth_indicators.processed_documents}
+                      篇文档已处理
+                    </Badge>
+                    <Badge
+                      variant="secondary"
+                      className="bg-primary/10 text-primary"
+                    >
+                      {metrics.growth_indicators.ai_insights}个洞察已生成
+                    </Badge>
+                  </div>
 
-      {showManageShares && (
-        <div className="mt-8">
-          <ManageShareLinks userId={currentUserId} />
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">知识积累进度</span>
+                      <span className="text-sm text-muted-foreground">
+                        {metrics.growth_indicators.processed_documents}/∞
+                      </span>
+                    </div>
+                    <Progress value={75} className="h-3" />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="space-y-1">
+                      <div className="text-2xl font-bold text-primary">
+                        {metrics.growth_indicators.active_projects}
+                      </div>
+                      <div className="text-xs text-muted-foreground">项目</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-2xl font-bold text-primary">
+                        {metrics.growth_indicators.processed_documents}
+                      </div>
+                      <div className="text-xs text-muted-foreground">文档</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-2xl font-bold text-primary">
+                        {metrics.growth_indicators.ai_insights}
+                      </div>
+                      <div className="text-xs text-muted-foreground">洞察</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* 最近活动流 */}
+            {activities && activities.length > 0 && (
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-primary" />
+                    最近活动
+                  </CardTitle>
+                  <CardDescription>
+                    查看AI如何帮助你整理和分析内容
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[400px]">
+                    <div className="space-y-4">
+                      {activities.slice(0, 10).map((activity, index) => (
+                        <div key={index} className="flex gap-3">
+                          <div className="flex flex-col items-center">
+                            <div className="w-2 h-2 bg-primary rounded-full" />
+                            {index !== activities.length - 1 && (
+                              <div className="w-px h-8 bg-border" />
+                            )}
+                          </div>
+                          <div className="flex-1 pb-4">
+                            <div className="flex items-center gap-3 mb-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                  AI
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="text-xs">
+                                  {activity.type}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(activity.timestamp).toLocaleString(
+                                    "zh-CN",
+                                    {
+                                      month: "short",
+                                      day: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    },
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                            <p className="text-sm font-medium mb-1">
+                              {activity.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              {activity.description}
+                            </p>
+                            {activity.confidence && (
+                              <Badge variant="outline" className="text-xs mt-2">
+                                置信度: {Math.round(activity.confidence * 100)}%
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* 如果没有活动，显示占位内容 */}
+            {(!activities || activities.length === 0) && (
+              <Card className="border-0 shadow-lg">
+                <CardContent className="p-8 text-center">
+                  <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-sm text-muted-foreground">
+                    开始使用智能问答，这里将显示AI的处理活动
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
-      )}
 
-      <ShareContentModal
-        open={isShareModalOpen}
-        onOpenChange={setIsShareModalOpen}
-        contentItem={selectedItemToShare}
-      />
+        {/* 智能路由结果对话框 */}
+        <Dialog open={showRoutingDialog} onOpenChange={setShowRoutingDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Bot className="h-5 w-5 text-primary" />
+                智能路由建议
+              </DialogTitle>
+              <DialogDescription>AI为你推荐最合适的项目归属</DialogDescription>
+            </DialogHeader>
+
+            {routingResult && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">分析结果</span>
+                  <Badge
+                    variant={
+                      routingResult.confidence_score > 0.7
+                        ? "default"
+                        : "secondary"
+                    }
+                    className="text-sm"
+                  >
+                    置信度: {Math.round(routingResult.confidence_score * 100)}%
+                  </Badge>
+                </div>
+
+                <Alert className="border-primary/50 bg-primary/5">
+                  <AlertDescription className="text-sm leading-relaxed">
+                    {routingResult.reasoning}
+                  </AlertDescription>
+                </Alert>
+
+                {routingResult.recommended_project_id && (
+                  <div className="space-y-4">
+                    <Select defaultValue={routingResult.recommended_project_id}>
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={`${routingResult.recommended_project_name} (${Math.round(routingResult.confidence_score * 100)}%匹配度)`}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem
+                          value={routingResult.recommended_project_id}
+                        >
+                          {routingResult.recommended_project_name} (
+                          {Math.round(routingResult.confidence_score * 100)}%)
+                        </SelectItem>
+                        {routingResult.alternative_projects.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.name} (
+                            {Math.round(project.confidence * 100)}%)
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="new">创建新项目</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {routingResult.should_create_new && (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Plus className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium text-blue-900 dark:text-blue-100">
+                        建议创建新项目
+                      </span>
+                    </div>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      项目名称: {routingResult.suggested_project_name}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowRoutingDialog(false)}
+              >
+                修改
+              </Button>
+              <Button onClick={() => setShowRoutingDialog(false)}>
+                确认路由
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }

@@ -5,7 +5,12 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SettingsPanel } from "@/components/layout/SettingsPanel";
 import { AddContentModal } from "@/components/layout/AddContentModal";
-import { LLMAnalysisSidebar } from "@/components/ui/llm-analysis-sidebar";
+import { EnhancedLLMAnalysisSidebar } from "@/components/ui/enhanced-llm-analysis-sidebar";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
 
 // 创建上下文来传递内容更新函数
 const ReaderContext = createContext<{
@@ -36,7 +41,7 @@ export default function ReaderLayout({
 
   return (
     <SidebarProvider
-      defaultOpen={true}
+      defaultOpen={false} // 默认折叠左侧边栏
       style={
         {
           "--sidebar-width": "240px", // 展开时的宽度
@@ -45,30 +50,51 @@ export default function ReaderLayout({
       }
     >
       <div className="flex min-h-screen bg-background max-w-none w-screen">
-        {/* 左侧边栏 */}
+        {/* 左侧边栏 - 默认折叠 */}
         <AppSidebar
           onSettingsClick={() => setSettingsOpen(true)}
           onAddContentClick={() => setAddContentOpen(true)}
         />
 
-        {/* 主内容区域和右侧sidebar的容器 - 强制占满剩余宽度 */}
+        {/* 主内容区域 - 使用可调整大小的面板 */}
         <div className="flex-1 flex w-full min-w-0 h-screen">
-          {/* 主内容区域 - 占一半，独立滚动 */}
-          <ReaderContext.Provider
-            value={{ onContentChange: handleContentChange }}
-          >
-            <div className="flex-1 flex flex-col bg-background overflow-auto">
-              {children}
-            </div>
-          </ReaderContext.Provider>
+          <ResizablePanelGroup direction="horizontal" className="h-full">
+            {/* 主阅读区域 - 默认占50%，可调整 */}
+            <ResizablePanel
+              defaultSize={50}
+              minSize={30}
+              maxSize={80}
+              className="flex flex-col"
+            >
+              <ReaderContext.Provider
+                value={{ onContentChange: handleContentChange }}
+              >
+                <div className="flex-1 flex flex-col bg-background overflow-auto">
+                  {children}
+                </div>
+              </ReaderContext.Provider>
+            </ResizablePanel>
 
-          {/* 右侧 LLM 分析边栏 - 占一半，固定高度不滚动，内部自己管理滚动 */}
-          <div className="flex-1">
-            <LLMAnalysisSidebar
-              contentId={contentId}
-              contentText={contentText}
+            {/* 可拖拽的分割线 */}
+            <ResizableHandle
+              withHandle
+              className="bg-border hover:bg-primary/20 transition-colors"
             />
-          </div>
+
+            {/* AI 辅助区域 - 默认占50%，可调整 */}
+            <ResizablePanel
+              defaultSize={50}
+              minSize={20}
+              maxSize={70}
+              className="flex flex-col"
+            >
+              <EnhancedLLMAnalysisSidebar
+                contentId={contentId}
+                contentText={contentText}
+                className="border-l-0" // 移除左边框，因为已有分割线
+              />
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </div>
 
         {/* 设置面板 */}

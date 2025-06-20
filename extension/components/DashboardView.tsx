@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User } from '../lib/auth';
+import type { User } from '../lib/auth';
 import { useAuth } from '../lib/useAuth';
 
 interface DashboardViewProps {
@@ -26,12 +26,31 @@ export function DashboardView({ user }: DashboardViewProps) {
   useEffect(() => {
     // 获取当前页面信息
     getCurrentPageInfo();
+    
+    // 添加页面变化监听
+    const handleTabUpdate = () => {
+      setTimeout(() => {
+        getCurrentPageInfo();
+      }, 1000); // 等待页面加载完成
+    };
+    
+    // 监听标签页变化
+    chrome.tabs.onUpdated.addListener(handleTabUpdate);
+    chrome.tabs.onActivated.addListener(handleTabUpdate);
+    
+    return () => {
+      // 清理监听器
+      chrome.tabs.onUpdated.removeListener(handleTabUpdate);
+      chrome.tabs.onActivated.removeListener(handleTabUpdate);
+    };
   }, []);
 
   const getCurrentPageInfo = () => {
     setConnectionError(null);
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]?.id) {
+        console.log('[DashboardView] Attempting to connect to content script on tab:', tabs[0].id);
+        
         // 修复：使用正确的消息类型
         chrome.tabs.sendMessage(
           tabs[0].id,
@@ -39,22 +58,101 @@ export function DashboardView({ user }: DashboardViewProps) {
           (response) => {
             // 处理runtime错误
             if (chrome.runtime.lastError) {
-              console.log('[DashboardView] Content script connection error (normal):', chrome.runtime.lastError.message);
-              setConnectionError('页面内容脚本未加载，请刷新页面');
+              console.log('[DashboardView] Content script connection error:', chrome.runtime.lastError.message);
+              
+              // 检查是否是content script未注入的问题
+              if (chrome.runtime.lastError.message?.includes('Could not establish connection') || 
+                  chrome.runtime.lastError.message?.includes('Receiving end does not exist')) {
+                
+                // 尝试手动注入content script
+                tryInjectContentScript(tabs[0].id!);
+              } else {
+                setConnectionError('页面连接异常：' + chrome.runtime.lastError.message);
+              }
               return;
             }
             
             if (response?.success) {
+              console.log('[DashboardView] Successfully connected to content script');
               setCurrentPage(response.data);
               setConnectionError(null);
             } else {
               console.log('[DashboardView] Content extraction failed:', response?.error);
-              setConnectionError('内容提取失败');
+              setConnectionError('内容提取失败：' + (response?.error || '未知错误'));
             }
           }
         );
+      } else {
+        setConnectionError('无法获取当前标签页信息');
       }
     });
+  };
+
+  // 尝试手动注入content script
+  const tryInjectContentScript = async (tabId: number) => {
+    try {
+      console.log('[DashboardView] Attempting to inject content script manually...');
+      setConnectionError('🔄 正在注入页面脚本，请稍候...');
+      
+      // 先获取标签页信息，检查是否为特殊页面
+      const tab = await chrome.tabs.get(tabId);
+      
+      if (!tab.url) {
+        setConnectionError('❌ 无法获取页面URL');
+        return;
+      }
+      
+      // 检查是否为受保护的页面
+      if (tab.url.startsWith('chrome://') || 
+          tab.url.startsWith('chrome-extension://') ||
+          tab.url.startsWith('edge://') ||
+          tab.url.startsWith('moz-extension://') ||
+          tab.url.startsWith('about:') ||
+          tab.url.startsWith('file://')) {
+        setConnectionError('❌ 此页面不支持扩展功能（浏览器保护页面）');
+        return;
+      }
+      
+      // 动态注入content script
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        files: ['page-observer.1f0e3a13.js']
+      });
+      
+      // 等待2秒让脚本初始化
+      setTimeout(() => {
+        console.log('[DashboardView] Retrying after script injection...');
+        // 重新尝试连接
+        chrome.tabs.sendMessage(tabId, { type: 'EXTRACT_CONTENT' }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.log('[DashboardView] Injection failed, manual refresh needed');
+            setConnectionError('🔄 页面脚本注入失败，请手动刷新页面 (F5) 后重试');
+          } else if (response?.success) {
+            console.log('[DashboardView] Successfully connected after injection');
+            setCurrentPage(response.data);
+            setConnectionError('✅ 页面脚本注入成功！');
+            // 3秒后清除成功消息
+            setTimeout(() => setConnectionError(null), 3000);
+          } else {
+            setConnectionError('页面脚本注入成功，但内容提取失败');
+          }
+        });
+      }, 2000);
+      
+    } catch (error) {
+      console.error('[DashboardView] Manual injection failed:', error);
+      
+      // 根据错误类型提供不同的提示
+      if (error.message?.includes('Cannot access a chrome:// URL') ||
+          error.message?.includes('Cannot access contents of') ||
+          error.message?.includes('The extensions gallery cannot be scripted')) {
+        setConnectionError('❌ 此页面不支持扩展功能（浏览器保护页面）');
+      } else if (error.message?.includes('No tab with id')) {
+        setConnectionError('❌ 标签页已关闭或无效');
+      } else {
+        setConnectionError('❌ 自动修复失败，请手动刷新页面 (F5) 后重试');
+      }
+    }
   };
 
   const handleLogout = async () => {
@@ -85,15 +183,19 @@ export function DashboardView({ user }: DashboardViewProps) {
 
   const handleSavePage = () => {
     if (!currentPage) {
-      setConnectionError('没有页面数据可保存');
+      setConnectionError('没有页面数据可保存，请先刷新页面');
       return;
     }
 
     setIsLoading(true);
     setConnectionError(null);
     
+    console.log('[DashboardView] Starting save page process');
+    
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]?.id) {
+        console.log('[DashboardView] Sending save request to content script');
+        
         // 修复：使用正确的消息类型
         chrome.tabs.sendMessage(
           tabs[0].id,
@@ -104,25 +206,93 @@ export function DashboardView({ user }: DashboardViewProps) {
             // 处理runtime错误
             if (chrome.runtime.lastError) {
               console.log('[DashboardView] Save page connection error:', chrome.runtime.lastError.message);
-              setConnectionError('保存失败：扩展连接错误');
+              
+              // 如果content script未连接，提供明确的指导
+              if (chrome.runtime.lastError.message?.includes('Could not establish connection') || 
+                  chrome.runtime.lastError.message?.includes('Receiving end does not exist')) {
+                setConnectionError('❌ 页面脚本未加载，请刷新页面后重新尝试保存');
+              } else {
+                setConnectionError('❌ 保存失败：扩展连接错误 - ' + chrome.runtime.lastError.message);
+              }
               return;
             }
+            
+            console.log('[DashboardView] Save page response:', response);
             
             if (response?.success) {
               console.log('Page saved successfully');
               setConnectionError(null);
-              // 可以添加成功提示
+              // 显示成功消息
+              setConnectionError('✅ 页面已成功保存到内容库');
+              // 3秒后清除成功消息
+              setTimeout(() => {
+                setConnectionError(null);
+              }, 3000);
             } else {
               console.log('Save page failed:', response?.error);
-              setConnectionError(`保存失败：${response?.error || '未知错误'}`);
+              
+              // 特别处理认证错误
+              if (response?.error?.includes('未登录') || response?.error?.includes('认证失败')) {
+                setConnectionError('❌ 认证已过期，请退出后重新登录');
+              } else {
+                setConnectionError(`❌ 保存失败：${response?.error || '未知错误'}`);
+              }
             }
           }
         );
       } else {
         setIsLoading(false);
-        setConnectionError('无法获取当前标签页');
+        setConnectionError('❌ 无法获取当前标签页');
       }
     });
+  };
+
+  // 调试：检查认证状态
+  const handleDebugAuth = async () => {
+    console.log('[DashboardView] Debug: Checking auth status');
+    try {
+      const result = await chrome.storage.local.get(['accessToken', 'user']);
+      console.log('[DashboardView] Debug: Storage data:', result);
+      
+      if (result.accessToken) {
+        console.log('[DashboardView] Debug: Token present:', result.accessToken.substring(0, 20) + '...');
+        
+        // 测试API调用 - 与background script保持一致的逻辑
+        const response = await fetch(`${process.env.PLASMO_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/users/me`, {
+          headers: {
+            'Authorization': `Bearer ${result.accessToken}`,
+            'Content-Type': 'application/json'
+          },
+        });
+        
+        console.log('[DashboardView] Debug: API test response:', response.status, response.statusText);
+        
+        if (response.ok) {
+          const userData = await response.json();
+          console.log('[DashboardView] Debug: User data:', userData);
+          setConnectionError('🔍 调试: 认证状态正常，token有效');
+        } else if (response.status === 401) {
+          // 与background script保持一致：401时清除token
+          console.log('[DashboardView] Debug: Token expired (401), clearing storage');
+          await chrome.storage.local.remove(['accessToken', 'user']);
+          setConnectionError('🔍 调试: Token已过期，已清除本地存储，请重新登录');
+        } else {
+          console.log('[DashboardView] Debug: API test failed:', response.status);
+          setConnectionError(`🔍 调试: API错误 (${response.status}) - ${response.statusText}`);
+        }
+      } else {
+        console.log('[DashboardView] Debug: No token found');
+        setConnectionError('🔍 调试: 未找到token，请先登录');
+      }
+    } catch (error) {
+      console.error('[DashboardView] Debug: Error:', error);
+      setConnectionError(`🔍 调试: 网络错误 - ${error.message}`);
+    }
+    
+    // 5秒后清除调试消息
+    setTimeout(() => {
+      setConnectionError(null);
+    }, 5000);
   };
 
   const handleSummarize = () => {
@@ -206,21 +376,39 @@ export function DashboardView({ user }: DashboardViewProps) {
 
       {/* 错误提示 */}
       {connectionError && (
-        <div className="bg-yellow-50 border border-yellow-200 mx-4 mt-4 rounded-lg p-3">
+        <div className={`mx-4 mt-4 rounded-lg p-3 ${
+          connectionError.startsWith('✅') 
+            ? 'bg-green-50 border border-green-200' 
+            : 'bg-yellow-50 border border-yellow-200'
+        }`}>
           <div className="flex items-start">
             <div className="flex-shrink-0">
-              <svg className="w-5 h-5 text-yellow-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              {connectionError.startsWith('✅') ? (
+                <svg className="w-5 h-5 text-green-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 text-yellow-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
             </div>
             <div className="ml-3">
-              <p className="text-yellow-800 text-sm font-medium">{connectionError}</p>
-              <button
-                onClick={getCurrentPageInfo}
-                className="text-yellow-600 hover:text-yellow-800 text-xs underline mt-1"
-              >
-                重试
-              </button>
+              <p className={`text-sm font-medium ${
+                connectionError.startsWith('✅') 
+                  ? 'text-green-800' 
+                  : 'text-yellow-800'
+              }`}>
+                {connectionError}
+              </p>
+              {!connectionError.startsWith('✅') && (
+                <button
+                  onClick={getCurrentPageInfo}
+                  className="text-yellow-600 hover:text-yellow-800 text-xs underline mt-1"
+                >
+                  重试
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -366,6 +554,14 @@ export function DashboardView({ user }: DashboardViewProps) {
             v0.1.0
           </div>
         </div>
+        
+        {/* 调试按钮 */}
+        <button
+          onClick={handleDebugAuth}
+          className="w-full mb-2 flex items-center justify-center p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors text-xs font-medium"
+        >
+          🔍 调试认证状态
+        </button>
         
         <button
           onClick={handleLogout}

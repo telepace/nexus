@@ -1,12 +1,16 @@
 from fastapi import APIRouter
 
 from app.api.routes import (
+    ai_conversations,  # Add AI conversations router
+    chat,  # Add chat router
     content,  # Add content router
+    dashboard,  # Add dashboard router
     google_oauth,
     images,  # Added images router
     items,
     llm_service,
     login,
+    preprocessing,  # Add preprocessing router
     private,
     prompts,
     users,
@@ -23,11 +27,23 @@ api_router.include_router(google_oauth.router)
 api_router.include_router(prompts.router, prefix="/prompts", tags=["prompts"])
 api_router.include_router(llm_service.router, prefix="/llm", tags=["llm"])
 api_router.include_router(
+    chat.router, prefix="/chat", tags=["chat"]
+)  # Include chat router
+api_router.include_router(
     content.router, prefix="/content", tags=["content"]
 )  # Include content router
 api_router.include_router(
     images.router, prefix="/images", tags=["images"]
 )  # Include images router
+api_router.include_router(
+    dashboard.router, prefix="/dashboard", tags=["dashboard"]
+)  # Include dashboard router
+api_router.include_router(
+    preprocessing.router, prefix="/preprocessing", tags=["preprocessing"]
+)  # Include preprocessing router
+api_router.include_router(
+    ai_conversations.router, prefix="/ai/conversations", tags=["ai-conversations"]
+)  # Include AI conversations router
 
 
 if settings.ENVIRONMENT == "local":

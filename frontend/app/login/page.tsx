@@ -4,8 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/client-auth";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
+import { setCookie } from "@/lib/client-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,7 +42,15 @@ function CallbackUrlHandler({
   setExtensionCallback: (url: string | null) => void;
 }) {
   const searchParams = useSearchParams();
-  const callbackUrlFromQuery = searchParams.get("callbackUrl") || "/setup";
+
+  // Check if this is from extension
+  const isFromExtension = searchParams.get("from") === "extension";
+
+  // Set different default callback URLs based on source
+  const defaultCallbackUrl = isFromExtension ? "/setup" : "/content-library";
+  const callbackUrlFromQuery =
+    searchParams.get("callbackUrl") || defaultCallbackUrl;
+
   const extensionCallbackUrl = searchParams.get("extension_callback");
 
   useEffect(() => {
@@ -77,21 +86,18 @@ function AuthRedirectHandler() {
  * @returns {JSX.Element} - The rendered Login component.
  */
 function LoginContent() {
-  const { login, isLoading } = useAuth();
+  const { isLoading } = useAuth();
   const router = useRouter();
-  const [callbackUrl, setCallbackUrl] = useState("/setup");
+  const [callbackUrl, setCallbackUrl] = useState("/content-library");
   const [extensionCallback, setExtensionCallback] = useState<string | null>(
     null,
   );
-  const [email, setEmail] = useState("test@example.com"); // 预填测试用户
-  const [password, setPassword] = useState("password"); // 预填测试用户密码
+  const [email, setEmail] = useState(""); // 移除预填测试用户
+  const [password, setPassword] = useState(""); // 移除预填测试用户密码
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [error, setError] = useState("");
-  const [debugInfo, setDebugInfo] = useState("");
 
   // 如果正在检查登录状态，显示加载提示
-  // Note: useAuthRedirect handles redirection if user is already logged in.
-  // The isLoading check here is for rendering the loading UI, not for redirection.
   if (isLoading) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center"></div>
@@ -102,48 +108,41 @@ function LoginContent() {
     e.preventDefault();
     setIsLoggingIn(true);
     setError("");
-    setDebugInfo("");
 
     try {
-      // Get API URL from env
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      // 检查是否来自插件
+      const urlParams = new URLSearchParams(window.location.search);
+      const isFromExtension = urlParams.get("from") === "extension";
 
-      // 修正登录端点
-      const response = await fetch(`${apiUrl}/api/v1/login/access-token`, {
+      const response = await fetch("/api/v1/auth/login", {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
-        body: new URLSearchParams({
-          username: email,
-          password: password,
+        body: JSON.stringify({
+          email,
+          password,
+          from_source: isFromExtension ? "extension" : "web",
         }),
       });
 
-      const data = await response.json();
+      if (response.ok) {
+        const data = await response.json();
+        setCookie("accessToken", data.access_token);
 
-      // 添加调试信息
-      setDebugInfo(JSON.stringify(data, null, 2));
-
-      if (!response.ok) {
-        throw new Error(data.detail || "登录失败，请检查用户名和密码");
+        if (extensionCallback) {
+          setExtensionCallback(null);
+          window.location.href = extensionCallback;
+        } else {
+          router.push(callbackUrl);
+        }
+      } else {
+        const data = await response.json();
+        setError(data.detail || "登录失败");
       }
-
-      console.log("Login successful:", data);
-
-      // 确保响应包含access_token
-      if (!data.access_token) {
-        throw new Error("登录响应缺少访问令牌");
-      }
-
-      // Store token using auth hook
-      login(data.access_token);
-
-      // Redirect to callback URL or dashboard
-      router.push(callbackUrl);
     } catch (err) {
       console.error("Login error:", err);
-      setError(err instanceof Error ? err.message : "登录失败");
+      setError("网络错误，请重试");
     } finally {
       setIsLoggingIn(false);
     }
@@ -199,7 +198,12 @@ function LoginContent() {
               variant="outline"
               className="w-full py-6 border-slate-200 dark:border-slate-700 flex items-center justify-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all duration-300 mb-6 relative group overflow-hidden"
               type="button"
-              onClick={() => initiateGoogleLogin()}
+              onClick={() => {
+                // 检查是否来自插件
+                const urlParams = new URLSearchParams(window.location.search);
+                const isFromExtension = urlParams.get("from") === "extension";
+                initiateGoogleLogin(isFromExtension ? "extension" : "web");
+              }}
             >
               <div className="absolute inset-0 w-0 bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/30 dark:to-transparent transition-all duration-500 group-hover:w-full"></div>
               <svg
@@ -308,34 +312,6 @@ function LoginContent() {
                 </Button>
               </div>
             </form>
-
-            {/* 测试用户信息 */}
-            <div className="mt-4 p-2 border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-800">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                测试用户信息：
-              </p>
-              <p className="text-xs text-gray-700 dark:text-gray-300">
-                邮箱: test@example.com
-              </p>
-              <p className="text-xs text-gray-700 dark:text-gray-300">
-                密码: password
-              </p>
-              <p className="text-xs text-gray-700 dark:text-gray-300">
-                用户ID: d17ab34d-b82f-4756-a315-82fca4264c4e
-              </p>
-            </div>
-
-            {/* 调试信息 */}
-            {debugInfo && (
-              <div className="mt-4 p-2 border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-800">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  调试信息：
-                </p>
-                <pre className="text-xs overflow-auto max-h-32">
-                  {debugInfo}
-                </pre>
-              </div>
-            )}
           </CardContent>
         </Card>
 

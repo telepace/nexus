@@ -1,7 +1,7 @@
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlmodel import col, delete, func, select
 
 from app import crud
@@ -9,12 +9,14 @@ from app.api.deps import (
     CurrentUser,
     SessionDep,
     get_current_active_superuser,
+    get_storage_service,
 )
 from app.core.config import settings
 from app.core.security import decrypt_password, get_password_hash, verify_password
+from app.core.storage import StorageInterface
 from app.models import (
-    Item,
     Message,
+    Project,
     UpdatePassword,
     User,
     UserCreate,
@@ -240,8 +242,74 @@ def delete_user(
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
-    statement = delete(Item).where(col(Item.owner_id) == user_id)
+    statement = delete(Project).where(col(Project.owner_id) == user_id)
     session.exec(statement)  # type: ignore
     session.delete(user)
     session.commit()
     return Message(message="User deleted successfully")
+
+
+@router.post("/me/avatar", response_model=UserPublic)
+async def upload_user_avatar(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    storage_service: StorageInterface = Depends(get_storage_service),
+    avatar: UploadFile = File(...),
+) -> Any:
+    """
+    Upload and update user avatar.
+    """
+    # 验证文件类型
+    if not avatar.content_type or not avatar.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400, detail="Invalid file type. Only image files are allowed."
+        )
+
+    # 验证文件大小 (限制为 2MB)
+    avatar.file.seek(0, 2)  # 移动到文件末尾
+    file_size = avatar.file.tell()
+    avatar.file.seek(0)  # 重置到文件开头
+
+    if file_size > 2 * 1024 * 1024:  # 2MB
+        raise HTTPException(
+            status_code=400, detail="File too large. Maximum size is 2MB."
+        )
+
+    try:
+        # 生成唯一的文件名
+        file_extension = (
+            avatar.filename.split(".")[-1]
+            if avatar.filename and "." in avatar.filename
+            else "jpg"
+        )
+        unique_filename = f"{uuid.uuid4()}.{file_extension}"
+        blob_name = f"avatars/{current_user.id}/{unique_filename}"
+
+        # 读取文件内容
+        file_content = await avatar.read()
+
+        # 上传到存储服务
+        avatar_url = await storage_service.upload_file(
+            file_content=file_content,
+            destination_blob_name=blob_name,
+            content_type=avatar.content_type,
+        )
+
+        if not avatar_url:
+            raise HTTPException(
+                status_code=500, detail="Failed to upload avatar to storage service."
+            )
+
+        # 更新用户的头像URL
+        current_user.avatar_url = avatar_url
+        session.add(current_user)
+        session.commit()
+        session.refresh(current_user)
+
+        return current_user
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to upload avatar: {str(e)}"
+        )

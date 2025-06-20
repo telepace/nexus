@@ -33,7 +33,7 @@ def test_create_prompt(
     assert "created_at" in content
     assert "updated_at" in content
     assert "created_by" in content
-    assert "tags" in content
+    assert "user_enabled" in content
 
 
 def test_read_prompt(
@@ -69,7 +69,7 @@ def test_read_prompt(
     assert "created_at" in content
     assert "updated_at" in content
     assert "created_by" in content
-    assert "tags" in content
+    assert "user_enabled" in content
 
 
 def test_update_prompt(

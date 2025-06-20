@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { FC, useState, useRef, useCallback, useEffect } from "react";
 import {
   X,
   Upload,
@@ -25,6 +25,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuth, getCookie } from "@/lib/auth";
+import { contentCache } from "@/lib/services/content-cache";
+import { eventBus } from "@/lib/event-bus";
 
 interface AddContentModalProps {
   open: boolean;
@@ -32,6 +34,20 @@ interface AddContentModalProps {
 }
 
 type ContentType = "url" | "text" | "file" | null;
+
+// 与内容库页面保持一致的公共内容项类型定义
+interface ContentItemPublic {
+  id: string;
+  type: string;
+  source_uri?: string | null;
+  title?: string | null;
+  summary?: string | null;
+  user_id: string;
+  processing_status: string;
+  created_at: string;
+  updated_at: string;
+  ai_analysis?: unknown | null;
+}
 
 /**
  * Add Content Modal component.
@@ -61,9 +77,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 检测URL的正则表达式
-  const urlRegex = useMemo(() => /(https?:\/\/[^\s]+)/g, []);
-
   /**
    * Checks if the provided text is a valid URL.
    */
@@ -77,60 +90,41 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   };
 
   /**
-   * 从文本中提取所有URL
+   * Safely extracts hostname from URL, returns fallback if invalid
    */
-  const extractUrls = useCallback(
-    (text: string): string[] => {
-      // 支持多种分割符：空格、分号、逗号、换行符
-      const separators = /[\s;,\n\r]+/;
-      const parts = text.split(separators).filter((part) => part.trim());
-
-      const urls: string[] = [];
-
-      // 检查每个部分是否为有效URL
-      parts.forEach((part) => {
-        const trimmed = part.trim();
-        if (trimmed && isURL(trimmed)) {
-          urls.push(trimmed);
-        }
-      });
-
-      // 同时使用正则表达式提取URL（防止遗漏）
-      const regexMatches = text.match(urlRegex) || [];
-      regexMatches.forEach((url) => {
-        if (!urls.includes(url)) {
-          urls.push(url);
-        }
-      });
-
-      return urls;
-    },
-    [urlRegex],
-  );
+  const getUrlHostname = (url: string, fallback: string = "网站"): string => {
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return fallback;
+    }
+  };
 
   // 处理内容变化
-  const handleContentChange = useCallback(
-    (value: string) => {
-      setContent(value);
+  const handleContentChange = useCallback((text: string) => {
+    setContent(text);
 
-      if (!value.trim()) {
-        setContentType(null);
-        setDetectedUrls([]);
-        return;
-      }
+    // Auto-detect URLs in the content with improved regex
+    const urls = text.match(/https?:\/\/[^\s<>"{}|\\^`\[\]]+/g) || [];
+    if (urls.length > 0) {
+      const validUrls = urls
+        .map((url: string) => {
+          // Remove trailing punctuation that might be captured by regex
+          const cleanedUrl = url.replace(/[.,;:!?]+$/, "");
+          return isURL(cleanedUrl) ? cleanedUrl : null;
+        })
+        .filter((url): url is string => url !== null);
 
-      // 提取URL
-      const urls = extractUrls(value);
-      setDetectedUrls(urls);
-
-      if (urls.length > 0) {
+      if (validUrls.length > 0) {
+        setDetectedUrls((prev) => {
+          const allUrls = [...prev, ...validUrls];
+          // Remove duplicates
+          return Array.from(new Set(allUrls));
+        });
         setContentType("url");
-      } else if (value.trim() && contentType !== "text") {
-        setContentType("text");
       }
-    },
-    [contentType, extractUrls],
-  );
+    }
+  }, []);
 
   // 处理粘贴事件
   const handlePaste = useCallback(
@@ -143,16 +137,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     },
     [handleContentChange],
   );
-
-  // 监听粘贴事件
-  useEffect(() => {
-    if (open) {
-      document.addEventListener("paste", handlePaste);
-      return () => {
-        document.removeEventListener("paste", handlePaste);
-      };
-    }
-  }, [open, handlePaste]);
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -213,13 +197,11 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   };
 
   /**
-   * Handles the addition of content through an asynchronous process.
-   *
-   * This function creates content items by calling the backend API,
-   * handles different content types (text, URL, file), and manages
-   * error states and loading indicators.
+   * Handles the submission of content addition with optimistic UI updates.
+   * Creates content items and immediately closes modal for seamless experience.
+   * Background processing and status updates are handled via SSE.
    */
-  const handleAddContent = async () => {
+  const handleAddContent = useCallback(async () => {
     setIsLoading(true);
     setError("");
 
@@ -234,13 +216,16 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
+      // 用于收集已创建的内容项，便于后续一次性广播事件
+      const newlyCreatedItems: ContentItemPublic[] = [];
+
       if (contentType === "url" && detectedUrls.length > 0) {
         // 处理URL类型内容
         for (const url of detectedUrls) {
           const contentData = {
             type: "url",
             source_uri: url,
-            title: title || `网页内容 - ${new URL(url).hostname}`,
+            title: title || `网页内容 - ${getUrlHostname(url)}`,
             summary: `从 ${url} 获取的网页内容`,
           };
 
@@ -261,25 +246,10 @@ export const AddContentModal: FC<AddContentModalProps> = ({
             );
           }
 
-          const createdItem = await response.json();
+          const createdItem: ContentItemPublic = await response.json();
           console.log("URL内容创建成功:", createdItem);
-
-          // 自动开始处理
-          const processResponse = await fetch(
-            `${apiUrl}/api/v1/content/process/${createdItem.id || createdItem.data?.id}`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              credentials: "include",
-            },
-          );
-
-          if (processResponse.ok) {
-            console.log("内容处理已开始");
-          }
+          newlyCreatedItems.push(createdItem);
+          // Note: Background processing is automatically started by the backend
         }
       } else if (contentType === "text" && content.trim()) {
         // 处理文本类型内容
@@ -308,25 +278,10 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           );
         }
 
-        const createdItem = await response.json();
+        const createdItem: ContentItemPublic = await response.json();
         console.log("文本内容创建成功:", createdItem);
-
-        // 自动开始处理
-        const processResponse = await fetch(
-          `${apiUrl}/api/v1/content/process/${createdItem.id || createdItem.data?.id}`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-          },
-        );
-
-        if (processResponse.ok) {
-          console.log("内容处理已开始");
-        }
+        newlyCreatedItems.push(createdItem);
+        // Text content is immediately completed, no background processing needed
       } else if (contentType === "file" && selectedFiles.length > 0) {
         // 处理文件类型内容（暂时显示提示信息）
         setError("文件上传功能正在开发中，敬请期待。");
@@ -336,15 +291,20 @@ export const AddContentModal: FC<AddContentModalProps> = ({
         return;
       }
 
-      // 清空表单并关闭模态窗口
+      // 立即清空表单并关闭模态窗口 - 乐观UI更新
       resetForm();
       onClose();
 
-      // 可以在这里触发页面刷新或者通知父组件更新内容列表
-      if (typeof window !== "undefined") {
-        // 简单的页面刷新，实际项目中可以使用更优雅的状态管理
-        window.location.reload();
-      }
+      // 清除内容缓存，确保content-library页面能获取到最新数据
+      contentCache.clearContentList();
+
+      // 通过事件总线通知内容库页面及时更新
+      newlyCreatedItems.forEach((item) => {
+        eventBus.emit("contentCreated", item);
+      });
+
+      // Note: Content status updates will also be handled via SSE in the content library
+      // 这里主动广播可以让用户立即看到新内容，无需等待SSE
     } catch (error) {
       console.error("添加内容时发生错误:", error);
       setError(
@@ -353,7 +313,18 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [contentType, detectedUrls, title, content, selectedFiles, user, onClose]);
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !isLoading) {
+        if (content || selectedFiles.length > 0 || detectedUrls.length > 0) {
+          handleAddContent();
+        }
+      }
+    },
+    [content, selectedFiles, detectedUrls, isLoading, handleAddContent],
+  );
 
   const resetForm = () => {
     setContentType(null);
@@ -369,14 +340,34 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     onClose();
   };
 
+  // 监听快捷键
+  useEffect(() => {
+    if (open) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [open, handleKeyDown]);
+
+  // 监听粘贴事件
+  useEffect(() => {
+    if (open) {
+      document.addEventListener("paste", handlePaste);
+      return () => {
+        document.removeEventListener("paste", handlePaste);
+      };
+    }
+  }, [open, handlePaste]);
+
   if (!open) {
     return null;
   }
 
   return (
     <AlertDialog open={open}>
-      <AlertDialogContent className="max-w-2xl">
-        <AlertDialogHeader>
+      <AlertDialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+        <AlertDialogHeader className="flex-shrink-0">
           <AlertDialogTitle className="text-xl">添加新内容</AlertDialogTitle>
           <Button
             variant="ghost"
@@ -388,11 +379,15 @@ export const AddContentModal: FC<AddContentModalProps> = ({
             <X className="h-4 w-4" />
           </Button>
         </AlertDialogHeader>
-        <AlertDialogDescription>
+        <AlertDialogDescription className="flex-shrink-0">
           粘贴链接、输入文本或上传文件来添加新内容。支持多个链接同时添加。
+          <br />
+          <span className="text-xs text-muted-foreground mt-1 inline-block">
+            💡 提示：使用 Ctrl+Enter (Mac: Cmd+Enter) 快速添加内容
+          </span>
         </AlertDialogDescription>
 
-        <div className="space-y-6 py-4">
+        <div className="flex-1 overflow-y-auto space-y-6 py-4">
           {/* 主拖放区域 */}
           <div
             data-testid="drop-area"
@@ -485,7 +480,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                       id="url-input"
                       role="textbox"
                       placeholder="粘贴一个或多个链接，支持空格、分号、逗号或换行分隔"
-                      className="min-h-[80px]"
+                      className="min-h-[80px] max-h-[200px] resize-none"
                       value={content}
                       onChange={(e) => handleContentChange(e.target.value)}
                     />
@@ -511,10 +506,22 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                     id="text-content"
                     role="textbox"
                     placeholder="输入您想要添加的文本内容"
-                    className="min-h-[120px]"
+                    className="min-h-[120px] max-h-[300px] resize-none"
                     value={content}
                     onChange={(e) => handleContentChange(e.target.value)}
                   />
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {content.length > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span>字符数: {content.length}</span>
+                        {content.length > 5000 && (
+                          <span className="text-amber-600 dark:text-amber-400">
+                            ⚠️ 内容较长，建议分段添加
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="text-title">标题 (可选)</Label>
@@ -601,7 +608,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           )}
         </div>
 
-        <AlertDialogFooter>
+        <AlertDialogFooter className="flex-shrink-0">
           <AlertDialogCancel onClick={handleCancel} disabled={isLoading}>
             取消
           </AlertDialogCancel>

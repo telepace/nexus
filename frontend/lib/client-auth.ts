@@ -152,13 +152,13 @@ export function useAuth(): AuthContextType {
         return;
       }
 
-      // 设置cookie，添加更多安全选项
-      const cookieValue = `accessToken=${token};path=/;max-age=${60 * 60 * 24 * 7}`;
-      document.cookie = cookieValue;
+      // 设置cookie，支持 localhost 和 127.0.0.1
+      const maxAge = 60 * 60 * 24 * 7; // 7天
+      const cookieOptions = `path=/;max-age=${maxAge};SameSite=Lax`;
 
-      // 为浏览器扩展设置一个额外的非httpOnly cookie
-      const extCookieValue = `accessToken_ext=${token};path=/;max-age=${60 * 60 * 24 * 7};SameSite=Lax`;
-      document.cookie = extCookieValue;
+      // 为当前域名设置 cookie
+      document.cookie = `accessToken=${token};${cookieOptions}`;
+      document.cookie = `accessToken_ext=${token};${cookieOptions}`;
 
       // 验证cookie是否设置成功
       const savedToken = getCookie("accessToken");
@@ -169,6 +169,7 @@ export function useAuth(): AuthContextType {
 
       // 打印所有的cookie以便调试
       console.log("[Auth] Current cookies:", document.cookie);
+      console.log("[Auth] Current domain:", window.location.hostname);
 
       // 如果已有用户数据，将token添加到用户对象
       if (user) {
@@ -198,13 +199,13 @@ export function useAuth(): AuthContextType {
         return;
       }
 
-      // 设置cookie
-      const cookieValue = `accessToken=${token};path=/;max-age=${60 * 60 * 24 * 7}`;
-      document.cookie = cookieValue;
+      // 设置cookie，支持 localhost 和 127.0.0.1
+      const maxAge = 60 * 60 * 24 * 7; // 7天
+      const cookieOptions = `path=/;max-age=${maxAge};SameSite=Lax`;
 
-      // 为浏览器扩展设置一个额外的非httpOnly cookie
-      const extCookieValue = `accessToken_ext=${token};path=/;max-age=${60 * 60 * 24 * 7};SameSite=Lax`;
-      document.cookie = extCookieValue;
+      // 为当前域名设置 cookie
+      document.cookie = `accessToken=${token};${cookieOptions}`;
+      document.cookie = `accessToken_ext=${token};${cookieOptions}`;
 
       // 验证设置成功
       const savedToken = getCookie("accessToken");
@@ -254,25 +255,24 @@ export function useAuth(): AuthContextType {
 // Helper to get cookie value on client side
 export function getCookie(name: string): string | undefined {
   if (typeof document === "undefined") {
-    console.log("[Auth] getCookie: document is undefined (server side)");
     return undefined;
   }
 
-  console.log("[Auth] getCookie: 搜索cookie:", name);
-  console.log("[Auth] getCookie: 所有cookie:", document.cookie);
-
-  const cookies = document.cookie.split(";");
-  for (let i = 0; i < cookies.length; i++) {
-    const cookie = cookies[i].trim();
-    if (cookie.startsWith(name + "=")) {
-      const value = cookie.substring(name.length + 1);
-      console.log(
-        `[Auth] getCookie: 找到 ${name} = ${value.substring(0, 10)}...`,
-      );
-      return value;
-    }
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    return parts.pop()?.split(";").shift();
   }
 
-  console.log(`[Auth] getCookie: ${name} 未找到`);
   return undefined;
+}
+
+export function setCookie(name: string, value: string, days: number = 7) {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  const maxAge = 60 * 60 * 24 * days; // Convert days to seconds
+  const cookieOptions = `path=/;max-age=${maxAge};SameSite=Lax`;
+  document.cookie = `${name}=${value};${cookieOptions}`;
 }

@@ -25,6 +25,13 @@ Object.defineProperty(process.env, "NEXT_PUBLIC_FRONTEND_URL", {
   configurable: true,
 });
 
+// Add encryption key for testing
+Object.defineProperty(process.env, "NEXT_PUBLIC_APP_SYMMETRIC_ENCRYPTION_KEY", {
+  value: "test-encryption-key-32-characters-long",
+  writable: true,
+  configurable: true,
+});
+
 // Mock environment variables that might be needed for tests
 process.env.NEXTAUTH_SECRET = "test-secret";
 process.env.NEXTAUTH_URL = "http://localhost:3000";

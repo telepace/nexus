@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Any
 
 from sqlmodel import Field, SQLModel
 
@@ -37,6 +38,7 @@ class ContentItemPublic(ContentItemBaseSchema):
     content_text: str | None = None
     created_at: datetime
     updated_at: datetime
+    ai_analysis: dict[str, Any] | None = None  # AI分析结果
 
 
 class ContentItemDetail(ContentItemPublic):

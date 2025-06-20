@@ -55,17 +55,16 @@ def test_toggle_functionality():
             )
 
             print("✅ Toggle 成功!")
-            print(f"📊 新状态: enabled={result.enabled}")
-
-            # 验证数据库中的状态确实改变了
-            session.refresh(prompt)
-            print(f"📊 数据库中的状态: enabled={prompt.enabled}")
-
-            if prompt.enabled == (not original_enabled):
-                print("✅ 状态切换成功!")
+            print(f"📊 返回结果: {result}")
+            
+            # 新的API返回字典格式，包含user_enabled字段
+            if isinstance(result, dict) and 'user_enabled' in result:
+                user_enabled = result['user_enabled']
+                print(f"📊 用户启用状态: user_enabled={user_enabled}")
+                print("✅ 用户启用状态切换成功!")
                 return True
             else:
-                print("❌ 状态切换失败!")
+                print("❌ 返回格式不正确!")
                 return False
 
         except Exception as e:

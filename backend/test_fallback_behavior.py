@@ -99,9 +99,9 @@ def test_fallback_behavior():
         print("\n📋 测试3: 模拟Jina API调用失败的情况")
 
         # 模拟Jina API调用失败
-        with patch('app.utils.content_processors.requests.post') as mock_post:
+        with patch('app.utils.content_processors.requests.get') as mock_get:
             # 模拟API调用失败
-            mock_post.side_effect = Exception("Network error")
+            mock_get.side_effect = Exception("Network error")
 
             content_item_3 = ContentItem(
                 id=uuid.uuid4(),

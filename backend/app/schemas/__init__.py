@@ -1,3 +1,8 @@
+from .ai_conversations import (
+    AIConversationCreate,
+    AIConversationDetail,
+    AIConversationPublic,
+)
 from .image import (
     ImageBase,
     ImageCreate,
@@ -18,5 +23,8 @@ __all__ = [
     "ImageResponse",
     "PresignedURLRequest",
     "PresignedURLResponse",
+    "AIConversationCreate",
+    "AIConversationPublic",
+    "AIConversationDetail",
     # Add other schema names here as you create/import them
 ]

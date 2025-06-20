@@ -308,13 +308,13 @@ export default function TestStreamingPage() {
                 <StreamingText
                   title="内容分析结果"
                   placeholder="点击开始按钮开始分析内容..."
-                  url={`${apiUrl}/api/v1/content/${contentId}/analyze`}
+                  url={`${apiUrl}/api/v1/content/${contentId}/analyze-ai-sdk`}
                   requestOptions={{
                     method: "POST",
                     body: JSON.stringify({
-                      system_prompt: systemPrompt,
-                      user_prompt: userPrompt,
-                      model: "gpt-3.5-turbo",
+                      system_prompt: userPrompt,
+                      user_prompt: systemPrompt,
+                      model: "or-llama-3-1-8b-instruct",
                     }),
                   }}
                   streamingOptions={{

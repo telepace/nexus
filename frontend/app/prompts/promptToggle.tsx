@@ -34,11 +34,11 @@ export function PromptToggle({
           variant: "destructive",
         });
       } else {
-        const newStatus = !isEnabled;
-        setIsEnabled(newStatus);
+        const actualStatus = result.data?.user_enabled ?? !isEnabled;
+        setIsEnabled(actualStatus as boolean);
         toast({
           title: "状态已更新",
-          description: `提示词"${promptName}"已${newStatus ? "启用" : "禁用"}`,
+          description: `提示词"${promptName}"已${actualStatus ? "启用" : "禁用"}`,
         });
       }
     } catch (error) {

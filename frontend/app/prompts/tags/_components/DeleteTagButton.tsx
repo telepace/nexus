@@ -1,7 +1,7 @@
 "use client";
 // DeleteTagButton component for deleting a tag with confirmation
 import * as React from "react";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonGroup } from "@/components/ui/button";
 import { useTranslation } from "next-i18next";
 import { toast } from "@/components/ui/use-toast";
 
@@ -44,22 +44,35 @@ export const DeleteTagButton: React.FC<DeleteTagButtonProps> = ({
         {t("delete")}
       </Button>
       {confirming && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-          <div className="bg-white rounded shadow-lg p-6 w-80">
-            <div className="mb-4 text-center text-sm text-gray-700">
-              {t("delete_tag_confirm_message")}
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setConfirming(false)}
-              >
-                {t("cancel")}
-              </Button>
-              <Button variant="destructive" size="sm" onClick={handleDelete}>
-                {t("confirm_delete")}
-              </Button>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 dark:bg-black/70 z-50 p-4">
+          <div className="bg-background dark:bg-card rounded-lg shadow-xl border max-w-md w-full mx-4 elevation-highest">
+            <div className="p-6">
+              <div className="mb-6 text-center">
+                <h3 className="text-lg font-semibold mb-2 text-foreground">
+                  确认删除标签
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {t("delete_tag_confirm_message")}
+                </p>
+              </div>
+              <ButtonGroup justify="end" responsive className="modal-actions">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConfirming(false)}
+                  className="w-full sm:w-auto"
+                >
+                  {t("cancel")}
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDelete}
+                  className="w-full sm:w-auto"
+                >
+                  {t("confirm_delete")}
+                </Button>
+              </ButtonGroup>
             </div>
           </div>
         </div>
