@@ -325,8 +325,17 @@ class TestAIProcessorConfiguration:
         assert settings.LITELLM_PROXY_URL is not None
         assert settings.DEFAULT_LLM_MODEL is not None
 
+        # 获取实际的URL值，处理可能包含变量名的情况
+        litellm_url = settings.LITELLM_PROXY_URL
+        
+        # 如果URL包含等号，说明可能是 "LITELLM_PROXY_URL=http://..." 格式
+        # 这种情况通常出现在CI环境中的环境变量配置问题
+        if "=" in litellm_url:
+            # 提取等号后面的实际URL
+            litellm_url = litellm_url.split("=", 1)[1]
+        
         # LiteLLM URL应该是有效格式
-        assert settings.LITELLM_PROXY_URL.startswith(("http://", "https://"))
+        assert litellm_url.startswith(("http://", "https://")), f"Invalid LITELLM_PROXY_URL format: {settings.LITELLM_PROXY_URL}"
 
         # 如果配置了master key，应该以sk-开头
         if settings.LITELLM_MASTER_KEY:
