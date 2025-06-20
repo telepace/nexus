@@ -491,37 +491,37 @@ export const EnhancedLLMAnalysisSidebar: FC<
       </div>
 
       {/* Footer - 智能推荐区域 */}
-      <div className="shrink-0 p-4 border-t bg-muted/20">
-        <div className="space-y-3">
-          {/* 快速分析推荐 */}
-          {enabledPrompts?.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">推荐分析</span>
+        <div className="shrink-0 p-4 border-t bg-muted/20">
+          <div className="space-y-3">
+            {/* 快速分析推荐 */}
+            {enabledPrompts?.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">推荐分析</span>
+                </div>
+                <div className="max-h-[120px] overflow-y-auto">
+                  <PromptRecommendations
+                    recommendations={getPromptRecommendations().slice(0, 4)}
+                    onPromptClick={handleEnabledPromptClick}
+                    isGenerating={isGenerating}
+                    disabled={isGenerating}
+                  />
+                </div>
               </div>
-              <div className="max-h-[120px] overflow-y-auto">
-                <PromptRecommendations
-                  recommendations={getPromptRecommendations().slice(0, 4)}
-                  onPromptClick={handleEnabledPromptClick}
-                  isGenerating={isGenerating}
-                  disabled={isGenerating}
-                />
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* 自定义分析对话框 */}
-          <div>
-            <PromptCommandDialog
-              availablePrompts={enabledPrompts || []}
-              isExecuting={isGenerating}
-              onPromptSelect={handlePromptSelect}
-              onExecute={handleExecute}
-            />
+            {/* 自定义分析对话框 */}
+            <div>
+              <PromptCommandDialog
+                availablePrompts={enabledPrompts || []}
+                isExecuting={isGenerating}
+                onPromptSelect={handlePromptSelect}
+                onExecute={handleExecute}
+              />
+            </div>
           </div>
         </div>
-      </div>
     </div>
   );
 };

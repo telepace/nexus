@@ -14,13 +14,13 @@ interface Props {
 export const ContentPreview = ({ item }: Props) => {
   return (
     <Card className="sticky top-6 border-0 shadow-lg">
-      <CardHeader className="pb-4">
+      <CardHeader className="pt-4 pb-4">
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" />
           内容预览
         </CardTitle>
       </CardHeader>
-      <CardContent className="py-2">
+      <CardContent className="pb-4">
         {item ? (
           <div className="space-y-6">
             <div>
