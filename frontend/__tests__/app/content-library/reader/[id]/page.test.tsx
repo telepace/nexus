@@ -1,5 +1,5 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
-import ReaderPage from "@/app/content-library/reader/[id]/page";
+import ReaderPage from "@/app/reader/[id]/page";
 import { useAuth } from "@/lib/client-auth";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -42,7 +42,7 @@ jest.mock("@/components/layout/ReaderLayout", () => {
 });
 
 // Mock ClientContent
-jest.mock("@/app/content-library/reader/[id]/ClientContent", () => ({
+jest.mock("@/app/reader/[id]/ClientContent", () => ({
   ClientContent: ({
     contentId,
   }: { contentId: string; initialData?: any; initialMarkdown?: any }) => (
@@ -76,7 +76,7 @@ describe("ReaderPage", () => {
       refresh: jest.fn(),
     } as any);
 
-    mockUsePathname.mockReturnValue("/content-library/reader/1");
+    mockUsePathname.mockReturnValue("/reader/1");
 
     mockUseAuth.mockReturnValue({
       user: {

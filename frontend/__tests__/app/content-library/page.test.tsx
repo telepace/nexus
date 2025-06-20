@@ -133,7 +133,7 @@ describe("ContentLibraryPage", () => {
 
     if (contentCard) {
       fireEvent.click(contentCard);
-      expect(mockPush).toHaveBeenCalledWith("/content-library/reader/1");
+      expect(mockPush).toHaveBeenCalledWith("/reader/1");
     }
   });
 

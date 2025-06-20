@@ -11,11 +11,10 @@ import {
   History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { LLMAnalysisCard } from "@/components/ui/llm-analysis-card";
 import { PromptRecommendations } from "@/components/ui/prompt-recommendations";
 import { PromptCommandDialog } from "@/components/ui/prompt-command-dialog";
-import { ConversationList } from "@/components/ai/ConversationList";
 import {
   useLLMAnalysisStore,
   LLMAnalysis,
@@ -23,7 +22,6 @@ import {
 } from "@/lib/stores/llm-analysis-store";
 import { useToast } from "@/hooks/use-toast";
 import { Prompt } from "@/lib/api/services/prompts";
-import { ConversationDetail } from "@/lib/api/ai-conversations";
 import { client } from "@/lib/api/client";
 
 interface EnhancedLLMAnalysisSidebarProps {
@@ -56,9 +54,8 @@ interface HistoricalAnalysis {
 export const EnhancedLLMAnalysisSidebar: FC<
   EnhancedLLMAnalysisSidebarProps
 > = ({ contentId, className = "", contentText = "" }) => {
-  const [activeTab, setActiveTab] = useState<"analysis" | "conversations">(
-    "analysis",
-  );
+  // The sidebar will always show the analysis view, so a dedicated tab state is no longer necessary.
+  const activeTab = "analysis" as const;
   const [historicalAnalyses, setHistoricalAnalyses] = useState<LLMAnalysis[]>(
     [],
   );
@@ -362,11 +359,6 @@ export const EnhancedLLMAnalysisSidebar: FC<
     }
   };
 
-  const handleConversationSelect = (conversation: ConversationDetail) => {
-    // 可以在这里添加更多逻辑，比如在分析标签页中显示对话内容
-    console.log("Selected conversation:", conversation.id);
-  };
-
   if (isLoadingPrompts) {
     return (
       <div
@@ -396,7 +388,7 @@ export const EnhancedLLMAnalysisSidebar: FC<
             </div>
           </div>
 
-          {(contentAnalyses?.length > 0 || activeTab === "analysis") && (
+          {contentAnalyses?.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
@@ -416,30 +408,6 @@ export const EnhancedLLMAnalysisSidebar: FC<
             <span className="text-xs">分析中...</span>
           </div>
         )}
-      </div>
-
-      {/* Tabs - 分析和对话历史切换 */}
-      <div className="flex-shrink-0 px-4 pt-2">
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) =>
-            setActiveTab(value as "analysis" | "conversations")
-          }
-        >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="analysis" className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              <span>实时分析</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="conversations"
-              className="flex items-center gap-2"
-            >
-              <History className="h-4 w-4" />
-              <span>对话历史</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
       </div>
 
       {/* Content - 分析结果区域 */}
@@ -519,55 +487,41 @@ export const EnhancedLLMAnalysisSidebar: FC<
                 )}
             </div>
           </TabsContent>
-
-          {/* 对话历史标签页 */}
-          <TabsContent value="conversations" className="h-full mt-0">
-            <div className="p-4 h-full">
-              <ConversationList
-                contentItemId={contentId}
-                onConversationSelect={handleConversationSelect}
-                showHeader={false}
-                maxHeight="calc(100vh - 300px)"
-              />
-            </div>
-          </TabsContent>
         </Tabs>
       </div>
 
       {/* Footer - 智能推荐区域 */}
-      {activeTab === "analysis" && (
-        <div className="shrink-0 p-4 border-t bg-muted/20">
-          <div className="space-y-3">
-            {/* 快速分析推荐 */}
-            {enabledPrompts?.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">推荐分析</span>
-                </div>
-                <div className="max-h-[120px] overflow-y-auto">
-                  <PromptRecommendations
-                    recommendations={getPromptRecommendations().slice(0, 4)}
-                    onPromptClick={handleEnabledPromptClick}
-                    isGenerating={isGenerating}
-                    disabled={isGenerating}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* 自定义分析对话框 */}
+      <div className="shrink-0 p-4 border-t bg-muted/20">
+        <div className="space-y-3">
+          {/* 快速分析推荐 */}
+          {enabledPrompts?.length > 0 && (
             <div>
-              <PromptCommandDialog
-                availablePrompts={enabledPrompts || []}
-                isExecuting={isGenerating}
-                onPromptSelect={handlePromptSelect}
-                onExecute={handleExecute}
-              />
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">推荐分析</span>
+              </div>
+              <div className="max-h-[120px] overflow-y-auto">
+                <PromptRecommendations
+                  recommendations={getPromptRecommendations().slice(0, 4)}
+                  onPromptClick={handleEnabledPromptClick}
+                  isGenerating={isGenerating}
+                  disabled={isGenerating}
+                />
+              </div>
             </div>
+          )}
+
+          {/* 自定义分析对话框 */}
+          <div>
+            <PromptCommandDialog
+              availablePrompts={enabledPrompts || []}
+              isExecuting={isGenerating}
+              onPromptSelect={handlePromptSelect}
+              onExecute={handleExecute}
+            />
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
