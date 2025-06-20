@@ -2,6 +2,7 @@
 
 import type { ContentItemPublic } from '../types'
 import { ContentCard } from './ContentCard'
+import { Separator } from '@/components/ui/separator'
 
 interface Props {
   items: ContentItemPublic[]
@@ -15,14 +16,17 @@ export const ContentList = ({ items, selectedItem, onSelect, prefetchContent }: 
 
   return (
     <div className="space-y-4">
-      {items.map((item) => (
-        <ContentCard
-          key={item.id}
-          item={item}
-          selected={selectedItem?.id === item.id}
-          onSelect={onSelect}
-          prefetchContent={prefetchContent}
-        />
+      {items.map((item, idx) => (
+        <>
+          <ContentCard
+            key={item.id}
+            item={item}
+            selected={selectedItem?.id === item.id}
+            onSelect={onSelect}
+            prefetchContent={prefetchContent}
+          />
+          {idx !== items.length - 1 && <Separator />}
+        </>
       ))}
     </div>
   )

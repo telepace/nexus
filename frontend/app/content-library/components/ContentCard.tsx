@@ -38,9 +38,7 @@ export const ContentCard = ({ item, selected, onSelect, prefetchContent }: Props
   return (
     <Card
       key={item.id}
-      className={`cursor-pointer transition-all duration-200 ease-out border-0 shadow-lg hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1 active:scale-[0.98] active:shadow-md active:translate-y-0 ${
-        selected ? 'ring-1 ring-primary shadow-xl scale-[1.02] -translate-y-1' : ''
-      }`}
+      className={`cursor-pointer transition-colors duration-200 ease-out bg-transparent border border-transparent shadow-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none hover:bg-card hover:border-border hover:shadow-md`}
       onClick={handleClick}
       onMouseDown={createRipple}
       onMouseEnter={() => {

@@ -547,6 +547,16 @@
     height: auto;
     object-fit: contain;
   }
+
+  /* Hide scrollbar completely */
+  .no-scrollbar {
+    scrollbar-width: none; /* Firefox */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    width: 0px !important;
+    height: 0px !important;
+    display: none;
+  }
 }
 
 /* =============================================================================

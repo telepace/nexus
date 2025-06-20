@@ -121,7 +121,7 @@ export function AppSidebar({
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="p-0">
         <div className="flex h-header shrink-0 items-center justify-between gap-2 border-b px-4 group-data-[collapsible=icon]:justify-center">
           {/* 左侧：Logo和品牌名称 - 在折叠状态下隐藏 */}
           <div className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:hidden">

@@ -13,7 +13,7 @@ interface Props {
 
 export const ContentPreview = ({ item }: Props) => {
   return (
-    <Card className="sticky top-6 border-0 shadow-lg">
+    <Card className="h-full rounded-sm bg-neutral-50 border shadow-md dark:bg-neutral-900 flex flex-col overflow-hidden">
       <CardHeader className="pt-4 pb-4">
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" />
