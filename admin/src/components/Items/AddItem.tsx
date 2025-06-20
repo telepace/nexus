@@ -12,7 +12,8 @@ import {
 import { useState } from "react"
 import { FaPlus } from "react-icons/fa"
 
-import { ItemsService, type ProjectCreate } from "@/client"
+import { ItemsService } from "@/client"
+import type { app__models__project__ProjectCreate as ProjectCreate } from "@/client"
 import type { ApiError } from "@/client/core/ApiError"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"

@@ -3,7 +3,95 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ChatCreateChatCompletionData, ChatCreateChatCompletionResponse, ChatListAvailableModelsResponse, ContentContentEventsEndpointResponse, ContentCreateContentItemEndpointData, ContentCreateContentItemEndpointResponse, ContentProcessContentItemEndpointData, ContentProcessContentItemEndpointResponse, ContentListContentItemsEndpointData, ContentListContentItemsEndpointResponse, ContentGetContentItemEndpointData, ContentGetContentItemEndpointResponse, ContentGetContentMarkdownEndpointData, ContentGetContentMarkdownEndpointResponse, ContentGetSupportedProcessorsResponse, ContentGetContentChunksEndpointData, ContentGetContentChunksEndpointResponse, ContentGetContentChunksSummaryEndpointData, ContentGetContentChunksSummaryEndpointResponse, ContentAnalyzeContentStreamData, ContentAnalyzeContentStreamResponse, ContentAnalyzeContentAiSdkData, ContentAnalyzeContentAiSdkResponse, ContentContentCompletionStreamData, ContentContentCompletionStreamResponse, ContentAnalyzeContentAiSdkUpdatedData, ContentAnalyzeContentAiSdkUpdatedResponse, ContentContentCompletionStreamUpdatedData, ContentContentCompletionStreamUpdatedResponse, ContentGetContentProcessingJobsData, ContentGetContentProcessingJobsResponse, ContentCreateShareLinkEndpointData, ContentCreateShareLinkEndpointResponse, ContentDeactivateShareLinkEndpointData, ContentDeactivateShareLinkEndpointResponse, ContentGetSharedContentEndpointData, ContentGetSharedContentEndpointResponse, DashboardAnalyzeQueryData, DashboardAnalyzeQueryResponse, DashboardGetDashboardMetricsResponse, DashboardGetRecentActivitiesData, DashboardGetRecentActivitiesResponse, DashboardConfirmRoutingData, DashboardConfirmRoutingResponse, DashboardCreateProjectData, DashboardCreateProjectResponse, DashboardGetUserProjectsData, DashboardGetUserProjectsResponse, GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ImagesGetUploadUrlData, ImagesGetUploadUrlResponse, ImagesCreateImageRecordData, ImagesCreateImageRecordResponse, ImagesListImagesData, ImagesListImagesResponse, ImagesReadImageData, ImagesReadImageResponse, ImagesDeleteImageData, ImagesDeleteImageResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateProjectData, ItemsCreateProjectResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LlmCreateCompletionData, LlmCreateCompletionResponse, LlmCreateEmbeddingData, LlmCreateEmbeddingResponse, LoginAuthLoginData, LoginAuthLoginResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginLoginAccessTokenHeadResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PreprocessingProcessContentData, PreprocessingProcessContentResponse, PreprocessingBatchProcessContentData, PreprocessingBatchProcessContentResponse, PreprocessingGetProcessingStatusData, PreprocessingGetProcessingStatusResponse, PreprocessingGetContentSegmentsData, PreprocessingGetContentSegmentsResponse, PreprocessingValidateContentData, PreprocessingValidateContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, PromptsTogglePromptEnabledData, PromptsTogglePromptEnabledResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersReadUserMeHeadResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { AiConversationsListAiConversationsData, AiConversationsListAiConversationsResponse, AiConversationsCreateAiConversationData, AiConversationsCreateAiConversationResponse, AiConversationsGetAiConversationDetailData, AiConversationsGetAiConversationDetailResponse, AiConversationsGetAiConversationMessagesData, AiConversationsGetAiConversationMessagesResponse, ChatCreateChatCompletionData, ChatCreateChatCompletionResponse, ChatListAvailableModelsResponse, ContentContentEventsEndpointResponse, ContentCreateContentItemEndpointData, ContentCreateContentItemEndpointResponse, ContentProcessContentItemEndpointData, ContentProcessContentItemEndpointResponse, ContentListContentItemsEndpointData, ContentListContentItemsEndpointResponse, ContentGetContentItemEndpointData, ContentGetContentItemEndpointResponse, ContentGetContentMarkdownEndpointData, ContentGetContentMarkdownEndpointResponse, ContentGetSupportedProcessorsResponse, ContentGetContentChunksEndpointData, ContentGetContentChunksEndpointResponse, ContentGetContentChunksSummaryEndpointData, ContentGetContentChunksSummaryEndpointResponse, ContentAnalyzeContentStreamData, ContentAnalyzeContentStreamResponse, ContentAnalyzeContentAiSdkData, ContentAnalyzeContentAiSdkResponse, ContentContentCompletionStreamData, ContentContentCompletionStreamResponse, ContentAnalyzeContentAiSdkUpdatedData, ContentAnalyzeContentAiSdkUpdatedResponse, ContentContentCompletionStreamUpdatedData, ContentContentCompletionStreamUpdatedResponse, ContentGetContentProcessingJobsData, ContentGetContentProcessingJobsResponse, ContentCreateShareLinkEndpointData, ContentCreateShareLinkEndpointResponse, ContentDeactivateShareLinkEndpointData, ContentDeactivateShareLinkEndpointResponse, ContentGetSharedContentEndpointData, ContentGetSharedContentEndpointResponse, ContentGetContentAiConversationsData, ContentGetContentAiConversationsResponse, ContentGetAiConversationDetailsData, ContentGetAiConversationDetailsResponse, DashboardAnalyzeQueryData, DashboardAnalyzeQueryResponse, DashboardGetDashboardMetricsResponse, DashboardGetRecentActivitiesData, DashboardGetRecentActivitiesResponse, DashboardConfirmRoutingData, DashboardConfirmRoutingResponse, DashboardCreateProjectData, DashboardCreateProjectResponse, DashboardGetUserProjectsData, DashboardGetUserProjectsResponse, GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ImagesGetUploadUrlData, ImagesGetUploadUrlResponse, ImagesCreateImageRecordData, ImagesCreateImageRecordResponse, ImagesListImagesData, ImagesListImagesResponse, ImagesReadImageData, ImagesReadImageResponse, ImagesDeleteImageData, ImagesDeleteImageResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateProjectData, ItemsCreateProjectResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LlmCreateCompletionData, LlmCreateCompletionResponse, LlmCreateEmbeddingData, LlmCreateEmbeddingResponse, LoginAuthLoginData, LoginAuthLoginResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginLoginAccessTokenHeadResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PreprocessingProcessContentData, PreprocessingProcessContentResponse, PreprocessingBatchProcessContentData, PreprocessingBatchProcessContentResponse, PreprocessingGetProcessingStatusData, PreprocessingGetProcessingStatusResponse, PreprocessingGetContentSegmentsData, PreprocessingGetContentSegmentsResponse, PreprocessingValidateContentData, PreprocessingValidateContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsGetUserEnabledPromptsData, PromptsGetUserEnabledPromptsResponse, PromptsGetUserDisabledPromptsData, PromptsGetUserDisabledPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, PromptsTogglePromptEnabledData, PromptsTogglePromptEnabledResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersReadUserMeHeadResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UsersUploadUserAvatarData, UsersUploadUserAvatarResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+
+export class AiConversationsService {
+    /**
+     * List Ai Conversations
+     * Retrieve conversations of current user. Optionally filter by content_item_id.
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @param data.contentItemId
+     * @returns AIConversationPublic Successful Response
+     * @throws ApiError
+     */
+    public static listAiConversations(data: AiConversationsListAiConversationsData = {}): CancelablePromise<AiConversationsListAiConversationsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/ai/conversations/',
+            query: {
+                skip: data.skip,
+                limit: data.limit,
+                content_item_id: data.contentItemId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Ai Conversation
+     * Create a new AI conversation.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns AIConversationDetail Successful Response
+     * @throws ApiError
+     */
+    public static createAiConversation(data: AiConversationsCreateAiConversationData): CancelablePromise<AiConversationsCreateAiConversationResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/ai/conversations/',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Ai Conversation Detail
+     * @param data The data for the request.
+     * @param data.conversationId
+     * @returns AIConversationDetail Successful Response
+     * @throws ApiError
+     */
+    public static getAiConversationDetail(data: AiConversationsGetAiConversationDetailData): CancelablePromise<AiConversationsGetAiConversationDetailResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/ai/conversations/{conversation_id}',
+            path: {
+                conversation_id: data.conversationId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Ai Conversation Messages
+     * @param data The data for the request.
+     * @param data.conversationId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getAiConversationMessages(data: AiConversationsGetAiConversationMessagesData): CancelablePromise<AiConversationsGetAiConversationMessagesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/ai/conversations/{conversation_id}/messages',
+            path: {
+                conversation_id: data.conversationId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+}
 
 export class ChatService {
     /**
@@ -260,17 +348,7 @@ export class ContentService {
     
     /**
      * Analyze Content Ai Sdk
-     * Stream AI analysis of content using Vercel AI SDK compatible format.
-     *
-     * This endpoint provides Data Stream Protocol compatible responses for
-     * seamless integration with Vercel AI SDK useCompletion hook.
-     *
-     * Args:
-     * content_id: ID of the content to analyze
-     * user_prompt: The analysis instruction/prompt from user
-     * model: AI model to use
-     * temperature: Sampling temperature
-     * max_tokens: Maximum tokens to generate
+     * 使用 Vercel AI SDK 兼容格式分析内容，同时将对话存储到AIConversation表中
      * @param data The data for the request.
      * @param data.contentId
      * @param data.requestBody
@@ -294,7 +372,8 @@ export class ContentService {
     
     /**
      * Content Completion Stream
-     * Stream content analysis using Vercel AI SDK compatible format.
+     * Stream content analysis using Vercel AI SDK compatible format，
+     * 同时将对话存储到AIConversation表中
      *
      * This endpoint returns pure text streaming for optimal compatibility
      * with Vercel AI SDK useCompletion hook.
@@ -363,7 +442,8 @@ export class ContentService {
     
     /**
      * Content Completion Stream Updated
-     * Stream content analysis with updated prompt structure: system=content, user=instruction.
+     * Stream content analysis using updated prompt structure: system=content, user=instruction.
+     * Compatible with Vercel AI SDK useCompletion hook.
      *
      * This endpoint implements the adjusted LLM logic where:
      * - System message contains the article content (provides context)
@@ -480,6 +560,54 @@ export class ContentService {
             },
             query: {
                 password: data.password
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get AI Conversations for Content
+     * 获取指定内容项的所有AI对话记录
+     * @param data The data for the request.
+     * @param data.contentId
+     * @param data.skip 跳过的记录数
+     * @param data.limit 返回的最大记录数
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getContentAiConversations(data: ContentGetContentAiConversationsData): CancelablePromise<ContentGetContentAiConversationsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/content/{content_id}/conversations',
+            path: {
+                content_id: data.contentId
+            },
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get AI Conversation Details
+     * 获取指定AI对话的详细信息
+     * @param data The data for the request.
+     * @param data.conversationId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getAiConversationDetails(data: ContentGetAiConversationDetailsData): CancelablePromise<ContentGetAiConversationDetailsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/content/conversations/{conversation_id}',
+            path: {
+                conversation_id: data.conversationId
             },
             errors: {
                 422: 'Validation Error'
@@ -644,6 +772,7 @@ export class GoogleOauthService {
      * This endpoint redirects to Google's login page
      * @param data The data for the request.
      * @param data.extensionCallback
+     * @param data.fromSource
      * @returns unknown Successful Response
      * @throws ApiError
      */
@@ -652,7 +781,8 @@ export class GoogleOauthService {
             method: 'GET',
             url: '/api/v1/login/google',
             query: {
-                extension_callback: data.extensionCallback
+                extension_callback: data.extensionCallback,
+                from_source: data.fromSource
             },
             errors: {
                 422: 'Validation Error'
@@ -1383,16 +1513,17 @@ export class PromptsService {
      *
      * Args:
      * db (Session): Database session.
-     * _current_user (Any): Current user information (dependency).
+     * current_user (Any): Current user information (dependency).
      * skip (int?): Number of records to skip. Defaults to 0.
      * limit (int?): Maximum number of records to return. Defaults to 100.
      * tag_ids (list[UUID] | None?): List of UUIDs for tags to filter prompts by.
      * search (str | None?): Search term to filter prompts by name, description, or content.
      * sort (str | None?): Field to sort the results by ('created_at' or 'updated_at'). Defaults to None.
      * order (str?): Order of sorting ('asc' or 'desc'). Defaults to "desc".
+     * user_enabled (bool | None?): Filter by user's enabled status. Defaults to None.
      *
      * Returns:
-     * list[Prompt]: List of prompts matching the filters and sorted as specified.
+     * list[dict]: List of prompts with user settings matching the filters and sorted as specified.
      *
      * Raises:
      * HTTPException: If an error occurs during database query execution.
@@ -1403,7 +1534,8 @@ export class PromptsService {
      * @param data.search
      * @param data.sort
      * @param data.order
-     * @returns Prompt Successful Response
+     * @param data.userEnabled
+     * @returns unknown Successful Response
      * @throws ApiError
      */
     public static readPrompts(data: PromptsReadPromptsData = {}): CancelablePromise<PromptsReadPromptsResponse> {
@@ -1416,7 +1548,50 @@ export class PromptsService {
                 tag_ids: data.tagIds,
                 search: data.search,
                 sort: data.sort,
-                order: data.order
+                order: data.order,
+                user_enabled: data.userEnabled
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get User Enabled Prompts
+     * 获取用户启用的 prompts
+     * @param data The data for the request.
+     * @param data.limit
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getUserEnabledPrompts(data: PromptsGetUserEnabledPromptsData = {}): CancelablePromise<PromptsGetUserEnabledPromptsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/prompts/user-enabled',
+            query: {
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get User Disabled Prompts
+     * 获取用户未启用的 prompts
+     * @param data The data for the request.
+     * @param data.limit
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getUserDisabledPrompts(data: PromptsGetUserDisabledPromptsData = {}): CancelablePromise<PromptsGetUserDisabledPromptsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/prompts/user-disabled',
+            query: {
+                limit: data.limit
             },
             errors: {
                 422: 'Validation Error'
@@ -1429,7 +1604,7 @@ export class PromptsService {
      * 获取提示词详情
      * @param data The data for the request.
      * @param data.promptId
-     * @returns PromptReadWithTags Successful Response
+     * @returns unknown Successful Response
      * @throws ApiError
      */
     public static readPrompt(data: PromptsReadPromptData): CancelablePromise<PromptsReadPromptResponse> {
@@ -1637,10 +1812,10 @@ export class PromptsService {
     
     /**
      * Toggle Prompt Enabled
-     * 快速切换提示词的启用状态
+     * 快速切换用户对提示词的启用状态
      * @param data The data for the request.
      * @param data.promptId
-     * @returns PromptReadWithTags Successful Response
+     * @returns unknown Successful Response
      * @throws ApiError
      */
     public static togglePromptEnabled(data: PromptsTogglePromptEnabledData): CancelablePromise<PromptsTogglePromptEnabledResponse> {
@@ -1862,6 +2037,26 @@ export class UsersService {
             path: {
                 user_id: data.userId
             },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Upload User Avatar
+     * Upload and update user avatar.
+     * @param data The data for the request.
+     * @param data.formData
+     * @returns UserPublic Successful Response
+     * @throws ApiError
+     */
+    public static uploadUserAvatar(data: UsersUploadUserAvatarData): CancelablePromise<UsersUploadUserAvatarResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/users/me/avatar',
+            formData: data.formData,
+            mediaType: 'multipart/form-data',
             errors: {
                 422: 'Validation Error'
             }

@@ -111,6 +111,12 @@ import type {
   PromptsReadPromptsData,
   PromptsReadPromptsError,
   PromptsReadPromptsResponse,
+  PromptsGetUserEnabledPromptsData,
+  PromptsGetUserEnabledPromptsError,
+  PromptsGetUserEnabledPromptsResponse,
+  PromptsGetUserDisabledPromptsData,
+  PromptsGetUserDisabledPromptsError,
+  PromptsGetUserDisabledPromptsResponse,
   PromptsReadPromptData,
   PromptsReadPromptError,
   PromptsReadPromptResponse,
@@ -135,12 +141,6 @@ import type {
   PromptsTogglePromptEnabledData,
   PromptsTogglePromptEnabledError,
   PromptsTogglePromptEnabledResponse,
-  PromptsGetUserEnabledPromptsData,
-  PromptsGetUserEnabledPromptsError,
-  PromptsGetUserEnabledPromptsResponse,
-  PromptsGetUserDisabledPromptsData,
-  PromptsGetUserDisabledPromptsError,
-  PromptsGetUserDisabledPromptsResponse,
   LlmCreateCompletionData,
   LlmCreateCompletionError,
   LlmCreateCompletionResponse,
@@ -204,6 +204,12 @@ import type {
   ContentGetSharedContentEndpointData,
   ContentGetSharedContentEndpointError,
   ContentGetSharedContentEndpointResponse,
+  ContentGetContentAiConversationsData,
+  ContentGetContentAiConversationsError,
+  ContentGetContentAiConversationsResponse,
+  ContentGetAiConversationDetailsData,
+  ContentGetAiConversationDetailsError,
+  ContentGetAiConversationDetailsResponse,
   ImagesGetUploadUrlData,
   ImagesGetUploadUrlError,
   ImagesGetUploadUrlResponse,
@@ -251,6 +257,18 @@ import type {
   PreprocessingValidateContentData,
   PreprocessingValidateContentError,
   PreprocessingValidateContentResponse,
+  AiConversationsListAiConversationsData,
+  AiConversationsListAiConversationsError,
+  AiConversationsListAiConversationsResponse,
+  AiConversationsCreateAiConversationData,
+  AiConversationsCreateAiConversationError,
+  AiConversationsCreateAiConversationResponse,
+  AiConversationsGetAiConversationDetailData,
+  AiConversationsGetAiConversationDetailError,
+  AiConversationsGetAiConversationDetailResponse,
+  AiConversationsGetAiConversationMessagesData,
+  AiConversationsGetAiConversationMessagesError,
+  AiConversationsGetAiConversationMessagesResponse,
   PrivateCreateUserData,
   PrivateCreateUserError,
   PrivateCreateUserResponse,
@@ -933,6 +951,47 @@ export const promptsReadPrompts = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get User Enabled Prompts
+ * 获取用户启用的 prompts
+ */
+export const promptsGetUserEnabledPrompts = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<PromptsGetUserEnabledPromptsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    PromptsGetUserEnabledPromptsResponse,
+    PromptsGetUserEnabledPromptsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/user-enabled",
+  });
+};
+
+/**
+ * Get User Disabled Prompts
+ * 获取用户未启用的 prompts
+ */
+export const promptsGetUserDisabledPrompts = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<
+    PromptsGetUserDisabledPromptsData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    PromptsGetUserDisabledPromptsResponse,
+    PromptsGetUserDisabledPromptsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/prompts/user-disabled",
+  });
+};
+
+/**
  * Read Prompt
  * 获取提示词详情
  */
@@ -1121,47 +1180,6 @@ export const promptsTogglePromptEnabled = <
   >({
     ...options,
     url: "/api/v1/prompts/{prompt_id}/toggle-enabled",
-  });
-};
-
-/**
- * Get User Enabled Prompts
- * 获取用户启用的 prompts
- */
-export const promptsGetUserEnabledPrompts = <
-  ThrowOnError extends boolean = false,
->(
-  options?: OptionsLegacyParser<PromptsGetUserEnabledPromptsData, ThrowOnError>,
-) => {
-  return (options?.client ?? client).get<
-    PromptsGetUserEnabledPromptsResponse,
-    PromptsGetUserEnabledPromptsError,
-    ThrowOnError
-  >({
-    ...options,
-    url: "/api/v1/prompts/user-enabled",
-  });
-};
-
-/**
- * Get User Disabled Prompts
- * 获取用户未启用的 prompts
- */
-export const promptsGetUserDisabledPrompts = <
-  ThrowOnError extends boolean = false,
->(
-  options?: OptionsLegacyParser<
-    PromptsGetUserDisabledPromptsData,
-    ThrowOnError
-  >,
-) => {
-  return (options?.client ?? client).get<
-    PromptsGetUserDisabledPromptsResponse,
-    PromptsGetUserDisabledPromptsError,
-    ThrowOnError
-  >({
-    ...options,
-    url: "/api/v1/prompts/user-disabled",
   });
 };
 
@@ -1455,17 +1473,7 @@ export const contentAnalyzeContentStream = <
 
 /**
  * Analyze Content Ai Sdk
- * Stream AI analysis of content using Vercel AI SDK compatible format.
- *
- * This endpoint provides Data Stream Protocol compatible responses for
- * seamless integration with Vercel AI SDK useCompletion hook.
- *
- * Args:
- * content_id: ID of the content to analyze
- * user_prompt: The analysis instruction/prompt from user
- * model: AI model to use
- * temperature: Sampling temperature
- * max_tokens: Maximum tokens to generate
+ * 使用 Vercel AI SDK 兼容格式分析内容，同时将对话存储到AIConversation表中
  */
 export const contentAnalyzeContentAiSdk = <
   ThrowOnError extends boolean = false,
@@ -1484,7 +1492,8 @@ export const contentAnalyzeContentAiSdk = <
 
 /**
  * Content Completion Stream
- * Stream content analysis using Vercel AI SDK compatible format.
+ * Stream content analysis using Vercel AI SDK compatible format，
+ * 同时将对话存储到AIConversation表中
  *
  * This endpoint returns pure text streaming for optimal compatibility
  * with Vercel AI SDK useCompletion hook.
@@ -1549,7 +1558,8 @@ export const contentAnalyzeContentAiSdkUpdated = <
 
 /**
  * Content Completion Stream Updated
- * Stream content analysis with updated prompt structure: system=content, user=instruction.
+ * Stream content analysis using updated prompt structure: system=content, user=instruction.
+ * Compatible with Vercel AI SDK useCompletion hook.
  *
  * This endpoint implements the adjusted LLM logic where:
  * - System message contains the article content (provides context)
@@ -1665,6 +1675,50 @@ export const contentGetSharedContentEndpoint = <
   >({
     ...options,
     url: "/api/v1/content/share/{token}",
+  });
+};
+
+/**
+ * Get AI Conversations for Content
+ * 获取指定内容项的所有AI对话记录
+ */
+export const contentGetContentAiConversations = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentGetContentAiConversationsData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetContentAiConversationsResponse,
+    ContentGetContentAiConversationsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{content_id}/conversations",
+  });
+};
+
+/**
+ * Get AI Conversation Details
+ * 获取指定AI对话的详细信息
+ */
+export const contentGetAiConversationDetails = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentGetAiConversationDetailsData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetAiConversationDetailsResponse,
+    ContentGetAiConversationDetailsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/conversations/{conversation_id}",
   });
 };
 
@@ -1981,6 +2035,92 @@ export const preprocessingValidateContent = <
   >({
     ...options,
     url: "/api/v1/preprocessing/preprocessing/validate",
+  });
+};
+
+/**
+ * List Ai Conversations
+ * Retrieve conversations of current user. Optionally filter by content_item_id.
+ */
+export const aiConversationsListAiConversations = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<
+    AiConversationsListAiConversationsData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    AiConversationsListAiConversationsResponse,
+    AiConversationsListAiConversationsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/ai/conversations/",
+  });
+};
+
+/**
+ * Create Ai Conversation
+ * Create a new AI conversation.
+ */
+export const aiConversationsCreateAiConversation = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    AiConversationsCreateAiConversationData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    AiConversationsCreateAiConversationResponse,
+    AiConversationsCreateAiConversationError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/ai/conversations/",
+  });
+};
+
+/**
+ * Get Ai Conversation Detail
+ */
+export const aiConversationsGetAiConversationDetail = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    AiConversationsGetAiConversationDetailData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    AiConversationsGetAiConversationDetailResponse,
+    AiConversationsGetAiConversationDetailError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/ai/conversations/{conversation_id}",
+  });
+};
+
+/**
+ * Get Ai Conversation Messages
+ */
+export const aiConversationsGetAiConversationMessages = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    AiConversationsGetAiConversationMessagesData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    AiConversationsGetAiConversationMessagesResponse,
+    AiConversationsGetAiConversationMessagesError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/ai/conversations/{conversation_id}/messages",
   });
 };
 

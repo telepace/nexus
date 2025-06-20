@@ -1,4 +1,8 @@
 import { ApiError } from "./core/ApiError"
+import type { ProjectPublic } from "./types.gen"
+
+// 为了向后兼容，将ProjectPublic重新导出为ItemPublic
+export type ItemPublic = ProjectPublic
 
 /**
  * 检查是否为API响应对象
