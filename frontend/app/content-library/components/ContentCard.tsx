@@ -38,7 +38,7 @@ export const ContentCard = ({ item, selected, onSelect, prefetchContent }: Props
   return (
     <Card
       key={item.id}
-      className={`cursor-pointer transition-colors duration-200 ease-out bg-transparent border border-transparent shadow-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none hover:bg-card hover:border-border hover:shadow-md`}
+      className={`cursor-pointer overflow-hidden transition-colors duration-200 ease-out bg-transparent border border-transparent shadow-none rounded-md focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none hover:bg-card hover:border-border hover:shadow-md w-libraryCard`}
       onClick={handleClick}
       onMouseDown={createRipple}
       onMouseEnter={() => {
@@ -46,29 +46,27 @@ export const ContentCard = ({ item, selected, onSelect, prefetchContent }: Props
         prefetchContent(item)
       }}
     >
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-4 flex-1">
-            <div className="w-12 h-12 rounded-lg bg-transparent flex items-center justify-center">
-              {getContentIcon(item.type)}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-lg truncate mb-2">
-                {item.title || '无标题'}
-              </h3>
-              <p className="text-sm text-muted-foreground line-clamp-2 mb-3 leading-relaxed">
-                {item.summary || '暂无摘要'}
-              </p>
-              <div className="flex items-center gap-3 flex-wrap">
-                <ProcessingStatusBadge status={item.processing_status as ProcessingStatus} size="sm" />
-                <Badge variant="outline" className="text-xs">
-                  {item.type.toUpperCase()}
-                </Badge>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Calendar className="h-3 w-3" />
-                  {new Date(item.created_at).toLocaleDateString('zh-CN')}
-                </div>
-              </div>
+      <CardContent className="p-4 pl-1 flex flex-col h-full">
+        <div className="flex items-start gap-2 flex-1 min-w-0">
+          <div className="w-10 h-10 rounded-lg bg-transparent flex items-center justify-center">
+            {getContentIcon(item.type)}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-base line-clamp-2 mb-1 text-neutral-800 dark:text-neutral-100 max-w-[25rem] break-words">
+              {item.title || '无标题'}
+            </h3>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-4 leading-relaxed max-w-[20rem] break-words">
+              {item.summary || '暂无摘要'}
+            </p>
+            <div className="mt-2 flex items-center justify-end gap-2">
+              <ProcessingStatusBadge
+                status={item.processing_status as ProcessingStatus}
+                size="sm"
+                className="text-neutral-400"
+              />
+              <span className="text-xs text-neutral-400">
+                {new Date(item.created_at).toLocaleDateString('zh-CN')}
+              </span>
             </div>
           </div>
         </div>

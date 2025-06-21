@@ -35,7 +35,7 @@ export default function MainLayout({
         } as React.CSSProperties
       }
     >
-      <div className="flex min-h-screen bg-[var(--zinc-200)] max-w-none w-screen">
+      <div className="flex min-h-screen bg-background max-w-none w-screen">
         {/* 侧边栏 */}
         <AppSidebar
           onSettingsClick={() => setSettingsOpen(true)}
