@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Settings, ChevronUp, RefreshCw } from "lucide-react";
 import {
-  IconCirclePlusFilled,
+  IconCirclePlus,
   IconHome,
   IconDashboard,
   IconTags,
@@ -121,7 +121,7 @@ export function AppSidebar({
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="p-0">
+      <SidebarHeader className="p-0 px-1">
         <div className="flex h-header shrink-0 items-center justify-between gap-2 border-b px-4 group-data-[collapsible=icon]:justify-center">
           {/* 左侧：Logo和品牌名称 - 在折叠状态下隐藏 */}
           <div className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:hidden">
@@ -134,28 +134,21 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        {/* 快速创建 - 采用参考示例样式 */}
-        <SidebarGroup className="!px-4">
-          <SidebarGroupContent className="flex flex-col gap-2">
+        {/* 主要导航，包括 Upload Content */}
+        <SidebarGroup className="!px-4 mt-2">
+          <SidebarGroupContent>
             <SidebarMenu>
+              {/* Upload Content */}
               <SidebarMenuItem className="flex items-center gap-2">
                 <SidebarMenuButton
                   onClick={onAddContentClick}
                   tooltip="Upload Content"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
                 >
-                  <IconCirclePlusFilled />
+                  <IconCirclePlus />
                   <span>Upload Content</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
 
-        {/* 主要导航 */}
-        <SidebarGroup className="!px-4 -mt-3">
-          <SidebarGroupContent>
-            <SidebarMenu>
               {data.navMain.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
