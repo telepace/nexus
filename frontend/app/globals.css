@@ -74,6 +74,75 @@
   --size-library: 35.25rem; /* 564px - left pane fixed width */
   --size-library-card: 28.75rem; /* 460px - card width */
   --size-card-title: 25rem; /* 400px - card text width */
+
+  /* === Custom Color Palettes (Tailwind v4 tokens) === */
+  /* -------------------------------------------------
+   *  Common root  ——  Light  Scheme
+   * -------------------------------------------------*/
+  /* ------ Tailwind Stone ------ */
+  --stone-50 : oklch(98.48% 0.001 106deg);
+  --stone-100: oklch(96.99% 0.001 106deg);
+  --stone-200: oklch(92.32% 0.003  49deg);
+  --stone-300: oklch(86.87% 0.004  56deg);
+  --stone-400: oklch(71.61% 0.009  56deg);
+  --stone-500: oklch(55.34% 0.012  58deg);
+  --stone-600: oklch(44.44% 0.010  74deg);
+  --stone-700: oklch(37.41% 0.009  68deg);
+  --stone-800: oklch(26.85% 0.006  34deg);
+  --stone-900: oklch(21.61% 0.006  56deg);
+  --stone-950: oklch(14.69% 0.004  49deg);
+
+  /* ------ Tailwind Zinc ------ */
+  --zinc-50 : oklch(98.51% 0.000  90deg);
+  --zinc-100: oklch(96.74% 0.001 286deg);
+  --zinc-200: oklch(91.97% 0.004 286deg);
+  --zinc-300: oklch(87.11% 0.005 286deg);
+  --zinc-400: oklch(71.18% 0.013 286deg);
+  --zinc-500: oklch(55.17% 0.014 286deg);
+  --zinc-600: oklch(44.19% 0.015 286deg);
+  --zinc-700: oklch(37.03% 0.012 286deg);
+  --zinc-800: oklch(27.39% 0.005 286deg);
+  --zinc-900: oklch(21.03% 0.006 286deg);
+  --zinc-950: oklch(14.08% 0.004 286deg);
+
+  /* ------ Notion Palette (text / bg) ------ */
+  --notion-default-bg : oklch(100% 0 90deg);
+  --notion-default-tx : oklch(32.80% 0.010 87deg);
+
+  --notion-gray-bg    : oklch(94.29% 0.002 93deg);
+  --notion-gray-tx    : oklch(55.52% 0.009 83deg);
+
+  --notion-brown-bg   : oklch(95.28% 0.001 43deg);
+  --notion-brown-tx   : oklch(53.23% 0.030 55deg);
+
+  --notion-orange-bg  : oklch(95.92% 0.005 77deg);
+  --notion-orange-tx  : oklch(60.07% 0.083 69deg);
+
+  --notion-yellow-bg  : oklch(97.37% 0.010 94deg);
+  --notion-yellow-tx  : oklch(70.26% 0.085 90deg);
+
+  --notion-green-bg   : oklch(95.22% 0.005 154deg);
+  --notion-green-tx   : oklch(60.04% 0.054 147deg);
+
+  --notion-blue-bg    : oklch(94.97% 0.008 245deg);
+  --notion-blue-tx    : oklch(55.08% 0.057 250deg);
+
+  --notion-purple-bg  : oklch(96.71% 0.005 306deg);
+  --notion-purple-tx  : oklch(57.40% 0.068 301deg);
+
+  --notion-pink-bg    : oklch(97.08% 0.006 19deg);
+  --notion-pink-tx    : oklch(60.45% 0.094 23deg);
+
+  --notion-red-bg     : oklch(96.45% 0.007 33deg);
+  --notion-red-tx     : oklch(57.30% 0.098 37deg);
+
+  /* ------ macOS System Gray (Light) ------ */
+  --mac-gray-1: oklch(55.17% 0.010 88deg);
+  --mac-gray-2: oklch(67.73% 0.006 91deg);
+  --mac-gray-3: oklch(78.37% 0.003 93deg);
+  --mac-gray-4: oklch(82.30% 0.003 91deg);
+  --mac-gray-5: oklch(90.27% 0.002 93deg);
+  --mac-gray-6: oklch(95.50% 0.001 93deg);
 }
 
 .dark {
@@ -114,6 +183,87 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* === Custom Color Palettes (Tailwind v4 tokens) === */
+  /* -------------------------------------------------
+   *  Common root  ——  Dark  Scheme
+   * -------------------------------------------------*/
+  /* ------ Tailwind Stone ------ */
+  --stone-50 : oklch(98.48% 0.001 106deg);
+  --stone-100: oklch(96.99% 0.001 106deg);
+  --stone-200: oklch(92.32% 0.003  49deg);
+  --stone-300: oklch(86.87% 0.004  56deg);
+  --stone-400: oklch(71.61% 0.009  56deg);
+  --stone-500: oklch(55.34% 0.012  58deg);
+  --stone-600: oklch(44.44% 0.010  74deg);
+  --stone-700: oklch(37.41% 0.009  68deg);
+  --stone-800: oklch(26.85% 0.006  34deg);
+  --stone-900: oklch(21.61% 0.006  56deg);
+  --stone-950: oklch(14.69% 0.004  49deg);
+
+  /* ------ Tailwind Zinc ------ */
+  --zinc-50 : oklch(98.51% 0.000  90deg);
+  --zinc-100: oklch(96.74% 0.001 286deg);
+  --zinc-200: oklch(91.97% 0.004 286deg);
+  --zinc-300: oklch(87.11% 0.005 286deg);
+  --zinc-400: oklch(71.18% 0.013 286deg);
+  --zinc-500: oklch(55.17% 0.014 286deg);
+  --zinc-600: oklch(44.19% 0.015 286deg);
+  --zinc-700: oklch(37.03% 0.012 286deg);
+  --zinc-800: oklch(27.39% 0.005 286deg);
+  --zinc-900: oklch(21.03% 0.006 286deg);
+  --zinc-950: oklch(14.08% 0.004 286deg);
+
+  /* ------ Notion Palette (text / bg) ------ */
+  --notion-default-bg : oklch(100% 0 90deg);
+  --notion-default-tx : oklch(32.80% 0.010 87deg);
+
+  --notion-gray-bg    : oklch(94.29% 0.002 93deg);
+  --notion-gray-tx    : oklch(55.52% 0.009 83deg);
+
+  --notion-brown-bg   : oklch(95.28% 0.001 43deg);
+  --notion-brown-tx   : oklch(53.23% 0.030 55deg);
+
+  --notion-orange-bg  : oklch(95.92% 0.005 77deg);
+  --notion-orange-tx  : oklch(60.07% 0.083 69deg);
+
+  --notion-yellow-bg  : oklch(97.37% 0.010 94deg);
+  --notion-yellow-tx  : oklch(70.26% 0.085 90deg);
+
+  --notion-green-bg   : oklch(95.22% 0.005 154deg);
+  --notion-green-tx   : oklch(60.04% 0.054 147deg);
+
+  --notion-blue-bg    : oklch(94.97% 0.008 245deg);
+  --notion-blue-tx    : oklch(55.08% 0.057 250deg);
+
+  --notion-purple-bg  : oklch(96.71% 0.005 306deg);
+  --notion-purple-tx  : oklch(57.40% 0.068 301deg);
+
+  --notion-pink-bg    : oklch(97.08% 0.006 19deg);
+  --notion-pink-tx    : oklch(60.45% 0.094 23deg);
+
+  --notion-red-bg     : oklch(96.45% 0.007 33deg);
+  --notion-red-tx     : oklch(57.30% 0.098 37deg);
+
+  /* ------ macOS System Gray (Dark) ------ */
+  --mac-gray-1: oklch(55.17% 0.010 88deg);
+  --mac-gray-2: oklch(38.78% 0.009 93deg);
+  --mac-gray-3: oklch(28.83% 0.006 93deg);
+  --mac-gray-4: oklch(23.27% 0.006 94deg);
+  --mac-gray-5: oklch(17.61% 0.005 94deg);
+  --mac-gray-6: oklch(11.13% 0.004 93deg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark overrides for mac-gray */
+    --mac-gray-1: oklch(55.17% 0.010 88deg); /* same as light gray-1 */
+    --mac-gray-2: oklch(38.78% 0.009 93deg);
+    --mac-gray-3: oklch(28.83% 0.006 93deg);
+    --mac-gray-4: oklch(23.27% 0.006 94deg);
+    --mac-gray-5: oklch(17.61% 0.005 94deg);
+    --mac-gray-6: oklch(11.13% 0.004 93deg);
+  }
 }
 
 /* =============================================================================
