@@ -73,6 +73,7 @@
   /* Custom width tokens */
   --size-library: 35.25rem; /* 564px - left pane fixed width */
   --size-library-card: 28.75rem; /* 460px - card width */
+  --size-card-title: 25rem; /* 400px - card text width */
 }
 
 .dark {
@@ -573,6 +574,15 @@
 
   .w-libraryCard {
     width: var(--size-library-card);
+  }
+
+  /* Card title / text width */
+  .w-cardTitle {
+    width: var(--size-card-title);
+  }
+
+  .max-w-cardTitle {
+    max-width: var(--size-card-title);
   }
 }
 

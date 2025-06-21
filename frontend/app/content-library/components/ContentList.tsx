@@ -25,7 +25,12 @@ export const ContentList = ({ items, selectedItem, onSelect, prefetchContent }: 
             onSelect={onSelect}
             prefetchContent={prefetchContent}
           />
-          {idx !== items.length - 1 && <Separator />}
+          {idx !== items.length - 1 && (
+            <Separator
+              className="ml-[3.25rem]"
+              style={{ width: "calc(var(--size-card-title) - 0.5rem)" }}
+            />
+          )}
         </>
       ))}
     </div>

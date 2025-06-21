@@ -52,10 +52,10 @@ export const ContentCard = ({ item, selected, onSelect, prefetchContent }: Props
             {getContentIcon(item.type)}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-base line-clamp-2 mb-1 text-neutral-800 dark:text-neutral-100 max-w-[25rem] break-words">
+            <h3 className="font-medium text-base line-clamp-2 mb-1 text-neutral-800 dark:text-neutral-100 max-w-cardTitle break-words">
               {item.title || '无标题'}
             </h3>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-4 leading-relaxed max-w-[20rem] break-words">
+            <p className="text-sm text-neutral-400 dark:text-neutral-400 line-clamp-4 leading-relaxed max-w-cardTitle break-words">
               {item.summary || '暂无摘要'}
             </p>
             <div className="mt-2 flex items-center justify-end gap-2">
