@@ -1,19 +1,24 @@
-"use client"
+"use client";
 
-import type { ContentItemPublic } from '../types'
-import { ContentCard } from './ContentCard'
-import { Separator } from '@/components/ui/separator'
-import React from 'react'
+import type { ContentItemPublic } from "../types";
+import { ContentCard } from "./ContentCard";
+import { Separator } from "@/components/ui/separator";
+import React from "react";
 
 interface Props {
-  items: ContentItemPublic[]
-  selectedItem: ContentItemPublic | null
-  onSelect: (item: ContentItemPublic) => void
-  prefetchContent: (item: ContentItemPublic) => void
+  items: ContentItemPublic[];
+  selectedItem: ContentItemPublic | null;
+  onSelect: (item: ContentItemPublic) => void;
+  prefetchContent: (item: ContentItemPublic) => void;
 }
 
-export const ContentList = ({ items, selectedItem, onSelect, prefetchContent }: Props) => {
-  if (!items.length) return null
+export const ContentList = ({
+  items,
+  selectedItem,
+  onSelect,
+  prefetchContent,
+}: Props) => {
+  if (!items.length) return null;
 
   return (
     <div className="space-y-4">
@@ -34,5 +39,5 @@ export const ContentList = ({ items, selectedItem, onSelect, prefetchContent }: 
         </React.Fragment>
       ))}
     </div>
-  )
-} 
+  );
+};

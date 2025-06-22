@@ -1,15 +1,7 @@
 "use client";
 
 import { FC, useEffect, useState, useCallback } from "react";
-import {
-  Brain,
-  Trash2,
-  Loader2,
-  Sparkles,
-  Lightbulb,
-  Target,
-  History,
-} from "lucide-react";
+import { Loader2, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { LLMAnalysisCard } from "@/components/ui/llm-analysis-card";
@@ -70,7 +62,6 @@ export const EnhancedLLMAnalysisSidebar: FC<
     isLoadingPrompts,
     toggleExpanded,
     removeAnalysis,
-    clearAnalyses,
     generateAnalysis,
     executeAnalysisWithContent,
     loadPrompts,
@@ -328,14 +319,6 @@ export const EnhancedLLMAnalysisSidebar: FC<
         variant: "destructive",
       });
     }
-  };
-
-  const handleClearAll = () => {
-    clearAnalyses();
-    toast({
-      title: "已清空",
-      description: "实时分析已清空（历史分析保留）",
-    });
   };
 
   const handlePromptSelect = (prompt: Prompt) => {

@@ -126,7 +126,8 @@ describe("ContentLibraryPage", () => {
     });
 
     // First click: set focus (should NOT navigate)
-    const contentCard = screen.getByText("Test Document").closest("div.cursor-pointer") ||
+    const contentCard =
+      screen.getByText("Test Document").closest("div.cursor-pointer") ||
       screen.getByText("Test Document").closest("[role='button']") ||
       screen.getByText("Test Document").closest("div");
 
@@ -136,7 +137,7 @@ describe("ContentLibraryPage", () => {
     }
 
     // Now the preview should render a "查看全文" button
-    const fullButton = await screen.findByRole('button', { name: '查看全文' });
+    const fullButton = await screen.findByRole("button", { name: "查看全文" });
     fireEvent.click(fullButton);
     expect(mockPush).toHaveBeenCalledWith("/content-library/reader/1");
   });

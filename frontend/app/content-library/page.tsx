@@ -1,28 +1,25 @@
 "use client";
 
-import MainLayout from '@/components/layout/MainLayout'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Search, AlertCircle, Loader2 } from 'lucide-react'
-import { ContentList } from './components/ContentList'
-import { ContentPreview } from './components/ContentPreview'
-import { LibraryHeader } from './components/LibraryHeader'
-import { useContentItems } from './hooks/useContentItems'
+import MainLayout from "@/components/layout/MainLayout";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Search, AlertCircle, Loader2 } from "lucide-react";
+import { ContentList } from "./components/ContentList";
+import { ContentPreview } from "./components/ContentPreview";
+import { useContentItems } from "./hooks/useContentItems";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 
 export default function ContentLibraryPage() {
   const {
     authLoading,
     loading,
     error,
-    items,
     filteredItems,
     selectedItem,
     setSelectedItem,
@@ -33,7 +30,7 @@ export default function ContentLibraryPage() {
     typeFilter,
     setTypeFilter,
     prefetchContent,
-  } = useContentItems()
+  } = useContentItems();
 
   // Loading states
   if (authLoading || loading) {
@@ -46,7 +43,7 @@ export default function ContentLibraryPage() {
           </div>
         </div>
       </MainLayout>
-    )
+    );
   }
 
   // Error state
@@ -59,7 +56,7 @@ export default function ContentLibraryPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       </MainLayout>
-    )
+    );
   }
 
   return (
@@ -75,45 +72,45 @@ export default function ContentLibraryPage() {
 
           {/* 筛选控件（暂时隐藏） */}
           {false && (
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between px-6 pt-4 pb-2">
-            {/* 搜索框 */}
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="搜索标题或摘要..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-9"
-              />
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between px-6 pt-4 pb-2">
+              {/* 搜索框 */}
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="搜索标题或摘要..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-9"
+                />
+              </div>
+
+              {/* 状态筛选 */}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="min-w-[120px]">
+                  <SelectValue placeholder="所有状态" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">所有状态</SelectItem>
+                  <SelectItem value="pending">待处理</SelectItem>
+                  <SelectItem value="processing">处理中</SelectItem>
+                  <SelectItem value="completed">已完成</SelectItem>
+                  <SelectItem value="failed">失败</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* 类型筛选 */}
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="min-w-[120px]">
+                  <SelectValue placeholder="所有类型" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">所有类型</SelectItem>
+                  <SelectItem value="pdf">PDF</SelectItem>
+                  <SelectItem value="url">网页</SelectItem>
+                  <SelectItem value="text">文本</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-
-            {/* 状态筛选 */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="min-w-[120px]">
-                <SelectValue placeholder="所有状态" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">所有状态</SelectItem>
-                <SelectItem value="pending">待处理</SelectItem>
-                <SelectItem value="processing">处理中</SelectItem>
-                <SelectItem value="completed">已完成</SelectItem>
-                <SelectItem value="failed">失败</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* 类型筛选 */}
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="min-w-[120px]">
-                <SelectValue placeholder="所有类型" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">所有类型</SelectItem>
-                <SelectItem value="pdf">PDF</SelectItem>
-                <SelectItem value="url">网页</SelectItem>
-                <SelectItem value="text">文本</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           )}
 
           {/* 列表 */}
@@ -139,5 +136,5 @@ export default function ContentLibraryPage() {
         </aside>
       </div>
     </MainLayout>
-  )
+  );
 }

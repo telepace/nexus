@@ -3,7 +3,6 @@
 import { useEffect, useState, memo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   ArrowLeft,
@@ -15,7 +14,6 @@ import {
 import { useAuth, getCookie } from "@/lib/auth";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
-import { ShareContentModal } from "@/components/share/ShareContentModal";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
 import { useReaderContext } from "@/components/layout/ReaderLayout";
@@ -216,9 +214,6 @@ export const ClientContent = ({
   );
   const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
-
-  // 添加分享状态管理
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // 记录访问
   useEffect(() => {
