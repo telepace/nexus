@@ -1,9 +1,6 @@
 "use client"
 
-import { Badge } from '@/components/ui/badge'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { Calendar, Clock, FileText } from 'lucide-react'
+import { FileText, Calendar, Clock } from 'lucide-react'
 import { AIAnalysisCard } from './AIAnalysisCard'
 import type { ContentItemPublic } from '../types'
 
@@ -13,28 +10,28 @@ interface Props {
 
 export const ContentPreview = ({ item }: Props) => {
   return (
-    <Card className="h-full rounded-sm bg-neutral-50 border shadow-md dark:bg-neutral-900 flex flex-col overflow-hidden">
-      <CardHeader className="pt-4 pb-4">
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5 text-primary" />
+    <div className="h-full shadow-macos-window  bg-neutral-100 rounded-sm  flex flex-col overflow-hidden">
+      <div className="flex items-center h-header px-4">
+        <div className="flex items-center gap-2 text-base font-medium">
+          <FileText className="h-5 w-5" />
           内容预览
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pb-4">
+        </div>
+      </div>
+      <div className="pb-4 flex-1 overflow-auto mt-12">
         {item ? (
-          <div className="space-y-6">
+          <div className="space-y-6 max-w-[28rem] mx-auto">
             <div>
               <h3 className="font-semibold mb-3 text-lg">
                 {item.title || '无标题'}
               </h3>
-              <div className="flex items-center gap-2 mb-4 flex-wrap">
-                <Badge variant="outline" className="text-xs">
-                  {item.type.toUpperCase()}
-                </Badge>
+              <div className="mb-4">
+                <div className="inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow">
+                  <span className="text-xs font-medium">
+                    {item.type.toUpperCase()}
+                  </span>
+                </div>
               </div>
             </div>
-
-            <Separator />
 
             <div className="space-y-4">
               <div>
@@ -93,7 +90,7 @@ export const ContentPreview = ({ item }: Props) => {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 } 

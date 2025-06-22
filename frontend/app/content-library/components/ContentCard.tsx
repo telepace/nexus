@@ -38,7 +38,7 @@ export const ContentCard = ({ item, selected, onSelect, prefetchContent }: Props
   return (
     <Card
       key={item.id}
-      className={`cursor-pointer overflow-hidden transition-colors duration-200 ease-out bg-transparent border border-transparent shadow-none rounded-md focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none hover:bg-card hover:border-border hover:shadow-md w-libraryCard`}
+      className={`cursor-pointer rounded-lg overflow-hidden transition-colors duration-200 ease-out bg-transparent border border-transparent shadow-none hover:bg-[var(--color-linear-bg-2)] hover:border-[var(--mac-gray-5)] hover:shadow-md w-libraryCard`}
       onClick={handleClick}
       onMouseDown={createRipple}
       onMouseEnter={() => {

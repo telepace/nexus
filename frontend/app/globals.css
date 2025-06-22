@@ -25,8 +25,8 @@
   --neutral-950: oklch(0.145 0 0);
 
   /* Light‑mode semantic colors */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: var(--color-linear-bg-1);
+  --foreground: #222326; /* Nordic Gray */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -53,7 +53,7 @@
   --chart-5: oklch(0.769 0.188 70.08);
 
   /* Sidebar colors (light) */
-  --sidebar: oklch(1 0 0);
+  --sidebar: var(--color-linear-bg-1);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
@@ -143,6 +143,27 @@
   --mac-gray-4: oklch(82.30% 0.003 91deg);
   --mac-gray-5: oklch(90.27% 0.002 93deg);
   --mac-gray-6: oklch(95.50% 0.001 93deg);
+
+  /* === Linear Palette === */
+  /* Brand / Accent */
+  --color-linear-accent: #5E6AD2;
+
+  /* Neutrals */
+  --color-linear-bg-0: #F3F3F3; /* 侧边栏 / 主背景 */
+  --color-linear-bg-1: #F9F9F9; /* 主页面背景 */
+  --color-linear-bg-2: #FFFFFF; /* 卡片 / 列 */
+  --color-linear-border: #E5E6EA; /* Divider */
+
+  /* Typography */
+  --color-linear-text: #222326; /* 主文本 */
+  --color-linear-text-secondary: #8A8F98; /* 次文本 */
+
+  /* Reeder specific */
+  --color-reeder-border-card: #F3F2EE;
+
+  /* Dia icon palette */
+  --color-dia-icon-bg: #F1F2F2; /* icon container background */
+  --color-dia-icon: #FCFCFC;    /* icon itself / fg */
 }
 
 .dark {
@@ -252,6 +273,27 @@
   --mac-gray-4: oklch(23.27% 0.006 94deg);
   --mac-gray-5: oklch(17.61% 0.005 94deg);
   --mac-gray-6: oklch(11.13% 0.004 93deg);
+
+  /* === Linear Palette === */
+  /* Brand / Accent */
+  --color-linear-accent: #5E6AD2;
+
+  /* Neutrals */
+  --color-linear-bg-0: #F4F5F8; /* 页面最底层背景 */
+  --color-linear-bg-1: #F5F5F5; /* 侧边栏 / 主背景 */
+  --color-linear-bg-2: #FFFFFF; /* 卡片 / 列 */
+  --color-linear-border: #E5E6EA; /* Divider */
+
+  /* Typography */
+  --color-linear-text: #222326; /* 主文本 */
+  --color-linear-text-secondary: #8A8F98; /* 次文本 */
+
+  /* Reeder specific */
+  --color-reeder-border-card: #F3F2EE;
+
+  /* Dia icon palette */
+  --color-dia-icon-bg: #F1F2F2; /* icon container background */
+  --color-dia-icon: #FCFCFC;    /* icon itself / fg */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -352,7 +394,7 @@
   --spacing-96: 24rem;
 
   /* Custom layout dimensions */
-  --spacing-header: 3.5rem; /* 56px - header height */
+  --spacing-header: 3rem; 
   --spacing-sidebar: 16rem; /* 256px - sidebar width */
   --spacing-sidebar-collapsed: 3.5rem; /* 56px - collapsed sidebar width */
 
@@ -648,6 +690,17 @@
     max-height: min(80vh, 600px);
     aspect-ratio: auto;
   }
+
+  .page-top-highlight {
+    @apply relative;
+  }
+  .page-top-highlight::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 1px 0 #ffffff;
+  }
 }
 
 /* =============================================================================
@@ -734,6 +787,46 @@
   .max-w-cardTitle {
     max-width: var(--size-card-title);
   }
+
+  /* macOS style shadows and container utilities */
+  .shadow-macos-window {
+    box-shadow:
+      0 0 2px 1px rgba(0,0,0,.1),  /* 贴边深线 */
+      0 0 0px 1px rgba(0,0,0,.05),  /* 贴边深线 */
+      0 4px 8px 0.5px rgba(0,0,0,.20);  /* 柔和投影 */
+  }
+
+  .shadow-macos-2 {
+    box-shadow:
+      0 0 10px 1px rgba(0,0,0,.08), 
+      0 0 0px rgba(0,0,0,.65),  
+      inset 0 0 0 1px rgba(255,255,255,.15); 
+  }
+
+  .border-macos-container {
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+
+  /* Linear utility classes */
+  .linear-bg-0 { background-color: var(--color-linear-bg-0); }
+  .linear-bg-1 { background-color: var(--color-linear-bg-1); }
+  .linear-bg-2 { background-color: var(--color-linear-bg-2); }
+
+  .linear-text-primary { color: var(--color-linear-text); }
+  .linear-text-secondary { color: var(--color-linear-text-secondary); }
+  .linear-text-accent { color: var(--color-linear-accent); }
+
+  .linear-border { border: 1px solid var(--color-linear-border); }
+  .linear-border-t { border-top: 1px solid var(--color-linear-border); }
+  .linear-border-b { border-bottom: 1px solid var(--color-linear-border); }
+
+  /* Reeder specific */
+  .border-reeder-border-card { border: 1px solid var(--color-reeder-border-card); }
+
+  /* Dia icon utilities */
+  .dia-icon-bg { background-color: var(--color-dia-icon-bg); }
+  .dia-icon { background-color: var(--color-dia-icon); }
+  .text-dia-icon { color: var(--color-dia-icon); }
 }
 
 /* =============================================================================
