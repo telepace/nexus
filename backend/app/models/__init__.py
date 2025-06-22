@@ -38,6 +38,9 @@ from .content import (
     ProcessingJob,
 )
 
+# Import favorite model
+from .favorite import Favorite
+
 # Import the new Image model
 from .image import Image
 
@@ -88,6 +91,7 @@ __all__ = [
     "ContentShare",
     "ProcessingJob",
     "AIConversation",
+    "Favorite",
     # Project and routing models
     "Project",
     "ProjectBase",

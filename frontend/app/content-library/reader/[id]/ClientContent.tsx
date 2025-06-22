@@ -95,6 +95,8 @@ const ProcessedContentRenderer = memo(
     markdownContent?: string | null;
     contentId: string;
   }) => {
+    const router = useRouter();
+
     // 优先使用虚拟滚动渲染
     if (contentId && content.processing_status === "completed") {
       return (
@@ -141,14 +143,71 @@ const ProcessedContentRenderer = memo(
             <p className="text-sm text-muted-foreground">
               {content.processing_status === "completed"
                 ? "处理后的内容暂不可用"
-                : `内容正在处理中，状态：${content.processing_status}`}
+                : content.processing_status === "failed"
+                  ? "内容处理失败"
+                  : `内容正在处理中，状态：${content.processing_status}`}
             </p>
-            {content.processing_status !== "completed" && (
+            {content.processing_status === "failed" ? (
+              <div className="flex flex-col items-center gap-3 mt-4">
+                <p className="text-xs text-red-600">
+                  内容处理失败，可尝试重新处理
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        const apiUrl =
+                          process.env.NEXT_PUBLIC_API_URL ||
+                          "http://127.0.0.1:8000";
+                        const token = getCookie("accessToken");
+                        if (!token) {
+                          throw new Error("未找到登录凭据");
+                        }
+
+                        const res = await fetch(
+                          `${apiUrl}/api/v1/content/reprocess/${contentId}`,
+                          {
+                            method: "POST",
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                              "Content-Type": "application/json",
+                            },
+                          },
+                        );
+
+                        if (!res.ok) {
+                          throw new Error("重新处理请求失败");
+                        }
+
+                        // 刷新当前页面状态
+                        router.refresh();
+                      } catch (err) {
+                        console.error(err);
+                        alert("重新处理请求失败，请稍后再试");
+                      }
+                    }}
+                    className="text-xs"
+                  >
+                    重新处理
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push("/content-library")}
+                    className="text-xs"
+                  >
+                    返回内容库
+                  </Button>
+                </div>
+              </div>
+            ) : content.processing_status !== "completed" ? (
               <div className="flex items-center justify-center gap-2 mt-2">
                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
                 <span className="text-xs text-primary">AI 正在处理内容...</span>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       );

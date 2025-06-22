@@ -13,10 +13,12 @@ from app.main import app
 from app.models import User, UserCreate
 from app.models.content import (
     AIConversation,
+    AIResult,
     ContentAsset,
     ContentItem,
     ContentShare,
     ProcessingJob,
+    Segment,
 )
 from app.models.project import Project
 from app.models.prompt import Prompt, Tag
@@ -120,18 +122,20 @@ def db() -> Generator[Session, None, None]:
     with Session(test_engine, expire_on_commit=False) as session:
         # 先清理所有数据，确保测试隔离
         try:
-            # Clean up all test data - use Project instead of Item
-            session.execute(delete(Project))
-            session.execute(delete(User))
-            # Clean up content-related tables
+            # Clean up all test data - 按照外键依赖关系的顺序删除
+            # 1. 先删除依赖于其他表的子表
             session.execute(delete(AIConversation))
             session.execute(delete(ProcessingJob))
             session.execute(delete(ContentAsset))
             session.execute(delete(ContentShare))
-            session.execute(delete(ContentItem))
-            # Clean up prompt-related tables
-            session.execute(delete(Prompt))
+            session.execute(delete(Segment))  # Segment 依赖于 ContentItem
+            session.execute(delete(AIResult))  # AIResult 依赖于 ContentItem
+            session.execute(delete(ContentItem))  # ContentItem 依赖于 User
+            session.execute(delete(Project))  # Project 可能依赖于 User
+            session.execute(delete(Prompt))  # Prompt 可能依赖于 User
             session.execute(delete(Tag))
+            # 2. 最后删除被依赖的父表
+            session.execute(delete(User))
             session.commit()
         except Exception as e:
             # If cleanup fails, log but don't fail the test
@@ -146,18 +150,20 @@ def db() -> Generator[Session, None, None]:
 
         # 在每个测试结束后清理数据，但保留数据库结构
         try:
-            # Clean up all test data - use Project instead of Item
-            session.execute(delete(Project))
-            session.execute(delete(User))
-            # Clean up content-related tables
+            # Clean up all test data - 按照外键依赖关系的顺序删除
+            # 1. 先删除依赖于其他表的子表
             session.execute(delete(AIConversation))
             session.execute(delete(ProcessingJob))
             session.execute(delete(ContentAsset))
-            session.execute(delete(ContentShare))  # Added ContentShare
-            session.execute(delete(ContentItem))
-            # Clean up prompt-related tables
-            session.execute(delete(Prompt))
+            session.execute(delete(ContentShare))
+            session.execute(delete(Segment))  # Segment 依赖于 ContentItem
+            session.execute(delete(AIResult))  # AIResult 依赖于 ContentItem
+            session.execute(delete(ContentItem))  # ContentItem 依赖于 User
+            session.execute(delete(Project))  # Project 可能依赖于 User
+            session.execute(delete(Prompt))  # Prompt 可能依赖于 User
             session.execute(delete(Tag))
+            # 2. 最后删除被依赖的父表
+            session.execute(delete(User))
             session.commit()
         except Exception as e:
             # If cleanup fails, log but don't fail the test
@@ -234,11 +240,18 @@ def superuser_token_headers(client: TestClient, db: Session) -> dict[str, str]:
 
 @pytest.fixture(scope="function")  # 改为function scope，确保每个测试都有独立的用户
 def normal_user_token_headers(client: TestClient, db: Session) -> dict[str, str]:
+    """Get normal user token headers for testing."""
     # 确保数据库会话提交，使用户对API可见
     db.commit()
     return authentication_token_from_email(
-        client=client, email=settings.EMAIL_TEST_USER, db=db
+        client=client, email=settings.FIRST_SUPERUSER, db=db
     )
+
+
+@pytest.fixture(scope="function")
+def db_session(db: Session) -> Session:
+    """Alias for db fixture to support existing tests that use db_session."""
+    return db
 
 
 def get_api_response_data(response: Any) -> dict[str, Any]:

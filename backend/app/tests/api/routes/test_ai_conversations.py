@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
+from app.models.content import ContentItem
 
 
 class TestAIConversationsAPI:
@@ -20,7 +21,6 @@ class TestAIConversationsAPI:
                 {"role": "user", "content": "Analyze this content"},
                 {"role": "assistant", "content": "Here is my analysis..."},
             ],
-            "summary": "This is a test conversation for content analysis",
         }
 
         response = client.post(
@@ -36,7 +36,6 @@ class TestAIConversationsAPI:
         content = response.json()
         assert content["title"] == data["title"]
         assert content["ai_model_name"] == data["ai_model_name"]
-        assert content["summary"] == data["summary"]
         assert len(content["messages"]) == 2
         assert "id" in content
         assert "created_at" in content
@@ -110,7 +109,6 @@ class TestAIConversationsAPI:
                 {"role": "user", "content": "Hello"},
                 {"role": "assistant", "content": "Hi there!"},
             ],
-            "summary": "A simple greeting conversation",
         }
 
         create_response = client.post(
@@ -169,10 +167,28 @@ class TestAIConversationsAPI:
         self, client: TestClient, superuser_token_headers: dict[str, str], db: Session
     ) -> None:
         """Test creating conversation with content_item_id."""
-        content_item_id = str(uuid.uuid4())
+        # 获取测试用户
+        from app import crud
+        from app.core.config import settings
+
+        test_user = crud.get_user_by_email(session=db, email=settings.FIRST_SUPERUSER)
+
+        # 创建真实的 ContentItem
+        real_content_item = ContentItem(
+            user_id=test_user.id,
+            type="article",
+            title="测试内容",
+            content_text="这是一些测试内容用于AI对话",
+            processing_status="completed",
+        )
+
+        # 保存到数据库
+        db.add(real_content_item)
+        db.commit()
+        db.refresh(real_content_item)
 
         data = {
-            "content_item_id": content_item_id,
+            "content_item_id": str(real_content_item.id),
             "title": "Content Analysis",
             "ai_model_name": "claude-3",
             "messages": [
@@ -180,7 +196,6 @@ class TestAIConversationsAPI:
                 {"role": "user", "content": "Please analyze this content"},
                 {"role": "assistant", "content": "Based on my analysis..."},
             ],
-            "summary": "Analysis of specific content item",
         }
 
         response = client.post(
@@ -191,7 +206,7 @@ class TestAIConversationsAPI:
 
         assert response.status_code == 201
         content = response.json()
-        assert content["content_item_id"] == content_item_id
+        assert content["content_item_id"] == str(real_content_item.id)
         assert len(content["messages"]) == 3
 
     def test_list_ai_conversations_pagination(

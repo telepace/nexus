@@ -65,6 +65,15 @@ const nextConfig = {
         protocol: "https",
         hostname: "cdn.jsdelivr.net",
       },
+      // 添加 Wikimedia 域名支持
+      {
+        protocol: "https",
+        hostname: "upload.wikimedia.org",
+      },
+      {
+        protocol: "https",
+        hostname: "*.wikimedia.org",
+      },
     ],
   },
   webpack: (config, { isServer }) => {

@@ -77,3 +77,41 @@ export function getCookie(name: string): string | null {
 
   return null;
 }
+
+/**
+ * Normalizes image URLs by converting protocol-relative URLs to HTTPS.
+ * 
+ * Protocol-relative URLs (starting with //) are not supported by Next.js Image component.
+ * This function converts them to absolute HTTPS URLs.
+ *
+ * @param url - The image URL to normalize
+ * @returns The normalized URL with explicit protocol
+ * 
+ * @example
+ * // Convert protocol-relative URLs to HTTPS
+ * normalizeImageUrl('//upload.wikimedia.org/image.jpg') // returns 'https://upload.wikimedia.org/image.jpg'
+ * normalizeImageUrl('//example.com/image.jpg') // returns 'https://example.com/image.jpg'
+ * 
+ * // Leave other URLs unchanged
+ * normalizeImageUrl('https://example.com/image.jpg') // returns 'https://example.com/image.jpg'
+ * normalizeImageUrl('http://localhost:3000/image.jpg') // returns 'http://localhost:3000/image.jpg'
+ * normalizeImageUrl('/local/image.jpg') // returns '/local/image.jpg'
+ * normalizeImageUrl('relative/image.jpg') // returns 'relative/image.jpg'
+ * 
+ * // Handle edge cases
+ * normalizeImageUrl('') // returns ''
+ * normalizeImageUrl(null) // returns null (if input is falsy)
+ */
+export function normalizeImageUrl(url: string): string {
+  // Handle falsy values
+  if (!url || typeof url !== 'string') {
+    return url || '';
+  }
+  
+  // Convert protocol-relative URLs to HTTPS
+  if (url.startsWith('//')) {
+    return `https:${url}`;
+  }
+  
+  return url;
+}

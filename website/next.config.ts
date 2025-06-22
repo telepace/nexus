@@ -16,6 +16,16 @@ export default withNextra({
   output: 'standalone',
   images: {
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'upload.wikimedia.org',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.wikimedia.org',
+      },
+    ],
   },
   eslint: {
     ignoreDuringBuilds: true,

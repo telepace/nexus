@@ -6,7 +6,7 @@ import { convertPromptToRecommendation } from "@/lib/utils/prompt-utils";
 
 export interface LLMAnalysis {
   id: string;
-  type: "summary" | "key_points" | "questions" | "insights" | "custom";
+  type: "summary" | "key_points" | "questions" | "insights" | "tags_extractor" | "custom";
   title: string;
   content: string;
   prompt?: string;

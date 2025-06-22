@@ -4,6 +4,7 @@ AI聊天服务
 """
 
 import logging
+import random
 from pathlib import Path
 from typing import Any
 
@@ -93,31 +94,29 @@ class ChatService:
         }
 
     async def _generate_mock_labels(self, context: dict[str, Any]) -> dict[str, Any]:
-        """生成模拟标签"""
+        """生成模拟标签和评分（适配新版标签Prompt）"""
         content = context.get("content", "")
 
-        # 简单的关键词提取
-        tech_terms = [
-            "技术",
-            "AI",
-            "人工智能",
-            "机器学习",
-            "深度学习",
-            "算法",
-            "数据",
-            "系统",
+        # 简单关键词提取作为示例
+        keywords = [
+            "ai",
+            "machine learning",
+            "data",
+            "python",
+            "analysis",
         ]
-        found_terms = [term for term in tech_terms if term in content]
+
+        tags = [
+            kw.replace(" ", "-") for kw in keywords if kw.lower() in content.lower()
+        ] or [
+            "general",
+            "content",
+        ]
+
+        # 生成 0~5 的随机评分（示例），真实场景应由模型给出
+        score = round(random.uniform(3.0, 5.0), 1)
 
         return {
-            "primary_tags": {
-                "topics": found_terms[:3] if found_terms else ["技术", "分析"],
-                "concepts": ["核心概念", "理论框架"],
-                "industries": ["科技", "信息技术"],
-            },
-            "secondary_tags": {
-                "skills": ["技术能力", "分析能力"],
-                "tools": ["工具应用"],
-                "methodologies": ["方法论"],
-            },
+            "tags": tags[:8],
+            "score": score,
         }

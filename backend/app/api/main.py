@@ -5,6 +5,7 @@ from app.api.routes import (
     chat,  # Add chat router
     content,  # Add content router
     dashboard,  # Add dashboard router
+    favorites,  # Add favorites router
     google_oauth,
     images,  # Added images router
     items,
@@ -32,6 +33,9 @@ api_router.include_router(
 api_router.include_router(
     content.router, prefix="/content", tags=["content"]
 )  # Include content router
+api_router.include_router(
+    favorites.router, prefix="/favorites", tags=["favorites"]
+)  # Include favorites router
 api_router.include_router(
     images.router, prefix="/images", tags=["images"]
 )  # Include images router

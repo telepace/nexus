@@ -11,7 +11,6 @@ class ContentItemBaseSchema(SQLModel):
     type: str
     source_uri: str | None = None
     title: str | None = None
-    summary: str | None = None
 
 
 class ContentItemCreate(ContentItemBaseSchema):
@@ -25,7 +24,6 @@ class ContentItemUpdate(SQLModel):
     type: str | None = None
     source_uri: str | None = None
     title: str | None = None
-    summary: str | None = None
     content_text: str | None = None
     # user_id is typically not updatable, or handled via different auth/logic
     # processing_status is also typically not updated directly by user

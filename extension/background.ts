@@ -1,6 +1,7 @@
 import { sendToContentScript } from "@plasmohq/messaging";
 // import { getUIManager } from "./lib/ui-manager"; // 🔧 暂时移除UI Manager
 import { generateSummary, saveToLibrary } from "./lib/api";
+import { apiClient, StreamChunk } from './lib/api-client'
 
 // 🔧 暂时移除UI Manager
 // const uiManager = getUIManager();
@@ -228,17 +229,12 @@ chrome.action.onClicked.addListener(async (tab) => {
 
 // 监听来自内容脚本和侧边栏的消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log('[Background] 📨 Received message:', {
-    type: request.type,
-    from: sender.tab ? `tab-${sender.tab.id}` : 'extension',
-    url: sender.tab?.url?.substring(0, 100) + '...'
-  });
+  console.log('[Background] 📨 Received message:', request.type);
 
   // 处理连接检查（心跳）
   if (request.type === 'PING') {
-    console.log('[Background] 🏓 PING received, sending PONG');
-    sendResponse({ success: true, pong: true, timestamp: Date.now() })
-    return false // 同步响应
+    sendResponse({ success: true, timestamp: Date.now() });
+    return;
   }
 
   // 处理认证相关
@@ -287,36 +283,40 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // 处理保存页面请求
   if (request.type === 'PROCESS_SAVE_PAGE') {
     console.log('[Background] 💾 PROCESS_SAVE_PAGE request received');
-    
-    // 🔧 添加超时保护，确保消息不会无限等待
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('处理超时')), 30000); // 30秒超时
-    });
-    
-    Promise.race([
-      handleSavePageRequest(request.data),
-      timeoutPromise
-    ]).then(response => {
+    handleSavePageRequest(request.data).then(response => {
       console.log('[Background] 💾 PROCESS_SAVE_PAGE response:', { success: response.success });
       sendResponse(response)
     }).catch(error => {
       console.error('[Background] 💾 PROCESS_SAVE_PAGE error:', error);
-      sendResponse({ success: false, error: error.message })
-    })
-    return true
+      sendResponse({ success: false, error: error.message || 'Unknown error' });
+    });
+    return true; // 异步响应
   }
 
   // 处理摘要生成请求
   if (request.type === 'PROCESS_SUMMARIZE_PAGE') {
     console.log('[Background] 📝 PROCESS_SUMMARIZE_PAGE request received');
-    handleSummarizePageRequest(request.data).then(response => {
+    handleSummarizePage(request.data).then(response => {
       console.log('[Background] 📝 PROCESS_SUMMARIZE_PAGE response:', { success: response.success });
       sendResponse(response)
     }).catch(error => {
       console.error('[Background] 📝 PROCESS_SUMMARIZE_PAGE error:', error);
-      sendResponse({ success: false, error: error.message })
-    })
-    return true
+      sendResponse({ success: false, error: error.message || 'Unknown error' });
+    });
+    return true; // 异步响应
+  }
+
+  // 处理关键要点提取请求
+  if (request.type === 'PROCESS_EXTRACT_KEY_POINTS') {
+    console.log('[Background] 🔑 PROCESS_EXTRACT_KEY_POINTS request received');
+    handleExtractKeyPoints(request.data).then(response => {
+      console.log('[Background] 🔑 PROCESS_EXTRACT_KEY_POINTS response:', { success: response.success });
+      sendResponse(response)
+    }).catch(error => {
+      console.error('[Background] 🔑 PROCESS_EXTRACT_KEY_POINTS error:', error);
+      sendResponse({ success: false, error: error.message || 'Unknown error' });
+    });
+    return true; // 异步响应
   }
 
   // 处理来自独立窗口的摘要生成请求
@@ -685,33 +685,236 @@ function extractTitleFromUrl(url: string): string {
   }
 }
 
-// 处理摘要生成请求
-async function handleSummarizePageRequest(pageData: any) {
+// 处理摘要页面请求
+async function handleSummarizePage(pageData: any) {
   try {
-    if (!pageData.content || pageData.content.length < 100) {
-      // 🔧 移除UI Manager调用
-      // await uiManager.showNotification('页面内容太少，无法生成摘要', 'warning')
-      console.log('[Background] Content too short for summary');
-      return { success: false, error: '页面内容太少，无法生成摘要' }
+    console.log('[Background] 🚀 Processing summarize page request:', {
+      title: pageData.title,
+      url: pageData.url,
+      contentLength: pageData.content?.length || 0
+    });
+    
+    // 检查认证状态
+    const authResult = await checkAuthStatus()
+    if (!authResult.isAuthenticated || !authResult.token) {
+      return { success: false, error: '请先登录' }
     }
 
-    // 🔧 移除UI Manager调用
-    // await uiManager.showLoading('正在生成AI摘要...', 'sidepanel')
-    console.log('[Background] Generating AI summary...');
+    // 设置API客户端token
+    apiClient.setToken(authResult.token);
+
+    // 首先创建内容项
+    console.log('[Background] 📝 Creating content item...');
+    const contentItem = await apiClient.createContent({
+      type: 'url',
+      source_uri: pageData.url,
+      title: pageData.title?.trim() || extractTitleFromUrl(pageData.url),
+      content_text: pageData.content,
+      summary: generateContentSummary(pageData.content)
+    });
+
+    console.log('[Background] ✅ Content item created:', contentItem.id);
+
+    // 等待内容处理完成
+    let processingAttempts = 0;
+    const maxAttempts = 10;
     
-    // 生成摘要
-    const summary = await generateSummary(pageData.content)
+    while (processingAttempts < maxAttempts) {
+      const contentStatus = await apiClient.getContent(contentItem.id);
+      
+      if (contentStatus.processing_status === 'completed') {
+        break;
+      } else if (contentStatus.processing_status === 'failed') {
+        throw new Error('内容处理失败');
+      }
+      
+      // 等待1秒后重试
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      processingAttempts++;
+    }
+
+    if (processingAttempts >= maxAttempts) {
+      throw new Error('内容处理超时');
+    }
+
+    // 开始流式摘要生成
+    console.log('[Background] 🔄 Starting streaming summary...');
     
-    // 🔧 移除UI Manager调用
-    // await uiManager.showSummary(summary, pageData.title)
-    console.log('[Background] Summary generated successfully');
-    
-    return { success: true, summary, message: 'AI摘要生成成功' }
+    let streamingSummary = '';
+    let summaryComplete = false;
+
+    const summaryPromise = apiClient.streamSummary(contentItem.id, {
+      onChunk: (chunk: StreamChunk) => {
+        console.log('[Background] 📦 Received chunk:', {
+          type: chunk.type,
+          contentLength: chunk.content.length,
+          finished: chunk.finished
+        });
+
+        // 向content script发送实时更新
+        if (chunk.type === 'summary' && chunk.content && !chunk.finished) {
+          // 发送流式内容更新
+          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]?.id) {
+              chrome.tabs.sendMessage(tabs[0].id, {
+                type: 'STREAMING_SUMMARY_CHUNK',
+                data: {
+                  contentId: contentItem.id,
+                  chunk: chunk.content,
+                  isComplete: false
+                }
+              }).catch(err => {
+                console.log('[Background] Failed to send chunk to content script:', err);
+              });
+            }
+          });
+        }
+      },
+      onComplete: (fullContent: string) => {
+        console.log('[Background] ✅ Streaming summary completed');
+        streamingSummary = fullContent;
+        summaryComplete = true;
+
+        // 发送完成信号
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]?.id) {
+            chrome.tabs.sendMessage(tabs[0].id, {
+              type: 'STREAMING_SUMMARY_COMPLETE',
+              data: {
+                contentId: contentItem.id,
+                summary: fullContent
+              }
+            }).catch(err => {
+              console.log('[Background] Failed to send completion to content script:', err);
+            });
+          }
+        });
+      },
+      onError: (error: string) => {
+        console.error('[Background] ❌ Streaming summary error:', error);
+      }
+    });
+
+    // 等待摘要完成
+    await summaryPromise;
+
+    return {
+      success: true,
+      contentId: contentItem.id,
+      summary: streamingSummary,
+      streaming: true
+    };
+
   } catch (error) {
-    console.error('Summarize error:', error)
-    // 🔧 移除UI Manager调用
-    // await uiManager.showNotification('生成摘要失败：' + (error as Error).message, 'error')
-    return { success: false, error: (error as Error).message }
+    console.error('[Background] ❌ Summarize failed:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : String(error)
+    };
+  }
+}
+
+// 处理流式关键要点提取请求
+async function handleExtractKeyPoints(pageData: any) {
+  try {
+    console.log('[Background] 🚀 Processing key points extraction:', {
+      title: pageData.title,
+      url: pageData.url,
+      contentLength: pageData.content?.length || 0
+    });
+    
+    // 检查认证状态
+    const authResult = await checkAuthStatus()
+    if (!authResult.isAuthenticated || !authResult.token) {
+      return { success: false, error: '请先登录' }
+    }
+
+    // 设置API客户端token
+    apiClient.setToken(authResult.token);
+
+    // 如果已有contentId，直接使用；否则创建新的内容项
+    let contentId = pageData.contentId;
+    
+    if (!contentId) {
+      const contentItem = await apiClient.createContent({
+        type: 'url',
+        source_uri: pageData.url,
+        title: pageData.title?.trim() || extractTitleFromUrl(pageData.url),
+        content_text: pageData.content,
+        summary: generateContentSummary(pageData.content)
+      });
+      contentId = contentItem.id;
+    }
+
+    console.log('[Background] 🔄 Starting streaming key points extraction...');
+    
+    let streamingKeyPoints = '';
+
+    const keyPointsPromise = apiClient.streamKeyPoints(contentId, {
+      onChunk: (chunk: StreamChunk) => {
+        console.log('[Background] 📦 Received key points chunk:', {
+          type: chunk.type,
+          contentLength: chunk.content.length,
+          finished: chunk.finished
+        });
+
+        // 向content script发送实时更新
+        if (chunk.type === 'key_points' && chunk.content && !chunk.finished) {
+          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]?.id) {
+              chrome.tabs.sendMessage(tabs[0].id, {
+                type: 'STREAMING_KEY_POINTS_CHUNK',
+                data: {
+                  contentId: contentId,
+                  chunk: chunk.content,
+                  isComplete: false
+                }
+              }).catch(err => {
+                console.log('[Background] Failed to send key points chunk:', err);
+              });
+            }
+          });
+        }
+      },
+      onComplete: (fullContent: string) => {
+        console.log('[Background] ✅ Streaming key points completed');
+        streamingKeyPoints = fullContent;
+
+        // 发送完成信号
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]?.id) {
+            chrome.tabs.sendMessage(tabs[0].id, {
+              type: 'STREAMING_KEY_POINTS_COMPLETE',
+              data: {
+                contentId: contentId,
+                keyPoints: fullContent
+              }
+            }).catch(err => {
+              console.log('[Background] Failed to send key points completion:', err);
+            });
+          }
+        });
+      },
+      onError: (error: string) => {
+        console.error('[Background] ❌ Streaming key points error:', error);
+      }
+    });
+
+    await keyPointsPromise;
+
+    return {
+      success: true,
+      contentId: contentId,
+      keyPoints: streamingKeyPoints,
+      streaming: true
+    };
+
+  } catch (error) {
+    console.error('[Background] ❌ Key points extraction failed:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : String(error)
+    };
   }
 }
 

@@ -306,6 +306,35 @@ class Settings(BaseSettings):
     # Jina AI Configuration
     JINA_API_KEY: str | None = None
 
+    # 内容处理器选择 - 简单配置
+    CONTENT_PROCESSOR: str = Field(
+        default="readability",
+        description="选择使用的内容处理器: jina, firecrawl, scrapingbee, readability, markitdown"
+    )
+
+    # 内容处理器配置
+    CONTENT_PROCESSOR_MAX_RETRIES: int = Field(
+        default=2,
+        description="内容处理器最大重试次数"
+    )
+    
+    CONTENT_PROCESSOR_FALLBACK_ON_ERROR: bool = Field(
+        default=True,
+        description="当处理器失败时是否启用回退到其他处理器"
+    )
+
+    # 第三方API配置
+    FIRECRAWL_API_KEY: str | None = None
+    SCRAPINGBEE_API_KEY: str | None = None
+    @field_validator("CONTENT_PROCESSOR")
+    def validate_content_processor(cls, v):
+        """验证内容处理器选择是否有效"""
+        DEFAULT_PROCESSOR = "firecrawl"
+        valid_processors = {DEFAULT_PROCESSOR, "firecrawl", "scrapingbee", "readability", "markitdown"}
+        if v not in valid_processors:
+            raise ValueError(f"无效的处理器名称: {v}. 有效选项: {valid_processors}")
+        return v or DEFAULT_PROCESSOR
+
     @property
     def google_oauth_redirect_uri(self) -> str:
         """Generate Google OAuth redirect URI pointing to backend API."""

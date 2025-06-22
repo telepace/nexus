@@ -35,6 +35,8 @@ const getAnalysisIcon = (type: LLMAnalysis["type"]) => {
       return "❓";
     case "insights":
       return "💡";
+    case "tags_extractor":
+      return "🏷️";
     default:
       return "";
   }
@@ -51,6 +53,26 @@ const getAnalysisColor = (type: LLMAnalysis["type"]) => {
     default:
       return "bg-neutral-50 border-neutral-200 dark:bg-neutral-950 dark:border-neutral-800";
   }
+};
+
+// 新增评分星级渲染组件
+const RatingStars: FC<{ score: number }> = ({ score }) => {
+  const stars = [];
+  // 分数范围 0~5，保留半星（0.5）
+  for (let i = 1; i <= 5; i++) {
+    if (score >= i) {
+      stars.push("★");
+    } else if (score >= i - 0.5) {
+      stars.push("☆"); // 半星显示为空星，简化
+    } else {
+      stars.push("☆");
+    }
+  }
+  return (
+    <span className="text-yellow-500 dark:text-yellow-400 text-xs ml-1">
+      {stars.join("")}
+    </span>
+  );
 };
 
 export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
@@ -100,6 +122,46 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
 
     return content;
   }, [analysis?.content]);
+
+  // 标签提取器专用渲染
+  if (analysis.type === "tags_extractor" && analysis.content) {
+    try {
+      const data = JSON.parse(analysis.content as unknown as string) as {
+        tags?: string[];
+        score?: number;
+      };
+      const tags = data.tags || [];
+      const score = data.score ?? 0;
+
+      return (
+        <Card
+          className={cn(
+            "py-2 rounded-sm transition-all duration-200 shadow-sm hover:shadow-lg ",
+            getAnalysisColor(analysis.type),
+          )}
+        >
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🏷️</span>
+              <span className="font-medium text-sm">智能标签 & 评分</span>
+              {score > 0 && <RatingStars score={score} />}
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <Badge key={tag} variant="outline" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      );
+    } catch {
+      /* fallthrough to default rendering */
+    }
+  }
 
   // 添加安全检查
   if (!analysis || !analysis.id) {

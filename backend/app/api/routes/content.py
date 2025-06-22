@@ -1,9 +1,10 @@
 import json
 import logging
+import re
 import uuid
 from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
-from typing import Any  # Added Optional
+from typing import Any, Literal  # Added Optional and Literal
 
 from fastapi import (
     APIRouter,
@@ -13,6 +14,7 @@ from fastapi import (
     HTTPException,
     Path,  # Added Path
     Query,
+    Response,
     status,
 )
 from fastapi.responses import StreamingResponse
@@ -35,8 +37,14 @@ from app.crud.crud_content import (
 from app.crud.crud_content import (
     get_content_items_sync as crud_get_content_items,
 )
+from app.crud.crud_favorite import (
+    create_favorite,
+    delete_favorite,
+    get_favorite,
+)
 from app.models.content import (
     AIConversation,  # Added for conversation storage
+    AIResult,  # Added for AIResult storage
     ContentItem,  # For converting ContentItemCreate to ContentItem model for CRUD
 )
 from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is just base + id and audit fields
@@ -45,10 +53,17 @@ from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is
     ContentShareCreate,
     ContentSharePublic,
 )
+from app.schemas.favorite import FavoriteStatusResponse
 from app.schemas.llm import CompletionRequest, LLMMessage
 from app.utils.background_tasks import background_task_manager
 from app.utils.content_processors import ProcessingPipeline
 from app.utils.events import content_event_manager, create_sse_generator
+from app.utils.streaming_processors import (
+    StreamChunk,
+    StreamingAIProcessor,
+    StreamingKeyPointsProcessor,
+    StreamingSummaryProcessor,
+)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -201,6 +216,12 @@ def create_content_item_endpoint(
     content_item_data = content_in.model_dump()
     content_item_data["user_id"] = current_user.id
 
+    # 自动从内容中解析标题（若未提供）
+    if not content_in.title or content_in.title.strip() == "":
+        content_item_data["title"] = _extract_title_from_content(
+            content_in.content_text
+        )
+
     # For text content, set status to completed since no processing needed
     # For URL and other types, set to processing and trigger background task
     if content_in.type == "text":
@@ -229,7 +250,6 @@ def create_content_item_endpoint(
         type=created_item.type,
         source_uri=created_item.source_uri,
         title=created_item.title,
-        summary=created_item.summary,
         content_text=created_item.content_text,
         processing_status=created_item.processing_status,
         created_at=created_item.created_at,
@@ -238,16 +258,28 @@ def create_content_item_endpoint(
 
     # 通知前端新内容已创建
     import asyncio
+    import threading
 
-    try:
-        loop = asyncio.get_event_loop()
-        loop.create_task(
-            content_event_manager.notify_content_created(
-                user_id=str(current_user.id), content_item=public_item.model_dump()
+    def send_sse_notification():
+        """在新线程中发送SSE通知"""
+        try:
+            # 创建新的事件循环
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+            # 运行异步任务
+            loop.run_until_complete(
+                content_event_manager.notify_content_created(
+                    user_id=str(current_user.id), content_item=public_item.model_dump()
+                )
             )
-        )
-    except Exception as e:
-        print(f"Failed to send SSE notification: {e}")
+        except Exception as e:
+            print(f"Failed to send SSE notification: {e}")
+        finally:
+            loop.close()
+
+    # 在后台线程中发送通知
+    threading.Thread(target=send_sse_notification, daemon=True).start()
 
     return public_item
 
@@ -291,7 +323,6 @@ async def process_content_item_endpoint(
             type=item.type,
             source_uri=item.source_uri,
             title=item.title,
-            summary=item.summary,
             content_text=item.content_text,
             processing_status=item.processing_status,
             created_at=item.created_at,
@@ -318,7 +349,6 @@ async def process_content_item_endpoint(
         type=item.type,
         source_uri=item.source_uri,
         title=item.title,
-        summary=item.summary,
         content_text=item.content_text,
         processing_status=item.processing_status,
         created_at=item.created_at,
@@ -370,8 +400,10 @@ def process_content_background(processor, content_item: ContentItem, session):
     try:
         result = processor.process_content(content_item, session)
         if result.success:
-            # Store the processed markdown content
-            content_item.content_text = result.markdown_content
+            # Store the processed markdown content (sanitize to ensure no invalid bytes)
+            from app.utils.content_processors import clean_content_for_db
+
+            content_item.content_text = clean_content_for_db(result.markdown_content)
             if result.metadata:
                 content_item.meta_info = result.metadata
         session.commit()
@@ -417,7 +449,6 @@ def list_content_items_endpoint(
             type=item.type,
             source_uri=item.source_uri,
             title=item.title,
-            summary=item.summary,
             content_text=item.content_text,
             processing_status=item.processing_status,
             created_at=item.created_at,
@@ -467,7 +498,6 @@ def get_content_item_endpoint(
         type=item.type,
         source_uri=item.source_uri,
         title=item.title,
-        summary=item.summary,
         content_text=item.content_text,
         processing_status=item.processing_status,
         created_at=item.created_at,
@@ -549,9 +579,14 @@ def get_content_markdown_endpoint(
     if not markdown_content:
         # Provide different messages based on processing status
         if item.processing_status == "failed":
+            error_detail = "Content processing failed."
+            if item.error_message:
+                error_detail += f" Error: {item.error_message}"
+            error_detail += " Please try reprocessing the content."
+
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Content processing failed. Please try reprocessing the content.",
+                detail=error_detail,
             )
         elif item.processing_status in ["pending", "processing"]:
             raise HTTPException(
@@ -561,7 +596,7 @@ def get_content_markdown_endpoint(
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"No markdown content available. Status: {item.processing_status}",
+                detail=f"No markdown content available. Status: {item.processing_status}. The content may need to be reprocessed.",
             )
 
     return {
@@ -659,9 +694,9 @@ def get_content_chunks_endpoint(
         "chunks": [
             {
                 "id": str(chunk.id),
-                "index": chunk.chunk_index,
-                "content": chunk.chunk_content,
-                "type": chunk.chunk_type,
+                "index": chunk.segment_index,
+                "content": chunk.content,
+                "type": chunk.segment_type,
                 "word_count": chunk.word_count,
                 "char_count": chunk.char_count,
                 "meta_info": chunk.meta_info,
@@ -813,21 +848,22 @@ async def analyze_content_stream(
         """发送模拟的分析响应（当LiteLLM不可用时）"""
         import asyncio
 
-        mock_analysis = f"""基于提示"{system_prompt}"对内容的分析：
+        # 不直接回显完整的 system_prompt，避免冗长输出
+        trimmed_prompt = (
+            system_prompt[:60] + "..." if len(system_prompt) > 60 else system_prompt
+        )
 
-这是一个AI分析的模拟响应。当前LiteLLM服务不可用或配置不完整，因此显示此模拟结果。
+        mock_analysis = f"""⚠️ LiteLLM service is unavailable (mock response).
 
-内容要点：
-• 这是对用户提供内容的分析
-• 当前系统检测到LiteLLM服务连接问题
-• 建议检查API密钥配置和服务状态
+Prompt preview: "{trimmed_prompt}"
 
-要获得真实的AI分析，请：
-1. 配置有效的API密钥（OpenAI、GitHub等）
-2. 确保LiteLLM服务正常运行
-3. 检查网络连接状态
+由于当前未配置有效的 LLM 服务，系统返回模拟分析结果以测试前端流式显示功能。
 
-注意：这是一个模拟响应，用于测试前端流式显示功能。"""
+要获得真实的 AI 分析，请：
+1. 配置有效的 API Key（OpenAI、Anthropic 等）
+2. 确保 LiteLLM 服务正常运行并可访问
+3. 检查网络连接或代理设置
+"""
 
         # 模拟流式响应
         words = mock_analysis.split()
@@ -924,13 +960,13 @@ async def analyze_content_ai_sdk(
         max_tokens,
     )
 
+    # 使用与 create_ai_conversation 一致的消息结构
+    # 系统消息包含文章内容，用户消息包含分析指令
     completion_request = CompletionRequest(
         model=model,
         messages=[
-            LLMMessage(role="system", content="You are a helpful content analyst."),
-            LLMMessage(
-                role="user", content=f"{user_prompt}\n\n内容：\n{content_to_analyze}"
-            ),
+            LLMMessage(role="system", content=content_to_analyze),
+            LLMMessage(role="user", content=user_prompt),
         ],
         stream=True,
         temperature=temperature,
@@ -1900,7 +1936,6 @@ def get_shared_content_endpoint(
         type=content_item.type,
         source_uri=content_item.source_uri,
         title=content_item.title,
-        summary=content_item.summary,
         content_text=content_item.content_text,
         processing_status=content_item.processing_status,
         created_at=content_item.created_at,
@@ -2147,6 +2182,23 @@ def get_ai_analysis_for_content(
                     print(f"Error processing job result for job {job.id}: {e}")
                     continue
 
+    # 4. 补充 AIResult 中的标签与评分
+
+    ai_result = session.exec(
+        select(AIResult).where(AIResult.content_item_id == content_id)
+    ).first()
+
+    if ai_result and ai_result.labels:
+        # 组装标签提取器结果
+        tag_score = None
+        if ai_result.content_analysis and isinstance(ai_result.content_analysis, dict):
+            tag_score = ai_result.content_analysis.get("tagging_score")
+
+        ai_analysis["tags_extractor"] = {
+            "tags": ai_result.labels,
+            "score": tag_score,
+        }
+
     return ai_analysis
 
 
@@ -2216,7 +2268,6 @@ def get_content_ai_conversations(
                 "title": conv.title,
                 "ai_model_name": conv.ai_model_name,
                 "messages": messages,
-                "summary": conv.summary,
                 "meta_info": meta_info,
                 "created_at": conv.created_at.isoformat(),
                 "updated_at": conv.updated_at.isoformat(),
@@ -2295,8 +2346,449 @@ def get_ai_conversation_details(
         "title": conversation.title,
         "ai_model_name": conversation.ai_model_name,
         "messages": messages,
-        "summary": conversation.summary,
         "meta_info": meta_info,
         "created_at": conversation.created_at.isoformat(),
         "updated_at": conversation.updated_at.isoformat(),
     }
+
+
+@router.post(
+    "/reprocess/{id}",
+    response_model=ContentItemPublic,
+    summary="Reprocess Failed Content Item",
+    description="Reprocess a failed content item to retry conversion to Markdown format.",
+)
+async def reprocess_content_item_endpoint(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+) -> ContentItemPublic:
+    """
+    Reprocess a failed content item.
+    """
+    # Get the content item
+    item = crud_get_content_item(session=session, id=id)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="ContentItem not found"
+        )
+
+    # Check if the item belongs to the current user
+    if item.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to access this content item",
+        )
+
+    # Reset status and error message
+    item.processing_status = "processing"
+    item.error_message = None
+    item.content_text = None  # Clear previous content to force reprocessing
+    session.add(item)
+    session.commit()
+    session.refresh(item)
+
+    # Use the new processing pipeline
+    pipeline = ProcessingPipeline()
+
+    # Process in background with new pipeline
+    background_tasks.add_task(process_content_background_async, pipeline, item, session)
+
+    # Convert ContentItem to ContentItemPublic
+    public_item = ContentItemPublic(
+        id=item.id,
+        user_id=item.user_id,
+        type=item.type,
+        source_uri=item.source_uri,
+        title=item.title,
+        content_text=item.content_text,
+        processing_status=item.processing_status,
+        created_at=item.created_at,
+        updated_at=item.updated_at,
+    )
+
+    # 通知前端内容重新处理开始
+    import asyncio
+    import threading
+
+    def send_reprocess_notification():
+        """在新线程中发送重新处理通知"""
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+            loop.run_until_complete(
+                content_event_manager.notify_content_status(
+                    user_id=str(current_user.id),
+                    content_id=str(item.id),
+                    status="processing",
+                    title=item.title,
+                    progress=0,
+                )
+            )
+        except Exception as e:
+            print(f"Failed to send reprocess notification: {e}")
+        finally:
+            loop.close()
+
+    threading.Thread(target=send_reprocess_notification, daemon=True).start()
+
+    return public_item
+
+
+# --- Compatibility alias for older front-end "analyze-stream" endpoint ---
+@router.post("/{content_id}/analyze-stream", include_in_schema=False)
+async def analyze_content_stream_alias(
+    content_id: str,
+    current_user: CurrentUser,
+    system_prompt: str = Body(..., description="System prompt for analysis"),
+    user_prompt: str = Body(..., description="User prompt (content text)"),
+    db: Session = Depends(get_db),
+):
+    """Alias of /{content_id}/analyze keeping old path used by frontend."""
+    return await analyze_content_stream(
+        content_id=content_id,
+        current_user=current_user,
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        db=db,
+    )
+
+
+@router.get(
+    "/{id}/analyze/stream",
+    summary="Stream Content Analysis",
+    description="Stream AI analysis of content (summary or key points) with real-time output.",
+)
+async def stream_content_analysis(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID,
+    analysis_type: Literal["summary", "key_points"] = Query(
+        default="summary", description="Type of analysis to perform"
+    ),
+):
+    """
+    流式内容分析接口
+
+    支持的分析类型：
+    - summary: 生成内容摘要
+    - key_points: 提取关键要点
+
+    返回Server-Sent Events格式的流式数据
+    """
+    # 获取内容项
+    content_item = session.get(ContentItem, id)
+    if not content_item:
+        raise HTTPException(status_code=404, error="ContentItem not found")
+
+    # 检查权限
+    if content_item.user_id != current_user.id:
+        raise HTTPException(status_code=403, error="Not enough permissions")
+
+    # 检查内容是否已处理
+    if not content_item.content_text:
+        raise HTTPException(
+            status_code=400,
+            error="Content not yet processed. Please process the content first.",
+        )
+
+    # 创建流式处理器
+    processor = StreamingAIProcessor()
+
+    async def generate_stream():
+        """生成流式响应"""
+        try:
+            async for chunk in processor.process_streaming(
+                content_item, analysis_type, session
+            ):
+                # 按照Server-Sent Events格式输出
+                yield f"data: {chunk.to_json()}\n\n"
+
+        except Exception as e:
+            # 发送错误信息
+            error_chunk = StreamChunk(
+                type="error",
+                content=str(e),
+                finished=True,
+                metadata={"error_type": "stream_error"},
+            )
+            yield f"data: {error_chunk.to_json()}\n\n"
+        finally:
+            # 发送结束信号
+            yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        generate_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Cache-Control",
+        },
+    )
+
+
+@router.get(
+    "/{id}/summary/stream",
+    summary="Stream Content Summary",
+    description="Generate streaming summary for content with real-time output.",
+)
+async def stream_content_summary(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID,
+):
+    """
+    流式摘要生成接口
+    专门用于生成内容摘要的流式API
+    """
+    # 获取内容项
+    content_item = session.get(ContentItem, id)
+    if not content_item:
+        raise HTTPException(status_code=404, error="ContentItem not found")
+
+    # 检查权限
+    if content_item.user_id != current_user.id:
+        raise HTTPException(status_code=403, error="Not enough permissions")
+
+    # 检查内容是否已处理
+    if not content_item.content_text:
+        raise HTTPException(
+            status_code=400,
+            error="Content not yet processed. Please process the content first.",
+        )
+
+    # 创建流式摘要处理器
+    processor = StreamingSummaryProcessor()
+
+    async def generate_summary_stream():
+        """生成摘要流式响应"""
+        try:
+            async for chunk in processor.generate_summary_stream(content_item, session):
+                yield f"data: {chunk.to_json()}\n\n"
+
+        except Exception as e:
+            error_chunk = StreamChunk(
+                type="error",
+                content=str(e),
+                finished=True,
+                metadata={"error_type": "summary_error"},
+            )
+            yield f"data: {error_chunk.to_json()}\n\n"
+        finally:
+            yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        generate_summary_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Cache-Control",
+        },
+    )
+
+
+@router.get(
+    "/{id}/key-points/stream",
+    summary="Stream Key Points Extraction",
+    description="Extract key points from content with real-time streaming output.",
+)
+async def stream_content_key_points(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID,
+):
+    """
+    流式关键要点提取接口
+    专门用于提取内容关键要点的流式API
+    """
+    # 获取内容项
+    content_item = session.get(ContentItem, id)
+    if not content_item:
+        raise HTTPException(status_code=404, error="ContentItem not found")
+
+    # 检查权限
+    if content_item.user_id != current_user.id:
+        raise HTTPException(status_code=403, error="Not enough permissions")
+
+    # 检查内容是否已处理
+    if not content_item.content_text:
+        raise HTTPException(
+            status_code=400,
+            error="Content not yet processed. Please process the content first.",
+        )
+
+    # 创建流式关键要点处理器
+    processor = StreamingKeyPointsProcessor()
+
+    async def generate_key_points_stream():
+        """生成关键要点流式响应"""
+        try:
+            async for chunk in processor.generate_key_points_stream(
+                content_item, session
+            ):
+                yield f"data: {chunk.to_json()}\n\n"
+
+        except Exception as e:
+            error_chunk = StreamChunk(
+                type="error",
+                content=str(e),
+                finished=True,
+                metadata={"error_type": "key_points_error"},
+            )
+            yield f"data: {error_chunk.to_json()}\n\n"
+        finally:
+            yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        generate_key_points_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Cache-Control",
+        },
+    )
+
+
+# ----------------------------------------
+# Helper utilities
+# ----------------------------------------
+
+
+def _extract_title_from_content(content: str | None) -> str:
+    """Extract a reasonable title from the raw content.
+
+    Priority:
+    1. First Markdown heading (lines starting with "#")
+    2. First non-empty line (trimmed)
+    3. Fallback to "Untitled Content"
+    """
+
+    if not content:
+        return "Untitled Content"
+
+    lines = content.strip().splitlines()
+
+    # Search for markdown heading
+    heading_pattern = re.compile(r"^\s*#+\s+(.*)$")
+    for line in lines:
+        m = heading_pattern.match(line)
+        if m:
+            title = m.group(1).strip()
+            if title:
+                return title[:150]
+
+    # Fallback to first non-empty line
+    for line in lines:
+        stripped = line.strip()
+        if stripped:
+            return stripped[:150]
+
+    return "Untitled Content"
+
+
+@router.post(
+    "/{content_item_id}/favorite",
+    response_model=FavoriteStatusResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Add Content Item to Favorites",
+    description="Add a content item to user's favorites.",
+)
+def add_favorite_to_content(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    content_item_id: uuid.UUID,
+) -> FavoriteStatusResponse:
+    """Add content item to favorites."""
+    # Check if content item exists and belongs to user
+    content_item = crud.get_content_item_sync(
+        session=session, content_item_id=content_item_id, user_id=current_user.id
+    )
+    if not content_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
+        )
+
+    # Check if already favorited
+    existing_favorite = get_favorite(
+        session=session, user_id=current_user.id, content_item_id=content_item_id
+    )
+    if existing_favorite:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Content item already in favorites",
+        )
+
+    # Create favorite
+    create_favorite(
+        session=session, user_id=current_user.id, content_item_id=content_item_id
+    )
+
+    return FavoriteStatusResponse(status="ok")
+
+
+@router.delete(
+    "/{content_item_id}/favorite",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Remove Content Item from Favorites",
+    description="Remove a content item from user's favorites.",
+)
+def remove_favorite_from_content(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    content_item_id: uuid.UUID,
+):
+    """Remove content item from favorites."""
+    success = delete_favorite(
+        session=session, user_id=current_user.id, content_item_id=content_item_id
+    )
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Favorite not found"
+        )
+
+
+@router.delete(
+    "/{id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete Content Item",
+    description="Deletes a content item and all related assets. Requires ownership.",
+)
+def delete_content_item_endpoint(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID,
+):
+    """Delete a content item by its ID (only owner allowed)."""
+    item = crud.get_content_item_sync(session=session, id=id)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="ContentItem not found"
+        )
+
+    # Ensure the current user owns the item
+    if item.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to delete this content item",
+        )
+
+    crud.delete_content_item_sync(session=session, id=id)
+
+    # No content to return for 204 response
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

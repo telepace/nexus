@@ -6,15 +6,19 @@
 
 import asyncio
 import logging
+import re
+import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Any
 
+from sqlmodel import Session, create_engine, select
+
+from app.core.config import settings
+from app.models.content import AIResult, ContentItem, Segment
 from app.services.ai.chat_service import ChatService
-from app.utils.content_parser import ContentParser
-from app.utils.markdown_converter import MarkdownConverter
-from app.utils.text_segmentation import TextSegmentationService
+from app.utils.content_processors import clean_content_for_db
 
 logger = logging.getLogger(__name__)
 
@@ -88,13 +92,10 @@ class PreprocessingResult:
 
 
 class PreprocessingPipeline:
-    """预处理流水线主服务"""
+    """预处理管道：多层次内容处理架构"""
 
     def __init__(self, chat_service: ChatService):
         self.chat_service = chat_service
-        self.content_parser = ContentParser()
-        self.segmentation_service = TextSegmentationService()
-        self.markdown_converter = MarkdownConverter()
 
     async def process_content(
         self,
@@ -103,48 +104,52 @@ class PreprocessingPipeline:
         user_preferences: dict[str, Any] | None = None,
     ) -> PreprocessingResult:
         """
-        执行完整的预处理流水线
-
-        Args:
-            content: 原始内容
-            metadata: 文档元数据
-            user_preferences: 用户偏好设置
-
-        Returns:
-            PreprocessingResult: 预处理结果
+        主要处理流程：
+        1. 输入层：内容清理和验证
+        2. 解析层：格式转换和结构化
+        3. 分段层：智能分段处理
+        4. AI初始化层：生成摘要、要点、标签
+        5. 存储层：持久化到数据库
+        6. 输出层：格式化结果
         """
         start_time = datetime.now()
-        content_id = self._generate_content_id()
         errors: list[str] = []
+        processing_stats = {}
 
         try:
-            logger.info(f"开始预处理内容: {content_id}")
+            content_id = self._generate_content_id()
+            logger.info(f"开始处理内容: {content_id}")
 
-            # 1. 输入层：内容验证和规范化
-            normalized_content, input_stats = await self._input_layer(content, metadata)
+            # 1. 输入层
+            clean_content, input_stats = await self._input_layer(content, metadata)
+            processing_stats["input_layer"] = input_stats
 
-            # 2. 解析层：转换为统一Markdown格式
+            # 2. 解析层
             markdown_content, parsing_stats = await self._parsing_layer(
-                normalized_content, metadata
+                clean_content, metadata
             )
+            processing_stats["parsing_layer"] = parsing_stats
 
-            # 3. 智能分段层：长文本分段处理
+            # 3. 分段层
             segments, segmentation_stats = await self._segmentation_layer(
                 markdown_content, metadata
             )
+            processing_stats["segmentation_layer"] = segmentation_stats
 
-            # 4. AI初始化层：生成摘要、要点等
+            # 4. AI初始化层
             ai_results, ai_stats = await self._ai_initialization_layer(
                 markdown_content, metadata, user_preferences
             )
+            processing_stats["ai_layer"] = ai_stats
 
-            # 5. 存储层：持久化数据
+            # 5. 存储层
             storage_stats = await self._storage_layer(
                 content_id, markdown_content, segments, ai_results, metadata
             )
+            processing_stats["storage_layer"] = storage_stats
 
-            # 6. 输出层：格式化结果
-            result = await self._output_layer(
+            # 6. 输出层
+            return await self._output_layer(
                 content_id,
                 markdown_content,
                 segments,
@@ -152,30 +157,19 @@ class PreprocessingPipeline:
                 metadata,
                 start_time,
                 errors,
-                {
-                    "input": input_stats,
-                    "parsing": parsing_stats,
-                    "segmentation": segmentation_stats,
-                    "ai": ai_stats,
-                    "storage": storage_stats,
-                },
+                processing_stats,
             )
-
-            logger.info(
-                f"预处理完成: {content_id}, 耗时: {(datetime.now() - start_time).total_seconds():.2f}s"
-            )
-            return result
 
         except Exception as e:
-            logger.error(f"预处理失败: {content_id}, 错误: {str(e)}")
+            logger.error(f"处理失败: {str(e)}")
             errors.append(str(e))
 
-            # 返回失败结果
+            # 返回部分结果
             return PreprocessingResult(
-                content_id=content_id,
+                content_id=self._generate_content_id(),
                 status=ProcessingStatus.FAILED,
                 processed_at=datetime.now(),
-                markdown_content="",
+                markdown_content=content,
                 segments=[],
                 summary={},
                 key_points={},
@@ -184,67 +178,60 @@ class PreprocessingPipeline:
                 difficulty_level="unknown",
                 content_quality_score=0.0,
                 metadata=metadata,
-                processing_stats={},
+                processing_stats=processing_stats,
                 errors=errors,
             )
 
     async def _input_layer(
         self, content: str, metadata: DocumentMetadata
     ) -> tuple[str, dict[str, Any]]:
-        """输入层：内容验证和规范化"""
+        """输入层：内容清理和验证"""
         logger.debug("执行输入层处理")
 
-        # 内容验证
-        if not content or len(content.strip()) < 50:
-            raise ValueError("内容太短，至少需要50个字符")
+        start_time = datetime.now()
 
-        # 内容清理和规范化
-        normalized_content = self._normalize_content(content)
+        # 内容清理
+        clean_content = self._normalize_content(content)
+
+        # 基础验证
+        if not clean_content.strip():
+            raise ValueError("内容为空")
 
         # 更新元数据
-        metadata.estimated_words = self._estimate_word_count(normalized_content)
+        metadata.estimated_words = self._estimate_word_count(clean_content)
 
-        stats = {
-            "original_length": len(content),
-            "normalized_length": len(normalized_content),
+        processing_time = (datetime.now() - start_time).total_seconds()
+
+        return clean_content, {
+            "content_length": len(clean_content),
             "estimated_words": metadata.estimated_words,
-            "processing_time": 0.1,
+            "processing_time": processing_time,
         }
-
-        return normalized_content, stats
 
     async def _parsing_layer(
         self, content: str, metadata: DocumentMetadata
     ) -> tuple[str, dict[str, Any]]:
-        """解析层：转换为统一Markdown格式"""
+        """解析层：格式转换和结构化"""
         logger.debug("执行解析层处理")
 
         start_time = datetime.now()
 
-        # 根据内容类型选择解析策略
-        if metadata.content_type == ContentType.WEB_PAGE:
-            # HTML内容解析
-            markdown_content = await self.content_parser.html_to_markdown(content)
-        elif metadata.content_type == ContentType.RESEARCH_PAPER:
-            # 学术论文解析
-            markdown_content = await self.content_parser.pdf_to_markdown(content)
-        else:
-            # 通用文本解析
-            markdown_content = await self.content_parser.text_to_markdown(content)
+        # 这里可以根据内容类型进行不同的解析
+        # 目前简化处理，直接返回清理后的内容
+        markdown_content = content
 
-        # 内容清理和格式优化
-        markdown_content = self.markdown_converter.optimize_structure(markdown_content)
+        # 未来可以添加：
+        # - HTML to Markdown 转换
+        # - PDF 文本提取优化
+        # - 结构化数据提取
 
         processing_time = (datetime.now() - start_time).total_seconds()
 
-        stats = {
-            "input_format": metadata.content_type.value,
-            "output_length": len(markdown_content),
-            "conversion_success": True,
+        return markdown_content, {
+            "format_detected": "markdown",
+            "structure_elements": [],
             "processing_time": processing_time,
         }
-
-        return markdown_content, stats
 
     async def _segmentation_layer(
         self, content: str, metadata: DocumentMetadata
@@ -266,13 +253,20 @@ class PreprocessingPipeline:
                 }
             ]
         else:
-            # 智能分段
-            segments = await self.segmentation_service.segment_content(
-                content,
-                metadata.content_type,
-                max_segment_length=4000,
-                preserve_structure=True,
-            )
+            # 简单分段逻辑（按段落分割）
+            paragraphs = content.split("\n\n")
+            segments = []
+            for i, para in enumerate(paragraphs):
+                if para.strip():
+                    segments.append(
+                        {
+                            "id": f"segment_{i + 1}",
+                            "content": para.strip(),
+                            "order": i + 1,
+                            "type": "paragraph",
+                            "word_count": self._estimate_word_count(para),
+                        }
+                    )
 
         processing_time = (datetime.now() - start_time).total_seconds()
 
@@ -320,14 +314,23 @@ class PreprocessingPipeline:
             self._analyze_content_properties(content, metadata),
         ]
 
-        summary, key_points, labels, content_analysis = await asyncio.gather(*tasks)
+        summary, key_points, labels_result, content_analysis = await asyncio.gather(
+            *tasks
+        )
+
+        # labels_result = {'tags': [...], 'score': float | None}
+        tag_score = labels_result.get("score")
+
+        # 合并标签得分到内容分析
+        if tag_score is not None:
+            content_analysis["tagging_score"] = tag_score
 
         processing_time = (datetime.now() - start_time).total_seconds()
 
         ai_results = {
             "summary": summary,
             "key_points": key_points,
-            "labels": labels,
+            "labels": labels_result.get("tags", []),
             "content_analysis": content_analysis,
         }
 
@@ -353,19 +356,104 @@ class PreprocessingPipeline:
         start_time = datetime.now()
 
         try:
-            # with Session(get_session()) as session:
-            # 这里应该实现具体的数据库存储逻辑
-            # 存储主要内容
-            # 存储分段
-            # 存储AI分析结果
-            # 存储元数据
-            pass
+            with Session(
+                create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
+            ) as session:
+                # 1. 查找或创建 ContentItem
+                content_item_uuid = uuid.UUID(content_id.replace("content_", ""))
+
+                # 查找现有的 ContentItem
+                stmt = select(ContentItem).where(ContentItem.id == content_item_uuid)
+                content_item = session.exec(stmt).first()
+
+                if not content_item:
+                    logger.warning(
+                        f"ContentItem {content_item_uuid} not found, cannot store AI results"
+                    )
+                    return {
+                        "storage_success": False,
+                        "error": "ContentItem not found",
+                        "processing_time": (
+                            datetime.now() - start_time
+                        ).total_seconds(),
+                    }
+
+                # 2. 创建或更新 AI 结果
+                ai_result = AIResult(
+                    content_item_id=content_item_uuid,
+                    summary=ai_results.get("summary"),
+                    key_points=ai_results.get("key_points"),
+                    labels=ai_results.get("labels"),
+                    content_analysis=ai_results.get("content_analysis"),
+                    reading_time_minutes=max(1, metadata.estimated_words // 200),
+                    difficulty_level=ai_results.get("content_analysis", {}).get(
+                        "difficulty_level", "intermediate"
+                    ),
+                    content_quality_score=self._calculate_quality_score(
+                        markdown_content, ai_results, metadata
+                    ),
+                )
+
+                # 检查是否已存在 AI 结果
+                existing_ai_result = session.exec(
+                    select(AIResult).where(
+                        AIResult.content_item_id == content_item_uuid
+                    )
+                ).first()
+
+                if existing_ai_result:
+                    # 更新现有结果
+                    existing_ai_result.summary = ai_result.summary
+                    existing_ai_result.key_points = ai_result.key_points
+                    existing_ai_result.labels = ai_result.labels
+                    existing_ai_result.content_analysis = ai_result.content_analysis
+                    existing_ai_result.reading_time_minutes = (
+                        ai_result.reading_time_minutes
+                    )
+                    existing_ai_result.difficulty_level = ai_result.difficulty_level
+                    existing_ai_result.content_quality_score = (
+                        ai_result.content_quality_score
+                    )
+                    existing_ai_result.updated_at = datetime.now()
+                    session.add(existing_ai_result)
+                else:
+                    # 创建新结果
+                    session.add(ai_result)
+
+                # 3. 创建分段数据
+                # 先删除现有分段
+                existing_segments = session.exec(
+                    select(Segment).where(Segment.content_item_id == content_item_uuid)
+                ).all()
+                for segment in existing_segments:
+                    session.delete(segment)
+
+                # 创建新分段
+                for i, segment_data in enumerate(segments):
+                    # Sanitize content before storing to avoid invalid characters
+                    sanitized_content = clean_content_for_db(
+                        segment_data.get("content", "")
+                    )
+
+                    segment = Segment(
+                        content_item_id=content_item_uuid,
+                        segment_index=i,
+                        content=sanitized_content,
+                        segment_type=segment_data.get("type", "paragraph"),
+                        word_count=len(sanitized_content.split()),
+                        char_count=len(sanitized_content),
+                        meta_info=segment_data.get("meta_info"),
+                    )
+                    session.add(segment)
+
+                # 4. 提交事务
+                session.commit()
 
             processing_time = (datetime.now() - start_time).total_seconds()
 
             return {
                 "storage_success": True,
-                "items_stored": len(segments) + 1,  # 分段数 + 主内容
+                "items_stored": len(segments) + 1,  # 分段数 + AI结果
                 "processing_time": processing_time,
             }
 
@@ -445,21 +533,27 @@ class PreprocessingPipeline:
             logger.error(f"生成要点失败: {str(e)}")
             return {}
 
-    async def _generate_labels(self, context: dict[str, Any]) -> list[str]:
-        """使用labels.j2模板生成标签"""
+    async def _generate_labels(self, context: dict[str, Any]) -> dict[str, Any]:
+        """使用 labels.j2 模板生成标签与评分，返回格式 {'tags': [...], 'score': float}"""
         try:
             response = await self.chat_service.generate_with_template(
                 template_name="labels.j2", context=context
             )
-            # 从复杂的标签结构中提取简单列表
-            labels_data = response.get("primary_tags", {})
-            all_labels = []
-            for _category, tags in labels_data.items():
-                all_labels.extend(tags)
-            return all_labels[:20]  # 限制标签数量
+
+            # LLM 应输出 {'tags': [...], 'score': x.x}
+            tags = response.get("tags", [])
+            score = response.get("score", None)
+
+            # 对输出进行基础校验
+            if not isinstance(tags, list):
+                tags = []
+            if score is not None and not isinstance(score, int | float):
+                score = None
+
+            return {"tags": tags[:20], "score": score}
         except Exception as e:
             logger.error(f"生成标签失败: {str(e)}")
-            return []
+            return {"tags": [], "score": None}
 
     async def _analyze_content_properties(
         self, content: str, metadata: DocumentMetadata
@@ -498,8 +592,6 @@ class PreprocessingPipeline:
         # 统一换行符
         content = content.replace("\r\n", "\n").replace("\r", "\n")
         # 移除多余空白
-        import re
-
         content = re.sub(r"\n\s*\n", "\n\n", content)
         return content
 
@@ -530,6 +622,4 @@ class PreprocessingPipeline:
 
     def _generate_content_id(self) -> str:
         """生成内容ID"""
-        import uuid
-
         return f"content_{uuid.uuid4().hex[:12]}"

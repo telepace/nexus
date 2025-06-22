@@ -296,25 +296,38 @@ class AIProcessorBase(ProcessingStep):
             logger.error(f"LLM API call failed: {str(e)}")
             raise
 
-    def _parse_ai_response(self, ai_response: str) -> dict[str, Any]:
-        """解析AI返回的JSON响应"""
+    def _parse_ai_response(self, ai_response: str) -> dict:
+        """解析AI响应，支持简化的markdown格式输出"""
         try:
-            # 尝试提取JSON内容（处理可能的markdown代码块）
-            if "```json" in ai_response:
-                start = ai_response.find("```json") + 7
-                end = ai_response.find("```", start)
-                json_content = ai_response[start:end].strip()
-            elif ai_response.strip().startswith("{"):
-                json_content = ai_response.strip()
+            # 先尝试处理 markdown 代码块中的 JSON
+            stripped_response = ai_response.strip()
+
+            # 检查是否是 markdown 代码块格式
+            if stripped_response.startswith("```json") and stripped_response.endswith(
+                "```"
+            ):
+                # 提取代码块中的 JSON 内容
+                json_content = stripped_response[7:-3].strip()  # 去掉 ```json 和 ```
+                return json.loads(json_content)
+
+            # 尝试直接解析 JSON 格式
+            if stripped_response.startswith("{"):
+                return json.loads(stripped_response)
             else:
-                # 如果没有找到JSON，返回原始响应
-                return {"raw_response": ai_response}
-
-            return json.loads(json_content)
-
-        except json.JSONDecodeError as e:
-            logger.warning(f"Failed to parse AI response as JSON: {str(e)}")
-            return {"raw_response": ai_response, "parse_error": str(e)}
+                # 处理简化的 markdown 格式输出
+                return {
+                    "content": stripped_response,
+                    "format": "markdown",
+                    "simplified": True,
+                }
+        except json.JSONDecodeError:
+            # 如果 JSON 解析失败，返回包含 raw_response 的字典（与测试期望一致）
+            logger.warning("AI响应不是有效的JSON格式，直接使用文本内容")
+            return {
+                "raw_response": ai_response.strip(),
+                "format": "text",
+                "simplified": True,
+            }
 
 
 class SummaryProcessor(AIProcessorBase):

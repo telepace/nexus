@@ -21,6 +21,9 @@ import {
   Lightbulb,
   Target,
   Sparkles,
+  Tag,
+  Trash2,
+  MoreVertical,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/client-auth";
 import { useRouter } from "next/navigation";
@@ -36,6 +39,15 @@ import { Input } from "@/components/ui/input";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
 import { eventBus } from "@/lib/event-bus";
+import { contentApi } from "@/lib/services/content-api";
+import { FavoriteButton } from "@/components/actions/FavoriteButton";
+
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 // Ripple effect function
 const createRipple = (event: React.MouseEvent<HTMLElement>) => {
@@ -134,6 +146,19 @@ const AIAnalysisCard = ({
   if (!analysis) return null;
 
   const { summarizer, key_points_extractor, ...restAnalyses } = analysis;
+
+  // 提取标签分析结果（tags_extractor）
+  const tagsExtractor = restAnalyses["tags_extractor"] as
+    | {
+        tags?: string[];
+        score?: number;
+      }
+    | undefined;
+
+  // 移除 tags_extractor，避免后面重复渲染
+  if (tagsExtractor) {
+    delete restAnalyses["tags_extractor"];
+  }
 
   // 提取其他分析类型（如 insights、questions 等）
   const otherEntries = Object.entries(restAnalyses).filter(
@@ -250,6 +275,35 @@ const AIAnalysisCard = ({
         </div>
       )}
 
+      {/* 标签与评分 */}
+      {tagsExtractor && tagsExtractor.tags && (
+        <div className="bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20 p-3 rounded-lg border border-orange-200/50 dark:border-orange-800/50">
+          <div className="flex items-center gap-2 mb-2">
+            <Tag className="h-3 w-3 text-orange-600 dark:text-orange-400" />
+            <span className="text-xs font-medium text-orange-700 dark:text-orange-300">
+              标签 ({tagsExtractor.tags.length})
+            </span>
+            {typeof tagsExtractor.score === "number" && (
+              <span className="text-xs text-yellow-600 dark:text-yellow-400 ml-auto">
+                评分: {tagsExtractor.score.toFixed(1)}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {tagsExtractor.tags.slice(0, 10).map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+            {tagsExtractor.tags.length > 10 && (
+              <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                +{tagsExtractor.tags.length - 10}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 其他分析类型 */}
       {otherEntries.map(([key, value], idx) =>
         renderGenericAnalysis(key, value, idx),
@@ -272,6 +326,10 @@ export default function ContentLibraryPage() {
 
   // 添加分享状态管理
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [reprocessingItems, setReprocessingItems] = useState<Set<string>>(
+    new Set(),
+  );
+  const [deletingItems, setDeletingItems] = useState<Set<string>>(new Set());
 
   // 添加性能监控状态
   const [prefetchStats, setPrefetchStats] = useState({
@@ -704,6 +762,67 @@ export default function ContentLibraryPage() {
     };
   }, []);
 
+  // 重新处理内容项
+  const handleReprocess = async (item: ContentItemPublic) => {
+    try {
+      setReprocessingItems((prev) => new Set(prev).add(item.id));
+
+      await contentApi.reprocessContentItem(item.id);
+
+      // 更新本地状态
+      setItems((prevItems) =>
+        prevItems.map((prevItem) =>
+          prevItem.id === item.id
+            ? { ...prevItem, processing_status: "processing" }
+            : prevItem,
+        ),
+      );
+
+      // 更新选中项
+      if (selectedItem?.id === item.id) {
+        setSelectedItem((prev) =>
+          prev ? { ...prev, processing_status: "processing" } : null,
+        );
+      }
+
+      toast.success("已开始重新处理内容");
+    } catch (error) {
+      console.error("重新处理失败:", error);
+      toast.error("重新处理失败，请稍后重试");
+    } finally {
+      setReprocessingItems((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(item.id);
+        return newSet;
+      });
+    }
+  };
+
+  // Handle Delete
+  const handleDelete = async (item: ContentItemPublic) => {
+    if (!confirm(`确定删除「${item.title || '无标题'}」? 删除后不可恢复。`)) {
+      return;
+    }
+    setDeletingItems((prev) => new Set(prev).add(item.id));
+    try {
+      await contentApi.deleteContentItem(item.id);
+      setItems((prev) => prev.filter((it) => it.id !== item.id));
+      if (selectedItem?.id === item.id) {
+        setSelectedItem(null);
+      }
+      toast.success("删除成功");
+    } catch (error) {
+      console.error(error);
+      toast.error("删除失败");
+    } finally {
+      setDeletingItems((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(item.id);
+        return newSet;
+      });
+    }
+  };
+
   useEffect(() => {
     // Wait for auth to complete
     if (authLoading) return;
@@ -986,9 +1105,45 @@ export default function ContentLibraryPage() {
                                 {getContentIcon(item.type)}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-lg truncate mb-2">
-                                  {item.title || "无标题"}
-                                </h3>
+                                <div className="flex items-start justify-between mb-2">
+                                  <h3 className="font-semibold text-lg truncate flex-1">
+                                    {item.title || "无标题"}
+                                  </h3>
+                                  <div className="flex items-center gap-2">
+                                    <FavoriteButton 
+                                      itemId={item.id} 
+                                      size="sm"
+                                      className="opacity-60 hover:opacity-100 transition-opacity"
+                                    />
+                                    {/* More actions menu */}
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <button
+                                          className="p-1 rounded-full hover:bg-accent/50"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <MoreVertical className="h-4 w-4" />
+                                        </button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" onClick={(e)=>e.stopPropagation()}>
+                                        <DropdownMenuItem onClick={() => handleShare(item)}>
+                                          <Share2 className="mr-2 h-3 w-3" /> 分享
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleDownload(item)}>
+                                          <Download className="mr-2 h-3 w-3" /> 下载
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          disabled={deletingItems.has(item.id)}
+                                          onClick={() => handleDelete(item)}
+                                          className="text-destructive focus:text-destructive"
+                                        >
+                                          <Trash2 className="mr-2 h-3 w-3" />
+                                          {deletingItems.has(item.id) ? "删除中" : "删除"}
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                </div>
                                 <p className="text-sm text-muted-foreground line-clamp-2 mb-3 leading-relaxed">
                                   {item.summary || "暂无摘要"}
                                 </p>
@@ -998,6 +1153,19 @@ export default function ContentLibraryPage() {
                                       item.processing_status as ProcessingStatus
                                     }
                                     size="sm"
+                                    errorMessage={
+                                      item.processing_status === "failed"
+                                        ? "处理失败，点击重试"
+                                        : undefined
+                                    }
+                                    onReprocess={
+                                      item.processing_status === "failed"
+                                        ? () => handleReprocess(item)
+                                        : undefined
+                                    }
+                                    isReprocessing={reprocessingItems.has(
+                                      item.id,
+                                    )}
                                   />
                                   <Badge variant="outline" className="text-xs">
                                     {item.type.toUpperCase()}
@@ -1032,9 +1200,16 @@ export default function ContentLibraryPage() {
                     {selectedItem ? (
                       <div className="space-y-6">
                         <div>
-                          <h3 className="font-semibold mb-3 text-lg">
-                            {selectedItem.title || "无标题"}
-                          </h3>
+                          <div className="flex items-start justify-between mb-3">
+                            <h3 className="font-semibold text-lg flex-1">
+                              {selectedItem.title || "无标题"}
+                            </h3>
+                            <FavoriteButton 
+                              itemId={selectedItem.id} 
+                              size="sm"
+                              className="ml-2"
+                            />
+                          </div>
                           <div className="flex items-center gap-2 mb-4 flex-wrap">
                             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                               {getContentIcon(selectedItem.type)}
@@ -1047,6 +1222,19 @@ export default function ContentLibraryPage() {
                                 selectedItem.processing_status as ProcessingStatus
                               }
                               size="sm"
+                              errorMessage={
+                                selectedItem.processing_status === "failed"
+                                  ? "处理失败，点击重试"
+                                  : undefined
+                              }
+                              onReprocess={
+                                selectedItem.processing_status === "failed"
+                                  ? () => handleReprocess(selectedItem)
+                                  : undefined
+                              }
+                              isReprocessing={reprocessingItems.has(
+                                selectedItem.id,
+                              )}
                             />
                           </div>
                         </div>

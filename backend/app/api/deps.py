@@ -95,7 +95,7 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
 
         logging.getLogger("app").error(f"JWT Token Error: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Could not validate credentials: {str(e)}",
         )
     except ValidationError:
@@ -105,7 +105,7 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
             "JWT Token Validation Error: Invalid payload format"
         )
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token payload",
         )
 

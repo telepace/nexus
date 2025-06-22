@@ -152,11 +152,76 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
 
-    # Since foreign key constraints have been removed, we can delete the user directly
-    # The application should handle cleanup of related records if needed
+    # Clean up related records before deleting the user
+    from sqlmodel import delete
 
-    # Optional: Clean up related records (can be done asynchronously)
-    # For now, we'll just delete the user since there are no FK constraints
+    from app.models.content import (
+        AIConversation,
+        AIResult,
+        ContentAsset,
+        ContentItem,
+        ContentShare,
+        ProcessingJob,
+        Segment,
+    )
+
+    # Delete AI conversations first (they reference user_id)
+    ai_conversations_stmt = delete(AIConversation).where(
+        AIConversation.user_id == current_user.id
+    )
+    session.exec(ai_conversations_stmt)
+
+    # Get all content items owned by the user
+    content_items_stmt = select(ContentItem).where(
+        ContentItem.user_id == current_user.id
+    )
+    user_content_items = session.exec(content_items_stmt).all()
+
+    # For each content item, clean up related records
+    for content_item in user_content_items:
+        # Delete segments
+        segments_stmt = delete(Segment).where(
+            Segment.content_item_id == content_item.id
+        )
+        session.exec(segments_stmt)
+
+        # Delete content assets
+        assets_stmt = delete(ContentAsset).where(
+            ContentAsset.content_item_id == content_item.id
+        )
+        session.exec(assets_stmt)
+
+        # Delete content shares
+        shares_stmt = delete(ContentShare).where(
+            ContentShare.content_item_id == content_item.id
+        )
+        session.exec(shares_stmt)
+
+        # Delete AI results
+        ai_results_stmt = delete(AIResult).where(
+            AIResult.content_item_id == content_item.id
+        )
+        session.exec(ai_results_stmt)
+
+        # Delete processing jobs
+        jobs_stmt = delete(ProcessingJob).where(
+            ProcessingJob.content_item_id == content_item.id
+        )
+        session.exec(jobs_stmt)
+
+    # Delete content items
+    content_items_delete_stmt = delete(ContentItem).where(
+        ContentItem.user_id == current_user.id
+    )
+    session.exec(content_items_delete_stmt)
+
+    # Delete projects owned by the user
+    from app.models.project import Project
+
+    projects_stmt = delete(Project).where(Project.owner_id == current_user.id)
+    session.exec(projects_stmt)
+
+    # Finally, delete the user
     session.delete(current_user)
     session.commit()
     return Message(message="User deleted successfully")

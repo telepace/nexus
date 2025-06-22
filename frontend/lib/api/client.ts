@@ -86,6 +86,17 @@ class APIClient {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
+      // 对于204 No Content响应，不尝试解析JSON
+      if (response.status === 204) {
+        return undefined as T;
+      }
+
+      // 检查响应是否有内容
+      const contentLength = response.headers.get('content-length');
+      if (contentLength === '0') {
+        return undefined as T;
+      }
+
       const data = await response.json();
       return data as T;
     } catch (error) {

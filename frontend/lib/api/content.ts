@@ -171,6 +171,16 @@ export const contentApi = {
   },
 
   /**
+   * Reprocess a failed content item
+   */
+  async reprocessContentItem(id: string): Promise<ContentItemPublic> {
+    const response = await client.post<ContentItemPublic>(
+      `/api/v1/content/reprocess/${id}`,
+    );
+    return response;
+  },
+
+  /**
    * Get supported content types and processors
    */
   async getSupportedProcessors(): Promise<{
@@ -208,5 +218,9 @@ export const contentApi = {
       },
     );
     return response;
+  },
+
+  async deleteContentItem(id: string): Promise<void> {
+    await client.delete(`/api/v1/content/${id}`);
   },
 };

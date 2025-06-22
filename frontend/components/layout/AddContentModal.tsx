@@ -225,7 +225,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           const contentData = {
             type: "url",
             source_uri: url,
-            title: title || `网页内容 - ${getUrlHostname(url)}`,
+            // title will be auto-extracted on backend
             summary: `从 ${url} 获取的网页内容`,
           };
 
@@ -256,7 +256,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
         const contentData = {
           type: "text",
           content_text: content,
-          title: title || "文本内容",
+          // title will be auto-extracted on backend
           summary:
             content.length > 100 ? content.substring(0, 100) + "..." : content,
         };
@@ -485,15 +485,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                       onChange={(e) => handleContentChange(e.target.value)}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="title">标题 (可选)</Label>
-                    <Input
-                      id="title"
-                      placeholder="为这些链接添加标题"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                    />
-                  </div>
+                  {/* Title input removed; backend auto-extracts */}
                 </div>
               </div>
             )}
@@ -523,15 +515,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                     )}
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="text-title">标题 (可选)</Label>
-                  <Input
-                    id="text-title"
-                    placeholder="为文本内容添加标题"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                  />
-                </div>
+                {/* Title input removed; backend auto-extracts */}
               </div>
             )}
 

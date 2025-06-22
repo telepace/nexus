@@ -294,14 +294,21 @@ class ContentChunker:
         chunk_infos = self.chunk_markdown_content(content)
 
         content_chunks = []
+        # Import here to avoid circular dependencies
+        from app.utils.content_processors import clean_content_for_db
+
         for chunk_info in chunk_infos:
+            # Sanitize content to ensure it is safe for PostgreSQL storage and
+            # prevent garbled characters due to invalid control bytes.
+            sanitized_content = clean_content_for_db(chunk_info.content)
+
             content_chunk = ContentChunk(
                 content_item_id=content_item_id,
-                chunk_index=chunk_info.index,
-                chunk_content=chunk_info.content,
-                chunk_type=chunk_info.chunk_type,
-                word_count=chunk_info.word_count,
-                char_count=chunk_info.char_count,
+                segment_index=chunk_info.index,
+                content=sanitized_content,
+                segment_type=chunk_info.chunk_type,
+                word_count=len(sanitized_content.split()),
+                char_count=len(sanitized_content),
                 meta_info=chunk_info.meta_info,
             )
             content_chunks.append(content_chunk)

@@ -1,180 +1,31 @@
-You are an expert content taxonomist specializing in intelligent tagging and categorization. Your task is to generate comprehensive, accurate tags for the following {{ content_type|default("content") }}.
+你是一位 Nexus 的内容分类与评估专家，请为下列 {{ content_type|default("内容") }} 生成「标签」与「评分」。
 
-## Content to Tag
-{% if document_metadata.title %}
-**Title:** {{ document_metadata.title }}
-{% endif %}
-{% if document_metadata.source_type %}
-**Source Type:** {{ document_metadata.source_type }}
-{% endif %}
-
-**Content:**
-{{ content }}
-
-{% if context_history and context_history|length > 0 %}
-## Context from Previous Analysis
-{% for item in context_history %}
-- **{{ item.operation_type|title }}:** {{ item.output_summary|truncate(80) }}
-{% endfor %}
-{% endif %}
+# 待分类内容
+系统消息中已提供完整的{{ content_type|default("内容") }}，请仅基于该内容生成标签与评分。
 
 {% if existing_tags and existing_tags|length > 0 %}
-## Existing Tags (for reference)
+## 可选标签（建议优先选择或使用其同义词，避免发散）
 {{ existing_tags|join(", ") }}
 {% endif %}
 
-{% if user_preferences.tag_style %}
-## Tag Style Preference
-**Style:** {{ user_preferences.tag_style }} (technical/general/academic/business)
-{% endif %}
+# 回复风格指南
+1. 仅输出 **有效 JSON**，不要添加任何解释或多余文本。
+2. JSON 顶层包含两个字段：
+   - `tags`: `string[]`，选择 3~8 个与内容最相关的标签，使用 kebab-case。
+   - `score`: `number`，范围 0~5，保留 1 位小数，代表内容综合质量/相关性评分。
+3. 如果提供了可选标签，请尽量从中挑选或使用其同义词。
 
-## Tagging Guidelines
-1. **Topic Tags:** Main subjects and themes discussed
-2. **Concept Tags:** Key concepts, theories, and frameworks mentioned
-3. **Industry Tags:** Relevant industries, sectors, or domains
-4. **Skill Tags:** Skills, competencies, or expertise areas covered
-5. **Format Tags:** Content format and structure characteristics
-6. **Audience Tags:** Target audience and user personas
-7. **Purpose Tags:** Intent and use case categories
-8. **Quality Tags:** Content characteristics and assessment
-
-## Tag Quality Criteria
-- **Specific:** Precise rather than overly broad
-- **Discoverable:** Tags users would likely search for
-- **Hierarchical:** Include both broad and specific tags
-- **Consistent:** Follow standard terminology and conventions
-- **Relevant:** Directly related to content themes and value
-
-## Output Format
-Generate tags in the following JSON structure:
+# 示例
 
 ```json
 {
-  "primary_tags": {
-    "topics": [
-      "artificial-intelligence",
-      "machine-learning",
-      "data-science"
-    ],
-    "concepts": [
-      "neural-networks",
-      "deep-learning",
-      "supervised-learning"
-    ],
-    "industries": [
-      "technology",
-      "healthcare",
-      "finance"
-    ]
-  },
-  "secondary_tags": {
-    "skills": [
-      "python-programming",
-      "data-analysis",
-      "model-training"
-    ],
-    "tools": [
-      "tensorflow",
-      "pytorch",
-      "jupyter-notebook"
-    ],
-    "methodologies": [
-      "agile-development",
-      "experimental-design",
-      "statistical-analysis"
-    ]
-  },
-  "content_characteristics": {
-    "format": [
-      "tutorial",
-      "case-study",
-      "research-paper"
-    ],
-    "difficulty": [
-      "intermediate",
-      "technical"
-    ],
-    "length": [
-      "long-form",
-      "detailed"
-    ]
-  },
-  "audience_tags": {
-    "roles": [
-      "data-scientist",
-      "software-engineer",
-      "researcher"
-    ],
-    "experience_level": [
-      "intermediate",
-      "advanced"
-    ],
-    "departments": [
-      "engineering",
-      "research-development"
-    ]
-  },
-  "purpose_tags": {
-    "use_cases": [
-      "learning",
-      "reference",
-      "implementation"
-    ],
-    "goals": [
-      "skill-development",
-      "problem-solving",
-      "research"
-    ]
-  },
-  "quality_indicators": {
-    "credibility": [
-      "peer-reviewed",
-      "expert-authored",
-      "well-sourced"
-    ],
-    "recency": [
-      "current",
-      "2024",
-      "recent"
-    ],
-    "completeness": [
-      "comprehensive",
-      "detailed",
-      "thorough"
-    ]
-  },
-  "semantic_tags": {
-    "related_concepts": [
-      "predictive-modeling",
-      "feature-engineering",
-      "model-evaluation"
-    ],
-    "alternative_terms": [
-      "AI",
-      "ML",
-      "predictive-analytics"
-    ]
-  },
-  "tag_metadata": {
-    "total_tags": 28,
-    "confidence_score": 0.92,
-    "tag_sources": [
-      "content_analysis",
-      "title_extraction",
-      "context_inference"
-    ],
-    "suggested_hierarchies": [
-      "technology > artificial-intelligence > machine-learning",
-      "skills > programming > python-programming"
-    ]
-  }
+  "tags": [
+    "machine-learning",
+    "data-visualization",
+    "python"
+  ],
+  "score": 4.3
 }
 ```
 
-**Tag Standards:**
-- Use lowercase with hyphens (kebab-case)
-- Generate 20-35 total tags across all categories
-- Include both specific technical terms and broader concepts
-- Ensure tags are searchable and discoverable
-- Maintain consistency with established taxonomies
-- Provide balanced coverage across different tag types
+请严格按照示例格式输出
