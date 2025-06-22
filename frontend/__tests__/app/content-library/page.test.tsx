@@ -118,23 +118,27 @@ describe("ContentLibraryPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("should navigate to reader page when content item is clicked", async () => {
+  it("should navigate to reader page when '查看全文' button is clicked after focusing", async () => {
     render(<ContentLibraryPage />);
 
     await waitFor(() => {
       expect(screen.getByText("Test Document")).toBeInTheDocument();
     });
 
-    // Click on the content item card to navigate
-    const contentCard =
+    // First click: set focus (should NOT navigate)
+    const contentCard = screen.getByText("Test Document").closest("div.cursor-pointer") ||
       screen.getByText("Test Document").closest("[role='button']") ||
-      screen.getByText("Test Document").closest(".cursor-pointer") ||
       screen.getByText("Test Document").closest("div");
 
     if (contentCard) {
       fireEvent.click(contentCard);
-      expect(mockPush).toHaveBeenCalledWith("/content-library/reader/1");
+      expect(mockPush).not.toHaveBeenCalled();
     }
+
+    // Now the preview should render a "查看全文" button
+    const fullButton = await screen.findByRole('button', { name: '查看全文' });
+    fireEvent.click(fullButton);
+    expect(mockPush).toHaveBeenCalledWith("/content-library/reader/1");
   });
 
   it("should display content items in card format", async () => {
@@ -143,7 +147,7 @@ describe("ContentLibraryPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Test Document")).toBeInTheDocument();
       expect(screen.getByText("Test summary")).toBeInTheDocument();
-      expect(screen.getAllByText("PDF")).toHaveLength(2);
+      expect(screen.getAllByText("PDF")).toHaveLength(1);
     });
   });
 

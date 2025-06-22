@@ -6,7 +6,6 @@ import { Calendar, FileText, Link, BookOpen } from 'lucide-react'
 import { ProcessingStatusBadge, ProcessingStatus } from '@/components/ui/ProcessingStatusBadge'
 import { createRipple } from '../utils/ripple'
 import type { ContentItemPublic } from '../types'
-import { useRouter } from 'next/navigation'
 
 interface Props {
   item: ContentItemPublic
@@ -29,21 +28,31 @@ const getContentIcon = (type: string) => {
 }
 
 export const ContentCard = ({ item, selected, onSelect, prefetchContent }: Props) => {
-  const router = useRouter()
+  // Focus click handler: first click sets focus via onSelect, second click handled elsewhere (Preview button)
 
   const handleClick = () => {
-    router.push(`/content-library/reader/${item.id}`)
+    if (!selected) {
+      onSelect(item)
+      prefetchContent(item)
+    }
   }
 
   return (
     <Card
       key={item.id}
-      className={`cursor-pointer rounded-lg overflow-hidden transition-colors duration-200 ease-out bg-transparent border border-transparent shadow-none hover:bg-[var(--color-linear-bg-2)] hover:border-[var(--mac-gray-5)] hover:shadow-md w-libraryCard`}
+      tabIndex={0}
+      className={`cursor-pointer rounded-lg overflow-hidden transition-colors duration-200 ease-out w-libraryCard ${
+        selected
+          ? 'bg-[var(--color-linear-bg-2)] border-[var(--mac-gray-5)] shadow-md'
+          : 'bg-transparent border border-transparent shadow-none hover:shadow-none hover:bg-transparent hover:border-transparent'
+      }`}
       onClick={handleClick}
       onMouseDown={createRipple}
-      onMouseEnter={() => {
-        onSelect(item)
-        prefetchContent(item)
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && !selected) {
+          e.preventDefault()
+          handleClick()
+        }
       }}
     >
       <CardContent className="p-4 pl-1 flex flex-col h-full">

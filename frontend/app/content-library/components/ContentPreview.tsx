@@ -1,6 +1,7 @@
 "use client"
 
 import { FileText, Calendar, Clock } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { AIAnalysisCard } from './AIAnalysisCard'
 import type { ContentItemPublic } from '../types'
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export const ContentPreview = ({ item }: Props) => {
+  const router = useRouter()
   return (
     <div className="h-full shadow-macos-window  bg-neutral-100 rounded-sm  flex flex-col overflow-hidden">
       <div className="flex items-center h-header px-4">
@@ -25,10 +27,19 @@ export const ContentPreview = ({ item }: Props) => {
                 {item.title || '无标题'}
               </h3>
               <div className="mb-4">
-                <div className="inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow">
-                  <span className="text-xs font-medium">
-                    {item.type.toUpperCase()}
-                  </span>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow cursor-pointer transition"
+                  onClick={() => router.push(`/content-library/reader/${item.id}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      router.push(`/content-library/reader/${item.id}`)
+                    }
+                  }}
+                >
+                  <span className="text-xs font-medium">查看全文</span>
                 </div>
               </div>
             </div>
@@ -65,14 +76,14 @@ export const ContentPreview = ({ item }: Props) => {
                 <div>
                   <label className="text-muted-foreground block mb-1">创建时间</label>
                   <div className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
+                    
                     {new Date(item.created_at).toLocaleDateString('zh-CN')}
                   </div>
                 </div>
                 <div>
                   <label className="text-muted-foreground block mb-1">更新时间</label>
                   <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
+                    
                     {new Date(item.updated_at).toLocaleDateString('zh-CN')}
                   </div>
                 </div>
@@ -85,8 +96,8 @@ export const ContentPreview = ({ item }: Props) => {
           <div className="text-center py-12">
             <FileText className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-4" />
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">悬停内容卡片查看预览</p>
-              <p className="text-xs text-muted-foreground/70">点击卡片直接开始阅读</p>
+              <p className="text-sm text-muted-foreground">点击内容卡片查看预览</p>
+          
             </div>
           </div>
         )}
