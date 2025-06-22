@@ -800,7 +800,7 @@ export default function ContentLibraryPage() {
 
   // Handle Delete
   const handleDelete = async (item: ContentItemPublic) => {
-    if (!confirm(`确定删除「${item.title || '无标题'}」? 删除后不可恢复。`)) {
+    if (!confirm(`确定删除「${item.title || "无标题"}」? 删除后不可恢复。`)) {
       return;
     }
     setDeletingItems((prev) => new Set(prev).add(item.id));
@@ -1110,8 +1110,8 @@ export default function ContentLibraryPage() {
                                     {item.title || "无标题"}
                                   </h3>
                                   <div className="flex items-center gap-2">
-                                    <FavoriteButton 
-                                      itemId={item.id} 
+                                    <FavoriteButton
+                                      itemId={item.id}
                                       size="sm"
                                       className="opacity-60 hover:opacity-100 transition-opacity"
                                     />
@@ -1125,12 +1125,21 @@ export default function ContentLibraryPage() {
                                           <MoreVertical className="h-4 w-4" />
                                         </button>
                                       </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end" onClick={(e)=>e.stopPropagation()}>
-                                        <DropdownMenuItem onClick={() => handleShare(item)}>
-                                          <Share2 className="mr-2 h-3 w-3" /> 分享
+                                      <DropdownMenuContent
+                                        align="end"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <DropdownMenuItem
+                                          onClick={() => handleShare(item)}
+                                        >
+                                          <Share2 className="mr-2 h-3 w-3" />{" "}
+                                          分享
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleDownload(item)}>
-                                          <Download className="mr-2 h-3 w-3" /> 下载
+                                        <DropdownMenuItem
+                                          onClick={() => handleDownload(item)}
+                                        >
+                                          <Download className="mr-2 h-3 w-3" />{" "}
+                                          下载
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                           disabled={deletingItems.has(item.id)}
@@ -1138,7 +1147,9 @@ export default function ContentLibraryPage() {
                                           className="text-destructive focus:text-destructive"
                                         >
                                           <Trash2 className="mr-2 h-3 w-3" />
-                                          {deletingItems.has(item.id) ? "删除中" : "删除"}
+                                          {deletingItems.has(item.id)
+                                            ? "删除中"
+                                            : "删除"}
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
@@ -1204,8 +1215,8 @@ export default function ContentLibraryPage() {
                             <h3 className="font-semibold text-lg flex-1">
                               {selectedItem.title || "无标题"}
                             </h3>
-                            <FavoriteButton 
-                              itemId={selectedItem.id} 
+                            <FavoriteButton
+                              itemId={selectedItem.id}
                               size="sm"
                               className="ml-2"
                             />

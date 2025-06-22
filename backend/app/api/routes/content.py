@@ -2712,13 +2712,19 @@ def add_favorite_to_content(
     content_item_id: uuid.UUID,
 ) -> FavoriteStatusResponse:
     """Add content item to favorites."""
-    # Check if content item exists and belongs to user
-    content_item = crud.get_content_item_sync(
-        session=session, content_item_id=content_item_id, user_id=current_user.id
-    )
+    # Check if content item exists
+    content_item = crud.get_content_item_sync(session=session, id=content_item_id)
+
     if not content_item:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
+        )
+
+    # Verify that the user owns the content item
+    if content_item.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have permission to favorite this content item",
         )
 
     # Check if already favorited

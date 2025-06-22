@@ -12,6 +12,7 @@ alwaysApply: true
 - All chat responses should be in Chinese
 - LLM instructions should be placed in the `prompt_templates/` directory with `.j2` extension format, rather than being hardcoded into the code
 - Follow the DIY principle
+- Prioritize helping me do my best and embrace long-termism.
 - Use `docker compose` instead of `docker-compose`
 - Focus on four directories: backend (api) is `backend/`, frontend (web) is `frontend/`, management backend (admin) is `admin/`, and browser extension is `extension/`
 - If unfamiliar with the directory structure, recommended to start with `tree -L 2` to understand the layout

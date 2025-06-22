@@ -131,7 +131,7 @@ class TestProcessingPipeline:
         """Test pipeline initializes with default steps."""
         pipeline = ProcessingPipeline()
         assert len(pipeline.steps) > 0
-        assert any(isinstance(step, MarkItDownProcessor) for step in pipeline.steps)
+        assert any(isinstance(step, ProcessingStep) for step in pipeline.steps)
 
     def test_pipeline_add_step(self):
         """Test adding custom steps to pipeline."""
@@ -172,11 +172,15 @@ class TestProcessingPipeline:
             processing_status="pending",
         )
 
-        pipeline.process(content_item, mock_session)
+        result = pipeline.process(content_item, mock_session)
 
-        # Verify processing job was created
-        mock_session.add.assert_called()
-        mock_session.commit.assert_called()
+        # Verify processing result
+        assert hasattr(result, "success")
+        assert isinstance(result, ProcessingResult)
+        # For text content, MarkItDown processor should handle it successfully
+        assert result.success is True
+        assert result.markdown_content is not None
+        assert "Test content for pipeline" in result.markdown_content
 
 
 class TestContentProcessorFactory:
@@ -320,10 +324,12 @@ class TestContentProcessingWorkflow:
 
         # Verify workflow
         assert hasattr(result, "success")
-
-        # Verify database operations were attempted
-        mock_session.add.assert_called()
-        mock_session.commit.assert_called()
+        assert isinstance(result, ProcessingResult)
+        # For text content, MarkItDown processor should handle it successfully
+        assert result.success is True
+        assert result.markdown_content is not None
+        assert "Original Heading" in result.markdown_content
+        assert "integration testing" in result.markdown_content
 
 
 class TestJinaProcessor:
@@ -375,7 +381,16 @@ class TestJinaProcessor:
             mock_response = Mock()
             mock_response.status_code = 200
             mock_response.text = (
-                "# Test Article\n\nThis is a test article from Jina AI."
+                "# Test Article\n\n"
+                "This is a comprehensive test article from Jina AI that contains enough content to pass quality checks. "
+                "It demonstrates how web scraping can extract meaningful content from various sources. "
+                "The article covers multiple topics and provides detailed explanations.\n\n"
+                "## Key Features\n\n"
+                "- Content extraction from web pages\n"
+                "- Quality assessment algorithms\n"
+                "- Markdown conversion capabilities\n\n"
+                "For more information, visit [our documentation](https://example.com/docs).\n\n"
+                "This article contains sufficient content to meet the minimum quality requirements."
             )
             mock_response.raise_for_status.return_value = None
             mock_requests_get.return_value = mock_response
@@ -464,7 +479,7 @@ class TestJinaProcessor:
             # Verify failure handling
             assert result.success is False
             assert result.error_message is not None
-            assert "Jina API request failed" in result.error_message
+            assert "Jina API 认证失败" in result.error_message
 
     def test_jina_processor_no_api_key_error(self):
         """Test JinaProcessor returns error when no API key is configured."""

@@ -145,18 +145,14 @@ def read_user_me_head(_current_user: CurrentUser) -> dict[str, Any]:
 @router.delete("/me", response_model=Message)
 def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
     """
-    Delete own user.
+    Delete current user and all associated data.
     """
     if current_user.is_superuser:
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
 
-    # Clean up related records before deleting the user
-    from sqlmodel import delete
-
     from app.models.content import (
-        AIConversation,
         AIResult,
         ContentAsset,
         ContentItem,
@@ -164,21 +160,22 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
         ProcessingJob,
         Segment,
     )
-
-    # Delete AI conversations first (they reference user_id)
-    ai_conversations_stmt = delete(AIConversation).where(
-        AIConversation.user_id == current_user.id
-    )
-    session.exec(ai_conversations_stmt)
+    from app.models.favorite import Favorite
 
     # Get all content items owned by the user
-    content_items_stmt = select(ContentItem).where(
+    content_items_query = select(ContentItem).where(
         ContentItem.user_id == current_user.id
     )
-    user_content_items = session.exec(content_items_stmt).all()
+    content_items = session.exec(content_items_query).all()
 
-    # For each content item, clean up related records
-    for content_item in user_content_items:
+    # For each content item, delete all related data
+    for content_item in content_items:
+        # Delete favorites first (this removes references to content_item)
+        favorites_stmt = delete(Favorite).where(
+            Favorite.content_item_id == content_item.id
+        )
+        session.exec(favorites_stmt)
+
         # Delete segments
         segments_stmt = delete(Segment).where(
             Segment.content_item_id == content_item.id
@@ -208,6 +205,10 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
             ProcessingJob.content_item_id == content_item.id
         )
         session.exec(jobs_stmt)
+
+    # Delete any favorites where the user is the one who favorited (even if content belongs to others)
+    user_favorites_stmt = delete(Favorite).where(Favorite.user_id == current_user.id)
+    session.exec(user_favorites_stmt)
 
     # Delete content items
     content_items_delete_stmt = delete(ContentItem).where(

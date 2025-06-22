@@ -11,7 +11,6 @@ import {
   Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -66,7 +65,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 }) => {
   const [contentType, setContentType] = useState<ContentType>(null);
   const [content, setContent] = useState("");
-  const [title, setTitle] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [detectedUrls, setDetectedUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -86,17 +84,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({
       return true;
     } catch {
       return false;
-    }
-  };
-
-  /**
-   * Safely extracts hostname from URL, returns fallback if invalid
-   */
-  const getUrlHostname = (url: string, fallback: string = "网站"): string => {
-    try {
-      return new URL(url).hostname;
-    } catch {
-      return fallback;
     }
   };
 
@@ -313,7 +300,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [contentType, detectedUrls, title, content, selectedFiles, user, onClose]);
+  }, [contentType, detectedUrls, content, selectedFiles, user, onClose]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -329,7 +316,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   const resetForm = () => {
     setContentType(null);
     setContent("");
-    setTitle("");
     setSelectedFiles([]);
     setDetectedUrls([]);
     setError("");

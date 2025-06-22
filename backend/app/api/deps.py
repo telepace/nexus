@@ -124,15 +124,11 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
 
     if not user:
         logger.error(f"User with ID '{token_data.sub}' not found in database")
-        # 尝试手动查询用户表
-        from sqlmodel import select
-
-        all_users = session.exec(select(User)).all()
-        logger.info(f"Database contains {len(all_users)} users")
-        for db_user in all_users:
-            logger.info(f"DB User: {db_user.id} / {db_user.email}")
-
-        raise HTTPException(status_code=404, detail="User not found")
+        # This is an authentication error, as the token refers to a non-existent user
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User associated with this token no longer exists.",
+        )
 
     logger.info(f"User found: {user.email}, active: {user.is_active}")
     if not user.is_active:

@@ -3,7 +3,9 @@ AI聊天服务
 提供基于模板的AI内容生成功能
 """
 
+import json
 import logging
+import os
 import random
 from pathlib import Path
 from typing import Any
@@ -41,12 +43,49 @@ class ChatService:
             # 加载模板
             template = self.template_env.get_template(template_name)
 
-            # 渲染模板
-            template.render(**context)
+            # 渲染模板得到 prompt
+            prompt: str = template.render(**context)
 
-            logger.info(f"使用模板 {template_name} 生成提示词")
+            logger.info(
+                f"Using template {template_name} to build prompt, length={len(prompt)}"
+            )
 
-            # 模拟AI响应（在实际项目中这里会调用真实的AI服务）
+            # ---- 尝试使用 litellm 统一调用 LLM ----
+            try:
+                import importlib
+
+                if importlib.util.find_spec("litellm") is not None:
+                    import litellm  # type: ignore
+
+                    model_name = os.getenv(
+                        "LLM_MODEL", "or-gemini-2.5-flash-preview-05-20"
+                    )
+                    temperature = float(os.getenv("LLM_TEMPERATURE", "0.3"))
+
+                    # litellm.completion 返回 Response 对象
+                    response = litellm.completion(
+                        model=model_name,
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "You are a helpful assistant. If the user instructs to output markdown or lists, follow strictly.",
+                            },
+                            {"role": "user", "content": prompt},
+                        ],
+                        temperature=temperature,
+                    )
+
+                    ai_content = response.choices[0].message.content.strip()  # type: ignore[attr-defined]
+
+                    try:
+                        parsed = json.loads(ai_content)
+                        return parsed  # type: ignore[return-value]
+                    except json.JSONDecodeError:
+                        return {"text": ai_content}
+            except Exception as lite_err:
+                logger.error(f"litellm call failed: {lite_err}; falling back to mock")
+
+            # --- fallback mock ---
             if template_name == "summary.j2":
                 return await self._generate_mock_summary(context)
             elif template_name == "key_points.j2":
@@ -54,7 +93,7 @@ class ChatService:
             elif template_name == "labels.j2":
                 return await self._generate_mock_labels(context)
             else:
-                return {"result": "模拟AI响应"}
+                return {"result": "mock response"}
 
         except Exception as e:
             logger.error(f"模板生成失败: {template_name}, 错误: {str(e)}")

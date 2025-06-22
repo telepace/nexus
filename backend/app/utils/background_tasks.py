@@ -5,10 +5,10 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 
-from sqlmodel import Session
+from sqlmodel import Session, delete
 
 from app.core.db import engine
-from app.models.content import ContentItem
+from app.models.content import ContentItem, Segment
 from app.utils.content_processors import ContentProcessorFactory
 from app.utils.events import content_event_manager
 from app.utils.timezone import now_utc
@@ -245,25 +245,66 @@ class BackgroundTaskManager:
                             pass
 
                         # 添加内容分段逻辑 - 确保所有处理器都生成chunks
-                        if result.markdown_content and len(result.markdown_content.strip()) > 0:
+                        if (
+                            result.markdown_content
+                            and len(result.markdown_content.strip()) > 0
+                        ):
                             try:
-                                from app.utils.content_chunker import chunk_content_for_item
-                                from app.utils.content_processors import clean_content_for_db
-                                
+                                from app.utils.content_chunker import (
+                                    chunk_content_for_item,
+                                )
+                                from app.utils.content_processors import (
+                                    clean_content_for_db,
+                                )
+
                                 # 清理内容确保数据库安全
-                                cleaned_content = clean_content_for_db(result.markdown_content)
-                                
+                                cleaned_content = clean_content_for_db(
+                                    result.markdown_content
+                                )
+
                                 # 创建内容分段
-                                chunks = chunk_content_for_item(content_item.id, cleaned_content)
-                                
-                                # 添加到数据库会话
-                                for chunk in chunks:
-                                    session.add(chunk)
-                                
-                                logger.info(f"Created {len(chunks)} content chunks for {content_id}")
-                                
+                                chunks = chunk_content_for_item(
+                                    content_item.id, cleaned_content
+                                )
+
+                                # ---------------- 长期优化：幂等写入 ----------------
+                                # 在写入新分段之前，删除当前内容项已存在的分段，
+                                # 确保重复执行不会触发唯一索引冲突 (uix_content_segment_idx)。
+                                # NOTE: 该删除与后续插入放在同一事务中，最终只提交一次。
+
+                                # 删除旧分段（如果有）
+                                session.exec(
+                                    delete(Segment).where(
+                                        Segment.content_item_id == content_item.id
+                                    )
+                                )
+
+                                # 批量插入新分段
+                                session.add_all(chunks)
+
+                                # ---------------- 生成 AI 分析结果 ----------------
+                                try:
+                                    from app.utils.ai_results_generator import (
+                                        generate_and_store_basic_ai_results,
+                                    )
+
+                                    # 使用 markdown_content（清洁后）生成分析
+                                    await generate_and_store_basic_ai_results(
+                                        session, content_item, cleaned_content
+                                    )
+                                except Exception as ai_err:
+                                    logger.error(
+                                        f"Failed to generate AI results for {content_id}: {ai_err}"
+                                    )
+
+                                logger.info(
+                                    f"Replaced segments for {content_id} (total {len(chunks)})"
+                                )
+
                             except Exception as chunk_error:
-                                logger.error(f"Failed to create chunks for {content_id}: {chunk_error}")
+                                logger.error(
+                                    f"Failed to create chunks for {content_id}: {chunk_error}"
+                                )
                                 # 不让分段失败影响整体处理状态
 
                         logger.info(f"Successfully processed content {content_id}")

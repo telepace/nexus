@@ -1,91 +1,101 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getCookie } from '@/lib/utils'
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getCookie } from "@/lib/utils";
 
 interface FavoriteItem {
-  id: string
-  user_id: string
-  content_item_id: string
-  created_at: string
+  id: string;
+  user_id: string;
+  content_item_id: string;
+  created_at: string;
   content_item: {
-    id: string
-    title: string
-    type: string
-    source_uri?: string
-    content_text?: string
-    created_at: string
-    updated_at: string
-    processing_status: string
-  }
+    id: string;
+    title: string;
+    type: string;
+    source_uri?: string;
+    summary?: string;
+    content_text?: string;
+    created_at: string;
+    updated_at: string;
+    processing_status: string;
+  };
 }
 
 interface FavoritesResponse {
-  items: FavoriteItem[]
-  total: number
-  skip: number
-  limit: number
+  items: FavoriteItem[];
+  total: number;
+  skip: number;
+  limit: number;
 }
 
 const fetcher = async (url: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-  const token = getCookie('accessToken')
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  const token = getCookie("accessToken");
 
   if (!token) {
-    throw new Error('No access token found')
+    throw new Error("No access token found");
   }
 
-  const response = await fetch(`${baseUrl}/api/v1${url}`, {
+  const fullUrl = `${baseUrl}/api/v1${url}`;
+  console.log("Fetching from:", fullUrl);
+
+  const response = await fetch(fullUrl, {
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
-  })
+  });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch')
+    const errorText = await response.text();
+    console.error(`Fetch failed with status ${response.status}:`, errorText);
+    throw new Error(
+      `Failed to fetch: ${response.status} ${response.statusText}`,
+    );
   }
 
-  return response.json()
-}
+  return response.json();
+};
 
 export function useFavorites() {
   const { data, error, isLoading } = useQuery<string[]>({
-    queryKey: ['favorites', 'content-ids'],
-    queryFn: () => fetcher('/favorites/content-ids'),
+    queryKey: ["favorites", "content-ids"],
+    queryFn: () => fetcher("/favorites/content-ids"),
     staleTime: 30000, // 30 seconds
     refetchOnWindowFocus: false,
-  })
+    retry: 1, // 只重试1次
+  });
 
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   const mutate = () => {
-    queryClient.invalidateQueries({ queryKey: ['favorites'] })
-  }
+    queryClient.invalidateQueries({ queryKey: ["favorites"] });
+  };
 
   return {
     data,
     isLoading,
     error,
     mutate,
-  }
+  };
 }
 
 export function useFavoritesList(skip = 0, limit = 100) {
   const { data, error, isLoading } = useQuery<FavoritesResponse>({
-    queryKey: ['favorites', 'list', skip, limit],
+    queryKey: ["favorites", "list", skip, limit],
     queryFn: () => fetcher(`/favorites?skip=${skip}&limit=${limit}`),
     refetchOnWindowFocus: false,
-  })
+    retry: 1, // 只重试1次
+  });
 
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   const mutate = () => {
-    queryClient.invalidateQueries({ queryKey: ['favorites'] })
-  }
+    queryClient.invalidateQueries({ queryKey: ["favorites"] });
+  };
 
   return {
     data,
     isLoading,
     error,
     mutate,
-  }
-} 
+  };
+}

@@ -3,12 +3,11 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings, ChevronUp, RefreshCw } from "lucide-react";
+import { Settings, ChevronUp, RefreshCw, Star } from "lucide-react";
 import {
   IconCirclePlusFilled,
   IconHome,
   IconDashboard,
-  IconTags,
   IconMessageChatbot,
   IconInnerShadowTop,
   IconUser,
@@ -55,7 +54,7 @@ const data = {
     {
       title: "Favorites",
       url: "/favorites",
-      icon: IconTags,
+      icon: Star,
     },
     {
       title: "Prompts",

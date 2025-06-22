@@ -39,20 +39,20 @@ def get_favorites_endpoint(
     items = []
     for favorite in favorites:
         content_item = crud_content.get_content_item_sync(
-            session=session,
-            content_item_id=favorite.content_item_id,
-            user_id=current_user.id,
+            session=session, id=favorite.content_item_id
         )
         if content_item:
-            items.append(
-                FavoriteWithContent(
-                    id=favorite.id,
-                    user_id=favorite.user_id,
-                    content_item_id=favorite.content_item_id,
-                    created_at=favorite.created_at,
-                    content_item=ContentItemPublic.model_validate(content_item),
+            # Check ownership for security, though favorites should imply this
+            if content_item.user_id == current_user.id:
+                items.append(
+                    FavoriteWithContent(
+                        id=favorite.id,
+                        user_id=favorite.user_id,
+                        content_item_id=favorite.content_item_id,
+                        created_at=favorite.created_at,
+                        content_item=ContentItemPublic.model_validate(content_item),
+                    )
                 )
-            )
 
     return FavoriteListResponse(items=items, total=total, skip=skip, limit=limit)
 

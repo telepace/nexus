@@ -28,7 +28,7 @@ from sqlmodel import Session
 from app.core.config import settings
 from app.models.content import ContentAsset, ContentItem
 from app.utils.content_chunker import chunk_content_for_item
-from app.utils.storage.local import LocalStorageService
+from app.utils.storage import get_storage_service
 
 logger = logging.getLogger(__name__)
 
@@ -1003,7 +1003,9 @@ class FirecrawlProcessor(ProcessingStep):
 
                     extracted_title = next(
                         (
-                            t for t in title_candidates if t and isinstance(t, str) and t.strip()
+                            t
+                            for t in title_candidates
+                            if t and isinstance(t, str) and t.strip()
                         ),
                         None,
                     )
@@ -1059,8 +1061,8 @@ class FirecrawlProcessor(ProcessingStep):
     ) -> str:
         """将处理后的 Markdown 与元数据上传至 R2，并创建数据库记录。"""
 
-        from io import BytesIO
         import json
+        from io import BytesIO
 
         content_item = context.content_item
         storage_service = context.storage_service
@@ -1077,7 +1079,9 @@ class FirecrawlProcessor(ProcessingStep):
             # 上传元数据
             metadata_path = f"processed/metadata/{content_item.id}.json"
             storage_service.upload_file(
-                file_data=BytesIO(json.dumps(metadata, ensure_ascii=False, indent=2).encode("utf-8")),
+                file_data=BytesIO(
+                    json.dumps(metadata, ensure_ascii=False, indent=2).encode("utf-8")
+                ),
                 file_path=metadata_path,
             )
 
@@ -1090,7 +1094,9 @@ class FirecrawlProcessor(ProcessingStep):
                 s3_key=r2_path,
                 mime_type="text/markdown",
                 size_bytes=len(markdown_content.encode("utf-8")),
-                meta_info=json.dumps({"asset_type": "markdown", "processor": "firecrawl"}),
+                meta_info=json.dumps(
+                    {"asset_type": "markdown", "processor": "firecrawl"}
+                ),
             )
 
             metadata_asset = ContentAsset(
@@ -1101,7 +1107,9 @@ class FirecrawlProcessor(ProcessingStep):
                 s3_key=metadata_path,
                 mime_type="application/json",
                 size_bytes=len(json.dumps(metadata).encode("utf-8")),
-                meta_info=json.dumps({"asset_type": "metadata", "processor": "firecrawl"}),
+                meta_info=json.dumps(
+                    {"asset_type": "metadata", "processor": "firecrawl"}
+                ),
             )
 
             context.session.add(markdown_asset)
@@ -1698,11 +1706,8 @@ class ProcessingPipeline:
     ) -> ProcessingResult:
         """Process content item asynchronously through the pipeline."""
 
-        # 创建临时存储目录用于测试
-        import tempfile
-
-        temp_dir = tempfile.mkdtemp()
-        storage_service = LocalStorageService(base_dir=temp_dir)
+        # 创建存储服务
+        storage_service = get_storage_service()
         context = ProcessingContext(
             content_item=content_item,
             session=session,
@@ -1713,7 +1718,7 @@ class ProcessingPipeline:
         # Initialize result
         result = ProcessingResult(success=False)
         attempted_processors = []
-        last_error_details = None
+        last_error_details: dict[str, Any] | None = None
         max_retries = settings.CONTENT_PROCESSOR_MAX_RETRIES
         fallback_enabled = settings.CONTENT_PROCESSOR_FALLBACK_ON_ERROR
 
@@ -1820,7 +1825,7 @@ class ProcessingPipeline:
                 # 检查最后一次失败是否建议继续尝试其他处理器
                 if (
                     last_error_details
-                    and last_error_details.get("metadata")
+                    and isinstance(last_error_details.get("metadata"), dict)
                     and not last_error_details["metadata"].get(
                         "fallback_recommended", True
                     )
@@ -1833,7 +1838,7 @@ class ProcessingPipeline:
                 # 对于余额不足等特定错误，提供详细信息
                 if (
                     last_error_details
-                    and last_error_details.get("metadata")
+                    and isinstance(last_error_details.get("metadata"), dict)
                     and last_error_details["metadata"].get("error_type")
                     == "insufficient_balance"
                 ):

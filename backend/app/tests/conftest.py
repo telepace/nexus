@@ -20,6 +20,7 @@ from app.models.content import (
     ProcessingJob,
     Segment,
 )
+from app.models.favorite import Favorite
 from app.models.project import Project
 from app.models.prompt import Prompt, Tag
 from app.tests.utils.test_db import setup_test_db, teardown_test_db
@@ -128,10 +129,25 @@ def db() -> Generator[Session, None, None]:
             session.execute(delete(ProcessingJob))
             session.execute(delete(ContentAsset))
             session.execute(delete(ContentShare))
+            session.execute(delete(Favorite))  # Favorite 依赖于 ContentItem 和 User
             session.execute(delete(Segment))  # Segment 依赖于 ContentItem
             session.execute(delete(AIResult))  # AIResult 依赖于 ContentItem
             session.execute(delete(ContentItem))  # ContentItem 依赖于 User
             session.execute(delete(Project))  # Project 可能依赖于 User
+            # 删除 prompt_versions 表（在删除 prompts 之前）
+            try:
+                from app.models.prompt import PromptVersion
+
+                session.execute(delete(PromptVersion))
+            except Exception:
+                pass  # 表可能不存在
+            # 删除 prompt_tags 表（如果存在的话）
+            try:
+                from sqlmodel import text
+
+                session.execute(text("DELETE FROM prompt_tags"))
+            except Exception:
+                pass  # 表可能不存在
             session.execute(delete(Prompt))  # Prompt 可能依赖于 User
             session.execute(delete(Tag))
             # 2. 最后删除被依赖的父表
@@ -156,10 +172,25 @@ def db() -> Generator[Session, None, None]:
             session.execute(delete(ProcessingJob))
             session.execute(delete(ContentAsset))
             session.execute(delete(ContentShare))
+            session.execute(delete(Favorite))  # Favorite 依赖于 ContentItem 和 User
             session.execute(delete(Segment))  # Segment 依赖于 ContentItem
             session.execute(delete(AIResult))  # AIResult 依赖于 ContentItem
             session.execute(delete(ContentItem))  # ContentItem 依赖于 User
             session.execute(delete(Project))  # Project 可能依赖于 User
+            # 删除 prompt_versions 表（在删除 prompts 之前）
+            try:
+                from app.models.prompt import PromptVersion
+
+                session.execute(delete(PromptVersion))
+            except Exception:
+                pass  # 表可能不存在
+            # 删除 prompt_tags 表（如果存在的话）
+            try:
+                from sqlmodel import text
+
+                session.execute(text("DELETE FROM prompt_tags"))
+            except Exception:
+                pass  # 表可能不存在
             session.execute(delete(Prompt))  # Prompt 可能依赖于 User
             session.execute(delete(Tag))
             # 2. 最后删除被依赖的父表
@@ -198,7 +229,6 @@ def client() -> Generator[TestClient, None, None]:
 def superuser_token_headers(client: TestClient, db: Session) -> dict[str, str]:
     """Get superuser token headers for testing."""
     # 确保超级用户存在于测试数据库中
-    from app.core.config import settings
 
     # 查找现有超级用户
     superuser = crud.get_user_by_email(session=db, email=settings.FIRST_SUPERUSER)
@@ -241,11 +271,18 @@ def superuser_token_headers(client: TestClient, db: Session) -> dict[str, str]:
 @pytest.fixture(scope="function")  # 改为function scope，确保每个测试都有独立的用户
 def normal_user_token_headers(client: TestClient, db: Session) -> dict[str, str]:
     """Get normal user token headers for testing."""
-    # 确保数据库会话提交，使用户对API可见
-    db.commit()
-    return authentication_token_from_email(
-        client=client, email=settings.FIRST_SUPERUSER, db=db
-    )
+    # 使用settings中配置的测试用户邮箱
+    test_user_email = settings.EMAIL_TEST_USER
+
+    # 确保这个用户不是超级用户
+    existing_user = crud.get_user_by_email(session=db, email=test_user_email)
+    if existing_user and existing_user.is_superuser:
+        existing_user.is_superuser = False
+        db.add(existing_user)
+        db.commit()
+        db.refresh(existing_user)
+
+    return authentication_token_from_email(client=client, email=test_user_email, db=db)
 
 
 @pytest.fixture(scope="function")

@@ -92,8 +92,8 @@ class APIClient {
       }
 
       // 检查响应是否有内容
-      const contentLength = response.headers.get('content-length');
-      if (contentLength === '0') {
+      const contentLength = response.headers.get("content-length");
+      if (contentLength === "0") {
         return undefined as T;
       }
 

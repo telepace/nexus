@@ -1,11 +1,10 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint
+from sqlalchemy import CheckConstraint, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import JSON, Column, Field, Relationship, SQLModel
 
-# 导入时区工具
 from app.utils.timezone import now_utc
 
 
@@ -286,6 +285,15 @@ class Segment(SegmentBase, table=True):
     __tablename__ = "segments"
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
+
+    # 添加唯一约束防止重复
+    __table_args__ = (
+        UniqueConstraint(
+            "content_item_id",
+            "segment_index",
+            name="uix_content_segment_idx",
+        ),
+    )
 
     content_item: ContentItem | None = Relationship(
         back_populates="segments",

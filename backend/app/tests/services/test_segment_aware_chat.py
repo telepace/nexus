@@ -7,7 +7,9 @@ import uuid
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from sqlmodel import select
 
+from app.models import User
 from app.models.content import AIConversation, ContentItem, Segment
 from app.services.ai.segment_aware_chat import SegmentAwareChatService
 from app.utils.timezone import now_utc
@@ -16,9 +18,27 @@ from app.utils.timezone import now_utc
 @pytest.fixture
 def sample_content_item(db_session):
     """Create a sample content item for testing."""
+    # 获取测试数据库中的第一个用户（由 init_db 创建）
+    user = db_session.exec(select(User)).first()
+    if not user:
+        # 如果没有用户，创建一个测试用户
+        from app.core.config import settings
+        from app.core.security import get_password_hash
+
+        user = User(
+            email=settings.EMAIL_TEST_USER,
+            hashed_password=get_password_hash("testpassword123"),
+            full_name="Test User",
+            is_active=True,
+            is_superuser=False,
+        )
+        db_session.add(user)
+        db_session.commit()
+        db_session.refresh(user)
+
     content_item = ContentItem(
         id=uuid.uuid4(),
-        user_id=uuid.uuid4(),
+        user_id=user.id,  # 使用实际存在的用户ID
         type="text",
         title="Test Content",
         content_text="This is a test content for segment-aware chat testing.",
