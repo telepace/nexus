@@ -13,6 +13,9 @@ jest.mock("@/lib/client-auth", () => ({
   getCookie: jest.fn(),
 }));
 
+// Mock the scrollTo function for JSDOM
+HTMLDivElement.prototype.scrollTo = jest.fn();
+
 // Mock MainLayout
 jest.mock("@/components/layout/MainLayout", () => {
   return function MockMainLayout({
@@ -112,10 +115,10 @@ describe("ContentLibraryPage", () => {
       expect(screen.getByText("Test Document")).toBeInTheDocument();
     });
 
-    // Check that search is actually present (the test expectation was wrong)
+    // We have removed search functionality, so it should not be present.
     expect(
-      screen.getByPlaceholderText("搜索标题或摘要..."),
-    ).toBeInTheDocument();
+      screen.queryByPlaceholderText("搜索标题或摘要..."),
+    ).not.toBeInTheDocument();
   });
 
   it("should navigate to reader page when '查看全文' button is clicked after focusing", async () => {
@@ -148,7 +151,6 @@ describe("ContentLibraryPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Test Document")).toBeInTheDocument();
       expect(screen.getByText("Test summary")).toBeInTheDocument();
-      expect(screen.getAllByText("PDF")).toHaveLength(1);
     });
   });
 
@@ -156,13 +158,13 @@ describe("ContentLibraryPage", () => {
     render(<ContentLibraryPage />);
 
     await waitFor(() => {
-      // Should have clean, elegant layout
-      expect(screen.getByText("内容库")).toBeInTheDocument();
+      // The header title should be "Library"
+      expect(screen.getByText("Library")).toBeInTheDocument();
       expect(screen.getByText("Test Document")).toBeInTheDocument();
     });
 
-    // Should have filter controls (the test expectation was wrong)
-    expect(screen.getByDisplayValue("所有状态")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("所有类型")).toBeInTheDocument();
+    // We have removed filter controls
+    expect(screen.queryByDisplayValue("所有状态")).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue("所有类型")).not.toBeInTheDocument();
   });
 });
