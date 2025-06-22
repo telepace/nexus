@@ -978,16 +978,64 @@ class FirecrawlProcessor(ProcessingStep):
             response_data = response.json()
 
             if response_data.get("success"):
-                markdown_content = response_data.get("data", {}).get("markdown", "")
+                # Firecrawl 可能返回对象或数组，统一解析
+                metadata_raw: dict[str, Any] = {}
+                markdown_content: str = ""
+
+                if isinstance(response_data, list) and len(response_data) > 0:
+                    data_item = response_data[0]
+                    markdown_content = data_item.get("markdown", "")
+                    metadata_raw = data_item.get("metadata", {})
+                else:
+                    data_section = response_data.get("data", response_data) or {}
+                    markdown_content = data_section.get("markdown", "")
+                    metadata_raw = data_section.get("metadata", {})
+
                 markdown_content = clean_content_for_db(markdown_content)
 
-                result.success = True
-                result.markdown_content = markdown_content
-                result.metadata = {
+                # -------------------- 自动提取并设置标题 --------------------
+                if not content_item.title or content_item.title.startswith("Untitled"):
+                    title_candidates = [
+                        metadata_raw.get("title"),
+                        metadata_raw.get("ogTitle") or metadata_raw.get("og:title"),
+                        metadata_raw.get("twitter:title"),
+                    ]
+
+                    extracted_title = next(
+                        (
+                            t for t in title_candidates if t and isinstance(t, str) and t.strip()
+                        ),
+                        None,
+                    )
+
+                    # 回退到 Markdown 一级标题
+                    if not extracted_title and markdown_content:
+                        for line in markdown_content.split("\n"):
+                            if line.startswith("# "):
+                                extracted_title = line[2:].strip()
+                                break
+
+                    if extracted_title:
+                        content_item.title = clean_content_for_db(extracted_title)[:255]
+
+                # -------------------- 组合元数据 --------------------
+                combined_metadata = {
                     "processor": "firecrawl",
                     "processed_at": datetime.utcnow().isoformat(),
                     "content_length": len(markdown_content),
+                    "raw_metadata": metadata_raw,
                 }
+
+                # 更新结果
+                result.success = True
+                result.markdown_content = markdown_content
+                result.metadata = combined_metadata
+
+                # 存储 Markdown 与元数据到 R2，并生成内容分段
+                markdown_path = self._store_markdown_to_r2(
+                    context, markdown_content, combined_metadata
+                )
+                result.assets_created = [markdown_path]
 
                 logger.info("✅ Firecrawl 处理成功")
             else:
@@ -1002,6 +1050,78 @@ class FirecrawlProcessor(ProcessingStep):
             logger.error(f"❌ Firecrawl 处理失败: {str(e)}")
 
         return result
+
+    def _store_markdown_to_r2(
+        self,
+        context: ProcessingContext,
+        markdown_content: str,
+        metadata: dict[str, Any],
+    ) -> str:
+        """将处理后的 Markdown 与元数据上传至 R2，并创建数据库记录。"""
+
+        from io import BytesIO
+        import json
+
+        content_item = context.content_item
+        storage_service = context.storage_service
+
+        r2_path = f"processed/markdown/{content_item.id}.md"
+
+        try:
+            # 上传 Markdown
+            storage_service.upload_file(
+                file_data=BytesIO(markdown_content.encode("utf-8")),
+                file_path=r2_path,
+            )
+
+            # 上传元数据
+            metadata_path = f"processed/metadata/{content_item.id}.json"
+            storage_service.upload_file(
+                file_data=BytesIO(json.dumps(metadata, ensure_ascii=False, indent=2).encode("utf-8")),
+                file_path=metadata_path,
+            )
+
+            # 创建 ContentAsset 记录
+            markdown_asset = ContentAsset(
+                content_item_id=content_item.id,
+                type="processed_text",
+                file_path=r2_path,
+                s3_bucket=settings.R2_BUCKET,
+                s3_key=r2_path,
+                mime_type="text/markdown",
+                size_bytes=len(markdown_content.encode("utf-8")),
+                meta_info=json.dumps({"asset_type": "markdown", "processor": "firecrawl"}),
+            )
+
+            metadata_asset = ContentAsset(
+                content_item_id=content_item.id,
+                type="metadata_json",
+                file_path=metadata_path,
+                s3_bucket=settings.R2_BUCKET,
+                s3_key=metadata_path,
+                mime_type="application/json",
+                size_bytes=len(json.dumps(metadata).encode("utf-8")),
+                meta_info=json.dumps({"asset_type": "metadata", "processor": "firecrawl"}),
+            )
+
+            context.session.add(markdown_asset)
+            context.session.add(metadata_asset)
+
+            # 生成内容分段
+            content_chunks = chunk_content_for_item(content_item.id, markdown_content)
+            for chunk in content_chunks:
+                context.session.add(chunk)
+
+            # 保存全文到 ContentItem
+            content_item.content_text = markdown_content
+            context.session.add(content_item)
+
+            context.session.commit()
+
+        except Exception as e:
+            logger.error(f"FirecrawlProcessor R2 存储失败: {e}")
+
+        return r2_path
 
 
 class MarkItDownProcessor(ProcessingStep):
