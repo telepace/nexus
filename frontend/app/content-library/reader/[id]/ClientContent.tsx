@@ -10,7 +10,6 @@ import {
   Loader2,
   AlertCircle,
   ExternalLink,
-  Share2,
   FileText,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
@@ -429,8 +428,8 @@ export const ClientContent = ({
   return (
     <div className="h-full flex flex-col animate-in fade-in duration-300">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b">
-        <div className="flex items-center space-x-4">
+      <div className="flex items-center justify-between px-4 border-b h-header">
+        <div className="flex items-center space-x-4 flex-1 min-w-0">
           <Button
             variant="ghost"
             size="sm"
@@ -438,41 +437,22 @@ export const ClientContent = ({
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <h1 className="text-lg md:text-xl font-semibold">
-              {content.title || "Untitled"}
-            </h1>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant="outline">{content.type.toUpperCase()}</Badge>
-              <Badge
-                variant={
-                  content.processing_status === "completed"
-                    ? "default"
-                    : "secondary"
-                }
-                className={
-                  content.processing_status === "completed"
-                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                    : ""
-                }
-              >
-                {content.processing_status === "completed"
-                  ? "AI 已处理"
-                  : content.processing_status}
-              </Badge>
-              {content.source_uri && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => window.open(content.source_uri!, "_blank")}
-                  title="查看原始内容"
-                >
-                  <ExternalLink className="h-3 w-3 mr-1" />
-                  原始内容
-                </Button>
-              )}
-            </div>
-          </div>
+          <h1 className="text-sm font-medium truncate">
+            {content.title || "Untitled"}
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          {content.source_uri && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.open(content.source_uri!, "_blank")}
+              title="查看原始内容"
+            >
+              <ExternalLink className="h-3 w-3 mr-1" />
+              原始内容
+            </Button>
+          )}
         </div>
       </div>
 

@@ -26,7 +26,7 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
 
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-1 gap-2">
+      <div className="flex space-x-2 overflow-x-auto pb-2">
         {safeRecommendations
           .filter((rec) => rec && rec.id && rec.name)
           .map((recommendation) => {
@@ -37,7 +37,7 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
                 size="sm"
                 onClick={() => onPromptClick(recommendation)}
                 disabled={disabled || isGenerating}
-                className="justify-start h-auto p-2.5 text-left bg-transparent border border-border shadow-md rounded-sm hover:bg-muted/30 transition-all duration-200 "
+                className="justify-start h-auto p-2.5 text-left bg-transparent shadow rounded-xl hover:bg-muted/30 transition-all duration-200 w-fit shrink-0 cursor-pointer"
               >
                 <div className="flex items-center gap-2 w-full">
                   <div className="flex-shrink-0 w-4 h-4 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -61,14 +61,14 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
           })}
       </div>
 
-      {isGenerating && (
+      {/* {isGenerating && (
         <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
           <div className="flex items-center gap-2 text-sm text-primary">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span className="font-medium">正在生成 AI 分析...</span>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };

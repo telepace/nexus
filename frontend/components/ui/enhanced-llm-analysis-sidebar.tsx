@@ -375,66 +375,43 @@ export const EnhancedLLMAnalysisSidebar: FC<
   }
 
   return (
-    <div className={`flex flex-col h-full bg-background ${className}`}>
-      {/* Header - 优化的标题区域 */}
-      <div className="flex-shrink-0 p-4 border-b bg-gradient-to-r from-primary/5 to-blue-50 dark:from-primary/5 dark:to-blue-950/20">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Brain className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold">AI 智能分析</h2>
-            </div>
-          </div>
-
-          {contentAnalyses?.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClearAll}
-              className="text-muted-foreground hover:text-destructive"
-              title="清空实时分析（不影响历史分析）"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
+    <div className={`flex flex-col h-full bg-transparent ${className}`}>
+      {/* 1. Header */}
+      <div className="flex items-center justify-between h-header px-4 shrink-0 border-b">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-medium">AI 智能分析</h2>
         </div>
-
-        {/* 分析状态指示器 */}
-        {isGenerating && (
-          <div className="flex items-center gap-1 text-primary mt-2">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            <span className="text-xs">分析中...</span>
-          </div>
-        )}
+        <Button variant="ghost" size="icon" onClick={loadHistoricalAnalyses}>
+          <History className="h-4 w-4" />
+        </Button>
       </div>
 
-      {/* Content - 分析结果区域 */}
-      <div className="flex-1 min-h-0 overflow-auto">
+      {/* 2. Content Body */}
+      <div className="flex-1 overflow-y-auto px-1">
         <Tabs value={activeTab} className="h-full">
           {/* 实时分析标签页 */}
           <TabsContent value="analysis" className="h-full mt-0">
-            <div className="p-4 space-y-4 h-full">
-              {/* 显示加载状态 */}
-              {loadingHistorical && (
-                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-4">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  <span>加载历史分析...</span>
-                </div>
-              )}
+            <div className="p-4 space-y-4">
+              {/* 如果没有正在进行的分析，则显示提示 */}
+              {allAnalyses.length === 0 &&
+                !isGenerating &&
+                !loadingHistorical && (
+                  <div className="text-center py-12 text-sm text-muted-foreground">
+                    暂无分析结果
+                  </div>
+                )}
 
               {/* 显示所有分析（实时 + 历史） */}
               {allAnalyses.map((analysis) => (
                 <div key={analysis?.id || `analysis-${Math.random()}`}>
-                  {/* 历史分析标识 */}
-                  {analysis.id.startsWith("historical_") && (
+                  {/* 历史分析标识 - 已移除 */}
+                  {/* {analysis.id.startsWith("historical_") && (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
                       <History className="h-3 w-3" />
                       <span>历史分析</span>
                       <div className="flex-1 h-px bg-border" />
                     </div>
-                  )}
+                  )} */}
 
                   <LLMAnalysisCard
                     analysis={analysis}
@@ -450,78 +427,41 @@ export const EnhancedLLMAnalysisSidebar: FC<
                 </div>
               ))}
 
-              {/* 空状态 - 优化的引导界面 */}
-              {allAnalyses.length === 0 &&
-                !isGenerating &&
-                !loadingHistorical && (
-                  <div className="text-center py-6">
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-24 h-24 bg-gradient-to-br from-primary/10 to-blue-100 dark:to-blue-900/20 rounded-full" />
-                      </div>
-                      <div className="relative">
-                        <Brain className="h-12 w-12 mx-auto mb-3 text-primary opacity-80" />
-                      </div>
-                    </div>
-                    <h3 className="text-base font-medium mb-2">开始智能分析</h3>
-                    <p className="text-sm text-muted-foreground mb-4 max-w-xs mx-auto">
-                      选择下方的分析类型，让 AI 帮你深度理解文档内容
-                    </p>
-
-                    {/* 快速分析建议 */}
-                    <div className="grid grid-cols-1 gap-1.5 max-w-sm mx-auto mb-3">
-                      <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
-                        <Sparkles className="h-4 w-4 text-yellow-500" />
-                        <span>智能总结 - 提取核心观点</span>
-                      </div>
-                      <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
-                        <Lightbulb className="h-4 w-4 text-orange-500" />
-                        <span>关键要点 - 梳理重要信息</span>
-                      </div>
-                      <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
-                        <Target className="h-4 w-4 text-green-500" />
-                        <span>深度洞察 - 发现隐含价值</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
+              {/* 显示加载状态 */}
+              {loadingHistorical && (
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-4">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>加载中...</span>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
       </div>
 
-      {/* Footer - 智能推荐区域 */}
-        <div className="shrink-0 p-4 border-t bg-muted/20">
-          <div className="space-y-3">
-            {/* 快速分析推荐 */}
-            {enabledPrompts?.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">推荐分析</span>
-                </div>
-                <div className="max-h-[120px] overflow-y-auto">
-                  <PromptRecommendations
-                    recommendations={getPromptRecommendations().slice(0, 4)}
-                    onPromptClick={handleEnabledPromptClick}
-                    isGenerating={isGenerating}
-                    disabled={isGenerating}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* 自定义分析对话框 */}
-            <div>
-              <PromptCommandDialog
-                availablePrompts={enabledPrompts || []}
-                isExecuting={isGenerating}
-                onPromptSelect={handlePromptSelect}
-                onExecute={handleExecute}
-              />
-            </div>
+      {/* 3. Footer */}
+      <div className="shrink-0 p-4 border-t bg-muted/20">
+        <div className="space-y-3">
+          {/* 推荐提示 */}
+          {!isLoadingPrompts && getAvailablePrompts().length > 0 && (
+            <PromptRecommendations
+              recommendations={getPromptRecommendations().slice(0, 4)}
+              onPromptClick={handleEnabledPromptClick}
+              isGenerating={isGenerating}
+              disabled={isGenerating}
+            />
+          )}
+          {/* 自定义分析对话框 */}
+          <div>
+            <PromptCommandDialog
+              availablePrompts={enabledPrompts || []}
+              isExecuting={isGenerating}
+              onPromptSelect={handlePromptSelect}
+              onExecute={handleExecute}
+            />
           </div>
         </div>
+      </div>
     </div>
   );
 };

@@ -86,7 +86,7 @@ export default function ReaderLayout({
               defaultSize={50}
               minSize={20}
               maxSize={70}
-              className="flex flex-col"
+              className="flex flex-col bg-muted/30"
             >
               <EnhancedLLMAnalysisSidebar
                 contentId={contentId}
