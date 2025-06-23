@@ -68,8 +68,7 @@ interface LLMAnalysisState {
   // Generate analysis
   generateAnalysis: (
     contentId: string,
-    systemPrompt: string,
-    userPrompt: string,
+    analysisInstruction: string,
     promptId?: string,
     title?: string,
   ) => Promise<void>;
@@ -186,8 +185,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
 
       generateAnalysis: async (
         contentId,
-        systemPrompt,
-        userPrompt,
+        analysisInstruction,
         promptId,
         title,
       ) => {
@@ -209,7 +207,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
           type: "custom" as const,
           title: title || "AI 分析",
           content: "",
-          prompt: systemPrompt,
+          prompt: analysisInstruction,
           promptId,
           isExpanded: true,
           isLoading: true,
@@ -240,8 +238,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                analysis_instruction: systemPrompt,  // 分析指令
-                article_content: userPrompt,         // 文章内容
+                analysis_instruction: analysisInstruction,    // 用户的分析指令
                 model: "gemini-2.5-flash-preview-05-20",
               }),
             },
@@ -444,8 +441,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
           // 使用选择的prompt
           await generateAnalysis(
             contentId,
-            selectedPrompt.content,
-            content,
+            selectedPrompt.content, // 分析指令
             selectedPrompt.id,
             selectedPrompt.name,
           );
@@ -453,8 +449,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
           // 直接使用内容作为自由对话
           await generateAnalysis(
             contentId,
-            "请分析以下内容：",
-            content,
+            "这篇文章讲的是什么",   // 用户问题
             undefined,
             "自由对话",
           );

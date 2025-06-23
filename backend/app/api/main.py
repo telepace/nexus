@@ -16,6 +16,7 @@ from app.api.routes import (
     prompts,
     users,
     utils,
+    health,  # Import health router separately
 )
 from app.core.config import settings
 
@@ -25,6 +26,7 @@ api_router.include_router(users.router)
 api_router.include_router(utils.router)
 api_router.include_router(items.router)
 api_router.include_router(google_oauth.router)
+api_router.include_router(health.router, tags=["health"])  # Include health router
 api_router.include_router(prompts.router, prefix="/prompts", tags=["prompts"])
 api_router.include_router(llm_service.router, prefix="/llm", tags=["llm"])
 api_router.include_router(

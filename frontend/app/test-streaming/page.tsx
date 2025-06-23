@@ -312,8 +312,7 @@ export default function TestStreamingPage() {
                   requestOptions={{
                     method: "POST",
                     body: JSON.stringify({
-                      system_prompt: userPrompt,
-                      user_prompt: systemPrompt,
+                      analysis_instruction: userPrompt,
                       model: "or-llama-3-1-8b-instruct",
                     }),
                   }}

@@ -272,7 +272,6 @@ export const EnhancedLLMAnalysisSidebar: FC<
       await generateAnalysis(
         contentId,
         recommendation.prompt, // system prompt
-        content, // user prompt (文章正文)
         recommendation.id,
         recommendation.name,
       );
@@ -319,7 +318,6 @@ export const EnhancedLLMAnalysisSidebar: FC<
       await generateAnalysis(
         contentId,
         analysis.prompt,
-        contentText || "",
         analysis.promptId,
         analysis.title,
       );

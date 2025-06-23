@@ -65,6 +65,8 @@ from app.utils.streaming_processors import (
     StreamingKeyPointsProcessor,
     StreamingSummaryProcessor,
 )
+from app.utils.cache import warm_article_cache
+import asyncio
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -407,6 +409,16 @@ def process_content_background(processor, content_item: ContentItem, session):
             content_item.content_text = clean_content_for_db(result.markdown_content)
             if result.metadata:
                 content_item.meta_info = result.metadata
+                
+            # 预热缓存（异步执行，不阻塞主流程）
+            if content_item.content_text:
+                try:
+                    asyncio.create_task(
+                        warm_article_cache(str(content_item.id), content_item.content_text)
+                    )
+                except Exception as e:
+                    # 缓存预热失败不应该影响主流程
+                    pass
         session.commit()
     except Exception as e:
         content_item.processing_status = "failed"
@@ -806,7 +818,6 @@ async def analyze_content_stream(
     content_id: str,
     current_user: CurrentUser,
     analysis_instruction: str = Body(..., description="用户的分析指令，如'请总结这篇文章'"),
-    article_content: str = Body(..., description="要分析的文章正文内容"),
     db: Session = Depends(get_db),
 ):
     """
@@ -814,18 +825,28 @@ async def analyze_content_stream(
 
     Args:
         content_id: ID of the content to analyze
-        analysis_instruction: 用户的分析指令 (发送给LLM的user role)
-        article_content: 文章正文内容 (发送给LLM的system role)
+        analysis_instruction: 用户的分析指令，将作为 user role 发送给 LLM
         current_user: Current authenticated user
         db: Database session
 
     Returns:
         StreamingResponse: Server-sent events with analysis chunks
     """
+    # 导入缓存工具
+    from app.utils.cache import get_article_text
+
     # Verify content exists and user has access
     content_item = crud_get_content_item(session=db, id=uuid.UUID(content_id))
     if not content_item or content_item.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Content not found")
+
+    # 从缓存/数据库获取文章内容
+    article_content = await get_article_text(content_id, db)
+    if not article_content:
+        raise HTTPException(
+            status_code=400, 
+            detail="Article content not available. Please ensure the content has been processed."
+        )
 
     # 按正确约定传递：system role = 文章内容，user role = 分析指令
     completion_request = CompletionRequest(
@@ -854,34 +875,93 @@ async def analyze_content_stream(
 
             payload = completion_request.model_dump(exclude_none=True)
 
+            # 详细的调试日志
+            logger.info(f"🔄 发起 LiteLLM 请求: {litellm_url}")
+            logger.info(f"📝 请求模型: {payload.get('model', 'Unknown')}")
+            logger.info(f"🔑 认证状态: {'已配置' if settings.LITELLM_MASTER_KEY else '未配置'}")
+
             # Make streaming request to LiteLLM using aiohttp
-            timeout = aiohttp.ClientTimeout(total=10.0)  # 降低超时时间以便快速失败
+            timeout = aiohttp.ClientTimeout(total=30.0)  # 增加超时时间到30秒
             async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.post(
-                    litellm_url, json=payload, headers=headers
-                ) as response:
-                    if response.status != 200:
-                        # 如果LiteLLM不可用，提供模拟响应
-                        async for chunk in _send_mock_analysis_response(analysis_instruction):
-                            yield chunk
-                        return
+                try:
+                    async with session.post(
+                        litellm_url, json=payload, headers=headers
+                    ) as response:
+                        logger.info(f"📡 LiteLLM 响应状态: {response.status}")
+                        
+                        if response.status != 200:
+                            # 记录详细的错误信息
+                            error_text = await response.text()
+                            logger.error(f"❌ LiteLLM 返回错误状态 {response.status}: {error_text}")
+                            
+                            # 分析具体错误原因
+                            error_analysis = ""
+                            if response.status == 401:
+                                error_analysis = "认证失败，请检查 LITELLM_MASTER_KEY 配置"
+                            elif response.status == 404:
+                                error_analysis = f"模型 '{payload.get('model')}' 不存在，请检查 LiteLLM 配置"
+                            elif response.status == 500:
+                                error_analysis = "LiteLLM 内部错误，请检查服务状态和后端 API 配置"
+                            elif response.status == 503:
+                                error_analysis = "LiteLLM 服务不可用，请检查服务是否正常运行"
+                            else:
+                                error_analysis = f"未知错误，状态码: {response.status}"
+                            
+                            logger.error(f"💡 错误分析: {error_analysis}")
+                            
+                            # 如果LiteLLM不可用，提供模拟响应
+                            async for chunk in _send_mock_analysis_response(analysis_instruction, f"HTTP {response.status}: {error_analysis}"):
+                                yield chunk
+                            return
 
-                    # Stream the response
-                    async for chunk_bytes in response.content.iter_chunked(1024):
-                        if chunk_bytes:
-                            # Forward the chunk as-is (LiteLLM sends SSE format)
-                            chunk_str: str = chunk_bytes.decode(
-                                "utf-8", errors="ignore"
-                            )
-                            yield chunk_str
+                        logger.info("✅ LiteLLM 连接成功，开始流式响应")
+                        
+                        # Stream the response
+                        chunk_count = 0
+                        async for chunk_bytes in response.content.iter_chunked(1024):
+                            if chunk_bytes:
+                                chunk_count += 1
+                                if chunk_count <= 3:  # 只记录前几个块的日志
+                                    logger.debug(f"📦 接收数据块 #{chunk_count}, 大小: {len(chunk_bytes)} bytes")
+                                
+                                # Forward the chunk as-is (LiteLLM sends SSE format)
+                                chunk_str: str = chunk_bytes.decode(
+                                    "utf-8", errors="ignore"
+                                )
+                                yield chunk_str
+                        
+                        logger.info(f"🏁 LiteLLM 流式响应完成，总共处理了 {chunk_count} 个数据块")
+                        
+                except aiohttp.ClientConnectorError as e:
+                    logger.error(f"🔌 LiteLLM 连接失败: {e}")
+                    logger.error("💡 可能原因: LiteLLM 服务未启动或网络不可达")
+                    error_msg = f"连接失败: {str(e)}"
+                    async for chunk in _send_mock_analysis_response(analysis_instruction, error_msg):
+                        yield chunk
+                    return
+                        
+                except asyncio.TimeoutError:
+                    logger.error("⏰ LiteLLM 请求超时 (30秒)")
+                    logger.error("💡 可能原因: LiteLLM 服务响应慢或网络延迟高")
+                    error_msg = "请求超时，LiteLLM 服务可能响应较慢"
+                    async for chunk in _send_mock_analysis_response(analysis_instruction, error_msg):
+                        yield chunk
+                    return
 
-        except Exception:
+        except Exception as e:
+            # 记录详细的异常信息
+            logger.error(f"🚨 LiteLLM 请求发生异常: {type(e).__name__}: {e}")
+            import traceback
+            logger.error(f"📍 异常堆栈: {traceback.format_exc()}")
+            
             # 当LiteLLM服务不可用时，发送模拟分析响应
-            async for chunk in _send_mock_analysis_response(analysis_instruction):
+            error_msg = f"系统异常: {str(e)}"
+            async for chunk in _send_mock_analysis_response(analysis_instruction, error_msg):
                 yield chunk
 
     async def _send_mock_analysis_response(
         analysis_instruction: str,
+        error_details: str = "",
     ) -> AsyncGenerator[str, None]:
         """发送模拟的分析响应（当LiteLLM不可用时）"""
         import asyncio
@@ -893,7 +973,25 @@ async def analyze_content_stream(
             else analysis_instruction
         )
 
-        mock_analysis = f"""⚠️ LiteLLM service is unavailable (mock response).
+        # 根据错误详情定制消息
+        if error_details:
+            mock_analysis = f"""⚠️ LiteLLM service is unavailable (mock response).
+
+错误详情: {error_details}
+
+Prompt preview: "{trimmed_prompt}"
+
+由于 LiteLLM 服务当前不可用，系统返回模拟分析结果以测试前端流式显示功能。
+
+要获得真实的 AI 分析，请：
+1. 检查 LiteLLM 服务状态: docker ps | grep litellm
+2. 查看服务日志: docker logs litellm
+3. 验证网络连接: curl {settings.LITELLM_PROXY_URL}/health
+4. 确认 API Key 配置正确
+5. 检查模型可用性
+"""
+        else:
+            mock_analysis = f"""⚠️ LiteLLM service is unavailable (mock response).
 
 Prompt preview: "{trimmed_prompt}"
 
@@ -2484,7 +2582,7 @@ async def analyze_content_stream_alias(
     content_id: str,
     current_user: CurrentUser,
     analysis_instruction: str = Body(..., description="分析指令"),
-    article_content: str = Body(..., description="文章内容"),
+    model: str = Body(default="gemini-2.5-flash-preview-05-20", description="模型名称"),
     db: Session = Depends(get_db),
 ):
     """Alias of /{content_id}/analyze keeping old path used by frontend."""
@@ -2492,7 +2590,6 @@ async def analyze_content_stream_alias(
         content_id=content_id,
         current_user=current_user,
         analysis_instruction=analysis_instruction,
-        article_content=article_content,
         db=db,
     )
 
@@ -2814,13 +2911,15 @@ def remove_favorite_from_content(
     summary="Delete Content Item",
     description="Deletes a content item and all related assets. Requires ownership.",
 )
-def delete_content_item_endpoint(
+async def delete_content_item_endpoint(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     id: uuid.UUID,
 ):
     """Delete a content item by its ID (only owner allowed)."""
+    from app.utils.cache import invalidate_article_cache
+    
     item = crud.get_content_item_sync(session=session, id=id)
     if not item:
         raise HTTPException(
@@ -2833,6 +2932,9 @@ def delete_content_item_endpoint(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have permission to delete this content item",
         )
+
+    # 失效缓存
+    await invalidate_article_cache(str(id))
 
     crud.delete_content_item_sync(session=session, id=id)
 

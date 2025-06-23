@@ -138,6 +138,15 @@ class Settings(BaseSettings):
     # LLM 配置
     DEFAULT_LLM_MODEL: str = "or-gemini-2.5-flash-preview-05-20"
 
+    # Redis 配置
+    REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_TTL_SECONDS: int = Field(
+        default=86400, description="Redis 缓存 TTL，默认 24 小时"
+    )
+    REDIS_ENABLED: bool = Field(
+        default=True, description="是否启用 Redis 缓存"
+    )
+
     # Database configuration
     DATABASE_TYPE: Literal["postgres", "supabase"] = "postgres"
 
