@@ -1,7 +1,9 @@
 import uuid
+import json
 from datetime import datetime
 
 from sqlmodel import Field, SQLModel
+from pydantic import BaseModel
 
 
 # New schema for AI results
@@ -45,6 +47,8 @@ class ContentItemPublic(ContentItemBaseSchema):
     user_id: uuid.UUID  # Include user_id in public response for reference
     processing_status: str
     content_text: str | None = None
+    error_message: str | None = None
+    last_processed_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
     ai_result: AIResultPublic | None = None
@@ -89,3 +93,13 @@ class ContentSharePublic(
 print(
     "Schemas for ContentItem and ContentShare created in backend/app/schemas/content.py"
 )
+
+class ContentAnalysisRequest(BaseModel):
+    """内容分析请求schema"""
+    analysis_instruction: str = Field(..., description="用户的分析指令")
+    model: str | None = Field(
+        default="or-gemini-2.5-flash-preview-05-20",
+        description="要使用的AI模型（可选，后端会自动选择默认模型）",
+    )
+    temperature: float = Field(default=0.7, description="温度参数")
+    max_tokens: int = Field(default=2000, description="最大token数")

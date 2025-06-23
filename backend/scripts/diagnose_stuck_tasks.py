@@ -6,7 +6,8 @@
 1. 识别长时间处于"处理中"状态的任务
 2. 显示任务详情和可能的问题
 3. 提供修复选项来重置任务状态
-4. 清理相关的处理任务记录
+
+注意：此脚本已更新以适应移除ProcessingJob表后的新架构
 """
 
 import sys
@@ -15,7 +16,7 @@ from datetime import timedelta, timezone
 from sqlmodel import Session, select
 
 from app.core.db import engine
-from app.models.content import ContentItem, ProcessingJob
+from app.models.content import ContentItem
 from app.utils.timezone import now_utc
 
 
@@ -35,20 +36,7 @@ def get_stuck_tasks(session: Session, hours_threshold: int = 2) -> list[ContentI
     return session.exec(stmt).all()
 
 
-def get_processing_jobs_for_content(
-    session: Session, content_id
-) -> list[ProcessingJob]:
-    """获取内容项相关的处理任务"""
-    stmt = (
-        select(ProcessingJob)
-        .where(ProcessingJob.content_item_id == content_id)
-        .order_by(ProcessingJob.created_at.desc())
-    )
-
-    return session.exec(stmt).all()
-
-
-def display_task_info(task: ContentItem, jobs: list[ProcessingJob]):
+def display_task_info(task: ContentItem):
     """显示任务详细信息"""
     print(f"\n📋 任务ID: {task.id}")
     print(f"   标题: {task.title or '无标题'}")
@@ -58,6 +46,7 @@ def display_task_info(task: ContentItem, jobs: list[ProcessingJob]):
     print(f"   创建时间: {task.created_at}")
     print(f"   更新时间: {task.updated_at}")
     print(f"   错误信息: {task.error_message or '无'}")
+    print(f"   最后处理时间: {task.last_processed_at or '从未处理'}")
 
     # 计算卡住时间 - 修复时区问题
     current_time = now_utc()
@@ -70,16 +59,6 @@ def display_task_info(task: ContentItem, jobs: list[ProcessingJob]):
     stuck_duration = current_time - task_updated_at
     hours = stuck_duration.total_seconds() / 3600
     print(f"   卡住时长: {hours:.1f} 小时")
-
-    # 显示相关的处理任务
-    if jobs:
-        print("   相关处理任务:")
-        for job in jobs:
-            print(f"     - {job.processor_name}: {job.status}")
-            if job.started_at:
-                print(f"       开始时间: {job.started_at}")
-            if job.error_message:
-                print(f"       错误: {job.error_message}")
 
 
 def diagnose_tasks():
@@ -97,9 +76,8 @@ def diagnose_tasks():
         print(f"⚠️  发现 {len(stuck_tasks)} 个卡住的任务:")
 
         for i, task in enumerate(stuck_tasks, 1):
-            jobs = get_processing_jobs_for_content(session, task.id)
             print(f"\n{i}. ", end="")
-            display_task_info(task, jobs)
+            display_task_info(task)
 
         return stuck_tasks
 
@@ -113,20 +91,12 @@ def reset_task_status(session: Session, task: ContentItem, new_status: str):
     # 清除错误信息如果状态改为pending
     if new_status == "pending":
         task.error_message = None
+        task.last_processed_at = None
     elif new_status == "failed" and not task.error_message:
         task.error_message = "Task was stuck and manually reset"
+        task.last_processed_at = now_utc()
 
     session.add(task)
-
-    # 清理相关的处理任务
-    jobs = get_processing_jobs_for_content(session, task.id)
-    for job in jobs:
-        if job.status == "in_progress":
-            job.status = "failed"
-            job.error_message = "Task was stuck and manually reset"
-            job.completed_at = now_utc()
-            session.add(job)
-
     session.commit()
     print(f"✅ 任务 {task.id} 状态已从 {old_status} 重置为 {new_status}")
 
@@ -161,8 +131,7 @@ def fix_stuck_tasks(stuck_tasks: list[ContentItem]):
             # 逐个处理
             for i, task in enumerate(stuck_tasks, 1):
                 print(f"\n处理任务 {i}/{len(stuck_tasks)}:")
-                jobs = get_processing_jobs_for_content(session, task.id)
-                display_task_info(task, jobs)
+                display_task_info(task)
 
                 print("\n选项:")
                 print("1. 标记为失败 (failed)")
@@ -195,35 +164,30 @@ def show_statistics():
             count = len(session.exec(stmt).all())
             print(f"   {status}: {count}")
 
-        # 统计处理任务状态
-        print("\n📊 处理任务状态统计:")
-        job_statuses = ["pending", "in_progress", "completed", "failed", "skipped"]
-
-        for status in job_statuses:
-            stmt = select(ProcessingJob).where(ProcessingJob.status == status)
-            count = len(session.exec(stmt).all())
-            print(f"   {status}: {count}")
+        # 统计有错误信息的任务
+        stmt = select(ContentItem).where(
+            ContentItem.error_message.isnot(None),
+            ContentItem.error_message != ""
+        )
+        error_count = len(session.exec(stmt).all())
+        print(f"   有错误信息的任务: {error_count}")
 
 
 def show_recommendations():
-    """显示建议和预防措施"""
-    print("\n💡 建议和预防措施:")
-    print("1. 考虑添加定期清理任务的 cron 作业")
-    print("2. 在后台任务管理器中添加超时检测机制")
-    print("3. 改进错误处理和日志记录")
-    print("4. 添加任务监控和告警")
-    print("5. 考虑使用更可靠的任务队列系统（如 Celery）")
-
-    print("\n🔧 立即可用的解决方案:")
-    print("- 已改进的后台任务管理器包含超时检测（30分钟）")
-    print("- 使用此脚本定期检查和清理卡住的任务")
-    print("- 考虑设置定时任务每小时运行一次此脚本")
+    """显示修复建议"""
+    print("\n💡 修复建议:")
+    print("1. 定期运行此脚本检查卡住的任务")
+    print("2. 对于长时间卡住的任务，建议重置为待处理状态")
+    print("3. 如果任务反复失败，检查错误信息并修复根本原因")
+    print("4. 考虑调整处理超时设置以避免任务卡死")
+    print("5. 监控服务器资源使用情况，确保有足够的内存和CPU")
 
 
 def main():
     """主函数"""
-    print("🩺 内容处理任务诊断工具")
-    print("=" * 50)
+    print("=" * 60)
+    print("🔧 内容处理任务诊断工具")
+    print("=" * 60)
 
     try:
         # 显示统计信息
@@ -239,12 +203,14 @@ def main():
         # 显示建议
         show_recommendations()
 
+    except KeyboardInterrupt:
+        print("\n\n👋 用户取消操作")
+        sys.exit(0)
     except Exception as e:
-        print(f"❌ 发生错误: {str(e)}")
-        import traceback
-
-        traceback.print_exc()
+        print(f"\n❌ 发生错误: {e}")
         sys.exit(1)
+
+    print("\n✅ 诊断完成")
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ from app.api.routes import (
     ai_conversations,  # Add AI conversations router
     chat,  # Add chat router
     content,  # Add content router
+    conversations,  # Add conversations router
     dashboard,  # Add dashboard router
     favorites,  # Add favorites router
     google_oauth,
@@ -50,6 +51,9 @@ api_router.include_router(
 api_router.include_router(
     ai_conversations.router, prefix="/ai/conversations", tags=["ai-conversations"]
 )  # Include AI conversations router
+api_router.include_router(
+    conversations.router, prefix="/conversations", tags=["conversations"]
+)  # Include conversations router
 
 
 if settings.ENVIRONMENT == "local":

@@ -17,7 +17,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import Session, create_engine, select
 
 from app.core.config import settings
-from app.models.content import AIResult, ContentItem, ProcessingJob, Segment
+from app.models.content import AIResult, ContentItem, Segment
 from app.services.ai.chat_service import ChatService
 from app.utils.content_processors import clean_content_for_db
 
@@ -361,221 +361,77 @@ class PreprocessingPipeline:
         logger.debug("执行存储层处理")
 
         start_time = datetime.now()
-        processing_job_id = None
+        storage_stats = {"segments_saved": 0, "ai_result_saved": False}
 
         try:
-            with Session(
-                create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
-            ) as session:
-                # 1. 处理content_id，生成或查找ContentItem UUID
-                if content_id.startswith("content_"):
-                    # 新生成的内容，需要创建ContentItem
-                    content_item_uuid = uuid.uuid4()
+            # 获取数据库会话
+            from app.core.db_factory import engine
 
-                    # 创建新的ContentItem（这里简化处理，实际应该在更早的阶段创建）
-                    logger.warning(
-                        f"PreprocessingPipeline不应该负责创建ContentItem，content_id: {content_id}"
-                    )
-                    # 这种情况下，我们跳过数据库存储，只返回内存中的结果
-                    return {
-                        "storage_success": False,
-                        "error": "ContentItem should be created before preprocessing",
-                        "processing_time": (
-                            datetime.now() - start_time
-                        ).total_seconds(),
-                    }
-                else:
-                    # 现有内容，解析UUID
-                    content_item_uuid = uuid.UUID(content_id)
-
-                # 查找现有的 ContentItem
-                select_stmt = select(ContentItem).where(
-                    ContentItem.id == content_item_uuid
-                )
-                content_item = session.exec(select_stmt).first()
-
+            with Session(engine) as session:
+                # 1. 检查ContentItem是否存在
+                content_item = session.get(ContentItem, content_id)
                 if not content_item:
-                    logger.warning(
-                        f"ContentItem {content_item_uuid} not found, cannot store AI results"
+                    logger.warning(f"ContentItem {content_id} 不存在，跳过存储")
+                    return storage_stats
+
+                # 2. 保存segments
+                for i, segment_data in enumerate(segments):
+                    segment = Segment(
+                        content_item_id=uuid.UUID(content_id),
+                        segment_index=i,
+                        content=segment_data["content"],
+                        segment_type=segment_data.get("type", "paragraph"),
+                        word_count=segment_data.get("word_count", 0),
+                        char_count=len(segment_data["content"]),
+                        meta_info=segment_data.get("metadata"),
                     )
-                    return {
-                        "storage_success": False,
-                        "error": "ContentItem not found",
-                        "processing_time": (
-                            datetime.now() - start_time
-                        ).total_seconds(),
-                    }
+                    session.add(segment)
+                    storage_stats["segments_saved"] += 1
 
-                # 2. 检查是否已有segments存在
-                existing_segments = session.exec(
-                    select(Segment).where(Segment.content_item_id == content_item_uuid)
-                ).all()
-
-                segments_already_exist = len(existing_segments) > 0
-
-                if segments_already_exist:
-                    logger.info(
-                        f"Content {content_item_uuid} 已有 {len(existing_segments)} 个segments，跳过segments插入"
+                # 3. 保存AI结果
+                try:
+                    ai_result = AIResult(
+                        content_item_id=uuid.UUID(content_id),
+                        summary=ai_results.get("summary"),
+                        key_points=ai_results.get("key_points"),
+                        labels=ai_results.get("labels"),
+                        content_analysis=ai_results.get("content_analysis"),
+                        reading_time_minutes=ai_results.get("reading_time_minutes"),
+                        difficulty_level=ai_results.get("difficulty_level"),
+                        content_quality_score=ai_results.get("content_quality_score"),
                     )
-                    segments_stored = len(existing_segments)
-                else:
-                    # 3. 创建ProcessingJob记录
-                    processing_job = ProcessingJob(
-                        content_item_id=content_item_uuid,
-                        processor_name="ai_initialization",
-                        status="in_progress",
-                        parameters='{"pipeline_version": "v1.0"}',
-                        started_at=datetime.now(),
-                        created_at=datetime.now(),
-                        updated_at=datetime.now(),
-                    )
-                    session.add(processing_job)
-                    session.flush()  # 获取ID
-                    processing_job_id = processing_job.id
-
-                    # 4. 安全地插入segments
-                    segments_stored = 0
-                    logger.info(f"开始插入 {len(segments)} 个segments")
-
-                    for i, segment_data in enumerate(segments):
-                        try:
-                            # Sanitize content before storing to avoid invalid characters
-                            sanitized_content = clean_content_for_db(
-                                segment_data.get("content", "")
-                            )
-
-                            segment_values = {
-                                "id": uuid.uuid4(),
-                                "content_item_id": content_item_uuid,
-                                "segment_index": i,
-                                "content": sanitized_content,
-                                "segment_type": segment_data.get("type", "paragraph"),
-                                "word_count": len(sanitized_content.split()),
-                                "char_count": len(sanitized_content),
-                                "meta_info": segment_data.get("meta_info"),
-                                "created_at": datetime.now(),
-                            }
-
-                            # 使用PostgreSQL的ON CONFLICT DO NOTHING避免重复
-                            stmt = insert(Segment).values(**segment_values)
-                            stmt = stmt.on_conflict_do_nothing(
-                                index_elements=["content_item_id", "segment_index"]
-                            )
-                            insert_result = session.execute(stmt)
-
-                            # 检查是否实际插入了数据
-                            if insert_result.rowcount > 0:
-                                segments_stored += 1
-
-                        except Exception as segment_error:
-                            logger.warning(
-                                f"插入segment {i} 失败: {str(segment_error)}"
-                            )
-                            # 继续处理其他segments，不中断整个流程
-                            continue
-
-                    logger.info(f"成功插入 {segments_stored} 个segments")
-
-                # 5. 创建或更新 AI 结果 (无论segments是否已存在都需要处理AI结果)
-                ai_result = AIResult(
-                    content_item_id=content_item_uuid,
-                    summary=ai_results.get("summary"),
-                    key_points=ai_results.get("key_points"),
-                    labels=ai_results.get("labels"),
-                    content_analysis=ai_results.get("content_analysis"),
-                    reading_time_minutes=max(1, metadata.estimated_words // 200),
-                    difficulty_level=ai_results.get("content_analysis", {}).get(
-                        "difficulty_level", "intermediate"
-                    ),
-                    content_quality_score=self._calculate_quality_score(
-                        markdown_content, ai_results, metadata
-                    ),
-                )
-
-                # 检查是否已存在 AI 结果
-                existing_ai_result = session.exec(
-                    select(AIResult).where(
-                        AIResult.content_item_id == content_item_uuid
-                    )
-                ).first()
-
-                if existing_ai_result:
-                    # 更新现有结果
-                    existing_ai_result.summary = ai_result.summary
-                    existing_ai_result.key_points = ai_result.key_points
-                    existing_ai_result.labels = ai_result.labels
-                    existing_ai_result.content_analysis = ai_result.content_analysis
-                    existing_ai_result.reading_time_minutes = (
-                        ai_result.reading_time_minutes
-                    )
-                    existing_ai_result.difficulty_level = ai_result.difficulty_level
-                    existing_ai_result.content_quality_score = (
-                        ai_result.content_quality_score
-                    )
-                    existing_ai_result.updated_at = datetime.now()
-                    session.add(existing_ai_result)
-                    logger.info("更新了现有的AI结果")
-                else:
-                    # 创建新结果
                     session.add(ai_result)
-                    logger.info("创建了新的AI结果")
+                    storage_stats["ai_result_saved"] = True
+                except Exception as e:
+                    logger.error(f"保存AI结果失败: {str(e)}")
 
-                # 6. 更新ProcessingJob状态为completed (如果有创建的话)
-                if processing_job_id:
-                    processing_job.status = "completed"
-                    processing_job.completed_at = datetime.now()
-                    processing_job.updated_at = datetime.now()
-                    processing_job.result = (
-                        '{"success": true, "segments_count": '
-                        + str(segments_stored)
-                        + ', "segments_already_existed": '
-                        + str(segments_already_exist).lower()
-                        + "}"
-                    )
+                # 4. 更新ContentItem状态
+                content_item.processing_status = "completed"
+                content_item.error_message = None
+                content_item.last_processed_at = datetime.utcnow()
+                session.add(content_item)
 
-                # 7. 提交事务
                 session.commit()
 
-            processing_time = (datetime.now() - start_time).total_seconds()
-
-            return {
-                "storage_success": True,
-                "items_stored": segments_stored + 1,  # 分段数 + AI结果
-                "segments_already_existed": segments_already_exist,
-                "processing_job_id": str(processing_job_id)
-                if processing_job_id
-                else None,
-                "processing_time": processing_time,
-            }
-
         except Exception as e:
-            logger.error(f"存储失败: {str(e)}")
+            logger.error(f"存储层处理失败: {str(e)}")
+            # 更新ContentItem为失败状态
+            try:
+                with Session(engine) as session:
+                    content_item = session.get(ContentItem, content_id)
+                    if content_item:
+                        content_item.processing_status = "failed"
+                        content_item.error_message = str(e)
+                        content_item.last_processed_at = datetime.utcnow()
+                        session.add(content_item)
+                        session.commit()
+            except Exception as job_error:
+                logger.error(f"更新ContentItem失败状态时出错: {str(job_error)}")
 
-            # 更新ProcessingJob状态为failed
-            if processing_job_id:
-                try:
-                    with Session(
-                        create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
-                    ) as session:
-                        job = session.get(ProcessingJob, processing_job_id)
-                        if job:
-                            job.status = "failed"
-                            job.error_message = str(e)
-                            job.completed_at = datetime.now()
-                            job.updated_at = datetime.now()
-                            session.add(job)
-                            session.commit()
-                except Exception as job_error:
-                    logger.error(f"更新ProcessingJob失败状态时出错: {str(job_error)}")
+        processing_time = (datetime.now() - start_time).total_seconds()
+        storage_stats["processing_time"] = processing_time
 
-            return {
-                "storage_success": False,
-                "error": str(e),
-                "processing_job_id": str(processing_job_id)
-                if processing_job_id
-                else None,
-                "processing_time": (datetime.now() - start_time).total_seconds(),
-            }
+        return storage_stats
 
     async def _output_layer(
         self,

@@ -1722,9 +1722,9 @@ class ProcessingPipeline:
     async def process_async(
         self, content_item: ContentItem, session: Session
     ) -> ProcessingResult:
-        """Process content item asynchronously through the pipeline."""
+        """Process content item asynchronously using available processors."""
+        logger.info(f"Starting async processing for content item {content_item.id}")
 
-        # 创建存储服务
         storage_service = get_storage_service()
         context = ProcessingContext(
             content_item=content_item,
@@ -1733,164 +1733,175 @@ class ProcessingPipeline:
             storage_service=storage_service,
         )
 
-        # Initialize result
+        # Initialize the result
         result = ProcessingResult(success=False)
+
         attempted_processors = []
-        last_error_details: dict[str, Any] | None = None
-        max_retries = settings.CONTENT_PROCESSOR_MAX_RETRIES
-        fallback_enabled = settings.CONTENT_PROCESSOR_FALLBACK_ON_ERROR
 
-        # Try each processing step
-        for step in self.steps:
-            if step.can_handle(content_item.type):
-                processor_name = step.__class__.__name__
-                logger.info(f"🔄 尝试使用处理器: {processor_name}")
-                attempted_processors.append(processor_name)
+        try:
+            # Step 1: Process the content (get markdown)
+            for processor in self.steps:
+                if processor.can_handle(content_item.type):
+                    processor_name = processor.__class__.__name__
+                    attempted_processors.append(processor_name)
+                    logger.info(f"Attempting to process with {processor_name}")
 
-                # 重试逻辑
-                for attempt in range(max_retries):
                     try:
-                        if attempt > 0:
-                            logger.info(
-                                f"🔄 处理器 {processor_name} 第 {attempt + 1} 次重试"
-                            )
+                        processor_result = processor.process(context, result)
 
-                        step_result = step.process(context, result)
+                        # Handle async processors
+                        if asyncio.iscoroutine(processor_result):
+                            processor_result = await processor_result
 
-                        # Handle async results
-                        if hasattr(step_result, "__await__"):
-                            step_result = await step_result
-
-                        if step_result.success:
-                            logger.info(
-                                f"✅ 处理器 {processor_name} 成功处理内容 (第 {attempt + 1} 次尝试)"
-                            )
-                            step_result.metadata = step_result.metadata or {}
-                            step_result.metadata.update(
-                                {
-                                    "successful_processor": processor_name,
-                                    "attempted_processors": attempted_processors,
-                                    "processing_history": self._get_processing_history(
-                                        attempted_processors
-                                    ),
-                                    "retry_count": attempt,
-                                    "total_attempts": attempt + 1,
-                                }
-                            )
-                            return step_result
-                        else:
-                            # 记录失败详情
-                            error_info = {
-                                "processor": processor_name,
-                                "error": step_result.error_message,
-                                "metadata": step_result.metadata,
-                                "attempt": attempt + 1,
-                                "max_attempts": max_retries,
-                            }
-                            last_error_details = error_info
-
-                            # 检查是否应该重试
-                            should_retry = (
-                                attempt < max_retries - 1
-                                and step_result.metadata
-                                and step_result.metadata.get("should_retry", True)
-                            )
-
-                            if not should_retry:
-                                logger.warning(
-                                    f"⚠️  处理器 {processor_name} 失败，不重试: {step_result.error_message}"
-                                )
-                                break
-                            else:
-                                logger.warning(
-                                    f"⚠️  处理器 {processor_name} 失败，将重试: {step_result.error_message}"
-                                )
-                                # 添加重试延迟
-                                import asyncio
-
-                                await asyncio.sleep(
-                                    min(2**attempt, 10)
-                                )  # 指数退避，最大10秒
-                                continue
-
-                    except Exception as e:
-                        logger.error(
-                            f"❌ 处理器 {processor_name} 异常 (第 {attempt + 1} 次尝试): {str(e)}",
-                            exc_info=True,
-                        )
-                        last_error_details = {
-                            "processor": processor_name,
-                            "error": f"处理器异常: {str(e)}",
-                            "exception_type": type(e).__name__,
-                            "attempt": attempt + 1,
-                            "max_attempts": max_retries,
-                        }
-
-                        # 对于异常，如果还有重试机会则继续
-                        if attempt < max_retries - 1:
-                            import asyncio
-
-                            await asyncio.sleep(min(2**attempt, 10))
-                            continue
-                        else:
+                        if processor_result.success:
+                            result = processor_result
+                            logger.info(f"Successfully processed with {processor_name}")
                             break
+                        else:
+                            logger.warning(
+                                f"{processor_name} failed: {processor_result.error_message}"
+                            )
+                    except Exception as e:
+                        logger.error(f"Error with {processor_name}: {str(e)}")
+                        result.error_message = f"Processor {processor_name} failed: {str(e)}"
 
-                # 检查是否应该继续尝试其他处理器
-                if not fallback_enabled:
-                    logger.warning("⏸️  回退功能已禁用，停止尝试其他处理器")
-                    break
+            if not result.success:
+                # Create comprehensive error message
+                error_msg = self._create_comprehensive_error_message(
+                    attempted_processors,
+                    {
+                        "type": "processor_failure",
+                        "message": result.error_message or "All processors failed",
+                    },
+                )
+                content_item.processing_status = "failed"
+                content_item.error_message = error_msg
+                session.add(content_item)
+                session.commit()
+                return result
 
-                # 检查最后一次失败是否建议继续尝试其他处理器
-                if (
-                    last_error_details
-                    and isinstance(last_error_details.get("metadata"), dict)
-                    and not last_error_details["metadata"].get(
-                        "fallback_recommended", True
-                    )
-                ):
-                    logger.warning(
-                        f"⏸️  处理器 {processor_name} 建议不使用替代方案，停止尝试"
-                    )
-                    break
+            # Step 2: Update content item with processed content
+            if result.markdown_content:
+                content_item.content_text = clean_content_for_db(result.markdown_content)
 
-                # 对于余额不足等特定错误，提供详细信息
-                if (
-                    last_error_details
-                    and isinstance(last_error_details.get("metadata"), dict)
-                    and last_error_details["metadata"].get("error_type")
-                    == "insufficient_balance"
-                ):
-                    logger.error(f"💳 {processor_name} 余额不足，尝试下一个处理器")
+            if result.metadata:
+                content_item.meta_info = json.dumps(result.metadata)
 
-        # If no step succeeded, return failure
-        result.success = False
-        result.error_message = self._create_comprehensive_error_message(
-            attempted_processors, last_error_details
-        )
-        result.metadata = {
-            "attempted_processors": attempted_processors,
-            "last_error": last_error_details,
-            "processing_failed": True,
-            "available_processors": [
-                step.__class__.__name__
-                for step in self.steps
-                if step.can_handle(content_item.type)
-            ],
-            "recommendations": self._get_failure_recommendations(
-                attempted_processors, last_error_details
-            ),
-            "max_retries_used": max_retries,
-            "fallback_enabled": fallback_enabled,
-            "config_summary": {
-                "content_processor": settings.CONTENT_PROCESSOR,
-                "jina_api_configured": bool(settings.JINA_API_KEY),
-                "firecrawl_api_configured": bool(settings.FIRECRAWL_API_KEY),
-                "scrapingbee_api_configured": bool(settings.SCRAPINGBEE_API_KEY),
-            },
-        }
+            content_item.processing_status = "completed"
+            content_item.error_message = None
+            content_item.last_processed_at = datetime.utcnow()
+            session.add(content_item)
+            session.commit()
+            session.refresh(content_item)
 
-        logger.error(f"❌ 所有处理器都失败了: {attempted_processors}")
-        return result
+            logger.info(f"Content processing completed for {content_item.id}")
+
+            # Step 3: 自动创建AI分析对话（新增功能）
+            await self._create_auto_analysis_conversation(content_item, session)
+
+            # Step 4: AI Processing (if enabled and content is available)
+            if (
+                result.success
+                and content_item.content_text
+                and len(self.ai_steps) > 0
+            ):
+                ai_result = await self._process_ai_steps(context, result)
+                if ai_result.metadata:
+                    # Merge AI processing metadata
+                    if result.metadata:
+                        result.metadata.update(ai_result.metadata)
+                    else:
+                        result.metadata = ai_result.metadata
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Critical error in async processing: {str(e)}")
+            content_item.processing_status = "failed"
+            content_item.error_message = f"Critical processing error: {str(e)}"
+            content_item.last_processed_at = datetime.utcnow()
+            session.add(content_item)
+            session.commit()
+
+            result.success = False
+            result.error_message = str(e)
+            return result
+
+    async def _create_auto_analysis_conversation(
+        self, content_item: ContentItem, session: Session
+    ) -> None:
+        """自动为处理完成的内容创建AI分析对话"""
+        try:
+            from app.models import AIConversation
+            from app.utils.timezone import now_utc
+            
+            # 检查是否已存在自动分析对话
+            from sqlmodel import select
+            existing_conversation = session.exec(
+                select(AIConversation).where(
+                    AIConversation.content_item_id == content_item.id,
+                    AIConversation.conversation_type == "auto_analysis",
+                    AIConversation.is_active == True,
+                )
+            ).first()
+            
+            if existing_conversation:
+                logger.info(f"Auto analysis conversation already exists for content {content_item.id}")
+                return
+
+            # 只有在有内容文本时才创建分析对话
+            if not content_item.content_text or len(content_item.content_text.strip()) < 100:
+                logger.info(f"Content {content_item.id} has insufficient text for analysis")
+                return
+
+            # 创建自动分析对话
+            conversation = AIConversation(
+                user_id=content_item.user_id,
+                content_item_id=content_item.id,
+                title=f"自动分析: {content_item.title or '内容分析'}",
+                conversation_type="auto_analysis",
+                ai_model_name=settings.DEFAULT_LLM_MODEL,
+                messages="[]",
+                summary="内容已准备就绪，可以开始AI分析",
+                is_active=True,
+            )
+
+            session.add(conversation)
+            session.commit()
+            session.refresh(conversation)
+            
+            logger.info(f"Created auto analysis conversation {conversation.id} for content {content_item.id}")
+
+        except Exception as e:
+            logger.error(f"Failed to create auto analysis conversation for content {content_item.id}: {e}")
+            # 不抛出异常，避免影响主处理流程
+
+    async def _process_ai_steps(
+        self, context: ProcessingContext, result: ProcessingResult
+    ) -> ProcessingResult:
+        """处理AI分析步骤"""
+        ai_result = ProcessingResult(success=True)
+        ai_result.metadata = {}
+        
+        try:
+            for ai_step in self.ai_steps:
+                if ai_step.can_handle(context.content_item.type):
+                    step_result = ai_step.process(context, result)
+                    
+                    # Handle async AI steps
+                    if asyncio.iscoroutine(step_result):
+                        step_result = await step_result
+                    
+                    if step_result.success and step_result.metadata:
+                        ai_result.metadata.update(step_result.metadata)
+                    else:
+                        logger.warning(f"AI step {ai_step.__class__.__name__} failed: {step_result.error_message}")
+                        
+        except Exception as e:
+            logger.error(f"Error in AI processing steps: {e}")
+            ai_result.metadata["ai_processing_error"] = str(e)
+            
+        return ai_result
 
     def process(self, content_item: ContentItem, session: Session) -> ProcessingResult:
         """Process content item synchronously through the pipeline."""

@@ -1,182 +1,153 @@
 #!/usr/bin/env python3
 """
-修复重复segments问题的脚本
-删除重复的segment记录，只保留最新的一条
+修复重复的Segment记录
+
+注意：此脚本已更新以适应移除ProcessingJob表后的新架构
 """
 
 import logging
 import uuid
-from datetime import datetime
 
-from sqlalchemy import create_engine, text
-from sqlmodel import Session, select
+from sqlmodel import Session, create_engine, select, func
 
 from app.core.config import settings
-from app.models.content import AIResult, ContentItem, ProcessingJob, Segment
+from app.models.content import AIResult, ContentItem, Segment
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def cleanup_duplicate_segments():
-    """清理重复的segments，只保留最新的记录"""
+def find_duplicate_segments(session: Session) -> list[tuple[uuid.UUID, int]]:
+    """查找有重复segment_index的内容项"""
+    # 查找同一个content_item_id下有重复segment_index的记录
+    stmt = (
+        select(Segment.content_item_id, Segment.segment_index, func.count())
+        .group_by(Segment.content_item_id, Segment.segment_index)
+        .having(func.count() > 1)
+    )
+    
+    results = session.exec(stmt).all()
+    duplicates = [(content_id, index) for content_id, index, count in results]
+    
+    logger.info(f"发现 {len(duplicates)} 组重复的segment")
+    return duplicates
+
+
+def fix_duplicate_segments_for_content(session: Session, content_id: uuid.UUID) -> bool:
+    """修复指定内容项的重复segment"""
+    # 获取所有segment，按创建时间排序
+    stmt = (
+        select(Segment)
+        .where(Segment.content_item_id == content_id)
+        .order_by(Segment.segment_index, Segment.created_at)
+    )
+    
+    segments = session.exec(stmt).all()
+    
+    if not segments:
+        logger.warning(f"内容 {content_id} 没有segment")
+        return False
+    
+    # 按segment_index分组
+    segments_by_index = {}
+    for segment in segments:
+        index = segment.segment_index
+        if index not in segments_by_index:
+            segments_by_index[index] = []
+        segments_by_index[index].append(segment)
+    
+    # 找出重复的segment_index
+    duplicates_found = False
+    for index, segment_list in segments_by_index.items():
+        if len(segment_list) > 1:
+            duplicates_found = True
+            logger.info(f"内容 {content_id} 的 segment_index {index} 有 {len(segment_list)} 个重复")
+            
+            # 保留第一个（最早创建的），删除其他的
+            to_keep = segment_list[0]
+            to_delete = segment_list[1:]
+            
+            logger.info(f"保留 segment {to_keep.id}，删除 {len(to_delete)} 个重复")
+            
+            for segment in to_delete:
+                session.delete(segment)
+    
+    if duplicates_found:
+        session.commit()
+        logger.info(f"修复了内容 {content_id} 的重复segment")
+        return True
+    else:
+        logger.info(f"内容 {content_id} 没有重复segment")
+        return False
+
+
+def reindex_segments(session: Session, content_id: uuid.UUID) -> bool:
+    """重新索引segment，确保索引连续"""
+    # 获取所有segment，按当前索引排序
+    stmt = (
+        select(Segment)
+        .where(Segment.content_item_id == content_id)
+        .order_by(Segment.segment_index, Segment.created_at)
+    )
+    
+    segments = session.exec(stmt).all()
+    
+    if not segments:
+        return False
+    
+    # 重新分配连续的索引
+    reindexed = False
+    for i, segment in enumerate(segments):
+        if segment.segment_index != i:
+            logger.info(f"重新索引 segment {segment.id}: {segment.segment_index} -> {i}")
+            segment.segment_index = i
+            session.add(segment)
+            reindexed = True
+    
+    if reindexed:
+        session.commit()
+        logger.info(f"重新索引了内容 {content_id} 的segment")
+        return True
+    else:
+        logger.info(f"内容 {content_id} 的segment索引已是连续的")
+        return False
+
+
+def main():
+    """主函数"""
     engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
-
+    
     with Session(engine) as session:
-        # 查找重复的segments
-        duplicate_query = text("""
-            SELECT content_item_id, segment_index, COUNT(*) as cnt
-            FROM segments
-            GROUP BY content_item_id, segment_index
-            HAVING COUNT(*) > 1
-        """)
-
-        duplicates = session.exec(duplicate_query).fetchall()
-        logger.info(f"发现 {len(duplicates)} 组重复的segments")
-
+        logger.info("开始查找重复的segment...")
+        
+        # 查找所有有重复segment的内容项
+        duplicates = find_duplicate_segments(session)
+        
         if not duplicates:
-            logger.info("没有发现重复的segments")
+            logger.info("没有发现重复的segment")
             return
-
-        # 删除重复的segments，保留最新的
-        delete_query = text("""
-            WITH ranked AS (
-                SELECT id, ROW_NUMBER() OVER (
-                    PARTITION BY content_item_id, segment_index
-                    ORDER BY created_at DESC
-                ) AS rnk
-                FROM segments
-            )
-            DELETE FROM segments
-            WHERE id IN (SELECT id FROM ranked WHERE rnk > 1)
-        """)
-
-        result = session.exec(delete_query)
-        deleted_count = result.rowcount
-        session.commit()
-
-        logger.info(f"成功删除 {deleted_count} 条重复的segment记录")
-
-
-def check_content_item_status(content_item_id: str):
-    """检查指定content item的处理状态"""
-    engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
-
-    with Session(engine) as session:
-        # 转换为UUID
-        try:
-            content_uuid = uuid.UUID(content_item_id)
-        except ValueError:
-            logger.error(f"无效的UUID格式: {content_item_id}")
-            return
-
-        # 查找ContentItem
-        content_item = session.exec(
-            select(ContentItem).where(ContentItem.id == content_uuid)
-        ).first()
-
-        if not content_item:
-            logger.error(f"未找到ContentItem: {content_item_id}")
-            return
-
-        logger.info(f"ContentItem状态: {content_item.processing_status}")
-        logger.info(f"内容长度: {len(content_item.content_text or '')}")
-
-        # 检查segments
-        segments = session.exec(
-            select(Segment).where(Segment.content_item_id == content_uuid)
-        ).all()
-        logger.info(f"Segments数量: {len(segments)}")
-
-        # 检查重复的segment_index
-        segment_indices = [s.segment_index for s in segments]
-        duplicates = [
-            idx for idx in set(segment_indices) if segment_indices.count(idx) > 1
-        ]
-        if duplicates:
-            logger.warning(f"发现重复的segment_index: {duplicates}")
-
-        # 检查AI结果
-        ai_result = session.exec(
-            select(AIResult).where(AIResult.content_item_id == content_uuid)
-        ).first()
-
-        if ai_result:
-            logger.info("AI结果存在")
-            logger.info(f"摘要: {'是' if ai_result.summary else '否'}")
-            logger.info(f"要点: {'是' if ai_result.key_points else '否'}")
-            logger.info(f"标签: {len(ai_result.labels or [])}")
-        else:
-            logger.warning("AI结果不存在")
-
-        # 检查ProcessingJob
-        processing_jobs = session.exec(
-            select(ProcessingJob).where(ProcessingJob.content_item_id == content_uuid)
-        ).all()
-        logger.info(f"ProcessingJob数量: {len(processing_jobs)}")
-        for job in processing_jobs:
-            logger.info(f"  - {job.processor_name}: {job.status}")
-
-
-def create_processing_job_for_ai(content_item_id: str):
-    """为指定内容创建AI处理任务"""
-    engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
-
-    with Session(engine) as session:
-        try:
-            content_uuid = uuid.UUID(content_item_id)
-        except ValueError:
-            logger.error(f"无效的UUID格式: {content_item_id}")
-            return
-
-        # 检查是否已存在AI处理任务
-        existing_job = session.exec(
-            select(ProcessingJob).where(
-                ProcessingJob.content_item_id == content_uuid,
-                ProcessingJob.processor_name == "ai_initialization",
-            )
-        ).first()
-
-        if existing_job:
-            logger.info(f"AI处理任务已存在，状态: {existing_job.status}")
-            return
-
-        # 创建新的处理任务
-        job = ProcessingJob(
-            content_item_id=content_uuid,
-            processor_name="ai_initialization",
-            status="pending",
-            parameters='{"retry_count": 0}',
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
-        )
-
-        session.add(job)
-        session.commit()
-
-        logger.info(f"已创建AI处理任务: {job.id}")
+        
+        # 获取唯一的内容项ID
+        unique_content_ids = list(set(content_id for content_id, _ in duplicates))
+        logger.info(f"需要修复的内容项: {len(unique_content_ids)}")
+        
+        # 逐个修复
+        for content_id in unique_content_ids:
+            logger.info(f"\n处理内容项: {content_id}")
+            
+            # 修复重复segment
+            fixed = fix_duplicate_segments_for_content(session, content_id)
+            
+            # 重新索引
+            reindexed = reindex_segments(session, content_id)
+            
+            if fixed or reindexed:
+                logger.info(f"内容项 {content_id} 修复完成")
+            else:
+                logger.info(f"内容项 {content_id} 无需修复")
+        
+        logger.info("\n所有重复segment修复完成")
 
 
 if __name__ == "__main__":
-    # 问题内容ID
-    problematic_content_id = "c0bfa00e-49d1-429b-bef0-81b1f0d47b63"
-
-    logger.info("开始修复重复segments问题...")
-
-    # 1. 检查问题内容状态
-    logger.info(f"检查内容 {problematic_content_id} 的状态...")
-    check_content_item_status(problematic_content_id)
-
-    # 2. 清理重复segments
-    logger.info("清理重复的segments...")
-    cleanup_duplicate_segments()
-
-    # 3. 再次检查状态
-    logger.info("清理后再次检查状态...")
-    check_content_item_status(problematic_content_id)
-
-    # 4. 创建AI处理任务
-    logger.info("创建AI处理任务...")
-    create_processing_job_for_ai(problematic_content_id)
-
-    logger.info("修复完成！")
+    main()

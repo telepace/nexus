@@ -12,11 +12,20 @@ from sqlalchemy.future import select  # For async select
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session  # Add this for sync operations and specific select
 from sqlmodel import select as sqlmodel_select
+from sqlalchemy import delete as sa_delete
 
 from app.core import security  # For password hashing
 from app.core.storage import StorageInterface
 from app.crud import crud_image  # crud_image module itself
-from app.models.content import ContentAsset, ContentChunk, ContentItem, ContentShare
+from app.models.content import (
+    AIConversation,
+    AIResult,
+    ContentAsset,
+    ContentChunk,
+    ContentItem,
+    ContentShare,
+    Segment,
+)
 
 # Schema imports - assuming these exist
 from app.schemas.content import ContentItemCreate, ContentItemUpdate, ContentShareCreate
@@ -401,59 +410,46 @@ def update_content_item_sync(
     return db_content_item
 
 
-def delete_content_item_sync(session: Session, id: uuid.UUID) -> ContentItem | None:
-    """Delete a content item together with ALL its related records to avoid
-    foreign-key NULL violations (some relations have `NOT NULL` constraints).
-
-    This performs explicit deletions for:
-
-    • ContentAsset
-    • ContentChunk
-    • ProcessingJob
-    • Segment
-    • AIConversation
-    • AIResult
-    • ContentShare
-
-    Using explicit `DELETE` statements ensures the rows are removed instead of
-    being updated with a NULL `content_item_id`. This is safer than relying on
-    SQLAlchemy relationship cascades when the DB schema lacks `ON DELETE
-    CASCADE`.
+def delete_content_item_sync(session: Session, id: uuid.UUID, user_id: uuid.UUID) -> bool:
     """
-
-    db_content_item = get_content_item_sync(session, id)
-    if not db_content_item:
-        return None
-
-    # Import here to avoid circular imports at module level
-    from sqlalchemy import delete as sa_delete
-
-    from app.models.content import (
-        AIConversation,
-        AIResult,
-        ContentAsset,
-        ContentChunk,
-        ContentShare,
-        ProcessingJob,
-        Segment,
-    )
-
-    # Delete child/related rows in batch to reduce round-trips
-    session.execute(sa_delete(ContentAsset).where(ContentAsset.content_item_id == id))
-    session.execute(sa_delete(ContentChunk).where(ContentChunk.content_item_id == id))
-    session.execute(sa_delete(ProcessingJob).where(ProcessingJob.content_item_id == id))
-    session.execute(sa_delete(Segment).where(Segment.content_item_id == id))
-    session.execute(
-        sa_delete(AIConversation).where(AIConversation.content_item_id == id)
-    )
-    session.execute(sa_delete(AIResult).where(AIResult.content_item_id == id))
-    session.execute(sa_delete(ContentShare).where(ContentShare.content_item_id == id))
-
-    # Now delete the content item itself
-    session.delete(db_content_item)
-    session.commit()
-
-    return db_content_item
+    DELETE CASCADE delete content item and all related records
+    """
+    
+    # Get the content item first to ensure it exists and user has permission
+    content_item = session.get(ContentItem, id)
+    if not content_item:
+        raise ValueError(f"Content item with id {id} not found")
+    
+    if content_item.user_id != user_id:
+        raise ValueError("User does not have permission to delete this content item")
+    
+    try:
+        # Delete in proper order to respect foreign key constraints
+        # 1. Delete segments (child table)
+        session.execute(sa_delete(Segment).where(Segment.content_item_id == id))
+        
+        # 2. Delete content assets (child table)
+        session.execute(sa_delete(ContentAsset).where(ContentAsset.content_item_id == id))
+        
+        # 3. Delete content shares (child table)
+        session.execute(sa_delete(ContentShare).where(ContentShare.content_item_id == id))
+        
+        # 4. Delete AI results (child table)
+        session.execute(sa_delete(AIResult).where(AIResult.content_item_id == id))
+        
+        # 5. Delete AI conversations (child table)
+        session.execute(sa_delete(AIConversation).where(AIConversation.content_item_id == id))
+        
+        # 6. Finally delete the content item itself
+        session.execute(sa_delete(ContentItem).where(ContentItem.id == id))
+        
+        session.commit()
+        return True
+        
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error deleting content item {id}: {str(e)}")
+        raise
 
 
 # print("CRUD functions for ContentItem and ContentAsset potentially modified for async and image processing.")

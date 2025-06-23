@@ -15,9 +15,16 @@ from app.core.config import settings
 from app.core.security import decrypt_password, get_password_hash, verify_password
 from app.core.storage import StorageInterface
 from app.models import (
+    AIConversation,
+    AIResult,
+    ContentAsset,
+    ContentItem,
+    ContentShare,
+    Favorite,
+    Image,
     Message,
     Project,
-    UpdatePassword,
+    Segment,
     User,
     UserCreate,
     UserPublic,
@@ -25,6 +32,7 @@ from app.models import (
     UsersPublic,
     UserUpdate,
     UserUpdateMe,
+    UpdatePassword,
 )
 from app.utils import generate_new_account_email, send_email
 
@@ -152,59 +160,43 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
 
-    from app.models.content import (
-        AIResult,
-        ContentAsset,
-        ContentItem,
-        ContentShare,
-        ProcessingJob,
-        Segment,
+    # Delete all related records in this order to respect foreign key constraints
+    # 删除 AI 对话和结果
+    ai_conversations_stmt = delete(AIConversation).where(
+        AIConversation.user_id == current_user.id
     )
-    from app.models.favorite import Favorite
+    session.execute(ai_conversations_stmt)
 
-    # Get all content items owned by the user
-    content_items_query = select(ContentItem).where(
-        ContentItem.user_id == current_user.id
+    ai_results_stmt = delete(AIResult).where(
+        AIResult.content_item_id.in_(
+            select(ContentItem.id).where(ContentItem.user_id == current_user.id)
+        )
     )
-    content_items = session.exec(content_items_query).all()
+    session.execute(ai_results_stmt)
 
-    # For each content item, delete all related data
-    for content_item in content_items:
-        # Delete favorites first (this removes references to content_item)
-        favorites_stmt = delete(Favorite).where(
-            Favorite.content_item_id == content_item.id
+    # Delete segments
+    segments_stmt = delete(Segment).where(
+        Segment.content_item_id.in_(
+            select(ContentItem.id).where(ContentItem.user_id == current_user.id)
         )
-        session.exec(favorites_stmt)
+    )
+    session.execute(segments_stmt)
 
-        # Delete segments
-        segments_stmt = delete(Segment).where(
-            Segment.content_item_id == content_item.id
+    # Delete content assets
+    assets_stmt = delete(ContentAsset).where(
+        ContentAsset.content_item_id.in_(
+            select(ContentItem.id).where(ContentItem.user_id == current_user.id)
         )
-        session.exec(segments_stmt)
+    )
+    session.execute(assets_stmt)
 
-        # Delete content assets
-        assets_stmt = delete(ContentAsset).where(
-            ContentAsset.content_item_id == content_item.id
+    # Delete content shares
+    shares_stmt = delete(ContentShare).where(
+        ContentShare.content_item_id.in_(
+            select(ContentItem.id).where(ContentItem.user_id == current_user.id)
         )
-        session.exec(assets_stmt)
-
-        # Delete content shares
-        shares_stmt = delete(ContentShare).where(
-            ContentShare.content_item_id == content_item.id
-        )
-        session.exec(shares_stmt)
-
-        # Delete AI results
-        ai_results_stmt = delete(AIResult).where(
-            AIResult.content_item_id == content_item.id
-        )
-        session.exec(ai_results_stmt)
-
-        # Delete processing jobs
-        jobs_stmt = delete(ProcessingJob).where(
-            ProcessingJob.content_item_id == content_item.id
-        )
-        session.exec(jobs_stmt)
+    )
+    session.execute(shares_stmt)
 
     # Delete any favorites where the user is the one who favorited (even if content belongs to others)
     user_favorites_stmt = delete(Favorite).where(Favorite.user_id == current_user.id)
@@ -217,8 +209,6 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
     session.exec(content_items_delete_stmt)
 
     # Delete projects owned by the user
-    from app.models.project import Project
-
     projects_stmt = delete(Project).where(Project.owner_id == current_user.id)
     session.exec(projects_stmt)
 

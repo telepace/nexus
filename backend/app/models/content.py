@@ -38,6 +38,7 @@ class ContentItemBase(SQLModel):
         index=True,
     )
     error_message: str | None = Field(default=None)
+    last_processed_at: datetime | None = Field(default=None)
     created_at: datetime = Field(default_factory=now_utc, nullable=False)
     updated_at: datetime = Field(
         default_factory=now_utc,
@@ -55,12 +56,6 @@ class ContentItem(ContentItemBase, table=True):
         back_populates="content_item",
         sa_relationship_kwargs={
             "primaryjoin": "ContentItem.id == foreign(ContentAsset.content_item_id)"
-        },
-    )
-    processing_jobs: list["ProcessingJob"] = Relationship(
-        back_populates="content_item",
-        sa_relationship_kwargs={
-            "primaryjoin": "ContentItem.id == foreign(ProcessingJob.content_item_id)"
         },
     )
     ai_conversations: list["AIConversation"] = Relationship(
@@ -175,49 +170,6 @@ class ContentAsset(ContentAssetBase, table=True):
     )
 
 
-class ProcessingJobBase(SQLModel):
-    """Base model for tracking processing jobs performed on content items."""
-
-    content_item_id: uuid.UUID = Field(foreign_key="contentitem.id", index=True)
-    processor_name: str = Field(
-        max_length=100, index=True
-    )  # e.g., 'summarizer', 'vectorizer', 'ocr'
-    status: str = Field(
-        default="pending",
-        sa_column_args=[
-            CheckConstraint(
-                "status IN ('pending', 'in_progress', 'completed', 'failed', 'skipped')"
-            )
-        ],
-        max_length=50,
-        index=True,
-    )
-    parameters: str | None = Field(default=None, sa_column=Column(JSON))
-    result: str | None = Field(default=None, sa_column=Column(JSON))
-    error_message: str | None = Field(default=None)
-    started_at: datetime | None = Field(default=None)
-    completed_at: datetime | None = Field(default=None)
-    created_at: datetime = Field(default_factory=now_utc, nullable=False)
-    updated_at: datetime = Field(
-        default_factory=now_utc,
-        nullable=False,
-        sa_column_kwargs={"onupdate": now_utc},
-    )
-
-
-class ProcessingJob(ProcessingJobBase, table=True):
-    """Represents a specific processing task (e.g., OCR, summarization) applied to a ContentItem."""
-
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
-
-    content_item: ContentItem | None = Relationship(
-        back_populates="processing_jobs",
-        sa_relationship_kwargs={
-            "primaryjoin": "foreign(ProcessingJob.content_item_id) == ContentItem.id"
-        },
-    )
-
-
 class AIConversationBase(SQLModel):
     """Base model for AI conversations, which may or may not be linked to a specific ContentItem."""
 
@@ -226,11 +178,23 @@ class AIConversationBase(SQLModel):
         default=None, foreign_key="contentitem.id", index=True
     )  # Optional link to a content item
     title: str | None = Field(default=None, max_length=255)
+    conversation_type: str = Field(
+        default="user_chat",
+        sa_column_args=[
+            CheckConstraint(
+                "conversation_type IN ('auto_analysis', 'user_chat', 'prompt_analysis')"
+            )
+        ],
+        max_length=50,
+        index=True,
+    )  # 对话类型：自动分析、用户聊天、Prompt分析
     ai_model_name: str = Field(max_length=100)  # e.g., 'gpt-4', 'claude-2'
     messages: str = Field(
         default="[]", sa_column=Column(JSON, nullable=False, server_default="[]")
     )
+    summary: str | None = Field(default=None, max_length=500)  # 对话的简短总结
     meta_info: str | None = Field(default=None, sa_column=Column(JSON))
+    is_active: bool = Field(default=True, index=True)  # 是否激活状态
     created_at: datetime = Field(default_factory=now_utc, nullable=False)
     updated_at: datetime = Field(
         default_factory=now_utc,

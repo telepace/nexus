@@ -7,15 +7,17 @@ from app.core.config import settings
 from app.core.db_factory import create_db_engine
 from app.core.default_prompts import get_default_prompts, get_default_tags
 from app.models import (
-    ProcessingJob,
+    AIConversation,
+    AIResult,
+    ContentAsset,
+    ContentItem,
+    ContentShare,
+    Image,
     Project,
-    Prompt,
-    PromptVersion,
-    Tag,
+    Segment,
     User,
     UserCreate,
 )
-from app.models.content import AIConversation, ContentItem
 from app.utils.timezone import now_utc
 
 # Get the logger
@@ -603,7 +605,7 @@ AI在军事领域的应用引发了关于自主武器系统的伦理争议。
             created_projects.append(existing_project)
             logger.info(f"Project already exists: {project_data['title']}")
 
-    # 为内容项分配项目并添加ProcessingJob数据
+    # 为内容项分配项目
     content_items = session.exec(
         select(ContentItem).where(ContentItem.user_id == user.id)
     ).all()
@@ -629,74 +631,6 @@ AI在军事领域的应用引发了关于自主武器系统的伦理争议。
                     ].id
 
                 logger.info(f"Assigned project to content: {content_item.title}")
-
-        # 为内容项添加ProcessingJob数据
-        processing_jobs_data = [
-            {
-                "processor_name": "summarizer",
-                "status": "completed",
-                "parameters": {"model": "gpt-4", "max_length": 500, "language": "zh"},
-                "result": {
-                    "summary": "AI领域的重要突破性论文，提出了革命性的Transformer架构",
-                    "key_points": ["注意力机制", "并行化", "编码器-解码器"],
-                    "confidence": 0.95,
-                },
-                "started_at": now_utc(),
-                "completed_at": now_utc(),
-            },
-            {
-                "processor_name": "vectorizer",
-                "status": "completed",
-                "parameters": {"model": "text-embedding-ada-002", "dimensions": 1536},
-                "result": {
-                    "embedding_model": "text-embedding-ada-002",
-                    "dimensions": 1536,
-                    "chunks_processed": 15,
-                    "success_rate": 1.0,
-                },
-                "started_at": now_utc(),
-                "completed_at": now_utc(),
-            },
-            {
-                "processor_name": "keyword_extractor",
-                "status": "completed",
-                "parameters": {"method": "tfidf", "max_keywords": 10},
-                "result": {
-                    "keywords": [
-                        "transformer",
-                        "attention",
-                        "neural network",
-                        "machine learning",
-                        "deep learning",
-                    ],
-                    "scores": [0.95, 0.89, 0.87, 0.85, 0.82],
-                    "confidence": 0.92,
-                },
-                "started_at": now_utc(),
-                "completed_at": now_utc(),
-            },
-        ]
-
-        for content_item in content_items[:3]:  # 只为前3个内容项添加处理任务
-            for job_data in processing_jobs_data:
-                # 检查是否已存在相同的处理任务
-                existing_job = session.exec(
-                    select(ProcessingJob).where(
-                        ProcessingJob.content_item_id == content_item.id,
-                        ProcessingJob.processor_name == job_data["processor_name"],
-                    )
-                ).first()
-
-                if not existing_job:
-                    job = ProcessingJob(content_item_id=content_item.id, **job_data)
-                    session.add(job)
-                    logger.info(
-                        f"Created processing job: {job_data['processor_name']} for {content_item.title}"
-                    )
-                else:
-                    logger.info(
-                        f"Processing job already exists: {job_data['processor_name']} for {content_item.title}"
-                    )
 
     # 创建测试AI对话数据
     # 获取第一个内容项用于关联对话

@@ -2,6 +2,8 @@
 """
 手动为指定内容触发AI处理的脚本
 用于补跑缺失的AI结果
+
+注意：此脚本已更新以适应移除ProcessingJob表后的新架构
 """
 
 import asyncio
@@ -12,7 +14,7 @@ from datetime import datetime
 from sqlmodel import Session, create_engine, select
 
 from app.core.config import settings
-from app.models.content import AIResult, ContentItem, ProcessingJob
+from app.models.content import AIResult, ContentItem
 from app.services.ai.chat_service import ChatService
 from app.services.preprocessing_pipeline import (
     ContentType,
@@ -69,22 +71,14 @@ async def process_ai_for_content_item(content_item_id: str):
         if existing_ai_result:
             logger.warning("AI结果已存在，将重新生成")
 
-        # 创建ProcessingJob记录
-        processing_job = ProcessingJob(
-            content_item_id=content_uuid,
-            processor_name="manual_ai_processing",
-            status="in_progress",
-            parameters='{"manual_trigger": true}',
-            started_at=datetime.now(),
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
-        )
-        session.add(processing_job)
+        # 更新ContentItem状态为处理中
+        content_item.processing_status = "processing"
+        content_item.error_message = None
+        content_item.updated_at = datetime.now()
+        session.add(content_item)
         session.commit()
-        session.refresh(processing_job)
 
-        logger.info(f"已创建ProcessingJob: {processing_job.id}")
-        processing_job_id = processing_job.id
+        logger.info(f"开始处理ContentItem: {content_item.id}")
 
     try:
         # 创建ChatService和Pipeline
@@ -147,14 +141,14 @@ async def process_ai_for_content_item(content_item_id: str):
                 session.add(ai_result)
                 logger.info("已创建新AI结果")
 
-            # 更新ProcessingJob状态
-            job = session.get(ProcessingJob, processing_job_id)
-            if job:
-                job.status = "completed"
-                job.completed_at = datetime.now()
-                job.updated_at = datetime.now()
-                job.result = '{"success": true, "ai_results_generated": true}'
-                session.add(job)
+            # 更新ContentItem状态为完成
+            content_item = session.get(ContentItem, content_uuid)
+            if content_item:
+                content_item.processing_status = "completed"
+                content_item.last_processed_at = datetime.now()
+                content_item.updated_at = datetime.now()
+                content_item.error_message = None
+                session.add(content_item)
 
             session.commit()
 
@@ -164,15 +158,15 @@ async def process_ai_for_content_item(content_item_id: str):
     except Exception as e:
         logger.error(f"AI处理失败: {str(e)}")
 
-        # 更新ProcessingJob状态为失败
+        # 更新ContentItem状态为失败
         with Session(engine) as session:
-            job = session.get(ProcessingJob, processing_job_id)
-            if job:
-                job.status = "failed"
-                job.error_message = str(e)
-                job.completed_at = datetime.now()
-                job.updated_at = datetime.now()
-                session.add(job)
+            content_item = session.get(ContentItem, content_uuid)
+            if content_item:
+                content_item.processing_status = "failed"
+                content_item.error_message = str(e)
+                content_item.last_processed_at = datetime.now()
+                content_item.updated_at = datetime.now()
+                session.add(content_item)
                 session.commit()
 
         return False

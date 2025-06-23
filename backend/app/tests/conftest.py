@@ -10,18 +10,19 @@ from app import crud
 from app.core.config import settings
 from app.core.db import init_db
 from app.main import app
-from app.models import User, UserCreate
-from app.models.content import (
+from app.models import (
     AIConversation,
     AIResult,
     ContentAsset,
     ContentItem,
     ContentShare,
-    ProcessingJob,
+    Image,
+    Project,
     Segment,
+    User,
+    UserCreate,
 )
 from app.models.favorite import Favorite
-from app.models.project import Project
 from app.models.prompt import Prompt, Tag
 from app.tests.utils.test_db import setup_test_db, teardown_test_db
 from app.tests.utils.user import authentication_token_from_email
@@ -126,12 +127,11 @@ def db() -> Generator[Session, None, None]:
             # Clean up all test data - 按照外键依赖关系的顺序删除
             # 1. 先删除依赖于其他表的子表
             session.execute(delete(AIConversation))
-            session.execute(delete(ProcessingJob))
+            session.execute(delete(AIResult))
+            session.execute(delete(Segment))
             session.execute(delete(ContentAsset))
             session.execute(delete(ContentShare))
             session.execute(delete(Favorite))  # Favorite 依赖于 ContentItem 和 User
-            session.execute(delete(Segment))  # Segment 依赖于 ContentItem
-            session.execute(delete(AIResult))  # AIResult 依赖于 ContentItem
             session.execute(delete(ContentItem))  # ContentItem 依赖于 User
             session.execute(delete(Project))  # Project 可能依赖于 User
             # 删除 prompt_versions 表（在删除 prompts 之前）
@@ -169,12 +169,11 @@ def db() -> Generator[Session, None, None]:
             # Clean up all test data - 按照外键依赖关系的顺序删除
             # 1. 先删除依赖于其他表的子表
             session.execute(delete(AIConversation))
-            session.execute(delete(ProcessingJob))
+            session.execute(delete(AIResult))
+            session.execute(delete(Segment))
             session.execute(delete(ContentAsset))
             session.execute(delete(ContentShare))
             session.execute(delete(Favorite))  # Favorite 依赖于 ContentItem 和 User
-            session.execute(delete(Segment))  # Segment 依赖于 ContentItem
-            session.execute(delete(AIResult))  # AIResult 依赖于 ContentItem
             session.execute(delete(ContentItem))  # ContentItem 依赖于 User
             session.execute(delete(Project))  # Project 可能依赖于 User
             # 删除 prompt_versions 表（在删除 prompts 之前）
@@ -337,3 +336,35 @@ def get_api_response_data(response: Any) -> dict[str, Any]:
 
     # 返回原始响应内容
     return content if isinstance(content, dict) else {"data": content}
+
+
+def cleanup_test_data(session: Session) -> None:
+    """Clean up all test data in the correct order to respect foreign key constraints."""
+    
+    # Delete in reverse dependency order
+    session.execute(delete(AIConversation))
+    session.execute(delete(AIResult))
+    session.execute(delete(Segment))
+    session.execute(delete(ContentAsset))
+    session.execute(delete(ContentShare))
+    session.execute(delete(ContentItem))
+    session.execute(delete(Image))
+    session.execute(delete(Project))
+    session.execute(delete(User))
+    session.commit()
+
+
+def cleanup_tables(session: Session) -> None:
+    """Clean up all tables in the correct order."""
+    
+    # Clean up in dependency order
+    session.execute(delete(AIConversation))
+    session.execute(delete(AIResult))
+    session.execute(delete(Segment))
+    session.execute(delete(ContentAsset))
+    session.execute(delete(ContentShare))
+    session.execute(delete(ContentItem))
+    session.execute(delete(Image))
+    session.execute(delete(Project))
+    session.execute(delete(User))
+    session.commit()
