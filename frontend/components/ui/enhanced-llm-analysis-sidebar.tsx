@@ -27,7 +27,6 @@ interface EnhancedLLMAnalysisSidebarProps {
   contentId: string;
   className?: string;
   contentText?: string;
-  onLoaded?: () => void;
 }
 
 // 历史分析数据类型
@@ -177,13 +176,6 @@ export const EnhancedLLMAnalysisSidebar: FC<
     loadPrompts();
     loadHistoricalAnalyses();
   }, [loadPrompts, contentId, loadHistoricalAnalyses]);
-
-  // 通知父布局：右栏已准备就绪
-  useEffect(() => {
-    if (!isLoadingPrompts && !loadingHistorical) {
-      onLoaded?.();
-    }
-  }, [isLoadingPrompts, loadingHistorical, onLoaded]);
 
   // 调试信息
   useEffect(() => {

@@ -541,7 +541,7 @@ export const ClientContent = ({
 
       {/* Main Content - 专注显示AI处理后的内容 */}
       <div className="flex-1 min-h-0">
-        <div className="h-full py-2 max-w-[35rem] mx-auto">
+        <div className="h-full py-2">
           <ProcessedContentRenderer
             content={content}
             markdownContent={markdownContent}

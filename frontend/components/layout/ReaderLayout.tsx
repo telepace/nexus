@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, createContext, useContext, useEffect } from "react";
+import React, { useState, useCallback, createContext, useContext } from "react";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SettingsPanel } from "@/components/layout/SettingsPanel";
@@ -150,8 +150,6 @@ export default function ReaderLayout({
           open={addContentOpen}
           onClose={() => setAddContentOpen(false)}
         />
-
-        {overlayVisible && <LoadingOverlay />}
       </div>
     </SidebarProvider>
   );
