@@ -144,7 +144,7 @@ export const StreamingText = forwardRef<HTMLDivElement, StreamingTextProps>(
         text = "错误";
         variant = "destructive";
       } else if (state.isConnecting) {
-        icon = <WifiOff className="h-3 w-3 animate-pulse" />;
+        icon = <WifiOff className="h-3 w-3 animate-shimmer" />;
         text = "连接中";
         variant = "outline";
       } else if (state.isLoading) {
@@ -335,7 +335,7 @@ export const StreamingText = forwardRef<HTMLDivElement, StreamingTextProps>(
         <div className="whitespace-pre-wrap text-sm leading-relaxed">
           {state.content}
           {state.isLoading && (
-            <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1" />
+            <span className="inline-block w-2 h-4 bg-primary animate-shimmer ml-1" />
           )}
         </div>
       );

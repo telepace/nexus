@@ -68,13 +68,13 @@ export function OnboardingHero() {
 
       {/* 动态背景装饰 */}
       <div className="absolute inset-0 opacity-40">
-        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-primary/10 rounded-full mix-blend-multiply filter blur-xl animate-pulse" />
+        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-primary/10 rounded-full mix-blend-multiply filter blur-xl animate-shimmer" />
         <div
-          className="absolute top-1/3 right-1/4 w-72 h-72 bg-blue-300/10 rounded-full mix-blend-multiply filter blur-xl animate-pulse"
+          className="absolute top-1/3 right-1/4 w-72 h-72 bg-blue-300/10 rounded-full mix-blend-multiply filter blur-xl animate-shimmer"
           style={{ animationDelay: "2s" }}
         />
         <div
-          className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-purple-300/10 rounded-full mix-blend-multiply filter blur-xl animate-pulse"
+          className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-purple-300/10 rounded-full mix-blend-multiply filter blur-xl animate-shimmer"
           style={{ animationDelay: "4s" }}
         />
       </div>

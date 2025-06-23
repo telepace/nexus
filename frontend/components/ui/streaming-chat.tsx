@@ -379,7 +379,7 @@ export const StreamingChat = forwardRef<HTMLDivElement, StreamingChatProps>(
                 <div className="whitespace-pre-wrap text-sm">
                   {message.content}
                   {message.isStreaming && (
-                    <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1" />
+                    <span className="inline-block w-2 h-4 bg-current animate-shimmer ml-1" />
                   )}
                 </div>
               )}

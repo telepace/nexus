@@ -4,14 +4,62 @@ import { useEffect, useState, memo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowLeft, Loader2, ExternalLink, FileText } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  ExternalLink,
+  FileText,
+} from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
 import { useReaderContext } from "@/components/layout/ReaderLayout";
-import { Loading } from "@/components/ui/loading";
+
+// 骨架屏组件
+const ReaderSkeleton = () => {
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header Skeleton */}
+      <div className="flex items-center justify-between px-4 h-header border-b shrink-0">
+        <div className="flex items-center space-x-4">
+          <div className="w-8 h-8 bg-muted rounded"></div>
+          <div className="w-48 h-6 bg-muted rounded"></div>
+        </div>
+        <div className="w-8 h-8 bg-muted rounded"></div>
+      </div>
+      {/* Main Content Skeleton */}
+      <div className="flex-1 p-6 space-y-6">
+        <div className="space-y-3">
+          <div className="w-full h-4 bg-muted rounded"></div>
+          <div className="w-5/6 h-4 bg-muted rounded"></div>
+          <div className="w-full h-4 bg-muted rounded"></div>
+          <div className="w-3/4 h-4 bg-muted rounded"></div>
+        </div>
+        <div className="space-y-3">
+          <div className="w-4/5 h-4 bg-muted rounded"></div>
+          <div className="w-full h-4 bg-muted rounded"></div>
+          <div className="w-2/3 h-4 bg-muted rounded"></div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface ContentDetail {
+  id: string;
+  type: string;
+  title?: string | null;
+  summary?: string | null;
+  content_text?: string | null;
+  processed_content?: string | null;
+  source_uri?: string | null;
+  user_id: string;
+  processing_status: string;
+  created_at: string;
+  updated_at: string;
+}
 
 // 优化的内容渲染器 - 专注于处理后的内容
 const ProcessedContentRenderer = memo(
@@ -66,13 +114,13 @@ const ProcessedContentRenderer = memo(
       return (
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
-            {content.processing_status === "completed" ? (
             <p className="text-sm text-muted-foreground">
-                处理后的内容暂不可用
+              {content.processing_status === "completed"
+                ? "处理后的内容暂不可用"
+                : `内容正在处理中，状态：${content.processing_status}`}
             </p>
-            ) : (
-              <div className="flex items-center justify-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            {content.processing_status !== "completed" && (
+              <div className="flex items-center justify-center gap-2 mt-2">
                 <span className="text-xs text-primary">AI 正在处理内容...</span>
               </div>
             )}
@@ -120,20 +168,6 @@ const ProcessedContentRenderer = memo(
 );
 
 ProcessedContentRenderer.displayName = "ProcessedContentRenderer";
-
-interface ContentDetail {
-  id: string;
-  type: string;
-  title?: string | null;
-  summary?: string | null;
-  content_text?: string | null;
-  processed_content?: string | null;
-  source_uri?: string | null;
-  user_id: string;
-  processing_status: string;
-  created_at: string;
-  updated_at: string;
-}
 
 interface ClientContentProps {
   contentId: string;
@@ -339,7 +373,7 @@ export const ClientContent = ({
   ]);
 
   if (authLoading || loading) {
-    return <Loading />;
+    return <ReaderSkeleton />;
   }
 
   if (error) {

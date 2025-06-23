@@ -65,7 +65,7 @@ export default async function TagsPage() {
         fallback={
           <div className="container py-10">
             <h1 className="text-2xl font-bold mb-6">标签管理</h1>
-            <div className="animate-pulse">
+            <div className="animate-shimmer">
               <div className="rounded-md bg-gray-200 h-8 w-24 mb-4"></div>
               <div className="rounded-md bg-gray-200 h-4 w-full mb-2"></div>
               <div className="rounded-md bg-gray-200 h-4 w-full mb-2"></div>

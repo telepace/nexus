@@ -59,7 +59,7 @@ export default async function CreatePromptPage() {
         fallback={
           <div className="container py-10">
             <h1 className="text-2xl font-bold mb-6">创建提示词</h1>
-            <div className="animate-pulse">
+            <div className="animate-shimmer">
               <div className="rounded-md bg-gray-200 h-8 w-full mb-4"></div>
               <div className="rounded-md bg-gray-200 h-32 w-full mb-2"></div>
               <div className="rounded-md bg-gray-200 h-8 w-32 mb-2"></div>
