@@ -3,6 +3,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
+from app import crud
 from app.core.config import settings
 from app.core.security import get_password_hash
 from app.models import User
@@ -11,12 +12,47 @@ from app.tests.utils.utils import random_email, random_lower_string
 from app.utils import generate_password_reset_token
 
 
-def test_get_access_token(client: TestClient) -> None:
+def test_get_access_token(client: TestClient, db: Session) -> None:
+    # Ensure superuser exists and has the correct password
+    superuser = crud.get_user_by_email(session=db, email=settings.FIRST_SUPERUSER)
+
+    if not superuser:
+        # Create superuser if it doesn't exist
+        from app.models import UserCreate
+
+        user_in = UserCreate(
+            email=settings.FIRST_SUPERUSER,
+            password=settings.FIRST_SUPERUSER_PASSWORD,
+            is_superuser=True,
+        )
+        superuser = crud.create_user(session=db, user_create=user_in)
+        db.commit()
+        db.refresh(superuser)
+
+    # Verify password is correct
+    from app.core.security import verify_password
+
+    if not verify_password(
+        settings.FIRST_SUPERUSER_PASSWORD, superuser.hashed_password
+    ):
+        # Fix password if it doesn't match
+        superuser.hashed_password = get_password_hash(settings.FIRST_SUPERUSER_PASSWORD)
+        db.add(superuser)
+        db.commit()
+        db.refresh(superuser)
+
     login_data = {
         "username": settings.FIRST_SUPERUSER,
         "password": settings.FIRST_SUPERUSER_PASSWORD,
     }
     r = client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
+
+    # Debug information if test fails
+    if r.status_code != 200:
+        print(f"Login failed with status {r.status_code}")
+        print(f"Response: {r.text}")
+        print(f"Login data: {login_data}")
+
     tokens = get_api_response_data(r)
     assert r.status_code == 200
     assert "access_token" in tokens

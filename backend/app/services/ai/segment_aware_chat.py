@@ -66,8 +66,8 @@ class SegmentAwareChatService:
 
             if not segments_with_scores:
                 # Fallback to regular chat if no segments found
-                response = await self.chat_service.generate_response(
-                    user_message, model=model
+                response = await self.chat_service.generate_with_template(
+                    "simple_chat.j2", {"user_message": user_message}
                 )
                 return {
                     "response": response,
@@ -78,21 +78,21 @@ class SegmentAwareChatService:
             # 2. Prepare segments for prompt
             segments = [segment for segment, score in segments_with_scores]
 
-            # 3. Generate prompt using template
-            prompt = await self._generate_prompt(user_message, segments)
+            # 3. Get AI response using template directly
+            ai_response = await self.chat_service.generate_with_template(
+                "segment_aware_chat.j2",
+                {"user_question": user_message, "segments": segments},
+            )
 
-            # 4. Get AI response
-            ai_response = await self.chat_service.generate_response(prompt, model=model)
-
-            # 5. Parse response to extract segment references
+            # 4. Parse response to extract segment references
             parsed_response = await self._parse_ai_response(ai_response)
 
-            # 6. Validate and clean segment references
+            # 5. Validate and clean segment references
             validated_references = await self._validate_segment_references(
                 parsed_response.get("segment_references", []), segments
             )
 
-            # 7. Store segment references in database
+            # 6. Store segment references in database
             conversation = self.db.get(AIConversation, conversation_id)
             if conversation:
                 message_index = len(json.loads(conversation.messages))
@@ -118,8 +118,8 @@ class SegmentAwareChatService:
         except Exception as e:
             logger.error(f"Error in segment-aware chat: {e}")
             # Fallback to regular chat
-            response = await self.chat_service.generate_response(
-                user_message, model=model
+            response = await self.chat_service.generate_with_template(
+                "simple_chat.j2", {"user_message": user_message}
             )
             return {
                 "response": response,

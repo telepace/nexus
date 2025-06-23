@@ -1657,7 +1657,8 @@ class ProcessingPipeline:
 
         # 如果首选处理器不可用，按顺序尝试备用处理器
         if not registered:
-            fallback_order = ["readability", "markitdown"]
+            # 调整fallback顺序，markitdown应该优先作为通用处理器
+            fallback_order = ["markitdown", "readability"]
             for fallback in fallback_order:
                 if fallback != preferred_processor:  # 避免重复尝试
                     try:
@@ -1669,6 +1670,19 @@ class ProcessingPipeline:
                             break
                     except Exception as e:
                         logger.warning(f"⚠️  备用处理器 {fallback} 初始化失败: {e}")
+
+        # 如果还是没有注册成功，强制注册markitdown作为最后的备用方案
+        if not registered:
+            try:
+                logger.warning(
+                    "⚠️  所有常规处理器都不可用，强制使用 markitdown 作为最后备用方案"
+                )
+                markitdown_instance = MarkItDownProcessor()
+                self.add_step(markitdown_instance)
+                logger.info("✅ 强制注册 markitdown 处理器成功")
+                registered = True
+            except Exception as e:
+                logger.error(f"❌ 连 markitdown 处理器都无法注册: {e}")
 
         if not registered:
             logger.error("❌ 没有可用的处理器！")
@@ -1690,6 +1704,10 @@ class ProcessingPipeline:
         ):
             logger.info(f"⚠️  {processor_name} 处理器缺少依赖库")
             return False
+
+        # markitdown 应该始终可用，除非有严重的问题
+        if processor_name == "markitdown":
+            return True
 
         return True
 

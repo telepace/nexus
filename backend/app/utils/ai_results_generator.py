@@ -76,7 +76,13 @@ async def generate_and_store_basic_ai_results(
     else:
         labels = []
 
-    reading_time_minutes = max(1, len(markdown_content.split()) // 200)
+    # 优先使用 LLM 生成的阅读时间，否则回退到算法估算
+    ai_reading_time = labels_resp.get("reading_time_minutes") if isinstance(labels_resp, dict) else None
+    if ai_reading_time is not None and isinstance(ai_reading_time, int) and ai_reading_time > 0:
+        reading_time_minutes = ai_reading_time
+    else:
+        # 回退到算法估算（每分钟200词）
+        reading_time_minutes = max(1, len(markdown_content.split()) // 200)
 
     # Basic content analysis fallback
     analysis: dict[str, Any] = {

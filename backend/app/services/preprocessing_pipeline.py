@@ -103,6 +103,7 @@ class PreprocessingPipeline:
         content: str,
         metadata: DocumentMetadata,
         user_preferences: dict[str, Any] | None = None,
+        content_item_id: uuid.UUID | None = None,
     ) -> PreprocessingResult:
         """
         主要处理流程：
@@ -118,7 +119,9 @@ class PreprocessingPipeline:
         processing_stats = {}
 
         try:
-            content_id = self._generate_content_id()
+            content_id = (
+                str(content_item_id) if content_item_id else self._generate_content_id()
+            )
             logger.info(f"开始处理内容: {content_id}")
 
             # 1. 输入层
@@ -590,8 +593,13 @@ class PreprocessingPipeline:
             markdown_content, ai_results, metadata
         )
 
-        # 估算阅读时间（每分钟200词）
-        reading_time = max(1, metadata.estimated_words // 200)
+        # 估算阅读时间 - 优先使用 LLM 生成的时间，否则回退到算法估算
+        ai_reading_time = ai_results.get("reading_time_minutes")
+        if ai_reading_time is not None and isinstance(ai_reading_time, int) and ai_reading_time > 0:
+            reading_time = ai_reading_time
+        else:
+            # 回退到算法估算（每分钟200词）
+            reading_time = max(1, metadata.estimated_words // 200)
 
         # 确定难度等级
         difficulty_level = ai_results.get("content_analysis", {}).get(
@@ -640,26 +648,33 @@ class PreprocessingPipeline:
             return {}
 
     async def _generate_labels(self, context: dict[str, Any]) -> dict[str, Any]:
-        """使用 labels.j2 模板生成标签与评分，返回格式 {'tags': [...], 'score': float}"""
+        """使用 labels.j2 模板生成标签、评分与阅读时间，返回格式 {'tags': [...], 'score': float, 'reading_time_minutes': int}"""
         try:
             response = await self.chat_service.generate_with_template(
                 template_name="labels.j2", context=context
             )
 
-            # LLM 应输出 {'tags': [...], 'score': x.x}
+            # LLM 应输出 {'tags': [...], 'score': x.x, 'reading_time_minutes': int}
             tags = response.get("tags", [])
             score = response.get("score", None)
+            reading_time_minutes = response.get("reading_time_minutes", None)
 
             # 对输出进行基础校验
             if not isinstance(tags, list):
                 tags = []
-            if score is not None and not isinstance(score, int | float):
+            if score is not None and not isinstance(score, (int, float)):
                 score = None
+            if reading_time_minutes is not None and not isinstance(reading_time_minutes, int):
+                reading_time_minutes = None
 
-            return {"tags": tags[:20], "score": score}
+            return {
+                "tags": tags[:20], 
+                "score": score,
+                "reading_time_minutes": reading_time_minutes
+            }
         except Exception as e:
             logger.error(f"生成标签失败: {str(e)}")
-            return {"tags": [], "score": None}
+            return {"tags": [], "score": None, "reading_time_minutes": None}
 
     async def _analyze_content_properties(
         self, content: str, metadata: DocumentMetadata

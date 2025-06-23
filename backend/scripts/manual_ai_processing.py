@@ -180,8 +180,8 @@ async def process_ai_for_content_item(content_item_id: str):
 
 async def main():
     """主函数"""
-    # 问题内容ID
-    problematic_content_id = "c0bfa00e-49d1-429b-bef0-81b1f0d47b63"
+    # 使用实际存在的内容ID
+    problematic_content_id = "526edb4d-90eb-41dc-8e2b-bb27eb753863"
 
     logger.info(f"开始为内容 {problematic_content_id} 手动触发AI处理...")
 

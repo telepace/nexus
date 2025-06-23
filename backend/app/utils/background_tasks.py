@@ -297,6 +297,118 @@ class BackgroundTaskManager:
                                         f"Failed to generate AI results for {content_id}: {ai_err}"
                                     )
 
+                                # ---------------- 新增：触发完整AI预处理管道 ----------------
+                                try:
+                                    from app.core.dependencies import (
+                                        get_chat_service_instance,
+                                    )
+                                    from app.services.preprocessing_pipeline import (
+                                        ContentType,
+                                        DocumentMetadata,
+                                        PreprocessingPipeline,
+                                    )
+
+                                    logger.info(
+                                        f"Triggering AI preprocessing pipeline for content {content_id}"
+                                    )
+
+                                    # 获取ChatService实例
+                                    chat_service = get_chat_service_instance()
+                                    preprocessing_pipeline = PreprocessingPipeline(
+                                        chat_service
+                                    )
+
+                                    # 构建文档元数据
+                                    metadata = DocumentMetadata(
+                                        title=content_item.title or "Untitled",
+                                        author=None,
+                                        source_url=content_item.source_uri
+                                        if content_item.type == "url"
+                                        else None,
+                                        content_type=ContentType.ARTICLE,  # 可以根据实际情况调整
+                                        language="auto",
+                                        domain="general",
+                                    )
+
+                                    # 执行AI预处理（只执行AI初始化层，不重复做存储）
+                                    preprocessing_result = await preprocessing_pipeline._ai_initialization_layer(
+                                        cleaned_content, metadata, user_preferences=None
+                                    )
+
+                                    ai_results, ai_stats = preprocessing_result
+
+                                    # 直接更新或创建AIResult
+                                    from sqlmodel import select
+
+                                    from app.models.content import AIResult
+
+                                    existing_ai_result = session.exec(
+                                        select(AIResult).where(
+                                            AIResult.content_item_id == content_item.id
+                                        )
+                                    ).first()
+
+                                    if existing_ai_result:
+                                        # 更新现有结果
+                                        existing_ai_result.summary = ai_results.get(
+                                            "summary"
+                                        )
+                                        existing_ai_result.key_points = ai_results.get(
+                                            "key_points"
+                                        )
+                                        existing_ai_result.labels = ai_results.get(
+                                            "labels"
+                                        )
+                                        existing_ai_result.content_analysis = (
+                                            ai_results.get("content_analysis")
+                                        )
+                                        existing_ai_result.reading_time_minutes = max(
+                                            1, len(cleaned_content.split()) // 200
+                                        )
+                                        existing_ai_result.difficulty_level = (
+                                            ai_results.get("content_analysis", {}).get(
+                                                "difficulty_level", "intermediate"
+                                            )
+                                        )
+                                        existing_ai_result.content_quality_score = preprocessing_pipeline._calculate_quality_score(
+                                            cleaned_content, ai_results, metadata
+                                        )
+                                        existing_ai_result.updated_at = now_utc()
+                                        session.add(existing_ai_result)
+                                        logger.info(
+                                            f"Updated AI results for content {content_id}"
+                                        )
+                                    else:
+                                        # 创建新结果
+                                        ai_result = AIResult(
+                                            content_item_id=content_item.id,
+                                            summary=ai_results.get("summary"),
+                                            key_points=ai_results.get("key_points"),
+                                            labels=ai_results.get("labels"),
+                                            content_analysis=ai_results.get(
+                                                "content_analysis"
+                                            ),
+                                            reading_time_minutes=max(
+                                                1, len(cleaned_content.split()) // 200
+                                            ),
+                                            difficulty_level=ai_results.get(
+                                                "content_analysis", {}
+                                            ).get("difficulty_level", "intermediate"),
+                                            content_quality_score=preprocessing_pipeline._calculate_quality_score(
+                                                cleaned_content, ai_results, metadata
+                                            ),
+                                        )
+                                        session.add(ai_result)
+                                        logger.info(
+                                            f"Created new AI results for content {content_id}"
+                                        )
+
+                                except Exception as preprocessing_err:
+                                    logger.error(
+                                        f"Failed to run AI preprocessing pipeline for {content_id}: {preprocessing_err}"
+                                    )
+                                    # 不让AI分析失败影响整体处理状态
+
                                 logger.info(
                                     f"Replaced segments for {content_id} (total {len(chunks)})"
                                 )

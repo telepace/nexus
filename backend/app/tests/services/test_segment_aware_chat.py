@@ -2,7 +2,6 @@
 Tests for segment-aware chat functionality.
 """
 
-import json
 import uuid
 from unittest.mock import AsyncMock, patch
 
@@ -109,7 +108,7 @@ class TestSegmentAwareChatService:
         service = SegmentAwareChatService(db_session)
 
         # Mock the chat service response
-        mock_response = {
+        mock_response_dict = {
             "answer": "人工智能是一个广泛的领域，包括机器学习和深度学习等子领域。",
             "segment_references": [
                 {
@@ -123,10 +122,15 @@ class TestSegmentAwareChatService:
             ],
         }
 
+        # Convert to JSON string as the actual service would return
+        import json
+
+        mock_response = json.dumps(mock_response_dict, ensure_ascii=False)
+
         with patch.object(
-            service.chat_service, "generate_response", new_callable=AsyncMock
+            service.chat_service, "generate_with_template", new_callable=AsyncMock
         ) as mock_chat:
-            mock_chat.return_value = json.dumps(mock_response)
+            mock_chat.return_value = mock_response
 
             result = await service.chat_with_segments(
                 user_message="什么是人工智能？",

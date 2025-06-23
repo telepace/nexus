@@ -2,10 +2,10 @@
 Segment retrieval service for finding relevant content segments based on user queries.
 """
 
+import re
 import uuid
 
 from fastapi import Depends
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import select, text
 
@@ -55,7 +55,7 @@ class SegmentRetrievalService:
                 text("content_vector IS NOT NULL")
             ).limit(max_segments * 2)
 
-            segments_with_vectors = self.db.exec(query_with_vectors)
+            segments_with_vectors = self.db.exec(query_with_vectors).all()
 
             results = []
             for segment in segments_with_vectors:
@@ -77,27 +77,88 @@ class SegmentRetrievalService:
         self, query: str, base_query, max_segments: int
     ) -> list[tuple[Segment, float]]:
         """Fallback text-based retrieval using keyword matching."""
-        # Simple keyword-based search
-        keywords = query.lower().split()
+        # Simple keyword-based search - handle Chinese text better
+        query_lower = query.lower()
 
-        # Use PostgreSQL full-text search if available
-        search_query = base_query.where(
-            func.lower(Segment.content).contains(query.lower())
-        ).limit(max_segments)
+        # For Chinese text, split by common punctuation and also try to extract key terms
+        # Split by punctuation and filter out empty strings
+        keywords = [
+            k.strip()
+            for k in re.split(r"[？。，、！；：\s]+", query_lower)
+            if k.strip()
+        ]
+
+        # Filter out common question words for better matching
+        question_words = {
+            "什么",
+            "什么是",
+            "怎么",
+            "如何",
+            "为什么",
+            "哪里",
+            "哪个",
+            "谁",
+            "吗",
+            "呢",
+        }
+        filtered_keywords = []
+
+        for keyword in keywords:
+            # Skip pure question words
+            if keyword in question_words:
+                continue
+            # Remove question words from the beginning of keywords
+            for qw in question_words:
+                if keyword.startswith(qw):
+                    keyword = keyword[len(qw) :].strip()
+                    break
+            if keyword:  # Only add non-empty keywords
+                filtered_keywords.append(keyword)
+
+        # If no keywords found after filtering, use original keywords
+        if not filtered_keywords:
+            filtered_keywords = keywords
+
+        # If still no keywords, use the original query
+        if not filtered_keywords:
+            filtered_keywords = [query_lower]
+
+        # Execute the base query first to get all segments, then filter in Python
+        # This avoids potential issues with SQLAlchemy's query compilation
+        segments = self.db.exec(
+            base_query.limit(max_segments * 10)
+        ).all()  # Get more to filter
 
         results = []
-        for segment in self.db.exec(search_query):
-            # Calculate simple keyword match score
+        for segment_row in segments:
+            # Handle SQLAlchemy Row objects
+            if hasattr(segment_row, "_data") and hasattr(segment_row, "__getitem__"):
+                # This is a SQLAlchemy Row object, extract the actual Segment
+                segment = segment_row[
+                    0
+                ]  # The first (and only) column is the Segment object
+            else:
+                segment = segment_row
+
+            # Now segment should be a proper Segment object
+            if not hasattr(segment, "content"):
+                continue
+
+            # Calculate keyword match score - use substring matching for Chinese
             content_lower = segment.content.lower()
-            matches = sum(1 for keyword in keywords if keyword in content_lower)
-            score = matches / len(keywords) if keywords else 0
+            matches = 0
+            for keyword in filtered_keywords:
+                if keyword in content_lower:
+                    matches += 1
+
+            score = matches / len(filtered_keywords) if filtered_keywords else 0
 
             if score > 0:
                 results.append((segment, score))
 
-        # Sort by score
+        # Sort by score and take top results
         results.sort(key=lambda x: x[1], reverse=True)
-        return results
+        return results[:max_segments]
 
     def _calculate_cosine_similarity(
         self, vec1: list[float], vec2: list[float]
@@ -125,7 +186,7 @@ class SegmentRetrievalService:
             .order_by(Segment.segment_index)
         )
 
-        return list(self.db.exec(query))
+        return list(self.db.exec(query).all())
 
 
 # Dependency injection

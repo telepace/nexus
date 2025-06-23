@@ -5,9 +5,16 @@ import "@testing-library/jest-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { FavoriteButton } from "./FavoriteButton";
+import { getCookie } from "@/lib/utils";
 
 // Mock fetch
 global.fetch = jest.fn();
+
+// Mock getCookie from utils
+jest.mock("@/lib/utils", () => ({
+  ...jest.requireActual("@/lib/utils"),
+  getCookie: jest.fn(),
+}));
 
 // Mock the useFavorites hook
 const mockUseFavorites = {
@@ -24,6 +31,7 @@ jest.mock("@/lib/hooks/useFavorites", () => ({
 describe("FavoriteButton", () => {
   let queryClient: QueryClient;
   const user = userEvent.setup();
+  const mockGetCookie = getCookie as jest.MockedFunction<typeof getCookie>;
 
   beforeEach(() => {
     queryClient = new QueryClient({
@@ -35,6 +43,7 @@ describe("FavoriteButton", () => {
     });
     (fetch as jest.Mock).mockClear();
     mockUseFavorites.mutate.mockClear();
+    mockGetCookie.mockReturnValue("mock-token");
   });
 
   const renderWithProviders = (component: React.ReactElement) => {

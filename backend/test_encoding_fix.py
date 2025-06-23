@@ -229,7 +229,9 @@ def test_encoding_processing():
         
         # 总结
         print("\n📊 测试总结:")
-        print(f"  - 原始HTML中文字符数: {len([char for char in chinese_html_content if '\u4e00' <= char <= '\u9fff'])}")
+        chinese_range = '\u4e00' <= char <= '\u9fff'
+        original_chinese_count = len([char for char in chinese_html_content if '\u4e00' <= char <= '\u9fff'])
+        print(f"  - 原始HTML中文字符数: {original_chinese_count}")
         print(f"  - MarkItDown处理后中文字符数: {len(markdown_chinese) if 'markdown_chinese' in locals() else 0}")
         print(f"  - 清理后中文字符数: {len(cleaned_chinese) if 'cleaned_chinese' in locals() else 0}")
         print(f"  - 乱码检测: {'通过' if not is_gibberish_result else '失败'}")

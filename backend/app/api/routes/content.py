@@ -42,12 +42,13 @@ from app.crud.crud_favorite import (
     delete_favorite,
     get_favorite,
 )
-from app.models.content import (
-    AIConversation,  # Added for conversation storage
+from app.models import (
+    AIConversation,
     AIResult,  # Added for AIResult storage
     ContentItem,  # For converting ContentItemCreate to ContentItem model for CRUD
 )
 from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is just base + id and audit fields
+    AIResultPublic,
     ContentItemCreate,
     ContentItemPublic,
     ContentShareCreate,
@@ -437,11 +438,32 @@ def list_content_items_endpoint(
         session=session, skip=skip, limit=limit, user_id=current_user.id
     )
 
-    # Convert ContentItem objects to ContentItemPublic objects with AI analysis
+    # Convert ContentItem objects to ContentItemPublic objects with AI results
     public_items = []
     for item in items:
-        # 获取AI分析结果
-        ai_analysis = get_ai_analysis_for_content(session, item.id)
+        # 获取AIResult数据（分数、标签等）
+        from sqlmodel import select
+
+        ai_result = session.exec(
+            select(AIResult).where(AIResult.content_item_id == item.id)
+        ).first()
+
+        ai_result_data = None
+        if ai_result:
+            ai_result_data = AIResultPublic(
+                summary=ai_result.summary,
+                key_points=ai_result.key_points,
+                labels=ai_result.labels,
+                content_analysis=ai_result.content_analysis,
+                reading_time_minutes=ai_result.reading_time_minutes,
+                difficulty_level=ai_result.difficulty_level,
+                content_quality_score=ai_result.content_quality_score,
+            )
+            # 添加调试日志
+            print(f"DEBUG: Item {item.id} has AI result:")
+            print(f"  - Labels: {ai_result.labels}")
+            print(f"  - Quality Score: {ai_result.content_quality_score}")
+            print(f"  - Reading Time: {ai_result.reading_time_minutes}")
 
         public_item = ContentItemPublic(
             id=item.id,
@@ -453,7 +475,7 @@ def list_content_items_endpoint(
             processing_status=item.processing_status,
             created_at=item.created_at,
             updated_at=item.updated_at,
-            ai_analysis=ai_analysis if ai_analysis else None,
+            ai_result=ai_result_data,
         )
         public_items.append(public_item)
 
@@ -488,8 +510,24 @@ def get_content_item_endpoint(
             detail="You don't have permission to access this content item",
         )
 
-    # Get AI analysis data
-    ai_analysis = get_ai_analysis_for_content(session, id)
+    # 获取AIResult数据（分数、标签等）
+    from sqlmodel import select
+
+    ai_result = session.exec(
+        select(AIResult).where(AIResult.content_item_id == item.id)
+    ).first()
+
+    ai_result_data = None
+    if ai_result:
+        ai_result_data = AIResultPublic(
+            summary=ai_result.summary,
+            key_points=ai_result.key_points,
+            labels=ai_result.labels,
+            content_analysis=ai_result.content_analysis,
+            reading_time_minutes=ai_result.reading_time_minutes,
+            difficulty_level=ai_result.difficulty_level,
+            content_quality_score=ai_result.content_quality_score,
+        )
 
     # Convert ContentItem to ContentItemPublic
     public_item = ContentItemPublic(
@@ -502,7 +540,7 @@ def get_content_item_endpoint(
         processing_status=item.processing_status,
         created_at=item.created_at,
         updated_at=item.updated_at,
-        ai_analysis=ai_analysis if ai_analysis else None,
+        ai_result=ai_result_data,
     )
 
     return public_item

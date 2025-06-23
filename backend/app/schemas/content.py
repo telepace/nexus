@@ -1,8 +1,19 @@
 import uuid
 from datetime import datetime
-from typing import Any
 
 from sqlmodel import Field, SQLModel
+
+
+# New schema for AI results
+class AIResultPublic(SQLModel):
+    summary: dict | None = None
+    key_points: dict | None = None
+    labels: list[str] | None = None
+    content_analysis: dict | None = None
+    reading_time_minutes: int | None = None
+    difficulty_level: str | None = None
+    content_quality_score: float | None = None
+
 
 # Schemas for ContentItem
 
@@ -36,7 +47,7 @@ class ContentItemPublic(ContentItemBaseSchema):
     content_text: str | None = None
     created_at: datetime
     updated_at: datetime
-    ai_analysis: dict[str, Any] | None = None  # AI分析结果
+    ai_result: AIResultPublic | None = None
 
 
 class ContentItemDetail(ContentItemPublic):

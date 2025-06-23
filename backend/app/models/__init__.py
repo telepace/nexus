@@ -31,11 +31,13 @@ from app.models.prompt import (
 # Import content aggregation models
 from .content import (
     AIConversation,
+    AIResult,
     ContentAsset,
-    ContentChunk,
     ContentItem,
     ContentShare,
+    MessageSegmentReference,
     ProcessingJob,
+    Segment,
 )
 
 # Import favorite model
@@ -87,10 +89,12 @@ __all__ = [
     # Content aggregation models
     "ContentItem",
     "ContentAsset",
-    "ContentChunk",
     "ContentShare",
+    "MessageSegmentReference",
     "ProcessingJob",
+    "Segment",
     "AIConversation",
+    "AIResult",
     "Favorite",
     # Project and routing models
     "Project",

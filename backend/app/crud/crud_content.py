@@ -9,6 +9,7 @@ from typing import (
 from sqlalchemy import func  # For count
 from sqlalchemy.ext.asyncio import AsyncSession  # Changed from sqlmodel.Session
 from sqlalchemy.future import select  # For async select
+from sqlalchemy.orm import selectinload
 from sqlmodel import Session  # Add this for sync operations and specific select
 from sqlmodel import select as sqlmodel_select
 
@@ -139,7 +140,9 @@ def get_content_item_sync(session: Session, id: uuid.UUID) -> ContentItem | None
 def get_content_items_sync(
     session: Session, skip: int = 0, limit: int = 100, user_id: uuid.UUID | None = None
 ) -> Sequence[ContentItem]:
-    statement = sqlmodel_select(ContentItem)
+    statement = sqlmodel_select(ContentItem).options(
+        selectinload(ContentItem.ai_result)
+    )
     if user_id:
         statement = statement.where(ContentItem.user_id == user_id)
     statement = statement.offset(skip).limit(limit)
