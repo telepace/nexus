@@ -4,82 +4,14 @@ import { useEffect, useState, memo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  ArrowLeft,
-  Loader2,
-  AlertCircle,
-  ExternalLink,
-  FileText,
-} from "lucide-react";
+import { ArrowLeft, Loader2, ExternalLink, FileText } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
 import { useReaderContext } from "@/components/layout/ReaderLayout";
-
-// 骨架屏组件
-const ReaderSkeleton = () => {
-  return (
-    <div className="h-full flex flex-col p-2 animate-pulse">
-      {/* Header Skeleton */}
-      <div className="flex items-center justify-between px-6 py-4 border-b">
-        <div className="flex items-center space-x-4">
-          <div className="w-24 h-8 bg-muted rounded"></div>
-          <div>
-            <div className="w-64 h-8 bg-muted rounded mb-2"></div>
-            <div className="flex items-center gap-2">
-              <div className="w-12 h-5 bg-muted rounded"></div>
-              <div className="w-16 h-5 bg-muted rounded"></div>
-              <div className="w-20 h-5 bg-muted rounded"></div>
-            </div>
-          </div>
-        </div>
-        <div className="w-20 h-8 bg-muted rounded"></div>
-      </div>
-
-      {/* Main Content Skeleton */}
-      <div className="flex-1 p-6">
-        {/* Content Area Skeleton */}
-        <div className="space-y-4">
-          {/* 模拟文章内容的骨架 */}
-          <div className="space-y-3">
-            <div className="w-full h-4 bg-muted rounded"></div>
-            <div className="w-5/6 h-4 bg-muted rounded"></div>
-            <div className="w-4/5 h-4 bg-muted rounded"></div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="w-full h-4 bg-muted rounded"></div>
-            <div className="w-3/4 h-4 bg-muted rounded"></div>
-            <div className="w-5/6 h-4 bg-muted rounded"></div>
-            <div className="w-2/3 h-4 bg-muted rounded"></div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="w-4/5 h-4 bg-muted rounded"></div>
-            <div className="w-full h-4 bg-muted rounded"></div>
-            <div className="w-3/5 h-4 bg-muted rounded"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-interface ContentDetail {
-  id: string;
-  type: string;
-  title?: string | null;
-  summary?: string | null;
-  content_text?: string | null;
-  processed_content?: string | null;
-  source_uri?: string | null;
-  user_id: string;
-  processing_status: string;
-  created_at: string;
-  updated_at: string;
-}
+import { Loading } from "@/components/ui/loading";
 
 // 优化的内容渲染器 - 专注于处理后的内容
 const ProcessedContentRenderer = memo(
@@ -134,14 +66,12 @@ const ProcessedContentRenderer = memo(
       return (
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
-            <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">
-              {content.processing_status === "completed"
-                ? "处理后的内容暂不可用"
-                : `内容正在处理中，状态：${content.processing_status}`}
-            </p>
-            {content.processing_status !== "completed" && (
-              <div className="flex items-center justify-center gap-2 mt-2">
+            {content.processing_status === "completed" ? (
+              <p className="text-sm text-muted-foreground">
+                处理后的内容暂不可用
+              </p>
+            ) : (
+              <div className="flex items-center justify-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
                 <span className="text-xs text-primary">AI 正在处理内容...</span>
               </div>
@@ -191,6 +121,20 @@ const ProcessedContentRenderer = memo(
 
 ProcessedContentRenderer.displayName = "ProcessedContentRenderer";
 
+interface ContentDetail {
+  id: string;
+  type: string;
+  title?: string | null;
+  summary?: string | null;
+  content_text?: string | null;
+  processed_content?: string | null;
+  source_uri?: string | null;
+  user_id: string;
+  processing_status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface ClientContentProps {
   contentId: string;
   initialData?: ContentDetail | null;
@@ -204,7 +148,7 @@ export const ClientContent = ({
 }: ClientContentProps) => {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
-  const { onContentChange } = useReaderContext();
+  const { onContentChange, markLeftReady } = useReaderContext();
 
   const [content, setContent] = useState<ContentDetail | null>(
     initialData || null,
@@ -394,14 +338,19 @@ export const ClientContent = ({
     markdownContent,
   ]);
 
+  useEffect(() => {
+    if (!loading) {
+      markLeftReady?.();
+    }
+  }, [loading, markLeftReady]);
+
   if (authLoading || loading) {
-    return <ReaderSkeleton />;
+    return <Loading />;
   }
 
   if (error) {
     return (
       <Alert variant="destructive" className="m-4">
-        <AlertCircle className="h-4 w-4" />
         <AlertTitle>Error Loading Content</AlertTitle>
         <AlertDescription>{error}</AlertDescription>
       </Alert>
@@ -411,7 +360,6 @@ export const ClientContent = ({
   if (!content) {
     return (
       <Alert variant="destructive" className="m-4">
-        <AlertCircle className="h-4 w-4" />
         <AlertTitle>Content Not Found</AlertTitle>
         <AlertDescription>
           The requested content could not be found.
@@ -452,7 +400,7 @@ export const ClientContent = ({
 
       {/* Main Content - 专注显示AI处理后的内容 */}
       <div className="flex-1 min-h-0">
-        <div className="h-full py-2">
+        <div className="h-full py-2 max-w-[35rem] mx-auto">
           <ProcessedContentRenderer
             content={content}
             markdownContent={markdownContent}

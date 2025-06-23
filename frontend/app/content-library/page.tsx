@@ -3,7 +3,7 @@
 import MainLayout from "@/components/layout/MainLayout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
-import { Search, AlertCircle, Loader2 } from "lucide-react";
+import { Search, AlertCircle } from "lucide-react";
 import { ContentList } from "./components/ContentList";
 import { ContentPreview } from "./components/ContentPreview";
 import { useContentItems } from "./hooks/useContentItems";
@@ -14,6 +14,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { Loading } from "@/components/ui/loading";
 
 export default function ContentLibraryPage() {
   const {
@@ -36,12 +37,7 @@ export default function ContentLibraryPage() {
   if (authLoading || loading) {
     return (
       <MainLayout pageTitle="Content Library">
-        <div className="flex justify-center items-center h-64">
-          <div className="flex items-center space-x-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <p className="text-lg">Loading...</p>
-          </div>
-        </div>
+        <Loading />
       </MainLayout>
     );
   }

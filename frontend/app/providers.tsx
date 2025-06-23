@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import { useState } from "react";
-import { ProgressBar } from "@/components/ui/ProgressBar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -37,8 +37,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
         enableSystem
         disableTransitionOnChange
       >
-        <ProgressBar />
-        {children}
+        <TooltipProvider>
+          {children}
+          {/* <ProgressBar /> */}
+        </TooltipProvider>
         <Toaster richColors position="top-right" />
       </ThemeProvider>
     </QueryClientProvider>
