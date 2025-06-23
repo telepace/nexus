@@ -258,20 +258,6 @@ const ProcessedContentRenderer = memo(
 
 ProcessedContentRenderer.displayName = "ProcessedContentRenderer";
 
-interface ContentDetail {
-  id: string;
-  type: string;
-  title?: string | null;
-  summary?: string | null;
-  content_text?: string | null;
-  processed_content?: string | null;
-  source_uri?: string | null;
-  user_id: string;
-  processing_status: string;
-  created_at: string;
-  updated_at: string;
-}
-
 interface ClientContentProps {
   contentId: string;
   initialData?: ContentDetail | null;
@@ -483,7 +469,7 @@ export const ClientContent = ({
   }, [content, contentId, user]);
 
   if (authLoading || loading) {
-    return <Loading />;
+    return <ReaderSkeleton />;
   }
 
   if (error) {

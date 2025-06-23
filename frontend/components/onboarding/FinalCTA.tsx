@@ -192,7 +192,7 @@ export function FinalCTA() {
 
             {/* 用户反馈滚动 */}
             <div className="mb-8 overflow-hidden">
-              <div className="flex space-x-8 animate-pulse">
+              <div className="flex space-x-8 animate-shimmer">
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground whitespace-nowrap">
                   <Star className="w-4 h-4 text-yellow-500" />
                   <span>&quot;阅读效率提升了3倍！&quot; - 产品经理 Sarah</span>

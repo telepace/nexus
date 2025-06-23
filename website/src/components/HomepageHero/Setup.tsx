@@ -56,7 +56,7 @@ export function SetupHero() {
             'dark:bg-linear-to-r dark:from-green-400 dark:via-teal-500 dark:to-cyan-500 dark:text-white',
             'text-sm mt-2 inline-block px-3 py-1 rounded-lg',
             '[&>span]:font-bold',
-            'animate-pulse',
+            'animate-shimmer',
             '[animation-duration:2s]',
           ])}
           dangerouslySetInnerHTML={{
