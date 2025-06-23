@@ -40,7 +40,7 @@ describe("PromptCommandDialog", () => {
     render(<PromptCommandDialog {...defaultProps} />);
 
     expect(
-      screen.getByPlaceholderText("chat with content"),
+      screen.getByPlaceholderText("ask something..."),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { hidden: true })).toBeInTheDocument();
   });
@@ -49,7 +49,7 @@ describe("PromptCommandDialog", () => {
     const user = userEvent.setup();
     render(<PromptCommandDialog {...defaultProps} />);
 
-    const input = screen.getByPlaceholderText("chat with content");
+    const input = screen.getByPlaceholderText("ask something...");
     await user.type(input, "/");
 
     await waitFor(() => {
@@ -62,7 +62,7 @@ describe("PromptCommandDialog", () => {
     const user = userEvent.setup();
     render(<PromptCommandDialog {...defaultProps} />);
 
-    const input = screen.getByPlaceholderText("chat with content");
+    const input = screen.getByPlaceholderText("ask something...");
     await user.type(input, "/摘要");
 
     await waitFor(() => {
@@ -75,7 +75,7 @@ describe("PromptCommandDialog", () => {
     const user = userEvent.setup();
     render(<PromptCommandDialog {...defaultProps} />);
 
-    const input = screen.getByPlaceholderText("chat with content");
+    const input = screen.getByPlaceholderText("ask something...");
     await user.type(input, "/");
 
     await waitFor(() => {
@@ -91,7 +91,7 @@ describe("PromptCommandDialog", () => {
     const user = userEvent.setup();
     render(<PromptCommandDialog {...defaultProps} />);
 
-    const input = screen.getByPlaceholderText("chat with content");
+    const input = screen.getByPlaceholderText("ask something...");
     await user.type(input, "这是测试内容");
 
     const sendButton = screen.getByRole("button");
@@ -104,7 +104,7 @@ describe("PromptCommandDialog", () => {
     const user = userEvent.setup();
     render(<PromptCommandDialog {...defaultProps} />);
 
-    const input = screen.getByPlaceholderText("chat with content");
+    const input = screen.getByPlaceholderText("ask something...");
 
     // Select a prompt first
     await user.type(input, "/");
@@ -135,7 +135,7 @@ describe("PromptCommandDialog", () => {
     const user = userEvent.setup();
     render(<PromptCommandDialog {...defaultProps} />);
 
-    const input = screen.getByPlaceholderText("chat with content");
+    const input = screen.getByPlaceholderText("ask something...");
     await user.type(input, "/");
 
     await waitFor(() => {
@@ -154,7 +154,7 @@ describe("PromptCommandDialog", () => {
   it("should handle empty prompts list", () => {
     render(<PromptCommandDialog {...defaultProps} availablePrompts={[]} />);
 
-    const input = screen.getByPlaceholderText("chat with content");
+    const input = screen.getByPlaceholderText("ask something...");
     expect(input).toBeInTheDocument();
   });
 
@@ -172,7 +172,7 @@ describe("PromptCommandDialog", () => {
       <PromptCommandDialog {...defaultProps} availablePrompts={manyPrompts} />,
     );
 
-    const input = screen.getByPlaceholderText("chat with content");
+    const input = screen.getByPlaceholderText("ask something...");
     await user.type(input, "/");
 
     await waitFor(() => {

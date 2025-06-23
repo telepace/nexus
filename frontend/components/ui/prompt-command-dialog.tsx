@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Command } from "lucide-react";
+import { Command, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -129,17 +129,18 @@ export function PromptCommandDialog({
       {/* 输入框和发送按钮 */}
       <form onSubmit={handleSubmit} className="relative">
         {/* 现代聊天输入框容器 */}
-        <div className="relative bg-transparent focus-within:ring-1 focus-within:ring-ring/20 transition-all">
-          <div className="flex items-end gap-3 p-3">
+        <div className="relative bg-white shadow-md rounded-3xl focus-within:ring-1 focus-within:ring-foreground transition-all duration-200">
+          <div className="flex items-center gap-3 pl-6 pr-3 py-1">
             <div className="relative flex-1">
               <Input
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="chat with content"
-                className="border-0 bg-transparent px-0 py-2 h-auto text-base border-b-2 border-neutral-800 rounded-none focus-visible:border-b-2 focus-visible:border-ring focus-visible:ring-0 focus-visible:ring-offset-0"
+                placeholder="ask something..."
+                className="border-0 bg-transparent px-0 py-2 h-auto text-base focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
                 disabled={isExecuting}
+                autoComplete="off"
               />
 
               {/* 命令建议列表 */}
@@ -154,7 +155,7 @@ export function PromptCommandDialog({
                         key={prompt?.id || `prompt-${Math.random()}`}
                         type="button"
                         onClick={() => handlePromptClick(prompt)}
-                        className="w-full p-2 text-left rounded-md hover:bg-muted transition-colors"
+                        className="w-full p-2 text-left rounded-xl hover:bg-muted transition-colors"
                       >
                         <div className="flex items-center gap-2">
                           <Command className="h-4 w-4 text-muted-foreground" />
@@ -174,15 +175,14 @@ export function PromptCommandDialog({
               )}
             </div>
 
-            {/* 集成的发送按钮 - 添加outline样式 */}
+            {/* 集成的发送按钮 */}
             <Button
               type="submit"
               disabled={!input.trim() || isExecuting}
-              variant="ghost"
-              size="sm"
-              className="h-10 w-10 p-0 hover:bg-transparent flex-shrink-0"
+              size="icon"
+              className="rounded-full h-6 w-6 shadow-md text-foreground hover:text-foreground bg-neutral-100 hover:bg-neutral-300 cursor-pointer"
             >
-              <Send className="h-5 w-5" />
+              <ArrowUpRight className="h-4 w-4" />
             </Button>
           </div>
         </div>

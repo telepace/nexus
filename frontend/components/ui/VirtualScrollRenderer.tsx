@@ -336,7 +336,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
 const ChunkItem = React.memo<{
   chunk: ContentChunk & { key: string };
 }>(({ chunk }) => (
-  <div className="chunk-item py-4 px-4">
+  <div className="chunk-item py-4 px-8">
     <div className="chunk-header mb-2 text-xs text-gray-500 flex justify-between items-center">
       <span className="font-medium">
         Chunk {chunk.index + 1} • {chunk.type}

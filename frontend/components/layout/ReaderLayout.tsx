@@ -109,10 +109,7 @@ export default function ReaderLayout({
             </ResizablePanel>
 
             {/* 可拖拽的分割线 */}
-            <ResizableHandle
-              withHandle
-              className="bg-border hover:bg-primary/20 transition-colors"
-            />
+            <ResizableHandle className="bg-border hover:bg-primary/20 transition-colors" />
 
             {/* AI 分析区域 - 默认占40%，可调整 */}
             <ResizablePanel
