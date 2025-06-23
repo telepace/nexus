@@ -27,6 +27,8 @@ import { useAuth, getCookie } from "@/lib/auth";
 import { contentCache } from "@/lib/services/content-cache";
 import { eventBus } from "@/lib/event-bus";
 import { useGlobalNotificationStore } from "@/lib/stores/useGlobalNotificationStore";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 interface AddContentModalProps {
   open: boolean;
@@ -70,6 +72,8 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   const [detectedUrls, setDetectedUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  // 控制左侧视图："input"(默认) 或 "file" 上传视图
+  const [view, setView] = useState<"input" | "file">("input");
 
   // Move useAuth to component top level
   const { user } = useAuth();
@@ -95,25 +99,38 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   const handleContentChange = useCallback((text: string) => {
     setContent(text);
 
-    // Auto-detect URLs in the content with improved regex
-    const urls = text.match(/https?:\/\/[^\s<>"{}|\\^`\[\]]+/g) || [];
-    if (urls.length > 0) {
-      const validUrls = urls
-        .map((url: string) => {
-          // Remove trailing punctuation that might be captured by regex
-          const cleanedUrl = url.replace(/[.,;:!?]+$/, "");
-          return isURL(cleanedUrl) ? cleanedUrl : null;
-        })
-        .filter((url): url is string => url !== null);
+    const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
+    // Auto-detect URLs in the content
+    const urls = text.match(urlRegex) || [];
 
-      if (validUrls.length > 0) {
-        setDetectedUrls((prev) => {
-          const allUrls = [...prev, ...validUrls];
-          // Remove duplicates
-          return Array.from(new Set(allUrls));
-        });
-        setContentType("url");
-      }
+    const validUrls = urls
+      .map((url: string) => {
+        // Remove trailing punctuation that might be captured by regex
+        const cleanedUrl = url.replace(/[.,;:!?]+$/, "");
+        return isURL(cleanedUrl) ? cleanedUrl : null;
+      })
+      .filter((url): url is string => url !== null);
+
+    // 计算去除 URL 和空白后的剩余字符长度
+    const nonUrlPartLength = text.replace(urlRegex, "").replace(/\s+/g, "").length;
+
+    if (validUrls.length > 0 && nonUrlPartLength <= 50) {
+      // 输入几乎只包含链接（剩余文本不超过 50 个字符），按 URL 类型处理
+      setDetectedUrls((prev) => {
+        const allUrls = [...prev, ...validUrls];
+        return Array.from(new Set(allUrls)); // 去重
+      });
+      setContentType("url");
+      return;
+    }
+
+    // 其它情况按文本处理，不额外上传链接
+    if (text.trim().length > 0) {
+      setDetectedUrls([]); // 清空链接，作为纯文本处理
+      setContentType("text");
+    } else {
+      setDetectedUrls([]);
+      setContentType(null);
     }
   }, []);
 
@@ -178,13 +195,8 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   }, []);
 
   // 处理拖放区域点击
-  /**
-   * Sets content type to "text" if it is currently undefined or null.
-   */
   const handleDropAreaClick = () => {
-    if (!contentType) {
-      setContentType("text");
-    }
+    fileInputRef.current?.click();
   };
 
   /**
@@ -380,12 +392,12 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
   return (
     <AlertDialog open={open}>
-      <AlertDialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+      <AlertDialogContent className="max-w-2xl max-h-[90vh] flex flex-col transition-all duration-300 ease-in-out">
         <AlertDialogHeader className="flex-shrink-0">
           <AlertDialogTitle className="text-xl">添加新内容</AlertDialogTitle>
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             className="absolute right-2 top-2"
             onClick={handleCancel}
             aria-label="关闭"
@@ -393,91 +405,44 @@ export const AddContentModal: FC<AddContentModalProps> = ({
             <X className="h-4 w-4" />
           </Button>
         </AlertDialogHeader>
-        <AlertDialogDescription className="flex-shrink-0">
-          粘贴链接、输入文本或上传文件来添加新内容。支持多个链接同时添加。
-          <br />
-          <span className="text-xs text-muted-foreground mt-1 inline-block">
-            💡 提示：使用 Ctrl+Enter (Mac: Cmd+Enter) 快速添加内容
-          </span>
-        </AlertDialogDescription>
 
-        <div className="flex-1 overflow-y-auto space-y-6 py-4">
-          {/* 主拖放区域 */}
-          <div
-            data-testid="drop-area"
-            onClick={handleDropAreaClick}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            className={`
-              flex flex-col items-center justify-center p-8 
-              border-2 border-dashed rounded-lg
-              transition-colors cursor-pointer
-              ${
-                selectedFiles.length || content || detectedUrls.length
-                  ? "border-primary/50 bg-primary/5"
-                  : "border-gray-300 hover:border-primary/50 hover:bg-gray-100/50 dark:border-gray-600 dark:hover:bg-gray-800/50"
-              }
-            `}
-          >
-            {!contentType && (
-              <>
-                <div className="flex items-center space-x-2 text-gray-500 dark:text-gray-400 mb-2">
-                  <LinkIcon className="h-5 w-5" />
-                  <FileText className="h-5 w-5" />
-                  <Upload className="h-5 w-5" />
-                </div>
-                <p className="text-center text-gray-500 dark:text-gray-400 mb-4">
-                  粘贴链接、输入文本，或拖拽文件至此
-                </p>
-                <p className="text-xs text-center text-gray-400 dark:text-gray-500 mb-4">
-                  支持多个链接，可用空格、分号、逗号或换行分隔
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    fileInputRef.current?.click();
-                  }}
-                >
-                  点击选择本地文件
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileSelect}
+        <div className="flex-1 overflow-y-auto space-y-6 py-4 px-4 md:px-6">
+          {view === "input" && (
+            <>
+            {/* 文本/链接输入区域 */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="content-input">文本内容 / 链接</Label>
+                <Textarea
+                  id="content-input"
+                  role="textbox"
+                  placeholder="粘贴链接或输入文本内容，支持多个链接同时添加。"
+                  className="min-h-[120px] max-h-[120px] resize-none"
+                  value={content}
+                  onChange={(e) => handleContentChange(e.target.value)}
                 />
-              </>
-            )}
+              </div>
 
-            {contentType === "url" && (
-              <div className="w-full space-y-4">
-                <div className="bg-green-50 dark:bg-green-900/20 p-2 rounded text-green-600 dark:text-green-400 text-sm flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-2" />
-                  <span>已识别 {detectedUrls.length} 个链接</span>
-                </div>
-
-                {/* 显示检测到的URL */}
-                {detectedUrls.length > 0 && (
+              {/* 已检测到的链接显示 */}
+              {contentType === "url" && detectedUrls.length > 0 && (
+                <>
                   <div className="space-y-2">
                     <Label>检测到的链接</Label>
                     <div className="space-y-2 max-h-32 overflow-y-auto">
                       {detectedUrls.map((url, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700"
+                          className="flex items-center justify-between bg-muted p-2 rounded border border-muted"
                         >
                           <div className="flex items-center min-w-0 flex-1">
-                            <LinkIcon className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                            <LinkIcon className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
                             <span className="truncate text-sm">{url}</span>
                           </div>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => removeUrl(index)}
-                            className="ml-2 h-6 w-6 p-0 text-gray-500 hover:text-red-500"
+                            className="ml-2 h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                           >
                             <X className="h-3 w-3" />
                           </Button>
@@ -485,7 +450,11 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                       ))}
                     </div>
                   </div>
-                )}
+                </>
+              )}
+            </div>
+            </>
+          )}
 
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -587,30 +556,36 @@ export const AddContentModal: FC<AddContentModalProps> = ({
             )}
           </div>
 
-          {/* 支持的格式信息 */}
-          <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-            <p>
-              <strong>支持格式:</strong> PDF, Markdown, TXT, DOCX, URL, 纯文本
-            </p>
-            <p>
-              <strong>链接分隔:</strong> 空格、分号(;)、逗号(,)、换行符
-            </p>
-          </div>
+              {/* 支持格式信息 */}
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>
+                  <strong>支持格式:</strong> PDF, Markdown, TXT, DOCX, URL, 纯文本
+                </p>
+              </div>
+            </div>
+            </>
+          )}
 
           {/* 错误信息 */}
           {error && (
-            <div className="text-red-500 text-sm bg-red-50 dark:bg-red-900/20 p-2 rounded-md">
+            <div className="text-destructive text-sm bg-destructive/10 dark:bg-destructive/20 p-2 rounded-md">
               <AlertCircle className="h-4 w-4 inline mr-1" />
               {error}
             </div>
           )}
         </div>
 
-        <AlertDialogFooter className="flex-shrink-0">
-          <AlertDialogCancel onClick={handleCancel} disabled={isLoading}>
-            取消
-          </AlertDialogCancel>
+        <AlertDialogFooter className="flex-shrink-0 space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setView(view === "input" ? "file" : "input")}
+            disabled={isLoading}
+          >
+            {view === "input" ? "上传本地文件" : "输入链接 / 文本"}
+          </Button>
           <AlertDialogAction
+            className={cn(buttonVariants({ size: "sm" }), "min-w-[4rem] bg-primary hover:bg-primary/90")}
             onClick={handleAddContent}
             disabled={
               isLoading ||
@@ -618,7 +593,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                 selectedFiles.length === 0 &&
                 detectedUrls.length === 0)
             }
-            className="bg-primary hover:bg-primary/90"
           >
             {isLoading
               ? "处理中..."
