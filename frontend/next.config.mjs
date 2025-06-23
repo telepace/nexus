@@ -11,7 +11,7 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:8000/api/:path*", // 代理到后端服务器
+        destination: `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`, // 代理到后端服务器
       },
     ];
   },
