@@ -111,7 +111,7 @@ class TestAIProcessorBase:
             mock_client.return_value.__aenter__.return_value = mock_client_instance
             mock_client_instance.post.return_value = mock_response
 
-            await processor._call_llm("测试提示词")
+            await processor._call_llm(system_content="测试系统内容", user_prompt="测试提示词")
 
             # 验证调用参数
             mock_client_instance.post.assert_called_once()
@@ -137,6 +137,7 @@ class TestAIProcessorBase:
             assert len(request_data["messages"]) == 2
             assert request_data["messages"][0]["role"] == "system"
             assert request_data["messages"][1]["role"] == "user"
+            assert request_data["messages"][0]["content"] == "测试系统内容"
             assert request_data["messages"][1]["content"] == "测试提示词"
 
     @pytest.mark.asyncio
@@ -160,7 +161,7 @@ class TestAIProcessorBase:
             mock_client_instance.post.return_value = mock_response
 
             with pytest.raises(Exception) as exc_info:
-                await processor._call_llm("测试提示词")
+                await processor._call_llm(system_content="测试系统内容", user_prompt="测试提示词")
 
             # 验证异常被正确抛出
             assert "401" in str(exc_info.value) or "Unauthorized" in str(exc_info.value)

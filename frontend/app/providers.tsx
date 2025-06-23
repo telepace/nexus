@@ -6,6 +6,7 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import { useState } from "react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { NotificationProvider } from "@/components/providers/NotificationProvider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -38,9 +39,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         enableSystem
         disableTransitionOnChange
       >
-        <ProgressBar />
-        {children}
-        <Toaster richColors position="top-right" />
+        <NotificationProvider>
+          <ProgressBar />
+          {children}
+          <Toaster richColors position="top-right" />
+        </NotificationProvider>
       </ThemeProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

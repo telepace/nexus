@@ -96,13 +96,15 @@ class AIProcessorBase(ProcessingStep):
             context.session.add(ai_job)
             context.session.commit()
 
-            # 渲染提示词模板
-            prompt = await self._render_template(
+            # 渲染提示词模板（作为用户提示）
+            user_prompt = await self._render_template(
                 content_item, content_to_analyze, context
             )
 
             # 调用LLM进行分析
-            ai_result = await self._call_llm(prompt)
+            ai_result = await self._call_llm(
+                system_content=content_to_analyze, user_prompt=user_prompt
+            )
 
             # 解析AI响应
             parsed_result = self._parse_ai_response(ai_result)
@@ -232,19 +234,21 @@ class AIProcessorBase(ProcessingStep):
         }
         return type_mapping.get(content_type, "文档")
 
-    async def _call_llm(self, prompt: str) -> str:
-        """调用LLM API进行内容分析"""
+    async def _call_llm(self, *, system_content: str, user_prompt: str) -> str:
+        """调用LLM API进行内容分析
+
+        Args:
+            system_content: 作为 system role 传递的正文文本
+            user_prompt: 作为 user role 传递的提示词（模板渲染结果）
+        """
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 # 构建请求数据
                 request_data = {
                     "model": settings.DEFAULT_LLM_MODEL,
                     "messages": [
-                        {
-                            "role": "system",
-                            "content": "You are a professional content analyst. Always respond with valid JSON format as specified in the prompt.",
-                        },
-                        {"role": "user", "content": prompt},
+                        {"role": "system", "content": system_content},
+                        {"role": "user", "content": user_prompt},
                     ],
                     "temperature": 0.3,
                     "max_tokens": 2000,

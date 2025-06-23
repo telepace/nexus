@@ -26,6 +26,7 @@ import {
 import { useAuth, getCookie } from "@/lib/auth";
 import { contentCache } from "@/lib/services/content-cache";
 import { eventBus } from "@/lib/event-bus";
+import { useGlobalNotificationStore } from "@/lib/stores/useGlobalNotificationStore";
 
 interface AddContentModalProps {
   open: boolean;
@@ -72,6 +73,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
   // Move useAuth to component top level
   const { user } = useAuth();
+
+  // 全局通知Store
+  const { createContentProcessingNotification } = useGlobalNotificationStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -236,7 +240,15 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           const createdItem: ContentItemPublic = await response.json();
           console.log("URL内容创建成功:", createdItem);
           newlyCreatedItems.push(createdItem);
-          // Note: Background processing is automatically started by the backend
+          
+          // 创建全局通知 - URL内容需要处理
+          if (createdItem.processing_status === 'processing') {
+            createContentProcessingNotification(
+              createdItem.id,
+              createdItem.title || '处理网页内容',
+              `正在分析来自 ${url} 的内容...`
+            );
+          }
         }
       } else if (contentType === "text" && content.trim()) {
         // 处理文本类型内容
@@ -268,7 +280,15 @@ export const AddContentModal: FC<AddContentModalProps> = ({
         const createdItem: ContentItemPublic = await response.json();
         console.log("文本内容创建成功:", createdItem);
         newlyCreatedItems.push(createdItem);
-        // Text content is immediately completed, no background processing needed
+        
+        // 创建全局通知 - 文本内容如果需要处理
+        if (createdItem.processing_status === 'processing') {
+          createContentProcessingNotification(
+            createdItem.id,
+            createdItem.title || '处理文本内容',
+            '正在分析文本内容...'
+          );
+        }
       } else if (contentType === "file" && selectedFiles.length > 0) {
         // 处理文件类型内容（暂时显示提示信息）
         setError("文件上传功能正在开发中，敬请期待。");
@@ -300,7 +320,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [contentType, detectedUrls, content, selectedFiles, user, onClose]);
+  }, [contentType, detectedUrls, content, selectedFiles, user, onClose, createContentProcessingNotification]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {

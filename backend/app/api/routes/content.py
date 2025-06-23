@@ -805,8 +805,8 @@ def get_content_chunks_summary_endpoint(
 async def analyze_content_stream(
     content_id: str,
     current_user: CurrentUser,
-    system_prompt: str = Body(..., description="System prompt for analysis"),
-    user_prompt: str = Body(..., description="User prompt (content text)"),
+    analysis_instruction: str = Body(..., description="用户的分析指令，如'请总结这篇文章'"),
+    article_content: str = Body(..., description="要分析的文章正文内容"),
     db: Session = Depends(get_db),
 ):
     """
@@ -814,8 +814,8 @@ async def analyze_content_stream(
 
     Args:
         content_id: ID of the content to analyze
-        system_prompt: System prompt (e.g., prompt template)
-        user_prompt: User prompt (the actual content text)
+        analysis_instruction: 用户的分析指令 (发送给LLM的user role)
+        article_content: 文章正文内容 (发送给LLM的system role)
         current_user: Current authenticated user
         db: Database session
 
@@ -827,12 +827,12 @@ async def analyze_content_stream(
     if not content_item or content_item.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Content not found")
 
-    # Prepare LiteLLM request
+    # 按正确约定传递：system role = 文章内容，user role = 分析指令
     completion_request = CompletionRequest(
-        model="github-llama-3-2-11b-vision",  # 暂时使用一个健康的模型进行测试
+        model="github-llama-3-2-11b-vision",  # 临时测试模型
         messages=[
-            LLMMessage(role="system", content=system_prompt),
-            LLMMessage(role="user", content=user_prompt),
+            LLMMessage(role="system", content=article_content),      # 文章内容作为系统消息
+            LLMMessage(role="user", content=analysis_instruction),   # 分析指令作为用户消息
         ],
         stream=True,
         temperature=0.7,
@@ -862,7 +862,7 @@ async def analyze_content_stream(
                 ) as response:
                     if response.status != 200:
                         # 如果LiteLLM不可用，提供模拟响应
-                        async for chunk in _send_mock_analysis_response(system_prompt):
+                        async for chunk in _send_mock_analysis_response(analysis_instruction):
                             yield chunk
                         return
 
@@ -877,18 +877,20 @@ async def analyze_content_stream(
 
         except Exception:
             # 当LiteLLM服务不可用时，发送模拟分析响应
-            async for chunk in _send_mock_analysis_response(system_prompt):
+            async for chunk in _send_mock_analysis_response(analysis_instruction):
                 yield chunk
 
     async def _send_mock_analysis_response(
-        system_prompt: str,
+        analysis_instruction: str,
     ) -> AsyncGenerator[str, None]:
         """发送模拟的分析响应（当LiteLLM不可用时）"""
         import asyncio
 
-        # 不直接回显完整的 system_prompt，避免冗长输出
+        # 不直接回显完整的分析指令，避免冗长输出
         trimmed_prompt = (
-            system_prompt[:60] + "..." if len(system_prompt) > 60 else system_prompt
+            analysis_instruction[:60] + "..." 
+            if len(analysis_instruction) > 60 
+            else analysis_instruction
         )
 
         mock_analysis = f"""⚠️ LiteLLM service is unavailable (mock response).
@@ -2481,16 +2483,16 @@ async def reprocess_content_item_endpoint(
 async def analyze_content_stream_alias(
     content_id: str,
     current_user: CurrentUser,
-    system_prompt: str = Body(..., description="System prompt for analysis"),
-    user_prompt: str = Body(..., description="User prompt (content text)"),
+    analysis_instruction: str = Body(..., description="分析指令"),
+    article_content: str = Body(..., description="文章内容"),
     db: Session = Depends(get_db),
 ):
     """Alias of /{content_id}/analyze keeping old path used by frontend."""
     return await analyze_content_stream(
         content_id=content_id,
         current_user=current_user,
-        system_prompt=system_prompt,
-        user_prompt=user_prompt,
+        analysis_instruction=analysis_instruction,
+        article_content=article_content,
         db=db,
     )
 

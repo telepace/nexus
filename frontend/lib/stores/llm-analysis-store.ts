@@ -240,8 +240,8 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                system_prompt: systemPrompt,
-                user_prompt: userPrompt,
+                analysis_instruction: systemPrompt,  // 分析指令
+                article_content: userPrompt,         // 文章内容
                 model: "gemini-2.5-flash-preview-05-20",
               }),
             },

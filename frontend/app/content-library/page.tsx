@@ -19,7 +19,6 @@ import {
   Clock,
   Brain,
   Target,
-  Sparkles,
   Trash2,
   MoreVertical,
   Star,
@@ -29,7 +28,6 @@ import { useAuth, getCookie } from "@/lib/client-auth";
 import { useRouter } from "next/navigation";
 import MainLayout from "@/components/layout/MainLayout";
 import { ShareContentModal } from "@/components/share/ShareContentModal";
-import { useContentEvents, ContentEvent } from "@/hooks/useContentEvents";
 import {
   ProcessingStatusBadge,
   ProcessingStatus,
@@ -294,73 +292,6 @@ export default function ContentLibraryPage() {
 
     setFilteredItems(filtered);
   }, [items, searchQuery, statusFilter, typeFilter]);
-
-  // Handle content status updates from SSE
-  const handleContentUpdate = useCallback((event: ContentEvent) => {
-    if (event.type === "content_status_update" && event.content_id) {
-      setItems((prevItems) => {
-        return prevItems.map((item) => {
-          if (item.id === event.content_id) {
-            const updatedItem = {
-              ...item,
-              processing_status: event.status || item.processing_status,
-              title: event.title || item.title,
-              updated_at: new Date().toISOString(),
-            };
-
-            // Update selected item if it's the same one
-            setSelectedItem((prev) =>
-              prev?.id === event.content_id ? updatedItem : prev,
-            );
-
-            return updatedItem;
-          }
-          return item;
-        });
-      });
-
-      // Show toast notifications for important status changes
-      if (event.status === "completed") {
-        toast.success(`内容处理完成: ${event.title || "未知内容"}`);
-      } else if (event.status === "failed") {
-        toast.error(`内容处理失败: ${event.error_message || "未知错误"}`);
-      }
-    } else if (event.type === "content_created" && event.content_item) {
-      // 处理新内容创建事件
-      const newItem = event.content_item as ContentItemPublic;
-      setItems((prevItems) => {
-        // 检查是否已存在，避免重复添加
-        const exists = prevItems.some((item) => item.id === newItem.id);
-        if (!exists) {
-          // 将新项目添加到列表开头
-          return [newItem, ...prevItems];
-        }
-        return prevItems;
-      });
-
-      // 清除内容缓存以确保数据一致性
-      contentCache.clearContentList();
-
-      // 显示成功通知
-      toast.success(`新内容已添加: ${newItem.title || "未知内容"}`);
-    }
-  }, []);
-
-  const handleConnectionEstablished = useCallback(() => {
-    console.log("SSE connection established");
-  }, []);
-
-  const handleSSEError = useCallback((error: Error) => {
-    console.error("SSE error:", error);
-  }, []);
-
-  // Setup SSE connection
-  useContentEvents({
-    onContentUpdate: handleContentUpdate,
-    onConnectionEstablished: handleConnectionEstablished,
-    onError: handleSSEError,
-    enabled: !!user,
-  });
 
   // Handle Open Reader
   const handleOpenReader = useCallback(

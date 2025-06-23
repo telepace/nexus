@@ -322,12 +322,15 @@ class PreprocessingPipeline:
             *tasks
         )
 
-        # labels_result = {'tags': [...], 'score': float | None}
+        # labels_result = {'tags': [...], 'score': float | None, 'reading_time_minutes': int | None}
         tag_score = labels_result.get("score")
+        reading_time_minutes = labels_result.get("reading_time_minutes")
 
-        # 合并标签得分到内容分析
+        # 合并标签得分和阅读时间到内容分析
         if tag_score is not None:
             content_analysis["tagging_score"] = tag_score
+        if reading_time_minutes is not None:
+            content_analysis["reading_time_minutes"] = reading_time_minutes
 
         processing_time = (datetime.now() - start_time).total_seconds()
 
@@ -595,7 +598,11 @@ class PreprocessingPipeline:
 
         # 估算阅读时间 - 优先使用 LLM 生成的时间，否则回退到算法估算
         ai_reading_time = ai_results.get("reading_time_minutes")
-        if ai_reading_time is not None and isinstance(ai_reading_time, int) and ai_reading_time > 0:
+        if (
+            ai_reading_time is not None
+            and isinstance(ai_reading_time, int)
+            and ai_reading_time > 0
+        ):
             reading_time = ai_reading_time
         else:
             # 回退到算法估算（每分钟200词）
@@ -662,15 +669,17 @@ class PreprocessingPipeline:
             # 对输出进行基础校验
             if not isinstance(tags, list):
                 tags = []
-            if score is not None and not isinstance(score, (int, float)):
+            if score is not None and not isinstance(score, int | float):
                 score = None
-            if reading_time_minutes is not None and not isinstance(reading_time_minutes, int):
+            if reading_time_minutes is not None and not isinstance(
+                reading_time_minutes, int
+            ):
                 reading_time_minutes = None
 
             return {
-                "tags": tags[:20], 
+                "tags": tags[:20],
                 "score": score,
-                "reading_time_minutes": reading_time_minutes
+                "reading_time_minutes": reading_time_minutes,
             }
         except Exception as e:
             logger.error(f"生成标签失败: {str(e)}")

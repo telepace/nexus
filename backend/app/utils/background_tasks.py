@@ -282,22 +282,7 @@ class BackgroundTaskManager:
                                 # 批量插入新分段
                                 session.add_all(chunks)
 
-                                # ---------------- 生成 AI 分析结果 ----------------
-                                try:
-                                    from app.utils.ai_results_generator import (
-                                        generate_and_store_basic_ai_results,
-                                    )
-
-                                    # 使用 markdown_content（清洁后）生成分析
-                                    await generate_and_store_basic_ai_results(
-                                        session, content_item, cleaned_content
-                                    )
-                                except Exception as ai_err:
-                                    logger.error(
-                                        f"Failed to generate AI results for {content_id}: {ai_err}"
-                                    )
-
-                                # ---------------- 新增：触发完整AI预处理管道 ----------------
+                                # ---------------- 统一AI处理：只使用PreprocessingPipeline ----------------
                                 try:
                                     from app.core.dependencies import (
                                         get_chat_service_instance,
@@ -337,6 +322,27 @@ class BackgroundTaskManager:
 
                                     ai_results, ai_stats = preprocessing_result
 
+                                    # 计算阅读时间（优先使用LLM生成的，否则算法估算）
+                                    ai_reading_time = None
+                                    # 尝试从content_analysis中获取LLM生成的阅读时间
+                                    content_analysis = ai_results.get(
+                                        "content_analysis", {}
+                                    )
+                                    if "reading_time_minutes" in content_analysis:
+                                        ai_reading_time = content_analysis.get(
+                                            "reading_time_minutes"
+                                        )
+
+                                    # 如果没有，使用算法估算
+                                    if (
+                                        not ai_reading_time
+                                        or not isinstance(ai_reading_time, int)
+                                        or ai_reading_time <= 0
+                                    ):
+                                        ai_reading_time = max(
+                                            1, len(cleaned_content.split()) // 200
+                                        )
+
                                     # 直接更新或创建AIResult
                                     from sqlmodel import select
 
@@ -362,8 +368,8 @@ class BackgroundTaskManager:
                                         existing_ai_result.content_analysis = (
                                             ai_results.get("content_analysis")
                                         )
-                                        existing_ai_result.reading_time_minutes = max(
-                                            1, len(cleaned_content.split()) // 200
+                                        existing_ai_result.reading_time_minutes = (
+                                            ai_reading_time
                                         )
                                         existing_ai_result.difficulty_level = (
                                             ai_results.get("content_analysis", {}).get(
@@ -388,9 +394,7 @@ class BackgroundTaskManager:
                                             content_analysis=ai_results.get(
                                                 "content_analysis"
                                             ),
-                                            reading_time_minutes=max(
-                                                1, len(cleaned_content.split()) // 200
-                                            ),
+                                            reading_time_minutes=ai_reading_time,
                                             difficulty_level=ai_results.get(
                                                 "content_analysis", {}
                                             ).get("difficulty_level", "intermediate"),

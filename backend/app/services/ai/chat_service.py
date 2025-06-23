@@ -5,7 +5,6 @@ AI聊天服务
 
 import json
 import logging
-import os
 import random
 from pathlib import Path
 from typing import Any
@@ -61,7 +60,10 @@ class ChatService:
                 ai_content = await self._call_litellm_proxy(system_content, prompt)
 
                 # 针对不同模板的解析策略
-                if template_name == "labels.j2" or template_name == "segment_aware_chat.j2":
+                if (
+                    template_name == "labels.j2"
+                    or template_name == "segment_aware_chat.j2"
+                ):
                     # 这两种模板要求输出有效 JSON
                     try:
                         # 处理被markdown代码块包裹的JSON
@@ -78,7 +80,7 @@ class ChatService:
                             end_idx = json_content.rfind("```")
                             if end_idx > start_idx:
                                 json_content = json_content[start_idx:end_idx].strip()
-                        
+
                         parsed = json.loads(json_content)
                         logger.info(f"✅ {template_name} JSON parsing successful")
                         return parsed  # type: ignore[return-value]
@@ -86,23 +88,33 @@ class ChatService:
                         logger.warning(
                             f"Expected JSON output for {template_name} but failed to parse: {json_err}"
                         )
-                        logger.debug(f"Raw AI content that failed to parse: {ai_content[:500]}")
+                        logger.debug(
+                            f"Raw AI content that failed to parse: {ai_content[:500]}"
+                        )
                         # JSON 解析失败时，回退到 mock 而不是返回空字典
-                        raise Exception(f"JSON parsing failed for {template_name}: {json_err}")
+                        raise Exception(
+                            f"JSON parsing failed for {template_name}: {json_err}"
+                        )
                 elif template_name == "summary.j2":
                     result = {"summary": {"text": ai_content}}
-                    logger.info(f"✅ {template_name} processing successful, result keys: {list(result.keys())}")
+                    logger.info(
+                        f"✅ {template_name} processing successful, result keys: {list(result.keys())}"
+                    )
                     return result
                 elif template_name == "key_points.j2":
                     result = {"key_points": {"text": ai_content}}
-                    logger.info(f"✅ {template_name} processing successful, result keys: {list(result.keys())}")
+                    logger.info(
+                        f"✅ {template_name} processing successful, result keys: {list(result.keys())}"
+                    )
                     return result
                 else:
-                    result = {"text": ai_content}
+                    result = {"text": ai_content}  # type: ignore[dict-item]
                     logger.info(f"✅ {template_name} processing successful (default)")
                     return result
             except Exception as lite_err:
-                logger.error(f"LiteLLM proxy call failed: {lite_err}; falling back to mock")
+                logger.error(
+                    f"LiteLLM proxy call failed: {lite_err}; falling back to mock"
+                )
 
             # --- fallback mock ---
             if template_name == "summary.j2":
@@ -236,12 +248,12 @@ class ChatService:
 
         # 生成 0~5 的随机评分（示例），真实场景应由模型给出
         score = round(random.uniform(3.0, 5.0), 1)
-        
+
         # 基于内容长度生成阅读时间估算
         word_count = len(content.split())
         # 改进的阅读时间估算：根据内容复杂度和类型调整
         content_type = context.get("content_type", "").lower()
-        
+
         # 基础阅读速度根据内容类型调整
         if "学术" in content_type or "论文" in content_type or "研究" in content_type:
             # 学术内容阅读较慢
@@ -252,15 +264,25 @@ class ChatService:
         else:
             # 普通内容正常速度
             base_reading_time = max(1, word_count // 180)
-            
+
         # 根据专业术语密度进一步调整
-        technical_terms = ["算法", "量子", "神经网络", "深度学习", "机器学习", "人工智能", "计算机", "程序", "数据"]
+        technical_terms = [
+            "算法",
+            "量子",
+            "神经网络",
+            "深度学习",
+            "机器学习",
+            "人工智能",
+            "计算机",
+            "程序",
+            "数据",
+        ]
         term_count = sum(1 for term in technical_terms if term in content)
         if term_count >= 3:
             base_reading_time = int(base_reading_time * 1.5)
         elif term_count >= 1:
             base_reading_time = int(base_reading_time * 1.2)
-            
+
         reading_time_minutes = max(1, base_reading_time)
 
         return {
