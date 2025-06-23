@@ -116,7 +116,7 @@ const ProcessedContentRenderer = memo(
           <div className="text-center">
             {content.processing_status !== "completed" && (
               <div className="flex items-center justify-center gap-2 mt-2">
-                <span className="text-xs text-primary">AI 正在处理内容...</span>
+                <span className="text-sm text-muted-foreground">AI 正在处理内容...</span>
               </div>
             )}
           </div>
@@ -147,10 +147,10 @@ const ProcessedContentRenderer = memo(
           contentToRender.includes("**") ? (
             <MarkdownRenderer
               content={contentToRender}
-              className="prose prose-sm max-w-none dark:prose-invert px-8 py-4 [&>*:first-child]:mt-0"
+              className="prose prose-sm max-w-[35rem] dark:prose-invert px-8 py-4 [&>*:first-child]:mt-0"
             />
           ) : (
-            <div className="prose prose-sm max-w-none dark:prose-invert px-8 py-4 [&>*:first-child]:mt-0">
+            <div className="prose prose-sm max-w-[35rem] dark:prose-invert px-8 py-4 [&>*:first-child]:mt-0">
               <div className="whitespace-pre-wrap text-sm leading-relaxed">
                 {contentToRender}
               </div>
