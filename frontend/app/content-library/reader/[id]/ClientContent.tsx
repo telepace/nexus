@@ -67,9 +67,9 @@ const ProcessedContentRenderer = memo(
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
             {content.processing_status === "completed" ? (
-              <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
                 处理后的内容暂不可用
-              </p>
+            </p>
             ) : (
               <div className="flex items-center justify-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
@@ -148,7 +148,7 @@ export const ClientContent = ({
 }: ClientContentProps) => {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
-  const { onContentChange, markLeftReady } = useReaderContext();
+  const { onContentChange } = useReaderContext();
 
   const [content, setContent] = useState<ContentDetail | null>(
     initialData || null,
@@ -338,12 +338,6 @@ export const ClientContent = ({
     markdownContent,
   ]);
 
-  useEffect(() => {
-    if (!loading) {
-      markLeftReady?.();
-    }
-  }, [loading, markLeftReady]);
-
   if (authLoading || loading) {
     return <Loading />;
   }
@@ -400,7 +394,7 @@ export const ClientContent = ({
 
       {/* Main Content - 专注显示AI处理后的内容 */}
       <div className="flex-1 min-h-0">
-        <div className="h-full py-2 max-w-[35rem] mx-auto">
+        <div className="h-full py-2">
           <ProcessedContentRenderer
             content={content}
             markdownContent={markdownContent}

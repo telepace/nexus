@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, createContext, useContext, useEffect } from "react";
+import React, { useState, useCallback, createContext, useContext } from "react";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SettingsPanel } from "@/components/layout/SettingsPanel";
@@ -11,12 +11,10 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
-import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
 
 // 创建上下文来传递内容更新函数
 const ReaderContext = createContext<{
   onContentChange?: (text: string) => void;
-  markLeftReady?: () => void;
 }>({});
 
 export const useReaderContext = () => useContext(ReaderContext);
@@ -35,13 +33,6 @@ export default function ReaderLayout({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addContentOpen, setAddContentOpen] = useState(false);
   const [contentText, setContentText] = useState(initialContentText);
-  const [leftReady, setLeftReady] = useState(false);
-  const [rightReady, setRightReady] = useState(false);
-
-  const overlayVisible = !(leftReady && rightReady);
-
-  const markLeftReady = useCallback(() => setLeftReady(true), []);
-  const markRightReady = useCallback(() => setRightReady(true), []);
 
   // 提供给 children 的上下文方法，让 ReaderContent 可以更新内容文本
   const handleContentChange = useCallback((text: string) => {
@@ -76,7 +67,7 @@ export default function ReaderLayout({
               className="flex flex-col"
             >
               <ReaderContext.Provider
-                value={{ onContentChange: handleContentChange, markLeftReady }}
+                value={{ onContentChange: handleContentChange }}
               >
                 <div className="flex-1 flex flex-col bg-background overflow-auto">
                   {children}
@@ -97,7 +88,6 @@ export default function ReaderLayout({
               <EnhancedLLMAnalysisSidebar
                 contentId={contentId}
                 contentText={contentText}
-                onLoaded={markRightReady}
                 className="border-l-0" // 移除左边框，因为已有分割线
               />
             </ResizablePanel>
@@ -115,8 +105,6 @@ export default function ReaderLayout({
           open={addContentOpen}
           onClose={() => setAddContentOpen(false)}
         />
-
-        {overlayVisible && <LoadingOverlay />}
       </div>
     </SidebarProvider>
   );
