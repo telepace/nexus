@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
   Loader2,
@@ -12,6 +13,8 @@ import {
   ExternalLink,
   Share2,
   FileText,
+  BookOpen,
+  MessageSquare,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
@@ -20,6 +23,9 @@ import { ShareContentModal } from "@/components/share/ShareContentModal";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
 import { useReaderContext } from "@/components/layout/ReaderLayout";
+import { contentApi, AIResult, ConversationListResponse } from "@/lib/api/content";
+import { AnalysisCards } from "@/components/ai/AnalysisCards";
+import { ConversationHistory } from "@/components/ai/ConversationHistory";
 
 // 骨架屏组件
 const ReaderSkeleton = () => {
@@ -280,6 +286,13 @@ export const ClientContent = ({
   // 添加分享状态管理
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
+  // 新增：AI分析结果和对话历史状态
+  const [analysisResult, setAnalysisResult] = useState<AIResult | null>(null);
+  const [conversations, setConversations] = useState<ConversationListResponse["conversations"]>([]);
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+  const [loadingConversations, setLoadingConversations] = useState(false);
+  const [activeTab, setActiveTab] = useState("content");
+
   // 记录访问
   useEffect(() => {
     navigationState.saveReaderVisit(contentId);
@@ -459,6 +472,63 @@ export const ClientContent = ({
     markdownContent,
   ]);
 
+  // 新增：获取AI分析结果和对话历史
+  useEffect(() => {
+    if (!content || !user) return;
+
+    async function fetchAnalysisData() {
+      try {
+        // 并行获取AI分析结果和对话历史
+        const [analysisPromise, conversationsPromise] = await Promise.allSettled([
+          (() => {
+            setLoadingAnalysis(true);
+            return contentApi.getContentAnalysisResult(contentId);
+          })(),
+          (() => {
+            setLoadingConversations(true);
+            return contentApi.getContentConversations(contentId, false);
+          })(),
+        ]);
+
+        // 处理分析结果
+        if (analysisPromise.status === "fulfilled" && analysisPromise.value) {
+          setAnalysisResult(analysisPromise.value);
+        } else if (analysisPromise.status === "rejected") {
+          console.error("Failed to fetch analysis result:", analysisPromise.reason);
+        }
+
+        // 处理对话历史
+        if (conversationsPromise.status === "fulfilled" && conversationsPromise.value) {
+          setConversations(conversationsPromise.value.conversations);
+        } else if (conversationsPromise.status === "rejected") {
+          console.error("Failed to fetch conversations:", conversationsPromise.reason);
+        }
+      } catch (error) {
+        console.error("Error fetching analysis data:", error);
+      } finally {
+        setLoadingAnalysis(false);
+        setLoadingConversations(false);
+      }
+    }
+
+    fetchAnalysisData();
+  }, [content, contentId, user]);
+
+  // 刷新对话历史的函数
+  const refreshConversations = async () => {
+    if (!user) return;
+    
+    setLoadingConversations(true);
+    try {
+      const response = await contentApi.getContentConversations(contentId, false);
+      setConversations(response.conversations);
+    } catch (error) {
+      console.error("Failed to refresh conversations:", error);
+    } finally {
+      setLoadingConversations(false);
+    }
+  };
+
   if (authLoading || loading) {
     return <ReaderSkeleton />;
   }
@@ -551,15 +621,63 @@ export const ClientContent = ({
         </div>
       </div>
 
-      {/* Main Content - 专注显示AI处理后的内容 */}
+      {/* Main Content - 使用 Tabs 切换不同视图 */}
       <div className="flex-1 p-6 min-h-0">
-        <div className="h-full border rounded-lg bg-gradient-to-br from-green-50/30 to-emerald-50/30 dark:from-green-950/10 dark:to-emerald-950/10">
-          <ProcessedContentRenderer
-            content={content}
-            markdownContent={markdownContent}
-            contentId={contentId}
-          />
-        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsTrigger value="content" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              内容阅读
+            </TabsTrigger>
+            <TabsTrigger value="analysis" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              AI 分析
+              {analysisResult && (
+                <Badge variant="outline" className="ml-1 text-xs">
+                  {[analysisResult.summary, analysisResult.key_points].filter(Boolean).length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="conversations" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              对话历史
+              {conversations.length > 0 && (
+                <Badge variant="outline" className="ml-1 text-xs">
+                  {conversations.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="content" className="flex-1 min-h-0 mt-0">
+            <div className="h-full border rounded-lg bg-gradient-to-br from-green-50/30 to-emerald-50/30 dark:from-green-950/10 dark:to-emerald-950/10">
+              <ProcessedContentRenderer
+                content={content}
+                markdownContent={markdownContent}
+                contentId={contentId}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analysis" className="flex-1 min-h-0 mt-0">
+            <div className="h-full overflow-auto">
+              <AnalysisCards 
+                analysisResult={analysisResult} 
+                loading={loadingAnalysis} 
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="conversations" className="flex-1 min-h-0 mt-0">
+            <div className="h-full overflow-auto">
+              <ConversationHistory 
+                conversations={conversations} 
+                loading={loadingConversations}
+                onRefresh={refreshConversations}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* 分享弹窗 */}

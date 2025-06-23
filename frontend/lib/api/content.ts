@@ -90,6 +90,43 @@ export interface ContentChunksSummary {
   };
 }
 
+export interface AIResult {
+  summary?: Record<string, unknown> | null;
+  key_points?: Record<string, unknown> | null;
+  labels?: string[] | null;
+  content_analysis?: Record<string, unknown> | null;
+  reading_time_minutes?: number | null;
+  difficulty_level?: string | null;
+  content_quality_score?: number | null;
+}
+
+export interface ConversationMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+  timestamp?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ConversationPublic {
+  id: string;
+  user_id: string;
+  content_item_id?: string;
+  title?: string;
+  conversation_type: string;
+  ai_model_name: string;
+  messages: ConversationMessage[];
+  summary?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConversationListResponse {
+  conversations: ConversationPublic[];
+  total: number;
+  has_auto_analysis: boolean;
+}
+
 export const contentApi = {
   /**
    * Get all content items for the current user
@@ -222,5 +259,33 @@ export const contentApi = {
 
   async deleteContentItem(id: string): Promise<void> {
     await client.delete(`/api/v1/content/${id}`);
+  },
+
+  /**
+   * Get AI conversations for a content item
+   */
+  async getContentConversations(
+    contentId: string,
+    includeInactive: boolean = false,
+  ): Promise<ConversationListResponse> {
+    const params = includeInactive ? "?include_inactive=true" : "";
+    const response = await client.get<ConversationListResponse>(
+      `/api/v1/content/${contentId}/conversations${params}`,
+    );
+    return response;
+  },
+
+  /**
+   * Get AI analysis result for a content item
+   */
+  async getContentAnalysisResult(contentId: string): Promise<AIResult | null> {
+    try {
+      const content = await this.getContentItem(contentId);
+      // AIResult 数据在 ContentItemPublic 的 ai_result 字段中
+      return (content as any).ai_result || null;
+    } catch (error) {
+      console.error("Failed to get AI analysis result:", error);
+      return null;
+    }
   },
 };

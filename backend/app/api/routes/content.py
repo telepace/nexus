@@ -18,7 +18,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import StreamingResponse
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.api.deps import CurrentUser, SessionDep, get_db
 from app.core import security  # For password verification
@@ -1026,3 +1026,151 @@ def get_content_markdown_endpoint(
         "created_at": content_item.created_at.isoformat(),
         "updated_at": content_item.updated_at.isoformat(),
     }
+
+# ================================
+# Content Conversations Routes
+# ================================
+
+def convert_conversation_to_public(conversation: AIConversation) -> dict:
+    """Convert AIConversation model to public schema."""
+    try:
+        messages_data = json.loads(conversation.messages) if conversation.messages else []
+        messages = [
+            {
+                "role": msg.get("role", "user"),
+                "content": msg.get("content", ""),
+                "timestamp": msg.get("timestamp"),
+                "metadata": msg.get("metadata"),
+            }
+            for msg in messages_data
+        ]
+    except (json.JSONDecodeError, ValueError) as e:
+        logger.error(f"Failed to parse messages for conversation {conversation.id}: {e}")
+        messages = []
+
+    return {
+        "id": str(conversation.id),
+        "user_id": str(conversation.user_id),
+        "content_item_id": str(conversation.content_item_id) if conversation.content_item_id else None,
+        "title": conversation.title,
+        "conversation_type": conversation.conversation_type,
+        "ai_model_name": conversation.ai_model_name,
+        "messages": messages,
+        "summary": conversation.summary,
+        "is_active": conversation.is_active,
+        "created_at": conversation.created_at.isoformat(),
+        "updated_at": conversation.updated_at.isoformat(),
+    }
+
+
+@router.get(
+    "/{content_id}/conversations",
+    summary="Get All Conversations for Content",
+    description="获取指定内容的所有AI对话，包括自动分析和用户对话。",
+)
+def get_content_conversations(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    content_id: uuid.UUID,
+    include_inactive: bool = Query(False, description="是否包含非激活状态的对话"),
+) -> dict[str, Any]:
+    """获取内容的所有AI对话。"""
+    
+    # 验证内容项存在且属于当前用户
+    content_item = session.exec(
+        select(ContentItem).where(
+            ContentItem.id == content_id,
+            ContentItem.user_id == current_user.id
+        )
+    ).first()
+    
+    if not content_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content item not found"
+        )
+    
+    # 查询对话
+    query = select(AIConversation).where(
+        AIConversation.content_item_id == content_id,
+        AIConversation.user_id == current_user.id
+    )
+    
+    if not include_inactive:
+        query = query.where(AIConversation.is_active == True)
+    
+    conversations = session.exec(query.order_by(AIConversation.created_at)).all()
+    
+    # 转换为public schema
+    public_conversations = [convert_conversation_to_public(conv) for conv in conversations]
+    
+    # 检查是否有自动分析对话
+    has_auto_analysis = any(
+        conv.conversation_type == "auto_analysis" for conv in conversations
+    )
+    
+    return {
+        "conversations": public_conversations,
+        "total": len(public_conversations),
+        "has_auto_analysis": has_auto_analysis,
+    }
+
+
+@router.post(
+    "/{content_id}/conversations",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create New Conversation",
+    description="为指定内容创建新的AI对话。",
+)
+def create_conversation(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    content_id: uuid.UUID,
+    conversation_data: dict = Body(...),
+) -> dict[str, Any]:
+    """创建新的AI对话。"""
+    
+    # 验证内容项存在且属于当前用户
+    content_item = session.exec(
+        select(ContentItem).where(
+            ContentItem.id == content_id,
+            ContentItem.user_id == current_user.id
+        )
+    ).first()
+    
+    if not content_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content item not found"
+        )
+    
+    # 创建对话
+    conversation = AIConversation(
+        user_id=current_user.id,
+        content_item_id=content_id,
+        title=conversation_data.get("title") or f"与《{content_item.title or '内容'}》的对话",
+        conversation_type=conversation_data.get("conversation_type", "user_chat"),
+        ai_model_name=conversation_data.get("ai_model_name", "gpt-3.5-turbo"),
+        messages="[]",
+        summary=None,
+        is_active=True,
+    )
+    
+    # 如果有初始消息，添加到对话中
+    if conversation_data.get("initial_message"):
+        from app.utils.timezone import now_utc
+        messages = [{
+            "role": "user",
+            "content": conversation_data["initial_message"],
+            "timestamp": now_utc().isoformat(),
+            "metadata": {"initial_message": True}
+        }]
+        conversation.messages = json.dumps(messages)
+    
+    session.add(conversation)
+    session.commit()
+    session.refresh(conversation)
+    
+    return convert_conversation_to_public(conversation)

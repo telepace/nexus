@@ -189,6 +189,7 @@ export default function ContentLibraryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("created_at_desc");
 
   // 添加分享状态管理
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -214,6 +215,7 @@ export default function ContentLibraryPage() {
       setSearchQuery(savedState.searchQuery || "");
       setStatusFilter(savedState.statusFilter || "all");
       setTypeFilter(savedState.typeFilter || "all");
+      setSortBy(savedState.sortBy || "created_at_desc");
     }
   }, []);
 
@@ -223,9 +225,10 @@ export default function ContentLibraryPage() {
       searchQuery,
       statusFilter,
       typeFilter,
+      sortBy,
       selectedItem: selectedItem?.id || null,
     });
-  }, [searchQuery, statusFilter, typeFilter, selectedItem]);
+  }, [searchQuery, statusFilter, typeFilter, sortBy, selectedItem]);
 
   // 在数据加载完成后恢复滚动位置
   useEffect(() => {
@@ -263,7 +266,7 @@ export default function ContentLibraryPage() {
     };
   }, []);
 
-  // Filter items based on search and filters
+  // Filter and sort items based on search, filters, and sort preference
   useEffect(() => {
     let filtered = items;
 
@@ -290,8 +293,44 @@ export default function ContentLibraryPage() {
       filtered = filtered.filter((item) => item.type === typeFilter);
     }
 
-    setFilteredItems(filtered);
-  }, [items, searchQuery, statusFilter, typeFilter]);
+    // Sort items
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "created_at_desc":
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "created_at_asc":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "updated_at_desc":
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        case "updated_at_asc":
+          return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+        case "title_asc":
+          return (a.title || "").localeCompare(b.title || "");
+        case "title_desc":
+          return (b.title || "").localeCompare(a.title || "");
+        case "quality_desc":
+          const qualityA = a.ai_result?.content_quality_score ?? 0;
+          const qualityB = b.ai_result?.content_quality_score ?? 0;
+          return qualityB - qualityA;
+        case "quality_asc":
+          const qualityAsc = a.ai_result?.content_quality_score ?? 0;
+          const qualityBsc = b.ai_result?.content_quality_score ?? 0;
+          return qualityAsc - qualityBsc;
+        case "reading_time_desc":
+          const timeA = a.ai_result?.reading_time_minutes ?? 0;
+          const timeB = b.ai_result?.reading_time_minutes ?? 0;
+          return timeB - timeA;
+        case "reading_time_asc":
+          const timeAscA = a.ai_result?.reading_time_minutes ?? 0;
+          const timeAscB = b.ai_result?.reading_time_minutes ?? 0;
+          return timeAscA - timeAscB;
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+
+    setFilteredItems(sorted);
+  }, [items, searchQuery, statusFilter, typeFilter, sortBy]);
 
   // Handle Open Reader
   const handleOpenReader = useCallback(
@@ -974,6 +1013,22 @@ export default function ContentLibraryPage() {
                       <option value="url">网页</option>
                       <option value="text">文本</option>
                     </select>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="px-4 py-2 border border-border rounded-md bg-background text-foreground"
+                    >
+                      <option value="created_at_desc">创建时间 (新→旧)</option>
+                      <option value="created_at_asc">创建时间 (旧→新)</option>
+                      <option value="updated_at_desc">更新时间 (新→旧)</option>
+                      <option value="updated_at_asc">更新时间 (旧→新)</option>
+                      <option value="title_asc">标题 (A→Z)</option>
+                      <option value="title_desc">标题 (Z→A)</option>
+                      <option value="quality_desc">质量评分 (高→低)</option>
+                      <option value="quality_asc">质量评分 (低→高)</option>
+                      <option value="reading_time_desc">阅读时长 (长→短)</option>
+                      <option value="reading_time_asc">阅读时长 (短→长)</option>
+                    </select>
                   </div>
                 </div>
                 <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
@@ -981,7 +1036,8 @@ export default function ContentLibraryPage() {
                   <div className="flex items-center gap-4">
                     {(searchQuery ||
                       statusFilter !== "all" ||
-                      typeFilter !== "all") && (
+                      typeFilter !== "all" ||
+                      sortBy !== "created_at_desc") && (
                       <span>筛选后显示 {filteredItems.length} 项</span>
                     )}
                     <span className="text-xs text-muted-foreground/70">

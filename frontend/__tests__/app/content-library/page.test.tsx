@@ -194,4 +194,37 @@ describe("ContentLibraryPage", () => {
     expect(screen.getByDisplayValue("所有状态")).toBeInTheDocument();
     expect(screen.getByDisplayValue("所有类型")).toBeInTheDocument();
   });
+
+  it("should display sorting options", async () => {
+    render(<ContentLibraryPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Test Document")).toBeInTheDocument();
+    });
+
+    // Check that sorting select is present with default value
+    const sortSelect = screen.getByDisplayValue("创建时间 (新→旧)");
+    expect(sortSelect).toBeInTheDocument();
+
+    // Check that sorting options are available
+    expect(screen.getByRole('option', { name: "创建时间 (新→旧)" })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: "创建时间 (旧→新)" })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: "标题 (A→Z)" })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: "质量评分 (高→低)" })).toBeInTheDocument();
+  });
+
+  it("should change sorting when option is selected", async () => {
+    render(<ContentLibraryPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Test Document")).toBeInTheDocument();
+    });
+
+    // Find and change the sort option
+    const sortSelect = screen.getByDisplayValue("创建时间 (新→旧)");
+    fireEvent.change(sortSelect, { target: { value: "title_asc" } });
+
+    // Verify the value changed
+    expect(sortSelect).toHaveValue("title_asc");
+  });
 });
