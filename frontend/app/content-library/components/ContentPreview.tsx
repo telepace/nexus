@@ -104,7 +104,7 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
 
       {/* Body */}
       <div className="pb-4 flex-1 overflow-auto mt-12">
-        <div className="space-y-6 max-w-[28rem] mx-auto">
+        <div className="space-y-6 max-w-[28rem] mx-auto px-8">
           {/* 标题 */}
           <div>
             <h3 className="font-semibold mb-3 text-lg">
@@ -130,54 +130,14 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
             </div>
           </div>
 
-          {/* 摘要 & 来源 */}
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-muted-foreground block mb-2">
-                摘要
-              </label>
-              <p className="text-sm leading-relaxed bg-muted/30 p-3 rounded-lg">
-                {item.summary || "暂无摘要"}
-              </p>
-            </div>
-
-            {item.source_uri && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground block mb-2">
-                  来源
-                </label>
-                <p className="text-sm break-all bg-muted/30 p-3 rounded-lg">
-                  <a
-                    href={item.source_uri}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline break-all"
-                  >
-                    {item.source_uri}
-                  </a>
-                </p>
-              </div>
-            )}
-
-            {/* 日期信息 */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <label className="text-muted-foreground block mb-1">
-                  创建时间
-                </label>
-                <div className="flex items-center gap-1">
-                  {new Date(item.created_at).toLocaleDateString("zh-CN")}
-                </div>
-              </div>
-              <div>
-                <label className="text-muted-foreground block mb-1">
-                  更新时间
-                </label>
-                <div className="flex items-center gap-1">
-                  {new Date(item.updated_at).toLocaleDateString("zh-CN")}
-                </div>
-              </div>
-            </div>
+          {/* 摘要 */}
+          <div>
+            <label className="text-sm font-medium text-muted-foreground block mb-2">
+              摘要
+            </label>
+            <p className="text-sm leading-relaxed">
+              {item.summary || "暂无摘要"}
+            </p>
           </div>
 
           {/* AI 分析 */}

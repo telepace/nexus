@@ -40,7 +40,7 @@ export const AIAnalysisCard = ({ analysis }: Props) => {
     if (!preview) return null;
 
     return (
-      <div key={index} className="p-3 rounded-lg">
+      <div key={index}>
         <div className="mb-2">
           <div className="inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow">
             <Sparkles className="h-3 w-3" />
@@ -57,14 +57,9 @@ export const AIAnalysisCard = ({ analysis }: Props) => {
   };
 
   return (
-    <div className="space-y-3 mt-3 pt-3 border-t border-border/50">
-      <div className="flex items-center gap-2 text-sm font-medium text-primary">
-        <Brain className="h-4 w-4" />
-        AI 智能分析
-      </div>
-
+    <div className="space-y-3">
       {summarizer && (
-        <div className="p-3 rounded-lg">
+        <div>
           <div className="mb-2">
             <div className="inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow">
               <FileText className="h-3 w-3" />
@@ -84,7 +79,7 @@ export const AIAnalysisCard = ({ analysis }: Props) => {
       )}
 
       {key_points_extractor && (
-        <div className="p-3 rounded-lg">
+        <div>
           <div className="mb-2">
             <div className="inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow">
               <Target className="h-3 w-3" />
