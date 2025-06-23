@@ -849,6 +849,11 @@
   .text-dia-icon {
     color: var(--color-dia-icon);
   }
+
+  /* Custom rounded class for 48px/3rem */
+  .rounded-3xl {
+    border-radius: 3rem; /* 48px */
+  }
 }
 
 /* =============================================================================
