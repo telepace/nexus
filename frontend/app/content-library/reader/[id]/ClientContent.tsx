@@ -114,11 +114,6 @@ const ProcessedContentRenderer = memo(
       return (
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">
-              {content.processing_status === "completed"
-                ? "处理后的内容暂不可用"
-                : `内容正在处理中，状态：${content.processing_status}`}
-            </p>
             {content.processing_status !== "completed" && (
               <div className="flex items-center justify-center gap-2 mt-2">
                 <span className="text-xs text-primary">AI 正在处理内容...</span>
