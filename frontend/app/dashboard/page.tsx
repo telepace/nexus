@@ -60,6 +60,7 @@ import Link from "next/link";
 import { fetchItems } from "@/components/actions/items-action-client";
 import { ContentItemPublic } from "@/app/openapi-client/index";
 import { getCookie } from "@/lib/client-auth";
+import { Loading } from "@/components/ui/loading";
 
 // 类型定义
 interface DashboardMetrics {
@@ -386,10 +387,7 @@ export default function DashboardPage() {
             {isLoading && (
               <Card>
                 <CardContent className="p-6">
-                  <div className="text-center">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                    <p>Loading content...</p>
-                  </div>
+                  <Loading message="加载中..." />
                 </CardContent>
               </Card>
             )}

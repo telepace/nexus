@@ -2,7 +2,6 @@
 
 import { FC } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 import { PromptRecommendation } from "@/lib/stores/llm-analysis-store";
 
 interface PromptRecommendationsProps {
@@ -50,9 +49,7 @@ export const PromptRecommendations: FC<PromptRecommendationsProps> = ({
                       <span className="font-medium text-xs text-foreground">
                         {recommendation.name}
                       </span>
-                      {isGenerating && (
-                        <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                      )}
+                      {/* Loading spinner removed to avoid multiple spinners on buttons. Disabled state remains via isGenerating flag */}
                     </div>
                   </div>
                 </div>

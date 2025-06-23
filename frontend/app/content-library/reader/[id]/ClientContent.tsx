@@ -258,6 +258,20 @@ const ProcessedContentRenderer = memo(
 
 ProcessedContentRenderer.displayName = "ProcessedContentRenderer";
 
+interface ContentDetail {
+  id: string;
+  type: string;
+  title?: string | null;
+  summary?: string | null;
+  content_text?: string | null;
+  processed_content?: string | null;
+  source_uri?: string | null;
+  user_id: string;
+  processing_status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface ClientContentProps {
   contentId: string;
   initialData?: ContentDetail | null;
@@ -469,7 +483,7 @@ export const ClientContent = ({
   }, [content, contentId, user]);
 
   if (authLoading || loading) {
-    return <ReaderSkeleton />;
+    return <Loading />;
   }
 
   if (error) {
@@ -527,7 +541,7 @@ export const ClientContent = ({
 
       {/* Main Content - 专注显示AI处理后的内容 */}
       <div className="flex-1 min-h-0">
-        <div className="h-full py-2">
+        <div className="h-full py-2 max-w-[35rem] mx-auto">
           <ProcessedContentRenderer
             content={content}
             markdownContent={markdownContent}

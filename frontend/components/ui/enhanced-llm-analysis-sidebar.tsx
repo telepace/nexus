@@ -27,6 +27,7 @@ interface EnhancedLLMAnalysisSidebarProps {
   contentId: string;
   className?: string;
   contentText?: string;
+  onLoaded?: () => void;
 }
 
 // 历史分析数据类型
@@ -52,7 +53,7 @@ interface HistoricalAnalysis {
 
 export const EnhancedLLMAnalysisSidebar: FC<
   EnhancedLLMAnalysisSidebarProps
-> = ({ contentId, className = "", contentText = "" }) => {
+> = ({ contentId, className = "", contentText = "", onLoaded }) => {
   // 采用远程分支的设计：固定为analysis视图，简化组件
   const activeTab = "analysis" as const;
   const [historicalAnalyses, setHistoricalAnalyses] = useState<LLMAnalysis[]>(
@@ -176,6 +177,13 @@ export const EnhancedLLMAnalysisSidebar: FC<
     loadPrompts();
     loadHistoricalAnalyses();
   }, [loadPrompts, contentId, loadHistoricalAnalyses]);
+
+  // 通知父布局：右栏已准备就绪
+  useEffect(() => {
+    if (!isLoadingPrompts && !loadingHistorical) {
+      onLoaded?.();
+    }
+  }, [isLoadingPrompts, loadingHistorical, onLoaded]);
 
   // 调试信息
   useEffect(() => {

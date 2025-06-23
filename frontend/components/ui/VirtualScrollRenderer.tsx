@@ -8,6 +8,7 @@ import React, {
   useMemo,
 } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
+import { Loading } from "@/components/ui/loading";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import {
   contentApi,
@@ -231,19 +232,12 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
   }, [loadChunks]);
 
   if (loading && (!chunks || chunks.length === 0)) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <p className="text-lg">Loading content...</p>
-        </div>
-      </div>
-    );
+    return <Loading />;
   }
 
   if (error && (!chunks || chunks.length === 0)) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center h-full">
         <div className="text-center">
           <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
           <p className="text-red-600 mb-4">{error}</p>
@@ -289,9 +283,9 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
           className="h-20 flex items-center justify-center bg-yellow-100 dark:bg-yellow-900"
         >
           {loadingMore ? (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2 text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <p className="text-sm text-gray-600">Loading more content...</p>
+              <span className="text-sm">加载更多内容...</span>
             </div>
           ) : (
             <div className="text-sm text-gray-400">
@@ -303,7 +297,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
 
       {/* End indicator */}
       {!hasMore && chunks && chunks.length > 0 && (
-        <div className="text-center py-8 text-gray-500 bg-green-100 dark:bg-green-900">
+        <div className="text-center py-8 text-neutral-500">
           <div className="text-sm">
             End of content • {totalChunks} chunks total
           </div>
