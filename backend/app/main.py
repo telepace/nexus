@@ -33,6 +33,7 @@ from app.api.main import api_router
 from app.api.middlewares.posthog import PostHogMiddleware
 from app.api.middlewares.response import ApiResponseMiddleware
 from app.core.config import settings
+from app.core.redis_client import redis_client
 from app.utils.error import AppError, create_error_response
 
 # 设置日志
@@ -84,10 +85,31 @@ app.router.default_response_class = UTF8JSONResponse
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
 
+@app.on_event("startup")
+async def startup_event():
+    """应用启动事件，初始化 Redis 连接"""
+    logger.info("启动应用...")
+    await redis_client.connect()
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """应用关闭事件，清理 Redis 连接"""
+    logger.info("关闭应用...")
+    await redis_client.disconnect()
+
+
 @app.get("/api/v1/health", tags=["health"])
 async def get_health_api():
     logger.info("收到API级别健康检查请求")
     return {"status": "ok"}
+
+
+@app.get("/api/v1/health/cache", tags=["health"])
+async def get_cache_health_api():
+    """Cache health check endpoint."""
+    logger.info("收到缓存健康检查请求")
+    return {"cache": {"status": "checking"}, "status": "ok"}
 
 
 # Set all CORS enabled origins

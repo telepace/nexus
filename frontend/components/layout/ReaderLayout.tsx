@@ -5,16 +5,23 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SettingsPanel } from "@/components/layout/SettingsPanel";
 import { AddContentModal } from "@/components/layout/AddContentModal";
-import { EnhancedLLMAnalysisSidebar } from "@/components/ui/enhanced-llm-analysis-sidebar";
+import { ContentAnalysisSidebar } from "@/components/ai/ContentAnalysisSidebar";
 import {
   ResizablePanelGroup,
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
+import { AIResult, ConversationListResponse } from "@/lib/api/content";
 
-// 创建上下文来传递内容更新函数
+// 创建上下文来传递内容更新函数和分析数据
 const ReaderContext = createContext<{
   onContentChange?: (text: string) => void;
+  onAnalysisUpdate?: (analysisResult: AIResult | null) => void;
+  onConversationsUpdate?: (
+    conversations: ConversationListResponse["conversations"],
+  ) => void;
+  analysisResult?: AIResult | null;
+  conversations?: ConversationListResponse["conversations"];
 }>({});
 
 export const useReaderContext = () => useContext(ReaderContext);
@@ -33,11 +40,31 @@ export default function ReaderLayout({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addContentOpen, setAddContentOpen] = useState(false);
   const [contentText, setContentText] = useState(initialContentText);
+  const [analysisResult, setAnalysisResult] = useState<AIResult | null>(null);
+  const [conversations, setConversations] = useState<
+    ConversationListResponse["conversations"]
+  >([]);
 
   // 提供给 children 的上下文方法，让 ReaderContent 可以更新内容文本
   const handleContentChange = useCallback((text: string) => {
     setContentText(text);
   }, []);
+
+  // 更新分析结果
+  const handleAnalysisUpdate = useCallback(
+    (newAnalysisResult: AIResult | null) => {
+      setAnalysisResult(newAnalysisResult);
+    },
+    [],
+  );
+
+  // 更新对话历史
+  const handleConversationsUpdate = useCallback(
+    (newConversations: ConversationListResponse["conversations"]) => {
+      setConversations(newConversations);
+    },
+    [],
+  );
 
   return (
     <SidebarProvider
@@ -59,15 +86,21 @@ export default function ReaderLayout({
         {/* 主内容区域 - 使用可调整大小的面板 */}
         <div className="flex-1 flex w-full min-w-0 h-screen">
           <ResizablePanelGroup direction="horizontal" className="h-full">
-            {/* 主阅读区域 - 默认占50%，可调整 */}
+            {/* 主阅读区域 - 默认占60%，可调整 */}
             <ResizablePanel
-              defaultSize={50}
-              minSize={30}
+              defaultSize={60}
+              minSize={40}
               maxSize={80}
               className="flex flex-col"
             >
               <ReaderContext.Provider
-                value={{ onContentChange: handleContentChange }}
+                value={{
+                  onContentChange: handleContentChange,
+                  onAnalysisUpdate: handleAnalysisUpdate,
+                  onConversationsUpdate: handleConversationsUpdate,
+                  analysisResult,
+                  conversations,
+                }}
               >
                 <div className="flex-1 flex flex-col bg-background overflow-auto">
                   {children}
@@ -81,16 +114,18 @@ export default function ReaderLayout({
               className="bg-border hover:bg-primary/20 transition-colors"
             />
 
-            {/* AI 辅助区域 - 默认占50%，可调整 */}
+            {/* AI 分析区域 - 默认占40%，可调整 */}
             <ResizablePanel
-              defaultSize={50}
+              defaultSize={40}
               minSize={20}
-              maxSize={70}
+              maxSize={60}
               className="flex flex-col"
             >
-              <EnhancedLLMAnalysisSidebar
+              <ContentAnalysisSidebar
                 contentId={contentId}
                 contentText={contentText}
+                analysisResult={analysisResult}
+                conversations={conversations}
                 className="border-l-0" // 移除左边框，因为已有分割线
               />
             </ResizablePanel>

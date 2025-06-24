@@ -320,11 +320,24 @@ def test_register_user(client: TestClient, db: Session) -> None:
     assert verify_password(password, user_db.hashed_password)
 
 
-def test_register_user_already_exists_error(client: TestClient) -> None:
+def test_register_user_already_exists_error(client: TestClient, db: Session) -> None:
+    # First, ensure the superuser exists in the database
+    superuser = crud.get_user_by_email(session=db, email=settings.FIRST_SUPERUSER)
+    if not superuser:
+        # Create the superuser if it doesn't exist
+        user_in = UserCreate(
+            email=settings.FIRST_SUPERUSER,
+            password=settings.FIRST_SUPERUSER_PASSWORD,
+            is_superuser=True,
+        )
+        superuser = crud.create_user(session=db, user_create=user_in)
+        db.commit()
+
+    # Now try to register with the same email
     password = random_lower_string()
     full_name = random_lower_string()
     data = {
-        "email": settings.FIRST_SUPERUSER,
+        "email": settings.FIRST_SUPERUSER,  # This email already exists
         "password": password,
         "full_name": full_name,
     }
@@ -332,6 +345,20 @@ def test_register_user_already_exists_error(client: TestClient) -> None:
         f"{settings.API_V1_STR}/users/signup",
         json=data,
     )
+
+    # Debug information if test fails
+    if r.status_code != 400:
+        print(f"Expected 400 but got {r.status_code}")
+        print(f"Response: {r.text}")
+        print(f"Existing user email: {settings.FIRST_SUPERUSER}")
+        # Check if user actually exists
+        existing_user = crud.get_user_by_email(
+            session=db, email=settings.FIRST_SUPERUSER
+        )
+        print(f"User exists in DB: {existing_user is not None}")
+        if existing_user:
+            print(f"User ID: {existing_user.id}, Email: {existing_user.email}")
+
     assert r.status_code == 400
     content = get_api_response_data(r)
     assert "已存在" in content["detail"] or "exist" in content["detail"].lower()

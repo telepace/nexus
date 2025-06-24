@@ -16,12 +16,12 @@ def test_sse_endpoint_requires_authentication(client: TestClient) -> None:
 
 
 def test_sse_endpoint_with_invalid_token(client: TestClient) -> None:
-    """Test SSE endpoint with invalid token."""
+    """Test that SSE endpoint rejects invalid tokens."""
     response = client.get(
         f"{settings.API_V1_STR}/content/events",
         headers={"Authorization": "Bearer invalid_token"},
     )
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 def test_sse_endpoint_with_valid_authentication(

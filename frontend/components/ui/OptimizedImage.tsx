@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn, normalizeImageUrl } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
 interface OptimizedImageProps {
@@ -51,7 +51,8 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [currentSrc, setCurrentSrc] = useState(src);
+  // 规范化图片URL，处理protocol-relative URLs
+  const [currentSrc, setCurrentSrc] = useState(normalizeImageUrl(src));
 
   // 计算图片尺寸
   const imageWidth = width;
@@ -66,7 +67,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
     setIsLoading(false);
     setHasError(true);
     if (fallbackSrc && currentSrc !== fallbackSrc) {
-      setCurrentSrc(fallbackSrc);
+      setCurrentSrc(normalizeImageUrl(fallbackSrc));
       setHasError(false);
       setIsLoading(true);
     } else {

@@ -1,4 +1,3 @@
-import uuid
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
@@ -19,18 +18,17 @@ class TestContentLLMAnalysisUpdated:
         # 获取测试用户
         test_user = crud.get_user_by_email(session=db, email=settings.EMAIL_TEST_USER)
 
-        # 创建模拟的内容项
-        content_text = """# 机器学习基础
+        # 创建真实的内容项并保存到数据库
+        content_text = """# 人工智能的发展趋势
 
-        机器学习是人工智能的一个重要分支，包括：
-        1. 监督学习
-        2. 无监督学习
-        3. 强化学习
+        人工智能技术正在快速发展，包括：
+        1. 大语言模型的突破
+        2. 多模态AI的兴起
+        3. AI在各行业的应用
 
-        这些方法可以用于解决各种实际问题。"""
+        这些发展为未来带来了巨大机遇。"""
 
-        mock_content_item = ContentItem(
-            id=uuid.uuid4(),
+        real_content_item = ContentItem(
             user_id=test_user.id,
             type="article",
             title="AI发展趋势",
@@ -38,15 +36,16 @@ class TestContentLLMAnalysisUpdated:
             processing_status="completed",
         )
 
-        analysis_instruction = "请总结这篇文章的主要观点，并提取关键信息"
+        # 保存到数据库
+        db.add(real_content_item)
+        db.commit()
+        db.refresh(real_content_item)
+
+        analysis_instruction = "分析这篇文章的主要观点和结构"
 
         with (
-            patch("app.api.routes.content.crud_get_content_item") as mock_get_content,
             patch("aiohttp.ClientSession") as MockSession,
         ):
-            # 模拟内容获取
-            mock_get_content.return_value = mock_content_item
-
             # 创建异步mock会话和响应
             mock_session_instance = AsyncMock()
             mock_response = AsyncMock()
@@ -71,7 +70,7 @@ class TestContentLLMAnalysisUpdated:
 
             # 发送请求
             response = client.post(
-                f"/api/v1/content/{mock_content_item.id}/analyze-ai-sdk-updated",
+                f"/api/v1/content/{real_content_item.id}/analyze-ai-sdk-updated",
                 headers=normal_user_token_headers,
                 json={
                     "analysis_instruction": analysis_instruction,
@@ -93,7 +92,7 @@ class TestContentLLMAnalysisUpdated:
             # 验证消息结构
             assert len(messages) == 2
             assert messages[0]["role"] == "system"
-            assert messages[0]["content"] == mock_content_item.content_text
+            assert messages[0]["content"] == real_content_item.content_text
             assert messages[1]["role"] == "user"
             assert messages[1]["content"] == analysis_instruction
 
@@ -104,7 +103,7 @@ class TestContentLLMAnalysisUpdated:
         # 获取测试用户
         test_user = crud.get_user_by_email(session=db, email=settings.EMAIL_TEST_USER)
 
-        # 创建模拟的内容项
+        # 创建真实的内容项并保存到数据库
         content_text = """# 人工智能的发展趋势
 
         人工智能技术正在快速发展，包括：
@@ -114,8 +113,7 @@ class TestContentLLMAnalysisUpdated:
 
         这些发展为未来带来了巨大机遇。"""
 
-        mock_content_item = ContentItem(
-            id=uuid.uuid4(),
+        real_content_item = ContentItem(
             user_id=test_user.id,
             type="article",
             title="AI发展趋势",
@@ -123,15 +121,16 @@ class TestContentLLMAnalysisUpdated:
             processing_status="completed",
         )
 
+        # 保存到数据库
+        db.add(real_content_item)
+        db.commit()
+        db.refresh(real_content_item)
+
         analysis_instruction = "分析这篇文章的结构和逻辑"
 
         with (
-            patch("app.api.routes.content.crud_get_content_item") as mock_get_content,
             patch("aiohttp.ClientSession") as MockSession,
         ):
-            # 模拟内容获取
-            mock_get_content.return_value = mock_content_item
-
             # 创建异步mock会话和响应
             mock_session_instance = AsyncMock()
             mock_response = AsyncMock()
@@ -156,7 +155,7 @@ class TestContentLLMAnalysisUpdated:
 
             # 发送请求
             response = client.post(
-                f"/api/v1/content/{mock_content_item.id}/completion-updated",
+                f"/api/v1/content/{real_content_item.id}/completion-updated",
                 headers=normal_user_token_headers,
                 json={
                     "analysis_instruction": analysis_instruction,
@@ -178,7 +177,7 @@ class TestContentLLMAnalysisUpdated:
             # 验证消息结构
             assert len(messages) == 2
             assert messages[0]["role"] == "system"
-            assert messages[0]["content"] == mock_content_item.content_text
+            assert messages[0]["content"] == real_content_item.content_text
             assert messages[1]["role"] == "user"
             assert messages[1]["content"] == analysis_instruction
 
@@ -190,7 +189,6 @@ class TestContentLLMAnalysisUpdated:
         test_user = crud.get_user_by_email(session=db, email=settings.EMAIL_TEST_USER)
 
         empty_content_item = ContentItem(
-            id=uuid.uuid4(),
             user_id=test_user.id,
             type="article",
             title="空文章",
@@ -198,20 +196,22 @@ class TestContentLLMAnalysisUpdated:
             processing_status="completed",
         )
 
-        with patch("app.api.routes.content.crud_get_content_item") as mock_get_content:
-            mock_get_content.return_value = empty_content_item
+        # 保存到数据库
+        db.add(empty_content_item)
+        db.commit()
+        db.refresh(empty_content_item)
 
-            response = client.post(
-                f"/api/v1/content/{empty_content_item.id}/analyze-ai-sdk-updated",
-                headers=normal_user_token_headers,
-                json={
-                    "analysis_instruction": "分析这篇文章",
-                    "model": "or-llama-3-1-8b-instruct",
-                },
-            )
+        response = client.post(
+            f"/api/v1/content/{empty_content_item.id}/analyze-ai-sdk-updated",
+            headers=normal_user_token_headers,
+            json={
+                "analysis_instruction": "分析这篇文章",
+                "model": "or-llama-3-1-8b-instruct",
+            },
+        )
 
-            # 应该返回错误，因为内容为空
-            assert response.status_code == 400
+        # 应该返回错误，因为内容为空
+        assert response.status_code == 400
 
     def test_missing_analysis_instruction(
         self, client: TestClient, db: Session, normal_user_token_headers: dict
@@ -220,8 +220,7 @@ class TestContentLLMAnalysisUpdated:
         # 获取测试用户
         test_user = crud.get_user_by_email(session=db, email=settings.EMAIL_TEST_USER)
 
-        mock_content_item = ContentItem(
-            id=uuid.uuid4(),
+        real_content_item = ContentItem(
             user_id=test_user.id,
             type="article",
             title="测试文章",
@@ -229,17 +228,19 @@ class TestContentLLMAnalysisUpdated:
             processing_status="completed",
         )
 
-        with patch("app.api.routes.content.crud_get_content_item") as mock_get_content:
-            mock_get_content.return_value = mock_content_item
+        # 保存到数据库
+        db.add(real_content_item)
+        db.commit()
+        db.refresh(real_content_item)
 
-            response = client.post(
-                f"/api/v1/content/{mock_content_item.id}/analyze-ai-sdk-updated",
-                headers=normal_user_token_headers,
-                json={
-                    "model": "or-llama-3-1-8b-instruct"
-                    # 缺少 analysis_instruction
-                },
-            )
+        response = client.post(
+            f"/api/v1/content/{real_content_item.id}/analyze-ai-sdk-updated",
+            headers=normal_user_token_headers,
+            json={
+                "model": "or-llama-3-1-8b-instruct"
+                # 缺少 analysis_instruction
+            },
+        )
 
-            # 应该返回错误，因为缺少必需的参数
-            assert response.status_code == 422
+        # 应该返回错误，因为缺少必需的参数
+        assert response.status_code == 422

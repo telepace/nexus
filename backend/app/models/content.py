@@ -1,19 +1,20 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint
+from sqlalchemy import CheckConstraint, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import JSON, Column, Field, Relationship, SQLModel
 
-# 导入时区工具
 from app.utils.timezone import now_utc
 
 
 class ContentItemBase(SQLModel):
     """Base model for content items, containing common fields."""
 
-    user_id: uuid.UUID = Field(index=True)
-    project_id: uuid.UUID | None = Field(default=None, index=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id", index=True)
+    project_id: uuid.UUID | None = Field(
+        default=None, foreign_key="projects.id", index=True
+    )
     type: str = Field(
         sa_column_args=[
             CheckConstraint("type IN ('url', 'pdf', 'docx', 'text', 'plugin')")
@@ -23,7 +24,6 @@ class ContentItemBase(SQLModel):
     )
     source_uri: str | None = Field(default=None, max_length=2048)
     title: str | None = Field(default=None, max_length=255)
-    summary: str | None = Field(default=None)
     content_text: str | None = Field(default=None)
     content_vector: list[float] | None = Field(default=None, sa_column=Column(JSONB))
     meta_info: str | None = Field(default=None, sa_column=Column(JSON))
@@ -38,6 +38,7 @@ class ContentItemBase(SQLModel):
         index=True,
     )
     error_message: str | None = Field(default=None)
+    last_processed_at: datetime | None = Field(default=None)
     created_at: datetime = Field(default_factory=now_utc, nullable=False)
     updated_at: datetime = Field(
         default_factory=now_utc,
@@ -57,22 +58,16 @@ class ContentItem(ContentItemBase, table=True):
             "primaryjoin": "ContentItem.id == foreign(ContentAsset.content_item_id)"
         },
     )
-    processing_jobs: list["ProcessingJob"] = Relationship(
-        back_populates="content_item",
-        sa_relationship_kwargs={
-            "primaryjoin": "ContentItem.id == foreign(ProcessingJob.content_item_id)"
-        },
-    )
     ai_conversations: list["AIConversation"] = Relationship(
         back_populates="content_item",
         sa_relationship_kwargs={
             "primaryjoin": "ContentItem.id == foreign(AIConversation.content_item_id)"
         },
     )
-    chunks: list["ContentChunk"] = Relationship(
+    segments: list["Segment"] = Relationship(
         back_populates="content_item",
         sa_relationship_kwargs={
-            "primaryjoin": "ContentItem.id == foreign(ContentChunk.content_item_id)"
+            "primaryjoin": "ContentItem.id == foreign(Segment.content_item_id)"
         },
     )
     shares: list["ContentShare"] = Relationship(
@@ -81,10 +76,66 @@ class ContentItem(ContentItemBase, table=True):
             "primaryjoin": "ContentItem.id == foreign(ContentShare.content_item_id)"
         },
     )
+    ai_result: "AIResult" = Relationship(
+        back_populates="content_item",
+        sa_relationship_kwargs={
+            "primaryjoin": "ContentItem.id == foreign(AIResult.content_item_id)",
+            "uselist": False,
+        },
+    )
+
+
+class AIResultBase(SQLModel):
+    """Base model for AI analysis results."""
+
+    content_item_id: uuid.UUID = Field(
+        foreign_key="contentitem.id", index=True, unique=True
+    )
+    # AI-optimized title and description
+    optimized_title: str | None = Field(default=None, max_length=255)
+    brief_description: str | None = Field(default=None, max_length=500)
+    
+    # Existing fields
+    summary: dict | None = Field(default=None, sa_column=Column(JSONB))
+    key_points: dict | None = Field(default=None, sa_column=Column(JSONB))
+    labels: list[str] | None = Field(default=None, sa_column=Column(JSONB))
+    content_analysis: dict | None = Field(default=None, sa_column=Column(JSONB))
+    reading_time_minutes: int | None = Field(default=None)
+    difficulty_level: str | None = Field(
+        default=None,
+        sa_column_args=[
+            CheckConstraint(
+                "difficulty_level IN ('beginner', 'intermediate', 'advanced')"
+            )
+        ],
+        max_length=20,
+    )
+    content_quality_score: float | None = Field(default=None)
+    created_at: datetime = Field(default_factory=now_utc, nullable=False)
+    updated_at: datetime = Field(
+        default_factory=now_utc,
+        nullable=False,
+        sa_column_kwargs={"onupdate": now_utc},
+    )
+
+
+class AIResult(AIResultBase, table=True):
+    """Represents AI analysis results for a ContentItem."""
+
+    __tablename__ = "ai_results"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
+
+    content_item: ContentItem | None = Relationship(
+        back_populates="ai_result",
+        sa_relationship_kwargs={
+            "primaryjoin": "foreign(AIResult.content_item_id) == ContentItem.id"
+        },
+    )
 
 
 class ContentAssetBase(SQLModel):
-    content_item_id: uuid.UUID = Field(index=True)
+    content_item_id: uuid.UUID = Field(foreign_key="contentitem.id", index=True)
     type: str = Field(
         sa_column_args=[
             CheckConstraint(
@@ -124,63 +175,31 @@ class ContentAsset(ContentAssetBase, table=True):
     )
 
 
-class ProcessingJobBase(SQLModel):
-    """Base model for tracking processing jobs performed on content items."""
+class AIConversationBase(SQLModel):
+    """Base model for AI conversations, which may or may not be linked to a specific ContentItem."""
 
-    content_item_id: uuid.UUID = Field(index=True)
-    processor_name: str = Field(
-        max_length=100, index=True
-    )  # e.g., 'summarizer', 'vectorizer', 'ocr'
-    status: str = Field(
-        default="pending",
+    user_id: uuid.UUID = Field(foreign_key="user.id", index=True)
+    content_item_id: uuid.UUID | None = Field(
+        default=None, foreign_key="contentitem.id", index=True
+    )  # Optional link to a content item
+    title: str | None = Field(default=None, max_length=255)
+    conversation_type: str = Field(
+        default="user_chat",
         sa_column_args=[
             CheckConstraint(
-                "status IN ('pending', 'in_progress', 'completed', 'failed', 'skipped')"
+                "conversation_type IN ('auto_analysis', 'user_chat', 'prompt_analysis')"
             )
         ],
         max_length=50,
         index=True,
-    )
-    parameters: str | None = Field(default=None, sa_column=Column(JSON))
-    result: str | None = Field(default=None, sa_column=Column(JSON))
-    error_message: str | None = Field(default=None)
-    started_at: datetime | None = Field(default=None)
-    completed_at: datetime | None = Field(default=None)
-    created_at: datetime = Field(default_factory=now_utc, nullable=False)
-    updated_at: datetime = Field(
-        default_factory=now_utc,
-        nullable=False,
-        sa_column_kwargs={"onupdate": now_utc},
-    )
-
-
-class ProcessingJob(ProcessingJobBase, table=True):
-    """Represents a specific processing task (e.g., OCR, summarization) applied to a ContentItem."""
-
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
-
-    content_item: ContentItem | None = Relationship(
-        back_populates="processing_jobs",
-        sa_relationship_kwargs={
-            "primaryjoin": "foreign(ProcessingJob.content_item_id) == ContentItem.id"
-        },
-    )
-
-
-class AIConversationBase(SQLModel):
-    """Base model for AI conversations, which may or may not be linked to a specific ContentItem."""
-
-    user_id: uuid.UUID = Field(index=True)
-    content_item_id: uuid.UUID | None = Field(
-        default=None, index=True
-    )  # Optional link to a content item
-    title: str | None = Field(default=None, max_length=255)
+    )  # 对话类型：自动分析、用户聊天、Prompt分析
     ai_model_name: str = Field(max_length=100)  # e.g., 'gpt-4', 'claude-2'
     messages: str = Field(
         default="[]", sa_column=Column(JSON, nullable=False, server_default="[]")
     )
-    summary: str | None = Field(default=None)
+    summary: str | None = Field(default=None, max_length=500)  # 对话的简短总结
     meta_info: str | None = Field(default=None, sa_column=Column(JSON))
+    is_active: bool = Field(default=True, index=True)  # 是否激活状态
     created_at: datetime = Field(default_factory=now_utc, nullable=False)
     updated_at: datetime = Field(
         default_factory=now_utc,
@@ -202,41 +221,60 @@ class AIConversation(AIConversationBase, table=True):
     )
 
 
-class ContentChunkBase(SQLModel):
-    """Base model for content chunks, storing segmented content for efficient rendering."""
+class SegmentBase(SQLModel):
+    """Base model for content segments, storing segmented content for efficient rendering."""
 
-    content_item_id: uuid.UUID = Field(index=True)
-    chunk_index: int = Field(index=True)  # Order of the chunk in the content
-    chunk_content: str = Field()  # The actual content segment
-    chunk_type: str = Field(
+    content_item_id: uuid.UUID = Field(foreign_key="contentitem.id", index=True)
+    segment_index: int = Field(index=True)  # Order of the segment in the content
+    content: str = Field()  # The actual content segment
+    content_vector: list[float] | None = Field(
+        default=None, sa_column=Column(JSONB)
+    )  # Vector embedding for semantic search
+    segment_type: str = Field(
         default="paragraph",
         sa_column_args=[
             CheckConstraint(
-                "chunk_type IN ('heading', 'paragraph', 'code_block', 'table', 'list')"
+                "segment_type IN ('heading', 'paragraph', 'code_block', 'table', 'list')"
             )
         ],
         max_length=50,
         index=True,
     )
-    word_count: int = Field(default=0)  # Number of words in this chunk
-    char_count: int = Field(default=0)  # Number of characters in this chunk
+    word_count: int = Field(default=0)  # Number of words in this segment
+    char_count: int = Field(default=0)  # Number of characters in this segment
     meta_info: str | None = Field(
         default=None, sa_column=Column(JSON)
     )  # Additional metadata
     created_at: datetime = Field(default_factory=now_utc, nullable=False)
 
 
-class ContentChunk(ContentChunkBase, table=True):
+class Segment(SegmentBase, table=True):
     """Represents a segment of content for efficient loading and rendering."""
+
+    __tablename__ = "segments"
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
 
+    # 添加唯一约束防止重复
+    __table_args__ = (
+        UniqueConstraint(
+            "content_item_id",
+            "segment_index",
+            name="uix_content_segment_idx",
+        ),
+    )
+
     content_item: ContentItem | None = Relationship(
-        back_populates="chunks",
+        back_populates="segments",
         sa_relationship_kwargs={
-            "primaryjoin": "foreign(ContentChunk.content_item_id) == ContentItem.id"
+            "primaryjoin": "foreign(Segment.content_item_id) == ContentItem.id"
         },
     )
+
+
+# 保持向后兼容的别名
+ContentChunkBase = SegmentBase
+ContentChunk = Segment
 
 
 class ContentShareBase(SQLModel):
@@ -246,9 +284,9 @@ class ContentShareBase(SQLModel):
         default=None, foreign_key="contentitem.id", index=True
     )
     share_token: str = Field(max_length=255, unique=True, index=True)
+    access_count: int = Field(default=0, nullable=False)
     created_at: datetime = Field(default_factory=now_utc, nullable=False)
     expires_at: datetime | None = Field(default=None)
-    access_count: int = Field(default=0)
     max_access_count: int | None = Field(default=None)
     password_hash: str | None = Field(default=None, max_length=255)
     is_active: bool = Field(default=True, index=True)
@@ -275,3 +313,43 @@ class ContentShare(ContentShareBase, table=True):
 # However, the relationships are defined from the perspective of these new models to the User model.
 # The User model would need to be updated separately to reflect these relationships if bidirectional access is needed.
 # For now, the foreign keys are defined, which is sufficient for these models.
+
+
+class MessageSegmentReferenceBase(SQLModel):
+    """Base model for tracking which segments are referenced in AI conversation messages."""
+
+    conversation_id: uuid.UUID = Field(foreign_key="aiconversation.id", index=True)
+    message_index: int = Field(index=True)  # Index of the message in the conversation
+    segment_id: uuid.UUID = Field(foreign_key="segments.id", index=True)
+    sentence_index: int | None = Field(
+        default=None
+    )  # Which sentence in the message references this segment
+    relevance_score: float | None = Field(
+        default=None
+    )  # How relevant this segment is to the message
+    created_at: datetime = Field(default_factory=now_utc, nullable=False)
+
+
+class MessageSegmentReference(MessageSegmentReferenceBase, table=True):
+    """Represents the relationship between AI conversation messages and referenced segments."""
+
+    __tablename__ = "message_segment_references"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
+
+    # Add unique constraint to prevent duplicate references
+    __table_args__ = (
+        {"schema": None},  # Use default schema
+    )
+
+    conversation: "AIConversation" = Relationship(
+        sa_relationship_kwargs={
+            "primaryjoin": "foreign(MessageSegmentReference.conversation_id) == AIConversation.id"
+        }
+    )
+
+    segment: "Segment" = Relationship(
+        sa_relationship_kwargs={
+            "primaryjoin": "foreign(MessageSegmentReference.segment_id) == Segment.id"
+        }
+    )

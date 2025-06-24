@@ -1,3 +1,4 @@
+import logging
 import re  # For Markdown image processing
 import secrets  # For generating unique tokens
 import uuid
@@ -6,16 +7,26 @@ from typing import (
     Any,  # For optional fields
 )
 
+from sqlalchemy import delete as sa_delete
 from sqlalchemy import func  # For count
 from sqlalchemy.ext.asyncio import AsyncSession  # Changed from sqlmodel.Session
 from sqlalchemy.future import select  # For async select
+from sqlalchemy.orm import selectinload
 from sqlmodel import Session  # Add this for sync operations and specific select
 from sqlmodel import select as sqlmodel_select
 
 from app.core import security  # For password hashing
 from app.core.storage import StorageInterface
 from app.crud import crud_image  # crud_image module itself
-from app.models.content import ContentAsset, ContentChunk, ContentItem, ContentShare
+from app.models.content import (
+    AIConversation,
+    AIResult,
+    ContentAsset,
+    ContentChunk,
+    ContentItem,
+    ContentShare,
+    Segment,
+)
 
 # Schema imports - assuming these exist
 from app.schemas.content import ContentItemCreate, ContentItemUpdate, ContentShareCreate
@@ -23,6 +34,8 @@ from app.schemas.image import ImageCreate
 
 # Image processing imports
 from app.utils.image_processor import process_base64_image, process_web_image
+
+logger = logging.getLogger(__name__)
 
 
 # Helper function to process images in Markdown
@@ -139,7 +152,9 @@ def get_content_item_sync(session: Session, id: uuid.UUID) -> ContentItem | None
 def get_content_items_sync(
     session: Session, skip: int = 0, limit: int = 100, user_id: uuid.UUID | None = None
 ) -> Sequence[ContentItem]:
-    statement = sqlmodel_select(ContentItem)
+    statement = sqlmodel_select(ContentItem).options(
+        selectinload(ContentItem.ai_result)
+    )
     if user_id:
         statement = statement.where(ContentItem.user_id == user_id)
     statement = statement.offset(skip).limit(limit)
@@ -183,9 +198,7 @@ async def create_content_item(
     # Ensure all required fields for ContentItem are present
     # Example: title might be required by ContentItem but optional in ContentItemCreate
     if "title" not in content_data or content_data["title"] is None:
-        content_data["title"] = (
-            "Untitled Content"  # Provide a default or handle as error
-        )
+        content_data["title"] = "新内容"  # Provide a default or handle as error
 
     db_content_item = ContentItem(**content_data)
 
@@ -321,7 +334,7 @@ def get_content_chunks(
     chunks_statement = (
         sqlmodel_select(ContentChunk)
         .where(ContentChunk.content_item_id == content_item_id)
-        .order_by(ContentChunk.chunk_index)
+        .order_by(ContentChunk.segment_index)
         .offset(offset)
         .limit(size)
     )
@@ -398,13 +411,54 @@ def update_content_item_sync(
     return db_content_item
 
 
-def delete_content_item_sync(session: Session, id: uuid.UUID) -> ContentItem | None:
-    db_content_item = get_content_item_sync(session, id)
-    if db_content_item:
-        session.delete(db_content_item)
+def delete_content_item_sync(
+    session: Session, id: uuid.UUID, user_id: uuid.UUID
+) -> bool:
+    """
+    DELETE CASCADE delete content item and all related records
+    """
+
+    # Get the content item first to ensure it exists and user has permission
+    content_item = session.get(ContentItem, id)
+    if not content_item:
+        raise ValueError(f"Content item with id {id} not found")
+
+    if content_item.user_id != user_id:
+        raise ValueError("User does not have permission to delete this content item")
+
+    try:
+        # Delete in proper order to respect foreign key constraints
+        # 1. Delete segments (child table)
+        session.execute(sa_delete(Segment).where(Segment.content_item_id == id))
+
+        # 2. Delete content assets (child table)
+        session.execute(
+            sa_delete(ContentAsset).where(ContentAsset.content_item_id == id)
+        )
+
+        # 3. Delete content shares (child table)
+        session.execute(
+            sa_delete(ContentShare).where(ContentShare.content_item_id == id)
+        )
+
+        # 4. Delete AI results (child table)
+        session.execute(sa_delete(AIResult).where(AIResult.content_item_id == id))
+
+        # 5. Delete AI conversations (child table)
+        session.execute(
+            sa_delete(AIConversation).where(AIConversation.content_item_id == id)
+        )
+
+        # 6. Finally delete the content item itself
+        session.execute(sa_delete(ContentItem).where(ContentItem.id == id))
+
         session.commit()
-        return db_content_item
-    return None
+        return True
+
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error deleting content item {id}: {str(e)}")
+        raise
 
 
 # print("CRUD functions for ContentItem and ContentAsset potentially modified for async and image processing.")

@@ -3,6 +3,7 @@ interface NavigationState {
   librarySearchQuery: string;
   libraryStatusFilter: string;
   libraryTypeFilter: string;
+  librarySortBy: string;
   librarySelectedItem: string | null;
   readerLastVisited: string | null;
 }
@@ -33,6 +34,7 @@ class NavigationStateService {
       librarySearchQuery: "",
       libraryStatusFilter: "all",
       libraryTypeFilter: "all",
+      librarySortBy: "created_at_desc",
       librarySelectedItem: null,
       readerLastVisited: null,
     };
@@ -56,6 +58,7 @@ class NavigationStateService {
     searchQuery?: string;
     statusFilter?: string;
     typeFilter?: string;
+    sortBy?: string;
     selectedItem?: string | null;
   }) {
     this.setState({
@@ -63,6 +66,7 @@ class NavigationStateService {
       librarySearchQuery: state.searchQuery,
       libraryStatusFilter: state.statusFilter,
       libraryTypeFilter: state.typeFilter,
+      librarySortBy: state.sortBy,
       librarySelectedItem: state.selectedItem,
     });
   }
@@ -74,6 +78,7 @@ class NavigationStateService {
       searchQuery: state.librarySearchQuery,
       statusFilter: state.libraryStatusFilter,
       typeFilter: state.libraryTypeFilter,
+      sortBy: state.librarySortBy,
       selectedItem: state.librarySelectedItem,
     };
   }

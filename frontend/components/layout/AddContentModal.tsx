@@ -11,7 +11,6 @@ import {
   Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -27,6 +26,7 @@ import {
 import { useAuth, getCookie } from "@/lib/auth";
 import { contentCache } from "@/lib/services/content-cache";
 import { eventBus } from "@/lib/event-bus";
+import { useGlobalNotificationStore } from "@/lib/stores/useGlobalNotificationStore";
 
 interface AddContentModalProps {
   open: boolean;
@@ -66,7 +66,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 }) => {
   const [contentType, setContentType] = useState<ContentType>(null);
   const [content, setContent] = useState("");
-  const [title, setTitle] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [detectedUrls, setDetectedUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -74,6 +73,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
   // Move useAuth to component top level
   const { user } = useAuth();
+
+  // 全局通知Store
+  const { createContentProcessingNotification } = useGlobalNotificationStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,17 +88,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({
       return true;
     } catch {
       return false;
-    }
-  };
-
-  /**
-   * Safely extracts hostname from URL, returns fallback if invalid
-   */
-  const getUrlHostname = (url: string, fallback: string = "网站"): string => {
-    try {
-      return new URL(url).hostname;
-    } catch {
-      return fallback;
     }
   };
 
@@ -225,7 +216,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           const contentData = {
             type: "url",
             source_uri: url,
-            title: title || `网页内容 - ${getUrlHostname(url)}`,
+            // title will be auto-extracted on backend
             summary: `从 ${url} 获取的网页内容`,
           };
 
@@ -249,14 +240,22 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           const createdItem: ContentItemPublic = await response.json();
           console.log("URL内容创建成功:", createdItem);
           newlyCreatedItems.push(createdItem);
-          // Note: Background processing is automatically started by the backend
+
+          // 创建全局通知 - URL内容需要处理
+          if (createdItem.processing_status === "processing") {
+            createContentProcessingNotification(
+              createdItem.id,
+              createdItem.title || "处理网页内容",
+              `正在分析来自 ${url} 的内容...`,
+            );
+          }
         }
       } else if (contentType === "text" && content.trim()) {
         // 处理文本类型内容
         const contentData = {
           type: "text",
           content_text: content,
-          title: title || "文本内容",
+          // title will be auto-extracted on backend
           summary:
             content.length > 100 ? content.substring(0, 100) + "..." : content,
         };
@@ -281,7 +280,15 @@ export const AddContentModal: FC<AddContentModalProps> = ({
         const createdItem: ContentItemPublic = await response.json();
         console.log("文本内容创建成功:", createdItem);
         newlyCreatedItems.push(createdItem);
-        // Text content is immediately completed, no background processing needed
+
+        // 创建全局通知 - 文本内容如果需要处理
+        if (createdItem.processing_status === "processing") {
+          createContentProcessingNotification(
+            createdItem.id,
+            createdItem.title || "处理文本内容",
+            "正在分析文本内容...",
+          );
+        }
       } else if (contentType === "file" && selectedFiles.length > 0) {
         // 处理文件类型内容（暂时显示提示信息）
         setError("文件上传功能正在开发中，敬请期待。");
@@ -313,7 +320,15 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [contentType, detectedUrls, title, content, selectedFiles, user, onClose]);
+  }, [
+    contentType,
+    detectedUrls,
+    content,
+    selectedFiles,
+    user,
+    onClose,
+    createContentProcessingNotification,
+  ]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -329,7 +344,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   const resetForm = () => {
     setContentType(null);
     setContent("");
-    setTitle("");
     setSelectedFiles([]);
     setDetectedUrls([]);
     setError("");
@@ -485,15 +499,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                       onChange={(e) => handleContentChange(e.target.value)}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="title">标题 (可选)</Label>
-                    <Input
-                      id="title"
-                      placeholder="为这些链接添加标题"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                    />
-                  </div>
+                  {/* Title input removed; backend auto-extracts */}
                 </div>
               </div>
             )}
@@ -523,15 +529,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                     )}
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="text-title">标题 (可选)</Label>
-                  <Input
-                    id="text-title"
-                    placeholder="为文本内容添加标题"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                  />
-                </div>
+                {/* Title input removed; backend auto-extracts */}
               </div>
             )}
 

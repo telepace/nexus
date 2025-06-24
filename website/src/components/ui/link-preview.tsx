@@ -1,5 +1,20 @@
 'use client'
 import { cn } from '@/lib/utils'
+
+// 规范化图片URL，处理protocol-relative URLs
+const normalizeImageUrl = (url: string): string => {
+  if (!url) {
+    return url;
+  }
+  
+  // Convert protocol-relative URLs to HTTPS
+  if (url.startsWith('//')) {
+    return `https:${url}`;
+  }
+  
+  return url;
+};
+
 import * as HoverCardPrimitive from '@radix-ui/react-hover-card'
 import {
   AnimatePresence,
@@ -103,7 +118,7 @@ export const LinkPreview = ({
         ? (
             <div className="hidden">
               <Image
-                src={src}
+                src={normalizeImageUrl(src)}
                 width={width}
                 height={height}
                 quality={quality}
@@ -163,7 +178,7 @@ export const LinkPreview = ({
                   style={{ fontSize: 0 }}
                 >
                   <Image
-                    src={isStatic ? imageSrc : src}
+                    src={normalizeImageUrl(isStatic ? imageSrc : src)}
                     width={width}
                     height={height}
                     quality={quality}

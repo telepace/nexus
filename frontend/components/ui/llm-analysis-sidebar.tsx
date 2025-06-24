@@ -105,8 +105,7 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
 
       await generateAnalysis(
         contentId,
-        prompt.content, // system prompt
-        content, // user prompt (文章正文)
+        prompt.content, // 用户的分析指令
         prompt.id,
         prompt.name,
       );
@@ -142,8 +141,7 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
     try {
       await generateAnalysis(
         contentId,
-        analysis.prompt,
-        contentText || "",
+        analysis.prompt, // userPrompt (分析指令)
         analysis.promptId,
         analysis.title,
       );

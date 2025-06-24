@@ -24,6 +24,16 @@ def get_chat_service() -> ChatService:
     return _chat_service
 
 
+def get_chat_service_instance() -> ChatService:
+    """
+    获取ChatService实例（用于后台任务等非FastAPI上下文）
+
+    Returns:
+        ChatService: 聊天服务实例
+    """
+    return get_chat_service()
+
+
 def reset_dependencies():
     """重置所有依赖项（主要用于测试）"""
     global _chat_service

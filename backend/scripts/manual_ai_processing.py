@@ -1,0 +1,211 @@
+#!/usr/bin/env python3
+"""
+手动为指定内容触发AI处理的脚本
+用法：python scripts/manual_ai_processing.py <content_id>
+用于补跑缺失的AI结果
+
+注意：此脚本已更新以适应移除ProcessingJob表后的新架构
+"""
+
+import asyncio
+import logging
+import sys
+import uuid
+from datetime import datetime
+
+from sqlmodel import Session, create_engine, select
+
+from app.core.config import settings
+from app.models.content import AIResult, ContentItem
+from app.services.ai.chat_service import ChatService
+from app.services.preprocessing_pipeline import (
+    ContentType,
+    DocumentMetadata,
+    PreprocessingPipeline,
+)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+async def process_ai_for_content_item(content_item_id: str):
+    """为指定的content item手动触发AI处理"""
+    engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
+
+    # 首先获取内容数据
+    content_text = None
+    title = None
+    source_uri = None
+
+    with Session(engine) as session:
+        # 查找ContentItem
+        try:
+            content_uuid = uuid.UUID(content_item_id)
+        except ValueError:
+            logger.error(f"无效的UUID格式: {content_item_id}")
+            return False
+
+        content_item = session.exec(
+            select(ContentItem).where(ContentItem.id == content_uuid)
+        ).first()
+
+        if not content_item:
+            logger.error(f"未找到ContentItem: {content_item_id}")
+            return False
+
+        if not content_item.content_text:
+            logger.error(f"ContentItem内容为空: {content_item_id}")
+            return False
+
+        # 获取需要的数据
+        content_text = content_item.content_text
+        title = content_item.title
+        source_uri = content_item.source_uri
+
+        logger.info(f"找到ContentItem: {title or '无标题'}")
+        logger.info(f"内容长度: {len(content_text)} 字符")
+
+        # 检查是否已有AI结果
+        existing_ai_result = session.exec(
+            select(AIResult).where(AIResult.content_item_id == content_uuid)
+        ).first()
+
+        if existing_ai_result:
+            logger.warning("AI结果已存在，将重新生成")
+
+        # 更新ContentItem状态为处理中
+        content_item.processing_status = "processing"
+        content_item.error_message = None
+        content_item.updated_at = datetime.now()
+        session.add(content_item)
+        session.commit()
+
+        logger.info(f"开始处理ContentItem: {content_item.id}")
+
+    try:
+        # 创建ChatService和Pipeline
+        chat_service = ChatService()
+        pipeline = PreprocessingPipeline(chat_service)
+
+        # 构建metadata
+        metadata = DocumentMetadata(
+            title=title,
+            source_url=source_uri,
+            content_type=ContentType.WEB_PAGE,
+            language="zh"
+            if any(ord(char) > 127 for char in content_text[:100])
+            else "en",
+            estimated_words=len(content_text.split()),
+        )
+
+        logger.info("开始AI处理...")
+
+        # 执行AI初始化层
+        ai_results, ai_stats = await pipeline._ai_initialization_layer(
+            content_text, metadata, user_preferences=None
+        )
+
+        logger.info(f"AI处理完成，统计: {ai_stats}")
+        logger.info(f"提取到的标题: {ai_results.get('optimized_title')}")
+        logger.info(f"简短描述: {ai_results.get('brief_description')}")
+
+        # 手动存储AI结果
+        with Session(engine) as session:
+            # 获取AI优化的标题和描述
+            optimized_title = ai_results.get("optimized_title")
+            brief_description = ai_results.get("brief_description")
+            
+            # 更新或创建AI结果
+            existing_ai_result = session.exec(
+                select(AIResult).where(AIResult.content_item_id == content_uuid)
+            ).first()
+
+            ai_result_data = {
+                "content_item_id": content_uuid,
+                "optimized_title": optimized_title,
+                "brief_description": brief_description,
+                "summary": ai_results.get("summary"),
+                "key_points": ai_results.get("key_points"),
+                "labels": ai_results.get("labels"),
+                "content_analysis": ai_results.get("content_analysis"),
+                "reading_time_minutes": max(1, metadata.estimated_words // 200),
+                "difficulty_level": ai_results.get("content_analysis", {}).get(
+                    "difficulty_level", "intermediate"
+                ),
+                "content_quality_score": pipeline._calculate_quality_score(
+                    content_text, ai_results, metadata
+                ),
+                "updated_at": datetime.now(),
+            }
+
+            if existing_ai_result:
+                # 更新现有结果
+                for key, value in ai_result_data.items():
+                    if key != "content_item_id":  # 不更新主键
+                        setattr(existing_ai_result, key, value)
+                session.add(existing_ai_result)
+                logger.info("已更新现有AI结果")
+            else:
+                # 创建新结果
+                ai_result = AIResult(**ai_result_data, created_at=datetime.now())
+                session.add(ai_result)
+                logger.info("已创建新AI结果")
+
+            # 如果有AI优化的标题，更新ContentItem的标题
+            content_item = session.get(ContentItem, content_uuid)
+            if content_item:
+                if optimized_title and isinstance(optimized_title, str) and optimized_title.strip():
+                    original_title = content_item.title
+                    content_item.title = optimized_title.strip()[:255]  # 确保长度限制
+                    logger.info(f"✅ 标题更新: '{original_title}' -> '{content_item.title}'")
+                
+                content_item.processing_status = "completed"
+                content_item.last_processed_at = datetime.now()
+                content_item.updated_at = datetime.now()
+                content_item.error_message = None
+                session.add(content_item)
+
+            session.commit()
+
+        logger.info("AI处理完成并已保存")
+        return True
+
+    except Exception as e:
+        logger.error(f"AI处理失败: {str(e)}")
+
+        # 更新ContentItem状态为失败
+        with Session(engine) as session:
+            content_item = session.get(ContentItem, content_uuid)
+            if content_item:
+                content_item.processing_status = "failed"
+                content_item.error_message = str(e)
+                content_item.last_processed_at = datetime.now()
+                content_item.updated_at = datetime.now()
+                session.add(content_item)
+                session.commit()
+
+        return False
+
+
+async def main():
+    """主函数"""
+    if len(sys.argv) != 2:
+        logger.error("用法: python scripts/manual_ai_processing.py <content_id>")
+        return False
+    
+    content_id = sys.argv[1]
+    
+    logger.info(f"开始为内容 {content_id} 手动触发AI处理...")
+
+    success = await process_ai_for_content_item(content_id)
+
+    if success:
+        logger.info("AI处理成功完成！")
+    else:
+        logger.error("AI处理失败！")
+
+    return success
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

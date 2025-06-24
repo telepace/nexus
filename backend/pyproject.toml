@@ -13,11 +13,14 @@ dependencies = [
     "emails<1.0,>=0.6",
     "jinja2<4.0.0,>=3.1.4",
     "alembic<2.0.0,>=1.12.1",
-    "httpx>=0.27.0,<0.29.0", # Updated httpx version
+    "httpx[socks]>=0.27.0,<0.29.0",
+    # Updated httpx version
     "aiohttp>=3.8.0,<4.0.0",
     "psycopg[binary]<4.0.0,>=3.1.13",
-    "asyncpg>=0.30.0",  # Added for async PostgreSQL support
-    "greenlet>=3.2.0",  # Added for async operation support in SQLAlchemy
+    "asyncpg>=0.30.0",
+    # Added for async PostgreSQL support
+    "greenlet>=3.2.0",
+    # Added for async operation support in SQLAlchemy
     "psycopg2-binary<3.0.0,>=2.9.9",
     # 添加 psycopg2 作为备用驱动
     "sqlmodel<1.0.0,>=0.0.21",
@@ -30,7 +33,8 @@ dependencies = [
     "posthog<3.0.0,>=2.4.0",
     "yarl>=1.9.0,<2.0.0",
     "itsdangerous>=2.2.0",
-    "cryptography>=42.0.8", # Added for symmetric encryption
+    "cryptography>=42.0.8",
+    # Added for symmetric encryption
     "httptools>=0.6.4",
     "pillow<11.0.0,>=10.0.0",
     "pyyaml>=6.0.0,<7.0.0",
@@ -38,7 +42,14 @@ dependencies = [
     "beautifulsoup4>=4.12.0,<5.0.0",
     "markitdown[all]>=0.1.1",
     "boto3>=1.38.23",
-    "PyMuPDF>=1.26.0,<1.27.0", # Added PyMuPDF
+    "PyMuPDF>=1.26.0,<1.27.0",
+    # Added PyMuPDF
+    "openai>=1.0.0,<2.0.0",
+    "html2text>=2025.4.15",
+    "python-readability>=0.1.3",
+    # Added OpenAI for embeddings
+    "redis[hiredis]>=5.0.0,<6.0.0",
+    # Added Redis for caching
 ]
 
 [tool.uv]

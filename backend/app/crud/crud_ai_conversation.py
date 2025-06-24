@@ -30,7 +30,6 @@ def create_ai_conversation(
         title=conversation_in.title,
         ai_model_name=conversation_in.ai_model_name,
         messages=json.dumps(conversation_in.messages or []),
-        summary=conversation_in.summary,
         meta_info=json.dumps({}),
     )
     session.add(db_obj)

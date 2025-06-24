@@ -15,8 +15,15 @@ from app.core.config import settings
 from app.core.security import decrypt_password, get_password_hash, verify_password
 from app.core.storage import StorageInterface
 from app.models import (
+    AIConversation,
+    AIResult,
+    ContentAsset,
+    ContentItem,
+    ContentShare,
+    Favorite,
     Message,
     Project,
+    Segment,
     UpdatePassword,
     User,
     UserCreate,
@@ -145,18 +152,66 @@ def read_user_me_head(_current_user: CurrentUser) -> dict[str, Any]:
 @router.delete("/me", response_model=Message)
 def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
     """
-    Delete own user.
+    Delete current user and all associated data.
     """
     if current_user.is_superuser:
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
 
-    # Since foreign key constraints have been removed, we can delete the user directly
-    # The application should handle cleanup of related records if needed
+    # Delete all related records in this order to respect foreign key constraints
+    # 删除 AI 对话和结果
+    ai_conversations_stmt = delete(AIConversation).where(
+        AIConversation.user_id == current_user.id
+    )
+    session.execute(ai_conversations_stmt)
 
-    # Optional: Clean up related records (can be done asynchronously)
-    # For now, we'll just delete the user since there are no FK constraints
+    ai_results_stmt = delete(AIResult).where(
+        AIResult.content_item_id.in_(
+            select(ContentItem.id).where(ContentItem.user_id == current_user.id)
+        )
+    )
+    session.execute(ai_results_stmt)
+
+    # Delete segments
+    segments_stmt = delete(Segment).where(
+        Segment.content_item_id.in_(
+            select(ContentItem.id).where(ContentItem.user_id == current_user.id)
+        )
+    )
+    session.execute(segments_stmt)
+
+    # Delete content assets
+    assets_stmt = delete(ContentAsset).where(
+        ContentAsset.content_item_id.in_(
+            select(ContentItem.id).where(ContentItem.user_id == current_user.id)
+        )
+    )
+    session.execute(assets_stmt)
+
+    # Delete content shares
+    shares_stmt = delete(ContentShare).where(
+        ContentShare.content_item_id.in_(
+            select(ContentItem.id).where(ContentItem.user_id == current_user.id)
+        )
+    )
+    session.execute(shares_stmt)
+
+    # Delete any favorites where the user is the one who favorited (even if content belongs to others)
+    user_favorites_stmt = delete(Favorite).where(Favorite.user_id == current_user.id)
+    session.exec(user_favorites_stmt)
+
+    # Delete content items
+    content_items_delete_stmt = delete(ContentItem).where(
+        ContentItem.user_id == current_user.id
+    )
+    session.exec(content_items_delete_stmt)
+
+    # Delete projects owned by the user
+    projects_stmt = delete(Project).where(Project.owner_id == current_user.id)
+    session.exec(projects_stmt)
+
+    # Finally, delete the user
     session.delete(current_user)
     session.commit()
     return Message(message="User deleted successfully")

@@ -136,7 +136,7 @@ class TestContentProcessingAPI:
             headers=normal_user_token_headers,
         )
         assert response.status_code == 404
-        assert "ContentItem not found" in response.json()["error"]
+        assert "ContentItem not found" in response.json()["detail"]
 
     def test_process_content_item_unsupported_type(
         self, client: TestClient, db: Session, normal_user_token_headers
@@ -237,4 +237,4 @@ class TestContentProcessingAPI:
             headers=normal_user_token_headers,
         )
         assert process_response.status_code == 403
-        assert "You don't have permission" in process_response.json()["error"]
+        assert "You don't have permission" in process_response.json()["detail"]

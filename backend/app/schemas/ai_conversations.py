@@ -23,7 +23,6 @@ class AIConversationCreate(SQLModel):
     # Stored exactly as a list of dicts compatible with OpenAI format, e.g.
     # [{"role": "user", "content": "Hello"}]
     messages: list[dict[str, Any]] = Field(default_factory=list)
-    summary: str | None = None
 
 
 class AIConversationPublic(SQLModel):
@@ -33,7 +32,6 @@ class AIConversationPublic(SQLModel):
     content_item_id: uuid.UUID | None = None
     title: str | None = None
     ai_model_name: str
-    summary: str | None = None
     created_at: datetime
     updated_at: datetime
 

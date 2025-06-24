@@ -16,6 +16,7 @@ import { OptimizedImage } from "./OptimizedImage"; // 添加OptimizedImage组件
 // 移除 rehypeRaw 插件，避免未知HTML标签错误
 // import rehypeRaw from 'rehype-raw'
 import { cn } from "@/lib/utils";
+import { normalizeImageUrl } from "@/lib/utils";
 
 // Import highlight.js styles
 import "highlight.js/styles/github-dark.css";
@@ -299,18 +300,21 @@ export function MarkdownRenderer({
               return null;
             }
 
+            // 规范化图片URL，处理protocol-relative URLs
+            const normalizedSrc = normalizeImageUrl(srcString);
+
             // 检查是否为外部URL
             const isExternalUrl =
-              srcString.startsWith("http://") ||
-              srcString.startsWith("https://");
+              normalizedSrc.startsWith("http://") ||
+              normalizedSrc.startsWith("https://");
 
             // 检查是否为localhost
             const isLocalhost =
-              srcString.includes("localhost") ||
-              srcString.includes("127.0.0.1");
+              normalizedSrc.includes("localhost") ||
+              normalizedSrc.includes("127.0.0.1");
 
             // 检查是否为绝对路径（以/开头）
-            const isAbsolutePath = srcString.startsWith("/");
+            const isAbsolutePath = normalizedSrc.startsWith("/");
 
             // 检查是否为相对路径（不以/开头，也不是URL）
             const isRelativePath = !isExternalUrl && !isAbsolutePath;
@@ -320,7 +324,7 @@ export function MarkdownRenderer({
               return (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={srcString}
+                  src={normalizedSrc}
                   alt={alt || ""}
                   className="rounded-md border max-w-full h-auto object-contain block mx-auto"
                   loading="lazy"
@@ -341,7 +345,7 @@ export function MarkdownRenderer({
 
             // 对于本地绝对路径图片，使用OptimizedImage组件
             const optimizedImageProps = {
-              src: srcString,
+              src: normalizedSrc,
               alt: alt || "",
               width: 800, // 提供默认宽度
               height: 600, // 提供默认高度

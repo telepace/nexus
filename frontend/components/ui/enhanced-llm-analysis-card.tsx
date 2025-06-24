@@ -181,8 +181,7 @@ export function EnhancedLLMAnalysisCard({
             requestOptions={{
               method: "POST",
               body: JSON.stringify({
-                system_prompt: "原文内容将由后端获取",
-                user_prompt: analysis.prompt || "请分析以下内容",
+                analysis_instruction: analysis.prompt || "请分析以下内容",
                 model: "or-llama-3-1-8b-instruct",
               }),
             }}

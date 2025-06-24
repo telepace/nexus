@@ -454,7 +454,7 @@ frontend: check-pnpm frontend-install check-frontend-env
 frontend-build: check-pnpm frontend-install
 	@echo "===========> Building frontend for production"
 	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
-		cd $(FRONTEND_DIR) && $(PNPM) run build; \
+		cd $(FRONTEND_DIR) && npm run build; \
 	else \
 		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
 	fi
@@ -498,7 +498,7 @@ frontend-test: frontend-install
 		mkdir -p $(FRONTEND_DIR)/.next/types 2>/dev/null || true; \
 		echo "{}" > $(FRONTEND_DIR)/.next/types/package.json 2>/dev/null || true; \
 		echo "===========> Running frontend tests"; \
-		cd $(FRONTEND_DIR) && NODE_ENV=test $(PNPM) test -- --passWithNoTests || (echo "===========> Frontend tests failed" && exit 1); \
+		cd $(FRONTEND_DIR) && NODE_ENV=test $(PNPM) test || (echo "===========> Frontend tests failed" && exit 1); \
 	else \
 		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
 		exit 1; \
@@ -578,7 +578,7 @@ admin-test: admin-install
 	@echo "===========> Ensuring backend is running for admin tests"
 	@$(MAKE) backend-start
 	@echo "===========> Waiting for backend to be healthy before running admin tests"
-	@cd $(ADMIN_DIR) && $(PNPM) exec wait-on http://localhost:8000/api/v1/health/check -t 60000
+	@cd $(ADMIN_DIR) && $(PNPM) exec wait-on http-get://localhost:8000/api/v1/health -t 60000
 	@echo "===========> Running admin tests"
 	@cd $(ADMIN_DIR) && $(PNPM) test
 

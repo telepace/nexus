@@ -163,7 +163,7 @@ class SidePanelPage {
 
   async clickSummarizeButton() {
     if (!this.page) throw new Error("Page not initialized for SidePanelPage.");
-    const button = await this.findButton(['AI 总结', '总结', '摘要', 'Summarize', 'Summary'], 'summarize');
+    const button = await this.findButton(['AI 摘要', 'AI 总结', '总结', '摘要', 'Summarize', 'Summary'], 'summarize');
     await button.click();
   }
 
@@ -175,8 +175,8 @@ class SidePanelPage {
 
   async clickKeypointsButton() {
     if (!this.page) throw new Error("Page not initialized for SidePanelPage.");
-    // 根据真实UI，没有关键点功能，所以这个方法会抛出错误
-    throw new Error("关键点功能在当前版本的extension中不可用");
+    const button = await this.findButton(['关键要点', '要点', '关键点', 'Key Points', 'Keypoints'], 'keypoints');
+    await button.click();
   }
 
   async getExtractedContentText() {
@@ -216,6 +216,27 @@ class SidePanelPage {
       // 如果没有找到成功消息，返回一个默认值
       return '页面保存功能已触发';
     }
+  }
+
+  // 新增：等待选择器方法
+  async waitForSelector(selector, options = {}) {
+    if (!this.page) throw new Error("Page not initialized for SidePanelPage.");
+    const defaultOptions = { visible: true, timeout: testConfig.defaultTimeout };
+    return await this.page.waitForSelector(selector, { ...defaultOptions, ...options });
+  }
+
+  // 新增：获取元素文本方法
+  async getElementText(selector) {
+    if (!this.page) throw new Error("Page not initialized for SidePanelPage.");
+    const element = await this.page.$(selector);
+    if (!element) return null;
+    return await this.page.evaluate(el => el.textContent?.trim() || '', element);
+  }
+
+  // 新增：查询选择器方法
+  async querySelector(selector) {
+    if (!this.page) throw new Error("Page not initialized for SidePanelPage.");
+    return await this.page.$(selector);
   }
 }
 

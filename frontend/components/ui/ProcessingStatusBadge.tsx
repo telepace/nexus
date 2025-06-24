@@ -1,6 +1,13 @@
 import { FC } from "react";
-import { Loader2, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Clock, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export type ProcessingStatus =
   | "pending"
@@ -14,6 +21,9 @@ interface ProcessingStatusBadgeProps {
   className?: string;
   size?: "sm" | "md" | "lg";
   showText?: boolean;
+  errorMessage?: string;
+  onReprocess?: () => void;
+  isReprocessing?: boolean;
 }
 
 interface StatusConfig {
@@ -74,12 +84,15 @@ export const ProcessingStatusBadge: FC<ProcessingStatusBadgeProps> = ({
   className,
   size = "md",
   showText = true,
+  errorMessage,
+  onReprocess,
+  isReprocessing,
 }) => {
   const config = statusConfigs[status];
   const sizeConfig = sizeClasses[size];
   const Icon = config.icon;
 
-  return (
+  const BadgeContent = () => (
     <div
       className={cn(
         "inline-flex items-center rounded-full border font-medium transition-colors",
@@ -104,8 +117,43 @@ export const ProcessingStatusBadge: FC<ProcessingStatusBadgeProps> = ({
           )}
         </span>
       )}
+      {status === "failed" && onReprocess && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="ml-2 h-6 px-2 text-xs"
+          onClick={onReprocess}
+          disabled={isReprocessing}
+        >
+          {isReprocessing ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3 w-3" />
+          )}
+          重试
+        </Button>
+      )}
     </div>
   );
+
+  if (status === "failed" && errorMessage) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <BadgeContent />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="max-w-xs">{errorMessage}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return <BadgeContent />;
 };
 
 // 简化版本，只显示图标

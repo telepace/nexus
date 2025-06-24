@@ -18,15 +18,16 @@ import {
   Calendar,
   Clock,
   Brain,
-  Lightbulb,
   Target,
-  Sparkles,
+  Trash2,
+  MoreVertical,
+  Star,
+  Tag,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/client-auth";
 import { useRouter } from "next/navigation";
 import MainLayout from "@/components/layout/MainLayout";
 import { ShareContentModal } from "@/components/share/ShareContentModal";
-import { useContentEvents, ContentEvent } from "@/hooks/useContentEvents";
 import {
   ProcessingStatusBadge,
   ProcessingStatus,
@@ -36,69 +37,44 @@ import { Input } from "@/components/ui/input";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
 import { eventBus } from "@/lib/event-bus";
+import { contentApi } from "@/lib/services/content-api";
+import { FavoriteButton } from "@/components/actions/FavoriteButton";
 
-// Ripple effect function
-const createRipple = (event: React.MouseEvent<HTMLElement>) => {
-  const button = event.currentTarget;
-  const rect = button.getBoundingClientRect();
-  const size = Math.max(rect.width, rect.height);
-  const x = event.clientX - rect.left - size / 2;
-  const y = event.clientY - rect.top - size / 2;
-
-  const ripple = document.createElement("span");
-  ripple.style.cssText = `
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(var(--primary), 0.3);
-    transform: scale(0);
-    animation: ripple 0.6s linear;
-    left: ${x}px;
-    top: ${y}px;
-    width: ${size}px;
-    height: ${size}px;
-    pointer-events: none;
-  `;
-
-  button.style.position = "relative";
-  button.style.overflow = "hidden";
-  button.appendChild(ripple);
-
-  setTimeout(() => {
-    ripple.remove();
-  }, 600);
-};
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 // Define the ContentItemPublic type based on backend schema
+interface AIResultPublic {
+  optimized_title?: string | null;
+  brief_description?: string | null;
+  summary?: {
+    main_thesis?: string;
+    key_arguments?: string[];
+  } | null;
+  key_points?: {
+    core_concepts?: Array<{ point: string; category: string }>;
+  } | null;
+  labels?: string[] | null;
+  content_quality_score?: number | null;
+  difficulty_level?: string | null;
+  reading_time_minutes?: number | null;
+}
+
 interface ContentItemPublic {
   id: string;
   type: string;
   source_uri?: string | null;
   title?: string | null;
-  summary?: string | null;
   user_id: string;
   processing_status: string;
   created_at: string;
   updated_at: string;
-  ai_analysis?: {
-    summarizer?: {
-      summary?: {
-        main_thesis?: string;
-        key_insights?: string[];
-        conclusion?: string;
-      };
-      raw_text?: string;
-    };
-    key_points_extractor?: {
-      key_points?: {
-        core_concepts?: Array<{ point: string; explanation?: string }>;
-        important_facts?: Array<{ fact: string; context?: string }>;
-        actionable_insights?: Array<{ insight: string; application?: string }>;
-      };
-      raw_text?: string;
-    };
-    // 允许其他动态分析类型
-    [key: string]: unknown;
-  } | null;
+  is_favorite?: boolean;
+  ai_result?: AIResultPublic | null;
 }
 
 // Content type icons mapping
@@ -130,71 +106,21 @@ function debounce<T extends (...args: never[]) => void>(
 // AI分析结果展示组件
 const AIAnalysisCard = ({
   analysis,
-}: { analysis: ContentItemPublic["ai_analysis"] }) => {
+}: {
+  analysis: AIResultPublic | null | undefined;
+}) => {
   if (!analysis) return null;
 
-  const { summarizer, key_points_extractor, ...restAnalyses } = analysis;
-
-  // 提取其他分析类型（如 insights、questions 等）
-  const otherEntries = Object.entries(restAnalyses).filter(
-    ([, value]) => value && typeof value === "object",
-  );
-
-  const renderGenericAnalysis = (
-    title: string,
-    content: unknown,
-    index: number,
-  ) => {
-    if (!content) return null;
-
-    // 类型保护和安全访问
-    const isObject = typeof content === "object" && content !== null;
-    const contentObj = isObject ? (content as Record<string, unknown>) : null;
-
-    // 尽量使用结构化字段，否则回退到 raw_text
-    const preview =
-      (typeof content === "string" && content) ||
-      (contentObj?.analysis_result &&
-      typeof contentObj.analysis_result === "string"
-        ? contentObj.analysis_result
-        : null) ||
-      (contentObj?.raw_text && typeof contentObj.raw_text === "string"
-        ? contentObj.raw_text
-        : null) ||
-      (isObject ? JSON.stringify(content).substring(0, 150) : null);
-
-    if (!preview) return null;
-
-    return (
-      <div
-        key={index}
-        className="bg-gradient-to-r from-purple-50 to-fuchsia-50 dark:from-purple-950/20 dark:to-fuchsia-950/20 p-3 rounded-lg border border-purple-200/50 dark:border-purple-800/50"
-      >
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="h-3 w-3 text-purple-600 dark:text-purple-400" />
-          <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
-            {title}
-          </span>
-        </div>
-        <p className="text-sm text-purple-800 dark:text-purple-200 leading-relaxed line-clamp-3">
-          {typeof preview === "string"
-            ? preview.substring(0, 150) + "..."
-            : "(unsupported format)"}
-        </p>
-      </div>
-    );
-  };
+  const { summary, key_points, labels } = analysis;
 
   return (
     <div className="space-y-3 mt-3 pt-3 border-t border-border/50">
-      {/* AI分析标题 */}
       <div className="flex items-center gap-2 text-sm font-medium text-primary">
         <Brain className="h-4 w-4" />
         AI 智能分析
       </div>
 
-      {/* 总结部分 */}
-      {summarizer && (
+      {summary && summary.main_thesis && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 p-3 rounded-lg border border-blue-200/50 dark:border-blue-800/50">
           <div className="flex items-center gap-2 mb-2">
             <FileText className="h-3 w-3 text-blue-600 dark:text-blue-400" />
@@ -202,20 +128,13 @@ const AIAnalysisCard = ({
               智能总结
             </span>
           </div>
-          {summarizer.summary?.main_thesis ? (
-            <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed line-clamp-3">
-              {summarizer.summary.main_thesis}
-            </p>
-          ) : summarizer.raw_text ? (
-            <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed line-clamp-3">
-              {summarizer.raw_text.substring(0, 150)}...
-            </p>
-          ) : null}
+          <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed line-clamp-3">
+            {summary.main_thesis}
+          </p>
         </div>
       )}
 
-      {/* 关键要点部分 */}
-      {key_points_extractor && (
+      {key_points && key_points.core_concepts && (
         <div className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20 p-3 rounded-lg border border-emerald-200/50 dark:border-emerald-800/50">
           <div className="flex items-center gap-2 mb-2">
             <Target className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
@@ -223,36 +142,39 @@ const AIAnalysisCard = ({
               关键要点
             </span>
           </div>
-          {key_points_extractor.key_points?.core_concepts ? (
-            <div className="space-y-1">
-              {key_points_extractor.key_points.core_concepts
-                .slice(0, 2)
-                .map((concept, index) => (
-                  <div key={index} className="flex items-start gap-1">
-                    <Lightbulb className="h-2 w-2 text-emerald-600 dark:text-emerald-400 mt-1 flex-shrink-0" />
-                    <span className="text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed line-clamp-2">
-                      {concept.point}
-                    </span>
-                  </div>
-                ))}
-              {key_points_extractor.key_points.core_concepts.length > 2 && (
-                <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                  +{key_points_extractor.key_points.core_concepts.length - 2}{" "}
-                  更多要点
-                </div>
-              )}
-            </div>
-          ) : key_points_extractor.raw_text ? (
-            <p className="text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed line-clamp-3">
-              {key_points_extractor.raw_text.substring(0, 150)}...
-            </p>
-          ) : null}
+          <ul className="space-y-1">
+            {key_points.core_concepts.slice(0, 2).map((point, i) => (
+              <li
+                key={i}
+                className="text-sm text-emerald-800 dark:text-emerald-200"
+              >
+                - {point.point}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
-      {/* 其他分析类型 */}
-      {otherEntries.map(([key, value], idx) =>
-        renderGenericAnalysis(key, value, idx),
+      {labels && labels.length > 0 && (
+        <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 p-3 rounded-lg border border-amber-200/50 dark:border-amber-800/50">
+          <div className="flex items-center gap-2 mb-2">
+            <Tag className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+            <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+              智能标签
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {labels.map((label) => (
+              <Badge
+                key={label}
+                variant="outline"
+                className="text-xs bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-300"
+              >
+                {label}
+              </Badge>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
@@ -269,9 +191,14 @@ export default function ContentLibraryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("created_at_desc");
 
   // 添加分享状态管理
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [reprocessingItems, setReprocessingItems] = useState<Set<string>>(
+    new Set(),
+  );
+  const [deletingItems, setDeletingItems] = useState<Set<string>>(new Set());
 
   // 添加性能监控状态
   const [prefetchStats, setPrefetchStats] = useState({
@@ -290,6 +217,7 @@ export default function ContentLibraryPage() {
       setSearchQuery(savedState.searchQuery || "");
       setStatusFilter(savedState.statusFilter || "all");
       setTypeFilter(savedState.typeFilter || "all");
+      setSortBy(savedState.sortBy || "created_at_desc");
     }
   }, []);
 
@@ -299,9 +227,10 @@ export default function ContentLibraryPage() {
       searchQuery,
       statusFilter,
       typeFilter,
+      sortBy,
       selectedItem: selectedItem?.id || null,
     });
-  }, [searchQuery, statusFilter, typeFilter, selectedItem]);
+  }, [searchQuery, statusFilter, typeFilter, sortBy, selectedItem]);
 
   // 在数据加载完成后恢复滚动位置
   useEffect(() => {
@@ -339,7 +268,7 @@ export default function ContentLibraryPage() {
     };
   }, []);
 
-  // Filter items based on search and filters
+  // Filter and sort items based on search, filters, and sort preference
   useEffect(() => {
     let filtered = items;
 
@@ -348,7 +277,12 @@ export default function ContentLibraryPage() {
       filtered = filtered.filter(
         (item) =>
           item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.summary?.toLowerCase().includes(searchQuery.toLowerCase()),
+          item.ai_result?.brief_description
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          item.ai_result?.summary?.main_thesis
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()),
       );
     }
 
@@ -364,75 +298,54 @@ export default function ContentLibraryPage() {
       filtered = filtered.filter((item) => item.type === typeFilter);
     }
 
-    setFilteredItems(filtered);
-  }, [items, searchQuery, statusFilter, typeFilter]);
-
-  // Handle content status updates from SSE
-  const handleContentUpdate = useCallback((event: ContentEvent) => {
-    if (event.type === "content_status_update" && event.content_id) {
-      setItems((prevItems) => {
-        return prevItems.map((item) => {
-          if (item.id === event.content_id) {
-            const updatedItem = {
-              ...item,
-              processing_status: event.status || item.processing_status,
-              title: event.title || item.title,
-              updated_at: new Date().toISOString(),
-            };
-
-            // Update selected item if it's the same one
-            setSelectedItem((prev) =>
-              prev?.id === event.content_id ? updatedItem : prev,
-            );
-
-            return updatedItem;
-          }
-          return item;
-        });
-      });
-
-      // Show toast notifications for important status changes
-      if (event.status === "completed") {
-        toast.success(`内容处理完成: ${event.title || "未知内容"}`);
-      } else if (event.status === "failed") {
-        toast.error(`内容处理失败: ${event.error_message || "未知错误"}`);
+    // Sort items
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "created_at_desc":
+          return (
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+        case "created_at_asc":
+          return (
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
+        case "updated_at_desc":
+          return (
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          );
+        case "updated_at_asc":
+          return (
+            new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
+          );
+        case "title_asc":
+          return (a.title || "").localeCompare(b.title || "");
+        case "title_desc":
+          return (b.title || "").localeCompare(a.title || "");
+        case "quality_desc":
+          const qualityA = a.ai_result?.content_quality_score ?? 0;
+          const qualityB = b.ai_result?.content_quality_score ?? 0;
+          return qualityB - qualityA;
+        case "quality_asc":
+          const qualityAsc = a.ai_result?.content_quality_score ?? 0;
+          const qualityBsc = b.ai_result?.content_quality_score ?? 0;
+          return qualityAsc - qualityBsc;
+        case "reading_time_desc":
+          const timeA = a.ai_result?.reading_time_minutes ?? 0;
+          const timeB = b.ai_result?.reading_time_minutes ?? 0;
+          return timeB - timeA;
+        case "reading_time_asc":
+          const timeAscA = a.ai_result?.reading_time_minutes ?? 0;
+          const timeAscB = b.ai_result?.reading_time_minutes ?? 0;
+          return timeAscA - timeAscB;
+        default:
+          return (
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
       }
-    } else if (event.type === "content_created" && event.content_item) {
-      // 处理新内容创建事件
-      const newItem = event.content_item as ContentItemPublic;
-      setItems((prevItems) => {
-        // 检查是否已存在，避免重复添加
-        const exists = prevItems.some((item) => item.id === newItem.id);
-        if (!exists) {
-          // 将新项目添加到列表开头
-          return [newItem, ...prevItems];
-        }
-        return prevItems;
-      });
+    });
 
-      // 清除内容缓存以确保数据一致性
-      contentCache.clearContentList();
-
-      // 显示成功通知
-      toast.success(`新内容已添加: ${newItem.title || "未知内容"}`);
-    }
-  }, []);
-
-  const handleConnectionEstablished = useCallback(() => {
-    console.log("SSE connection established");
-  }, []);
-
-  const handleSSEError = useCallback((error: Error) => {
-    console.error("SSE error:", error);
-  }, []);
-
-  // Setup SSE connection
-  useContentEvents({
-    onContentUpdate: handleContentUpdate,
-    onConnectionEstablished: handleConnectionEstablished,
-    onError: handleSSEError,
-    enabled: !!user,
-  });
+    setFilteredItems(sorted);
+  }, [items, searchQuery, statusFilter, typeFilter, sortBy]);
 
   // Handle Open Reader
   const handleOpenReader = useCallback(
@@ -679,22 +592,23 @@ export default function ContentLibraryPage() {
     }
   };
 
-  // 订阅来自 AddContentModal 的本地事件，立即更新内容列表
+  // 监听内容创建事件
   useEffect(() => {
     const handler = (item: ContentItemPublic) => {
-      setItems((prev) => {
-        // 避免重复插入
-        if (prev.some((existing) => existing.id === item.id)) {
-          return prev;
+      // 将新项目添加到列表开头
+      setItems((prevItems) => {
+        const exists = prevItems.some((prevItem) => prevItem.id === item.id);
+        if (exists) {
+          return prevItems;
         }
-        // 将新项目添加到顶部
-        return [item, ...prev];
+        return [item, ...prevItems];
       });
 
       // 清除缓存，确保后续刷新数据准确
       contentCache.clearContentList();
 
-      toast.success(`新内容已添加: ${item.title || "未知内容"}`);
+      // 移除重复的toast通知，让SSE系统统一处理通知
+      // toast.success(`新内容已添加: ${item.title || "未知内容"}`);
     };
 
     eventBus.on("contentCreated", handler);
@@ -703,6 +617,197 @@ export default function ContentLibraryPage() {
       eventBus.off("contentCreated", handler);
     };
   }, []);
+
+  // 重新处理内容项
+  const handleReprocess = async (item: ContentItemPublic) => {
+    try {
+      setReprocessingItems((prev) => new Set(prev).add(item.id));
+
+      await contentApi.reprocessContentItem(item.id);
+
+      // 更新本地状态
+      setItems((prevItems) =>
+        prevItems.map((prevItem) =>
+          prevItem.id === item.id
+            ? { ...prevItem, processing_status: "processing" }
+            : prevItem,
+        ),
+      );
+
+      // 更新选中项
+      if (selectedItem?.id === item.id) {
+        setSelectedItem((prev) =>
+          prev ? { ...prev, processing_status: "processing" } : null,
+        );
+      }
+
+      toast.success("已开始重新处理内容");
+    } catch (error) {
+      console.error("重新处理失败:", error);
+      toast.error("重新处理失败，请稍后重试");
+    } finally {
+      setReprocessingItems((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(item.id);
+        return newSet;
+      });
+    }
+  };
+
+  // Handle Delete
+  const handleDelete = async (item: ContentItemPublic) => {
+    if (!confirm(`确定删除「${item.title || "无标题"}」? 删除后不可恢复。`)) {
+      return;
+    }
+    setDeletingItems((prev) => new Set(prev).add(item.id));
+    try {
+      await contentApi.deleteContentItem(item.id);
+      setItems((prev) => prev.filter((it) => it.id !== item.id));
+      if (selectedItem?.id === item.id) {
+        setSelectedItem(null);
+      }
+      toast.success("删除成功");
+    } catch (error) {
+      console.error(error);
+      toast.error("删除失败");
+    } finally {
+      setDeletingItems((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(item.id);
+        return newSet;
+      });
+    }
+  };
+
+  // ContentItemCard 组件移动到这里，作为内部组件
+  const ContentItemCard = ({ item }: { item: ContentItemPublic }) => {
+    const isSelected = selectedItem?.id === item.id;
+
+    return (
+      <Card
+        key={item.id}
+        className={`cursor-pointer transition-all duration-300 ease-in-out relative group border ${
+          isSelected
+            ? "ring-2 ring-primary shadow-lg"
+            : "hover:shadow-md hover:border-primary/20"
+        }`}
+        onMouseEnter={() => {
+          setSelectedItem(item);
+          prefetchContent(item);
+        }}
+        onClick={() => handleOpenReader(item)}
+      >
+        <CardHeader className="flex flex-row items-start justify-between p-4 pb-2">
+          <div className="flex-1">
+            <CardTitle className="text-base leading-tight pr-8">
+              {item.title || "未命名内容"}
+            </CardTitle>
+          </div>
+          <div className="absolute top-3 right-3 flex items-center gap-2">
+            {item.ai_result?.content_quality_score != null && (
+              <div className="flex items-center gap-0.5 opacity-60 hover:opacity-100 transition-opacity">
+                {Array.from({ length: 5 }, (_, i) => {
+                  const starCount =
+                    item.ai_result.content_quality_score >= 0.9
+                      ? 5
+                      : item.ai_result.content_quality_score >= 0.8
+                        ? 4
+                        : item.ai_result.content_quality_score >= 0.7
+                          ? 3
+                          : item.ai_result.content_quality_score >= 0.6
+                            ? 2
+                            : 1;
+                  return (
+                    <Star
+                      key={i}
+                      className={`h-3 w-3 ${
+                        i < starCount
+                          ? "text-amber-500 fill-current"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  );
+                })}
+              </div>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <DropdownMenuItem onClick={() => handleShare(item)}>
+                  <Share2 className="mr-2 h-4 w-4" /> 分享
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDownload(item)}>
+                  <Download className="mr-2 h-4 w-4" /> 下载
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-red-600"
+                  disabled={deletingItems.has(item.id)}
+                  onClick={() => handleDelete(item)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  {deletingItems.has(item.id) ? "删除中..." : "删除"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4 pt-2">
+          <div className="flex items-center text-xs text-muted-foreground mb-3 space-x-4">
+            <div className="flex items-center gap-1.5">
+              {getContentIcon(item.type)}
+              <span>{item.type.toUpperCase()}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Calendar className="h-3 w-3" />
+              <span>{new Date(item.created_at).toLocaleDateString()}</span>
+            </div>
+            {item.ai_result?.reading_time_minutes != null && (
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-3 w-3" />
+                <span>{item.ai_result.reading_time_minutes} 分钟阅读</span>
+              </div>
+            )}
+          </div>
+          <ProcessingStatusBadge
+            status={item.processing_status as ProcessingStatus}
+            isReprocessing={reprocessingItems.has(item.id)}
+            onReprocess={() => handleReprocess(item)}
+          />
+
+          {/* Brief description */}
+          {(item.ai_result?.brief_description || item.ai_result?.summary?.main_thesis) && (
+            <div className="mt-3 mb-3">
+              <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                {item.ai_result?.brief_description || item.ai_result?.summary?.main_thesis}
+              </p>
+            </div>
+          )}
+
+          {item.ai_result?.labels && item.ai_result.labels.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {item.ai_result.labels.slice(0, 5).map((label) => (
+                <Badge key={label} variant="secondary" className="text-xs">
+                  {label}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   useEffect(() => {
     // Wait for auth to complete
@@ -720,7 +825,7 @@ export default function ContentLibraryPage() {
         setError(null);
 
         // 先尝试从缓存获取数据
-        const cachedItems = contentCache.getContentList();
+        const cachedItems = null; // contentCache.getContentList(); // 临时禁用缓存
         if (cachedItems) {
           console.log(`📦 从缓存加载 ${cachedItems.length} 个内容项`);
           setItems(cachedItems);
@@ -787,8 +892,24 @@ export default function ContentLibraryPage() {
             id: item.id,
             title: item.title,
             type: item.type,
+            ai_result: item.ai_result,
           })),
         });
+
+        // 详细检查AI结果数据
+        data.forEach((item: ContentItemPublic) => {
+          if (item.ai_result) {
+            console.log(`🔍 Item ${item.title} AI结果:`, {
+              labels: item.ai_result.labels,
+              quality_score: item.ai_result.content_quality_score,
+              reading_time: item.ai_result.reading_time_minutes,
+              difficulty: item.ai_result.difficulty_level,
+            });
+          } else {
+            console.log(`❌ Item ${item.title} 没有AI结果数据`);
+          }
+        });
+
         setItems(data);
         // 缓存内容列表
         contentCache.setContentList(data);
@@ -923,6 +1044,24 @@ export default function ContentLibraryPage() {
                       <option value="url">网页</option>
                       <option value="text">文本</option>
                     </select>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="px-4 py-2 border border-border rounded-md bg-background text-foreground"
+                    >
+                      <option value="created_at_desc">创建时间 (新→旧)</option>
+                      <option value="created_at_asc">创建时间 (旧→新)</option>
+                      <option value="updated_at_desc">更新时间 (新→旧)</option>
+                      <option value="updated_at_asc">更新时间 (旧→新)</option>
+                      <option value="title_asc">标题 (A→Z)</option>
+                      <option value="title_desc">标题 (Z→A)</option>
+                      <option value="quality_desc">质量评分 (高→低)</option>
+                      <option value="quality_asc">质量评分 (低→高)</option>
+                      <option value="reading_time_desc">
+                        阅读时长 (长→短)
+                      </option>
+                      <option value="reading_time_asc">阅读时长 (短→长)</option>
+                    </select>
                   </div>
                 </div>
                 <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
@@ -930,7 +1069,8 @@ export default function ContentLibraryPage() {
                   <div className="flex items-center gap-4">
                     {(searchQuery ||
                       statusFilter !== "all" ||
-                      typeFilter !== "all") && (
+                      typeFilter !== "all" ||
+                      sortBy !== "created_at_desc") && (
                       <span>筛选后显示 {filteredItems.length} 项</span>
                     )}
                     <span className="text-xs text-muted-foreground/70">
@@ -964,56 +1104,7 @@ export default function ContentLibraryPage() {
                 ) : (
                   <div className="space-y-4">
                     {filteredItems.map((item) => (
-                      <Card
-                        key={item.id}
-                        className={`cursor-pointer transition-all duration-200 ease-out border-0 shadow-lg hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1 active:scale-[0.98] active:shadow-md active:translate-y-0 ${
-                          selectedItem?.id === item.id
-                            ? "ring-2 ring-primary shadow-xl scale-[1.02] -translate-y-1"
-                            : ""
-                        }`}
-                        onClick={() => handleOpenReader(item)}
-                        onMouseDown={createRipple}
-                        onMouseEnter={() => {
-                          setSelectedItem(item);
-                          prefetchContent(item);
-                        }}
-                        onMouseLeave={() => {}}
-                      >
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-start space-x-4 flex-1">
-                              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                                {getContentIcon(item.type)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-lg truncate mb-2">
-                                  {item.title || "无标题"}
-                                </h3>
-                                <p className="text-sm text-muted-foreground line-clamp-2 mb-3 leading-relaxed">
-                                  {item.summary || "暂无摘要"}
-                                </p>
-                                <div className="flex items-center gap-3 flex-wrap">
-                                  <ProcessingStatusBadge
-                                    status={
-                                      item.processing_status as ProcessingStatus
-                                    }
-                                    size="sm"
-                                  />
-                                  <Badge variant="outline" className="text-xs">
-                                    {item.type.toUpperCase()}
-                                  </Badge>
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <Calendar className="h-3 w-3" />
-                                    {new Date(
-                                      item.created_at,
-                                    ).toLocaleDateString("zh-CN")}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <ContentItemCard key={item.id} item={item} />
                     ))}
                   </div>
                 )}
@@ -1032,9 +1123,16 @@ export default function ContentLibraryPage() {
                     {selectedItem ? (
                       <div className="space-y-6">
                         <div>
-                          <h3 className="font-semibold mb-3 text-lg">
-                            {selectedItem.title || "无标题"}
-                          </h3>
+                          <div className="flex items-start justify-between mb-3">
+                            <h3 className="font-semibold text-lg flex-1">
+                              {selectedItem.title || "无标题"}
+                            </h3>
+                            <FavoriteButton
+                              itemId={selectedItem.id}
+                              size="sm"
+                              className="ml-2"
+                            />
+                          </div>
                           <div className="flex items-center gap-2 mb-4 flex-wrap">
                             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                               {getContentIcon(selectedItem.type)}
@@ -1047,6 +1145,19 @@ export default function ContentLibraryPage() {
                                 selectedItem.processing_status as ProcessingStatus
                               }
                               size="sm"
+                              errorMessage={
+                                selectedItem.processing_status === "failed"
+                                  ? "处理失败，点击重试"
+                                  : undefined
+                              }
+                              onReprocess={
+                                selectedItem.processing_status === "failed"
+                                  ? () => handleReprocess(selectedItem)
+                                  : undefined
+                              }
+                              isReprocessing={reprocessingItems.has(
+                                selectedItem.id,
+                              )}
                             />
                           </div>
                         </div>
@@ -1059,7 +1170,9 @@ export default function ContentLibraryPage() {
                               摘要
                             </label>
                             <p className="text-sm leading-relaxed bg-muted/30 p-3 rounded-lg">
-                              {selectedItem.summary || "暂无摘要"}
+                              {selectedItem.ai_result?.brief_description ||
+                                selectedItem.ai_result?.summary?.main_thesis ||
+                                "暂无摘要"}
                             </p>
                           </div>
 
@@ -1143,7 +1256,7 @@ export default function ContentLibraryPage() {
                         </div>
 
                         {/* AI 智能分析 */}
-                        <AIAnalysisCard analysis={selectedItem.ai_analysis} />
+                        <AIAnalysisCard analysis={selectedItem.ai_result} />
                       </div>
                     ) : (
                       <div className="text-center py-12">

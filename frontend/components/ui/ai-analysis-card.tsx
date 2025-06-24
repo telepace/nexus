@@ -65,9 +65,9 @@ export function AIAnalysisCard({
   // 动态构建 API 端点
   const getApiEndpoint = () => {
     if (contentId) {
-      // 使用新的内容完成端点
+      // 使用更新版本的内容完成端点，有更好的消息结构
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      return `${apiUrl}/api/v1/content/${contentId}/completion`;
+      return `${apiUrl}/api/v1/content/${contentId}/completion-updated`;
     } else {
       // 使用通用聊天端点
       return api || "/api/v1/chat/completions";
@@ -86,8 +86,7 @@ export function AIAnalysisCard({
     api: getApiEndpoint(),
     body: {
       model,
-      // 如果是内容分析，只传递 prompt 参数
-      ...(contentId ? { prompt: userContent } : {}),
+      // 不要在这里预设 prompt，让 complete 方法来处理
     },
     headers: {
       Authorization: `Bearer ${getCookie("accessToken")}`,
@@ -121,11 +120,67 @@ export function AIAnalysisCard({
     setHasStarted(true);
 
     if (contentId) {
-      // 对于内容分析，直接传入分析指令
+      // 对于内容分析，使用自定义的请求体格式
       try {
-        await complete(userContent);
+        // 直接使用 fetch 发送请求，更新版本的端点期望 { analysis_instruction: string } 格式
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const response = await fetch(
+          `${apiUrl}/api/v1/content/${contentId}/completion-updated`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${getCookie("accessToken")}`,
+            },
+            body: JSON.stringify({
+              analysis_instruction: userContent,
+              model: model,
+            }),
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // 处理流式响应
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error("无法获取响应流");
+        }
+
+        const decoder = new TextDecoder();
+        let accumulatedContent = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          accumulatedContent += chunk;
+
+          // 实时更新显示的内容
+          setCompletion(accumulatedContent);
+        }
+
+        setHasStarted(false);
+        onComplete?.(accumulatedContent);
+        toast({
+          title: "分析完成",
+          description: "AI 分析已成功完成",
+        });
       } catch (error) {
         setHasStarted(false);
+        const errorMessage =
+          error instanceof Error ? error.message : "分析失败";
+        onError?.(error instanceof Error ? error : new Error(errorMessage));
+        toast({
+          title: "分析失败",
+          description: errorMessage,
+          variant: "destructive",
+        });
         console.error("Content analysis failed:", error);
       }
     } else {

@@ -33,7 +33,6 @@ def create_mock_content_item(
         type="text",
         source_uri="http://example.com/test.txt",
         title="Test Content Item",
-        summary="This is a test summary.",
         content_text="This is the test content.",
         processing_status="completed",
         created_at=datetime.now(timezone.utc),
@@ -128,7 +127,7 @@ def test_update_content_item(db_session_mock: MagicMock):
     # it expects the db_content_item to be passed in.
     # So, no need to mock session.get here for this particular CRUD update signature.
 
-    update_data = {"title": "Updated Title", "summary": "Updated Summary."}
+    update_data = {"title": "Updated Title", "content_text": "Updated content."}
 
     # The update_content_item function modifies db_obj in place and returns it.
     updated_item = update_content_item(
@@ -142,7 +141,7 @@ def test_update_content_item(db_session_mock: MagicMock):
     db_session_mock.refresh.assert_called_once_with(mock_existing_item)
 
     assert updated_item.title == "Updated Title"
-    assert updated_item.summary == "Updated Summary."
+    assert updated_item.content_text == "Updated content."
     assert updated_item.id == existing_item_id  # Ensure ID hasn't changed
 
 
