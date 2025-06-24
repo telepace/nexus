@@ -23,6 +23,9 @@ from app.crud.crud_content import (
     create_content_item_sync as crud_create_content_item,
 )
 from app.crud.crud_content import (
+    delete_content_item_sync as crud_delete_content_item,
+)
+from app.crud.crud_content import (
     get_content_chunks,
     get_content_chunks_summary,
 )
@@ -31,9 +34,6 @@ from app.crud.crud_content import (
 )
 from app.crud.crud_content import (
     get_content_items_sync as crud_get_content_items,
-)
-from app.crud.crud_content import (
-    delete_content_item_sync as crud_delete_content_item,
 )
 from app.models import (
     AIConversation,
@@ -68,7 +68,7 @@ def _extract_title_from_content(content_text: str | None) -> str:
         str: Extracted title or default title
     """
     if not content_text:
-        return "Untitled Content"
+        return "新内容"
 
     # Simple extraction: take first line or first 50 characters
     lines = content_text.strip().split("\n")
@@ -80,9 +80,9 @@ def _extract_title_from_content(content_text: str | None) -> str:
         # Limit length
         if len(title) > 50:
             title = title[:47] + "..."
-        return title if title else "Untitled Content"
+        return title if title else "新内容"
 
-    return "Untitled Content"
+    return "新内容"
 
 
 def create_ai_conversation(
@@ -1440,52 +1440,232 @@ def delete_content_item_endpoint(
     - Content shares
     - AI results
     - AI conversations
-    
+
     Only the owner of the content item can delete it.
     """
     try:
         success = crud_delete_content_item(
-            session=session, 
-            id=id, 
-            user_id=current_user.id
+            session=session, id=id, user_id=current_user.id
         )
-        
+
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to delete content item"
+                detail="Failed to delete content item",
             )
-            
+
         # 发送SSE通知（如果需要）
         try:
             content_event_manager.notify_content_deleted(
-                content_id=str(id),
-                user_id=str(current_user.id)
+                content_id=str(id), user_id=str(current_user.id)
             )
         except Exception as e:
             # SSE通知失败不应该影响删除操作
             logger.warning(f"Failed to send content deletion notification: {e}")
-            
+
     except ValueError as e:
         error_msg = str(e)
         if "not found" in error_msg:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Content item not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
             )
         elif "permission" in error_msg:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have permission to delete this content item"
+                detail="You don't have permission to delete this content item",
             )
         else:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=error_msg
+                status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg
             )
     except Exception as e:
         logger.error(f"Unexpected error deleting content item {id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while deleting the content item"
+            detail="An unexpected error occurred while deleting the content item",
         )
+
+
+@router.post(
+    "/{id}/favorite",
+    status_code=status.HTTP_201_CREATED,
+    summary="Add Content to Favorites",
+    description="Add a content item to the user's favorites list.",
+)
+def add_to_favorites_endpoint(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID = Path(..., description="Content item ID to add to favorites"),
+) -> dict[str, str]:
+    """Add content item to favorites."""
+    from app.crud.crud_favorite import create_favorite, get_favorite
+
+    # Verify content item exists and belongs to user
+    content_item = crud_get_content_item(session=session, id=id)
+    if not content_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
+        )
+
+    if content_item.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to access this content item",
+        )
+
+    # Check if already favorited
+    existing_favorite = get_favorite(
+        session=session, user_id=current_user.id, content_item_id=id
+    )
+    if existing_favorite:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Content item is already in favorites",
+        )
+
+    # Create favorite
+    create_favorite(session=session, user_id=current_user.id, content_item_id=id)
+
+    return {"status": "ok"}
+
+
+@router.delete(
+    "/{id}/favorite",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Remove Content from Favorites",
+    description="Remove a content item from the user's favorites list.",
+)
+def remove_from_favorites_endpoint(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID = Path(..., description="Content item ID to remove from favorites"),
+) -> None:
+    """Remove content item from favorites."""
+    from app.crud.crud_favorite import delete_favorite
+
+    # Verify content item exists and belongs to user
+    content_item = crud_get_content_item(session=session, id=id)
+    if not content_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
+        )
+
+    if content_item.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to access this content item",
+        )
+
+    # Remove from favorites
+    success = delete_favorite(
+        session=session, user_id=current_user.id, content_item_id=id
+    )
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content item is not in favorites",
+        )
+
+
+@router.get(
+    "/{id}/favorite/status",
+    summary="Check Favorite Status",
+    description="Check if a content item is in the user's favorites.",
+)
+def check_favorite_status_endpoint(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID = Path(..., description="Content item ID to check"),
+) -> dict[str, bool]:
+    """Check if content item is in favorites."""
+    from app.crud.crud_favorite import get_favorite
+
+    # Verify content item exists and belongs to user
+    content_item = crud_get_content_item(session=session, id=id)
+    if not content_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
+        )
+
+    if content_item.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to access this content item",
+        )
+
+    # Check favorite status
+    favorite = get_favorite(
+        session=session, user_id=current_user.id, content_item_id=id
+    )
+
+    return {"is_favorite": favorite is not None}
+
+
+@router.get(
+    "/processors/supported",
+    summary="Get Supported Processors",
+    description="Get information about supported content processors and pipeline configuration.",
+)
+def get_supported_processors_endpoint() -> dict[str, Any]:
+    """Get supported processors information."""
+    return {
+        "supported_types": [
+            "text",
+            "url",
+            "pdf",
+            "docx",
+            "webpage",
+            "html",
+            "markdown",
+            "csv",
+            "json",
+            "xlsx",
+            "pptx",
+        ],
+        "processors": {
+            "modern_processor": {
+                "name": "ModernProcessor",
+                "description": "Unified processor using Microsoft MarkItDown",
+                "supported_types": [
+                    "url",
+                    "pdf",
+                    "docx",
+                    "xlsx",
+                    "pptx",
+                    "csv",
+                    "json",
+                ],
+                "features": [
+                    "text_extraction",
+                    "markdown_conversion",
+                    "metadata_extraction",
+                ],
+            },
+            "text_processor": {
+                "name": "TextProcessor",
+                "description": "Direct text processing without conversion",
+                "supported_types": ["text"],
+                "features": ["direct_processing"],
+            },
+            "jina_processor": {
+                "name": "JinaProcessor",
+                "description": "Web content extraction using Jina Reader API",
+                "supported_types": ["url", "webpage"],
+                "features": ["web_content_extraction", "markdown_conversion"],
+            },
+        },
+        "pipeline_info": {
+            "engine": "Microsoft MarkItDown",
+            "storage": "Cloudflare R2",
+            "extensible": True,
+            "features": [
+                "background_processing",
+                "automatic_chunking",
+                "ai_analysis",
+                "error_handling",
+            ],
+        },
+    }

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
   Loader2,
@@ -13,8 +12,6 @@ import {
   ExternalLink,
   Share2,
   FileText,
-  BookOpen,
-  MessageSquare,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
@@ -28,15 +25,13 @@ import {
   AIResult,
   ConversationListResponse,
 } from "@/lib/api/content";
-import { AnalysisCards } from "@/components/ai/AnalysisCards";
-import { ConversationHistory } from "@/components/ai/ConversationHistory";
 
 // 骨架屏组件
 const ReaderSkeleton = () => {
   return (
-    <div className="h-full flex flex-col p-2 animate-pulse">
+    <div className="h-full flex flex-col animate-pulse">
       {/* Header Skeleton */}
-      <div className="flex items-center justify-between px-6 py-4 border-b">
+      <div className="flex items-center justify-between px-6 py-4 border-b bg-white/50">
         <div className="flex items-center space-x-4">
           <div className="w-24 h-8 bg-muted rounded"></div>
           <div>
@@ -52,24 +47,24 @@ const ReaderSkeleton = () => {
       </div>
 
       {/* Main Content Skeleton */}
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-8">
         {/* Content Area Skeleton */}
-        <div className="space-y-4">
+        <div className="space-y-6 max-w-4xl mx-auto">
           {/* 模拟文章内容的骨架 */}
-          <div className="space-y-3">
-            <div className="w-full h-4 bg-muted rounded"></div>
+          <div className="space-y-4">
+            <div className="w-full h-6 bg-muted rounded"></div>
             <div className="w-5/6 h-4 bg-muted rounded"></div>
             <div className="w-4/5 h-4 bg-muted rounded"></div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="w-full h-4 bg-muted rounded"></div>
             <div className="w-3/4 h-4 bg-muted rounded"></div>
             <div className="w-5/6 h-4 bg-muted rounded"></div>
             <div className="w-2/3 h-4 bg-muted rounded"></div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="w-4/5 h-4 bg-muted rounded"></div>
             <div className="w-full h-4 bg-muted rounded"></div>
             <div className="w-3/5 h-4 bg-muted rounded"></div>
@@ -94,8 +89,8 @@ interface ContentDetail {
   updated_at: string;
 }
 
-// 优化的内容渲染器 - 专注于处理后的内容
-const ProcessedContentRenderer = memo(
+// 优化的内容渲染器 - 专注于阅读体验
+const OptimizedContentRenderer = memo(
   ({
     content,
     markdownContent,
@@ -111,15 +106,14 @@ const ProcessedContentRenderer = memo(
     if (contentId && content.processing_status === "completed") {
       return (
         <div className="relative h-full">
-          {/* 内容类型指示器 */}
-          <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-r from-green-50/80 to-emerald-50/80 dark:from-green-950/20 dark:to-emerald-950/20 backdrop-blur-sm border-b border-green-200/50 dark:border-green-800/50 animate-in slide-in-from-top duration-200">
-            <div className="flex items-center justify-between p-3">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+          {/* 精简的内容类型指示器 */}
+          <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-r from-green-50/90 to-emerald-50/90 dark:from-green-950/30 dark:to-emerald-950/30 backdrop-blur-sm border-b border-green-200/30 dark:border-green-800/30">
+            <div className="flex items-center justify-between px-6 py-3">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                 <span className="text-sm font-medium text-green-800 dark:text-green-200">
                   AI 处理版本
                 </span>
-                {/* Removed '优化渲染已启用' for cleaner UI */}
               </div>
               <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
                 <FileText className="h-3 w-3" />
@@ -129,10 +123,10 @@ const ProcessedContentRenderer = memo(
           </div>
 
           {/* 虚拟滚动渲染器 */}
-          <div className="absolute top-[60px] left-0 right-0 bottom-0 animate-in fade-in duration-300 delay-100">
+          <div className="absolute top-[50px] left-0 right-0 bottom-0">
             <VirtualScrollRenderer
               contentId={contentId}
-              className="w-full h-full"
+              className="w-full h-full px-6 py-4"
               chunkSize={15}
               maxVisibleChunks={50}
             />
@@ -147,121 +141,132 @@ const ProcessedContentRenderer = memo(
 
     if (!contentToRender) {
       return (
-        <div className="flex justify-center items-center h-64">
-          <div className="text-center">
-            <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">
+        <div className="flex justify-center items-center h-96 max-w-4xl mx-auto">
+          <div className="text-center p-8">
+            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">
               {content.processing_status === "completed"
-                ? "处理后的内容暂不可用"
+                ? "内容暂不可用"
                 : content.processing_status === "failed"
                   ? "内容处理失败"
-                  : `内容正在处理中，状态：${content.processing_status}`}
+                  : "内容正在处理中"}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {content.processing_status === "completed"
+                ? "处理后的内容暂不可用，请稍后再试"
+                : content.processing_status === "failed"
+                  ? "内容处理失败，可尝试重新处理"
+                  : `当前状态：${content.processing_status}`}
             </p>
-            {content.processing_status === "failed" ? (
-              <div className="flex flex-col items-center gap-3 mt-4">
-                <p className="text-xs text-red-600">
-                  内容处理失败，可尝试重新处理
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={async () => {
-                      try {
-                        const apiUrl =
-                          process.env.NEXT_PUBLIC_API_URL ||
-                          "http://127.0.0.1:8000";
-                        const token = getCookie("accessToken");
-                        if (!token) {
-                          throw new Error("未找到登录凭据");
-                        }
-
-                        const res = await fetch(
-                          `${apiUrl}/api/v1/content/reprocess/${contentId}`,
-                          {
-                            method: "POST",
-                            headers: {
-                              Authorization: `Bearer ${token}`,
-                              "Content-Type": "application/json",
-                            },
-                          },
-                        );
-
-                        if (!res.ok) {
-                          throw new Error("重新处理请求失败");
-                        }
-
-                        // 刷新当前页面状态
-                        router.refresh();
-                      } catch (err) {
-                        console.error(err);
-                        alert("重新处理请求失败，请稍后再试");
+            {content.processing_status === "failed" && (
+              <div className="flex justify-center gap-3">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      const apiUrl =
+                        process.env.NEXT_PUBLIC_API_URL ||
+                        "http://127.0.0.1:8000";
+                      const token = getCookie("accessToken");
+                      if (!token) {
+                        throw new Error("未找到登录凭据");
                       }
-                    }}
-                    className="text-xs"
-                  >
-                    重新处理
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => router.push("/content-library")}
-                    className="text-xs"
-                  >
-                    返回内容库
-                  </Button>
+
+                      const res = await fetch(
+                        `${apiUrl}/api/v1/content/reprocess/${contentId}`,
+                        {
+                          method: "POST",
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                          },
+                        },
+                      );
+
+                      if (!res.ok) {
+                        throw new Error("重新处理请求失败");
+                      }
+
+                      router.refresh();
+                    } catch (err) {
+                      console.error(err);
+                      alert("重新处理请求失败，请稍后再试");
+                    }
+                  }}
+                >
+                  重新处理
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push("/content-library")}
+                >
+                  返回内容库
+                </Button>
+              </div>
+            )}
+            {content.processing_status !== "completed" &&
+              content.processing_status !== "failed" && (
+                <div className="flex items-center justify-center gap-2 mt-4">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  <span className="text-sm text-primary">
+                    AI 正在处理内容...
+                  </span>
                 </div>
-              </div>
-            ) : content.processing_status !== "completed" ? (
-              <div className="flex items-center justify-center gap-2 mt-2">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                <span className="text-xs text-primary">AI 正在处理内容...</span>
-              </div>
-            ) : null}
+              )}
           </div>
         </div>
       );
     }
 
-    // 传统 markdown 渲染
+    // 优化的传统 markdown 渲染
     return (
-      <div className="relative h-full animate-in fade-in duration-300">
-        <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-r from-green-50/80 to-emerald-50/80 dark:from-green-950/20 dark:to-emerald-950/20 backdrop-blur-sm border-b border-green-200/50 dark:border-green-800/50 animate-in slide-in-from-top duration-200">
-          <div className="flex items-center justify-between p-3">
-            <div className="flex items-center gap-2">
+      <div className="relative h-full">
+        <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-r from-green-50/90 to-emerald-50/90 dark:from-green-950/30 dark:to-emerald-950/30 backdrop-blur-sm border-b border-green-200/30 dark:border-green-800/30">
+          <div className="flex items-center justify-between px-6 py-3">
+            <div className="flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-green-500"></div>
               <span className="text-sm font-medium text-green-800 dark:text-green-200">
                 AI 处理版本
               </span>
-              <span className="text-xs text-green-600 dark:text-green-400">
-                标准渲染模式
-              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
+              <FileText className="h-3 w-3" />
+              <span>标准渲染模式</span>
             </div>
           </div>
         </div>
 
-        <div className="absolute top-[60px] left-0 right-0 bottom-0 overflow-auto animate-in fade-in duration-300 delay-100">
-          {markdownContent ||
-          contentToRender.includes("#") ||
-          contentToRender.includes("**") ? (
-            <MarkdownRenderer
-              content={contentToRender}
-              className="prose prose-sm max-w-none dark:prose-invert p-4 [&>*:first-child]:mt-0"
-            />
-          ) : (
-            <div className="prose prose-sm max-w-none dark:prose-invert p-4 [&>*:first-child]:mt-0">
-              <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                {contentToRender}
+        <div className="absolute top-[50px] left-0 right-0 bottom-0 overflow-auto custom-scrollbar smooth-scroll">
+          <div className="max-w-4xl mx-auto px-6 py-6">
+            {markdownContent ||
+            contentToRender.includes("#") ||
+            contentToRender.includes("**") ? (
+              <MarkdownRenderer
+                content={contentToRender}
+                className="reading-content prose prose-lg max-w-none dark:prose-invert 
+                  prose-headings:text-foreground prose-headings:font-semibold
+                  prose-p:text-foreground prose-p:leading-relaxed prose-p:mb-4
+                  prose-li:text-foreground prose-strong:text-foreground
+                  prose-code:text-foreground prose-pre:bg-muted
+                  [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+              />
+            ) : (
+              <div className="reading-content prose prose-lg max-w-none dark:prose-invert">
+                <div className="whitespace-pre-wrap text-foreground leading-relaxed">
+                  {contentToRender}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     );
   },
 );
 
-ProcessedContentRenderer.displayName = "ProcessedContentRenderer";
+OptimizedContentRenderer.displayName = "OptimizedContentRenderer";
 
 interface ClientContentProps {
   contentId: string;
@@ -276,7 +281,8 @@ export const ClientContent = ({
 }: ClientContentProps) => {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
-  const { onContentChange } = useReaderContext();
+  const { onContentChange, onAnalysisUpdate, onConversationsUpdate } =
+    useReaderContext();
 
   const [content, setContent] = useState<ContentDetail | null>(
     initialData || null,
@@ -290,14 +296,11 @@ export const ClientContent = ({
   // 添加分享状态管理
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
-  // 新增：AI分析结果和对话历史状态
+  // AI分析结果和对话历史状态 - 会传递给右侧面板
   const [analysisResult, setAnalysisResult] = useState<AIResult | null>(null);
   const [conversations, setConversations] = useState<
     ConversationListResponse["conversations"]
   >([]);
-  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
-  const [loadingConversations, setLoadingConversations] = useState(false);
-  const [activeTab, setActiveTab] = useState("content");
 
   // 记录访问
   useEffect(() => {
@@ -317,59 +320,45 @@ export const ClientContent = ({
     }
   }, [content, markdownContent, onContentChange]);
 
+  // 传递分析结果给右侧面板
+  useEffect(() => {
+    if (onAnalysisUpdate) {
+      onAnalysisUpdate(analysisResult);
+    }
+  }, [analysisResult, onAnalysisUpdate]);
+
+  // 传递对话历史给右侧面板
+  useEffect(() => {
+    if (onConversationsUpdate) {
+      onConversationsUpdate(conversations);
+    }
+  }, [conversations, onConversationsUpdate]);
+
+  // 获取内容详情和markdown
   useEffect(() => {
     if (authLoading) return;
 
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
-    // 如果已有初始数据，不需要重新获取
-    if (initialData && initialMarkdown) {
-      console.log(`⚡ 使用服务器端预加载数据: ${initialData.title}`);
+    if (!user?.token && !getCookie("accessToken")) {
+      setError("未登录或登录已过期");
       return;
     }
 
     async function fetchContentDetail() {
       try {
-        // 先尝试从缓存获取数据
-        const cachedContent = contentCache.getContentDetail(contentId);
-        const cachedMarkdown = contentCache.getMarkdownContent(contentId);
-
-        if (cachedContent && !initialData) {
-          console.log(`⚡ 从缓存快速加载内容: ${cachedContent.title}`);
-          setContent(cachedContent);
-          if (cachedMarkdown) {
-            setMarkdownContent(cachedMarkdown);
-            console.log(`⚡ 从缓存快速加载Markdown内容`);
-          }
-          setLoading(false);
-          // 检查内容是否需要更新（简单的时间戳检查）
-          const cacheTime = Date.now() - 2 * 60 * 1000; // 2分钟
-          const contentUpdated = new Date(cachedContent.updated_at).getTime();
-          if (contentUpdated > cacheTime) {
-            console.log(`✅ 缓存内容较新，无需重新获取`);
-            return;
-          }
-        } else if (!initialData) {
-          console.log(`🔄 缓存未命中，从服务器获取内容: ${contentId}`);
-          setLoading(true);
-        }
-
+        setLoading(true);
         setError(null);
-
-        const token = user?.token || getCookie("accessToken");
-        if (!token) {
-          setError("No authentication token found. Please log in again.");
-          router.push("/login");
-          return;
-        }
 
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const token = user?.token || getCookie("accessToken");
+        if (!token) {
+          throw new Error("未找到登录凭据");
+        }
 
-        // 并行请求内容详情和markdown内容
+        // 检查缓存
+        contentCache.getContentDetail(contentId);
+        contentCache.getMarkdownContent(contentId);
+
         const requests = [];
 
         if (!content) {
@@ -423,17 +412,17 @@ export const ClientContent = ({
             contentResponse.status === "fulfilled" &&
             contentResponse.value.status === 404
           ) {
-            setError("Content not found.");
+            setError("内容未找到");
             return;
           }
           throw new Error(
             contentResponse.status === "fulfilled"
               ? `HTTP ${contentResponse.value.status}: ${await contentResponse.value.text()}`
-              : "Failed to fetch content",
+              : "获取内容失败",
           );
         }
 
-        // 处理markdown内容请求结果
+        // 处理markdown请求结果
         if (
           markdownResponse &&
           markdownResponse.status === "fulfilled" &&
@@ -446,107 +435,51 @@ export const ClientContent = ({
             contentId,
             markdownData.markdown_content,
           );
-        } else if (markdownResponse) {
-          console.warn(
-            "Failed to fetch markdown content:",
-            markdownResponse.status === "fulfilled"
-              ? markdownResponse.value.status
-              : "Request failed",
-          );
         }
-      } catch (e: unknown) {
-        console.error("Error fetching content:", e);
-        if (e instanceof Error) {
-          setError(e.message);
-        } else {
-          setError("An unknown error occurred while fetching content.");
-        }
+      } catch (error) {
+        console.error("获取内容详情失败:", error);
+        setError(error instanceof Error ? error.message : "获取内容详情失败");
       } finally {
         setLoading(false);
       }
     }
 
     fetchContentDetail();
-  }, [
-    contentId,
-    user,
-    authLoading,
-    router,
-    initialData,
-    initialMarkdown,
-    content,
-    markdownContent,
-  ]);
+  }, [contentId, user?.token, authLoading, content, markdownContent]);
 
-  // 新增：获取AI分析结果和对话历史
+  // 获取AI分析结果和对话历史
   useEffect(() => {
     if (!content || !user) return;
 
     async function fetchAnalysisData() {
       try {
-        // 并行获取AI分析结果和对话历史
-        const [analysisPromise, conversationsPromise] =
+        // 并行获取分析结果和对话历史
+        const [analysisResponse, conversationsResponse] =
           await Promise.allSettled([
-            (() => {
-              setLoadingAnalysis(true);
-              return contentApi.getContentAnalysisResult(contentId);
-            })(),
-            (() => {
-              setLoadingConversations(true);
-              return contentApi.getContentConversations(contentId, false);
-            })(),
+            contentApi.getContentAnalysisResult(contentId),
+            contentApi.getContentConversations(contentId, false),
           ]);
 
         // 处理分析结果
-        if (analysisPromise.status === "fulfilled" && analysisPromise.value) {
-          setAnalysisResult(analysisPromise.value);
-        } else if (analysisPromise.status === "rejected") {
-          console.error(
-            "Failed to fetch analysis result:",
-            analysisPromise.reason,
-          );
+        if (analysisResponse.status === "fulfilled") {
+          setAnalysisResult(analysisResponse.value);
+        } else {
+          console.error("获取分析结果失败:", analysisResponse.reason);
         }
 
         // 处理对话历史
-        if (
-          conversationsPromise.status === "fulfilled" &&
-          conversationsPromise.value
-        ) {
-          setConversations(conversationsPromise.value.conversations);
-        } else if (conversationsPromise.status === "rejected") {
-          console.error(
-            "Failed to fetch conversations:",
-            conversationsPromise.reason,
-          );
+        if (conversationsResponse.status === "fulfilled") {
+          setConversations(conversationsResponse.value.conversations);
+        } else {
+          console.error("获取对话历史失败:", conversationsResponse.reason);
         }
       } catch (error) {
-        console.error("Error fetching analysis data:", error);
-      } finally {
-        setLoadingAnalysis(false);
-        setLoadingConversations(false);
+        console.error("获取分析数据失败:", error);
       }
     }
 
     fetchAnalysisData();
   }, [content, contentId, user]);
-
-  // 刷新对话历史的函数
-  const refreshConversations = async () => {
-    if (!user) return;
-
-    setLoadingConversations(true);
-    try {
-      const response = await contentApi.getContentConversations(
-        contentId,
-        false,
-      );
-      setConversations(response.conversations);
-    } catch (error) {
-      console.error("Failed to refresh conversations:", error);
-    } finally {
-      setLoadingConversations(false);
-    }
-  };
 
   if (authLoading || loading) {
     return <ReaderSkeleton />;
@@ -554,9 +487,9 @@ export const ClientContent = ({
 
   if (error) {
     return (
-      <Alert variant="destructive" className="m-4">
+      <Alert variant="destructive" className="m-6">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error Loading Content</AlertTitle>
+        <AlertTitle>加载错误</AlertTitle>
         <AlertDescription>{error}</AlertDescription>
       </Alert>
     );
@@ -564,35 +497,38 @@ export const ClientContent = ({
 
   if (!content) {
     return (
-      <Alert variant="destructive" className="m-4">
+      <Alert variant="destructive" className="m-6">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Content Not Found</AlertTitle>
+        <AlertTitle>内容未找到</AlertTitle>
         <AlertDescription>
-          The requested content could not be found.
+          无法找到请求的内容，请检查链接是否正确。
         </AlertDescription>
       </Alert>
     );
   }
 
   return (
-    <div className="h-full flex flex-col p-2 animate-in fade-in duration-300">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-950">
+      {/* 优化的头部 */}
+      <div className="flex items-center justify-between px-6 py-4 border-b bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm">
         <div className="flex items-center space-x-4">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => router.push("/content-library")}
+            className="hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Library
+            返回内容库
           </Button>
-          <div>
-            <h1 className="text-lg md:text-xl font-semibold">
-              {content.title || "Untitled"}
+          <div className="flex flex-col">
+            <h1 className="text-xl font-semibold text-foreground line-clamp-1">
+              {content.title || "未命名文档"}
             </h1>
             <div className="flex items-center gap-2 mt-1">
-              <Badge variant="outline">{content.type.toUpperCase()}</Badge>
+              <Badge variant="outline" className="text-xs">
+                {content.type.toUpperCase()}
+              </Badge>
               <Badge
                 variant={
                   content.processing_status === "completed"
@@ -601,8 +537,8 @@ export const ClientContent = ({
                 }
                 className={
                   content.processing_status === "completed"
-                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                    : ""
+                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs"
+                    : "text-xs"
                 }
               >
                 {content.processing_status === "completed"
@@ -615,6 +551,7 @@ export const ClientContent = ({
                   size="sm"
                   onClick={() => window.open(content.source_uri!, "_blank")}
                   title="查看原始内容"
+                  className="h-6 px-2 text-xs"
                 >
                   <ExternalLink className="h-3 w-3 mr-1" />
                   原始内容
@@ -632,6 +569,7 @@ export const ClientContent = ({
               size="sm"
               onClick={() => setIsShareModalOpen(true)}
               title="分享内容"
+              className="hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               <Share2 className="h-4 w-4 mr-2" />
               分享
@@ -640,74 +578,13 @@ export const ClientContent = ({
         </div>
       </div>
 
-      {/* Main Content - 使用 Tabs 切换不同视图 */}
-      <div className="flex-1 p-6 min-h-0">
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="h-full flex flex-col"
-        >
-          <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="content" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              内容阅读
-            </TabsTrigger>
-            <TabsTrigger value="analysis" className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4" />
-              AI 分析
-              {analysisResult && (
-                <Badge variant="outline" className="ml-1 text-xs">
-                  {
-                    [analysisResult.summary, analysisResult.key_points].filter(
-                      Boolean,
-                    ).length
-                  }
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger
-              value="conversations"
-              className="flex items-center gap-2"
-            >
-              <MessageSquare className="h-4 w-4" />
-              对话历史
-              {conversations.length > 0 && (
-                <Badge variant="outline" className="ml-1 text-xs">
-                  {conversations.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="content" className="flex-1 min-h-0 mt-0">
-            <div className="h-full border rounded-lg bg-gradient-to-br from-green-50/30 to-emerald-50/30 dark:from-green-950/10 dark:to-emerald-950/10">
-              <ProcessedContentRenderer
-                content={content}
-                markdownContent={markdownContent}
-                contentId={contentId}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="analysis" className="flex-1 min-h-0 mt-0">
-            <div className="h-full overflow-auto">
-              <AnalysisCards
-                analysisResult={analysisResult}
-                loading={loadingAnalysis}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="conversations" className="flex-1 min-h-0 mt-0">
-            <div className="h-full overflow-auto">
-              <ConversationHistory
-                conversations={conversations}
-                loading={loadingConversations}
-                onRefresh={refreshConversations}
-              />
-            </div>
-          </TabsContent>
-        </Tabs>
+      {/* 主要内容区域 - 专注于阅读体验 */}
+      <div className="flex-1 min-h-0 bg-gradient-to-br from-gray-50/30 to-white dark:from-gray-900/30 dark:to-gray-950">
+        <OptimizedContentRenderer
+          content={content}
+          markdownContent={markdownContent}
+          contentId={contentId}
+        />
       </div>
 
       {/* 分享弹窗 */}

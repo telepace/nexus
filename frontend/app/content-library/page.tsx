@@ -587,22 +587,23 @@ export default function ContentLibraryPage() {
     }
   };
 
-  // 订阅来自 AddContentModal 的本地事件，立即更新内容列表
+  // 监听内容创建事件
   useEffect(() => {
     const handler = (item: ContentItemPublic) => {
-      setItems((prev) => {
-        // 避免重复插入
-        if (prev.some((existing) => existing.id === item.id)) {
-          return prev;
+      // 将新项目添加到列表开头
+      setItems((prevItems) => {
+        const exists = prevItems.some((prevItem) => prevItem.id === item.id);
+        if (exists) {
+          return prevItems;
         }
-        // 将新项目添加到顶部
-        return [item, ...prev];
+        return [item, ...prevItems];
       });
 
       // 清除缓存，确保后续刷新数据准确
       contentCache.clearContentList();
 
-      toast.success(`新内容已添加: ${item.title || "未知内容"}`);
+      // 移除重复的toast通知，让SSE系统统一处理通知
+      // toast.success(`新内容已添加: ${item.title || "未知内容"}`);
     };
 
     eventBus.on("contentCreated", handler);

@@ -5,7 +5,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from app.models import ContentItem
+from app.core.security import get_password_hash
+from app.models import ContentItem, User
 
 
 def test_analyze_stream_endpoint_requires_auth(client: TestClient):
@@ -45,10 +46,23 @@ def test_analyze_stream_unauthorized_content(
     client: TestClient, normal_user_token_headers: dict, db: Session
 ):
     """测试访问其他用户的内容"""
+    # 创建另一个用户
+    other_user = User(
+        id=uuid.uuid4(),
+        email="other@example.com",
+        hashed_password=get_password_hash("password123"),
+        full_name="Other User",
+        is_active=True,
+        is_superuser=False,
+    )
+    db.add(other_user)
+    db.commit()
+    db.refresh(other_user)
+
     # 创建属于其他用户的内容
     other_user_content = ContentItem(
         id=uuid.uuid4(),
-        user_id=uuid.uuid4(),  # 不同的用户ID
+        user_id=other_user.id,  # 使用真实用户ID
         title="Other User Content",
         content_text="This content belongs to another user",
         type="webpage",

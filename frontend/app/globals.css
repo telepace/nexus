@@ -493,6 +493,117 @@
     max-height: min(80vh, 600px);
     aspect-ratio: auto;
   }
+
+  /* 阅读体验优化 */
+  .reading-content {
+    @apply text-base leading-7 text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif;
+  }
+
+  .reading-content h1,
+  .reading-content h2,
+  .reading-content h3,
+  .reading-content h4,
+  .reading-content h5,
+  .reading-content h6 {
+    @apply font-semibold text-foreground mb-4 mt-6;
+    line-height: 1.3;
+  }
+
+  .reading-content h1 {
+    @apply text-2xl;
+  }
+  .reading-content h2 {
+    @apply text-xl;
+  }
+  .reading-content h3 {
+    @apply text-lg;
+  }
+  .reading-content h4 {
+    @apply text-base;
+  }
+
+  .reading-content p {
+    @apply mb-4 leading-relaxed;
+  }
+
+  .reading-content p:last-child {
+    @apply mb-0;
+  }
+
+  .reading-content ul,
+  .reading-content ol {
+    @apply mb-4 pl-6;
+  }
+
+  .reading-content li {
+    @apply mb-2 leading-relaxed;
+  }
+
+  .reading-content blockquote {
+    @apply border-l-4 border-primary/20 pl-4 py-2 mb-4 text-muted-foreground italic;
+  }
+
+  .reading-content code {
+    @apply bg-muted px-1 py-0.5 rounded text-sm;
+  }
+
+  .reading-content pre {
+    @apply bg-muted p-4 rounded-lg mb-4 overflow-x-auto;
+  }
+
+  .reading-content pre code {
+    @apply bg-transparent p-0;
+  }
+
+  /* 分析卡片样式优化 */
+  .analysis-card {
+    @apply transition-all duration-200;
+  }
+
+  .analysis-card:hover {
+    @apply shadow-lg scale-[1.01];
+  }
+
+  /* 平滑滚动 */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+  }
+
+  /* 自定义滚动条 */
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-muted/20;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+
+  /* 响应式文本大小 */
+  @media (max-width: 768px) {
+    .reading-content {
+      @apply text-sm leading-6;
+    }
+
+    .reading-content h1 {
+      @apply text-xl;
+    }
+    .reading-content h2 {
+      @apply text-lg;
+    }
+    .reading-content h3 {
+      @apply text-base;
+    }
+  }
 }
 
 /* =============================================================================

@@ -219,6 +219,16 @@ export const useGlobalNotificationStore = create<GlobalNotificationStore>()(
           notifications,
         } = get();
 
+        // 添加调试日志
+        console.log(`🔔 处理SSE事件:`, {
+          type: evt.type,
+          content_id: evt.content_id,
+          status: evt.status,
+          title: evt.title,
+          progress: evt.progress,
+          error_message: evt.error_message,
+        });
+
         switch (evt.type) {
           case "content-status-update":
             if (evt.content_id) {
@@ -230,40 +240,72 @@ export const useGlobalNotificationStore = create<GlobalNotificationStore>()(
 
               if (evt.status === "processing") {
                 if (!existingNotification) {
-                  // 创建新的处理中通知
+                  // 创建新的处理中通知 - 优化标题显示
+                  const displayTitle =
+                    evt.title &&
+                    evt.title !== "Untitled Content" &&
+                    evt.title.trim() !== ""
+                      ? evt.title
+                      : "新内容";
                   createContentProcessingNotification(
                     evt.content_id,
-                    evt.title || "处理内容",
-                    "内容正在处理中...",
+                    displayTitle,
+                    evt.progress !== undefined
+                      ? `处理进度 ${evt.progress}%`
+                      : "内容正在处理中...",
                   );
                 } else {
                   // 更新现有通知的进度
+                  const progressMessage =
+                    evt.progress !== undefined
+                      ? `处理进度 ${evt.progress}%`
+                      : existingNotification.message;
+
                   updateNotification(existingNotification.id, {
                     progress: evt.progress || existingNotification.progress,
-                    message: `处理进度 ${evt.progress || 0}%`,
+                    message: progressMessage,
+                    title:
+                      evt.title &&
+                      evt.title !== "Untitled Content" &&
+                      evt.title.trim() !== ""
+                        ? evt.title
+                        : existingNotification.title,
                   });
                 }
               } else if (evt.status === "completed") {
                 if (existingNotification) {
                   // 更新为完成状态
+                  const finalTitle =
+                    evt.title &&
+                    evt.title !== "Untitled Content" &&
+                    evt.title.trim() !== ""
+                      ? evt.title
+                      : existingNotification.title;
                   updateNotification(existingNotification.id, {
                     status: "completed",
                     type: "content-completed",
                     progress: 100,
                     message: "内容处理完成",
+                    title: finalTitle,
                     autoHide: true,
                     duration: 5000,
                     actionUrl: `/content-library/reader/${evt.content_id}`,
                   });
                 } else {
                   // 创建完成通知
+                  const displayTitle =
+                    evt.title &&
+                    evt.title !== "Untitled Content" &&
+                    evt.title.trim() !== ""
+                      ? evt.title
+                      : "新内容";
                   createContentCompletedNotification(
                     evt.content_id,
-                    evt.title || "内容处理完成",
+                    displayTitle,
                     `/content-library/reader/${evt.content_id}`,
                   );
                 }
-              } else if (evt.status === "error") {
+              } else if (evt.status === "failed") {
                 if (existingNotification) {
                   // 更新为错误状态
                   updateNotification(existingNotification.id, {
@@ -274,9 +316,15 @@ export const useGlobalNotificationStore = create<GlobalNotificationStore>()(
                   });
                 } else {
                   // 创建错误通知
+                  const displayTitle =
+                    evt.title &&
+                    evt.title !== "Untitled Content" &&
+                    evt.title.trim() !== ""
+                      ? evt.title
+                      : "处理失败";
                   createContentErrorNotification(
                     evt.content_id,
-                    evt.title || "处理失败",
+                    displayTitle,
                     evt.error_message || "内容处理时发生错误",
                   );
                 }
@@ -289,9 +337,16 @@ export const useGlobalNotificationStore = create<GlobalNotificationStore>()(
               // 内容创建成功，可能需要处理
               const contentItem = evt.content_item;
               if (contentItem.processing_status === "processing") {
+                // 优化通知标题，避免显示"Untitled Content"
+                const displayTitle =
+                  contentItem.title &&
+                  contentItem.title !== "Untitled Content" &&
+                  contentItem.title.trim() !== ""
+                    ? contentItem.title
+                    : "新内容";
                 createContentProcessingNotification(
                   contentItem.id,
-                  contentItem.title || "新内容",
+                  displayTitle,
                   "正在分析内容...",
                 );
               }
@@ -300,7 +355,7 @@ export const useGlobalNotificationStore = create<GlobalNotificationStore>()(
 
           case "connection-established":
             // SSE连接建立
-            console.log("SSE连接已建立");
+            console.log("✅ SSE连接已建立");
             break;
 
           case "heartbeat":
@@ -308,7 +363,7 @@ export const useGlobalNotificationStore = create<GlobalNotificationStore>()(
             break;
 
           default:
-            console.log("未知的SSE事件类型:", evt.type);
+            console.log("❓ 未知的SSE事件类型:", evt.type);
         }
       },
     }),

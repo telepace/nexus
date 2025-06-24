@@ -163,9 +163,14 @@ class BackgroundTaskManager:
     async def _process_content_async(self, content_id: str, user_id: str):
         """异步处理内容 - 改进版本"""
         try:
-            # 通知开始处理
+            # 通知开始处理 - 进度0%
+            logger.info(f"开始处理内容 {content_id} for user {user_id}")
             await content_event_manager.notify_content_status(
-                user_id=user_id, content_id=content_id, status="processing", progress=0
+                user_id=user_id,
+                content_id=content_id,
+                status="processing",
+                progress=0,
+                title="新内容",
             )
 
             # 获取数据库会话
@@ -173,6 +178,7 @@ class BackgroundTaskManager:
                 # 获取内容项
                 content_item = session.get(ContentItem, uuid.UUID(content_id))
                 if not content_item:
+                    logger.error(f"Content item {content_id} not found")
                     await content_event_manager.notify_content_status(
                         user_id=user_id,
                         content_id=content_id,
@@ -195,45 +201,66 @@ class BackgroundTaskManager:
                     )
                     return
 
-                # 更新状态为处理中
+                # 更新状态为处理中 - 进度10%
                 content_item.processing_status = "processing"
                 content_item.updated_at = now_utc()
                 content_item.error_message = None  # 清除之前的错误信息
                 session.add(content_item)
                 session.commit()
 
+                logger.info(f"内容 {content_id} 状态已更新为处理中")
+                await content_event_manager.notify_content_status(
+                    user_id=user_id,
+                    content_id=content_id,
+                    status="processing",
+                    progress=10,
+                    title=content_item.title or "新内容",
+                )
+
                 try:
-                    # 获取合适的处理器
+                    # 获取合适的处理器 - 进度20%
                     processor = ContentProcessorFactory.get_processor(content_item.type)
                     logger.info(
                         f"Using processor {type(processor).__name__} for content {content_id}"
                     )
 
-                    # 通知处理进度
                     await content_event_manager.notify_content_status(
                         user_id=user_id,
                         content_id=content_id,
                         status="processing",
-                        progress=25,
+                        progress=20,
+                        title=content_item.title or "新内容",
+                    )
+
+                    # 开始内容处理 - 进度30%
+                    logger.info(f"开始使用 {type(processor).__name__} 处理内容")
+                    await content_event_manager.notify_content_status(
+                        user_id=user_id,
+                        content_id=content_id,
+                        status="processing",
+                        progress=30,
+                        title=content_item.title or "新内容",
                     )
 
                     # 处理内容
                     result = processor.process_content(content_item, session)
 
                     if result.success:
+                        # 内容处理完成 - 进度50%
+                        logger.info("内容处理成功，开始更新数据库")
+                        await content_event_manager.notify_content_status(
+                            user_id=user_id,
+                            content_id=content_id,
+                            status="processing",
+                            progress=50,
+                            title=content_item.title or "新内容",
+                        )
+
                         # 更新内容
                         content_item.content_text = result.markdown_content
                         if result.metadata:
                             content_item.meta_info = json.dumps(result.metadata)
                         content_item.processing_status = "completed"
-
-                        # 通知处理进度
-                        await content_event_manager.notify_content_status(
-                            user_id=user_id,
-                            content_id=content_id,
-                            status="processing",
-                            progress=75,
-                        )
 
                         # 如果有标题提取，更新标题
                         if hasattr(result, "title") and result.title:
@@ -243,6 +270,15 @@ class BackgroundTaskManager:
                         if hasattr(result, "summary") and result.summary:
                             # 摘要现在存储在 AIResult 表中，不再直接存储在 ContentItem 中
                             pass
+
+                        # 开始内容分段 - 进度60%
+                        await content_event_manager.notify_content_status(
+                            user_id=user_id,
+                            content_id=content_id,
+                            status="processing",
+                            progress=60,
+                            title=content_item.title or "新内容",
+                        )
 
                         # 添加内容分段逻辑 - 确保所有处理器都生成chunks
                         if (
@@ -297,6 +333,15 @@ class BackgroundTaskManager:
                                         f"Triggering AI preprocessing pipeline for content {content_id}"
                                     )
 
+                                    # 开始AI分析 - 进度70%
+                                    await content_event_manager.notify_content_status(
+                                        user_id=user_id,
+                                        content_id=content_id,
+                                        status="processing",
+                                        progress=70,
+                                        title=content_item.title or "新内容",
+                                    )
+
                                     # 获取ChatService实例
                                     chat_service = get_chat_service_instance()
                                     preprocessing_pipeline = PreprocessingPipeline(
@@ -305,7 +350,7 @@ class BackgroundTaskManager:
 
                                     # 构建文档元数据
                                     metadata = DocumentMetadata(
-                                        title=content_item.title or "Untitled",
+                                        title=content_item.title or "新内容",
                                         author=None,
                                         source_url=content_item.source_uri
                                         if content_item.type == "url"
@@ -318,6 +363,15 @@ class BackgroundTaskManager:
                                     # 执行AI预处理（只执行AI初始化层，不重复做存储）
                                     preprocessing_result = await preprocessing_pipeline._ai_initialization_layer(
                                         cleaned_content, metadata, user_preferences=None
+                                    )
+
+                                    # AI分析完成 - 进度85%
+                                    await content_event_manager.notify_content_status(
+                                        user_id=user_id,
+                                        content_id=content_id,
+                                        status="processing",
+                                        progress=85,
+                                        title=content_item.title or "新内容",
                                     )
 
                                     ai_results, ai_stats = preprocessing_result
@@ -407,6 +461,15 @@ class BackgroundTaskManager:
                                             f"Created new AI results for content {content_id}"
                                         )
 
+                                    # 保存AI结果 - 进度95%
+                                    await content_event_manager.notify_content_status(
+                                        user_id=user_id,
+                                        content_id=content_id,
+                                        status="processing",
+                                        progress=95,
+                                        title=content_item.title or "新内容",
+                                    )
+
                                 except Exception as preprocessing_err:
                                     logger.error(
                                         f"Failed to run AI preprocessing pipeline for {content_id}: {preprocessing_err}"
@@ -443,7 +506,7 @@ class BackgroundTaskManager:
                         user_id=user_id,
                         content_id=content_id,
                         status=content_item.processing_status,
-                        title=content_item.title,
+                        title=content_item.title or "新内容",
                         error_message=content_item.error_message,
                         progress=100
                         if content_item.processing_status == "completed"

@@ -5,18 +5,19 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BookOpen, Lightbulb, Clock, BarChart3, Tag } from "lucide-react";
 import { AIResult } from "@/lib/api/content";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 
 interface AnalysisCardsProps {
   analysisResult: AIResult | null;
   loading?: boolean;
 }
 
-const SummaryCard = ({
+// 内容摘要卡片
+export const SummaryCard = ({
   summary,
 }: { summary: Record<string, unknown> | null }) => {
   if (!summary) return null;
 
-  // 尝试从不同可能的字段中提取摘要文本
   const summaryText =
     (summary.text as string) ||
     (summary.content as string) ||
@@ -36,21 +37,31 @@ const SummaryCard = ({
       </CardHeader>
       <CardContent>
         <div className="text-sm text-muted-foreground leading-relaxed">
-          {summaryText}
+          <MarkdownRenderer
+            content={summaryText}
+            className="prose prose-sm max-w-none dark:prose-invert
+              prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-2 prose-p:mt-0
+              prose-strong:text-foreground prose-em:text-foreground
+              prose-li:text-muted-foreground prose-li:leading-relaxed prose-li:mb-1
+              prose-headings:text-foreground prose-headings:text-sm prose-headings:font-medium prose-headings:mb-2
+              [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+          />
         </div>
       </CardContent>
     </Card>
   );
 };
 
-const KeyPointsCard = ({
+// 关键要点卡片
+export const KeyPointsCard = ({
   keyPoints,
 }: { keyPoints: Record<string, unknown> | null }) => {
   if (!keyPoints) return null;
 
-  // 尝试从不同可能的字段中提取关键点
   let points: string[] = [];
+  let keyPointsContent = "";
 
+  // 尝试提取要点数组
   if (Array.isArray(keyPoints.points)) {
     points = keyPoints.points.map((p) =>
       typeof p === "string" ? p : JSON.stringify(p),
@@ -64,10 +75,21 @@ const KeyPointsCard = ({
       typeof p === "string" ? p : JSON.stringify(p),
     );
   } else {
-    // 如果是对象，尝试提取所有字符串值
-    points = Object.values(keyPoints)
-      .filter((val) => typeof val === "string" && val.length > 10)
-      .map((val) => val as string);
+    // 尝试获取原始文本内容（可能是markdown格式）
+    keyPointsContent =
+      (keyPoints.text as string) ||
+      (keyPoints.content as string) ||
+      (keyPoints.markdown as string) ||
+      (Object.values(keyPoints).find(
+        (val) => typeof val === "string" && val.length > 50,
+      ) as string) ||
+      "";
+
+    if (!keyPointsContent) {
+      points = Object.values(keyPoints)
+        .filter((val) => typeof val === "string" && val.length > 10)
+        .map((val) => val as string);
+    }
   }
 
   return (
@@ -79,24 +101,50 @@ const KeyPointsCard = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {points.length > 0 ? (
-            points.map((point, index) => (
-              <div key={index} className="flex gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center text-xs font-medium text-amber-700 dark:text-amber-300">
-                  {index + 1}
+        {/* 如果有markdown内容，直接渲染 */}
+        {keyPointsContent ? (
+          <div className="text-sm text-muted-foreground leading-relaxed">
+            <MarkdownRenderer
+              content={keyPointsContent}
+              className="prose prose-sm max-w-none dark:prose-invert
+                prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-2 prose-p:mt-0
+                prose-strong:text-foreground prose-em:text-foreground
+                prose-li:text-muted-foreground prose-li:leading-relaxed prose-li:mb-1
+                prose-ul:mb-2 prose-ol:mb-2 prose-ul:mt-0 prose-ol:mt-0
+                prose-headings:text-foreground prose-headings:text-sm prose-headings:font-medium prose-headings:mb-2
+                [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+            />
+          </div>
+        ) : (
+          /* 如果是要点数组，使用自定义样式 */
+          <div className="space-y-3">
+            {points.length > 0 ? (
+              points.map((point, index) => (
+                <div key={index} className="flex gap-3">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center text-xs font-medium text-amber-700 dark:text-amber-300">
+                    {index + 1}
+                  </div>
+                  <div className="text-sm text-muted-foreground leading-relaxed">
+                    <MarkdownRenderer
+                      content={point}
+                      className="prose prose-sm max-w-none dark:prose-invert
+                        prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-1 prose-p:mt-0
+                        prose-strong:text-foreground prose-em:text-foreground
+                        [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                    />
+                  </div>
                 </div>
-                <div className="text-sm text-muted-foreground leading-relaxed">
-                  {point}
-                </div>
+              ))
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                <MarkdownRenderer
+                  content={JSON.stringify(keyPoints)}
+                  className="prose prose-sm max-w-none dark:prose-invert"
+                />
               </div>
-            ))
-          ) : (
-            <div className="text-sm text-muted-foreground">
-              {JSON.stringify(keyPoints)}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -198,9 +198,7 @@ async def create_content_item(
     # Ensure all required fields for ContentItem are present
     # Example: title might be required by ContentItem but optional in ContentItemCreate
     if "title" not in content_data or content_data["title"] is None:
-        content_data["title"] = (
-            "Untitled Content"  # Provide a default or handle as error
-        )
+        content_data["title"] = "新内容"  # Provide a default or handle as error
 
     db_content_item = ContentItem(**content_data)
 
