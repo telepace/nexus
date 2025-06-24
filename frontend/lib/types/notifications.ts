@@ -1,8 +1,8 @@
 // 全局通知类型定义
 export interface ProcessingNotification {
   id: string;
-  type: 'content-processing' | 'content-error' | 'content-completed';
-  status: 'processing' | 'completed' | 'error';
+  type: "content-processing" | "content-error" | "content-completed";
+  status: "processing" | "completed" | "error";
   title: string;
   message: string;
   contentId?: string;
@@ -16,9 +16,13 @@ export interface ProcessingNotification {
 
 // SSE事件类型定义
 export interface SSENotificationEvent {
-  type: 'content-status-update' | 'content-created' | 'connection-established' | 'heartbeat';
+  type:
+    | "content-status-update"
+    | "content-created"
+    | "connection-established"
+    | "heartbeat";
   content_id?: string;
-  status?: 'processing' | 'completed' | 'error';
+  status?: "processing" | "completed" | "error";
   title?: string;
   error_message?: string;
   progress?: number;
@@ -36,7 +40,7 @@ export interface SSENotificationEvent {
 export interface NotificationAction {
   label: string;
   action: () => void;
-  variant?: 'default' | 'primary' | 'destructive';
+  variant?: "default" | "primary" | "destructive";
 }
 
 // 通知配置
@@ -45,4 +49,4 @@ export interface NotificationConfig {
   showAction?: boolean;
   persistOnPageChange?: boolean;
   sound?: boolean;
-} 
+}

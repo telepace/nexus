@@ -141,7 +141,7 @@ export const LLMAnalysisSidebar: FC<LLMAnalysisSidebarProps> = ({
     try {
       await generateAnalysis(
         contentId,
-        analysis.prompt,    // userPrompt (分析指令)
+        analysis.prompt, // userPrompt (分析指令)
         analysis.promptId,
         analysis.title,
       );

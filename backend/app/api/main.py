@@ -8,6 +8,7 @@ from app.api.routes import (
     dashboard,  # Add dashboard router
     favorites,  # Add favorites router
     google_oauth,
+    health,  # Import health router separately
     images,  # Added images router
     items,
     llm_service,
@@ -17,7 +18,6 @@ from app.api.routes import (
     prompts,
     users,
     utils,
-    health,  # Import health router separately
 )
 from app.core.config import settings
 

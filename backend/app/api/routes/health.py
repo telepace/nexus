@@ -19,5 +19,5 @@ async def cache_health_check():
     stats = await get_cache_stats()
     return {
         "cache": stats,
-        "status": "ok" if stats.get("redis_enabled") else "degraded"
-    } 
+        "status": "ok" if stats.get("redis_enabled") else "degraded",
+    }

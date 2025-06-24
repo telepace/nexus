@@ -16,10 +16,11 @@ from typing import Any
 
 import httpx
 from jinja2 import Environment, FileSystemLoader
-from sqlmodel import select
+from sqlmodel import Session, select
 
 from app.core.config import settings
 from app.models.content import ContentItem
+from app.services.ai.chat_service import ChatService
 from app.utils.content_processors import (
     ProcessingContext,
     ProcessingResult,
@@ -79,7 +80,9 @@ class AIProcessorBase(ProcessingStep):
         content_to_analyze = result.markdown_content or content_item.content_text
 
         try:
-            logger.info(f"Starting {self.processor_name} analysis for content {content_item.id}")
+            logger.info(
+                f"Starting {self.processor_name} analysis for content {content_item.id}"
+            )
 
             # 渲染提示词模板（作为用户提示）
             user_prompt = await self._render_template(
@@ -270,117 +273,125 @@ class KeyPointsProcessor(AIProcessorBase):
             template_name="key_points.j2", processor_name="key_points_extractor"
         )
 
+
 async def analyze_content_with_ai(
     content_item: ContentItem,
     session: Session,
     analysis_types: list[str] | None = None,
-    processor_name: str = "gpt-4",
-    max_retries: int = 3,
+    _processor_name: str = "gpt-4",
+    _max_retries: int = 3,
 ) -> dict[str, Any]:
     """
     使用AI分析内容，生成摘要、关键点、标签等
-    
+
     Args:
         content_item: 要分析的内容项
-        session: 数据库会话  
+        session: 数据库会话
         analysis_types: 分析类型列表，如['summary', 'key_points', 'labels']
-        processor_name: AI处理器名称（现在仅用于日志记录）
-        max_retries: 最大重试次数
-        
+        _processor_name: AI处理器名称（现在仅用于日志记录）
+        _max_retries: 最大重试次数
+
     Returns:
         dict: 包含分析结果的字典
     """
-    
+
     if not content_item.content_text:
         logger.warning(f"Content item {content_item.id} has no content text")
         return {}
-        
+
     if analysis_types is None:
         analysis_types = ["summary", "key_points", "labels"]
-    
+
     results = {}
-    
+
     try:
         # 更新内容项状态
         content_item.processing_status = "processing"
         content_item.last_processed_at = datetime.utcnow()
         session.add(content_item)
         session.commit()
-        
+
         # 调用AI分析
         chat_service = ChatService()
-        
+
         # 生成分析结果
         for analysis_type in analysis_types:
             try:
                 if analysis_type == "summary":
-                    result = await chat_service.generate_summary(content_item.content_text)
+                    result = await chat_service.generate_summary(
+                        content_item.content_text
+                    )
                     results["summary"] = result
                 elif analysis_type == "key_points":
-                    result = await chat_service.extract_key_points(content_item.content_text)
+                    result = await chat_service.extract_key_points(
+                        content_item.content_text
+                    )
                     results["key_points"] = result
                 elif analysis_type == "labels":
-                    result = await chat_service.generate_labels(content_item.content_text)
+                    result = await chat_service.generate_labels(
+                        content_item.content_text
+                    )
                     results["labels"] = result
-                    
+
             except Exception as e:
                 logger.error(f"Failed to generate {analysis_type}: {str(e)}")
                 results[analysis_type] = None
-        
+
         # 更新成功状态
         content_item.processing_status = "completed"
         content_item.error_message = None
         content_item.last_processed_at = datetime.utcnow()
         session.add(content_item)
         session.commit()
-        
+
         logger.info(f"AI analysis completed for content {content_item.id}")
         return results
-        
+
     except Exception as e:
         logger.error(f"AI analysis failed for content {content_item.id}: {str(e)}")
-        
+
         # 更新失败状态
         content_item.processing_status = "failed"
         content_item.error_message = str(e)
         content_item.last_processed_at = datetime.utcnow()
         session.add(content_item)
         session.commit()
-        
+
         return {}
 
+
 def has_recent_ai_analysis(
-    content_item: ContentItem, 
-    session: Session, 
+    content_item: ContentItem,
+    session: Session,
     hours_threshold: int = 24,
-    processor_names: list[str] | None = None
+    _processor_names: list[str] | None = None,
 ) -> bool:
     """
     检查内容项是否有最近的AI分析结果
-    
+
     Args:
         content_item: 内容项
         session: 数据库会话
         hours_threshold: 时间阈值（小时）
-        processor_names: 处理器名称列表（现在忽略此参数）
-        
+        _processor_names: 处理器名称列表（现在忽略此参数）
+
     Returns:
         bool: 是否有最近的分析
     """
-    
+
     # 检查是否有AI结果且最近更新过
     from app.models.content import AIResult
-    
+
     ai_result = session.exec(
         select(AIResult).where(AIResult.content_item_id == content_item.id)
     ).first()
-    
+
     if not ai_result:
         return False
-        
+
     # 检查更新时间
     if ai_result.updated_at:
         time_diff = datetime.utcnow() - ai_result.updated_at
         return time_diff.total_seconds() < (hours_threshold * 3600)
-    
+
     return False

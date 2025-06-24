@@ -282,7 +282,10 @@ export const contentApi = {
     try {
       const content = await this.getContentItem(contentId);
       // AIResult 数据在 ContentItemPublic 的 ai_result 字段中
-      return (content as any).ai_result || null;
+      return (
+        (content as ContentItemPublic & { ai_result?: AIResult | null })
+          .ai_result || null
+      );
     } catch (error) {
       console.error("Failed to get AI analysis result:", error);
       return null;

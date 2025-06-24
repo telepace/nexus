@@ -23,7 +23,11 @@ import { ShareContentModal } from "@/components/share/ShareContentModal";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
 import { useReaderContext } from "@/components/layout/ReaderLayout";
-import { contentApi, AIResult, ConversationListResponse } from "@/lib/api/content";
+import {
+  contentApi,
+  AIResult,
+  ConversationListResponse,
+} from "@/lib/api/content";
 import { AnalysisCards } from "@/components/ai/AnalysisCards";
 import { ConversationHistory } from "@/components/ai/ConversationHistory";
 
@@ -288,7 +292,9 @@ export const ClientContent = ({
 
   // 新增：AI分析结果和对话历史状态
   const [analysisResult, setAnalysisResult] = useState<AIResult | null>(null);
-  const [conversations, setConversations] = useState<ConversationListResponse["conversations"]>([]);
+  const [conversations, setConversations] = useState<
+    ConversationListResponse["conversations"]
+  >([]);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [activeTab, setActiveTab] = useState("content");
@@ -479,29 +485,39 @@ export const ClientContent = ({
     async function fetchAnalysisData() {
       try {
         // 并行获取AI分析结果和对话历史
-        const [analysisPromise, conversationsPromise] = await Promise.allSettled([
-          (() => {
-            setLoadingAnalysis(true);
-            return contentApi.getContentAnalysisResult(contentId);
-          })(),
-          (() => {
-            setLoadingConversations(true);
-            return contentApi.getContentConversations(contentId, false);
-          })(),
-        ]);
+        const [analysisPromise, conversationsPromise] =
+          await Promise.allSettled([
+            (() => {
+              setLoadingAnalysis(true);
+              return contentApi.getContentAnalysisResult(contentId);
+            })(),
+            (() => {
+              setLoadingConversations(true);
+              return contentApi.getContentConversations(contentId, false);
+            })(),
+          ]);
 
         // 处理分析结果
         if (analysisPromise.status === "fulfilled" && analysisPromise.value) {
           setAnalysisResult(analysisPromise.value);
         } else if (analysisPromise.status === "rejected") {
-          console.error("Failed to fetch analysis result:", analysisPromise.reason);
+          console.error(
+            "Failed to fetch analysis result:",
+            analysisPromise.reason,
+          );
         }
 
         // 处理对话历史
-        if (conversationsPromise.status === "fulfilled" && conversationsPromise.value) {
+        if (
+          conversationsPromise.status === "fulfilled" &&
+          conversationsPromise.value
+        ) {
           setConversations(conversationsPromise.value.conversations);
         } else if (conversationsPromise.status === "rejected") {
-          console.error("Failed to fetch conversations:", conversationsPromise.reason);
+          console.error(
+            "Failed to fetch conversations:",
+            conversationsPromise.reason,
+          );
         }
       } catch (error) {
         console.error("Error fetching analysis data:", error);
@@ -517,10 +533,13 @@ export const ClientContent = ({
   // 刷新对话历史的函数
   const refreshConversations = async () => {
     if (!user) return;
-    
+
     setLoadingConversations(true);
     try {
-      const response = await contentApi.getContentConversations(contentId, false);
+      const response = await contentApi.getContentConversations(
+        contentId,
+        false,
+      );
       setConversations(response.conversations);
     } catch (error) {
       console.error("Failed to refresh conversations:", error);
@@ -623,7 +642,11 @@ export const ClientContent = ({
 
       {/* Main Content - 使用 Tabs 切换不同视图 */}
       <div className="flex-1 p-6 min-h-0">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="h-full flex flex-col"
+        >
           <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="content" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
@@ -634,11 +657,18 @@ export const ClientContent = ({
               AI 分析
               {analysisResult && (
                 <Badge variant="outline" className="ml-1 text-xs">
-                  {[analysisResult.summary, analysisResult.key_points].filter(Boolean).length}
+                  {
+                    [analysisResult.summary, analysisResult.key_points].filter(
+                      Boolean,
+                    ).length
+                  }
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="conversations" className="flex items-center gap-2">
+            <TabsTrigger
+              value="conversations"
+              className="flex items-center gap-2"
+            >
               <MessageSquare className="h-4 w-4" />
               对话历史
               {conversations.length > 0 && (
@@ -661,17 +691,17 @@ export const ClientContent = ({
 
           <TabsContent value="analysis" className="flex-1 min-h-0 mt-0">
             <div className="h-full overflow-auto">
-              <AnalysisCards 
-                analysisResult={analysisResult} 
-                loading={loadingAnalysis} 
+              <AnalysisCards
+                analysisResult={analysisResult}
+                loading={loadingAnalysis}
               />
             </div>
           </TabsContent>
 
           <TabsContent value="conversations" className="flex-1 min-h-0 mt-0">
             <div className="h-full overflow-auto">
-              <ConversationHistory 
-                conversations={conversations} 
+              <ConversationHistory
+                conversations={conversations}
                 loading={loadingConversations}
                 onRefresh={refreshConversations}
               />

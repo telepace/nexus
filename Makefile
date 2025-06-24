@@ -578,7 +578,7 @@ admin-test: admin-install
 	@echo "===========> Ensuring backend is running for admin tests"
 	@$(MAKE) backend-start
 	@echo "===========> Waiting for backend to be healthy before running admin tests"
-	@cd $(ADMIN_DIR) && $(PNPM) exec wait-on http://localhost:8000/api/v1/health/check -t 60000
+	@cd $(ADMIN_DIR) && $(PNPM) exec wait-on http-get://localhost:8000/api/v1/health -t 60000
 	@echo "===========> Running admin tests"
 	@cd $(ADMIN_DIR) && $(PNPM) test
 

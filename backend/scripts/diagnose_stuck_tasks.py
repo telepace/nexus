@@ -166,8 +166,7 @@ def show_statistics():
 
         # 统计有错误信息的任务
         stmt = select(ContentItem).where(
-            ContentItem.error_message.isnot(None),
-            ContentItem.error_message != ""
+            ContentItem.error_message.isnot(None), ContentItem.error_message != ""
         )
         error_count = len(session.exec(stmt).all())
         print(f"   有错误信息的任务: {error_count}")

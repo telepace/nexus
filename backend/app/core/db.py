@@ -8,17 +8,12 @@ from app.core.db_factory import create_db_engine
 from app.core.default_prompts import get_default_prompts, get_default_tags
 from app.models import (
     AIConversation,
-    AIResult,
-    ContentAsset,
     ContentItem,
-    ContentShare,
-    Image,
     Project,
-    Segment,
     User,
     UserCreate,
 )
-from app.utils.timezone import now_utc
+from app.models.prompt import Prompt, PromptVersion, Tag
 
 # Get the logger
 logger = logging.getLogger("app.db")

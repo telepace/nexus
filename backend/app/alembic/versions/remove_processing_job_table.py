@@ -20,8 +20,31 @@ depends_on = None
 def upgrade():
     """移除 ProcessingJob 表并增强 ContentItem 表"""
     
-    # 阶段1: 为 ContentItem 表添加新字段
-    op.add_column('contentitem', sa.Column('last_processed_at', sa.DateTime(), nullable=True))
+    # 首先检查 processingjob 表是否存在
+    connection = op.get_bind()
+    result = connection.execute(
+        sa.text("SELECT table_name FROM information_schema.tables WHERE table_name = 'processingjob'")
+    ).fetchone()
+    
+    if result is None:
+        # processingjob 表不存在，只需要为 ContentItem 表添加新字段（如果不存在的话）
+        # 检查 last_processed_at 字段是否已经存在
+        column_result = connection.execute(
+            sa.text("SELECT column_name FROM information_schema.columns WHERE table_name = 'contentitem' AND column_name = 'last_processed_at'")
+        ).fetchone()
+        
+        if column_result is None:
+            op.add_column('contentitem', sa.Column('last_processed_at', sa.DateTime(), nullable=True))
+        
+        return
+    
+    # 阶段1: 为 ContentItem 表添加新字段（如果不存在的话）
+    column_result = connection.execute(
+        sa.text("SELECT column_name FROM information_schema.columns WHERE table_name = 'contentitem' AND column_name = 'last_processed_at'")
+    ).fetchone()
+    
+    if column_result is None:
+        op.add_column('contentitem', sa.Column('last_processed_at', sa.DateTime(), nullable=True))
     
     # 注意: error_message 字段在原来的 ContentItem 中已经存在，所以这里不需要添加
     
@@ -44,14 +67,28 @@ def upgrade():
         WHERE contentitem.id = pj.content_item_id;
     """)
     
-    # 阶段3: 删除 ProcessingJob 表的外键约束
-    op.drop_constraint('processingjob_content_item_id_fkey', 'processingjob', type_='foreignkey')
+    # 阶段3: 安全地删除 ProcessingJob 表的外键约束
+    # 首先检查约束是否存在
+    constraint_result = connection.execute(
+        sa.text("""
+            SELECT constraint_name 
+            FROM information_schema.table_constraints 
+            WHERE table_name = 'processingjob' 
+            AND constraint_name = 'processingjob_content_item_id_fkey'
+        """)
+    ).fetchone()
     
-    # 阶段4: 删除索引
-    op.drop_index('ix_processingjob_content_item_id', table_name='processingjob')
-    op.drop_index('ix_processingjob_id', table_name='processingjob')
-    op.drop_index('ix_processingjob_processor_name', table_name='processingjob')
-    op.drop_index('ix_processingjob_status', table_name='processingjob')
+    if constraint_result:
+        op.drop_constraint('processingjob_content_item_id_fkey', 'processingjob', type_='foreignkey')
+    
+    # 阶段4: 安全地删除索引（只删除存在的索引）
+    for index_name in ['ix_processingjob_content_item_id', 'ix_processingjob_id', 'ix_processingjob_processor_name', 'ix_processingjob_status']:
+        index_result = connection.execute(
+            sa.text(f"SELECT indexname FROM pg_indexes WHERE indexname = '{index_name}'")
+        ).fetchone()
+        
+        if index_result:
+            op.drop_index(index_name, table_name='processingjob')
     
     # 阶段5: 删除 ProcessingJob 表
     op.drop_table('processingjob')

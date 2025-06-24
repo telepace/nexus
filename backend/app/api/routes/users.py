@@ -21,10 +21,10 @@ from app.models import (
     ContentItem,
     ContentShare,
     Favorite,
-    Image,
     Message,
     Project,
     Segment,
+    UpdatePassword,
     User,
     UserCreate,
     UserPublic,
@@ -32,7 +32,6 @@ from app.models import (
     UsersPublic,
     UserUpdate,
     UserUpdateMe,
-    UpdatePassword,
 )
 from app.utils import generate_new_account_email, send_email
 

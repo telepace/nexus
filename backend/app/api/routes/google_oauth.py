@@ -245,7 +245,7 @@ async def google_callback(
 
         # 根据登录来源设置 setup 状态
         from_source = request.session.pop("from_source", None)
-        if from_source != "extension":
+        if from_source != "extension" and user is not None:
             # Web 端登录，自动完成 setup
             if not user.is_setup_complete:
                 user.is_setup_complete = True

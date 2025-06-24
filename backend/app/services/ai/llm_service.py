@@ -3,7 +3,6 @@ LLM服务模块
 提供大语言模型的对话接口
 """
 
-import json
 import logging
 from typing import Any
 
@@ -164,7 +163,9 @@ class LLMService:
                 "insights": "请分析以下内容并提供深度见解和观点：",
                 "action_items": "基于以下内容，请生成具体的行动建议：",
             }
-            user_prompt = prompts.get(analysis_type, f"请分析以下内容（{analysis_type}）：")
+            user_prompt = prompts.get(
+                analysis_type, f"请分析以下内容（{analysis_type}）："
+            )
 
         messages = [
             {"role": "system", "content": content},
@@ -180,4 +181,4 @@ class LLMService:
                 "content_length": len(content),
                 "analysis_type": analysis_type,
             },
-        } 
+        }

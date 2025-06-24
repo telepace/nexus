@@ -240,13 +240,13 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           const createdItem: ContentItemPublic = await response.json();
           console.log("URL内容创建成功:", createdItem);
           newlyCreatedItems.push(createdItem);
-          
+
           // 创建全局通知 - URL内容需要处理
-          if (createdItem.processing_status === 'processing') {
+          if (createdItem.processing_status === "processing") {
             createContentProcessingNotification(
               createdItem.id,
-              createdItem.title || '处理网页内容',
-              `正在分析来自 ${url} 的内容...`
+              createdItem.title || "处理网页内容",
+              `正在分析来自 ${url} 的内容...`,
             );
           }
         }
@@ -280,13 +280,13 @@ export const AddContentModal: FC<AddContentModalProps> = ({
         const createdItem: ContentItemPublic = await response.json();
         console.log("文本内容创建成功:", createdItem);
         newlyCreatedItems.push(createdItem);
-        
+
         // 创建全局通知 - 文本内容如果需要处理
-        if (createdItem.processing_status === 'processing') {
+        if (createdItem.processing_status === "processing") {
           createContentProcessingNotification(
             createdItem.id,
-            createdItem.title || '处理文本内容',
-            '正在分析文本内容...'
+            createdItem.title || "处理文本内容",
+            "正在分析文本内容...",
           );
         }
       } else if (contentType === "file" && selectedFiles.length > 0) {
@@ -320,7 +320,15 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [contentType, detectedUrls, content, selectedFiles, user, onClose, createContentProcessingNotification]);
+  }, [
+    contentType,
+    detectedUrls,
+    content,
+    selectedFiles,
+    user,
+    onClose,
+    createContentProcessingNotification,
+  ]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {

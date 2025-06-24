@@ -5,17 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { 
-  MessageSquare, 
-  ChevronDown, 
-  ChevronRight, 
-  Bot, 
-  User, 
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  MessageSquare,
+  ChevronDown,
+  ChevronRight,
+  Bot,
+  User,
   Clock,
-  RefreshCw 
+  RefreshCw,
 } from "lucide-react";
-import { ConversationPublic } from "@/lib/api/content";
+import { ConversationPublic, ConversationMessage } from "@/lib/api/content";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
@@ -26,12 +30,22 @@ interface ConversationHistoryProps {
 }
 
 const ConversationTypeMap = {
-  auto_analysis: { label: "自动分析", color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" },
-  user_chat: { label: "用户对话", color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" },
-  prompt_analysis: { label: "模板分析", color: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200" },
+  auto_analysis: {
+    label: "自动分析",
+    color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  },
+  user_chat: {
+    label: "用户对话",
+    color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  },
+  prompt_analysis: {
+    label: "模板分析",
+    color:
+      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+  },
 };
 
-const MessageBubble = ({ message, index }: { message: any; index: number }) => {
+const MessageBubble = ({ message }: { message: ConversationMessage }) => {
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
 
@@ -44,23 +58,24 @@ const MessageBubble = ({ message, index }: { message: any; index: number }) => {
           <Bot className="h-4 w-4 text-blue-600 dark:text-blue-300" />
         </div>
       )}
-      
-      <div className={`max-w-[80%] p-3 rounded-lg ${
-        isUser 
-          ? "bg-primary text-primary-foreground" 
-          : "bg-muted text-muted-foreground"
-      }`}>
+
+      <div
+        className={`max-w-[80%] p-3 rounded-lg ${
+          isUser
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-muted-foreground"
+        }`}
+      >
         <div className="text-sm leading-relaxed whitespace-pre-wrap">
-          {message.content.length > 500 
-            ? `${message.content.substring(0, 500)}...` 
-            : message.content
-          }
+          {message.content.length > 500
+            ? `${message.content.substring(0, 500)}...`
+            : message.content}
         </div>
         {message.timestamp && (
           <div className="text-xs opacity-70 mt-1">
-            {formatDistanceToNow(new Date(message.timestamp), { 
-              addSuffix: true, 
-              locale: zhCN 
+            {formatDistanceToNow(new Date(message.timestamp), {
+              addSuffix: true,
+              locale: zhCN,
             })}
           </div>
         )}
@@ -75,12 +90,19 @@ const MessageBubble = ({ message, index }: { message: any; index: number }) => {
   );
 };
 
-const ConversationItem = ({ conversation }: { conversation: ConversationPublic }) => {
+const ConversationItem = ({
+  conversation,
+}: { conversation: ConversationPublic }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const typeInfo = ConversationTypeMap[conversation.conversation_type as keyof typeof ConversationTypeMap] || 
-    { label: conversation.conversation_type, color: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200" };
+  const typeInfo = ConversationTypeMap[
+    conversation.conversation_type as keyof typeof ConversationTypeMap
+  ] || {
+    label: conversation.conversation_type,
+    color: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
+  };
 
-  const userMessages = conversation.messages?.filter(msg => msg.role !== "system") || [];
+  const userMessages =
+    conversation.messages?.filter((msg) => msg.role !== "system") || [];
   const hasMessages = userMessages.length > 0;
 
   return (
@@ -105,9 +127,9 @@ const ConversationItem = ({ conversation }: { conversation: ConversationPublic }
                     </Badge>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" />
-                      {formatDistanceToNow(new Date(conversation.created_at), { 
-                        addSuffix: true, 
-                        locale: zhCN 
+                      {formatDistanceToNow(new Date(conversation.created_at), {
+                        addSuffix: true,
+                        locale: zhCN,
                       })}
                     </div>
                     <Badge variant="outline" className="text-xs">
@@ -130,13 +152,13 @@ const ConversationItem = ({ conversation }: { conversation: ConversationPublic }
             )}
           </CardHeader>
         </CollapsibleTrigger>
-        
+
         <CollapsibleContent>
           <CardContent className="pt-0">
             {hasMessages ? (
               <div className="space-y-4 max-h-96 overflow-y-auto">
                 {userMessages.map((message, index) => (
-                  <MessageBubble key={index} message={message} index={index} />
+                  <MessageBubble key={index} message={message} />
                 ))}
               </div>
             ) : (
@@ -174,10 +196,10 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-export const ConversationHistory = ({ 
-  conversations, 
-  loading, 
-  onRefresh 
+export const ConversationHistory = ({
+  conversations,
+  loading,
+  onRefresh,
 }: ConversationHistoryProps) => {
   if (loading) {
     return <LoadingSkeleton />;
@@ -210,10 +232,13 @@ export const ConversationHistory = ({
       ) : (
         <div className="space-y-2">
           {conversations.map((conversation) => (
-            <ConversationItem key={conversation.id} conversation={conversation} />
+            <ConversationItem
+              key={conversation.id}
+              conversation={conversation}
+            />
           ))}
         </div>
       )}
     </div>
   );
-}; 
+};

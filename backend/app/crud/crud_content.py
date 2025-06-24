@@ -1,3 +1,4 @@
+import logging
 import re  # For Markdown image processing
 import secrets  # For generating unique tokens
 import uuid
@@ -6,13 +7,13 @@ from typing import (
     Any,  # For optional fields
 )
 
+from sqlalchemy import delete as sa_delete
 from sqlalchemy import func  # For count
 from sqlalchemy.ext.asyncio import AsyncSession  # Changed from sqlmodel.Session
 from sqlalchemy.future import select  # For async select
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session  # Add this for sync operations and specific select
 from sqlmodel import select as sqlmodel_select
-from sqlalchemy import delete as sa_delete
 
 from app.core import security  # For password hashing
 from app.core.storage import StorageInterface
@@ -33,6 +34,8 @@ from app.schemas.image import ImageCreate
 
 # Image processing imports
 from app.utils.image_processor import process_base64_image, process_web_image
+
+logger = logging.getLogger(__name__)
 
 
 # Helper function to process images in Markdown
@@ -410,42 +413,50 @@ def update_content_item_sync(
     return db_content_item
 
 
-def delete_content_item_sync(session: Session, id: uuid.UUID, user_id: uuid.UUID) -> bool:
+def delete_content_item_sync(
+    session: Session, id: uuid.UUID, user_id: uuid.UUID
+) -> bool:
     """
     DELETE CASCADE delete content item and all related records
     """
-    
+
     # Get the content item first to ensure it exists and user has permission
     content_item = session.get(ContentItem, id)
     if not content_item:
         raise ValueError(f"Content item with id {id} not found")
-    
+
     if content_item.user_id != user_id:
         raise ValueError("User does not have permission to delete this content item")
-    
+
     try:
         # Delete in proper order to respect foreign key constraints
         # 1. Delete segments (child table)
         session.execute(sa_delete(Segment).where(Segment.content_item_id == id))
-        
+
         # 2. Delete content assets (child table)
-        session.execute(sa_delete(ContentAsset).where(ContentAsset.content_item_id == id))
-        
+        session.execute(
+            sa_delete(ContentAsset).where(ContentAsset.content_item_id == id)
+        )
+
         # 3. Delete content shares (child table)
-        session.execute(sa_delete(ContentShare).where(ContentShare.content_item_id == id))
-        
+        session.execute(
+            sa_delete(ContentShare).where(ContentShare.content_item_id == id)
+        )
+
         # 4. Delete AI results (child table)
         session.execute(sa_delete(AIResult).where(AIResult.content_item_id == id))
-        
+
         # 5. Delete AI conversations (child table)
-        session.execute(sa_delete(AIConversation).where(AIConversation.content_item_id == id))
-        
+        session.execute(
+            sa_delete(AIConversation).where(AIConversation.content_item_id == id)
+        )
+
         # 6. Finally delete the content item itself
         session.execute(sa_delete(ContentItem).where(ContentItem.id == id))
-        
+
         session.commit()
         return True
-        
+
     except Exception as e:
         session.rollback()
         logger.error(f"Error deleting content item {id}: {str(e)}")

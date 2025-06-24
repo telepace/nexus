@@ -340,7 +340,7 @@ def get_api_response_data(response: Any) -> dict[str, Any]:
 
 def cleanup_test_data(session: Session) -> None:
     """Clean up all test data in the correct order to respect foreign key constraints."""
-    
+
     # Delete in reverse dependency order
     session.execute(delete(AIConversation))
     session.execute(delete(AIResult))
@@ -356,7 +356,7 @@ def cleanup_test_data(session: Session) -> None:
 
 def cleanup_tables(session: Session) -> None:
     """Clean up all tables in the correct order."""
-    
+
     # Clean up in dependency order
     session.execute(delete(AIConversation))
     session.execute(delete(AIResult))

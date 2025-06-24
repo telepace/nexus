@@ -1,7 +1,6 @@
 """Redis client configuration and connection management."""
 
 import logging
-from typing import Any, Optional
 
 import redis.asyncio as redis
 from redis.asyncio import ConnectionPool
@@ -15,8 +14,8 @@ class RedisClient:
     """异步 Redis 客户端管理器"""
 
     def __init__(self):
-        self._pool: Optional[ConnectionPool] = None
-        self._client: Optional[redis.Redis] = None
+        self._pool: ConnectionPool | None = None
+        self._client: redis.Redis | None = None
 
     async def connect(self) -> None:
         """建立 Redis 连接"""
@@ -33,11 +32,11 @@ class RedisClient:
                 retry_on_timeout=True,
             )
             self._client = redis.Redis(connection_pool=self._pool)
-            
+
             # 测试连接
             await self._client.ping()
             logger.info(f"Redis 连接成功: {settings.REDIS_URL}")
-            
+
         except Exception as e:
             logger.warning(f"Redis 连接失败: {e}，将使用数据库直接查询")
             self._client = None
@@ -58,27 +57,22 @@ class RedisClient:
         """检查 Redis 是否连接"""
         return self._client is not None and settings.REDIS_ENABLED
 
-    async def get(self, key: str) -> Optional[str]:
+    async def get(self, key: str) -> str | None:
         """获取缓存值"""
-        if not self.is_connected:
+        if not self.is_connected or self._client is None:
             return None
-        
+
         try:
             return await self._client.get(key)
         except Exception as e:
             logger.warning(f"Redis GET 失败 {key}: {e}")
             return None
 
-    async def set(
-        self, 
-        key: str, 
-        value: str, 
-        ttl: Optional[int] = None
-    ) -> bool:
+    async def set(self, key: str, value: str, ttl: int | None = None) -> bool:
         """设置缓存值"""
-        if not self.is_connected:
+        if not self.is_connected or self._client is None:
             return False
-        
+
         try:
             ttl = ttl or settings.REDIS_TTL_SECONDS
             result = await self._client.set(key, value, ex=ttl)
@@ -89,9 +83,9 @@ class RedisClient:
 
     async def delete(self, key: str) -> bool:
         """删除缓存值"""
-        if not self.is_connected:
+        if not self.is_connected or self._client is None:
             return False
-        
+
         try:
             result = await self._client.delete(key)
             return bool(result)
@@ -101,9 +95,9 @@ class RedisClient:
 
     async def exists(self, key: str) -> bool:
         """检查键是否存在"""
-        if not self.is_connected:
+        if not self.is_connected or self._client is None:
             return False
-        
+
         try:
             result = await self._client.exists(key)
             return bool(result)
@@ -118,4 +112,4 @@ redis_client = RedisClient()
 
 async def get_redis_client() -> RedisClient:
     """获取 Redis 客户端实例"""
-    return redis_client 
+    return redis_client

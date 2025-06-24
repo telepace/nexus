@@ -14,6 +14,10 @@ const nextConfig = {
   // 修复配置位置
   skipTrailingSlashRedirect: true,
   skipMiddlewareUrlNormalize: true,
+  // 临时禁用静态优化，防止预渲染错误
+  experimental: {
+    forceSwcTransforms: true,
+  },
   async rewrites() {
     return [
       {
@@ -76,23 +80,23 @@ const nextConfig = {
       },
     ],
   },
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.plugins.push(
-        new ForkTsCheckerWebpackPlugin({
-          async: true, // Run type checking synchronously to block the build
-          typescript: {
-            configOverwrite: {
-              compilerOptions: {
-                skipLibCheck: true,
-              },
-            },
-          },
-        }),
-      );
-    }
-    return config;
-  },
+  // webpack: (config, { isServer }) => {
+  //   if (!isServer) {
+  //     config.plugins.push(
+  //       new ForkTsCheckerWebpackPlugin({
+  //         async: true, // Run type checking synchronously to block the build
+  //         typescript: {
+  //           configOverwrite: {
+  //             compilerOptions: {
+  //               skipLibCheck: true,
+  //             },
+  //           },
+  //         },
+  //       }),
+  //     );
+  //   }
+  //   return config;
+  // },
 };
 
 export default nextConfig;

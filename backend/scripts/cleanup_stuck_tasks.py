@@ -36,9 +36,11 @@ def get_stuck_tasks(session: Session, hours_threshold: int = 2) -> list[ContentI
     return session.exec(stmt).all()
 
 
-def cleanup_stuck_tasks(session: Session, stuck_tasks: list[ContentItem], action: str = "reset"):
+def cleanup_stuck_tasks(
+    session: Session, stuck_tasks: list[ContentItem], action: str = "reset"
+):
     """清理卡住的任务
-    
+
     Args:
         session: 数据库会话
         stuck_tasks: 卡住的任务列表
@@ -58,7 +60,7 @@ def cleanup_stuck_tasks(session: Session, stuck_tasks: list[ContentItem], action
             if not task.error_message:
                 task.error_message = "Task was stuck and automatically cleaned up"
             task.last_processed_at = now_utc()
-        
+
         task.updated_at = now_utc()
         session.add(task)
         count += 1
@@ -90,14 +92,14 @@ def main():
     # 检查命令行参数
     hours_threshold = 2
     action = "reset"  # 默认动作：重置为pending
-    
+
     if len(sys.argv) > 1:
         try:
             hours_threshold = int(sys.argv[1])
         except ValueError:
             print("❌ 无效的小时数参数")
             sys.exit(1)
-    
+
     if len(sys.argv) > 2:
         action = sys.argv[2].lower()
         if action not in ["reset", "fail"]:
@@ -132,7 +134,9 @@ def main():
             print("\n📊 当前任务状态统计:")
             statuses = ["pending", "processing", "completed", "failed"]
             for status in statuses:
-                stmt = select(ContentItem).where(ContentItem.processing_status == status)
+                stmt = select(ContentItem).where(
+                    ContentItem.processing_status == status
+                )
                 count = len(session.exec(stmt).all())
                 print(f"  {status}: {count}")
 
@@ -140,7 +144,7 @@ def main():
         print(f"\n❌ 发生错误: {e}")
         sys.exit(1)
 
-    print(f"\n✅ 清理完成")
+    print("\n✅ 清理完成")
 
 
 if __name__ == "__main__":

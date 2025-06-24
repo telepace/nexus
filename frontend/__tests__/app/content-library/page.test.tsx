@@ -207,10 +207,18 @@ describe("ContentLibraryPage", () => {
     expect(sortSelect).toBeInTheDocument();
 
     // Check that sorting options are available
-    expect(screen.getByRole('option', { name: "创建时间 (新→旧)" })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: "创建时间 (旧→新)" })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: "标题 (A→Z)" })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: "质量评分 (高→低)" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "创建时间 (新→旧)" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "创建时间 (旧→新)" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "标题 (A→Z)" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "质量评分 (高→低)" }),
+    ).toBeInTheDocument();
   });
 
   it("should change sorting when option is selected", async () => {

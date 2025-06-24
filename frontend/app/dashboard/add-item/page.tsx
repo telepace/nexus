@@ -1,5 +1,8 @@
 "use client";
 
+// 强制动态渲染，防止静态生成时的错误
+export const dynamic = 'force-dynamic';
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addItem } from "@/components/actions/items-action";

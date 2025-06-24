@@ -1,9 +1,8 @@
 import uuid
-import json
 from datetime import datetime
 
-from sqlmodel import Field, SQLModel
 from pydantic import BaseModel
+from sqlmodel import Field, SQLModel
 
 
 # New schema for AI results
@@ -94,8 +93,10 @@ print(
     "Schemas for ContentItem and ContentShare created in backend/app/schemas/content.py"
 )
 
+
 class ContentAnalysisRequest(BaseModel):
     """内容分析请求schema"""
+
     analysis_instruction: str = Field(..., description="用户的分析指令")
     model: str | None = Field(
         default="or-gemini-2.5-flash-preview-05-20",

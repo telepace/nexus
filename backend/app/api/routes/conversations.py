@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlmodel import Session, select
+from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
@@ -26,21 +26,29 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-def convert_conversation_to_public(conversation: AIConversation) -> AIConversationPublic:
+def convert_conversation_to_public(
+    conversation: AIConversation,
+) -> AIConversationPublic:
     """Convert AIConversation model to public schema."""
     try:
-        messages_data = json.loads(conversation.messages) if conversation.messages else []
+        messages_data = (
+            json.loads(conversation.messages) if conversation.messages else []
+        )
         messages = [
             AIMessageSchema(
                 role=msg.get("role", "user"),
                 content=msg.get("content", ""),
-                timestamp=datetime.fromisoformat(msg["timestamp"]) if msg.get("timestamp") else None,
+                timestamp=datetime.fromisoformat(msg["timestamp"])
+                if msg.get("timestamp")
+                else None,
                 metadata=msg.get("metadata"),
             )
             for msg in messages_data
         ]
     except (json.JSONDecodeError, ValueError) as e:
-        logger.error(f"Failed to parse messages for conversation {conversation.id}: {e}")
+        logger.error(
+            f"Failed to parse messages for conversation {conversation.id}: {e}"
+        )
         messages = []
 
     return AIConversationPublic(
@@ -72,40 +80,40 @@ def get_content_conversations(
     include_inactive: bool = Query(False, description="是否包含非激活状态的对话"),
 ) -> ConversationListResponse:
     """获取内容的所有AI对话。"""
-    
+
     # 验证内容项存在且属于当前用户
     content_item = session.exec(
         select(ContentItem).where(
-            ContentItem.id == content_id,
-            ContentItem.user_id == current_user.id
+            ContentItem.id == content_id, ContentItem.user_id == current_user.id
         )
     ).first()
-    
+
     if not content_item:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content item not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
         )
-    
+
     # 查询对话
     query = select(AIConversation).where(
         AIConversation.content_item_id == content_id,
-        AIConversation.user_id == current_user.id
+        AIConversation.user_id == current_user.id,
     )
-    
+
     if not include_inactive:
-        query = query.where(AIConversation.is_active == True)
-    
+        query = query.where(AIConversation.is_active)
+
     conversations = session.exec(query.order_by(AIConversation.created_at)).all()
-    
+
     # 转换为public schema
-    public_conversations = [convert_conversation_to_public(conv) for conv in conversations]
-    
+    public_conversations = [
+        convert_conversation_to_public(conv) for conv in conversations
+    ]
+
     # 检查是否有自动分析对话
     has_auto_analysis = any(
         conv.conversation_type == "auto_analysis" for conv in conversations
     )
-    
+
     return ConversationListResponse(
         conversations=public_conversations,
         total=len(public_conversations),
@@ -128,21 +136,19 @@ def create_conversation(
     conversation_in: AIConversationCreate,
 ) -> AIConversationPublic:
     """创建新的AI对话。"""
-    
+
     # 验证内容项存在且属于当前用户
     content_item = session.exec(
         select(ContentItem).where(
-            ContentItem.id == content_id,
-            ContentItem.user_id == current_user.id
+            ContentItem.id == content_id, ContentItem.user_id == current_user.id
         )
     ).first()
-    
+
     if not content_item:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content item not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
         )
-    
+
     # 创建对话
     conversation = AIConversation(
         user_id=current_user.id,
@@ -154,21 +160,23 @@ def create_conversation(
         summary=None,
         is_active=True,
     )
-    
+
     # 如果有初始消息，添加到对话中
     if conversation_in.initial_message:
-        messages = [{
-            "role": "user",
-            "content": conversation_in.initial_message,
-            "timestamp": now_utc().isoformat(),
-            "metadata": {"initial_message": True}
-        }]
+        messages = [
+            {
+                "role": "user",
+                "content": conversation_in.initial_message,
+                "timestamp": now_utc().isoformat(),
+                "message_metadata": {"initial_message": True},
+            }
+        ]
         conversation.messages = json.dumps(messages)
-    
+
     session.add(conversation)
     session.commit()
     session.refresh(conversation)
-    
+
     return convert_conversation_to_public(conversation)
 
 
@@ -186,62 +194,60 @@ async def add_message_to_conversation(
     message_request: AddMessageRequest,
 ) -> AIConversationPublic:
     """向对话添加消息并获取AI响应。"""
-    
+
     # 获取对话
     conversation = session.exec(
         select(AIConversation).where(
             AIConversation.id == conversation_id,
             AIConversation.user_id == current_user.id,
-            AIConversation.is_active == True,
+            AIConversation.is_active,
         )
     ).first()
-    
+
     if not conversation:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found"
         )
-    
+
     # 获取内容项以提供上下文
     content_item = None
     if conversation.content_item_id:
         content_item = session.exec(
             select(ContentItem).where(ContentItem.id == conversation.content_item_id)
         ).first()
-    
+
     try:
         # 解析现有消息
         messages = json.loads(conversation.messages) if conversation.messages else []
-        
+
         # 添加用户消息
         user_message = {
             "role": message_request.role,
             "content": message_request.content,
             "timestamp": now_utc().isoformat(),
-            "metadata": {}
+            "message_metadata": {},
         }
         messages.append(user_message)
-        
+
         # 准备AI服务调用
         llm_service = LLMService()
-        
+
         # 构建消息上下文，包含内容文本（如果有）
         context_messages = []
-        
+
         if content_item and content_item.content_text:
-            context_messages.append({
-                "role": "system",
-                "content": f"以下是用户正在讨论的内容：\n\n{content_item.content_text[:4000]}..."  # 限制长度
-            })
-        
+            context_messages.append(
+                {
+                    "role": "system",
+                    "content": f"以下是用户正在讨论的内容：\n\n{content_item.content_text[:4000]}...",  # 限制长度
+                }
+            )
+
         # 添加对话历史（最近几条消息）
         recent_messages = messages[-10:]  # 最近10条消息
         for msg in recent_messages:
-            context_messages.append({
-                "role": msg["role"],
-                "content": msg["content"]
-            })
-        
+            context_messages.append({"role": msg["role"], "content": msg["content"]})
+
         # 调用AI服务
         response = await llm_service.chat_completion(
             messages=context_messages,
@@ -249,40 +255,44 @@ async def add_message_to_conversation(
             temperature=0.7,
             max_tokens=2000,
         )
-        
+
         ai_response_content = response.choices[0].message.content
-        
+
         # 添加AI响应
         ai_message = {
             "role": "assistant",
             "content": ai_response_content,
             "timestamp": now_utc().isoformat(),
-            "metadata": {
+            "message_metadata": {
                 "model": conversation.ai_model_name,
                 "tokens_used": response.usage.total_tokens if response.usage else 0,
-            }
+            },
         }
         messages.append(ai_message)
-        
+
         # 更新对话
         conversation.messages = json.dumps(messages)
         conversation.updated_at = now_utc()
-        
+
         # 更新对话摘要（如果是新对话）
         if len(messages) <= 4 and not conversation.summary:
-            conversation.summary = message_request.content[:100] + "..." if len(message_request.content) > 100 else message_request.content
-        
+            conversation.summary = (
+                message_request.content[:100] + "..."
+                if len(message_request.content) > 100
+                else message_request.content
+            )
+
         session.add(conversation)
         session.commit()
         session.refresh(conversation)
-        
+
         return convert_conversation_to_public(conversation)
-        
+
     except Exception as e:
         logger.error(f"Failed to add message to conversation {conversation_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to process message"
+            detail="Failed to process message",
         )
 
 
@@ -300,36 +310,35 @@ async def trigger_analysis(
     analysis_request: AnalysisPromptRequest,
 ) -> AIConversationPublic:
     """使用预设Prompt触发内容分析。"""
-    
+
     # 验证内容项存在且属于当前用户
     content_item = session.exec(
         select(ContentItem).where(
-            ContentItem.id == content_id,
-            ContentItem.user_id == current_user.id
+            ContentItem.id == content_id, ContentItem.user_id == current_user.id
         )
     ).first()
-    
+
     if not content_item:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content item not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
         )
-    
+
     if not content_item.content_text:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Content has no text to analyze"
+            detail="Content has no text to analyze",
         )
-    
+
     # 验证prompt类型
     if analysis_request.prompt_type not in ANALYSIS_PROMPTS:
+        available_types = ", ".join(ANALYSIS_PROMPTS.keys())
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid prompt type. Available types: {list(ANALYSIS_PROMPTS.keys())}"
+            detail=f"Invalid prompt type. Available types: {available_types}",
         )
-    
+
     prompt_config = ANALYSIS_PROMPTS[analysis_request.prompt_type]
-    
+
     try:
         # 检查是否已有相同类型的分析对话
         existing_conversation = session.exec(
@@ -338,14 +347,14 @@ async def trigger_analysis(
                 AIConversation.user_id == current_user.id,
                 AIConversation.conversation_type == "prompt_analysis",
                 AIConversation.title == prompt_config["title"],
-                AIConversation.is_active == True,
+                AIConversation.is_active,
             )
         ).first()
-        
+
         if existing_conversation:
             # 返回现有对话
             return convert_conversation_to_public(existing_conversation)
-        
+
         # 创建新的分析对话
         conversation = AIConversation(
             user_id=current_user.id,
@@ -357,79 +366,81 @@ async def trigger_analysis(
             summary=f"对《{content_item.title or '内容'}》进行{prompt_config['title']}",
             is_active=True,
         )
-        
+
         session.add(conversation)
         session.commit()
         session.refresh(conversation)
-        
+
         # 构建分析消息
         system_message = {
             "role": "system",
             "content": prompt_config["system_message"],
             "timestamp": now_utc().isoformat(),
-            "metadata": {"prompt_type": analysis_request.prompt_type}
+            "message_metadata": {"prompt_type": analysis_request.prompt_type},
         }
-        
+
         # 构建用户消息，包含内容和指令
-        user_content = f"内容：\n{content_item.content_text}\n\n指令：{prompt_config['prompt']}"
+        user_content = (
+            f"内容：\n{content_item.content_text}\n\n指令：{prompt_config['prompt']}"
+        )
         if analysis_request.custom_instruction:
             user_content += f"\n\n补充要求：{analysis_request.custom_instruction}"
-        
+
         user_message = {
             "role": "user",
             "content": user_content,
             "timestamp": now_utc().isoformat(),
-            "metadata": {
+            "message_metadata": {
                 "prompt_type": analysis_request.prompt_type,
-                "auto_generated": True
-            }
+                "auto_generated": True,
+            },
         }
-        
+
         messages = [system_message, user_message]
-        
+
         # 调用AI服务
         llm_service = LLMService()
         response = await llm_service.chat_completion(
             messages=[
-                {"role": msg["role"], "content": msg["content"]} 
+                {"role": str(msg["role"]), "content": str(msg["content"])}
                 for msg in messages
             ],
             model=settings.DEFAULT_LLM_MODEL,
             temperature=0.3,  # 分析类任务使用较低温度
             max_tokens=2000,
         )
-        
+
         ai_response_content = response.choices[0].message.content
-        
+
         # 添加AI响应
         ai_message = {
             "role": "assistant",
             "content": ai_response_content,
             "timestamp": now_utc().isoformat(),
-            "metadata": {
+            "message_metadata": {
                 "model": settings.DEFAULT_LLM_MODEL,
                 "prompt_type": analysis_request.prompt_type,
                 "tokens_used": response.usage.total_tokens if response.usage else 0,
-            }
+            },
         }
-        
+
         messages.append(ai_message)
-        
+
         # 更新对话
         conversation.messages = json.dumps(messages)
         conversation.updated_at = now_utc()
-        
+
         session.add(conversation)
         session.commit()
         session.refresh(conversation)
-        
+
         return convert_conversation_to_public(conversation)
-        
+
     except Exception as e:
         logger.error(f"Failed to trigger analysis for content {content_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to perform analysis"
+            detail="Failed to perform analysis",
         )
 
 
@@ -445,26 +456,25 @@ def deactivate_conversation(
     conversation_id: uuid.UUID,
 ) -> dict[str, str]:
     """停用对话。"""
-    
+
     conversation = session.exec(
         select(AIConversation).where(
             AIConversation.id == conversation_id,
             AIConversation.user_id == current_user.id,
         )
     ).first()
-    
+
     if not conversation:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found"
         )
-    
+
     conversation.is_active = False
     conversation.updated_at = now_utc()
-    
+
     session.add(conversation)
     session.commit()
-    
+
     return {"message": "Conversation deactivated successfully"}
 
 
@@ -475,13 +485,15 @@ def deactivate_conversation(
 )
 def get_analysis_prompts() -> dict[str, Any]:
     """获取预设分析Prompt模板。"""
-    
+
     return {
         "prompts": {
             key: {
                 "title": config["title"],
-                "description": config["prompt"][:100] + "..." if len(config["prompt"]) > 100 else config["prompt"]
+                "description": config["prompt"][:100] + "..."
+                if len(config["prompt"]) > 100
+                else config["prompt"],
             }
             for key, config in ANALYSIS_PROMPTS.items()
         }
-    } 
+    }

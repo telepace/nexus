@@ -11,10 +11,9 @@ interface GlobalNotificationContainerProps {
   className?: string;
 }
 
-const GlobalNotificationContainer: React.FC<GlobalNotificationContainerProps> = ({
-  maxVisible = 5,
-  className = "",
-}) => {
+const GlobalNotificationContainer: React.FC<
+  GlobalNotificationContainerProps
+> = ({ maxVisible = 5, className = "" }) => {
   const { notifications, removeNotification } = useGlobalNotificationStore();
 
   // 限制显示的通知数量，优先显示最新的
@@ -28,7 +27,7 @@ const GlobalNotificationContainer: React.FC<GlobalNotificationContainerProps> = 
   // 处理通知操作（如点击跳转）
   const handleNotificationAction = (notification: ProcessingNotification) => {
     // 如果是已完成的通知，点击后可以自动关闭
-    if (notification.status === 'completed' && notification.autoHide) {
+    if (notification.status === "completed" && notification.autoHide) {
       handleNotificationClose(notification.id);
     }
   };
@@ -39,7 +38,7 @@ const GlobalNotificationContainer: React.FC<GlobalNotificationContainerProps> = 
   }
 
   return (
-    <div 
+    <div
       className={`
         fixed top-4 right-4 z-50 
         flex flex-col space-y-3 
@@ -63,7 +62,7 @@ const GlobalNotificationContainer: React.FC<GlobalNotificationContainerProps> = 
           </div>
         ))}
       </AnimatePresence>
-      
+
       {/* 如果有更多通知未显示，显示提示 */}
       {notifications.length > maxVisible && (
         <div className="pointer-events-auto">
@@ -78,4 +77,4 @@ const GlobalNotificationContainer: React.FC<GlobalNotificationContainerProps> = 
   );
 };
 
-export default GlobalNotificationContainer; 
+export default GlobalNotificationContainer;

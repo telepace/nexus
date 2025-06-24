@@ -13,13 +13,10 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from sqlalchemy.dialects.postgresql import insert
-from sqlmodel import Session, create_engine, select
+from sqlmodel import Session
 
-from app.core.config import settings
 from app.models.content import AIResult, ContentItem, Segment
 from app.services.ai.chat_service import ChatService
-from app.utils.content_processors import clean_content_for_db
 
 logger = logging.getLogger(__name__)
 
@@ -429,7 +426,7 @@ class PreprocessingPipeline:
                 logger.error(f"更新ContentItem失败状态时出错: {str(job_error)}")
 
         processing_time = (datetime.now() - start_time).total_seconds()
-        storage_stats["processing_time"] = processing_time
+        storage_stats["processing_time"] = int(processing_time)
 
         return storage_stats
 

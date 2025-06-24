@@ -297,13 +297,21 @@ export default function ContentLibraryPage() {
     const sorted = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case "created_at_desc":
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          return (
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
         case "created_at_asc":
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          return (
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
         case "updated_at_desc":
-          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+          return (
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          );
         case "updated_at_asc":
-          return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+          return (
+            new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
+          );
         case "title_asc":
           return (a.title || "").localeCompare(b.title || "");
         case "title_desc":
@@ -325,7 +333,9 @@ export default function ContentLibraryPage() {
           const timeAscB = b.ai_result?.reading_time_minutes ?? 0;
           return timeAscA - timeAscB;
         default:
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          return (
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
       }
     });
 
@@ -666,7 +676,7 @@ export default function ContentLibraryPage() {
   // ContentItemCard 组件移动到这里，作为内部组件
   const ContentItemCard = ({ item }: { item: ContentItemPublic }) => {
     const isSelected = selectedItem?.id === item.id;
-    
+
     return (
       <Card
         key={item.id}
@@ -691,18 +701,24 @@ export default function ContentLibraryPage() {
             {item.ai_result?.content_quality_score != null && (
               <div className="flex items-center gap-0.5 opacity-60 hover:opacity-100 transition-opacity">
                 {Array.from({ length: 5 }, (_, i) => {
-                  const starCount = item.ai_result.content_quality_score >= 0.9 ? 5 :
-                                   item.ai_result.content_quality_score >= 0.8 ? 4 :
-                                   item.ai_result.content_quality_score >= 0.7 ? 3 :
-                                   item.ai_result.content_quality_score >= 0.6 ? 2 : 1;
+                  const starCount =
+                    item.ai_result.content_quality_score >= 0.9
+                      ? 5
+                      : item.ai_result.content_quality_score >= 0.8
+                        ? 4
+                        : item.ai_result.content_quality_score >= 0.7
+                          ? 3
+                          : item.ai_result.content_quality_score >= 0.6
+                            ? 2
+                            : 1;
                   return (
-                    <Star 
-                      key={i} 
+                    <Star
+                      key={i}
                       className={`h-3 w-3 ${
-                        i < starCount 
-                          ? "text-amber-500 fill-current" 
+                        i < starCount
+                          ? "text-amber-500 fill-current"
                           : "text-gray-300"
-                      }`} 
+                      }`}
                     />
                   );
                 })}
@@ -864,7 +880,7 @@ export default function ContentLibraryPage() {
             ai_result: item.ai_result,
           })),
         });
-        
+
         // 详细检查AI结果数据
         data.forEach((item: ContentItemPublic) => {
           if (item.ai_result) {
@@ -878,7 +894,7 @@ export default function ContentLibraryPage() {
             console.log(`❌ Item ${item.title} 没有AI结果数据`);
           }
         });
-        
+
         setItems(data);
         // 缓存内容列表
         contentCache.setContentList(data);
@@ -1026,7 +1042,9 @@ export default function ContentLibraryPage() {
                       <option value="title_desc">标题 (Z→A)</option>
                       <option value="quality_desc">质量评分 (高→低)</option>
                       <option value="quality_asc">质量评分 (低→高)</option>
-                      <option value="reading_time_desc">阅读时长 (长→短)</option>
+                      <option value="reading_time_desc">
+                        阅读时长 (长→短)
+                      </option>
                       <option value="reading_time_asc">阅读时长 (短→长)</option>
                     </select>
                   </div>

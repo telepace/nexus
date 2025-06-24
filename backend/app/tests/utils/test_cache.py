@@ -1,17 +1,18 @@
 """Tests for cache utilities."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from sqlmodel import Session
 
+from app.models import ContentItem
 from app.utils.cache import (
+    _get_content_cache_key,
     get_article_text,
+    get_cache_stats,
     invalidate_article_cache,
     warm_article_cache,
-    get_cache_stats,
-    _get_content_cache_key,
 )
-from app.models import ContentItem
 
 
 class TestCacheUtils:
@@ -28,17 +29,17 @@ class TestCacheUtils:
         """Test get_article_text with cache hit."""
         content_id = "test-content-123"
         cached_content = "This is cached content"
-        
+
         # Mock Redis client
         with patch("app.utils.cache.redis_client") as mock_redis:
             mock_redis.is_connected = True
             mock_redis.get = AsyncMock(return_value=cached_content)
-            
+
             # Mock database session (should not be used)
             mock_db = MagicMock(spec=Session)
-            
+
             result = await get_article_text(content_id, mock_db)
-            
+
             assert result == cached_content
             mock_redis.get.assert_called_once_with("content:test-content-123:text")
             # Database should not be accessed
@@ -49,13 +50,13 @@ class TestCacheUtils:
         """Test get_article_text with cache miss but database hit."""
         content_id = "test-content-123"
         db_content = "This is database content"
-        
+
         # Mock Redis client (cache miss)
         with patch("app.utils.cache.redis_client") as mock_redis:
             mock_redis.is_connected = True
             mock_redis.get = AsyncMock(return_value=None)
             mock_redis.set = AsyncMock(return_value=True)
-            
+
             # Mock database session
             mock_db = MagicMock(spec=Session)
             mock_content = MagicMock(spec=ContentItem)
@@ -63,9 +64,9 @@ class TestCacheUtils:
             mock_result = MagicMock()
             mock_result.first.return_value = mock_content
             mock_db.exec.return_value = mock_result
-            
+
             result = await get_article_text(content_id, mock_db)
-            
+
             assert result == db_content
             mock_redis.get.assert_called_once()
             mock_redis.set.assert_awaited_once_with(
@@ -77,20 +78,20 @@ class TestCacheUtils:
     async def test_get_article_text_not_found(self):
         """Test get_article_text when content not found."""
         content_id = "nonexistent-content"
-        
+
         # Mock Redis client (cache miss)
         with patch("app.utils.cache.redis_client") as mock_redis:
             mock_redis.is_connected = True
             mock_redis.get = AsyncMock(return_value=None)
-            
+
             # Mock database session (content not found)
             mock_db = MagicMock(spec=Session)
             mock_result = MagicMock()
             mock_result.first.return_value = None
             mock_db.exec.return_value = mock_result
-            
+
             result = await get_article_text(content_id, mock_db)
-            
+
             assert result is None
             mock_redis.set.assert_not_called()
 
@@ -99,11 +100,11 @@ class TestCacheUtils:
         """Test get_article_text when Redis is disabled."""
         content_id = "test-content-123"
         db_content = "This is database content"
-        
+
         # Mock Redis client (disabled)
         with patch("app.utils.cache.redis_client") as mock_redis:
             mock_redis.is_connected = False
-            
+
             # Mock database session
             mock_db = MagicMock(spec=Session)
             mock_content = MagicMock(spec=ContentItem)
@@ -111,9 +112,9 @@ class TestCacheUtils:
             mock_result = MagicMock()
             mock_result.first.return_value = mock_content
             mock_db.exec.return_value = mock_result
-            
+
             result = await get_article_text(content_id, mock_db)
-            
+
             assert result == db_content
             mock_redis.get.assert_not_called()
             mock_redis.set.assert_not_called()
@@ -122,13 +123,13 @@ class TestCacheUtils:
     async def test_invalidate_article_cache_success(self):
         """Test successful cache invalidation."""
         content_id = "test-content-123"
-        
+
         with patch("app.utils.cache.redis_client") as mock_redis:
             mock_redis.is_connected = True
             mock_redis.delete = AsyncMock(return_value=True)
-            
+
             result = await invalidate_article_cache(content_id)
-            
+
             assert result is True
             mock_redis.delete.assert_awaited_once_with("content:test-content-123:text")
 
@@ -136,12 +137,12 @@ class TestCacheUtils:
     async def test_invalidate_article_cache_redis_disabled(self):
         """Test cache invalidation when Redis is disabled."""
         content_id = "test-content-123"
-        
+
         with patch("app.utils.cache.redis_client") as mock_redis:
             mock_redis.is_connected = False
-            
+
             result = await invalidate_article_cache(content_id)
-            
+
             assert result is False
             mock_redis.delete.assert_not_called()
 
@@ -150,13 +151,13 @@ class TestCacheUtils:
         """Test successful cache warming."""
         content_id = "test-content-123"
         content_text = "This is the content to cache"
-        
+
         with patch("app.utils.cache.redis_client") as mock_redis:
             mock_redis.is_connected = True
             mock_redis.set = AsyncMock(return_value=True)
-            
+
             result = await warm_article_cache(content_id, content_text)
-            
+
             assert result is True
             mock_redis.set.assert_awaited_once_with(
                 "content:test-content-123:text", content_text
@@ -167,12 +168,12 @@ class TestCacheUtils:
         """Test cache warming with empty content."""
         content_id = "test-content-123"
         content_text = ""
-        
+
         with patch("app.utils.cache.redis_client") as mock_redis:
             mock_redis.is_connected = True
-            
+
             result = await warm_article_cache(content_id, content_text)
-            
+
             assert result is False
             mock_redis.set.assert_not_called()
 
@@ -181,9 +182,9 @@ class TestCacheUtils:
         """Test cache stats when Redis is connected."""
         with patch("app.utils.cache.redis_client") as mock_redis:
             mock_redis.is_connected = True
-            
+
             stats = await get_cache_stats()
-            
+
             assert stats["redis_enabled"] is True
             assert stats["status"] == "connected"
 
@@ -192,8 +193,8 @@ class TestCacheUtils:
         """Test cache stats when Redis is disconnected."""
         with patch("app.utils.cache.redis_client") as mock_redis:
             mock_redis.is_connected = False
-            
+
             stats = await get_cache_stats()
-            
+
             assert stats["redis_enabled"] is False
-            assert stats["status"] == "disconnected" 
+            assert stats["status"] == "disconnected"

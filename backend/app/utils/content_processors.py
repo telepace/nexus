@@ -1763,7 +1763,9 @@ class ProcessingPipeline:
                             )
                     except Exception as e:
                         logger.error(f"Error with {processor_name}: {str(e)}")
-                        result.error_message = f"Processor {processor_name} failed: {str(e)}"
+                        result.error_message = (
+                            f"Processor {processor_name} failed: {str(e)}"
+                        )
 
             if not result.success:
                 # Create comprehensive error message
@@ -1782,7 +1784,9 @@ class ProcessingPipeline:
 
             # Step 2: Update content item with processed content
             if result.markdown_content:
-                content_item.content_text = clean_content_for_db(result.markdown_content)
+                content_item.content_text = clean_content_for_db(
+                    result.markdown_content
+                )
 
             if result.metadata:
                 content_item.meta_info = json.dumps(result.metadata)
@@ -1800,11 +1804,7 @@ class ProcessingPipeline:
             await self._create_auto_analysis_conversation(content_item, session)
 
             # Step 4: AI Processing (if enabled and content is available)
-            if (
-                result.success
-                and content_item.content_text
-                and len(self.ai_steps) > 0
-            ):
+            if result.success and content_item.content_text and len(self.ai_steps) > 0:
                 ai_result = await self._process_ai_steps(context, result)
                 if ai_result.metadata:
                     # Merge AI processing metadata
@@ -1832,26 +1832,33 @@ class ProcessingPipeline:
     ) -> None:
         """自动为处理完成的内容创建AI分析对话"""
         try:
-            from app.models import AIConversation
-            from app.utils.timezone import now_utc
-            
             # 检查是否已存在自动分析对话
             from sqlmodel import select
+
+            from app.models import AIConversation
+
             existing_conversation = session.exec(
                 select(AIConversation).where(
                     AIConversation.content_item_id == content_item.id,
                     AIConversation.conversation_type == "auto_analysis",
-                    AIConversation.is_active == True,
+                    AIConversation.is_active,
                 )
             ).first()
-            
+
             if existing_conversation:
-                logger.info(f"Auto analysis conversation already exists for content {content_item.id}")
+                logger.info(
+                    f"Auto analysis conversation already exists for content {content_item.id}"
+                )
                 return
 
             # 只有在有内容文本时才创建分析对话
-            if not content_item.content_text or len(content_item.content_text.strip()) < 100:
-                logger.info(f"Content {content_item.id} has insufficient text for analysis")
+            if (
+                not content_item.content_text
+                or len(content_item.content_text.strip()) < 100
+            ):
+                logger.info(
+                    f"Content {content_item.id} has insufficient text for analysis"
+                )
                 return
 
             # 创建自动分析对话
@@ -1869,11 +1876,15 @@ class ProcessingPipeline:
             session.add(conversation)
             session.commit()
             session.refresh(conversation)
-            
-            logger.info(f"Created auto analysis conversation {conversation.id} for content {content_item.id}")
+
+            logger.info(
+                f"Created auto analysis conversation {conversation.id} for content {content_item.id}"
+            )
 
         except Exception as e:
-            logger.error(f"Failed to create auto analysis conversation for content {content_item.id}: {e}")
+            logger.error(
+                f"Failed to create auto analysis conversation for content {content_item.id}: {e}"
+            )
             # 不抛出异常，避免影响主处理流程
 
     async def _process_ai_steps(
@@ -1882,25 +1893,27 @@ class ProcessingPipeline:
         """处理AI分析步骤"""
         ai_result = ProcessingResult(success=True)
         ai_result.metadata = {}
-        
+
         try:
             for ai_step in self.ai_steps:
                 if ai_step.can_handle(context.content_item.type):
                     step_result = ai_step.process(context, result)
-                    
+
                     # Handle async AI steps
                     if asyncio.iscoroutine(step_result):
                         step_result = await step_result
-                    
+
                     if step_result.success and step_result.metadata:
                         ai_result.metadata.update(step_result.metadata)
                     else:
-                        logger.warning(f"AI step {ai_step.__class__.__name__} failed: {step_result.error_message}")
-                        
+                        logger.warning(
+                            f"AI step {ai_step.__class__.__name__} failed: {step_result.error_message}"
+                        )
+
         except Exception as e:
             logger.error(f"Error in AI processing steps: {e}")
             ai_result.metadata["ai_processing_error"] = str(e)
-            
+
         return ai_result
 
     def process(self, content_item: ContentItem, session: Session) -> ProcessingResult:

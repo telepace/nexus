@@ -301,7 +301,6 @@ def create_token_blacklist(
         user_id=user_id,
         expires_at=expires_at,
         created_at=datetime.utcnow(),
-        blacklisted_at=datetime.utcnow(),
     )
     session.add(token_blacklist)
     session.commit()
@@ -330,7 +329,6 @@ def add_token_to_blacklist(
         token=token,
         user_id=user_id,
         expires_at=expires_at,
-        blacklisted_at=datetime.utcnow(),
     )
     session.add(token_blacklist)
     session.commit()

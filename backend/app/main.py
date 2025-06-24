@@ -109,10 +109,7 @@ async def get_health_api():
 async def get_cache_health_api():
     """Cache health check endpoint."""
     logger.info("收到缓存健康检查请求")
-    return {
-        "cache": {"status": "checking"},
-        "status": "ok"
-    }
+    return {"cache": {"status": "checking"}, "status": "ok"}
 
 
 # Set all CORS enabled origins

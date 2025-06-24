@@ -11,15 +11,19 @@ interface AnalysisCardsProps {
   loading?: boolean;
 }
 
-const SummaryCard = ({ summary }: { summary: Record<string, unknown> | null }) => {
+const SummaryCard = ({
+  summary,
+}: { summary: Record<string, unknown> | null }) => {
   if (!summary) return null;
 
   // 尝试从不同可能的字段中提取摘要文本
-  const summaryText = 
+  const summaryText =
     (summary.text as string) ||
     (summary.content as string) ||
     (summary.summary as string) ||
-    Object.values(summary).find(val => typeof val === 'string' && val.length > 50) as string ||
+    (Object.values(summary).find(
+      (val) => typeof val === "string" && val.length > 50,
+    ) as string) ||
     JSON.stringify(summary);
 
   return (
@@ -39,23 +43,31 @@ const SummaryCard = ({ summary }: { summary: Record<string, unknown> | null }) =
   );
 };
 
-const KeyPointsCard = ({ keyPoints }: { keyPoints: Record<string, unknown> | null }) => {
+const KeyPointsCard = ({
+  keyPoints,
+}: { keyPoints: Record<string, unknown> | null }) => {
   if (!keyPoints) return null;
 
   // 尝试从不同可能的字段中提取关键点
   let points: string[] = [];
-  
+
   if (Array.isArray(keyPoints.points)) {
-    points = keyPoints.points.map(p => typeof p === 'string' ? p : JSON.stringify(p));
+    points = keyPoints.points.map((p) =>
+      typeof p === "string" ? p : JSON.stringify(p),
+    );
   } else if (Array.isArray(keyPoints.items)) {
-    points = keyPoints.items.map(p => typeof p === 'string' ? p : JSON.stringify(p));
+    points = keyPoints.items.map((p) =>
+      typeof p === "string" ? p : JSON.stringify(p),
+    );
   } else if (Array.isArray(keyPoints.key_points)) {
-    points = keyPoints.key_points.map(p => typeof p === 'string' ? p : JSON.stringify(p));
+    points = keyPoints.key_points.map((p) =>
+      typeof p === "string" ? p : JSON.stringify(p),
+    );
   } else {
     // 如果是对象，尝试提取所有字符串值
     points = Object.values(keyPoints)
-      .filter(val => typeof val === 'string' && val.length > 10)
-      .map(val => val as string);
+      .filter((val) => typeof val === "string" && val.length > 10)
+      .map((val) => val as string);
   }
 
   return (
@@ -91,7 +103,7 @@ const KeyPointsCard = ({ keyPoints }: { keyPoints: Record<string, unknown> | nul
 };
 
 const MetadataCard = ({ analysisResult }: { analysisResult: AIResult }) => {
-  const hasMetadata = 
+  const hasMetadata =
     analysisResult.reading_time_minutes ||
     analysisResult.difficulty_level ||
     analysisResult.content_quality_score ||
@@ -119,23 +131,27 @@ const MetadataCard = ({ analysisResult }: { analysisResult: AIResult }) => {
 
         {analysisResult.difficulty_level && (
           <div className="flex items-center gap-2">
-            <Badge 
+            <Badge
               variant={
-                analysisResult.difficulty_level === 'beginner' ? 'secondary' :
-                analysisResult.difficulty_level === 'intermediate' ? 'default' : 'destructive'
+                analysisResult.difficulty_level === "beginner"
+                  ? "secondary"
+                  : analysisResult.difficulty_level === "intermediate"
+                    ? "default"
+                    : "destructive"
               }
             >
-              {analysisResult.difficulty_level === 'beginner' ? '初级' :
-               analysisResult.difficulty_level === 'intermediate' ? '中级' : '高级'}
+              {analysisResult.difficulty_level === "beginner"
+                ? "初级"
+                : analysisResult.difficulty_level === "intermediate"
+                  ? "中级"
+                  : "高级"}
             </Badge>
           </div>
         )}
 
         {analysisResult.content_quality_score && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              内容质量评分: 
-            </span>
+            <span className="text-sm text-muted-foreground">内容质量评分:</span>
             <Badge variant="outline">
               {(analysisResult.content_quality_score * 100).toFixed(1)}%
             </Badge>
@@ -179,7 +195,10 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-export const AnalysisCards = ({ analysisResult, loading }: AnalysisCardsProps) => {
+export const AnalysisCards = ({
+  analysisResult,
+  loading,
+}: AnalysisCardsProps) => {
   if (loading) {
     return <LoadingSkeleton />;
   }
@@ -201,22 +220,18 @@ export const AnalysisCards = ({ analysisResult, loading }: AnalysisCardsProps) =
 
   // Summary 卡片
   if (analysisResult.summary) {
-    cards.push(
-      <SummaryCard key="summary" summary={analysisResult.summary} />
-    );
+    cards.push(<SummaryCard key="summary" summary={analysisResult.summary} />);
   }
 
   // Key Points 卡片
   if (analysisResult.key_points) {
     cards.push(
-      <KeyPointsCard key="key-points" keyPoints={analysisResult.key_points} />
+      <KeyPointsCard key="key-points" keyPoints={analysisResult.key_points} />,
     );
   }
 
   // Metadata 卡片
-  cards.push(
-    <MetadataCard key="metadata" analysisResult={analysisResult} />
-  );
+  cards.push(<MetadataCard key="metadata" analysisResult={analysisResult} />);
 
   if (cards.length === 0) {
     return (
@@ -232,8 +247,6 @@ export const AnalysisCards = ({ analysisResult, loading }: AnalysisCardsProps) =
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {cards}
-    </div>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{cards}</div>
   );
-}; 
+};

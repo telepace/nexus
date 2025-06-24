@@ -238,7 +238,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                analysis_instruction: analysisInstruction,    // 用户的分析指令
+                analysis_instruction: analysisInstruction, // 用户的分析指令
                 model: "gemini-2.5-flash-preview-05-20",
               }),
             },
@@ -449,7 +449,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
           // 直接使用内容作为自由对话
           await generateAnalysis(
             contentId,
-            "这篇文章讲的是什么",   // 用户问题
+            "这篇文章讲的是什么", // 用户问题
             undefined,
             "自由对话",
           );

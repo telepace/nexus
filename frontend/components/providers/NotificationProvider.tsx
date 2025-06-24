@@ -8,17 +8,19 @@ interface NotificationProviderProps {
   children: React.ReactNode;
 }
 
-export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
+export const NotificationProvider: React.FC<NotificationProviderProps> = ({
+  children,
+}) => {
   // 初始化全局SSE连接
   useGlobalSSENotifications({
     enabled: true,
     autoReconnect: true,
     reconnectInterval: 3000,
     onConnectionChange: (connected) => {
-      console.log(`SSE连接状态变化: ${connected ? '已连接' : '已断开'}`);
+      console.log(`SSE连接状态变化: ${connected ? "已连接" : "已断开"}`);
     },
     onError: (error) => {
-      console.error('SSE连接错误:', error);
+      console.error("SSE连接错误:", error);
     },
   });
 
@@ -29,4 +31,4 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       <GlobalNotificationContainer maxVisible={5} />
     </>
   );
-}; 
+};

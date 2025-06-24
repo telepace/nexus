@@ -1,29 +1,24 @@
+import asyncio
 import json
 import logging
-import re
 import uuid
 from collections.abc import AsyncGenerator
-from datetime import datetime, timezone
-from typing import Any, Literal  # Added Optional and Literal
+from typing import Any  # Added Optional and Literal
 
 from fastapi import (
     APIRouter,
     BackgroundTasks,
     Body,
-    Depends,
     HTTPException,
     Path,  # Added Path
     Query,
-    Response,
     status,
 )
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session, select
 
-from app.api.deps import CurrentUser, SessionDep, get_db
-from app.core import security  # For password verification
+from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
-from app.crud import crud_content as crud  # Alias for clarity
 from app.crud.crud_content import (
     create_content_item_sync as crud_create_content_item,
 )
@@ -37,10 +32,8 @@ from app.crud.crud_content import (
 from app.crud.crud_content import (
     get_content_items_sync as crud_get_content_items,
 )
-from app.crud.crud_favorite import (
-    create_favorite,
-    delete_favorite,
-    get_favorite,
+from app.crud.crud_content import (
+    delete_content_item_sync as crud_delete_content_item,
 )
 from app.models import (
     AIConversation,
@@ -53,22 +46,12 @@ from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is
     ContentAnalysisRequest,
     ContentItemCreate,
     ContentItemPublic,
-    ContentShareCreate,
-    ContentSharePublic,
 )
-from app.schemas.favorite import FavoriteStatusResponse
-from app.schemas.llm import CompletionRequest, LLMMessage
 from app.utils.background_tasks import background_task_manager
 from app.utils.content_processors import ProcessingPipeline
 from app.utils.events import content_event_manager, create_sse_generator
+
 # from app.utils.cache import warm_article_cache  # 暂时注释掉避免redis依赖
-from app.utils.streaming_processors import (
-    StreamChunk,
-    StreamingAIProcessor,
-    StreamingKeyPointsProcessor,
-    StreamingSummaryProcessor,
-)
-import asyncio
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -77,28 +60,28 @@ logger = logging.getLogger(__name__)
 def _extract_title_from_content(content_text: str | None) -> str:
     """
     Extract title from content text.
-    
+
     Args:
         content_text: The content text to extract title from
-        
+
     Returns:
         str: Extracted title or default title
     """
     if not content_text:
         return "Untitled Content"
-    
+
     # Simple extraction: take first line or first 50 characters
-    lines = content_text.strip().split('\n')
+    lines = content_text.strip().split("\n")
     first_line = lines[0].strip() if lines else ""
-    
+
     if first_line:
         # Remove markdown headers if present
-        title = first_line.lstrip('#').strip()
+        title = first_line.lstrip("#").strip()
         # Limit length
         if len(title) > 50:
             title = title[:47] + "..."
         return title if title else "Untitled Content"
-    
+
     return "Untitled Content"
 
 
@@ -181,7 +164,9 @@ def update_ai_conversation_response(
         live_conversation = session.get(AIConversation, ai_conversation.id)
 
         if not live_conversation:
-            logger.error(f"Failed to find AIConversation {ai_conversation.id} for update.")
+            logger.error(
+                f"Failed to find AIConversation {ai_conversation.id} for update."
+            )
             return
 
         # 获取现有消息
@@ -293,7 +278,6 @@ def create_content_item_endpoint(
     )
 
     # 通知前端新内容已创建
-    import asyncio
     import threading
 
     def send_sse_notification():
@@ -442,7 +426,7 @@ def process_content_background(processor, content_item: ContentItem, session):
             content_item.content_text = clean_content_for_db(result.markdown_content)
             if result.metadata:
                 content_item.meta_info = result.metadata
-                
+
             # 预热缓存（异步执行，不阻塞主流程）
             if content_item.content_text:
                 try:
@@ -451,7 +435,7 @@ def process_content_background(processor, content_item: ContentItem, session):
                     #     warm_article_cache(str(content_item.id), content_item.content_text)
                     # )
                     pass
-                except Exception as e:
+                except Exception:
                     # 缓存预热失败不应该影响主流程
                     pass
         session.commit()
@@ -611,28 +595,24 @@ def get_content_chunks_endpoint(
     size: int = Query(10, ge=1, le=50, description="Number of chunks per page"),
 ) -> dict[str, Any]:
     """Get content chunks with pagination."""
-    
+
     # 验证内容项存在且属于当前用户
     content_item = crud_get_content_item(session=session, id=id)
     if not content_item:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content item not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
         )
 
     if content_item.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to access this content item"
+            detail="You don't have permission to access this content item",
         )
-    
+
     try:
         # 获取分块数据
         chunks, total_count = get_content_chunks(
-            session=session,
-            content_item_id=id,
-            page=page,
-            size=size
+            session=session, content_item_id=id, page=page, size=size
         )
 
         # 转换为返回格式
@@ -640,52 +620,54 @@ def get_content_chunks_endpoint(
         max_index = 0
         total_words = 0
         total_chars = 0
-        
+
         for chunk in chunks:
-            chunk_data.append({
-                "id": str(chunk.id),
-                "index": chunk.segment_index,  # 前端期望的是 index 不是 segment_index
-                "content": chunk.content,
-                "type": chunk.segment_type,    # 前端期望的是 type 不是 segment_type
-                "word_count": chunk.word_count,
-                "char_count": chunk.char_count,
-                "meta_info": {},               # 默认空对象
-                "created_at": chunk.created_at.isoformat(),
-            })
+            chunk_data.append(
+                {
+                    "id": str(chunk.id),
+                    "index": chunk.segment_index,  # 前端期望的是 index 不是 segment_index
+                    "content": chunk.content,
+                    "type": chunk.segment_type,  # 前端期望的是 type 不是 segment_type
+                    "word_count": chunk.word_count,
+                    "char_count": chunk.char_count,
+                    "meta_info": {},  # 默认空对象
+                    "created_at": chunk.created_at.isoformat(),
+                }
+            )
             max_index = max(max_index, chunk.segment_index)
             total_words += chunk.word_count or 0
             total_chars += chunk.char_count or 0
-        
+
         return {
             "content_id": str(id),  # 前端期望的是 content_id
             "chunks": chunk_data,
-        "pagination": {
-            "page": page,
-            "size": size,
+            "pagination": {
+                "page": page,
+                "size": size,
                 "total_chunks": total_count,  # 前端期望的是 total_chunks
                 "total_pages": (total_count + size - 1) // size,
                 "has_next": page * size < total_count,  # 添加前端期望的字段
                 "has_prev": page > 1,
             },
             "summary": {  # 添加前端期望的 summary 字段
-            "total_chunks": total_count,
+                "total_chunks": total_count,
                 "total_words": total_words,
                 "total_chars": total_chars,
                 "max_index": max_index,
-        },
+            },
             "content_info": {  # 添加前端期望的 content_info 字段
                 "title": content_item.title or "",
                 "processing_status": content_item.processing_status,
                 "created_at": content_item.created_at.isoformat(),
                 "updated_at": content_item.updated_at.isoformat(),
-        },
-    }
-        
+            },
+        }
+
     except Exception as e:
         logger.error(f"Failed to get content chunks for {id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve content chunks"
+            detail="Failed to retrieve content chunks",
         )
 
 
@@ -701,19 +683,18 @@ def get_content_chunks_summary_endpoint(
     id: uuid.UUID = Path(..., description="Content item ID"),
 ) -> dict[str, Any]:
     """Get content chunks summary."""
-    
+
     # 验证内容项存在且属于当前用户
     content_item = crud_get_content_item(session=session, id=id)
     if not content_item:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content item not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
         )
 
     if content_item.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to access this content item"
+            detail="You don't have permission to access this content item",
         )
 
     try:
@@ -721,14 +702,13 @@ def get_content_chunks_summary_endpoint(
         summary_data = get_content_chunks_summary(session=session, content_item_id=id)
 
         # 获取最大索引（需要额外查询）
-        from sqlmodel import select, func
+        from sqlmodel import func, select
+
         max_index_result = session.exec(
-            select(func.max(Segment.segment_index)).where(
-                Segment.content_item_id == id
-            )
+            select(func.max(Segment.segment_index)).where(Segment.content_item_id == id)
         ).scalar()
         max_index = max_index_result or 0
-        
+
         # 转换为前端期望的格式
         return {
             "content_id": str(id),  # 前端期望的是 content_id
@@ -745,12 +725,12 @@ def get_content_chunks_summary_endpoint(
                 "updated_at": content_item.updated_at.isoformat(),
             },
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get content chunks summary for {id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve content chunks summary"
+            detail="Failed to retrieve content chunks summary",
         )
 
 
@@ -768,30 +748,29 @@ async def analyze_content_stream_endpoint(
 ) -> StreamingResponse:
     """
     Perform streaming AI analysis of content.
-    
+
     Returns a streaming response compatible with Vercel AI SDK Data Stream Protocol.
     """
-    
+
     # 验证内容项存在且属于当前用户
     content_item = crud_get_content_item(session=session, id=id)
     if not content_item:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content item not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
         )
-    
+
     if content_item.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to access this content item"
+            detail="You don't have permission to access this content item",
         )
-    
+
     if not content_item.content_text:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Content item has no text content to analyze"
+            detail="Content item has no text content to analyze",
         )
-                            
+
     # 统一使用内置默认模型，忽略前端传入的 model
     DEFAULT_MODEL = "or-gemini-2.5-flash-preview-05-20"
     resolved_model = DEFAULT_MODEL
@@ -808,15 +787,15 @@ async def analyze_content_stream_endpoint(
         temperature=request.temperature,
         max_tokens=request.max_tokens,
     )
-    
+
     # 返回流式响应
     return StreamingResponse(
         _stream_content_analysis(
-            content_item.id,  # 传递 ID 而不是对象
-            content_item.content_text,  # 传递内容文本
-            request,
-            ai_conversation.id,  # 传递 conversation ID 而不是对象  
-            resolved_model,
+            _content_item_id=content_item.id,  # 使用 ID 而不是对象
+            content_text=content_item.content_text,  # 传递内容文本
+            request=request,
+            ai_conversation_id=ai_conversation.id,  # 传递 conversation ID 而不是对象
+            resolved_model=resolved_model,
         ),
         media_type="text/plain",
         headers={
@@ -830,10 +809,10 @@ async def analyze_content_stream_endpoint(
 
 
 async def _stream_content_analysis(
-    content_item_id: uuid.UUID,  # 使用 ID 而不是对象
+    _content_item_id: uuid.UUID,  # 使用 ID 而不是对象
     content_text: str,  # 直接传递内容文本
     request: ContentAnalysisRequest,
-    ai_conversation_id: uuid.UUID,  # 使用 ID 而不是对象  
+    ai_conversation_id: uuid.UUID,  # 使用 ID 而不是对象
     resolved_model: str | None = None,
 ) -> AsyncGenerator[str, None]:
     """
@@ -841,18 +820,16 @@ async def _stream_content_analysis(
     """
     try:
         import aiohttp
+
         from app.api.deps import get_db
-        
+
         # 准备系统消息和用户消息
         messages = [
             {
-                "role": "system", 
-                "content": f"你是一个专业的内容分析助手。请根据用户的要求分析以下内容：\n\n{content_text}"
+                "role": "system",
+                "content": f"你是一个专业的内容分析助手。请根据用户的要求分析以下内容：\n\n{content_text}",
             },
-            {
-                "role": "user",
-                "content": request.analysis_instruction
-            }
+            {"role": "user", "content": request.analysis_instruction},
         ]
 
         # LiteLLM 代理配置
@@ -882,7 +859,7 @@ async def _stream_content_analysis(
                     try:
                         error_text = await response.text()
                         error_msg += f" - {error_text}"
-                    except:
+                    except Exception:
                         pass
                     yield f'9:[{{"error":"{error_msg}"}}]\n'
                     return
@@ -904,11 +881,14 @@ async def _stream_content_analysis(
                                 if accumulated_content:
                                     try:
                                         with next(get_db()) as new_session:
-                                            # 重新获取 AIConversation 对象
-                                            ai_conversation = new_session.get(AIConversation, ai_conversation_id)
-                                            if ai_conversation:
+                                            conversation = new_session.get(
+                                                AIConversation, ai_conversation_id
+                                            )
+                                            if conversation is not None:
                                                 update_ai_conversation_response(
-                                                    new_session, ai_conversation, accumulated_content
+                                                    new_session,
+                                                    conversation,
+                                                    accumulated_content,
                                                 )
                                     except Exception as e:
                                         logger.error(f"Failed to save AI response: {e}")
@@ -927,14 +907,20 @@ async def _stream_content_analysis(
                                     # 在新的数据库会话中保存错误
                                     try:
                                         with next(get_db()) as new_session:
-                                            ai_conversation = new_session.get(AIConversation, ai_conversation_id)
-                                            if ai_conversation:
+                                            conversation = new_session.get(
+                                                AIConversation, ai_conversation_id
+                                            )
+                                            if conversation is not None:
                                                 update_ai_conversation_response(
-                                                    new_session, ai_conversation, accumulated_content, "failed", error_msg
+                                                    new_session,
+                                                    conversation,
+                                                    accumulated_content,
+                                                    "failed",
+                                                    error_msg,
                                                 )
                                     except Exception as e:
                                         logger.error(f"Failed to save error: {e}")
-                                    
+
                                     yield f'9:[{{"error":"{error_msg}"}}]\n'
                                     return
 
@@ -948,11 +934,11 @@ async def _stream_content_analysis(
                                     content = parsed["choices"][0]["delta"]["content"]
                                     if content:
                                         accumulated_content += content
-                                        
+
                                         # 发送文本块 (类型 0)
                                         # 需要正确转义JSON内容
                                         escaped_content = json.dumps(content)
-                                        yield f'0:{escaped_content}\n'
+                                        yield f"0:{escaped_content}\n"
 
                             except json.JSONDecodeError:
                                 # 忽略非JSON数据
@@ -962,27 +948,27 @@ async def _stream_content_analysis(
         if accumulated_content:
             try:
                 with next(get_db()) as new_session:
-                    ai_conversation = new_session.get(AIConversation, ai_conversation_id)
-                    if ai_conversation:
+                    conversation = new_session.get(AIConversation, ai_conversation_id)
+                    if conversation is not None:
                         update_ai_conversation_response(
-                            new_session, ai_conversation, accumulated_content
+                            new_session, conversation, accumulated_content
                         )
             except Exception as e:
                 logger.error(f"Failed to save final response: {e}")
             yield '8:[{"finishReason":"stop"}]\n'
-    
+
     except Exception as e:
         # 在新的数据库会话中保存错误
         try:
             with next(get_db()) as new_session:
-                ai_conversation = new_session.get(AIConversation, ai_conversation_id)
-                if ai_conversation:
+                conversation = new_session.get(AIConversation, ai_conversation_id)
+                if conversation is not None:
                     update_ai_conversation_response(
-                        new_session, ai_conversation, "", "failed", str(e)
+                        new_session, conversation, "", "failed", str(e)
                     )
         except Exception as save_error:
             logger.error(f"Failed to save stream error: {save_error}")
-        
+
         # 发送错误信息
         error_msg = str(e).replace('"', '\\"')
         yield f'9:[{{"error":"Stream error: {error_msg}"}}]\n'
@@ -1002,19 +988,18 @@ def get_content_markdown_endpoint(
     """
     Get content item's markdown representation.
     """
-    
+
     # 验证内容项存在且属于当前用户
     content_item = crud_get_content_item(session=session, id=id)
     if not content_item:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content item not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
         )
 
     if content_item.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to access this content item"
+            detail="You don't have permission to access this content item",
         )
 
     # 返回markdown内容
@@ -1027,14 +1012,18 @@ def get_content_markdown_endpoint(
         "updated_at": content_item.updated_at.isoformat(),
     }
 
+
 # ================================
 # Content Conversations Routes
 # ================================
 
+
 def convert_conversation_to_public(conversation: AIConversation) -> dict:
     """Convert AIConversation model to public schema."""
     try:
-        messages_data = json.loads(conversation.messages) if conversation.messages else []
+        messages_data = (
+            json.loads(conversation.messages) if conversation.messages else []
+        )
         messages = [
             {
                 "role": msg.get("role", "user"),
@@ -1045,13 +1034,17 @@ def convert_conversation_to_public(conversation: AIConversation) -> dict:
             for msg in messages_data
         ]
     except (json.JSONDecodeError, ValueError) as e:
-        logger.error(f"Failed to parse messages for conversation {conversation.id}: {e}")
+        logger.error(
+            f"Failed to parse messages for conversation {conversation.id}: {e}"
+        )
         messages = []
 
     return {
         "id": str(conversation.id),
         "user_id": str(conversation.user_id),
-        "content_item_id": str(conversation.content_item_id) if conversation.content_item_id else None,
+        "content_item_id": str(conversation.content_item_id)
+        if conversation.content_item_id
+        else None,
         "title": conversation.title,
         "conversation_type": conversation.conversation_type,
         "ai_model_name": conversation.ai_model_name,
@@ -1076,40 +1069,40 @@ def get_content_conversations(
     include_inactive: bool = Query(False, description="是否包含非激活状态的对话"),
 ) -> dict[str, Any]:
     """获取内容的所有AI对话。"""
-    
+
     # 验证内容项存在且属于当前用户
     content_item = session.exec(
         select(ContentItem).where(
-            ContentItem.id == content_id,
-            ContentItem.user_id == current_user.id
+            ContentItem.id == content_id, ContentItem.user_id == current_user.id
         )
     ).first()
-    
+
     if not content_item:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content item not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
         )
-    
+
     # 查询对话
     query = select(AIConversation).where(
         AIConversation.content_item_id == content_id,
-        AIConversation.user_id == current_user.id
+        AIConversation.user_id == current_user.id,
     )
-    
+
     if not include_inactive:
-        query = query.where(AIConversation.is_active == True)
-    
+        query = query.where(AIConversation.is_active)
+
     conversations = session.exec(query.order_by(AIConversation.created_at)).all()
-    
+
     # 转换为public schema
-    public_conversations = [convert_conversation_to_public(conv) for conv in conversations]
-    
+    public_conversations = [
+        convert_conversation_to_public(conv) for conv in conversations
+    ]
+
     # 检查是否有自动分析对话
     has_auto_analysis = any(
         conv.conversation_type == "auto_analysis" for conv in conversations
     )
-    
+
     return {
         "conversations": public_conversations,
         "total": len(public_conversations),
@@ -1131,46 +1124,368 @@ def create_conversation(
     conversation_data: dict = Body(...),
 ) -> dict[str, Any]:
     """创建新的AI对话。"""
-    
+
     # 验证内容项存在且属于当前用户
     content_item = session.exec(
         select(ContentItem).where(
-            ContentItem.id == content_id,
-            ContentItem.user_id == current_user.id
+            ContentItem.id == content_id, ContentItem.user_id == current_user.id
         )
     ).first()
-    
+
     if not content_item:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content item not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
         )
-    
+
     # 创建对话
     conversation = AIConversation(
         user_id=current_user.id,
         content_item_id=content_id,
-        title=conversation_data.get("title") or f"与《{content_item.title or '内容'}》的对话",
+        title=conversation_data.get("title")
+        or f"与《{content_item.title or '内容'}》的对话",
         conversation_type=conversation_data.get("conversation_type", "user_chat"),
         ai_model_name=conversation_data.get("ai_model_name", "gpt-3.5-turbo"),
         messages="[]",
         summary=None,
         is_active=True,
     )
-    
+
     # 如果有初始消息，添加到对话中
     if conversation_data.get("initial_message"):
         from app.utils.timezone import now_utc
-        messages = [{
-            "role": "user",
-            "content": conversation_data["initial_message"],
-            "timestamp": now_utc().isoformat(),
-            "metadata": {"initial_message": True}
-        }]
+
+        messages = [
+            {
+                "role": "user",
+                "content": conversation_data["initial_message"],
+                "timestamp": now_utc().isoformat(),
+                "metadata": {"initial_message": True},
+            }
+        ]
         conversation.messages = json.dumps(messages)
-    
+
     session.add(conversation)
     session.commit()
     session.refresh(conversation)
-    
+
     return convert_conversation_to_public(conversation)
+
+
+@router.get(
+    "/{id}/analyze/stream",
+    summary="Stream Content Analysis with Templates",
+    description="Perform streaming AI analysis using predefined templates (summary or key_points).",
+)
+async def analyze_content_stream_with_template_endpoint(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID = Path(..., description="Content item ID"),
+    analysis_type: str = Query(
+        ..., description="Analysis type: 'summary' or 'key_points'"
+    ),
+) -> StreamingResponse:
+    """
+    使用预定义模板进行流式内容分析
+    """
+
+    # 验证analysis_type参数
+    if analysis_type not in ["summary", "key_points"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="analysis_type must be 'summary' or 'key_points'",
+        )
+
+    # 验证内容项存在且属于当前用户
+    content_item = crud_get_content_item(session=session, id=id)
+    if not content_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
+        )
+
+    if content_item.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to access this content item",
+        )
+
+    if not content_item.content_text:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Content item has no text content to analyze",
+        )
+
+    # 统一使用内置默认模型
+    DEFAULT_MODEL = "or-gemini-2.5-flash-preview-05-20"
+
+    # 返回流式响应 - 使用新的处理器
+    return StreamingResponse(
+        _stream_template_analysis(
+            content_item_id=content_item.id,
+            content_text=content_item.content_text,
+            content_item=content_item,
+            analysis_type=analysis_type,
+            user_id=current_user.id,
+            model=DEFAULT_MODEL,
+        ),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Cache-Control",
+        },
+    )
+
+
+async def _stream_template_analysis(
+    content_item_id: uuid.UUID,
+    content_text: str,
+    content_item: ContentItem,
+    analysis_type: str,
+    user_id: uuid.UUID,
+    model: str,
+) -> AsyncGenerator[str, None]:
+    """
+    使用模板进行流式分析，返回SSE格式数据
+    """
+    import json
+    import os
+
+    import aiohttp
+    from jinja2 import Environment, FileSystemLoader
+
+    from app.api.deps import get_db
+
+    try:
+        # 加载Jinja2模板
+        template_dir = os.path.join(
+            os.path.dirname(__file__), "..", "..", "prompt_templates"
+        )
+        env = Environment(loader=FileSystemLoader(template_dir))
+
+        template_file = f"{analysis_type}.j2"
+        template = env.get_template(template_file)
+
+        # 准备模板变量
+        document_metadata = {
+            "title": content_item.title,
+            "author": getattr(content_item, "author", None),
+            "source_url": content_item.source_uri,
+            "domain": getattr(content_item, "domain", None),
+        }
+
+        # 渲染用户指令
+        analysis_instruction = template.render(
+            document_metadata=document_metadata,
+            context_history=[],  # 暂时为空，后续可以加入历史分析
+            extraction_criteria=[],  # 暂时为空
+        )
+
+        # 准备系统消息和用户消息
+        messages = [
+            {"role": "system", "content": content_text},
+            {"role": "user", "content": analysis_instruction},
+        ]
+
+        # 创建AIConversation记录
+        with next(get_db()) as db_session:
+            ai_conversation = create_ai_conversation(
+                session=db_session,
+                user_id=user_id,
+                content_item_id=content_item_id,
+                content_item_title=content_item.title or "Untitled",
+                analysis_instruction=analysis_instruction,
+                content_to_analyze=content_text,
+                model=model,
+                temperature=0.3,
+                max_tokens=2000,
+            )
+            conversation_id = ai_conversation.id
+
+        # LiteLLM 代理配置
+        litellm_url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
+        headers = {"Content-Type": "application/json"}
+
+        if settings.LITELLM_MASTER_KEY:
+            headers["Authorization"] = f"Bearer {settings.LITELLM_MASTER_KEY}"
+
+        payload = {
+            "model": model,
+            "messages": messages,
+            "stream": True,
+            "temperature": 0.3,
+            "max_tokens": 2000,
+        }
+
+        timeout = aiohttp.ClientTimeout(total=120.0)
+        accumulated_content = ""
+
+        async with aiohttp.ClientSession(timeout=timeout) as session_client:
+            async with session_client.post(
+                litellm_url, json=payload, headers=headers
+            ) as response:
+                if response.status != 200:
+                    error_msg = f"LiteLLM error: HTTP {response.status}"
+                    try:
+                        error_text = await response.text()
+                        error_msg += f" - {error_text}"
+                    except Exception:
+                        pass
+
+                    # 发送错误事件
+                    yield f"data: {json.dumps({'type': 'error', 'content': error_msg, 'finished': True})}\n\n"
+                    return
+
+                # 处理流式响应
+                async for chunk_bytes in response.content.iter_chunked(1024):
+                    if not chunk_bytes:
+                        continue
+
+                    chunk_str = chunk_bytes.decode("utf-8", errors="ignore")
+                    lines = chunk_str.split("\n")
+
+                    for line in lines:
+                        if line.startswith("data: "):
+                            data = line[6:].strip()
+
+                            if data == "[DONE]":
+                                # 保存完整的AI响应
+                                if accumulated_content:
+                                    try:
+                                        with next(get_db()) as new_session:
+                                            conversation = new_session.get(
+                                                AIConversation, conversation_id
+                                            )
+                                            if conversation is not None:
+                                                update_ai_conversation_response(
+                                                    new_session,
+                                                    conversation,
+                                                    accumulated_content,
+                                                )
+                                    except Exception as e:
+                                        logger.error(f"Failed to save AI response: {e}")
+
+                                # 发送完成事件
+                                yield f"data: {json.dumps({'type': analysis_type, 'content': '', 'finished': True})}\n\n"
+                                return
+
+                            try:
+                                parsed = json.loads(data)
+
+                                # 检查错误
+                                if "error" in parsed:
+                                    error_msg = parsed.get("message", "Unknown error")
+
+                                    # 保存错误
+                                    try:
+                                        with next(get_db()) as new_session:
+                                            conversation = new_session.get(
+                                                AIConversation, conversation_id
+                                            )
+                                            if conversation is not None:
+                                                update_ai_conversation_response(
+                                                    new_session,
+                                                    conversation,
+                                                    accumulated_content,
+                                                    "failed",
+                                                    error_msg,
+                                                )
+                                    except Exception as e:
+                                        logger.error(f"Failed to save error: {e}")
+
+                                    yield f"data: {json.dumps({'type': 'error', 'content': error_msg, 'finished': True})}\n\n"
+                                    return
+
+                                # 提取内容
+                                if (
+                                    parsed.get("choices")
+                                    and len(parsed["choices"]) > 0
+                                    and "delta" in parsed["choices"][0]
+                                    and "content" in parsed["choices"][0]["delta"]
+                                ):
+                                    content = parsed["choices"][0]["delta"]["content"]
+                                    if content:
+                                        accumulated_content += content
+
+                                        # 发送流式内容
+                                        yield f"data: {json.dumps({'type': analysis_type, 'content': content, 'finished': False})}\n\n"
+
+                            except json.JSONDecodeError:
+                                # 忽略无法解析的数据
+                                continue
+
+    except Exception as e:
+        logger.error(f"Template analysis failed: {e}")
+        error_msg = f"Analysis failed: {str(e)}"
+        yield f"data: {json.dumps({'type': 'error', 'content': error_msg, 'finished': True})}\n\n"
+
+
+@router.delete(
+    "/{id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete Content Item",
+    description="Delete a content item and all its related data. User can only delete their own content.",
+)
+def delete_content_item_endpoint(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID = Path(..., description="Content item ID to delete"),
+) -> None:
+    """
+    Delete a content item and all its related data including:
+    - Segments (chunks)
+    - Content assets
+    - Content shares
+    - AI results
+    - AI conversations
+    
+    Only the owner of the content item can delete it.
+    """
+    try:
+        success = crud_delete_content_item(
+            session=session, 
+            id=id, 
+            user_id=current_user.id
+        )
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to delete content item"
+            )
+            
+        # 发送SSE通知（如果需要）
+        try:
+            content_event_manager.notify_content_deleted(
+                content_id=str(id),
+                user_id=str(current_user.id)
+            )
+        except Exception as e:
+            # SSE通知失败不应该影响删除操作
+            logger.warning(f"Failed to send content deletion notification: {e}")
+            
+    except ValueError as e:
+        error_msg = str(e)
+        if "not found" in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Content item not found"
+            )
+        elif "permission" in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have permission to delete this content item"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error_msg
+            )
+    except Exception as e:
+        logger.error(f"Unexpected error deleting content item {id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred while deleting the content item"
+        )
