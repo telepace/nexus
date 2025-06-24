@@ -498,7 +498,7 @@ frontend-test: frontend-install
 		mkdir -p $(FRONTEND_DIR)/.next/types 2>/dev/null || true; \
 		echo "{}" > $(FRONTEND_DIR)/.next/types/package.json 2>/dev/null || true; \
 		echo "===========> Running frontend tests"; \
-		cd $(FRONTEND_DIR) && NODE_ENV=test $(PNPM) test -- --passWithNoTests || (echo "===========> Frontend tests failed" && exit 1); \
+		cd $(FRONTEND_DIR) && NODE_ENV=test $(PNPM) test || (echo "===========> Frontend tests failed" && exit 1); \
 	else \
 		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
 		exit 1; \
