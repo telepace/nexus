@@ -49,6 +49,8 @@ import {
 
 // Define the ContentItemPublic type based on backend schema
 interface AIResultPublic {
+  optimized_title?: string | null;
+  brief_description?: string | null;
   summary?: {
     main_thesis?: string;
     key_arguments?: string[];
@@ -275,6 +277,9 @@ export default function ContentLibraryPage() {
       filtered = filtered.filter(
         (item) =>
           item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.ai_result?.brief_description
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
           item.ai_result?.summary?.main_thesis
             ?.toLowerCase()
             .includes(searchQuery.toLowerCase()),
@@ -781,6 +786,15 @@ export default function ContentLibraryPage() {
             onReprocess={() => handleReprocess(item)}
           />
 
+          {/* Brief description */}
+          {(item.ai_result?.brief_description || item.ai_result?.summary?.main_thesis) && (
+            <div className="mt-3 mb-3">
+              <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                {item.ai_result?.brief_description || item.ai_result?.summary?.main_thesis}
+              </p>
+            </div>
+          )}
+
           {item.ai_result?.labels && item.ai_result.labels.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-3">
               {item.ai_result.labels.slice(0, 5).map((label) => (
@@ -1156,7 +1170,8 @@ export default function ContentLibraryPage() {
                               摘要
                             </label>
                             <p className="text-sm leading-relaxed bg-muted/30 p-3 rounded-lg">
-                              {selectedItem.ai_result?.summary?.main_thesis ||
+                              {selectedItem.ai_result?.brief_description ||
+                                selectedItem.ai_result?.summary?.main_thesis ||
                                 "暂无摘要"}
                             </p>
                           </div>

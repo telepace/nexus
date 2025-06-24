@@ -397,6 +397,15 @@ class BackgroundTaskManager:
                                             1, len(cleaned_content.split()) // 200
                                         )
 
+                                    # 获取 AI 优化的标题和描述
+                                    optimized_title = ai_results.get("optimized_title")
+                                    brief_description = ai_results.get("brief_description")
+                                    
+                                    # 如果有AI优化的标题，更新ContentItem的标题
+                                    if optimized_title and isinstance(optimized_title, str) and optimized_title.strip():
+                                        content_item.title = optimized_title.strip()[:255]  # 确保长度限制
+                                        logger.info(f"✅ 应用AI优化标题: {content_item.title}")
+
                                     # 直接更新或创建AIResult
                                     from sqlmodel import select
 
@@ -410,6 +419,8 @@ class BackgroundTaskManager:
 
                                     if existing_ai_result:
                                         # 更新现有结果
+                                        existing_ai_result.optimized_title = optimized_title
+                                        existing_ai_result.brief_description = brief_description
                                         existing_ai_result.summary = ai_results.get(
                                             "summary"
                                         )
@@ -442,6 +453,8 @@ class BackgroundTaskManager:
                                         # 创建新结果
                                         ai_result = AIResult(
                                             content_item_id=content_item.id,
+                                            optimized_title=optimized_title,
+                                            brief_description=brief_description,
                                             summary=ai_results.get("summary"),
                                             key_points=ai_results.get("key_points"),
                                             labels=ai_results.get("labels"),

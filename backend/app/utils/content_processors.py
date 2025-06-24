@@ -414,15 +414,16 @@ class JinaProcessor(ProcessingStep):
                 return result
 
             # Extract title from markdown if not set
-            if not content_item.title:
+            if should_update_title(content_item.title):
                 lines = markdown_content.split("\n")
                 for line in lines:
                     if line.startswith("# "):
                         content_item.title = clean_content_for_db(line[2:].strip())
+                        logger.info(f"✅ Jina 从markdown提取到标题: {content_item.title}")
                         break
 
                 # Fallback to URL hostname if no title found
-                if not content_item.title:
+                if should_update_title(content_item.title):
                     from urllib.parse import urlparse
 
                     parsed_url = urlparse(content_item.source_uri)
@@ -808,8 +809,9 @@ class ReadabilityProcessor(ProcessingStep):
                 return result
 
             # 设置标题
-            if not content_item.title and title:
+            if should_update_title(content_item.title) and title:
                 content_item.title = clean_content_for_db(title.strip())
+                logger.info(f"✅ ReadabilityProcessor 提取到标题: {content_item.title}")
 
             result.success = True
             result.markdown_content = markdown_content
@@ -932,6 +934,44 @@ class ScrapingBeeProcessor(ProcessingStep):
         return result
 
 
+def should_update_title(title: str | None) -> bool:
+    """
+    Check if a content item's title should be updated.
+    
+    Returns True if:
+    - Title is None or empty
+    - Title is a default placeholder value
+    
+    Args:
+        title: The current title to check
+        
+    Returns:
+        bool: True if title should be updated, False otherwise
+    """
+    if not title:
+        return True
+    
+    # Check for common default/placeholder titles
+    default_titles = {
+        "新内容",
+        "Untitled", 
+        "新内容 - 未知网站",
+        "网页内容 - 未知网站"
+    }
+    
+    # Check if title is a default placeholder
+    if title in default_titles:
+        return True
+    
+    # Check if title starts with common prefixes that indicate it's a placeholder
+    placeholder_prefixes = ["Untitled", "新内容", "网页内容 -"]
+    for prefix in placeholder_prefixes:
+        if title.startswith(prefix):
+            return True
+    
+    return False
+
+
 class FirecrawlProcessor(ProcessingStep):
     """使用 Firecrawl API 的处理器"""
 
@@ -994,7 +1034,7 @@ class FirecrawlProcessor(ProcessingStep):
                 markdown_content = clean_content_for_db(markdown_content)
 
                 # -------------------- 自动提取并设置标题 --------------------
-                if not content_item.title or content_item.title.startswith("Untitled"):
+                if should_update_title(content_item.title):
                     title_candidates = [
                         metadata_raw.get("title"),
                         metadata_raw.get("ogTitle") or metadata_raw.get("og:title"),
@@ -1019,6 +1059,7 @@ class FirecrawlProcessor(ProcessingStep):
 
                     if extracted_title:
                         content_item.title = clean_content_for_db(extracted_title)[:255]
+                        logger.info(f"✅ Firecrawl 提取到标题: {content_item.title}")
 
                 # -------------------- 组合元数据 --------------------
                 combined_metadata = {

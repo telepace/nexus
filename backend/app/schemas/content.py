@@ -7,6 +7,8 @@ from sqlmodel import Field, SQLModel
 
 # New schema for AI results
 class AIResultPublic(SQLModel):
+    optimized_title: str | None = None
+    brief_description: str | None = None
     summary: dict | None = None
     key_points: dict | None = None
     labels: list[str] | None = None

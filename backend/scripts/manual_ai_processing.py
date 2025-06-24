@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 手动为指定内容触发AI处理的脚本
+用法：python scripts/manual_ai_processing.py <content_id>
 用于补跑缺失的AI结果
 
 注意：此脚本已更新以适应移除ProcessingJob表后的新架构
@@ -8,6 +9,7 @@
 
 import asyncio
 import logging
+import sys
 import uuid
 from datetime import datetime
 
@@ -104,9 +106,15 @@ async def process_ai_for_content_item(content_item_id: str):
         )
 
         logger.info(f"AI处理完成，统计: {ai_stats}")
+        logger.info(f"提取到的标题: {ai_results.get('optimized_title')}")
+        logger.info(f"简短描述: {ai_results.get('brief_description')}")
 
         # 手动存储AI结果
         with Session(engine) as session:
+            # 获取AI优化的标题和描述
+            optimized_title = ai_results.get("optimized_title")
+            brief_description = ai_results.get("brief_description")
+            
             # 更新或创建AI结果
             existing_ai_result = session.exec(
                 select(AIResult).where(AIResult.content_item_id == content_uuid)
@@ -114,6 +122,8 @@ async def process_ai_for_content_item(content_item_id: str):
 
             ai_result_data = {
                 "content_item_id": content_uuid,
+                "optimized_title": optimized_title,
+                "brief_description": brief_description,
                 "summary": ai_results.get("summary"),
                 "key_points": ai_results.get("key_points"),
                 "labels": ai_results.get("labels"),
@@ -141,9 +151,14 @@ async def process_ai_for_content_item(content_item_id: str):
                 session.add(ai_result)
                 logger.info("已创建新AI结果")
 
-            # 更新ContentItem状态为完成
+            # 如果有AI优化的标题，更新ContentItem的标题
             content_item = session.get(ContentItem, content_uuid)
             if content_item:
+                if optimized_title and isinstance(optimized_title, str) and optimized_title.strip():
+                    original_title = content_item.title
+                    content_item.title = optimized_title.strip()[:255]  # 确保长度限制
+                    logger.info(f"✅ 标题更新: '{original_title}' -> '{content_item.title}'")
+                
                 content_item.processing_status = "completed"
                 content_item.last_processed_at = datetime.now()
                 content_item.updated_at = datetime.now()
@@ -174,12 +189,15 @@ async def process_ai_for_content_item(content_item_id: str):
 
 async def main():
     """主函数"""
-    # 使用实际存在的内容ID
-    problematic_content_id = "526edb4d-90eb-41dc-8e2b-bb27eb753863"
+    if len(sys.argv) != 2:
+        logger.error("用法: python scripts/manual_ai_processing.py <content_id>")
+        return False
+    
+    content_id = sys.argv[1]
+    
+    logger.info(f"开始为内容 {content_id} 手动触发AI处理...")
 
-    logger.info(f"开始为内容 {problematic_content_id} 手动触发AI处理...")
-
-    success = await process_ai_for_content_item(problematic_content_id)
+    success = await process_ai_for_content_item(content_id)
 
     if success:
         logger.info("AI处理成功完成！")

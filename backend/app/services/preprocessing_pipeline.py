@@ -319,7 +319,9 @@ class PreprocessingPipeline:
             *tasks
         )
 
-        # labels_result = {'tags': [...], 'score': float | None, 'reading_time_minutes': int | None}
+        # labels_result 现在包含: {optimized_title, brief_description, tags, score, reading_time_minutes}
+        optimized_title = labels_result.get("optimized_title")
+        brief_description = labels_result.get("brief_description")
         tag_score = labels_result.get("score")
         reading_time_minutes = labels_result.get("reading_time_minutes")
 
@@ -332,6 +334,8 @@ class PreprocessingPipeline:
         processing_time = (datetime.now() - start_time).total_seconds()
 
         ai_results = {
+            "optimized_title": optimized_title,
+            "brief_description": brief_description,
             "summary": summary,
             "key_points": key_points,
             "labels": labels_result.get("tags", []),
@@ -508,13 +512,16 @@ class PreprocessingPipeline:
             return {}
 
     async def _generate_labels(self, context: dict[str, Any]) -> dict[str, Any]:
-        """使用 labels.j2 模板生成标签、评分与阅读时间，返回格式 {'tags': [...], 'score': float, 'reading_time_minutes': int}"""
+        """使用 labels.j2 模板生成标签、评分、阅读时间、优化标题和简短描述"""
         try:
             response = await self.chat_service.generate_with_template(
                 template_name="labels.j2", context=context
             )
 
-            # LLM 应输出 {'tags': [...], 'score': x.x, 'reading_time_minutes': int}
+            # 新的labels.j2模板输出完整结构：
+            # {'optimized_title': str, 'brief_description': str, 'tags': [...], 'score': float, 'reading_time_minutes': int}
+            optimized_title = response.get("optimized_title", None)
+            brief_description = response.get("brief_description", None)
             tags = response.get("tags", [])
             score = response.get("score", None)
             reading_time_minutes = response.get("reading_time_minutes", None)
@@ -530,13 +537,21 @@ class PreprocessingPipeline:
                 reading_time_minutes = None
 
             return {
+                "optimized_title": optimized_title,
+                "brief_description": brief_description,
                 "tags": tags[:20],
                 "score": score,
                 "reading_time_minutes": reading_time_minutes,
             }
         except Exception as e:
             logger.error(f"生成标签失败: {str(e)}")
-            return {"tags": [], "score": None, "reading_time_minutes": None}
+            return {
+                "optimized_title": None,
+                "brief_description": None,
+                "tags": [], 
+                "score": None, 
+                "reading_time_minutes": None
+            }
 
     async def _analyze_content_properties(
         self, content: str, metadata: DocumentMetadata

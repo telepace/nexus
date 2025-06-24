@@ -91,6 +91,8 @@ export interface ContentChunksSummary {
 }
 
 export interface AIResult {
+  optimized_title?: string | null;
+  brief_description?: string | null;
   summary?: Record<string, unknown> | null;
   key_points?: Record<string, unknown> | null;
   labels?: string[] | null;

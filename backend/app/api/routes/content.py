@@ -482,6 +482,8 @@ def list_content_items_endpoint(
         ai_result_data = None
         if ai_result:
             ai_result_data = AIResultPublic(
+                optimized_title=ai_result.optimized_title,
+                brief_description=ai_result.brief_description,
                 summary=ai_result.summary,
                 key_points=ai_result.key_points,
                 labels=ai_result.labels,
@@ -553,6 +555,8 @@ def get_content_item_endpoint(
     ai_result_data = None
     if ai_result:
         ai_result_data = AIResultPublic(
+            optimized_title=ai_result.optimized_title,
+            brief_description=ai_result.brief_description,
             summary=ai_result.summary,
             key_points=ai_result.key_points,
             labels=ai_result.labels,
