@@ -8,6 +8,17 @@ export interface ContentItemPublic {
   processing_status: string;
   created_at: string;
   updated_at: string;
+  ai_result?: {
+    optimized_title?: string | null;
+    brief_description?: string | null;
+    summary?: any | null;
+    key_points?: any | null;
+    labels?: string[] | null;
+    content_analysis?: any | null;
+    reading_time_minutes?: number | null;
+    difficulty_level?: string | null;
+    content_quality_score?: number | null;
+  } | null;
   ai_analysis?: {
     summarizer?: {
       summary?: {

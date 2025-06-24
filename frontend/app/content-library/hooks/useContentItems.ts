@@ -30,16 +30,8 @@ interface PrefetchStats {
 
 export const useContentItems = () => {
   const [items, setItems] = useState<ContentItemPublic[]>([]);
-  const [filteredItems, setFilteredItems] = useState<ContentItemPublic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedItem, setSelectedItem] = useState<ContentItemPublic | null>(
-    null,
-  );
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [prefetchStats, setPrefetchStats] = useState<PrefetchStats>({
     total: 0,
     cached: 0,
@@ -48,57 +40,6 @@ export const useContentItems = () => {
 
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-
-  // 恢复导航状态
-  useEffect(() => {
-    const savedState = navigationState.getLibraryState();
-    if (savedState) {
-      setSearchQuery(savedState.searchQuery || "");
-      setStatusFilter(savedState.statusFilter || "all");
-      setTypeFilter(savedState.typeFilter || "all");
-    }
-  }, []);
-
-  // 保存状态变化
-  useEffect(() => {
-    navigationState.saveLibraryState({
-      searchQuery,
-      statusFilter,
-      typeFilter,
-      selectedItem: selectedItem?.id || null,
-    });
-  }, [searchQuery, statusFilter, typeFilter, selectedItem]);
-
-  // 滚动位置保存/恢复
-  useEffect(() => {
-    const handleScroll = () => {
-      navigationState.saveLibraryState({ scrollPosition: window.scrollY });
-    };
-    const debouncedHandleScroll = debounce(handleScroll, 300);
-    window.addEventListener("scroll", debouncedHandleScroll);
-    return () => window.removeEventListener("scroll", debouncedHandleScroll);
-  }, []);
-
-  // 恢复滚动位置和选中项
-  useEffect(() => {
-    if (!loading && items.length > 0) {
-      const savedState = navigationState.getLibraryState();
-      if (savedState.scrollPosition > 0) {
-        setTimeout(
-          () =>
-            window.scrollTo({
-              top: savedState.scrollPosition,
-              behavior: "auto",
-            }),
-          100,
-        );
-      }
-      if (savedState.selectedItem) {
-        const item = items.find((i) => i.id === savedState.selectedItem);
-        if (item) setSelectedItem(item);
-      }
-    }
-  }, [loading, items]);
 
   // 本地 bus 监听新内容创建
   useEffect(() => {
@@ -244,22 +185,6 @@ export const useContentItems = () => {
     enabled: !!user,
   });
 
-  // 过滤逻辑
-  useEffect(() => {
-    let list = items;
-    if (searchQuery) {
-      list = list.filter(
-        (i) =>
-          i.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          i.summary?.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
-    }
-    if (statusFilter !== "all")
-      list = list.filter((i) => i.processing_status === statusFilter);
-    if (typeFilter !== "all") list = list.filter((i) => i.type === typeFilter);
-    setFilteredItems(list);
-  }, [items, searchQuery, statusFilter, typeFilter]);
-
   // 首次加载内容
   useEffect(() => {
     if (authLoading) return;
@@ -314,19 +239,8 @@ export const useContentItems = () => {
   return {
     authLoading,
     items,
-    filteredItems,
     loading,
     error,
-    selectedItem,
-    setSelectedItem,
-    searchQuery,
-    setSearchQuery,
-    statusFilter,
-    setStatusFilter,
-    typeFilter,
-    setTypeFilter,
-    isShareModalOpen,
-    setIsShareModalOpen,
     prefetchContent,
     prefetchStats,
   };

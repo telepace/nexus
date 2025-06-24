@@ -1,22 +1,49 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { ContentList } from "./components/ContentList";
 import { ContentPreview } from "./components/ContentPreview";
 import { useContentItems } from "./hooks/useContentItems";
+import type { ContentItemPublic } from "./types";
+import { useRouter } from "next/navigation";
 
 export default function ContentLibraryPage() {
+  const router = useRouter();
   const {
     authLoading,
     loading,
     error,
-    filteredItems,
-    selectedItem,
-    setSelectedItem,
+    items,
     prefetchContent,
   } = useContentItems();
+
+  const [selectedItem, setSelectedItem] = useState<ContentItemPublic | null>(null);
+  const [hoveredItem, setHoveredItem] = useState<ContentItemPublic | null>(null);
+
+  // 过滤逻辑
+  const filteredItems = items;
+
+  // 处理卡片点击 - 直接跳转到阅读器
+  const handleCardClick = useCallback((item: ContentItemPublic) => {
+    router.push(`/content-library/reader/${item.id}`);
+  }, [router]);
+
+  // 处理悬浮事件
+  const handleCardHover = useCallback((item: ContentItemPublic | null) => {
+    setHoveredItem(item);
+    if (item) {
+      // 将悬浮的项目设为选中项，提供更直观的体验
+      setSelectedItem(item);
+      // 预取内容
+      prefetchContent(item);
+    }
+  }, [prefetchContent]);
+
+  // 获取要在预览中显示的项目（优先显示悬浮的，其次显示选中的）
+  const previewItem = hoveredItem || selectedItem;
 
   // Loading states
   if (authLoading || loading) {
@@ -64,7 +91,9 @@ export default function ContentLibraryPage() {
               <ContentList
                 items={filteredItems}
                 selectedItem={selectedItem}
-                onSelect={setSelectedItem}
+                hoveredItem={hoveredItem}
+                onCardClick={handleCardClick}
+                onCardHover={handleCardHover}
                 prefetchContent={prefetchContent}
               />
             )}
@@ -74,7 +103,7 @@ export default function ContentLibraryPage() {
         {/* 右栏：剩余空间自适应 */}
         <aside className="flex-1 pr-2 py-2 pl-0 flex h-screen overflow-visible">
           <div className="flex-1 h-full">
-            <ContentPreview item={selectedItem} />
+            <ContentPreview item={previewItem} />
           </div>
         </aside>
       </div>

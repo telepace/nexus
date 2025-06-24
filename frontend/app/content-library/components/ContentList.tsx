@@ -8,14 +8,18 @@ import React from "react";
 interface Props {
   items: ContentItemPublic[];
   selectedItem: ContentItemPublic | null;
-  onSelect: (item: ContentItemPublic) => void;
+  hoveredItem: ContentItemPublic | null;
+  onCardClick: (item: ContentItemPublic) => void;
+  onCardHover: (item: ContentItemPublic | null) => void;
   prefetchContent: (item: ContentItemPublic) => void;
 }
 
 export const ContentList = ({
   items,
   selectedItem,
-  onSelect,
+  hoveredItem,
+  onCardClick,
+  onCardHover,
   prefetchContent,
 }: Props) => {
   if (!items.length) return null;
@@ -27,7 +31,9 @@ export const ContentList = ({
           <ContentCard
             item={item}
             selected={selectedItem?.id === item.id}
-            onSelect={onSelect}
+            hovered={hoveredItem?.id === item.id}
+            onCardClick={onCardClick}
+            onCardHover={onCardHover}
             prefetchContent={prefetchContent}
           />
           {idx !== items.length - 1 && (
