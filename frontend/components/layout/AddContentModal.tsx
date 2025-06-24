@@ -3,7 +3,6 @@
 import { FC, useState, useRef, useCallback, useEffect } from "react";
 import {
   X,
-  Upload,
   Link as LinkIcon,
   FileText,
   AlertCircle,
@@ -16,9 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
