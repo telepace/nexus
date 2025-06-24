@@ -408,7 +408,6 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
                 contentId={contentId}
                 contentText={contentText}
                 className="border-0 h-full"
-                embedded={true}
               />
             </div>
           </TabsContent>

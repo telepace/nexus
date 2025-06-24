@@ -3,20 +3,17 @@
 import { useEffect, useState, memo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   ArrowLeft,
   Loader2,
   AlertCircle,
   ExternalLink,
-  Share2,
   FileText,
 } from "lucide-react";
-import { useAuth, getCookie } from "@/lib/auth";
+import { useAuth, getCookie } from "@/lib/client-auth";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
-import { ShareContentModal } from "@/components/share/ShareContentModal";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
 import { useReaderContext } from "@/components/layout/ReaderLayout";
@@ -89,8 +86,8 @@ interface ContentDetail {
   updated_at: string;
 }
 
-// 优化的内容渲染器 - 专注于阅读体验
-const OptimizedContentRenderer = memo(
+// 内容渲染器 - 专注于阅读体验
+const ProcessedContentRenderer = memo(
   ({
     content,
     markdownContent,
@@ -106,11 +103,11 @@ const OptimizedContentRenderer = memo(
     if (contentId && content.processing_status === "completed") {
       return (
         <div className="relative h-full">
-          {/* 精简的内容类型指示器 */}
-          <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-r from-green-50/90 to-emerald-50/90 dark:from-green-950/30 dark:to-emerald-950/30 backdrop-blur-sm border-b border-green-200/30 dark:border-green-800/30">
-            <div className="flex items-center justify-between px-6 py-3">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+          {/* 内容类型指示器（隐藏） */}
+          <div className="hidden">
+            <div className="flex items-center justify-between p-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
                 <span className="text-sm font-medium text-green-800 dark:text-green-200">
                   AI 处理版本
                 </span>
@@ -123,7 +120,7 @@ const OptimizedContentRenderer = memo(
           </div>
 
           {/* 虚拟滚动渲染器 */}
-          <div className="absolute top-[50px] left-0 right-0 bottom-0">
+          <div className="absolute inset-0 animate-in fade-in duration-300 delay-100">
             <VirtualScrollRenderer
               contentId={contentId}
               className="w-full h-full px-6 py-4"
@@ -222,10 +219,10 @@ const OptimizedContentRenderer = memo(
 
     // 优化的传统 markdown 渲染
     return (
-      <div className="relative h-full">
-        <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-r from-green-50/90 to-emerald-50/90 dark:from-green-950/30 dark:to-emerald-950/30 backdrop-blur-sm border-b border-green-200/30 dark:border-green-800/30">
-          <div className="flex items-center justify-between px-6 py-3">
-            <div className="flex items-center gap-3">
+      <div className="relative h-full animate-in fade-in duration-300">
+        <div className="hidden">
+          <div className="flex items-center justify-between p-3">
+            <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-500"></div>
               <span className="text-sm font-medium text-green-800 dark:text-green-200">
                 AI 处理版本
@@ -238,35 +235,28 @@ const OptimizedContentRenderer = memo(
           </div>
         </div>
 
-        <div className="absolute top-[50px] left-0 right-0 bottom-0 overflow-auto custom-scrollbar smooth-scroll">
-          <div className="max-w-4xl mx-auto px-6 py-6">
-            {markdownContent ||
-            contentToRender.includes("#") ||
-            contentToRender.includes("**") ? (
-              <MarkdownRenderer
-                content={contentToRender}
-                className="reading-content prose prose-lg max-w-none dark:prose-invert 
-                  prose-headings:text-foreground prose-headings:font-semibold
-                  prose-p:text-foreground prose-p:leading-relaxed prose-p:mb-4
-                  prose-li:text-foreground prose-strong:text-foreground
-                  prose-code:text-foreground prose-pre:bg-muted
-                  [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
-              />
-            ) : (
-              <div className="reading-content prose prose-lg max-w-none dark:prose-invert">
-                <div className="whitespace-pre-wrap text-foreground leading-relaxed">
-                  {contentToRender}
-                </div>
+        <div className="absolute inset-0 overflow-auto animate-in fade-in duration-300 delay-100">
+          {markdownContent ||
+          contentToRender.includes("#") ||
+          contentToRender.includes("**") ? (
+            <MarkdownRenderer
+              content={contentToRender}
+              className="prose prose-sm max-w-none dark:prose-invert p-4 [&>*:first-child]:mt-0"
+            />
+          ) : (
+            <div className="prose prose-sm max-w-none dark:prose-invert p-4 [&>*:first-child]:mt-0">
+              <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                {contentToRender}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     );
   },
 );
 
-OptimizedContentRenderer.displayName = "OptimizedContentRenderer";
+ProcessedContentRenderer.displayName = "ProcessedContentRenderer";
 
 interface ClientContentProps {
   contentId: string;
@@ -292,9 +282,6 @@ export const ClientContent = ({
   );
   const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
-
-  // 添加分享状态管理
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // AI分析结果和对话历史状态 - 会传递给右侧面板
   const [analysisResult, setAnalysisResult] = useState<AIResult | null>(null);
@@ -508,102 +495,47 @@ export const ClientContent = ({
   }
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-950">
-      {/* 优化的头部 */}
-      <div className="flex items-center justify-between px-6 py-4 border-b bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm">
-        <div className="flex items-center space-x-4">
+    <div className="h-full flex flex-col animate-in fade-in duration-300">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 border-b h-header">
+        <div className="flex items-center space-x-4 flex-1 min-w-0">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => router.push("/content-library")}
             className="hover:bg-gray-100 dark:hover:bg-gray-800"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            返回内容库
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="flex flex-col">
-            <h1 className="text-xl font-semibold text-foreground line-clamp-1">
-              {content.title || "未命名文档"}
-            </h1>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant="outline" className="text-xs">
-                {content.type.toUpperCase()}
-              </Badge>
-              <Badge
-                variant={
-                  content.processing_status === "completed"
-                    ? "default"
-                    : "secondary"
-                }
-                className={
-                  content.processing_status === "completed"
-                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs"
-                    : "text-xs"
-                }
-              >
-                {content.processing_status === "completed"
-                  ? "AI 已处理"
-                  : content.processing_status}
-              </Badge>
-              {content.source_uri && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => window.open(content.source_uri!, "_blank")}
-                  title="查看原始内容"
-                  className="h-6 px-2 text-xs"
-                >
-                  <ExternalLink className="h-3 w-3 mr-1" />
-                  原始内容
-                </Button>
-              )}
-            </div>
-          </div>
+          <h1 className="text-sm font-medium truncate">
+            {content.title || "Untitled"}
+          </h1>
         </div>
-
-        {/* 右侧操作区域 */}
         <div className="flex items-center gap-2">
-          {content?.processing_status === "completed" && (
+          {content.source_uri && (
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              onClick={() => setIsShareModalOpen(true)}
-              title="分享内容"
-              className="hover:bg-gray-100 dark:hover:bg-gray-800"
+              onClick={() => window.open(content.source_uri!, "_blank")}
+              title="查看原始内容"
             >
-              <Share2 className="h-4 w-4 mr-2" />
-              分享
+              <ExternalLink className="h-3 w-3 mr-1" />
+              原始内容
             </Button>
           )}
         </div>
       </div>
 
-      {/* 主要内容区域 - 专注于阅读体验 */}
-      <div className="flex-1 min-h-0 bg-gradient-to-br from-gray-50/30 to-white dark:from-gray-900/30 dark:to-gray-950">
-        <OptimizedContentRenderer
-          content={content}
-          markdownContent={markdownContent}
-          contentId={contentId}
-        />
+      {/* Main Content - 专注显示AI处理后的内容 */}
+      <div className="flex-1 min-h-0">
+        <div className="h-full p-2">
+          <ProcessedContentRenderer
+            content={content}
+            markdownContent={markdownContent}
+            contentId={contentId}
+          />
+        </div>
       </div>
-
-      {/* 分享弹窗 */}
-      {content && (
-        <ShareContentModal
-          open={isShareModalOpen}
-          onOpenChange={setIsShareModalOpen}
-          contentItem={{
-            id: content.id,
-            title: content.title || "Untitled",
-            content_text: content.content_text,
-            user_id: content.user_id,
-            type: content.type,
-            processing_status: content.processing_status,
-            created_at: content.created_at,
-            updated_at: content.updated_at,
-          }}
-        />
-      )}
     </div>
   );
 };

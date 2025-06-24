@@ -118,8 +118,8 @@ export default function ReaderLayout({
             <ResizablePanel
               defaultSize={40}
               minSize={20}
-              maxSize={60}
-              className="flex flex-col"
+              maxSize={70}
+              className="flex flex-col bg-muted/30"
             >
               <ContentAnalysisSidebar
                 contentId={contentId}

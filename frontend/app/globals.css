@@ -25,8 +25,8 @@
   --neutral-950: oklch(0.145 0 0);
 
   /* Light‑mode semantic colors */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: var(--color-linear-bg-1);
+  --foreground: #222326; /* Nordic Gray */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -53,7 +53,7 @@
   --chart-5: oklch(0.769 0.188 70.08);
 
   /* Sidebar colors (light) */
-  --sidebar: oklch(0.985 0 0);
+  --sidebar: var(--color-linear-bg-1);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
@@ -65,10 +65,105 @@
   /* Layout dimensions */
   --header-height: 2.5rem; /* 40px */
   --sidebar-width: 16rem; /* 256px */
-  --sidebar-width-collapsed: 3.5rem; /* 56px */
+  --sidebar-width-collapsed: 3.5rem; /* 56px - collapsed sidebar width */
 
   /* Base radius token */
   --radius: 0.625rem;
+
+  /* Custom width tokens */
+  --size-library: 35.25rem; /* 564px - left pane fixed width */
+  --size-library-card: 28.75rem; /* 460px - card width */
+  --size-card-title: 25rem; /* 400px - card text width */
+
+  /* === Custom Color Palettes (Tailwind v4 tokens) === */
+  /* -------------------------------------------------
+   *  Common root  ——  Light  Scheme
+   * -------------------------------------------------*/
+  /* ------ Tailwind Stone ------ */
+  --stone-50: oklch(98.48% 0.001 106deg);
+  --stone-100: oklch(96.99% 0.001 106deg);
+  --stone-200: oklch(92.32% 0.003 49deg);
+  --stone-300: oklch(86.87% 0.004 56deg);
+  --stone-400: oklch(71.61% 0.009 56deg);
+  --stone-500: oklch(55.34% 0.012 58deg);
+  --stone-600: oklch(44.44% 0.01 74deg);
+  --stone-700: oklch(37.41% 0.009 68deg);
+  --stone-800: oklch(26.85% 0.006 34deg);
+  --stone-900: oklch(21.61% 0.006 56deg);
+  --stone-950: oklch(14.69% 0.004 49deg);
+
+  /* ------ Tailwind Zinc ------ */
+  --zinc-50: oklch(98.51% 0.0 90deg);
+  --zinc-100: oklch(96.74% 0.001 286deg);
+  --zinc-200: oklch(91.97% 0.004 286deg);
+  --zinc-300: oklch(87.11% 0.005 286deg);
+  --zinc-400: oklch(71.18% 0.013 286deg);
+  --zinc-500: oklch(55.17% 0.014 286deg);
+  --zinc-600: oklch(44.19% 0.015 286deg);
+  --zinc-700: oklch(37.03% 0.012 286deg);
+  --zinc-800: oklch(27.39% 0.005 286deg);
+  --zinc-900: oklch(21.03% 0.006 286deg);
+  --zinc-950: oklch(14.08% 0.004 286deg);
+
+  /* ------ Notion Palette (text / bg) ------ */
+  --notion-default-bg: oklch(100% 0 90deg);
+  --notion-default-tx: oklch(32.80% 0.01 87deg);
+
+  --notion-gray-bg: oklch(94.29% 0.002 93deg);
+  --notion-gray-tx: oklch(55.52% 0.009 83deg);
+
+  --notion-brown-bg: oklch(95.28% 0.001 43deg);
+  --notion-brown-tx: oklch(53.23% 0.03 55deg);
+
+  --notion-orange-bg: oklch(95.92% 0.005 77deg);
+  --notion-orange-tx: oklch(60.07% 0.083 69deg);
+
+  --notion-yellow-bg: oklch(97.37% 0.01 94deg);
+  --notion-yellow-tx: oklch(70.26% 0.085 90deg);
+
+  --notion-green-bg: oklch(95.22% 0.005 154deg);
+  --notion-green-tx: oklch(60.04% 0.054 147deg);
+
+  --notion-blue-bg: oklch(94.97% 0.008 245deg);
+  --notion-blue-tx: oklch(55.08% 0.057 250deg);
+
+  --notion-purple-bg: oklch(96.71% 0.005 306deg);
+  --notion-purple-tx: oklch(57.40% 0.068 301deg);
+
+  --notion-pink-bg: oklch(97.08% 0.006 19deg);
+  --notion-pink-tx: oklch(60.45% 0.094 23deg);
+
+  --notion-red-bg: oklch(96.45% 0.007 33deg);
+  --notion-red-tx: oklch(57.30% 0.098 37deg);
+
+  /* ------ macOS System Gray (Light) ------ */
+  --mac-gray-1: oklch(55.17% 0.01 88deg);
+  --mac-gray-2: oklch(67.73% 0.006 91deg);
+  --mac-gray-3: oklch(78.37% 0.003 93deg);
+  --mac-gray-4: oklch(82.30% 0.003 91deg);
+  --mac-gray-5: oklch(90.27% 0.002 93deg);
+  --mac-gray-6: oklch(95.50% 0.001 93deg);
+
+  /* === Linear Palette === */
+  /* Brand / Accent */
+  --color-linear-accent: #5e6ad2;
+
+  /* Neutrals */
+  --color-linear-bg-0: #f3f3f3; /* 侧边栏 / 主背景 */
+  --color-linear-bg-1: #f9f9f9; /* 主页面背景 */
+  --color-linear-bg-2: #ffffff; /* 卡片 / 列 */
+  --color-linear-border: #e5e6ea; /* Divider */
+
+  /* Typography */
+  --color-linear-text: #222326; /* 主文本 */
+  --color-linear-text-secondary: #8a8f98; /* 次文本 */
+
+  /* Reeder specific */
+  --color-reeder-border-card: #f3f2ee;
+
+  /* Dia icon palette */
+  --color-dia-icon-bg: #f1f2f2; /* icon container background */
+  --color-dia-icon: #fcfcfc; /* icon itself / fg */
 }
 
 .dark {
@@ -109,6 +204,108 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* === Custom Color Palettes (Tailwind v4 tokens) === */
+  /* -------------------------------------------------
+   *  Common root  ——  Dark  Scheme
+   * -------------------------------------------------*/
+  /* ------ Tailwind Stone ------ */
+  --stone-50: oklch(98.48% 0.001 106deg);
+  --stone-100: oklch(96.99% 0.001 106deg);
+  --stone-200: oklch(92.32% 0.003 49deg);
+  --stone-300: oklch(86.87% 0.004 56deg);
+  --stone-400: oklch(71.61% 0.009 56deg);
+  --stone-500: oklch(55.34% 0.012 58deg);
+  --stone-600: oklch(44.44% 0.01 74deg);
+  --stone-700: oklch(37.41% 0.009 68deg);
+  --stone-800: oklch(26.85% 0.006 34deg);
+  --stone-900: oklch(21.61% 0.006 56deg);
+  --stone-950: oklch(14.69% 0.004 49deg);
+
+  /* ------ Tailwind Zinc ------ */
+  --zinc-50: oklch(98.51% 0.0 90deg);
+  --zinc-100: oklch(96.74% 0.001 286deg);
+  --zinc-200: oklch(91.97% 0.004 286deg);
+  --zinc-300: oklch(87.11% 0.005 286deg);
+  --zinc-400: oklch(71.18% 0.013 286deg);
+  --zinc-500: oklch(55.17% 0.014 286deg);
+  --zinc-600: oklch(44.19% 0.015 286deg);
+  --zinc-700: oklch(37.03% 0.012 286deg);
+  --zinc-800: oklch(27.39% 0.005 286deg);
+  --zinc-900: oklch(21.03% 0.006 286deg);
+  --zinc-950: oklch(14.08% 0.004 286deg);
+
+  /* ------ Notion Palette (text / bg) ------ */
+  --notion-default-bg: oklch(100% 0 90deg);
+  --notion-default-tx: oklch(32.80% 0.01 87deg);
+
+  --notion-gray-bg: oklch(94.29% 0.002 93deg);
+  --notion-gray-tx: oklch(55.52% 0.009 83deg);
+
+  --notion-brown-bg: oklch(95.28% 0.001 43deg);
+  --notion-brown-tx: oklch(53.23% 0.03 55deg);
+
+  --notion-orange-bg: oklch(95.92% 0.005 77deg);
+  --notion-orange-tx: oklch(60.07% 0.083 69deg);
+
+  --notion-yellow-bg: oklch(97.37% 0.01 94deg);
+  --notion-yellow-tx: oklch(70.26% 0.085 90deg);
+
+  --notion-green-bg: oklch(95.22% 0.005 154deg);
+  --notion-green-tx: oklch(60.04% 0.054 147deg);
+
+  --notion-blue-bg: oklch(94.97% 0.008 245deg);
+  --notion-blue-tx: oklch(55.08% 0.057 250deg);
+
+  --notion-purple-bg: oklch(96.71% 0.005 306deg);
+  --notion-purple-tx: oklch(57.40% 0.068 301deg);
+
+  --notion-pink-bg: oklch(97.08% 0.006 19deg);
+  --notion-pink-tx: oklch(60.45% 0.094 23deg);
+
+  --notion-red-bg: oklch(96.45% 0.007 33deg);
+  --notion-red-tx: oklch(57.30% 0.098 37deg);
+
+  /* ------ macOS System Gray (Dark) ------ */
+  --mac-gray-1: oklch(55.17% 0.01 88deg);
+  --mac-gray-2: oklch(38.78% 0.009 93deg);
+  --mac-gray-3: oklch(28.83% 0.006 93deg);
+  --mac-gray-4: oklch(23.27% 0.006 94deg);
+  --mac-gray-5: oklch(17.61% 0.005 94deg);
+  --mac-gray-6: oklch(11.13% 0.004 93deg);
+
+  /* === Linear Palette === */
+  /* Brand / Accent */
+  --color-linear-accent: #5e6ad2;
+
+  /* Neutrals */
+  --color-linear-bg-0: #f4f5f8; /* 页面最底层背景 */
+  --color-linear-bg-1: #f5f5f5; /* 侧边栏 / 主背景 */
+  --color-linear-bg-2: #ffffff; /* 卡片 / 列 */
+  --color-linear-border: #e5e6ea; /* Divider */
+
+  /* Typography */
+  --color-linear-text: #222326; /* 主文本 */
+  --color-linear-text-secondary: #8a8f98; /* 次文本 */
+
+  /* Reeder specific */
+  --color-reeder-border-card: #f3f2ee;
+
+  /* Dia icon palette */
+  --color-dia-icon-bg: #f1f2f2; /* icon container background */
+  --color-dia-icon: #fcfcfc; /* icon itself / fg */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark overrides for mac-gray */
+    --mac-gray-1: oklch(55.17% 0.01 88deg); /* same as light gray-1 */
+    --mac-gray-2: oklch(38.78% 0.009 93deg);
+    --mac-gray-3: oklch(28.83% 0.006 93deg);
+    --mac-gray-4: oklch(23.27% 0.006 94deg);
+    --mac-gray-5: oklch(17.61% 0.005 94deg);
+    --mac-gray-6: oklch(11.13% 0.004 93deg);
+  }
 }
 
 /* =============================================================================
@@ -197,7 +394,7 @@
   --spacing-96: 24rem;
 
   /* Custom layout dimensions */
-  --spacing-header: 3.5rem; /* 56px - header height */
+  --spacing-header: 3rem;
   --spacing-sidebar: 16rem; /* 256px - sidebar width */
   --spacing-sidebar-collapsed: 3.5rem; /* 56px - collapsed sidebar width */
 
@@ -494,115 +691,16 @@
     aspect-ratio: auto;
   }
 
-  /* 阅读体验优化 */
-  .reading-content {
-    @apply text-base leading-7 text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-      "Helvetica Neue", Arial, sans-serif;
+  /* 页面顶部高亮效果 - 采用远程分支的设计 */
+  .page-top-highlight {
+    @apply relative;
   }
-
-  .reading-content h1,
-  .reading-content h2,
-  .reading-content h3,
-  .reading-content h4,
-  .reading-content h5,
-  .reading-content h6 {
-    @apply font-semibold text-foreground mb-4 mt-6;
-    line-height: 1.3;
-  }
-
-  .reading-content h1 {
-    @apply text-2xl;
-  }
-  .reading-content h2 {
-    @apply text-xl;
-  }
-  .reading-content h3 {
-    @apply text-lg;
-  }
-  .reading-content h4 {
-    @apply text-base;
-  }
-
-  .reading-content p {
-    @apply mb-4 leading-relaxed;
-  }
-
-  .reading-content p:last-child {
-    @apply mb-0;
-  }
-
-  .reading-content ul,
-  .reading-content ol {
-    @apply mb-4 pl-6;
-  }
-
-  .reading-content li {
-    @apply mb-2 leading-relaxed;
-  }
-
-  .reading-content blockquote {
-    @apply border-l-4 border-primary/20 pl-4 py-2 mb-4 text-muted-foreground italic;
-  }
-
-  .reading-content code {
-    @apply bg-muted px-1 py-0.5 rounded text-sm;
-  }
-
-  .reading-content pre {
-    @apply bg-muted p-4 rounded-lg mb-4 overflow-x-auto;
-  }
-
-  .reading-content pre code {
-    @apply bg-transparent p-0;
-  }
-
-  /* 分析卡片样式优化 */
-  .analysis-card {
-    @apply transition-all duration-200;
-  }
-
-  .analysis-card:hover {
-    @apply shadow-lg scale-[1.01];
-  }
-
-  /* 平滑滚动 */
-  .smooth-scroll {
-    scroll-behavior: smooth;
-  }
-
-  /* 自定义滚动条 */
-  .custom-scrollbar::-webkit-scrollbar {
-    @apply w-2;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-muted/20;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/50;
-  }
-
-  /* 响应式文本大小 */
-  @media (max-width: 768px) {
-    .reading-content {
-      @apply text-sm leading-6;
-    }
-
-    .reading-content h1 {
-      @apply text-xl;
-    }
-    .reading-content h2 {
-      @apply text-lg;
-    }
-    .reading-content h3 {
-      @apply text-base;
-    }
+  .page-top-highlight::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 1px 0 #ffffff;
   }
 }
 
@@ -657,6 +755,100 @@
     width: 100%;
     height: auto;
     object-fit: contain;
+  }
+
+  /* Hide scrollbar completely */
+  .no-scrollbar {
+    scrollbar-width: none; /* Firefox */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    width: 0px !important;
+    height: 0px !important;
+    display: none;
+  }
+
+  /* Library Layout Widths */
+  .w-library {
+    width: var(--size-library);
+  }
+
+  .max-w-library {
+    max-width: var(--size-library);
+  }
+
+  .w-libraryCard {
+    width: var(--size-library-card);
+  }
+
+  /* Card title / text width */
+  .w-cardTitle {
+    width: var(--size-card-title);
+  }
+
+  .max-w-cardTitle {
+    max-width: var(--size-card-title);
+  }
+
+  /* macOS style shadows and container utilities */
+  .shadow-macos-window {
+    box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.1), /* 贴边深线 */ 0 0 0px 1px
+      rgba(0, 0, 0, 0.05), /* 贴边深线 */ 0 4px 8px 0.5px rgba(0, 0, 0, 0.2); /* 柔和投影 */
+  }
+
+  .shadow-macos-2 {
+    box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.08), 0 0 0px rgba(0, 0, 0, 0.65),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+  }
+
+  .border-macos-container {
+    border: 1px solid rgba(0, 0, 0, 0.04);
+  }
+
+  /* Linear utility classes */
+  .linear-bg-0 {
+    background-color: var(--color-linear-bg-0);
+  }
+  .linear-bg-1 {
+    background-color: var(--color-linear-bg-1);
+  }
+  .linear-bg-2 {
+    background-color: var(--color-linear-bg-2);
+  }
+
+  .linear-text-primary {
+    color: var(--color-linear-text);
+  }
+  .linear-text-secondary {
+    color: var(--color-linear-text-secondary);
+  }
+  .linear-text-accent {
+    color: var(--color-linear-accent);
+  }
+
+  .linear-border {
+    border: 1px solid var(--color-linear-border);
+  }
+  .linear-border-t {
+    border-top: 1px solid var(--color-linear-border);
+  }
+  .linear-border-b {
+    border-bottom: 1px solid var(--color-linear-border);
+  }
+
+  /* Reeder specific */
+  .border-reeder-border-card {
+    border: 1px solid var(--color-reeder-border-card);
+  }
+
+  /* Dia icon utilities */
+  .dia-icon-bg {
+    background-color: var(--color-dia-icon-bg);
+  }
+  .dia-icon {
+    background-color: var(--color-dia-icon);
+  }
+  .text-dia-icon {
+    color: var(--color-dia-icon);
   }
 }
 
@@ -801,6 +993,13 @@
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+}
+
+.line-clamp-4 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
 }
 
 .line-clamp-none {
