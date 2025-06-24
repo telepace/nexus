@@ -1,21 +1,12 @@
 "use client";
 
 import { FC, useEffect, useState, useCallback } from "react";
-import {
-  Brain,
-  Trash2,
-  Loader2,
-  Sparkles,
-  Lightbulb,
-  Target,
-  History,
-} from "lucide-react";
+import { Loader2, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { LLMAnalysisCard } from "@/components/ui/llm-analysis-card";
 import { PromptRecommendations } from "@/components/ui/prompt-recommendations";
 import { PromptCommandDialog } from "@/components/ui/prompt-command-dialog";
-import { ConversationList } from "@/components/ai/ConversationList";
 import {
   useLLMAnalysisStore,
   LLMAnalysis,
@@ -23,7 +14,6 @@ import {
 } from "@/lib/stores/llm-analysis-store";
 import { useToast } from "@/hooks/use-toast";
 import { Prompt } from "@/lib/api/services/prompts";
-import { ConversationDetail } from "@/lib/api/ai-conversations";
 import { client } from "@/lib/api/client";
 
 interface EnhancedLLMAnalysisSidebarProps {
@@ -56,10 +46,16 @@ interface HistoricalAnalysis {
 
 export const EnhancedLLMAnalysisSidebar: FC<
   EnhancedLLMAnalysisSidebarProps
+<<<<<<< HEAD
 > = ({ contentId, className = "", contentText = "", embedded = false }) => {
   const [activeTab, setActiveTab] = useState<"analysis" | "conversations">(
     "analysis",
   );
+=======
+> = ({ contentId, className = "", contentText = "" }) => {
+  // The sidebar will always show the analysis view, so a dedicated tab state is no longer necessary.
+  const activeTab = "analysis" as const;
+>>>>>>> origin/ui/0617
   const [historicalAnalyses, setHistoricalAnalyses] = useState<LLMAnalysis[]>(
     [],
   );
@@ -74,7 +70,6 @@ export const EnhancedLLMAnalysisSidebar: FC<
     isLoadingPrompts,
     toggleExpanded,
     removeAnalysis,
-    clearAnalyses,
     generateAnalysis,
     executeAnalysisWithContent,
     loadPrompts,
@@ -332,14 +327,6 @@ export const EnhancedLLMAnalysisSidebar: FC<
     }
   };
 
-  const handleClearAll = () => {
-    clearAnalyses();
-    toast({
-      title: "已清空",
-      description: "实时分析已清空（历史分析保留）",
-    });
-  };
-
   const handlePromptSelect = (prompt: Prompt) => {
     // 当用户选择prompt时的回调，由PromptCommandDialog处理
     console.log("Selected prompt:", prompt);
@@ -361,11 +348,6 @@ export const EnhancedLLMAnalysisSidebar: FC<
     }
   };
 
-  const handleConversationSelect = (conversation: ConversationDetail) => {
-    // 可以在这里添加更多逻辑，比如在分析标签页中显示对话内容
-    console.log("Selected conversation:", conversation.id);
-  };
-
   if (isLoadingPrompts) {
     return (
       <div
@@ -382,106 +364,45 @@ export const EnhancedLLMAnalysisSidebar: FC<
   }
 
   return (
-    <div className={`flex flex-col h-full bg-background ${className}`}>
-      {/* Header - 优化的标题区域 */}
-      {!embedded && (
-        <div className="flex-shrink-0 p-4 border-b bg-gradient-to-r from-primary/5 to-blue-50 dark:from-primary/5 dark:to-blue-950/20">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Brain className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold">AI 智能分析</h2>
-              </div>
-            </div>
-
-            {(contentAnalyses?.length > 0 || activeTab === "analysis") && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearAll}
-                className="text-muted-foreground hover:text-destructive"
-                title="清空实时分析（不影响历史分析）"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-
-          {/* 分析状态指示器 */}
-          {isGenerating && (
-            <div className="flex items-center gap-1 text-primary mt-2">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              <span className="text-xs">分析中...</span>
-            </div>
-          )}
+    <div className={`flex flex-col h-full bg-transparent ${className}`}>
+      {/* 1. Header */}
+      <div className="flex items-center justify-between h-header px-4 shrink-0 border-b">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-medium">AI 智能分析</h2>
         </div>
-      )}
+        <Button variant="ghost" size="icon" onClick={loadHistoricalAnalyses}>
+          <History className="h-4 w-4" />
+        </Button>
+      </div>
 
-      {/* Tabs - 分析和对话历史切换 */}
-      {!embedded && (
-        <div className="flex-shrink-0 px-4 pt-2">
-          <Tabs
-            value={activeTab}
-            onValueChange={(value) =>
-              setActiveTab(value as "analysis" | "conversations")
-            }
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="analysis" className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                <span>实时分析</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="conversations"
-                className="flex items-center gap-2"
-              >
-                <History className="h-4 w-4" />
-                <span>对话历史</span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-      )}
+      {/* 2. Content Body */}
+      <div className="flex-1 overflow-y-auto px-1">
+        <Tabs value={activeTab} className="h-full">
+          {/* 实时分析标签页 */}
+          <TabsContent value="analysis" className="h-full mt-0">
+            <div className="p-4 space-y-4">
+              {/* 显示加载状态 */}
+              {loadingHistorical && (
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-4">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>加载中...</span>
+                </div>
+              )}
+              
+              {/* 如果没有正在进行的分析，则显示提示 */}
+              {allAnalyses.length === 0 &&
+                !isGenerating &&
+                !loadingHistorical && (
+                  <div className="text-center py-12 text-sm text-muted-foreground">
+                    暂无分析结果
+                  </div>
+                )}
 
-      {/* Content - 分析结果区域 */}
-      <div className="flex-1 min-h-0 overflow-auto">
-        {embedded ? (
-          /* 嵌入模式：直接显示分析内容，不使用tabs */
-          <div className="p-4 space-y-4 h-full">
-            {/* 显示清空按钮 */}
-            {contentAnalyses?.length > 0 && (
-              <div className="flex justify-end mb-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleClearAll}
-                  className="text-muted-foreground hover:text-destructive"
-                  title="清空实时分析（不影响历史分析）"
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  清空分析
-                </Button>
-              </div>
-            )}
+              {/* 显示所有分析（实时 + 历史） */}
+              {allAnalyses.map((analysis) => (
+                <div key={analysis?.id || `analysis-${Math.random()}`}>
 
-            {/* 显示加载状态 */}
-            {loadingHistorical && (
-              <div className="flex items-center gap-2 text-muted-foreground text-sm mb-4">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                <span>加载历史分析...</span>
-              </div>
-            )}
-
-            {/* 分析状态指示器 */}
-            {isGenerating && (
-              <div className="flex items-center gap-1 text-primary mb-4">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                <span className="text-sm">分析中...</span>
-              </div>
-            )}
-
+<<<<<<< HEAD
             {/* 显示所有分析（实时 + 历史） */}
             {allAnalyses.map((analysis) => (
               <div key={analysis?.id || `analysis-${Math.random()}`}>
@@ -670,9 +591,43 @@ export const EnhancedLLMAnalysisSidebar: FC<
                 onExecute={handleExecute}
               />
             </div>
+=======
+              {/* 显示加载状态 */}
+              {loadingHistorical && (
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-4">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>加载中...</span>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* 3. Footer */}
+      <div className="shrink-0 p-4 border-t bg-muted/20">
+        <div className="space-y-3">
+          {/* 推荐提示 */}
+          {!isLoadingPrompts && getAvailablePrompts().length > 0 && (
+            <PromptRecommendations
+              recommendations={getPromptRecommendations().slice(0, 4)}
+              onPromptClick={handleEnabledPromptClick}
+              isGenerating={isGenerating}
+              disabled={isGenerating}
+            />
+          )}
+          {/* 自定义分析对话框 */}
+          <div>
+            <PromptCommandDialog
+              availablePrompts={enabledPrompts || []}
+              isExecuting={isGenerating}
+              onPromptSelect={handlePromptSelect}
+              onExecute={handleExecute}
+            />
+>>>>>>> origin/ui/0617
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

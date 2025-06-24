@@ -1,5 +1,6 @@
 "use client";
 
+<<<<<<< HEAD
 import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -181,34 +182,21 @@ const AIAnalysisCard = ({
 };
 
 export default function ContentLibraryPage() {
-  const [items, setItems] = useState<ContentItemPublic[]>([]);
-  const [filteredItems, setFilteredItems] = useState<ContentItemPublic[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedItem, setSelectedItem] = useState<ContentItemPublic | null>(
-    null,
-  );
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("created_at_desc");
-
-  // 添加分享状态管理
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [reprocessingItems, setReprocessingItems] = useState<Set<string>>(
-    new Set(),
-  );
-  const [deletingItems, setDeletingItems] = useState<Set<string>>(new Set());
-
-  // 添加性能监控状态
-  const [prefetchStats, setPrefetchStats] = useState({
-    total: 0,
-    cached: 0,
-    inProgress: false,
-  });
-
-  const { user, isLoading: authLoading } = useAuth();
-  const router = useRouter();
+  const {
+    authLoading,
+    loading,
+    error,
+    filteredItems,
+    selectedItem,
+    setSelectedItem,
+    searchQuery,
+    setSearchQuery,
+    statusFilter,
+    setStatusFilter,
+    typeFilter,
+    setTypeFilter,
+    prefetchContent,
+  } = useContentItems();
 
   // 恢复导航状态
   useEffect(() => {
@@ -935,6 +923,42 @@ export default function ContentLibraryPage() {
 
   // Show loading while auth is loading
   if (authLoading) {
+=======
+import MainLayout from "@/components/layout/MainLayout";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Search, AlertCircle, Loader2 } from "lucide-react";
+import { ContentList } from "./components/ContentList";
+import { ContentPreview } from "./components/ContentPreview";
+import { useContentItems } from "./hooks/useContentItems";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+
+export default function ContentLibraryPage() {
+  const {
+    authLoading,
+    loading,
+    error,
+    filteredItems,
+    selectedItem,
+    setSelectedItem,
+    searchQuery,
+    setSearchQuery,
+    statusFilter,
+    setStatusFilter,
+    typeFilter,
+    setTypeFilter,
+    prefetchContent,
+  } = useContentItems();
+
+  // Loading states
+  if (authLoading || loading) {
+>>>>>>> origin/ui/0617
     return (
       <MainLayout pageTitle="Content Library">
         <div className="flex justify-center items-center h-64">
@@ -947,26 +971,13 @@ export default function ContentLibraryPage() {
     );
   }
 
-  // Show loading while fetching content
-  if (loading) {
-    return (
-      <MainLayout pageTitle="Content Library">
-        <div className="flex justify-center items-center h-64">
-          <div className="flex items-center space-x-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <p className="text-lg">Loading content library...</p>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
-
+  // Error state
   if (error) {
     return (
       <MainLayout pageTitle="Content Library">
         <Alert variant="destructive" className="m-4">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error Loading Content</AlertTitle>
+          <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       </MainLayout>
@@ -974,19 +985,17 @@ export default function ContentLibraryPage() {
   }
 
   return (
-    <MainLayout pageTitle="Content Library">
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="space-y-8">
-            {/* Header */}
-            <div className="text-center space-y-4">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                内容库
-              </h1>
-              <p className="text-muted-foreground text-base max-w-2xl mx-auto leading-relaxed">
-                管理和浏览你的所有内容，快速找到需要的信息
-              </p>
+    <MainLayout pageTitle="Content Library" fullscreen>
+      {/* 页面主体：左右两栏 */}
+      <div className="flex h-screen overflow-visible bg-gradient-to-br from-background via-background to-muted/20">
+        {/* 左栏：>904px 固定 35.25rem，≤904px 最宽 35.25rem 可缩 */}
+        <section className="flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar px-6 w-full max-w-library min-[904px]:w-library min-[904px]:flex-none">
+          {/* Header 仅存在于左栏 */}
+          <header className="flex items-center h-header px-2 md:px-6 border-b shrink-0 bg-background/80">
+            <h1 className="text-lg font-semibold">Library</h1>
+          </header>
 
+<<<<<<< HEAD
               {/* 性能指示器 - 暂时隐藏 */}
               {false && (
                 <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
@@ -1274,18 +1283,72 @@ export default function ContentLibraryPage() {
                   </CardContent>
                 </Card>
               </div>
-            </div>
-          </div>
-        </div>
+=======
+          {/* 筛选控件（暂时隐藏） */}
+          {false && (
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between px-6 pt-4 pb-2">
+              {/* 搜索框 */}
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="搜索标题或摘要..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-9"
+                />
+              </div>
 
-        {/* Share Modal */}
-        {selectedItem && (
-          <ShareContentModal
-            open={isShareModalOpen}
-            onOpenChange={(open) => setIsShareModalOpen(open)}
-            contentItem={selectedItem}
-          />
-        )}
+              {/* 状态筛选 */}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="min-w-[120px]">
+                  <SelectValue placeholder="所有状态" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">所有状态</SelectItem>
+                  <SelectItem value="pending">待处理</SelectItem>
+                  <SelectItem value="processing">处理中</SelectItem>
+                  <SelectItem value="completed">已完成</SelectItem>
+                  <SelectItem value="failed">失败</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* 类型筛选 */}
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="min-w-[120px]">
+                  <SelectValue placeholder="所有类型" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">所有类型</SelectItem>
+                  <SelectItem value="pdf">PDF</SelectItem>
+                  <SelectItem value="url">网页</SelectItem>
+                  <SelectItem value="text">文本</SelectItem>
+                </SelectContent>
+              </Select>
+>>>>>>> origin/ui/0617
+            </div>
+          )}
+
+          {/* 列表 */}
+          <div className="flex-1 px-4 md:px-6 pb-6 pt-6">
+            {filteredItems.length === 0 ? (
+              <div className="text-center py-12">暂无内容</div>
+            ) : (
+              <ContentList
+                items={filteredItems}
+                selectedItem={selectedItem}
+                onSelect={setSelectedItem}
+                prefetchContent={prefetchContent}
+              />
+            )}
+          </div>
+        </section>
+
+        {/* 右栏：剩余空间自适应 */}
+        <aside className="flex-1 pr-2 py-2 pl-0 flex h-screen overflow-visible">
+          <div className="flex-1 h-full">
+            <ContentPreview item={selectedItem} />
+          </div>
+        </aside>
       </div>
     </MainLayout>
   );

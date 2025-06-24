@@ -29,34 +29,29 @@ interface ProcessingStatusBadgeProps {
 interface StatusConfig {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
-  className: string;
-  bgClassName: string;
+  textClass: string;
 }
 
 const statusConfigs: Record<ProcessingStatus, StatusConfig> = {
   pending: {
     icon: Clock,
     label: "等待处理",
-    className: "text-amber-600 border-amber-200",
-    bgClassName: "bg-amber-50",
+    textClass: "text-neutral-600",
   },
   processing: {
     icon: Loader2,
     label: "处理中",
-    className: "text-blue-600 border-blue-200",
-    bgClassName: "bg-blue-50",
+    textClass: "text-neutral-600",
   },
   completed: {
     icon: CheckCircle2,
     label: "处理完成",
-    className: "text-green-600 border-green-200",
-    bgClassName: "bg-green-50",
+    textClass: "text-neutral-600",
   },
   failed: {
     icon: XCircle,
     label: "处理失败",
-    className: "text-red-600 border-red-200",
-    bgClassName: "bg-red-50",
+    textClass: "text-neutral-600",
   },
 };
 
@@ -83,21 +78,34 @@ export const ProcessingStatusBadge: FC<ProcessingStatusBadgeProps> = ({
   progress,
   className,
   size = "md",
+<<<<<<< HEAD
   showText = true,
   errorMessage,
   onReprocess,
   isReprocessing,
+=======
+  showText = false,
+>>>>>>> origin/ui/0617
 }) => {
   const config = statusConfigs[status];
   const sizeConfig = sizeClasses[size];
   const Icon = config.icon;
 
+<<<<<<< HEAD
   const BadgeContent = () => (
+=======
+  const iconSizeMap: Record<typeof size, string> = {
+    sm: "h-4 w-4",
+    md: "h-5 w-5",
+    lg: "h-6 w-6",
+  };
+
+  return (
+>>>>>>> origin/ui/0617
     <div
       className={cn(
-        "inline-flex items-center rounded-full border font-medium transition-colors",
-        config.className,
-        config.bgClassName,
+        "inline-flex items-center rounded-full font-medium transition-colors border-transparent bg-transparent",
+        config.textClass,
         sizeConfig.container,
         sizeConfig.gap,
         className,
@@ -105,7 +113,7 @@ export const ProcessingStatusBadge: FC<ProcessingStatusBadgeProps> = ({
     >
       <Icon
         className={cn(
-          sizeConfig.icon,
+          iconSizeMap[size],
           status === "processing" && "animate-spin",
         )}
       />

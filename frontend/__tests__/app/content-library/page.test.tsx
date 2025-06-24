@@ -13,6 +13,7 @@ jest.mock("@/lib/client-auth", () => ({
   getCookie: jest.fn(),
 }));
 
+<<<<<<< HEAD
 // Mock sonner toast
 jest.mock("sonner", () => ({
   toast: {
@@ -26,6 +27,10 @@ jest.mock("@/lib/utils", () => ({
   ...jest.requireActual("@/lib/utils"),
   getCookie: jest.fn(() => "mock-token"),
 }));
+=======
+// Mock the scrollTo function for JSDOM
+HTMLDivElement.prototype.scrollTo = jest.fn();
+>>>>>>> origin/ui/0617
 
 // Mock MainLayout
 jest.mock("@/components/layout/MainLayout", () => {
@@ -140,29 +145,34 @@ describe("ContentLibraryPage", () => {
       expect(screen.getByText("Test Document")).toBeInTheDocument();
     });
 
-    // Check that search is actually present (the test expectation was wrong)
+    // We have removed search functionality, so it should not be present.
     expect(
-      screen.getByPlaceholderText("搜索标题或摘要..."),
-    ).toBeInTheDocument();
+      screen.queryByPlaceholderText("搜索标题或摘要..."),
+    ).not.toBeInTheDocument();
   });
 
-  it("should navigate to reader page when content item is clicked", async () => {
+  it("should navigate to reader page when '查看全文' button is clicked after focusing", async () => {
     render(<ContentLibraryPage />);
 
     await waitFor(() => {
       expect(screen.getByText("Test Document")).toBeInTheDocument();
     });
 
-    // Click on the content item card to navigate
+    // First click: set focus (should NOT navigate)
     const contentCard =
+      screen.getByText("Test Document").closest("div.cursor-pointer") ||
       screen.getByText("Test Document").closest("[role='button']") ||
-      screen.getByText("Test Document").closest(".cursor-pointer") ||
       screen.getByText("Test Document").closest("div");
 
     if (contentCard) {
       fireEvent.click(contentCard);
-      expect(mockPush).toHaveBeenCalledWith("/content-library/reader/1");
+      expect(mockPush).not.toHaveBeenCalled();
     }
+
+    // Now the preview should render a "查看全文" button
+    const fullButton = await screen.findByRole("button", { name: "查看全文" });
+    fireEvent.click(fullButton);
+    expect(mockPush).toHaveBeenCalledWith("/content-library/reader/1");
   });
 
   it("should display content items in card format", async () => {
@@ -170,6 +180,10 @@ describe("ContentLibraryPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Test Document")).toBeInTheDocument();
+<<<<<<< HEAD
+=======
+      expect(screen.getByText("Test summary")).toBeInTheDocument();
+>>>>>>> origin/ui/0617
     });
 
     // Check that the content is displayed, but don't rely on specific AI analysis text
@@ -185,14 +199,14 @@ describe("ContentLibraryPage", () => {
     render(<ContentLibraryPage />);
 
     await waitFor(() => {
-      // Should have clean, elegant layout
-      expect(screen.getByText("内容库")).toBeInTheDocument();
+      // The header title should be "Library"
+      expect(screen.getByText("Library")).toBeInTheDocument();
       expect(screen.getByText("Test Document")).toBeInTheDocument();
     });
 
-    // Should have filter controls (the test expectation was wrong)
-    expect(screen.getByDisplayValue("所有状态")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("所有类型")).toBeInTheDocument();
+    // We have removed filter controls
+    expect(screen.queryByDisplayValue("所有状态")).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue("所有类型")).not.toBeInTheDocument();
   });
 
   it("should display sorting options", async () => {

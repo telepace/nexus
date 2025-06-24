@@ -262,10 +262,11 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
         <CardContent className="pt-0">
           {analysis.isLoading ? (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-muted-foreground">
+              {/* 正在生成AI分析"灰色背景有border的提示元素 */}
+              {/* <div className="flex items-center gap-2 text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span className="text-sm">AI 正在分析中...</span>
-              </div>
+              </div> */}
 
               {/* 流式内容实时渲染 */}
               {formattedContent && (
