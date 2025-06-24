@@ -305,7 +305,7 @@ export const useGlobalNotificationStore = create<GlobalNotificationStore>()(
                     `/content-library/reader/${evt.content_id}`,
                   );
                 }
-              } else if (evt.status === "failed") {
+              } else if (evt.status === "error") {
                 if (existingNotification) {
                   // 更新为错误状态
                   updateNotification(existingNotification.id, {

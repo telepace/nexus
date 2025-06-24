@@ -1,7 +1,14 @@
 "use client";
 
 import { FC, useEffect, useState, useCallback } from "react";
-import { Loader2, History } from "lucide-react";
+import {
+  Loader2,
+  History,
+  Brain,
+  Sparkles,
+  Lightbulb,
+  Target,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { LLMAnalysisCard } from "@/components/ui/llm-analysis-card";
@@ -20,7 +27,6 @@ interface EnhancedLLMAnalysisSidebarProps {
   contentId: string;
   className?: string;
   contentText?: string;
-  embedded?: boolean;
 }
 
 // 历史分析数据类型
@@ -46,16 +52,9 @@ interface HistoricalAnalysis {
 
 export const EnhancedLLMAnalysisSidebar: FC<
   EnhancedLLMAnalysisSidebarProps
-<<<<<<< HEAD
-> = ({ contentId, className = "", contentText = "", embedded = false }) => {
-  const [activeTab, setActiveTab] = useState<"analysis" | "conversations">(
-    "analysis",
-  );
-=======
 > = ({ contentId, className = "", contentText = "" }) => {
-  // The sidebar will always show the analysis view, so a dedicated tab state is no longer necessary.
+  // 采用远程分支的设计：固定为analysis视图，简化组件
   const activeTab = "analysis" as const;
->>>>>>> origin/ui/0617
   const [historicalAnalyses, setHistoricalAnalyses] = useState<LLMAnalysis[]>(
     [],
   );
@@ -378,7 +377,7 @@ export const EnhancedLLMAnalysisSidebar: FC<
       {/* 2. Content Body */}
       <div className="flex-1 overflow-y-auto px-1">
         <Tabs value={activeTab} className="h-full">
-          {/* 实时分析标签页 */}
+          {/* 分析标签页 */}
           <TabsContent value="analysis" className="h-full mt-0">
             <div className="p-4 space-y-4">
               {/* 显示加载状态 */}
@@ -388,217 +387,68 @@ export const EnhancedLLMAnalysisSidebar: FC<
                   <span>加载中...</span>
                 </div>
               )}
-              
-              {/* 如果没有正在进行的分析，则显示提示 */}
-              {allAnalyses.length === 0 &&
-                !isGenerating &&
-                !loadingHistorical && (
-                  <div className="text-center py-12 text-sm text-muted-foreground">
-                    暂无分析结果
-                  </div>
-                )}
 
               {/* 显示所有分析（实时 + 历史） */}
               {allAnalyses.map((analysis) => (
                 <div key={analysis?.id || `analysis-${Math.random()}`}>
-
-<<<<<<< HEAD
-            {/* 显示所有分析（实时 + 历史） */}
-            {allAnalyses.map((analysis) => (
-              <div key={analysis?.id || `analysis-${Math.random()}`}>
-                {/* 历史分析标识 */}
-                {analysis.id.startsWith("historical_") && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                    <History className="h-3 w-3" />
-                    <span>历史分析</span>
-                    <div className="flex-1 h-px bg-border" />
-                  </div>
-                )}
-
-                <LLMAnalysisCard
-                  analysis={analysis}
-                  onToggleExpanded={handleToggleExpanded}
-                  onRemove={handleRemoveAnalysis}
-                  onRegenerate={
-                    analysis.id.startsWith("historical_")
-                      ? undefined
-                      : handleRegenerate
-                  }
-                  onCopy={handleCopy}
-                />
-              </div>
-            ))}
-
-            {/* 空状态 - 优化的引导界面 */}
-            {allAnalyses.length === 0 &&
-              !isGenerating &&
-              !loadingHistorical && (
-                <div className="text-center py-6">
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-24 h-24 bg-gradient-to-br from-primary/10 to-blue-100 dark:to-blue-900/20 rounded-full" />
-                    </div>
-                    <div className="relative">
-                      <Brain className="h-12 w-12 mx-auto mb-3 text-primary opacity-80" />
-                    </div>
-                  </div>
-                  <h3 className="text-base font-medium mb-2">开始智能分析</h3>
-                  <p className="text-sm text-muted-foreground mb-4 max-w-xs mx-auto">
-                    选择下方的分析类型，让 AI 帮你深度理解文档内容
-                  </p>
-
-                  {/* 快速分析建议 */}
-                  <div className="grid grid-cols-1 gap-1.5 max-w-sm mx-auto mb-3">
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
-                      <Sparkles className="h-4 w-4 text-yellow-500" />
-                      <span>智能总结 - 提取核心观点</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
-                      <Lightbulb className="h-4 w-4 text-orange-500" />
-                      <span>关键要点 - 梳理重要信息</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
-                      <Target className="h-4 w-4 text-green-500" />
-                      <span>深度洞察 - 发现隐含价值</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-          </div>
-        ) : (
-          /* 非嵌入模式：使用完整的tabs */
-          <Tabs value={activeTab} className="h-full">
-            {/* 实时分析标签页 */}
-            <TabsContent value="analysis" className="h-full mt-0">
-              <div className="p-4 space-y-4 h-full">
-                {/* 显示加载状态 */}
-                {loadingHistorical && (
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm mb-4">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>加载历史分析...</span>
-                  </div>
-                )}
-
-                {/* 显示所有分析（实时 + 历史） */}
-                {allAnalyses.map((analysis) => (
-                  <div key={analysis?.id || `analysis-${Math.random()}`}>
-                    {/* 历史分析标识 */}
-                    {analysis.id.startsWith("historical_") && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                        <History className="h-3 w-3" />
-                        <span>历史分析</span>
-                        <div className="flex-1 h-px bg-border" />
-                      </div>
-                    )}
-
-                    <LLMAnalysisCard
-                      analysis={analysis}
-                      onToggleExpanded={handleToggleExpanded}
-                      onRemove={handleRemoveAnalysis}
-                      onRegenerate={
-                        analysis.id.startsWith("historical_")
-                          ? undefined
-                          : handleRegenerate
-                      }
-                      onCopy={handleCopy}
-                    />
-                  </div>
-                ))}
-
-                {/* 空状态 - 优化的引导界面 */}
-                {allAnalyses.length === 0 &&
-                  !isGenerating &&
-                  !loadingHistorical && (
-                    <div className="text-center py-6">
-                      <div className="relative">
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-24 h-24 bg-gradient-to-br from-primary/10 to-blue-100 dark:to-blue-900/20 rounded-full" />
-                        </div>
-                        <div className="relative">
-                          <Brain className="h-12 w-12 mx-auto mb-3 text-primary opacity-80" />
-                        </div>
-                      </div>
-                      <h3 className="text-base font-medium mb-2">
-                        开始智能分析
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-4 max-w-xs mx-auto">
-                        选择下方的分析类型，让 AI 帮你深度理解文档内容
-                      </p>
-
-                      {/* 快速分析建议 */}
-                      <div className="grid grid-cols-1 gap-1.5 max-w-sm mx-auto mb-3">
-                        <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
-                          <Sparkles className="h-4 w-4 text-yellow-500" />
-                          <span>智能总结 - 提取核心观点</span>
-                        </div>
-                        <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
-                          <Lightbulb className="h-4 w-4 text-orange-500" />
-                          <span>关键要点 - 梳理重要信息</span>
-                        </div>
-                        <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
-                          <Target className="h-4 w-4 text-green-500" />
-                          <span>深度洞察 - 发现隐含价值</span>
-                        </div>
-                      </div>
+                  {/* 历史分析标识 */}
+                  {analysis.id.startsWith("historical_") && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                      <History className="h-3 w-3" />
+                      <span>历史分析</span>
+                      <div className="flex-1 h-px bg-border" />
                     </div>
                   )}
-              </div>
-            </TabsContent>
 
-            {/* 对话历史标签页 */}
-            <TabsContent value="conversations" className="h-full mt-0">
-              <div className="p-4 h-full">
-                <ConversationList
-                  contentItemId={contentId}
-                  onConversationSelect={handleConversationSelect}
-                  showHeader={false}
-                  maxHeight="calc(100vh - 300px)"
-                />
-              </div>
-            </TabsContent>
-          </Tabs>
-        )}
-      </div>
-
-      {/* Footer - 智能推荐区域 */}
-      {(activeTab === "analysis" || embedded) && (
-        <div className="shrink-0 p-4 border-t bg-muted/20">
-          <div className="space-y-3">
-            {/* 快速分析推荐 */}
-            {enabledPrompts?.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">推荐分析</span>
-                </div>
-                <div className="max-h-[120px] overflow-y-auto">
-                  <PromptRecommendations
-                    recommendations={getPromptRecommendations().slice(0, 4)}
-                    onPromptClick={handleEnabledPromptClick}
-                    isGenerating={isGenerating}
-                    disabled={isGenerating}
+                  <LLMAnalysisCard
+                    analysis={analysis}
+                    onToggleExpanded={handleToggleExpanded}
+                    onRemove={handleRemoveAnalysis}
+                    onRegenerate={
+                      analysis.id.startsWith("historical_")
+                        ? undefined
+                        : handleRegenerate
+                    }
+                    onCopy={handleCopy}
                   />
                 </div>
-              </div>
-            )}
+              ))}
 
-            {/* 自定义分析对话框 */}
-            <div>
-              <PromptCommandDialog
-                availablePrompts={enabledPrompts || []}
-                isExecuting={isGenerating}
-                onPromptSelect={handlePromptSelect}
-                onExecute={handleExecute}
-              />
-            </div>
-=======
-              {/* 显示加载状态 */}
-              {loadingHistorical && (
-                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-4">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>加载中...</span>
-                </div>
-              )}
+              {/* 如果没有分析，则显示空状态 */}
+              {allAnalyses.length === 0 &&
+                !isGenerating &&
+                !loadingHistorical && (
+                  <div className="text-center py-12 text-sm text-muted-foreground">
+                    <div className="relative mb-4">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-24 h-24 bg-gradient-to-br from-primary/10 to-blue-100 dark:to-blue-900/20 rounded-full" />
+                      </div>
+                      <div className="relative">
+                        <Brain className="h-12 w-12 mx-auto mb-3 text-primary opacity-80" />
+                      </div>
+                    </div>
+                    <h3 className="text-base font-medium mb-2">开始智能分析</h3>
+                    <p className="text-sm text-muted-foreground mb-4 max-w-xs mx-auto">
+                      选择下方的分析类型，让 AI 帮你深度理解文档内容
+                    </p>
+
+                    {/* 快速分析建议 */}
+                    <div className="grid grid-cols-1 gap-1.5 max-w-sm mx-auto mb-3">
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
+                        <Sparkles className="h-4 w-4 text-yellow-500" />
+                        <span>智能总结 - 提取核心观点</span>
+                      </div>
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
+                        <Lightbulb className="h-4 w-4 text-orange-500" />
+                        <span>关键要点 - 梳理重要信息</span>
+                      </div>
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
+                        <Target className="h-4 w-4 text-green-500" />
+                        <span>深度洞察 - 发现隐含价值</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
             </div>
           </TabsContent>
         </Tabs>
@@ -624,7 +474,6 @@ export const EnhancedLLMAnalysisSidebar: FC<
               onPromptSelect={handlePromptSelect}
               onExecute={handleExecute}
             />
->>>>>>> origin/ui/0617
           </div>
         </div>
       </div>

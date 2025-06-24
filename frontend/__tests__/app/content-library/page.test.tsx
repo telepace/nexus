@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { useRouter } from "next/navigation";
 import ContentLibraryPage from "@/app/content-library/page";
-import { useAuth, getCookie } from "@/lib/client-auth";
+import { useAuth } from "@/lib/client-auth";
 
 // Mock dependencies
 jest.mock("next/navigation", () => ({
@@ -10,27 +10,10 @@ jest.mock("next/navigation", () => ({
 
 jest.mock("@/lib/client-auth", () => ({
   useAuth: jest.fn(),
-  getCookie: jest.fn(),
 }));
 
-<<<<<<< HEAD
-// Mock sonner toast
-jest.mock("sonner", () => ({
-  toast: {
-    success: jest.fn(),
-    error: jest.fn(),
-  },
-}));
-
-// Mock getCookie from utils (used by FavoriteButton)
-jest.mock("@/lib/utils", () => ({
-  ...jest.requireActual("@/lib/utils"),
-  getCookie: jest.fn(() => "mock-token"),
-}));
-=======
 // Mock the scrollTo function for JSDOM
 HTMLDivElement.prototype.scrollTo = jest.fn();
->>>>>>> origin/ui/0617
 
 // Mock MainLayout
 jest.mock("@/components/layout/MainLayout", () => {
@@ -65,7 +48,6 @@ jest.mock("@/lib/hooks/useFavorites", () => ({
 const mockPush = jest.fn();
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
-const mockGetCookie = getCookie as jest.MockedFunction<typeof getCookie>;
 
 describe("ContentLibraryPage", () => {
   beforeEach(() => {
@@ -97,8 +79,6 @@ describe("ContentLibraryPage", () => {
       fetchUser: jest.fn(),
     });
 
-    mockGetCookie.mockReturnValue("mock-token");
-
     // Mock fetch with proper response
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
@@ -114,9 +94,11 @@ describe("ContentLibraryPage", () => {
             created_at: "2024-01-01T00:00:00Z",
             updated_at: "2024-01-01T00:00:00Z",
             source_uri: "https://example.com/doc.pdf",
-            ai_result: {
-              summary: {
-                main_thesis: "Test summary",
+            ai_analysis: {
+              summarizer: {
+                summary: {
+                  main_thesis: "Test summary",
+                },
               },
             },
           },
@@ -180,10 +162,7 @@ describe("ContentLibraryPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Test Document")).toBeInTheDocument();
-<<<<<<< HEAD
-=======
       expect(screen.getByText("Test summary")).toBeInTheDocument();
->>>>>>> origin/ui/0617
     });
 
     // Check that the content is displayed, but don't rely on specific AI analysis text

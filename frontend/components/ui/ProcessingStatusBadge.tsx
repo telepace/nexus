@@ -78,30 +78,22 @@ export const ProcessingStatusBadge: FC<ProcessingStatusBadgeProps> = ({
   progress,
   className,
   size = "md",
-<<<<<<< HEAD
-  showText = true,
+  showText = false,
   errorMessage,
   onReprocess,
   isReprocessing,
-=======
-  showText = false,
->>>>>>> origin/ui/0617
 }) => {
   const config = statusConfigs[status];
   const sizeConfig = sizeClasses[size];
   const Icon = config.icon;
 
-<<<<<<< HEAD
-  const BadgeContent = () => (
-=======
   const iconSizeMap: Record<typeof size, string> = {
     sm: "h-4 w-4",
     md: "h-5 w-5",
     lg: "h-6 w-6",
   };
 
-  return (
->>>>>>> origin/ui/0617
+  const BadgeContent = () => (
     <div
       className={cn(
         "inline-flex items-center rounded-full font-medium transition-colors border-transparent bg-transparent",
