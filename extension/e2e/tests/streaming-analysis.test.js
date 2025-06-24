@@ -109,7 +109,7 @@ describe('Streaming Analysis Features', () => {
     try {
       await extensionHelper.mockLoginState({
         email: 'test@example.com',
-        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LXVzZXItaWQifQ.mock_signature_for_testing',
+        token: 'xxx.xx.xx',
         userId: 'test-user-123',
         fullName: 'Test User'
       }, sidePanelTabPage);

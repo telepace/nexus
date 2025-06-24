@@ -10,7 +10,7 @@ beforeEach(async () => {
   // 🔧 设置Mock登录状态 - 这是Chrome扩展测试的最佳实践
   await extensionHelper.mockLoginState({
     email: 'test@example.com',
-    token: 'mock-jwt-token',
+    token: 'mock-jwtxxx',
     userId: 'test-user-123',
     fullName: 'Test User'
   });
