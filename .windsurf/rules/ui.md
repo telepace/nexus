@@ -54,7 +54,7 @@ This document spells out **exactly how to author UI code** in this project. Trea
 
 ### 6 · State, Motion & Feedback
 
-- **Animations** – only `animate-[spin|ping|pulse|bounce|accordion-up|accordion-down]`.
+- **Animations** – only `animate-[spin|ping|bounce|accordion-up|accordion-down]`.
 - Duration/easing are fixed in `tailwind.config.js`; do not inline `transition` props.
 - **Loading / Error states** – every async component must expose at least: “idle”, “loading”, “error”, “success”.
 

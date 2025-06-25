@@ -22,6 +22,7 @@ const ReaderContext = createContext<{
   ) => void;
   analysisResult?: AIResult | null;
   conversations?: ConversationListResponse["conversations"];
+  markLeftReady?: () => void;
 }>({});
 
 export const useReaderContext = () => useContext(ReaderContext);
@@ -44,6 +45,7 @@ export default function ReaderLayout({
   const [conversations, setConversations] = useState<
     ConversationListResponse["conversations"]
   >([]);
+  const markLeftReady = useCallback(() => {}, []);
 
   // 提供给 children 的上下文方法，让 ReaderContent 可以更新内容文本
   const handleContentChange = useCallback((text: string) => {
@@ -96,6 +98,7 @@ export default function ReaderLayout({
               <ReaderContext.Provider
                 value={{
                   onContentChange: handleContentChange,
+                  markLeftReady,
                   onAnalysisUpdate: handleAnalysisUpdate,
                   onConversationsUpdate: handleConversationsUpdate,
                   analysisResult,
@@ -109,10 +112,7 @@ export default function ReaderLayout({
             </ResizablePanel>
 
             {/* 可拖拽的分割线 */}
-            <ResizableHandle
-              withHandle
-              className="bg-border hover:bg-primary/20 transition-colors"
-            />
+            <ResizableHandle className="bg-border hover:bg-primary/20 transition-colors" />
 
             {/* AI 分析区域 - 默认占40%，可调整 */}
             <ResizablePanel

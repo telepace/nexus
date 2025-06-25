@@ -94,7 +94,7 @@ class AIResultBase(SQLModel):
     # AI-optimized title and description
     optimized_title: str | None = Field(default=None, max_length=255)
     brief_description: str | None = Field(default=None, max_length=500)
-    
+
     # Existing fields
     summary: dict | None = Field(default=None, sa_column=Column(JSONB))
     key_points: dict | None = Field(default=None, sa_column=Column(JSONB))

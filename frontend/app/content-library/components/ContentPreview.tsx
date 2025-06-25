@@ -1,6 +1,14 @@
 "use client";
 
-import { FileText, Star, Clock, TrendingUp, Tag, BookOpen, Lightbulb } from "lucide-react";
+import {
+  FileText,
+  Star,
+  Clock,
+  TrendingUp,
+  Tag,
+  BookOpen,
+  Lightbulb,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AIAnalysisCard } from "./AIAnalysisCard";
 import type { ContentItemPublic } from "../types";
@@ -13,16 +21,14 @@ import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 const StarRating = ({ score }: { score: number }) => {
   const stars = Math.round(score * 5);
   const fullStars = Math.floor(stars);
-  
+
   return (
     <div className="flex items-center gap-1">
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
           className={`h-4 w-4 ${
-            i < fullStars
-              ? "fill-amber-400 text-amber-400"
-              : "text-neutral-300"
+            i < fullStars ? "fill-amber-400 text-amber-400" : "text-neutral-300"
           }`}
         />
       ))}
@@ -36,15 +42,24 @@ const StarRating = ({ score }: { score: number }) => {
 // 难度等级组件
 const DifficultyLevel = ({ level }: { level: string }) => {
   const config = {
-    beginner: { label: "入门", color: "bg-green-50 text-green-700 border-green-200" },
-    intermediate: { label: "中级", color: "bg-yellow-50 text-yellow-700 border-yellow-200" },
+    beginner: {
+      label: "入门",
+      color: "bg-green-50 text-green-700 border-green-200",
+    },
+    intermediate: {
+      label: "中级",
+      color: "bg-yellow-50 text-yellow-700 border-yellow-200",
+    },
     advanced: { label: "高级", color: "bg-red-50 text-red-700 border-red-200" },
   };
-  
-  const { label, color } = config[level as keyof typeof config] || config.intermediate;
-  
+
+  const { label, color } =
+    config[level as keyof typeof config] || config.intermediate;
+
   return (
-    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${color}`}>
+    <span
+      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${color}`}
+    >
       <TrendingUp className="h-3 w-3 mr-1" />
       {label}
     </span>
@@ -68,13 +83,14 @@ export const ContentPreview = ({ item }: Props) => {
   useEffect(() => {
     if (item) {
       // 使用函数式更新来避免依赖 panels
-      setPanels(prevPanels => {
+      setPanels((prevPanels) => {
         // 只有当传入的 item 与栈顶的 item 内容不同时才添加新面板
         if (item.id !== prevPanels[prevPanels.length - 1]?.item.id) {
           panelIdCounter++;
-          const newPanels = [...prevPanels, { id: panelIdCounter, item: item }].slice(
-            -2,
-          );
+          const newPanels = [
+            ...prevPanels,
+            { id: panelIdCounter, item: item },
+          ].slice(-2);
           return newPanels;
         }
         return prevPanels;
@@ -128,26 +144,31 @@ export const ContentPreview = ({ item }: Props) => {
 };
 
 // 内容摘要卡片组件
-const SummaryCard = ({ summary }: { summary: any | null }) => {
+const SummaryCard = ({ summary }: { summary: unknown | null }) => {
   if (!summary) return null;
 
   let summaryText = "";
-  
+
   // 处理不同格式的摘要
   if (typeof summary === "string") {
     summaryText = summary;
-  } else if (summary.text) {
-    summaryText = summary.text;
-  } else if (summary.content) {
-    summaryText = summary.content;
-  } else if (summary.summary) {
-    summaryText = summary.summary;
-  } else if (summary.raw_text) {
-    summaryText = summary.raw_text;
-  } else {
-    // 尝试找到最长的字符串值
-    const values = Object.values(summary).filter(val => typeof val === "string" && val.length > 50);
-    summaryText = values[0] as string || JSON.stringify(summary);
+  } else if (summary && typeof summary === "object") {
+    const summaryObj = summary as Record<string, unknown>;
+    if (summaryObj.text && typeof summaryObj.text === "string") {
+      summaryText = summaryObj.text;
+    } else if (summaryObj.content && typeof summaryObj.content === "string") {
+      summaryText = summaryObj.content;
+    } else if (summaryObj.summary && typeof summaryObj.summary === "string") {
+      summaryText = summaryObj.summary;
+    } else if (summaryObj.raw_text && typeof summaryObj.raw_text === "string") {
+      summaryText = summaryObj.raw_text;
+    } else {
+      // 尝试找到最长的字符串值
+      const values = Object.values(summaryObj).filter(
+        (val) => typeof val === "string" && val.length > 50,
+      );
+      summaryText = (values[0] as string) || JSON.stringify(summary);
+    }
   }
 
   if (!summaryText) return null;
@@ -178,45 +199,49 @@ const SummaryCard = ({ summary }: { summary: any | null }) => {
 };
 
 // 关键要点卡片组件
-const KeyPointsCard = ({ keyPoints }: { keyPoints: any | null }) => {
+const KeyPointsCard = ({ keyPoints }: { keyPoints: unknown | null }) => {
   if (!keyPoints) return null;
 
   let points: string[] = [];
   let keyPointsContent = "";
 
   // 尝试提取要点数组
-  if (Array.isArray(keyPoints.points)) {
-    points = keyPoints.points.map((p) =>
-      typeof p === "string" ? p : JSON.stringify(p),
-    );
-  } else if (Array.isArray(keyPoints.items)) {
-    points = keyPoints.items.map((p) =>
-      typeof p === "string" ? p : JSON.stringify(p),
-    );
-  } else if (Array.isArray(keyPoints.key_points)) {
-    points = keyPoints.key_points.map((p) =>
-      typeof p === "string" ? p : JSON.stringify(p),
-    );
-  } else if (Array.isArray(keyPoints)) {
-    points = keyPoints.map((p) =>
-      typeof p === "string" ? p : JSON.stringify(p),
-    );
-  } else {
-    // 尝试获取原始文本内容（可能是markdown格式）
-    keyPointsContent =
-      (keyPoints.text as string) ||
-      (keyPoints.content as string) ||
-      (keyPoints.markdown as string) ||
-      (keyPoints.raw_text as string) ||
-      (Object.values(keyPoints || {}).find(
-        (val) => typeof val === "string" && val.length > 50,
-      ) as string) ||
-      "";
+  if (keyPoints && typeof keyPoints === "object") {
+    const keyPointsObj = keyPoints as Record<string, unknown>;
 
-    if (!keyPointsContent) {
-      points = Object.values(keyPoints || {})
-        .filter((val) => typeof val === "string" && val.length > 10)
-        .map((val) => val as string);
+    if (Array.isArray(keyPointsObj.points)) {
+      points = keyPointsObj.points.map((p) =>
+        typeof p === "string" ? p : JSON.stringify(p),
+      );
+    } else if (Array.isArray(keyPointsObj.items)) {
+      points = keyPointsObj.items.map((p) =>
+        typeof p === "string" ? p : JSON.stringify(p),
+      );
+    } else if (Array.isArray(keyPointsObj.key_points)) {
+      points = keyPointsObj.key_points.map((p) =>
+        typeof p === "string" ? p : JSON.stringify(p),
+      );
+    } else if (Array.isArray(keyPoints)) {
+      points = (keyPoints as unknown[]).map((p) =>
+        typeof p === "string" ? p : JSON.stringify(p),
+      );
+    } else {
+      // 尝试获取原始文本内容（可能是markdown格式）
+      keyPointsContent =
+        (keyPointsObj.text as string) ||
+        (keyPointsObj.content as string) ||
+        (keyPointsObj.markdown as string) ||
+        (keyPointsObj.raw_text as string) ||
+        (Object.values(keyPointsObj || {}).find(
+          (val) => typeof val === "string" && val.length > 50,
+        ) as string) ||
+        "";
+
+      if (!keyPointsContent) {
+        points = Object.values(keyPointsObj || {})
+          .filter((val) => typeof val === "string" && val.length > 10)
+          .map((val) => val as string);
+      }
     }
   }
 
@@ -291,7 +316,7 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const aiResult = item.ai_result;
   const aiAnalysis = item.ai_analysis;
-  
+
   useEffect(() => {
     containerRef.current?.scrollTo({ top: 0 });
     containerRef.current?.focus?.();
@@ -316,10 +341,8 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
         <div className="space-y-6 max-w-[28rem] mx-auto">
           {/* 标题和评分 */}
           <div className="space-y-3">
-            <h3 className="font-semibold text-lg">
-              {item.title || "无标题"}
-            </h3>
-            
+            <h3 className="font-semibold text-lg">{item.title || "无标题"}</h3>
+
             {/* 质量评分 */}
             {aiResult?.content_quality_score != null && (
               <div>
@@ -329,7 +352,7 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
                 <StarRating score={aiResult.content_quality_score} />
               </div>
             )}
-            
+
             {/* 阅读时间和难度 */}
             <div className="flex items-center gap-4">
               {aiResult?.reading_time_minutes != null && (
@@ -338,12 +361,12 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
                   <span>{aiResult.reading_time_minutes} 分钟阅读</span>
                 </div>
               )}
-              
+
               {aiResult?.difficulty_level && (
                 <DifficultyLevel level={aiResult.difficulty_level} />
               )}
             </div>
-            
+
             <div className="mb-4">
               <div
                 role="button"
@@ -367,25 +390,30 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
           {/* AI 摘要和关键要点 */}
           <div className="space-y-4">
             {/* 内容摘要 - 优先显示 AI 分析结果中的摘要 */}
-            {(aiAnalysis?.summarizer?.summary || aiAnalysis?.summarizer?.raw_text || aiResult?.summary || item.summary) && (
-              <SummaryCard 
+            {(aiAnalysis?.summarizer?.summary ||
+              aiAnalysis?.summarizer?.raw_text ||
+              aiResult?.summary ||
+              item.summary) && (
+              <SummaryCard
                 summary={
-                  aiAnalysis?.summarizer?.summary || 
-                  aiAnalysis?.summarizer?.raw_text || 
-                  aiResult?.summary || 
+                  aiAnalysis?.summarizer?.summary ||
+                  aiAnalysis?.summarizer?.raw_text ||
+                  aiResult?.summary ||
                   item.summary
-                } 
+                }
               />
             )}
 
             {/* 关键要点 - 优先显示 AI 分析结果中的关键要点 */}
-            {(aiAnalysis?.key_points_extractor?.key_points || aiAnalysis?.key_points_extractor?.raw_text || aiResult?.key_points) && (
-              <KeyPointsCard 
+            {(aiAnalysis?.key_points_extractor?.key_points ||
+              aiAnalysis?.key_points_extractor?.raw_text ||
+              aiResult?.key_points) && (
+              <KeyPointsCard
                 keyPoints={
-                  aiAnalysis?.key_points_extractor?.key_points || 
-                  aiAnalysis?.key_points_extractor?.raw_text || 
+                  aiAnalysis?.key_points_extractor?.key_points ||
+                  aiAnalysis?.key_points_extractor?.raw_text ||
                   aiResult?.key_points
-                } 
+                }
               />
             )}
           </div>

@@ -11,10 +11,10 @@ export interface ContentItemPublic {
   ai_result?: {
     optimized_title?: string | null;
     brief_description?: string | null;
-    summary?: any | null;
-    key_points?: any | null;
+    summary?: Record<string, unknown> | null;
+    key_points?: Record<string, unknown> | null;
     labels?: string[] | null;
-    content_analysis?: any | null;
+    content_analysis?: Record<string, unknown> | null;
     reading_time_minutes?: number | null;
     difficulty_level?: string | null;
     content_quality_score?: number | null;
@@ -38,4 +38,26 @@ export interface ContentItemPublic {
     };
     [key: string]: unknown;
   } | null;
+}
+
+// 辅助类型定义
+export interface LLMAnalysis {
+  id: string;
+  type: string;
+  status: "pending" | "completed" | "failed";
+  result: Record<string, unknown> | null;
+  error_message: string | null;
+  content_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FormData {
+  [key: string]: unknown;
+}
+
+export interface FilterOptions {
+  sort_by?: string;
+  order?: "asc" | "desc";
+  [key: string]: unknown;
 }

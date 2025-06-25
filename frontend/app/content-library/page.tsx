@@ -3,44 +3,50 @@
 import { useState, useCallback } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { ContentList } from "./components/ContentList";
 import { ContentPreview } from "./components/ContentPreview";
 import { useContentItems } from "./hooks/useContentItems";
 import type { ContentItemPublic } from "./types";
 import { useRouter } from "next/navigation";
+import { Loading } from "@/components/ui/loading";
 
 export default function ContentLibraryPage() {
   const router = useRouter();
-  const {
-    authLoading,
-    loading,
-    error,
-    items,
-    prefetchContent,
-  } = useContentItems();
+  const { authLoading, loading, error, items, prefetchContent } =
+    useContentItems();
 
-  const [selectedItem, setSelectedItem] = useState<ContentItemPublic | null>(null);
-  const [hoveredItem, setHoveredItem] = useState<ContentItemPublic | null>(null);
+  const [selectedItem, setSelectedItem] = useState<ContentItemPublic | null>(
+    null,
+  );
+  const [hoveredItem, setHoveredItem] = useState<ContentItemPublic | null>(
+    null,
+  );
 
   // 过滤逻辑
   const filteredItems = items;
 
   // 处理卡片点击 - 直接跳转到阅读器
-  const handleCardClick = useCallback((item: ContentItemPublic) => {
-    router.push(`/content-library/reader/${item.id}`);
-  }, [router]);
+  const handleCardClick = useCallback(
+    (item: ContentItemPublic) => {
+      router.push(`/content-library/reader/${item.id}`);
+    },
+    [router],
+  );
 
   // 处理悬浮事件
-  const handleCardHover = useCallback((item: ContentItemPublic | null) => {
-    setHoveredItem(item);
-    if (item) {
-      // 将悬浮的项目设为选中项，提供更直观的体验
-      setSelectedItem(item);
-      // 预取内容
-      prefetchContent(item);
-    }
-  }, [prefetchContent]);
+  const handleCardHover = useCallback(
+    (item: ContentItemPublic | null) => {
+      setHoveredItem(item);
+      if (item) {
+        // 将悬浮的项目设为选中项，提供更直观的体验
+        setSelectedItem(item);
+        // 预取内容
+        prefetchContent(item);
+      }
+    },
+    [prefetchContent],
+  );
 
   // 获取要在预览中显示的项目（优先显示悬浮的，其次显示选中的）
   const previewItem = hoveredItem || selectedItem;
@@ -49,12 +55,7 @@ export default function ContentLibraryPage() {
   if (authLoading || loading) {
     return (
       <MainLayout pageTitle="Content Library">
-        <div className="flex justify-center items-center h-64">
-          <div className="flex items-center space-x-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <p className="text-lg">Loading...</p>
-          </div>
-        </div>
+        <Loading />
       </MainLayout>
     );
   }

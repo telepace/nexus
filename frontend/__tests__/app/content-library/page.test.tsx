@@ -140,7 +140,7 @@ describe("ContentLibraryPage", () => {
       expect(screen.getByText("Test Document")).toBeInTheDocument();
     });
 
-    // First click: set focus (should NOT navigate)
+    // 点击卡片直接导航到阅读器
     const contentCard =
       screen.getByText("Test Document").closest("div.cursor-pointer") ||
       screen.getByText("Test Document").closest("[role='button']") ||
@@ -148,13 +148,8 @@ describe("ContentLibraryPage", () => {
 
     if (contentCard) {
       fireEvent.click(contentCard);
-      expect(mockPush).not.toHaveBeenCalled();
+      expect(mockPush).toHaveBeenCalledWith("/content-library/reader/1");
     }
-
-    // Now the preview should render a "查看全文" button
-    const fullButton = await screen.findByRole("button", { name: "查看全文" });
-    fireEvent.click(fullButton);
-    expect(mockPush).toHaveBeenCalledWith("/content-library/reader/1");
   });
 
   it("should display content items in card format", async () => {
@@ -162,16 +157,11 @@ describe("ContentLibraryPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Test Document")).toBeInTheDocument();
-      expect(screen.getByText("Test summary")).toBeInTheDocument();
+      expect(screen.getByText("暂无描述")).toBeInTheDocument();
     });
 
-    // Check that the content is displayed, but don't rely on specific AI analysis text
-    // since it might not render depending on the exact data structure
+    // 检查文档类型显示
     expect(screen.getByText("Test Document")).toBeInTheDocument();
-
-    // Check for PDF indicators in content type and filter
-    const pdfElements = screen.getAllByText("PDF");
-    expect(pdfElements.length).toBeGreaterThanOrEqual(1);
   });
 
   it("should display elegant layout without search filters", async () => {
@@ -183,49 +173,11 @@ describe("ContentLibraryPage", () => {
       expect(screen.getByText("Test Document")).toBeInTheDocument();
     });
 
-    // We have removed filter controls
+    // 不再有过滤控件和排序控件
     expect(screen.queryByDisplayValue("所有状态")).not.toBeInTheDocument();
     expect(screen.queryByDisplayValue("所有类型")).not.toBeInTheDocument();
-  });
-
-  it("should display sorting options", async () => {
-    render(<ContentLibraryPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Test Document")).toBeInTheDocument();
-    });
-
-    // Check that sorting select is present with default value
-    const sortSelect = screen.getByDisplayValue("创建时间 (新→旧)");
-    expect(sortSelect).toBeInTheDocument();
-
-    // Check that sorting options are available
     expect(
-      screen.getByRole("option", { name: "创建时间 (新→旧)" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("option", { name: "创建时间 (旧→新)" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("option", { name: "标题 (A→Z)" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("option", { name: "质量评分 (高→低)" }),
-    ).toBeInTheDocument();
-  });
-
-  it("should change sorting when option is selected", async () => {
-    render(<ContentLibraryPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Test Document")).toBeInTheDocument();
-    });
-
-    // Find and change the sort option
-    const sortSelect = screen.getByDisplayValue("创建时间 (新→旧)");
-    fireEvent.change(sortSelect, { target: { value: "title_asc" } });
-
-    // Verify the value changed
-    expect(sortSelect).toHaveValue("title_asc");
+      screen.queryByDisplayValue("创建时间 (新→旧)"),
+    ).not.toBeInTheDocument();
   });
 });

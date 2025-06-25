@@ -548,9 +548,9 @@ class PreprocessingPipeline:
             return {
                 "optimized_title": None,
                 "brief_description": None,
-                "tags": [], 
-                "score": None, 
-                "reading_time_minutes": None
+                "tags": [],
+                "score": None,
+                "reading_time_minutes": None,
             }
 
     async def _analyze_content_properties(

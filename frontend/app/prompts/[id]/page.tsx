@@ -138,7 +138,7 @@ export default async function PromptDetailPage({
         fallback={
           <div className="container py-10">
             <div className="max-w-4xl mx-auto">
-              <div className="animate-pulse">
+              <div className="animate-shimmer">
                 <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
                 <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
                 <div className="h-32 bg-gray-200 rounded mb-4"></div>

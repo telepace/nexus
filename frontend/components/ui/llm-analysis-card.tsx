@@ -277,7 +277,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
                   </div>
                   {/* 打字机光标效果 - 放在独立的行 */}
                   <div className="flex items-center justify-start mt-2">
-                    <span className="inline-block w-2 h-4 bg-primary animate-pulse opacity-75 rounded-sm" />
+                    <span className="inline-block w-2 h-4 bg-primary animate-shimmer opacity-75 rounded-sm" />
                     <span className="ml-2 text-xs text-muted-foreground">
                       正在生成...
                     </span>

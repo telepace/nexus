@@ -366,7 +366,7 @@ export function AIAnalysisCard({
                 ) : (
                   <div className="whitespace-pre-wrap text-sm relative font-mono">
                     <span className="streaming-text">{completion}</span>
-                    <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1 align-bottom opacity-75" />
+                    <span className="inline-block w-2 h-4 bg-primary animate-shimmer ml-1 align-bottom opacity-75" />
                   </div>
                 )}
               </div>

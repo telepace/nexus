@@ -241,10 +241,10 @@ const ProcessedContentRenderer = memo(
           contentToRender.includes("**") ? (
             <MarkdownRenderer
               content={contentToRender}
-              className="prose prose-sm max-w-none dark:prose-invert p-4 [&>*:first-child]:mt-0"
+              className="prose prose-sm max-w-[35rem] dark:prose-invert px-8 py-4 [&>*:first-child]:mt-0"
             />
           ) : (
-            <div className="prose prose-sm max-w-none dark:prose-invert p-4 [&>*:first-child]:mt-0">
+            <div className="prose prose-sm max-w-[35rem] dark:prose-invert px-8 py-4 [&>*:first-child]:mt-0">
               <div className="whitespace-pre-wrap text-sm leading-relaxed">
                 {contentToRender}
               </div>
@@ -519,8 +519,7 @@ export const ClientContent = ({
               onClick={() => window.open(content.source_uri!, "_blank")}
               title="查看原始内容"
             >
-              <ExternalLink className="h-3 w-3 mr-1" />
-              原始内容
+              <ExternalLink className="h-3 w-3" />
             </Button>
           )}
         </div>
@@ -528,7 +527,7 @@ export const ClientContent = ({
 
       {/* Main Content - 专注显示AI处理后的内容 */}
       <div className="flex-1 min-h-0">
-        <div className="h-full p-2">
+        <div className="h-full py-2">
           <ProcessedContentRenderer
             content={content}
             markdownContent={markdownContent}

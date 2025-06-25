@@ -114,7 +114,7 @@ async def process_ai_for_content_item(content_item_id: str):
             # 获取AI优化的标题和描述
             optimized_title = ai_results.get("optimized_title")
             brief_description = ai_results.get("brief_description")
-            
+
             # 更新或创建AI结果
             existing_ai_result = session.exec(
                 select(AIResult).where(AIResult.content_item_id == content_uuid)
@@ -154,11 +154,17 @@ async def process_ai_for_content_item(content_item_id: str):
             # 如果有AI优化的标题，更新ContentItem的标题
             content_item = session.get(ContentItem, content_uuid)
             if content_item:
-                if optimized_title and isinstance(optimized_title, str) and optimized_title.strip():
+                if (
+                    optimized_title
+                    and isinstance(optimized_title, str)
+                    and optimized_title.strip()
+                ):
                     original_title = content_item.title
                     content_item.title = optimized_title.strip()[:255]  # 确保长度限制
-                    logger.info(f"✅ 标题更新: '{original_title}' -> '{content_item.title}'")
-                
+                    logger.info(
+                        f"✅ 标题更新: '{original_title}' -> '{content_item.title}'"
+                    )
+
                 content_item.processing_status = "completed"
                 content_item.last_processed_at = datetime.now()
                 content_item.updated_at = datetime.now()
@@ -192,9 +198,9 @@ async def main():
     if len(sys.argv) != 2:
         logger.error("用法: python scripts/manual_ai_processing.py <content_id>")
         return False
-    
+
     content_id = sys.argv[1]
-    
+
     logger.info(f"开始为内容 {content_id} 手动触发AI处理...")
 
     success = await process_ai_for_content_item(content_id)

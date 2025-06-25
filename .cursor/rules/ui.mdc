@@ -256,7 +256,7 @@ function BadCard() {
 ### 5 · Motion & Performance
 
 - **Animation tokens**: `ultrafast` → `ultraslow` (≤ 400 ms).
-- Pre-defined keyframes: `accordion-up`, `accordion-down`, `spin`, `pulse`, `bounce`.
+- Pre-defined keyframes: `accordion-up`, `accordion-down`, `spin`.
 - Performance rules:
     - Animate `transform`/`opacity`; avoid `box-shadow`/`filter`.
     - Add `will-change: transform` for transforms > 120 ms.

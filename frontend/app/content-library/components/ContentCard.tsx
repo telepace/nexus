@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Link, BookOpen, Star, Clock, TrendingUp } from "lucide-react";
+import { FileText, Link, BookOpen, Star, Clock } from "lucide-react";
 import {
   ProcessingStatusBadge,
   ProcessingStatus,
@@ -46,14 +46,12 @@ const StarRating = ({ score }: { score: number }) => {
             i < fullStars
               ? "fill-amber-400 text-amber-400"
               : i === fullStars && hasHalfStar
-              ? "fill-amber-200 text-amber-400"
-              : "text-neutral-300"
+                ? "fill-amber-200 text-amber-400"
+                : "text-neutral-300"
           }`}
         />
       ))}
-      <span className="text-xs text-neutral-500 ml-1">
-        {score.toFixed(1)}
-      </span>
+      <span className="text-xs text-neutral-500 ml-1">{score.toFixed(1)}</span>
     </div>
   );
 };
@@ -65,9 +63,10 @@ const DifficultyBadge = ({ level }: { level: string }) => {
     intermediate: { label: "中级", color: "bg-yellow-100 text-yellow-700" },
     advanced: { label: "高级", color: "bg-red-100 text-red-700" },
   };
-  
-  const { label, color } = config[level as keyof typeof config] || config.intermediate;
-  
+
+  const { label, color } =
+    config[level as keyof typeof config] || config.intermediate;
+
   return (
     <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${color}`}>
       {label}
@@ -114,8 +113,8 @@ export const ContentCard = ({
         selected
           ? "bg-[var(--color-linear-bg-2)] border-[var(--mac-gray-5)] shadow-md"
           : hovered
-          ? "bg-muted/50 border-muted-foreground/20 shadow-sm"
-          : "bg-transparent border border-transparent shadow-none hover:shadow-none hover:bg-transparent hover:border-transparent"
+            ? "bg-muted/50 border-muted-foreground/20 shadow-sm"
+            : "bg-transparent border border-transparent shadow-none hover:shadow-none hover:bg-transparent hover:border-transparent"
       }`}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
@@ -178,7 +177,7 @@ export const ContentCard = ({
                     <span>{aiResult.reading_time_minutes} 分钟</span>
                   </div>
                 )}
-                
+
                 {/* 难度等级 */}
                 {hasDifficulty && (
                   <DifficultyBadge level={aiResult.difficulty_level!} />
@@ -191,7 +190,9 @@ export const ContentCard = ({
                   size="sm"
                   className="text-neutral-400"
                 />
-                <span>{new Date(item.created_at).toLocaleDateString("zh-CN")}</span>
+                <span>
+                  {new Date(item.created_at).toLocaleDateString("zh-CN")}
+                </span>
               </div>
             </div>
           </div>
