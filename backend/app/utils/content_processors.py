@@ -419,7 +419,9 @@ class JinaProcessor(ProcessingStep):
                 for line in lines:
                     if line.startswith("# "):
                         content_item.title = clean_content_for_db(line[2:].strip())
-                        logger.info(f"✅ Jina 从markdown提取到标题: {content_item.title}")
+                        logger.info(
+                            f"✅ Jina 从markdown提取到标题: {content_item.title}"
+                        )
                         break
 
                 # Fallback to URL hostname if no title found
@@ -937,38 +939,33 @@ class ScrapingBeeProcessor(ProcessingStep):
 def should_update_title(title: str | None) -> bool:
     """
     Check if a content item's title should be updated.
-    
+
     Returns True if:
     - Title is None or empty
     - Title is a default placeholder value
-    
+
     Args:
         title: The current title to check
-        
+
     Returns:
         bool: True if title should be updated, False otherwise
     """
     if not title:
         return True
-    
+
     # Check for common default/placeholder titles
-    default_titles = {
-        "新内容",
-        "Untitled", 
-        "新内容 - 未知网站",
-        "网页内容 - 未知网站"
-    }
-    
+    default_titles = {"新内容", "Untitled", "新内容 - 未知网站", "网页内容 - 未知网站"}
+
     # Check if title is a default placeholder
     if title in default_titles:
         return True
-    
+
     # Check if title starts with common prefixes that indicate it's a placeholder
     placeholder_prefixes = ["Untitled", "新内容", "网页内容 -"]
     for prefix in placeholder_prefixes:
         if title.startswith(prefix):
             return True
-    
+
     return False
 
 
