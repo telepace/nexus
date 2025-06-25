@@ -45,9 +45,9 @@ const SummaryCard = ({
 
   return (
     <Card className="h-full analysis-card shadow-sm hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <BookOpen className="h-4 w-4 text-blue-600" />
+      <CardHeader className="pb-3 pt-4">
+        <CardTitle className="flex items-center gap-2 text-base text-foreground">
+          <BookOpen className="h-4 w-4 text-foreground" />
           内容摘要
         </CardTitle>
       </CardHeader>
@@ -110,9 +110,9 @@ const KeyPointsCard = ({
 
   return (
     <Card className="h-full analysis-card shadow-sm hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Lightbulb className="h-4 w-4 text-amber-600" />
+      <CardHeader className="pb-3 pt-4">
+        <CardTitle className="flex items-center gap-2 text-base text-foreground">
+          <Lightbulb className="h-4 w-4 text-foreground" />
           关键要点
         </CardTitle>
       </CardHeader>
@@ -178,9 +178,9 @@ const MetadataCard = ({ analysisResult }: { analysisResult: AIResult }) => {
 
   return (
     <Card className="h-full analysis-card shadow-sm hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <BarChart3 className="h-4 w-4 text-green-600" />
+      <CardHeader className="pb-3 pt-4">
+        <CardTitle className="flex items-center gap-2 text-base text-foreground">
+          <BarChart3 className="h-4 w-4 text-foreground" />
           内容分析
         </CardTitle>
       </CardHeader>

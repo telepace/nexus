@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Lightbulb, Clock, BarChart3, Tag } from "lucide-react";
+import { BookOpen, Lightbulb, BarChart3} from "lucide-react";
 import { AIResult } from "@/lib/api/content";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 
@@ -29,9 +29,9 @@ export const SummaryCard = ({
 
   return (
     <Card className="h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <BookOpen className="h-5 w-5 text-blue-600" />
+      <CardHeader className="py-3">
+        <CardTitle className="flex items-center gap-2 text-base text-foreground">
+          <BookOpen className="h-3 w-3 text-foreground" />
           内容摘要
         </CardTitle>
       </CardHeader>
@@ -94,9 +94,9 @@ export const KeyPointsCard = ({
 
   return (
     <Card className="h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Lightbulb className="h-5 w-5 text-amber-600" />
+      <CardHeader className="py-3">
+        <CardTitle className="flex items-center gap-2 text-base text-foreground">
+          <Lightbulb className="h-3 w-3 text-foreground" />
           关键要点
         </CardTitle>
       </CardHeader>
@@ -121,7 +121,7 @@ export const KeyPointsCard = ({
             {points.length > 0 ? (
               points.map((point, index) => (
                 <div key={index} className="flex gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center text-xs font-medium text-amber-700 dark:text-amber-300">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center text-xs font-medium text-neutral-700 dark:text-neutral-300">
                     {index + 1}
                   </div>
                   <div className="text-sm text-muted-foreground leading-relaxed">
@@ -161,16 +161,15 @@ const MetadataCard = ({ analysisResult }: { analysisResult: AIResult }) => {
 
   return (
     <Card className="h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <BarChart3 className="h-5 w-5 text-green-600" />
+      <CardHeader className="py-3">
+        <CardTitle className="flex items-center gap-2 text-base text-foreground">
+          <BarChart3 className="h-3 w-3 text-foreground" />
           内容分析
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {analysisResult.reading_time_minutes && (
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">
               预计阅读时间: {analysisResult.reading_time_minutes} 分钟
             </span>
@@ -209,7 +208,6 @@ const MetadataCard = ({ analysisResult }: { analysisResult: AIResult }) => {
         {analysisResult.labels && analysisResult.labels.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Tag className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">标签:</span>
             </div>
             <div className="flex flex-wrap gap-1">
