@@ -2,7 +2,6 @@
 
 import { FC, useState } from "react";
 import {
-  Brain,
   BookOpen,
   Lightbulb,
   BarChart3,
@@ -342,20 +341,14 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
   return (
     <div className={`flex flex-col h-full bg-background ${className}`}>
       {/* Header */}
-      <div className="flex-shrink-0 p-4 border-b bg-gradient-to-r from-primary/5 to-blue-50 dark:from-primary/5 dark:to-blue-950/20">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Brain className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold">AI 智能分析</h2>
-            <p className="text-xs text-muted-foreground">深度理解文档内容</p>
-          </div>
+      <div className="flex items-center justify-between px-4 border-b h-header">
+        <div className="flex items-center space-x-4 flex-1 min-w-0">
+          <h2 className="text-sm font-medium truncate">AI分析</h2>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex-shrink-0 px-4 pt-3">
+      <div className="flex-shrink-0 px-4 py-3">
         <Tabs
           value={activeTab}
           onValueChange={(value) =>
