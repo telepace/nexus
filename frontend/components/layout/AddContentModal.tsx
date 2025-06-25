@@ -109,7 +109,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
       .filter((url): url is string => url !== null);
 
     // 计算去除 URL 和空白后的剩余字符长度
-    const nonUrlPartLength = text.replace(urlRegex, "").replace(/\s+/g, "").length;
+    const nonUrlPartLength = text
+      .replace(urlRegex, "")
+      .replace(/\s+/g, "").length;
 
     if (validUrls.length > 0 && nonUrlPartLength <= 50) {
       // 输入几乎只包含链接（剩余文本不超过 50 个字符），按 URL 类型处理
@@ -154,20 +156,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({
     [],
   );
 
-  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const filesArray = Array.from(e.dataTransfer.files);
-      setSelectedFiles((prev) => [...prev, ...filesArray]);
-      setContentType("file");
-    }
-  }, []);
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
-
   // 移除文件
   const removeFile = useCallback((index: number) => {
     setSelectedFiles((prev) => {
@@ -190,11 +178,6 @@ export const AddContentModal: FC<AddContentModalProps> = ({
       return newUrls;
     });
   }, []);
-
-  // 处理拖放区域点击
-  const handleDropAreaClick = () => {
-    fileInputRef.current?.click();
-  };
 
   /**
    * Handles the submission of content addition with optimistic UI updates.
@@ -406,171 +389,143 @@ export const AddContentModal: FC<AddContentModalProps> = ({
         <div className="flex-1 overflow-y-auto space-y-6 py-4 px-4 md:px-6">
           {view === "input" && (
             <>
-            {/* 文本/链接输入区域 */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="content-input">文本内容 / 链接</Label>
-                <Textarea
-                  id="content-input"
-                  role="textbox"
-                  placeholder="粘贴链接或输入文本内容，支持多个链接同时添加。"
-                  className="min-h-[120px] max-h-[120px] resize-none"
-                  value={content}
-                  onChange={(e) => handleContentChange(e.target.value)}
-                />
-              </div>
-
-              {/* 已检测到的链接显示 */}
-              {contentType === "url" && detectedUrls.length > 0 && (
-                <>
-                  <div className="space-y-2">
-                    <Label>检测到的链接</Label>
-                    <div className="space-y-2 max-h-32 overflow-y-auto">
-                      {detectedUrls.map((url, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between bg-muted p-2 rounded border border-muted"
-                        >
-                          <div className="flex items-center min-w-0 flex-1">
-                            <LinkIcon className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
-                            <span className="truncate text-sm">{url}</span>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeUrl(index)}
-                            className="ml-2 h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-            </>
-          )}
-
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="url-input">链接输入</Label>
-                    <Textarea
-                      id="url-input"
-                      role="textbox"
-                      placeholder="粘贴一个或多个链接，支持空格、分号、逗号或换行分隔"
-                      className="min-h-[80px] max-h-[200px] resize-none"
-                      value={content}
-                      onChange={(e) => handleContentChange(e.target.value)}
-                    />
-                  </div>
-                  {/* Title input removed; backend auto-extracts */}
-                </div>
-              </div>
-            )}
-
-            {contentType === "text" && (
-              <div className="w-full space-y-4">
+              {/* 文本/链接输入区域 */}
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="text-content">文本内容</Label>
+                  <Label htmlFor="content-input">文本内容 / 链接</Label>
                   <Textarea
-                    id="text-content"
+                    id="content-input"
                     role="textbox"
-                    placeholder="输入您想要添加的文本内容"
-                    className="min-h-[120px] max-h-[300px] resize-none"
+                    placeholder="粘贴链接或输入文本内容，支持多个链接同时添加。"
+                    className="min-h-[120px] max-h-[120px] resize-none"
                     value={content}
                     onChange={(e) => handleContentChange(e.target.value)}
                   />
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {content.length > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span>字符数: {content.length}</span>
-                        {content.length > 5000 && (
-                          <span className="text-amber-600 dark:text-amber-400">
-                            ⚠️ 内容较长，建议分段添加
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
                 </div>
-                {/* Title input removed; backend auto-extracts */}
-              </div>
-            )}
 
-            {contentType === "file" && (
-              <div className="w-full space-y-4">
-                <div className="space-y-2">
-                  <Label>已选择的文件 ({selectedFiles.length})</Label>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {selectedFiles.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700"
-                      >
-                        <div className="flex items-center min-w-0 flex-1">
-                          <FileText className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <span className="truncate text-sm block">
-                              {file.name}
-                            </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {(file.size / 1024).toFixed(1)} KB
-                            </span>
+                {/* 已检测到的链接显示 */}
+                {contentType === "url" && detectedUrls.length > 0 && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>检测到的链接</Label>
+                      <div className="space-y-2 max-h-32 overflow-y-auto">
+                        {detectedUrls.map((url, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between bg-muted p-2 rounded border border-muted"
+                          >
+                            <div className="flex items-center min-w-0 flex-1">
+                              <LinkIcon className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
+                              <span className="truncate text-sm">{url}</span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeUrl(index)}
+                              className="ml-2 h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
                           </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile(index)}
-                          className="ml-2 h-6 w-6 p-0 text-gray-500 hover:text-red-500"
-                          title="移除文件"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    添加更多文件
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={handleFileSelect}
-                  />
-                </div>
+                    </div>
+                  </>
+                )}
               </div>
-            )}
-          </div>
-
-              {/* 支持格式信息 */}
-              <div className="text-xs text-muted-foreground space-y-1">
-                <p>
-                  <strong>支持格式:</strong> PDF, Markdown, TXT, DOCX, URL, 纯文本
-                </p>
-              </div>
-            </div>
             </>
           )}
 
-          {/* 错误信息 */}
-          {error && (
-            <div className="text-destructive text-sm bg-destructive/10 dark:bg-destructive/20 p-2 rounded-md">
-              <AlertCircle className="h-4 w-4 inline mr-1" />
-              {error}
+          {contentType === "text" && (
+            <div className="w-full space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="text-content">文本内容</Label>
+                <Textarea
+                  id="text-content"
+                  role="textbox"
+                  placeholder="输入您想要添加的文本内容"
+                  className="min-h-[120px] max-h-[300px] resize-none"
+                  value={content}
+                  onChange={(e) => handleContentChange(e.target.value)}
+                />
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {content.length > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span>字符数: {content.length}</span>
+                      {content.length > 5000 && (
+                        <span className="text-amber-600 dark:text-amber-400">
+                          ⚠️ 内容较长，建议分段添加
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* Title input removed; backend auto-extracts */}
+            </div>
+          )}
+
+          {contentType === "file" && (
+            <div className="w-full space-y-4">
+              <div className="space-y-2">
+                <Label>已选择的文件 ({selectedFiles.length})</Label>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {selectedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700"
+                    >
+                      <div className="flex items-center min-w-0 flex-1">
+                        <FileText className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <span className="truncate text-sm block">
+                            {file.name}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {(file.size / 1024).toFixed(1)} KB
+                          </span>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                        className="ml-2 h-6 w-6 p-0 text-gray-500 hover:text-red-500"
+                        title="移除文件"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  添加更多文件
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+              </div>
             </div>
           )}
         </div>
+
+        {/* 错误信息 */}
+        {error && (
+          <div className="text-destructive text-sm bg-destructive/10 dark:bg-destructive/20 p-2 rounded-md">
+            <AlertCircle className="h-4 w-4 inline mr-1" />
+            {error}
+          </div>
+        )}
 
         <AlertDialogFooter className="flex-shrink-0 space-x-2">
           <Button
@@ -582,7 +537,10 @@ export const AddContentModal: FC<AddContentModalProps> = ({
             {view === "input" ? "上传本地文件" : "输入链接 / 文本"}
           </Button>
           <AlertDialogAction
-            className={cn(buttonVariants({ size: "sm" }), "min-w-[4rem] bg-primary hover:bg-primary/90")}
+            className={cn(
+              buttonVariants({ size: "sm" }),
+              "min-w-[4rem] bg-primary hover:bg-primary/90",
+            )}
             onClick={handleAddContent}
             disabled={
               isLoading ||

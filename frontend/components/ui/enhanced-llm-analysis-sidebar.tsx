@@ -52,7 +52,7 @@ interface HistoricalAnalysis {
 
 export const EnhancedLLMAnalysisSidebar: FC<
   EnhancedLLMAnalysisSidebarProps
-> = ({ contentId, className = "", contentText = "", onLoaded }) => {
+> = ({ contentId, className = "", contentText = "" }) => {
   // 采用远程分支的设计：固定为analysis视图，简化组件
   const activeTab = "analysis" as const;
   const [historicalAnalyses, setHistoricalAnalyses] = useState<LLMAnalysis[]>(

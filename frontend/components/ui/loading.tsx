@@ -12,7 +12,7 @@ interface LoadingProps {
 
 /**
  * 统一的加载指示器组件
- * 
+ *
  * 用法：
  * <Loading />
  * <Loading message="正在上传..." />
@@ -29,4 +29,4 @@ export const Loading: React.FC<LoadingProps> = ({
       </div>
     </div>
   );
-}; 
+};

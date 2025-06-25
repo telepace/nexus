@@ -39,9 +39,7 @@ describe("PromptCommandDialog", () => {
   it("should render dialog with input field", () => {
     render(<PromptCommandDialog {...defaultProps} />);
 
-    expect(
-      screen.getByPlaceholderText("ask something..."),
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("ask something...")).toBeInTheDocument();
     expect(screen.getByRole("button", { hidden: true })).toBeInTheDocument();
   });
 

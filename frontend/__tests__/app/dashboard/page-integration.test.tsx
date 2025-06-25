@@ -57,7 +57,7 @@ describe("DashboardPage 集成测试", () => {
   it("应该显示加载状态", () => {
     render(<DashboardPage />);
 
-    expect(screen.getByText("Loading content...")).toBeInTheDocument();
+    expect(screen.getByText("加载中...")).toBeInTheDocument();
   });
 
   it("应该显示错误信息当API失败时", async () => {

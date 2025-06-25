@@ -1,6 +1,6 @@
 "use client";
 
-import { Brain, FileText, Target, Sparkles, Lightbulb } from "lucide-react";
+import { BookOpen, Lightbulb, Tag, MessageSquare } from "lucide-react";
 import type { ContentItemPublic } from "../types";
 
 interface Props {
@@ -43,7 +43,7 @@ export const AIAnalysisCard = ({ analysis }: Props) => {
       <div key={index}>
         <div className="mb-2">
           <div className="inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow">
-            <Sparkles className="h-3 w-3" />
+            <MessageSquare className="h-3 w-3" />
             <span className="text-xs font-medium">{title}</span>
           </div>
         </div>
@@ -62,7 +62,7 @@ export const AIAnalysisCard = ({ analysis }: Props) => {
         <div>
           <div className="mb-2">
             <div className="inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow">
-              <FileText className="h-3 w-3" />
+              <BookOpen className="h-3 w-3" />
               <span className="text-xs font-medium ">智能总结</span>
             </div>
           </div>
@@ -82,7 +82,7 @@ export const AIAnalysisCard = ({ analysis }: Props) => {
         <div>
           <div className="mb-2">
             <div className="inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow">
-              <Target className="h-3 w-3" />
+              <Tag className="h-3 w-3" />
               <span className="text-xs font-medium">关键要点</span>
             </div>
           </div>

@@ -5,22 +5,9 @@ import { useAuth, getCookie } from "@/lib/client-auth";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { contentCache } from "@/lib/services/content-cache";
-import { navigationState } from "@/lib/services/navigation-state";
 import { useContentEvents, ContentEvent } from "@/hooks/useContentEvents";
 import { eventBus } from "@/lib/event-bus";
 import type { ContentItemPublic } from "../types";
-
-// 简单的防抖
-function debounce<T extends (...args: never[]) => void>(
-  func: T,
-  delay: number,
-) {
-  let timeoutId: NodeJS.Timeout;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay);
-  };
-}
 
 interface PrefetchStats {
   total: number;

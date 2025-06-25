@@ -12,7 +12,6 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import { AIResult, ConversationListResponse } from "@/lib/api/content";
-import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
 
 // 创建上下文来传递内容更新函数和分析数据
 const ReaderContext = createContext<{
@@ -46,13 +45,7 @@ export default function ReaderLayout({
   const [conversations, setConversations] = useState<
     ConversationListResponse["conversations"]
   >([]);
-  const [leftReady, setLeftReady] = useState(false);
-  const [rightReady, setRightReady] = useState(false);
-
-  const overlayVisible = !(leftReady && rightReady);
-
-  const markLeftReady = useCallback(() => setLeftReady(true), []);
-  const markRightReady = useCallback(() => setRightReady(true), []);
+  const markLeftReady = useCallback(() => {}, []);
 
   // 提供给 children 的上下文方法，让 ReaderContent 可以更新内容文本
   const handleContentChange = useCallback((text: string) => {
@@ -104,7 +97,8 @@ export default function ReaderLayout({
             >
               <ReaderContext.Provider
                 value={{
-                  onContentChange: handleContentChange, markLeftReady,
+                  onContentChange: handleContentChange,
+                  markLeftReady,
                   onAnalysisUpdate: handleAnalysisUpdate,
                   onConversationsUpdate: handleConversationsUpdate,
                   analysisResult,
@@ -132,7 +126,6 @@ export default function ReaderLayout({
                 contentText={contentText}
                 analysisResult={analysisResult}
                 conversations={conversations}
-                onLoaded={markRightReady}
                 className="border-l-0" // 移除左边框，因为已有分割线
               />
             </ResizablePanel>
