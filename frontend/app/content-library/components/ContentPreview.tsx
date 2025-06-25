@@ -100,7 +100,7 @@ export const ContentPreview = ({ item }: Props) => {
 
   if (!panels.length && !item) {
     return (
-      <div className="h-full shadow-macos-window bg-neutral-100 rounded-sm flex flex-col overflow-hidden">
+      <div className="h-full shadow-macos-window linear-bg-2 rounded-sm flex flex-col overflow-hidden">
         <div className="flex items-center h-header px-4">
           <div className="flex items-center gap-2 text-base font-medium">
             <FileText className="h-5 w-5" />
@@ -319,14 +319,13 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
 
   useEffect(() => {
     containerRef.current?.scrollTo({ top: 0 });
-    containerRef.current?.focus?.();
   }, []);
 
   return (
     <div
       ref={containerRef}
       tabIndex={-1}
-      className="h-full shadow-macos-window bg-neutral-100 rounded-sm flex flex-col overflow-hidden"
+      className="h-full shadow-macos-window linear-bg-2 rounded-sm flex flex-col overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center h-header px-4">
@@ -421,15 +420,14 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
           {/* 标签 */}
           {aiResult?.labels && aiResult.labels.length > 0 && (
             <div>
-              <label className="text-sm font-medium text-muted-foreground block mb-3 flex items-center gap-1">
-                <Tag className="h-4 w-4" />
+              <label className="text-sm font-medium text-muted-foreground block mb-3">
                 标签
               </label>
               <div className="flex flex-wrap gap-2">
                 {aiResult.labels.map((label, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200"
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-muted text-muted-foreground border border-border"
                   >
                     {label}
                   </span>
@@ -445,7 +443,7 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
                 <label className="text-sm font-medium text-muted-foreground block mb-2">
                   简短描述
                 </label>
-                <p className="text-sm leading-relaxed bg-blue-50 p-3 rounded-lg border border-blue-100">
+                <p className="text-sm leading-relaxed p-3 rounded-lg">
                   {aiResult.brief_description}
                 </p>
               </div>
@@ -456,7 +454,7 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
                 <label className="text-sm font-medium text-muted-foreground block mb-2">
                   来源
                 </label>
-                <p className="text-sm break-all bg-muted/30 p-3 rounded-lg">
+                <p className="text-sm break-all p-3 rounded-lg">
                   <a
                     href={item.source_uri}
                     target="_blank"
