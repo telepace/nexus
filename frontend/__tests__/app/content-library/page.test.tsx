@@ -176,6 +176,8 @@ describe("ContentLibraryPage", () => {
     // 不再有过滤控件和排序控件
     expect(screen.queryByDisplayValue("所有状态")).not.toBeInTheDocument();
     expect(screen.queryByDisplayValue("所有类型")).not.toBeInTheDocument();
-    expect(screen.queryByDisplayValue("创建时间 (新→旧)")).not.toBeInTheDocument();
+    expect(
+      screen.queryByDisplayValue("创建时间 (新→旧)"),
+    ).not.toBeInTheDocument();
   });
 });
