@@ -334,10 +334,10 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
       </div>
 
       {/* Body */}
-      <div className="pb-4 flex-1 overflow-auto mt-12">
+      <div className="pb-4 flex-1 overflow-auto">
         <div className="space-y-6 max-w-[28rem] mx-auto">
           {/* 标题和评分 */}
-          <div className="space-y-3">
+          <div className="space-y-3 mt-12">
             <h3 className="font-semibold text-lg">{item.title || "无标题"}</h3>
 
             {/* 查看全文按钮 */}
