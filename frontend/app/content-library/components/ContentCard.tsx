@@ -177,11 +177,6 @@ export const ContentCard = ({
                     <span>{aiResult.reading_time_minutes} 分钟</span>
                   </div>
                 )}
-
-                {/* 难度等级 */}
-                {hasDifficulty && (
-                  <DifficultyBadge level={aiResult.difficulty_level!} />
-                )}
               </div>
 
               <div className="flex items-center gap-2">

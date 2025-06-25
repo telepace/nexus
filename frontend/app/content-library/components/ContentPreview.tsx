@@ -44,21 +44,19 @@ const DifficultyLevel = ({ level }: { level: string }) => {
   const config = {
     beginner: {
       label: "入门",
-      color: "bg-green-50 text-green-700 border-green-200",
     },
     intermediate: {
       label: "中级",
-      color: "bg-yellow-50 text-yellow-700 border-yellow-200",
     },
-    advanced: { label: "高级", color: "bg-red-50 text-red-700 border-red-200" },
+    advanced: { label: "高级" },
   };
 
-  const { label, color } =
+  const { label } =
     config[level as keyof typeof config] || config.intermediate;
 
   return (
     <span
-      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${color}`}
+      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-foreground bg-transparent shadow"
     >
       <TrendingUp className="h-3 w-3 mr-1" />
       {label}
@@ -342,30 +340,7 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
           <div className="space-y-3">
             <h3 className="font-semibold text-lg">{item.title || "无标题"}</h3>
 
-            {/* 质量评分 */}
-            {aiResult?.content_quality_score != null && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground block mb-2">
-                  内容质量
-                </label>
-                <StarRating score={aiResult.content_quality_score} />
-              </div>
-            )}
-
-            {/* 阅读时间和难度 */}
-            <div className="flex items-center gap-4">
-              {aiResult?.reading_time_minutes != null && (
-                <div className="flex items-center gap-1 text-sm text-neutral-600">
-                  <Clock className="h-4 w-4" />
-                  <span>{aiResult.reading_time_minutes} 分钟阅读</span>
-                </div>
-              )}
-
-              {aiResult?.difficulty_level && (
-                <DifficultyLevel level={aiResult.difficulty_level} />
-              )}
-            </div>
-
+            {/* 查看全文按钮 */}
             <div className="mb-4">
               <div
                 role="button"
@@ -384,6 +359,16 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
                 <span className="text-xs font-medium">查看全文</span>
               </div>
             </div>
+
+            {/* 质量评分 */}
+            {aiResult?.content_quality_score != null && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground block mb-2">
+                  内容质量
+                </label>
+                <StarRating score={aiResult.content_quality_score} />
+              </div>
+            )}
           </div>
 
           {/* AI 摘要和关键要点 */}
@@ -427,7 +412,7 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
                 {aiResult.labels.map((label, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-muted text-muted-foreground border border-border"
+                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-base bg-muted text-muted-foreground"
                   >
                     {label}
                   </span>
@@ -448,44 +433,6 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
                 </p>
               </div>
             )}
-
-            {item.source_uri && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground block mb-2">
-                  来源
-                </label>
-                <p className="text-sm break-all p-3 rounded-lg">
-                  <a
-                    href={item.source_uri}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline break-all"
-                  >
-                    {item.source_uri}
-                  </a>
-                </p>
-              </div>
-            )}
-
-            {/* 日期信息 */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <label className="text-muted-foreground block mb-1">
-                  创建时间
-                </label>
-                <div className="flex items-center gap-1">
-                  {new Date(item.created_at).toLocaleDateString("zh-CN")}
-                </div>
-              </div>
-              <div>
-                <label className="text-muted-foreground block mb-1">
-                  更新时间
-                </label>
-                <div className="flex items-center gap-1">
-                  {new Date(item.updated_at).toLocaleDateString("zh-CN")}
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* AI 分析 - 其他分析内容 */}
