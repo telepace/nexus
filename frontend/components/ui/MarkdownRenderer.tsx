@@ -1,23 +1,27 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useEffect, useRef } from "react"; // Added useEffect, useRef
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
-import remarkMath from "remark-math";
-import remarkToc from "remark-toc";
 import rehypeHighlight from "rehype-highlight";
-import rehypeKatex from "rehype-katex";
-import rehypeAutolinkHeadings from "rehype-autolink-headings";
-import mediumZoom from "medium-zoom";
-import copy from "copy-to-clipboard";
-import { cn, normalizeImageUrl } from "@/lib/utils";
-import { OptimizedImage } from "./OptimizedImage";
+import remarkToc from "remark-toc"; // Added
+import rehypeAutolinkHeadings from "rehype-autolink-headings"; // Added
+import remarkMath from "remark-math"; // Added
+import rehypeKatex from "rehype-katex"; // Added
+import mediumZoom from "medium-zoom"; // Added
+import copy from "copy-to-clipboard"; // Added
+import { OptimizedImage } from "./OptimizedImage"; // 添加OptimizedImage组件导入
+
+// 移除 rehypeRaw 插件，避免未知HTML标签错误
+// import rehypeRaw from 'rehype-raw'
+import { cn } from "@/lib/utils";
+import { normalizeImageUrl } from "@/lib/utils";
 
 // Import highlight.js styles
 import "highlight.js/styles/github-dark.css";
 import "highlight.js/styles/github.css";
-import "katex/dist/katex.min.css"; // KaTeX CSS
+import "katex/dist/katex.min.css"; // Added KaTeX CSS
 
 interface MarkdownRendererProps {
   content: string | null;
@@ -71,7 +75,7 @@ export function MarkdownRenderer({
 
   return (
     <div
-      ref={contentRef}
+      ref={contentRef} // Added ref
       data-testid="markdown-renderer"
       className={cn(
         "prose prose-slate dark:prose-invert max-w-none",

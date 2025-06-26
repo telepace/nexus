@@ -16,12 +16,6 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
-import { 
-  AnalysisCards, 
-  adaptAnalysisData, 
-  SummaryCard, 
-  KeyPointsCard 
-} from "@/components/ai/AnalysisCards";
 
 // 星级评分组件
 const StarRating = ({ score }: { score: number }) => {
@@ -147,6 +141,173 @@ export const ContentPreview = ({ item }: Props) => {
   );
 };
 
+// 内容摘要卡片组件
+const SummaryCard = ({ summary }: { summary: unknown | null }) => {
+  if (!summary) return null;
+
+  let summaryText = "";
+
+  // 处理不同格式的摘要
+  if (typeof summary === "string") {
+    summaryText = summary;
+  } else if (summary && typeof summary === "object") {
+    const summaryObj = summary as Record<string, unknown>;
+    if (summaryObj.text && typeof summaryObj.text === "string") {
+      summaryText = summaryObj.text;
+    } else if (summaryObj.content && typeof summaryObj.content === "string") {
+      summaryText = summaryObj.content;
+    } else if (summaryObj.summary && typeof summaryObj.summary === "string") {
+      summaryText = summaryObj.summary;
+    } else if (summaryObj.raw_text && typeof summaryObj.raw_text === "string") {
+      summaryText = summaryObj.raw_text;
+    } else {
+      // 尝试找到最长的字符串值
+      const values = Object.values(summaryObj).filter(
+        (val) => typeof val === "string" && val.length > 50,
+      );
+      summaryText = (values[0] as string) || JSON.stringify(summary);
+    }
+  }
+
+  if (!summaryText) return null;
+
+  return (
+    <Card className="h-full analysis-card shadow-sm hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3 pt-4">
+        <CardTitle className="flex items-center gap-2 text-sm text-foreground">
+          <BookOpen className="h-4 w-4 text-foreground" />
+          内容摘要
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-3">
+        <div className="text-sm text-muted-foreground leading-relaxed reading-content">
+          <MarkdownRenderer
+            content={summaryText}
+            className="prose prose-sm max-w-none dark:prose-invert
+              prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-2 prose-p:mt-0
+              prose-strong:text-foreground prose-em:text-foreground
+              prose-li:text-muted-foreground prose-li:leading-relaxed prose-li:mb-1
+              prose-headings:text-foreground prose-headings:text-sm prose-headings:font-medium prose-headings:mb-2
+              [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// 关键要点卡片组件
+const KeyPointsCard = ({ keyPoints }: { keyPoints: unknown | null }) => {
+  if (!keyPoints) return null;
+
+  let points: string[] = [];
+  let keyPointsContent = "";
+
+  // 尝试提取要点数组
+  if (keyPoints && typeof keyPoints === "object") {
+    const keyPointsObj = keyPoints as Record<string, unknown>;
+
+    if (Array.isArray(keyPointsObj.points)) {
+      points = keyPointsObj.points.map((p) =>
+        typeof p === "string" ? p : JSON.stringify(p),
+      );
+    } else if (Array.isArray(keyPointsObj.items)) {
+      points = keyPointsObj.items.map((p) =>
+        typeof p === "string" ? p : JSON.stringify(p),
+      );
+    } else if (Array.isArray(keyPointsObj.key_points)) {
+      points = keyPointsObj.key_points.map((p) =>
+        typeof p === "string" ? p : JSON.stringify(p),
+      );
+    } else if (Array.isArray(keyPoints)) {
+      points = (keyPoints as unknown[]).map((p) =>
+        typeof p === "string" ? p : JSON.stringify(p),
+      );
+    } else {
+      // 尝试获取原始文本内容（可能是markdown格式）
+      keyPointsContent =
+        (keyPointsObj.text as string) ||
+        (keyPointsObj.content as string) ||
+        (keyPointsObj.markdown as string) ||
+        (keyPointsObj.raw_text as string) ||
+        (Object.values(keyPointsObj || {}).find(
+          (val) => typeof val === "string" && val.length > 50,
+        ) as string) ||
+        "";
+
+      if (!keyPointsContent) {
+        points = Object.values(keyPointsObj || {})
+          .filter((val) => typeof val === "string" && val.length > 10)
+          .map((val) => val as string);
+      }
+    }
+  }
+
+  if (!keyPointsContent && points.length === 0) return null;
+
+  return (
+    <Card className="h-full analysis-card shadow-sm hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3 pt-4">
+        <CardTitle className="flex items-center gap-2 text-sm text-foreground">
+          <Lightbulb className="h-4 w-4 text-foreground" />
+          关键要点
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-3">
+        {/* 如果有markdown内容，直接渲染 */}
+        {keyPointsContent ? (
+          <div className="text-sm text-muted-foreground leading-relaxed reading-content">
+            <MarkdownRenderer
+              content={keyPointsContent}
+              className="prose prose-sm max-w-none dark:prose-invert
+                prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-2 prose-p:mt-0
+                prose-strong:text-foreground prose-em:text-foreground
+                prose-li:text-muted-foreground prose-li:leading-relaxed prose-li:mb-1
+                prose-ul:mb-2 prose-ol:mb-2 prose-ul:mt-0 prose-ol:mt-0
+                prose-headings:text-foreground prose-headings:text-sm prose-headings:font-medium prose-headings:mb-2
+                [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+            />
+          </div>
+        ) : (
+          /* 如果是要点数组，使用自定义样式 */
+          <div className="space-y-2">
+            {points.length > 0 ? (
+              points.slice(0, 5).map((point, index) => (
+                <div key={index} className="flex gap-2 items-start">
+                  <div className="flex-shrink-0 w-4 h-4 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center text-xs font-medium text-amber-700 dark:text-amber-300 mt-0.5">
+                    {index + 1}
+                  </div>
+                  <div className="text-sm text-muted-foreground leading-relaxed reading-content">
+                    <MarkdownRenderer
+                      content={point}
+                      className="prose prose-sm max-w-none dark:prose-invert
+                        prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-1 prose-p:mt-0
+                        prose-strong:text-foreground prose-em:text-foreground
+                        [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                    />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-sm text-muted-foreground reading-content">
+                <MarkdownRenderer
+                  content={JSON.stringify(keyPoints)}
+                  className="prose prose-sm max-w-none dark:prose-invert"
+                />
+              </div>
+            )}
+            {points.length > 5 && (
+              <div className="text-xs text-muted-foreground ml-6">
+                +{points.length - 5} 个更多要点
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 // 子组件渲染实际内容，避免重复
 const PanelContent = ({ item }: { item: ContentItemPublic }) => {
   const router = useRouter();
@@ -157,9 +318,6 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
   useEffect(() => {
     containerRef.current?.scrollTo({ top: 0 });
   }, []);
-
-  // 使用适配器函数统一数据格式
-  const unifiedData = adaptAnalysisData(aiResult, aiAnalysis);
 
   return (
     <div
@@ -213,21 +371,33 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
             )}
           </div>
 
-          {/* AI 摘要和关键要点 - 使用统一组件 */}
+          {/* AI 摘要和关键要点 */}
           <div className="space-y-4">
-            {/* 内容摘要 */}
-            {unifiedData.summary && (
-              <SummaryCard 
-                summary={unifiedData.summary} 
-                variant="preview"
+            {/* 内容摘要 - 优先显示 AI 分析结果中的摘要 */}
+            {(aiAnalysis?.summarizer?.summary ||
+              aiAnalysis?.summarizer?.raw_text ||
+              aiResult?.summary ||
+              item.summary) && (
+              <SummaryCard
+                summary={
+                  aiAnalysis?.summarizer?.summary ||
+                  aiAnalysis?.summarizer?.raw_text ||
+                  aiResult?.summary ||
+                  item.summary
+                }
               />
             )}
 
-            {/* 关键要点 */}
-            {unifiedData.keyPoints && (
-              <KeyPointsCard 
-                keyPoints={unifiedData.keyPoints} 
-                variant="preview"
+            {/* 关键要点 - 优先显示 AI 分析结果中的关键要点 */}
+            {(aiAnalysis?.key_points_extractor?.key_points ||
+              aiAnalysis?.key_points_extractor?.raw_text ||
+              aiResult?.key_points) && (
+              <KeyPointsCard
+                keyPoints={
+                  aiAnalysis?.key_points_extractor?.key_points ||
+                  aiAnalysis?.key_points_extractor?.raw_text ||
+                  aiResult?.key_points
+                }
               />
             )}
           </div>

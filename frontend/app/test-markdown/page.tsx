@@ -112,15 +112,15 @@ export default function TestMarkdownPage() {
             {/* 新markdown格式测试 */}
             <div className="space-y-4">
               <h3 className="font-semibold">新 Markdown 格式</h3>
-              <SummaryCard summary={mockSummaryData} variant="default" />
-              <KeyPointsCard keyPoints={mockKeyPointsData} variant="default" />
+              <SummaryCard summary={mockSummaryData} />
+              <KeyPointsCard keyPoints={mockKeyPointsData} />
             </div>
 
             {/* 传统格式测试 */}
             <div className="space-y-4">
               <h3 className="font-semibold">传统格式（向后兼容）</h3>
-              <SummaryCard summary={mockLegacySummaryData} variant="default" />
-              <KeyPointsCard keyPoints={mockLegacyKeyPointsData} variant="default" />
+              <SummaryCard summary={mockLegacySummaryData} />
+              <KeyPointsCard keyPoints={mockLegacyKeyPointsData} />
             </div>
           </div>
         </div>
