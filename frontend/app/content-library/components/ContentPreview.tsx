@@ -33,17 +33,17 @@ const StarRating = ({ score }: { score: number }) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex items-center gap-1 cursor-help">
+        <div className="inline-flex items-center gap-0.5">
           {Array.from({ length: 5 }).map((_, i) => (
             <Star
               key={i}
-              className={`h-4 w-4 ${
+              className={`h-3 w-3 ${
                 i < fullStars ? "fill-amber-400 text-amber-400" : "text-neutral-300"
               }`}
             />
           ))}
-          <span className="text-sm text-neutral-600 ml-2">
-            {ratingScore} / 5.0
+          <span className="text-xs text-neutral-500 ml-1">
+            {ratingScore}/5.0
           </span>
         </div>
       </TooltipTrigger>
@@ -187,7 +187,7 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
       {/* Body */}
       <div className="pb-4 flex-1 overflow-auto">
         <div className="space-y-6 max-w-[28rem] mx-auto">
-          {/* 标题和评分 */}
+          {/* 标题 */}
           <div className="space-y-3 mt-12">
             <h3 className="font-semibold text-lg">{item.title || "无标题"}</h3>
 
@@ -210,16 +210,6 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
                 <span className="text-xs font-medium">查看全文</span>
               </div>
             </div>
-
-            {/* 质量评分 */}
-            {aiResult?.content_quality_score != null && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground block mb-2">
-                  内容质量
-                </label>
-                <StarRating score={aiResult.content_quality_score} />
-              </div>
-            )}
           </div>
 
           {/* AI 摘要和关键要点 - 使用统一组件 */}
@@ -276,6 +266,16 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
 
           {/* AI 分析 - 其他分析内容 */}
           <AIAnalysisCard analysis={item.ai_analysis} />
+
+          {/* 内容质量评分 - 移到最底部 */}
+          {aiResult?.content_quality_score != null && (
+            <div>
+              <label className="text-sm font-medium text-muted-foreground block mb-2">
+                内容质量
+              </label>
+              <StarRating score={aiResult.content_quality_score} />
+            </div>
+          )}
         </div>
       </div>
     </div>

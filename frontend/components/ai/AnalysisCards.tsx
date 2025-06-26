@@ -60,7 +60,7 @@ function getVariantStyles(variant: 'default' | 'sidebar' | 'preview' = 'default'
   const baseStyles = {
     card: "h-full border-0 rounded-md max-w-[35rem] bg-transparent shadow-none",
     header: "py-3 px-4",
-    title: "inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow cursor-pointer transition text-xs font-medium text-neutral-950 dark:text-neutral-100 w-fit bg-transparent",
+    title: "inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow transition text-xs font-medium text-neutral-950 dark:text-neutral-100 w-fit bg-transparent",
     icon: "h-2 w-2 text-neutral-950 dark:text-neutral-100",
     content: "px-4",
     text: "text-sm leading-relaxed text-neutral-950 dark:text-neutral-50",
@@ -73,7 +73,7 @@ function getVariantStyles(variant: 'default' | 'sidebar' | 'preview' = 'default'
         ...baseStyles,
         card: "h-full analysis-card border-0 rounded-md max-w-[35rem] mx-auto bg-transparent shadow-none",
         header: "pb-3 pt-4 px-4",
-        title: "inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow cursor-pointer transition text-xs font-medium text-neutral-950 dark:text-neutral-100 w-fit bg-transparent",
+        title: "inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow transition text-xs font-medium text-neutral-950 dark:text-neutral-100 w-fit bg-transparent",
         icon: "h-3 w-3 text-neutral-950 dark:text-neutral-100",
         content: "px-8 pb-4",
         text: "text-sm text-neutral-950 dark:text-neutral-50 leading-relaxed reading-content",
@@ -83,7 +83,7 @@ function getVariantStyles(variant: 'default' | 'sidebar' | 'preview' = 'default'
         ...baseStyles,
         card: "h-full analysis-card border-0 rounded-md max-w-[35rem] mx-auto bg-transparent shadow-none hover:shadow-none",
         header: "pb-3 pt-4 !px-0",
-        title: "inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow cursor-pointer transition text-xs font-medium text-neutral-950 dark:text-neutral-100 w-fit bg-transparent",
+        title: "inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow transition text-xs font-medium text-neutral-950 dark:text-neutral-100 w-fit bg-transparent",
         icon: "h-3 w-3 text-neutral-950 dark:text-neutral-100",
         content: "pb-3 !px-0",
         text: "text-sm text-neutral-950 dark:text-neutral-50 leading-relaxed reading-content",
@@ -91,7 +91,7 @@ function getVariantStyles(variant: 'default' | 'sidebar' | 'preview' = 'default'
     default:
       return {
         ...baseStyles,
-        title: "inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow cursor-pointer transition text-xs font-medium text-neutral-950 dark:text-neutral-100 w-fit bg-transparent",
+        title: "inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow transition text-xs font-medium text-neutral-950 dark:text-neutral-100 w-fit bg-transparent",
         icon: "h-2 w-2 text-neutral-950 dark:text-neutral-100",
         text: "text-sm text-neutral-950 dark:text-neutral-50 leading-relaxed",
       };
@@ -327,7 +327,7 @@ export const MetadataCard = ({
             <span className="text-sm text-muted-foreground">内容质量评分:</span>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center gap-1 cursor-help">
+                <div className="inline-flex items-center gap-1">
                   {Array.from({ length: 5 }).map((_, i) => {
                     const stars = Math.round(qualityScore * 5);
                     const fullStars = Math.floor(stars);

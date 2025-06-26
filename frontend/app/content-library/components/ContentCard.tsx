@@ -42,7 +42,7 @@ const StarRating = ({ score }: { score: number }) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex items-center gap-0.5 cursor-help">
+        <div className="inline-flex items-center gap-0.5">
           {Array.from({ length: 5 }).map((_, i) => (
             <Star
               key={i}
