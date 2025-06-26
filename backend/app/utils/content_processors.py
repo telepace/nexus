@@ -988,51 +988,51 @@ class FirecrawlProcessor(ProcessingStep):
         try:
             # 使用同步 firecrawl-py 库
             from firecrawl import FirecrawlApp
-            
+
             app = FirecrawlApp(api_key=self.api_key)
-            
+
             # 配置参数以只保留主要内容
             params = {
-                'formats': ['markdown'],
-                'onlyMainContent': True,  # 只保留主要内容
-                'waitFor': 0  # 不等待，快速返回
+                "formats": ["markdown"],
+                "onlyMainContent": True,  # 只保留主要内容
+                "waitFor": 0,  # 不等待，快速返回
             }
-            
+
             response = app.scrape_url(url=content_item.source_uri, params=params)
 
             if response and isinstance(response, dict):
                 # 提取markdown内容
                 markdown_content = ""
-                if 'markdown' in response:
-                    markdown_content = response['markdown']
-                elif 'data' in response and isinstance(response['data'], dict):
-                    markdown_content = response['data'].get('markdown', '')
-                
+                if "markdown" in response:
+                    markdown_content = response["markdown"]
+                elif "data" in response and isinstance(response["data"], dict):
+                    markdown_content = response["data"].get("markdown", "")
+
                 if not markdown_content:
                     result.success = False
                     result.error_message = "Firecrawl 未返回有效的 markdown 内容"
                     return result
-                
+
                 # 清理内容
                 markdown_content = clean_content_for_db(markdown_content)
 
                 # 自动提取标题（简化版）
                 if should_update_title(content_item.title):
                     title = None
-                    
+
                     # 优先从metadata提取
-                    if 'metadata' in response:
-                        title = response['metadata'].get('title')
-                    elif 'data' in response and 'metadata' in response['data']:
-                        title = response['data']['metadata'].get('title')
-                    
+                    if "metadata" in response:
+                        title = response["metadata"].get("title")
+                    elif "data" in response and "metadata" in response["data"]:
+                        title = response["data"]["metadata"].get("title")
+
                     # 回退到markdown标题
                     if not title and markdown_content:
-                        for line in markdown_content.split('\n'):
-                            if line.startswith('# '):
+                        for line in markdown_content.split("\n"):
+                            if line.startswith("# "):
                                 title = line[2:].strip()
                                 break
-                    
+
                     if title:
                         content_item.title = clean_content_for_db(title)[:255]
                         logger.info(f"✅ 提取到标题: {content_item.title}")
@@ -1042,7 +1042,7 @@ class FirecrawlProcessor(ProcessingStep):
                     "processor": "firecrawl",
                     "processed_at": datetime.utcnow().isoformat(),
                     "content_length": len(markdown_content),
-                    "only_main_content": True
+                    "only_main_content": True,
                 }
 
                 # 更新结果
@@ -1088,8 +1088,9 @@ class FirecrawlProcessor(ProcessingStep):
             content_item.content_text = markdown_content
             if metadata:
                 import json
+
                 content_item.meta_info = json.dumps(metadata)
-            
+
             context.session.add(content_item)
             context.session.commit()
 
