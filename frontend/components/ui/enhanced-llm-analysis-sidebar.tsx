@@ -364,17 +364,7 @@ export const EnhancedLLMAnalysisSidebar: FC<
 
   return (
     <div className={`flex flex-col h-full bg-transparent ${className}`}>
-      {/* 1. Header */}
-      <div className="flex items-center justify-between h-header px-4 shrink-0 border-b">
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm font-medium">AI 智能分析</h2>
-        </div>
-        <Button variant="ghost" size="icon" onClick={loadHistoricalAnalyses}>
-          <History className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* 2. Content Body */}
+      {/* Content Body */}
       <div className="flex-1 overflow-y-auto px-1">
         <Tabs value={activeTab} className="h-full">
           {/* 分析标签页 */}
@@ -454,7 +444,7 @@ export const EnhancedLLMAnalysisSidebar: FC<
         </Tabs>
       </div>
 
-      {/* 3. Footer */}
+      {/* Footer */}
       <div className="shrink-0 p-4 bg-muted/20">
         <div className="space-y-3">
           {/* 推荐提示 */}

@@ -118,10 +118,10 @@ export default function ReaderLayout({
         {/* 主内容区域 - 使用可调整大小的面板 */}
         <div className="flex-1 flex w-full min-w-0 h-screen">
           <ResizablePanelGroup direction="horizontal" className="h-full">
-            {/* 主阅读区域 - 默认占60%，可调整 */}
+            {/* 主阅读区域 - 默认占50%，可调整 */}
             <ResizablePanel
-              defaultSize={60}
-              minSize={40}
+              defaultSize={50}
+              minSize={30}
               maxSize={80}
               className="flex flex-col"
             >
@@ -142,9 +142,9 @@ export default function ReaderLayout({
             {/* 可拖拽的分割线 */}
             <ResizableHandle className="bg-border hover:bg-primary/20 transition-colors" />
 
-            {/* AI 分析区域 - 默认占40%，可调整 */}
+            {/* AI 分析区域 - 默认占50%，可调整 */}
             <ResizablePanel
-              defaultSize={40}
+              defaultSize={50}
               minSize={20}
               maxSize={70}
               className="flex flex-col bg-muted/30"
@@ -157,15 +157,27 @@ export default function ReaderLayout({
                   isLoading={loading}
                 />
               ) : (
-                <div className="w-80 bg-muted/30 border-l border-border">
-                  <div className="p-4 space-y-4">
-                    <div className="animate-pulse">
-                      <div className="h-4 bg-muted rounded mb-2"></div>
-                      <div className="h-20 bg-muted rounded"></div>
+                <div className="flex flex-col h-full bg-background">
+                  {/* Header Skeleton */}
+                  <div className="flex items-center justify-between px-4 border-b h-header">
+                    <div className="w-20 h-6 bg-muted rounded animate-pulse"></div>
+                  </div>
+                  
+                  {/* Tabs Skeleton */}
+                  <div className="flex-shrink-0 px-4 py-3">
+                    <div className="grid w-full grid-cols-3 gap-1 p-1 bg-muted rounded-lg">
+                      <div className="h-7 bg-background rounded animate-pulse"></div>
+                      <div className="h-7 bg-muted rounded animate-pulse"></div>
+                      <div className="h-7 bg-muted rounded animate-pulse"></div>
                     </div>
-                    <div className="animate-pulse">
-                      <div className="h-4 bg-muted rounded mb-2"></div>
-                      <div className="h-32 bg-muted rounded"></div>
+                  </div>
+                  
+                  {/* Content Body Skeleton */}
+                  <div className="flex-1 min-h-0 overflow-auto px-4 space-y-4">
+                    <div className="space-y-4">
+                      <div className="w-full h-32 bg-muted rounded-lg animate-pulse"></div>
+                      <div className="w-full h-40 bg-muted rounded-lg animate-pulse"></div>
+                      <div className="w-full h-28 bg-muted rounded-lg animate-pulse"></div>
                     </div>
                   </div>
                 </div>

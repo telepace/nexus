@@ -28,30 +28,29 @@ const LeftPanelSkeleton = () => (
 
 // 右侧 AI 分析面板的骨架
 const RightPanelSkeleton = () => (
-  <div className="flex flex-col h-full">
+  <div className="flex flex-col h-full bg-background">
     {/* Header Skeleton */}
-    <div className="flex items-center justify-between h-header px-4 shrink-0 border-b">
-      <div className="w-32 h-6 bg-muted rounded"></div>
-      <div className="w-8 h-8 bg-muted rounded"></div>
+    <div className="flex items-center justify-between px-4 border-b h-header">
+      <div className="w-20 h-6 bg-muted rounded"></div>
     </div>
-    {/* Content Body Skeleton */}
-    <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-      {/* 推荐提示骨架 */}
-      <div className="space-y-2">
-        <div className="w-full h-8 bg-muted rounded"></div>
-        <div className="w-full h-8 bg-muted rounded"></div>
-        <div className="w-full h-8 bg-muted rounded"></div>
+    
+    {/* Tabs Skeleton */}
+    <div className="flex-shrink-0 px-4 py-3">
+      <div className="grid w-full grid-cols-3 gap-1 p-1 bg-muted rounded-lg">
+        <div className="h-7 bg-background rounded"></div>
+        <div className="h-7 bg-muted rounded"></div>
+        <div className="h-7 bg-muted rounded"></div>
       </div>
+    </div>
+    
+    {/* Content Body Skeleton */}
+    <div className="flex-1 min-h-0 overflow-auto px-4 space-y-4">
       {/* 分析卡片骨架 */}
       <div className="space-y-4">
-        <div className="w-full h-24 bg-muted rounded-lg"></div>
         <div className="w-full h-32 bg-muted rounded-lg"></div>
+        <div className="w-full h-40 bg-muted rounded-lg"></div>
         <div className="w-full h-28 bg-muted rounded-lg"></div>
       </div>
-    </div>
-    {/* Footer Skeleton */}
-    <div className="shrink-0 p-4 border-t">
-      <div className="w-full h-10 bg-muted rounded"></div>
     </div>
   </div>
 );

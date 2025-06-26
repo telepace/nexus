@@ -17,56 +17,33 @@ import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
 import { useReaderContext } from "@/components/layout/ReaderLayout";
-import {
-  contentApi,
-  AIResult,
-  ConversationListResponse,
-} from "@/lib/api/content";
 import { ContentItemPublic } from "@/app/content-library/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // 骨架屏组件
 const ReaderSkeleton = () => {
   return (
-    <div className="h-full flex flex-col animate-pulse">
+    <div className="flex flex-col h-full">
       {/* Header Skeleton */}
-      <div className="flex items-center justify-between px-6 py-4 border-b bg-white/50">
+      <div className="flex items-center justify-between px-4 h-header border-b shrink-0">
         <div className="flex items-center space-x-4">
-          <div className="w-24 h-8 bg-muted rounded"></div>
-          <div>
-            <div className="w-64 h-8 bg-muted rounded mb-2"></div>
-            <div className="flex items-center gap-2">
-              <div className="w-12 h-5 bg-muted rounded"></div>
-              <div className="w-16 h-5 bg-muted rounded"></div>
-              <div className="w-20 h-5 bg-muted rounded"></div>
-            </div>
-          </div>
+          <div className="w-8 h-8 bg-muted rounded"></div>
+          <div className="w-48 h-6 bg-muted rounded"></div>
         </div>
-        <div className="w-20 h-8 bg-muted rounded"></div>
+        <div className="w-8 h-8 bg-muted rounded"></div>
       </div>
-
       {/* Main Content Skeleton */}
-      <div className="flex-1 p-8">
-        {/* Content Area Skeleton */}
-        <div className="space-y-6 max-w-4xl mx-auto">
-          {/* 模拟文章内容的骨架 */}
-          <div className="space-y-4">
-            <div className="w-full h-6 bg-muted rounded"></div>
-            <div className="w-5/6 h-4 bg-muted rounded"></div>
-            <div className="w-4/5 h-4 bg-muted rounded"></div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="w-full h-4 bg-muted rounded"></div>
-            <div className="w-3/4 h-4 bg-muted rounded"></div>
-            <div className="w-5/6 h-4 bg-muted rounded"></div>
-            <div className="w-2/3 h-4 bg-muted rounded"></div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="w-4/5 h-4 bg-muted rounded"></div>
-            <div className="w-full h-4 bg-muted rounded"></div>
-            <div className="w-3/5 h-4 bg-muted rounded"></div>
-          </div>
+      <div className="flex-1 p-6 space-y-6">
+        <div className="space-y-3">
+          <div className="w-full h-4 bg-muted rounded"></div>
+          <div className="w-5/6 h-4 bg-muted rounded"></div>
+          <div className="w-full h-4 bg-muted rounded"></div>
+          <div className="w-3/4 h-4 bg-muted rounded"></div>
+        </div>
+        <div className="space-y-3">
+          <div className="w-4/5 h-4 bg-muted rounded"></div>
+          <div className="w-full h-4 bg-muted rounded"></div>
+          <div className="w-2/3 h-4 bg-muted rounded"></div>
         </div>
       </div>
     </div>
