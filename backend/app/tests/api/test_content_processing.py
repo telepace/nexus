@@ -8,6 +8,8 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
+from app.tests.conftest import get_api_response_data
+
 
 def extract_content_id(response_json):
     """Extract content ID from response, handling both direct and wrapped formats."""
@@ -136,7 +138,8 @@ class TestContentProcessingAPI:
             headers=normal_user_token_headers,
         )
         assert response.status_code == 404
-        assert "ContentItem not found" in response.json()["detail"]
+        response_data = get_api_response_data(response)
+        assert "ContentItem not found" in response_data["detail"]
 
     def test_process_content_item_unsupported_type(
         self, client: TestClient, db: Session, normal_user_token_headers
@@ -237,4 +240,5 @@ class TestContentProcessingAPI:
             headers=normal_user_token_headers,
         )
         assert process_response.status_code == 403
-        assert "You don't have permission" in process_response.json()["detail"]
+        response_data = get_api_response_data(process_response)
+        assert "You don't have permission" in response_data["detail"]

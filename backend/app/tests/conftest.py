@@ -1,4 +1,9 @@
+# Set testing environment variables as early as possible
 import os
+
+os.environ["TESTING"] = "true"
+os.environ["TEST_MODE"] = "true"
+
 from collections.abc import Generator
 from typing import Any
 
@@ -27,10 +32,6 @@ from app.models.prompt import Prompt, Tag
 from app.tests.utils.test_db import setup_test_db, teardown_test_db
 from app.tests.utils.user import authentication_token_from_email
 from app.tests.utils.utils import get_superuser_token_headers
-
-# Set testing environment variables as early as possible
-os.environ["TESTING"] = "true"
-os.environ["TEST_MODE"] = "true"
 
 
 # This runs before all tests to set up the test environmen
@@ -282,6 +283,36 @@ def normal_user_token_headers(client: TestClient, db: Session) -> dict[str, str]
         db.refresh(existing_user)
 
     return authentication_token_from_email(client=client, email=test_user_email, db=db)
+
+
+@pytest.fixture(scope="function")
+def user(db: Session) -> User:
+    """Get the normal test user object for testing."""
+    test_user_email = settings.EMAIL_TEST_USER
+
+    # 获取或创建测试用户
+    existing_user = crud.get_user_by_email(session=db, email=test_user_email)
+    if not existing_user:
+        # 如果用户不存在，创建一个
+        from app.tests.utils.utils import random_lower_string
+
+        user_in = UserCreate(
+            email=test_user_email,
+            password=random_lower_string(),
+            is_superuser=False,
+        )
+        user = crud.create_user(session=db, user_create=user_in)
+        db.commit()
+        db.refresh(user)
+        return user
+    else:
+        # 确保用户不是超级用户
+        if existing_user.is_superuser:
+            existing_user.is_superuser = False
+            db.add(existing_user)
+            db.commit()
+            db.refresh(existing_user)
+        return existing_user
 
 
 @pytest.fixture(scope="function")

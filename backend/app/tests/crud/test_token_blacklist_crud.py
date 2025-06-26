@@ -59,7 +59,6 @@ def test_create_token_blacklist(
         user_id=sample_token_data["user_id"],
         expires_at=sample_token_data["expires_at"],
         created_at=datetime(2023, 1, 1, 12, 0, 0),
-        blacklisted_at=datetime(2023, 1, 1, 12, 0, 0),
     )
     mock_db_session.add.assert_called_once_with(mock_token_blacklist_instance)
     mock_db_session.commit.assert_called_once()
@@ -89,7 +88,6 @@ def test_add_token_to_blacklist(
         token=sample_token_data["token"],
         user_id=sample_token_data["user_id"],
         expires_at=sample_token_data["expires_at"],
-        blacklisted_at=datetime(2023, 1, 1, 13, 0, 0),
     )
     mock_db_session.add.assert_called_once_with(mock_token_blacklist_instance)
     mock_db_session.commit.assert_called_once()

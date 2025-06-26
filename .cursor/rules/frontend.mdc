@@ -14,4 +14,6 @@ alwaysApply: false
 - If the backend API is unclear or in question, use the MCP api docs tool to find the relevant API definition- 
 - The UI library should be isolated from the code base and placed in components/ui
 - Try to ensure that the versions of react and next are not changed
+- **🌙 MANDATORY Dark Mode Compliance**: Every new component, feature, or UI change MUST be tested and optimized for dark mode. Always use semantic color tokens from globals.css, never hardcode colors. Verify WCAG AA contrast ratios in both light and dark themes before committing.
+- **🎨 Visual Hierarchy Validation**: All UI cha enges must maintain clear visual separation between background layers (main → sidebar → cards → interactive elements). Test readability across different lighting conditions.
 - Finally, it is necessary to ensure that make frontend-all passes

@@ -4,7 +4,9 @@
   "description": "E2E tests for Nexus browser extension",
   "main": "index.js",
   "scripts": {
+    "pretest": "npx puppeteer browsers install chrome",
     "test": "jest",
+    "test:ci": "npx puppeteer browsers install chrome && jest --ci --coverage",
     "start-mock-server": "node utils/mock-server.js"
   },
   "keywords": [
@@ -19,6 +21,9 @@
   },
   "devDependencies": {
     "jest": "^29.0.0",
+    "babel-jest": "^29.0.0",
+    "@babel/core": "^7.22.0",
+    "@babel/preset-env": "^7.22.0",
     "express": "^4.17.1",
     "body-parser": "^1.19.0",
     "jest-html-reporter": "^3.7.0"
