@@ -59,11 +59,11 @@ function getVariantStyles(variant: 'default' | 'sidebar' | 'preview' = 'default'
   const baseStyles = {
     card: "h-full border-0 shadow rounded-md max-w-[35rem]",
     header: "py-3 px-4",
-    title: "flex items-center gap-2 text-neutral-900 dark:text-neutral-100",
-    icon: "text-neutral-900 dark:text-neutral-100",
+    title: "flex items-center gap-2 text-neutral-950 dark:text-neutral-100",
+    icon: "text-neutral-950 dark:text-neutral-100",
     content: "px-4",
     text: "text-sm leading-relaxed text-neutral-950 dark:text-neutral-50",
-    markdownBase: "prose prose-sm max-w-none dark:prose-invert prose-p:text-neutral-950 dark:prose-p:text-neutral-50 prose-p:leading-relaxed prose-p:mb-2 prose-p:mt-0 prose-strong:text-neutral-900 dark:prose-strong:text-neutral-100 prose-em:text-neutral-900 dark:prose-em:text-neutral-100 prose-li:text-neutral-950 dark:prose-li:text-neutral-50 prose-li:leading-relaxed prose-li:mb-1 prose-headings:text-neutral-900 dark:prose-headings:text-neutral-100 prose-headings:text-sm prose-headings:font-medium prose-headings:mb-2 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+    markdownBase: "prose prose-sm max-w-none dark:prose-invert prose-p:text-neutral-950 dark:prose-p:text-neutral-50 prose-p:leading-relaxed prose-p:mb-2 prose-p:mt-0 prose-strong:text-neutral-950 dark:prose-strong:text-neutral-100 prose-em:text-neutral-950 dark:prose-em:text-neutral-100 prose-li:text-neutral-950 dark:prose-li:text-neutral-50 prose-li:leading-relaxed prose-li:mb-1 prose-headings:text-neutral-950 dark:prose-headings:text-neutral-100 prose-headings:text-sm prose-headings:font-medium prose-headings:mb-2 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
   };
 
   switch (variant) {
@@ -72,8 +72,8 @@ function getVariantStyles(variant: 'default' | 'sidebar' | 'preview' = 'default'
         ...baseStyles,
         card: "h-full analysis-card border-0 shadow hover:shadow-md transition-shadow rounded-md max-w-[35rem] mx-auto",
         header: "pb-3 pt-4 px-4",
-        title: "flex items-center gap-2 text-base text-neutral-900 dark:text-neutral-100",
-        icon: "h-4 w-4 text-neutral-900 dark:text-neutral-100",
+        title: "flex items-center gap-2 text-base text-neutral-950 dark:text-neutral-100",
+        icon: "h-4 w-4 text-neutral-950 dark:text-neutral-100",
         content: "px-8 pb-4",
         text: "text-sm text-neutral-950 dark:text-neutral-50 leading-relaxed reading-content",
       };
@@ -82,16 +82,16 @@ function getVariantStyles(variant: 'default' | 'sidebar' | 'preview' = 'default'
         ...baseStyles,
         card: "h-full analysis-card border-0 shadow hover:shadow-md transition-shadow rounded-md max-w-[35rem] mx-auto",
         header: "pb-3 pt-4 px-4",
-        title: "flex items-center gap-2 text-sm text-neutral-900 dark:text-neutral-100",
-        icon: "h-4 w-4 text-neutral-900 dark:text-neutral-100",
+        title: "flex items-center gap-2 text-sm text-neutral-950 dark:text-neutral-100",
+        icon: "h-4 w-4 text-neutral-950 dark:text-neutral-100",
         content: "px-8 pb-3",
         text: "text-sm text-neutral-950 dark:text-neutral-50 leading-relaxed reading-content",
       };
     default:
       return {
         ...baseStyles,
-        title: "flex items-center gap-2 text-base text-neutral-900 dark:text-neutral-100",
-        icon: "h-3 w-3 text-neutral-900 dark:text-neutral-100",
+        title: "flex items-center gap-2 text-base text-neutral-950 dark:text-neutral-100",
+        icon: "h-3 w-3 text-neutral-950 dark:text-neutral-100",
         text: "text-sm text-neutral-950 dark:text-neutral-50 leading-relaxed",
       };
   }
@@ -234,7 +234,7 @@ export const KeyPointsCard = ({
                   } rounded-full ${
                     variant === 'preview' 
                       ? 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300' 
-                      : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300'
+                      : 'bg-neutral-100 dark:bg-neutral-950 text-neutral-700 dark:text-neutral-300'
                   } flex items-center justify-center text-xs font-medium mt-0.5`}>
                     {index + 1}
                   </div>
