@@ -242,10 +242,10 @@ const ProcessedContentRenderer = memo(
           contentToRender.includes("**") ? (
             <MarkdownRenderer
               content={contentToRender}
-              className="prose prose-sm max-w-[35rem] dark:prose-invert px-8 pyx-8 py-4 [&>*:first-child]:mt-0"
+              className="prose prose-sm max-w-[35rem] dark:prose-invert px-8 pyx-8 py-4 mx-auto [&>*:first-child]:mt-0"
             />
           ) : (
-            <div className="prose prose-sm max-w-[35rem] dark:prose-invert px-8 pyx-8 py-4 [&>*:first-child]:mt-0">
+            <div className="prose prose-sm max-w-[35rem] dark:prose-invert px-8 pyx-8 py-4 mx-auto [&>*:first-child]:mt-0">
               <div className="whitespace-pre-wrap text-sm leading-relaxed">
                 {contentToRender}
               </div>

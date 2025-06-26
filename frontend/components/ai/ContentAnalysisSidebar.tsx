@@ -151,7 +151,7 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
+      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar pb-8">
         <Tabs value={activeTab} className="h-full">
           {/* 内容分析标签页 */}
           <TabsContent value="analysis" className="h-full mt-0 p-4">

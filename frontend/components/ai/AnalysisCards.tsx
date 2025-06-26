@@ -57,42 +57,42 @@ export function adaptAnalysisData(
 // 获取变体样式
 function getVariantStyles(variant: 'default' | 'sidebar' | 'preview' = 'default') {
   const baseStyles = {
-    card: "h-full",
-    header: "py-3",
+    card: "h-full border-0 shadow rounded-md max-w-[35rem]",
+    header: "py-3 px-4",
     title: "flex items-center gap-2 text-neutral-900 dark:text-neutral-100",
     icon: "text-neutral-900 dark:text-neutral-100",
-    content: "",
-    text: "text-sm leading-relaxed",
-    markdownBase: "prose prose-sm max-w-none dark:prose-invert prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-2 prose-p:mt-0 prose-strong:text-neutral-900 dark:prose-strong:text-neutral-100 prose-em:text-neutral-900 dark:prose-em:text-neutral-100 prose-li:text-muted-foreground prose-li:leading-relaxed prose-li:mb-1 prose-headings:text-neutral-900 dark:prose-headings:text-neutral-100 prose-headings:text-sm prose-headings:font-medium prose-headings:mb-2 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+    content: "px-4",
+    text: "text-sm leading-relaxed text-neutral-950 dark:text-neutral-50",
+    markdownBase: "prose prose-sm max-w-none dark:prose-invert prose-p:text-neutral-950 dark:prose-p:text-neutral-50 prose-p:leading-relaxed prose-p:mb-2 prose-p:mt-0 prose-strong:text-neutral-900 dark:prose-strong:text-neutral-100 prose-em:text-neutral-900 dark:prose-em:text-neutral-100 prose-li:text-neutral-950 dark:prose-li:text-neutral-50 prose-li:leading-relaxed prose-li:mb-1 prose-headings:text-neutral-900 dark:prose-headings:text-neutral-100 prose-headings:text-sm prose-headings:font-medium prose-headings:mb-2 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
   };
 
   switch (variant) {
     case 'sidebar':
       return {
         ...baseStyles,
-        card: "h-full analysis-card shadow-sm hover:shadow-md transition-shadow",
-        header: "pb-3 pt-4",
+        card: "h-full analysis-card border-0 shadow hover:shadow-md transition-shadow rounded-md max-w-[35rem] mx-auto",
+        header: "pb-3 pt-4 px-4",
         title: "flex items-center gap-2 text-base text-neutral-900 dark:text-neutral-100",
         icon: "h-4 w-4 text-neutral-900 dark:text-neutral-100",
-        content: "p-4",
-        text: "text-sm text-muted-foreground leading-relaxed reading-content",
+        content: "px-8 pb-4",
+        text: "text-sm text-neutral-950 dark:text-neutral-50 leading-relaxed reading-content",
       };
     case 'preview':
       return {
         ...baseStyles,
-        card: "h-full analysis-card shadow-sm hover:shadow-md transition-shadow",
-        header: "pb-3 pt-4",
+        card: "h-full analysis-card border-0 shadow hover:shadow-md transition-shadow rounded-md max-w-[35rem] mx-auto",
+        header: "pb-3 pt-4 px-4",
         title: "flex items-center gap-2 text-sm text-neutral-900 dark:text-neutral-100",
         icon: "h-4 w-4 text-neutral-900 dark:text-neutral-100",
-        content: "p-3",
-        text: "text-sm text-muted-foreground leading-relaxed reading-content",
+        content: "px-8 pb-3",
+        text: "text-sm text-neutral-950 dark:text-neutral-50 leading-relaxed reading-content",
       };
     default:
       return {
         ...baseStyles,
         title: "flex items-center gap-2 text-base text-neutral-900 dark:text-neutral-100",
         icon: "h-3 w-3 text-neutral-900 dark:text-neutral-100",
-        text: "text-sm text-neutral-900 leading-relaxed",
+        text: "text-sm text-neutral-950 dark:text-neutral-50 leading-relaxed",
       };
   }
 }
