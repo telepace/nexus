@@ -72,6 +72,7 @@
 
   /* Custom width tokens */
   --size-library: 35.25rem; /* 564px - left pane fixed width */
+  --size-library-lg: 38rem; /* 608px - large screen library width */
   --size-library-card: 28.75rem; /* 460px - card width */
   --size-card-title: 25rem; /* 400px - card text width */
 
@@ -774,6 +775,25 @@
 
   .max-w-library {
     max-width: var(--size-library);
+  }
+
+  .w-library-lg {
+    width: var(--size-library-lg);
+  }
+
+  .max-w-library-lg {
+    max-width: var(--size-library-lg);
+  }
+
+  /* 响应式变体 - 在 2xl 断点(1536px)后使用 library-lg 宽度 */
+  @media (min-width: 1536px) {
+    .\32 xl\:w-library-lg {
+      width: var(--size-library-lg);
+    }
+
+    .\32 xl\:max-w-library-lg {
+      max-width: var(--size-library-lg);
+    }
   }
 
   .w-libraryCard {

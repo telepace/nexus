@@ -17,55 +17,32 @@ import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
 import { useReaderContext } from "@/components/layout/ReaderLayout";
-import {
-  contentApi,
-  AIResult,
-  ConversationListResponse,
-} from "@/lib/api/content";
+import { ContentItemPublic } from "@/app/content-library/types";
 
 // 骨架屏组件
 const ReaderSkeleton = () => {
   return (
-    <div className="h-full flex flex-col animate-pulse">
+    <div className="flex flex-col h-full">
       {/* Header Skeleton */}
-      <div className="flex items-center justify-between px-6 py-4 border-b bg-white/50">
+      <div className="flex items-center justify-between px-4 h-header border-b shrink-0">
         <div className="flex items-center space-x-4">
-          <div className="w-24 h-8 bg-muted rounded"></div>
-          <div>
-            <div className="w-64 h-8 bg-muted rounded mb-2"></div>
-            <div className="flex items-center gap-2">
-              <div className="w-12 h-5 bg-muted rounded"></div>
-              <div className="w-16 h-5 bg-muted rounded"></div>
-              <div className="w-20 h-5 bg-muted rounded"></div>
-            </div>
-          </div>
+          <div className="w-8 h-8 bg-muted rounded"></div>
+          <div className="w-48 h-6 bg-muted rounded"></div>
         </div>
-        <div className="w-20 h-8 bg-muted rounded"></div>
+        <div className="w-8 h-8 bg-muted rounded"></div>
       </div>
-
       {/* Main Content Skeleton */}
-      <div className="flex-1 p-8">
-        {/* Content Area Skeleton */}
-        <div className="space-y-6 max-w-4xl mx-auto">
-          {/* 模拟文章内容的骨架 */}
-          <div className="space-y-4">
-            <div className="w-full h-6 bg-muted rounded"></div>
-            <div className="w-5/6 h-4 bg-muted rounded"></div>
-            <div className="w-4/5 h-4 bg-muted rounded"></div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="w-full h-4 bg-muted rounded"></div>
-            <div className="w-3/4 h-4 bg-muted rounded"></div>
-            <div className="w-5/6 h-4 bg-muted rounded"></div>
-            <div className="w-2/3 h-4 bg-muted rounded"></div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="w-4/5 h-4 bg-muted rounded"></div>
-            <div className="w-full h-4 bg-muted rounded"></div>
-            <div className="w-3/5 h-4 bg-muted rounded"></div>
-          </div>
+      <div className="flex-1 p-6 space-y-6">
+        <div className="space-y-3">
+          <div className="w-full h-4 bg-muted rounded"></div>
+          <div className="w-5/6 h-4 bg-muted rounded"></div>
+          <div className="w-full h-4 bg-muted rounded"></div>
+          <div className="w-3/4 h-4 bg-muted rounded"></div>
+        </div>
+        <div className="space-y-3">
+          <div className="w-4/5 h-4 bg-muted rounded"></div>
+          <div className="w-full h-4 bg-muted rounded"></div>
+          <div className="w-2/3 h-4 bg-muted rounded"></div>
         </div>
       </div>
     </div>
@@ -241,10 +218,10 @@ const ProcessedContentRenderer = memo(
           contentToRender.includes("**") ? (
             <MarkdownRenderer
               content={contentToRender}
-              className="prose prose-sm max-w-[35rem] dark:prose-invert px-8 py-4 [&>*:first-child]:mt-0"
+              className="prose prose-sm max-w-[35rem] dark:prose-invert px-8 pyx-8 py-4 mx-auto [&>*:first-child]:mt-0"
             />
           ) : (
-            <div className="prose prose-sm max-w-[35rem] dark:prose-invert px-8 py-4 [&>*:first-child]:mt-0">
+            <div className="prose prose-sm max-w-[35rem] dark:prose-invert px-8 pyx-8 py-4 mx-auto [&>*:first-child]:mt-0">
               <div className="whitespace-pre-wrap text-sm leading-relaxed">
                 {contentToRender}
               </div>
@@ -271,8 +248,7 @@ export const ClientContent = ({
 }: ClientContentProps) => {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
-  const { onContentChange, onAnalysisUpdate, onConversationsUpdate } =
-    useReaderContext();
+  const { onContentChange, onContentItemUpdate } = useReaderContext();
 
   const [content, setContent] = useState<ContentDetail | null>(
     initialData || null,
@@ -282,12 +258,6 @@ export const ClientContent = ({
   );
   const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
-
-  // AI分析结果和对话历史状态 - 会传递给右侧面板
-  const [analysisResult, setAnalysisResult] = useState<AIResult | null>(null);
-  const [conversations, setConversations] = useState<
-    ConversationListResponse["conversations"]
-  >([]);
 
   // 记录访问
   useEffect(() => {
@@ -307,19 +277,22 @@ export const ClientContent = ({
     }
   }, [content, markdownContent, onContentChange]);
 
-  // 传递分析结果给右侧面板
+  // 当内容加载完成后，通知 ReaderLayout 更新完整的内容项数据
   useEffect(() => {
-    if (onAnalysisUpdate) {
-      onAnalysisUpdate(analysisResult);
+    if (content && onContentItemUpdate) {
+      // 将 ContentDetail 转换为 ContentItemPublic 格式
+      const contentItem: Partial<ContentItemPublic> = {
+        id: content.id,
+        type: content.type,
+        title: content.title,
+        source_uri: content.source_uri,
+        processing_status: content.processing_status,
+        // 这些字段在新版本的 ReaderLayout 中会通过 contentApi.getContentItem 重新获取
+        // 以确保包含 ai_result 和 ai_analysis 数据
+      };
+      onContentItemUpdate(contentItem as ContentItemPublic);
     }
-  }, [analysisResult, onAnalysisUpdate]);
-
-  // 传递对话历史给右侧面板
-  useEffect(() => {
-    if (onConversationsUpdate) {
-      onConversationsUpdate(conversations);
-    }
-  }, [conversations, onConversationsUpdate]);
+  }, [content, onContentItemUpdate]);
 
   // 获取内容详情和markdown
   useEffect(() => {
@@ -433,40 +406,6 @@ export const ClientContent = ({
 
     fetchContentDetail();
   }, [contentId, user?.token, authLoading, content, markdownContent]);
-
-  // 获取AI分析结果和对话历史
-  useEffect(() => {
-    if (!content || !user) return;
-
-    async function fetchAnalysisData() {
-      try {
-        // 并行获取分析结果和对话历史
-        const [analysisResponse, conversationsResponse] =
-          await Promise.allSettled([
-            contentApi.getContentAnalysisResult(contentId),
-            contentApi.getContentConversations(contentId, false),
-          ]);
-
-        // 处理分析结果
-        if (analysisResponse.status === "fulfilled") {
-          setAnalysisResult(analysisResponse.value);
-        } else {
-          console.error("获取分析结果失败:", analysisResponse.reason);
-        }
-
-        // 处理对话历史
-        if (conversationsResponse.status === "fulfilled") {
-          setConversations(conversationsResponse.value.conversations);
-        } else {
-          console.error("获取对话历史失败:", conversationsResponse.reason);
-        }
-      } catch (error) {
-        console.error("获取分析数据失败:", error);
-      }
-    }
-
-    fetchAnalysisData();
-  }, [content, contentId, user]);
 
   if (authLoading || loading) {
     return <ReaderSkeleton />;

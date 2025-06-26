@@ -239,11 +239,11 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
     return (
       <div className="flex justify-center items-center h-full">
         <div className="text-center">
-          <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-          <p className="text-red-600 mb-4">{error}</p>
+          <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-2" />
+          <p className="text-destructive mb-4">{error}</p>
           <button
             onClick={retryLoad}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
           >
             Retry
           </button>
@@ -266,7 +266,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
     >
       {/* Top sentinel for DOM cleanup */}
       {visibleStartIndex > 0 && (
-        <div ref={topSentinelRef} className="h-1 bg-red-200" />
+        <div ref={topSentinelRef} className="h-1 bg-border" />
       )}
 
       {/* Content chunks - 使用优化的渲染 */}
@@ -280,7 +280,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
       {hasMore && (
         <div
           ref={loadTriggerRef}
-          className="h-20 flex items-center justify-center bg-yellow-100 dark:bg-yellow-900"
+          className="h-20 flex items-center justify-center bg-muted"
         >
           {loadingMore ? (
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -288,7 +288,7 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
               <span className="text-sm">加载更多内容...</span>
             </div>
           ) : (
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-muted-foreground">
               Scroll down to load more...
             </div>
           )}
@@ -297,12 +297,12 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
 
       {/* End indicator */}
       {!hasMore && chunks && chunks.length > 0 && (
-        <div className="text-center py-8 text-neutral-500">
+        <div className="text-center py-8 text-muted-foreground">
           <div className="text-sm">
             End of content • {totalChunks} chunks total
           </div>
           {visibleStartIndex > 0 && (
-            <div className="text-xs text-gray-400 mt-2">
+            <div className="text-xs text-muted-foreground mt-2">
               Showing chunks {visibleStartIndex + 1} -{" "}
               {visibleStartIndex + chunks.length} of {totalChunks}
             </div>
@@ -312,11 +312,11 @@ export const VirtualScrollRenderer: React.FC<ProgressiveRendererProps> = ({
 
       {/* Error indicator for partial failures */}
       {error && chunks && chunks.length > 0 && (
-        <div className="text-center py-4 text-red-500 bg-red-100 dark:bg-red-900">
+        <div className="text-center py-4 text-destructive bg-destructive/10">
           <div className="text-sm mb-2">Failed to load more content</div>
           <button
             onClick={() => loadChunks(currentPage + 1)}
-            className="text-xs px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+            className="text-xs px-3 py-1 bg-destructive/10 text-destructive rounded hover:bg-destructive/20 transition-colors"
           >
             Retry
           </button>
@@ -331,18 +331,18 @@ const ChunkItem = React.memo<{
   chunk: ContentChunk & { key: string };
 }>(({ chunk }) => (
   <div className="chunk-item py-4 px-8">
-    <div className="chunk-header mb-2 text-xs text-gray-500 flex justify-between items-center">
+    <div className="chunk-header mb-2 text-xs text-neutral-200 flex justify-between items-center">
       <span className="font-medium">
         Chunk {chunk.index + 1} • {chunk.type}
       </span>
-      <span className="text-gray-400">
+      <span className="text-neutral-200">
         {chunk.word_count} words • {chunk.char_count} chars
       </span>
     </div>
     <div className="chunk-content">
       <MarkdownRenderer
         content={chunk.content}
-        className="prose prose-sm max-w-[35rem] dark:prose-invert [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+        className="prose prose-sm max-w-[35rem] dark:prose-invert mx-auto [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
       />
     </div>
   </div>

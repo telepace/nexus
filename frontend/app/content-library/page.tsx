@@ -77,8 +77,8 @@ export default function ContentLibraryPage() {
     <MainLayout pageTitle="Content Library" fullscreen>
       {/* 页面主体：左右两栏 */}
       <div className="flex h-screen overflow-visible bg-gradient-to-br from-background via-background to-muted/20">
-        {/* 左栏：>904px 固定 35.25rem，≤904px 最宽 35.25rem 可缩 */}
-        <section className="flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar px-6 w-full max-w-library min-[904px]:w-library min-[904px]:flex-none">
+        {/* 左栏：默认固定 35.25rem，2xl时固定宽度变为37.5rem */}
+        <section className="flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar px-6 w-library flex-none 2xl:w-library-lg">
           {/* Header 仅存在于左栏 */}
           <header className="flex items-center h-header px-2 md:px-6 border-b shrink-0 bg-background/80">
             <h1 className="text-lg font-semibold">Library</h1>
