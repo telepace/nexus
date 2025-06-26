@@ -6,6 +6,7 @@ from app.api.routes import (
     content,  # Add content router
     conversations,  # Add conversations router
     dashboard,  # Add dashboard router
+    extension_stream,  # Add extension stream router
     favorites,  # Add favorites router
     google_oauth,
     health,  # Import health router separately
@@ -36,6 +37,9 @@ api_router.include_router(
 api_router.include_router(
     content.router, prefix="/content", tags=["content"]
 )  # Include content router
+api_router.include_router(
+    extension_stream.router, prefix="/extension", tags=["extension"]
+)  # Include extension stream router
 api_router.include_router(
     favorites.router, prefix="/favorites", tags=["favorites"]
 )  # Include favorites router

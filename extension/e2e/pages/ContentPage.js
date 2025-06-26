@@ -11,16 +11,28 @@ class ContentPage {
     this.extractionStatusIndicator = '#nexus-extraction-status'; // e.g., a status message
   }
 
-  async navigateTo(url) {
+  async navigateTo(urlOrContent) {
     if (!this.page) throw new Error("Page not initialized for ContentPage.");
-    // Ensure full URL for local fixture files
-    let fullUrl = url;
-    if (url.startsWith('fixtures/')) {
+    
+    // Check if this is HTML content (starts with <!DOCTYPE or <html)
+    if (urlOrContent.trim().startsWith('<!DOCTYPE') || urlOrContent.trim().startsWith('<html')) {
+      console.log(`ContentPage: Setting page content (HTML)`);
+      await this.page.setContent(urlOrContent, { waitUntil: 'networkidle2', timeout: testConfig.defaultTimeout });
+      return;
+    }
+    
+    // Handle file paths and URLs
+    let fullUrl = urlOrContent;
+    if (urlOrContent.startsWith('fixtures/')) {
         // Construct correct file path URL from current e2e directory
         const path = require('path');
-        fullUrl = 'file://' + path.resolve(process.cwd(), url);
-    } else if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('file://')) {
-        fullUrl = `http://${url}`; // Default to http if no scheme
+        fullUrl = 'file://' + path.resolve(process.cwd(), urlOrContent);
+    } else if (urlOrContent.includes('/fixtures/test-pages/')) {
+        // Handle absolute paths to fixture files
+        const path = require('path');
+        fullUrl = 'file://' + path.resolve(urlOrContent);
+    } else if (!urlOrContent.startsWith('http://') && !urlOrContent.startsWith('https://') && !urlOrContent.startsWith('file://')) {
+        fullUrl = `http://${urlOrContent}`; // Default to http if no scheme
     }
 
     console.log(`ContentPage: Navigating to ${fullUrl}`);

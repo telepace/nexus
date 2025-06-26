@@ -24,7 +24,7 @@ class TextSegmentationService:
     """文本智能分段服务"""
 
     def __init__(self):
-        self.min_segment_length = 500  # 最小分段长度
+        self.min_segment_length = 500  # 恢复原始值以匹配测试期望
         self.max_segment_length = 4000  # 最大分段长度
         self.overlap_length = 200  # 分段重叠长度
 
@@ -96,60 +96,64 @@ class TextSegmentationService:
     async def _segment_by_sections(self, content: str) -> list[dict[str, Any]]:
         """基于章节结构分段"""
         segments = []
-        section_pattern = r"^(#{1,6}\s+.+|^\d+[\.\)]\s+.+|\n[A-Z][^.\n]{10,80}\n)"
-
-        # 查找所有可能的章节标题
-        sections = re.split(section_pattern, content, flags=re.MULTILINE)
-
-        current_segment = ""
-        segment_count = 0
-
-        for _i, section in enumerate(sections):
-            if not section.strip():
+        
+        # 查找所有章节标题的位置
+        lines = content.split('\n')
+        section_starts = []
+        
+        for i, line in enumerate(lines):
+            line_stripped = line.strip()
+            if not line_stripped:
                 continue
-
-            # 检查是否是标题
+                
+            # 检查是否是真正的标题
             is_heading = (
-                re.match(r"^#{1,6}\s+", section.strip())
-                or re.match(r"^\d+[\.\)]\s+", section.strip())
-                or (len(section.strip()) < 100 and "\n" not in section.strip())
+                # Markdown标题 (# 开头)
+                re.match(r"^#{1,6}\s+.+", line_stripped)
+                # 数字编号标题 (1. 或 1) 开头)
+                or re.match(r"^\d+[\.\)]\s+.+", line_stripped)
+                # 中文编号标题 (一、二、三 等)
+                or re.match(r"^[一二三四五六七八九十]+[、\.]\s*.+", line_stripped)
             )
-
-            if (
-                is_heading
-                and current_segment
-                and len(current_segment) > self.min_segment_length
-            ):
-                # 保存当前分段
-                segment_count += 1
-                segments.append(
-                    self._create_segment(
-                        current_segment,
-                        segment_count,
-                        "section",
-                        {"heading": section.strip()},
+            
+            if is_heading:
+                section_starts.append((i, line_stripped))
+        
+        # 如果找到多个标题，根据标题分段
+        if len(section_starts) >= 2:
+            segments = []
+            segment_count = 0
+            
+            for i, (line_idx, heading) in enumerate(section_starts):
+                # 确定本节的结束位置
+                if i < len(section_starts) - 1:
+                    next_line_idx = section_starts[i + 1][0]
+                    section_content = '\n'.join(lines[line_idx:next_line_idx])
+                else:
+                    section_content = '\n'.join(lines[line_idx:])
+                
+                section_content = section_content.strip()
+                
+                # 每个章节创建一个分段（除非章节内容太长需要进一步分割）
+                if len(section_content) <= self.max_segment_length:
+                    segment_count += 1
+                    segments.append(
+                        self._create_segment(section_content, segment_count, "section")
                     )
-                )
-                current_segment = section
-            else:
-                current_segment += section
+                else:
+                    # 章节内容太长，需要进一步分割
+                    sub_segments = await self._segment_by_length(section_content)
+                    for sub_segment in sub_segments:
+                        segment_count += 1
+                        sub_segment["id"] = f"segment_{segment_count}"
+                        sub_segment["order"] = segment_count
+                        sub_segment["type"] = "section"
+                        segments.append(sub_segment)
 
-            # 检查分段长度
-            if len(current_segment) > self.max_segment_length:
-                segment_count += 1
-                segments.append(
-                    self._create_segment(current_segment, segment_count, "section")
-                )
-                current_segment = ""
-
-        # 处理最后一个分段
-        if current_segment.strip():
-            segment_count += 1
-            segments.append(
-                self._create_segment(current_segment, segment_count, "section")
-            )
-
-        return segments
+            return segments
+        else:
+            # 没有找到足够的章节标题，返回整个内容作为一个分段
+            return [self._create_segment(content, 1, "section")]
 
     async def _segment_by_paragraphs(self, content: str) -> list[dict[str, Any]]:
         """基于段落分段"""
@@ -286,15 +290,25 @@ class TextSegmentationService:
 
     def _find_split_point(self, content: str) -> int:
         """寻找合适的分割点"""
-        # 优先级：句号 > 换行 > 逗号 > 空格
-        split_chars = [".", "\n", "!", "?", ";", ",", " "]
+        # 优先级：中文句号 > 英文句号 > 换行 > 中文标点 > 英文标点 > 空格
+        split_chars = ["。", ".", "\n", "！", "？", "；", "!", "?", ";", "，", ",", " "]
 
+        # 从内容的后70%开始寻找分割点
+        search_start = int(len(content) * 0.7)
+        
         for char in split_chars:
-            pos = content.rfind(char)
-            if pos > len(content) * 0.7:  # 在后30%的位置寻找
+            pos = content.rfind(char, search_start)
+            if pos > search_start:  # 确保在合适的位置
                 return pos + 1
 
-        return 0  # 没找到合适的分割点
+        # 如果没有找到合适的分割点，尝试在前半部分寻找
+        for char in split_chars:
+            pos = content.rfind(char)
+            if pos > len(content) * 0.3:  # 至少在30%的位置之后
+                return pos + 1
+
+        # 最后的回退：返回75%位置
+        return int(len(content) * 0.75)
 
     def _create_segment(
         self,
@@ -323,16 +337,25 @@ class TextSegmentationService:
 
     def _extract_first_sentence(self, content: str) -> str:
         """提取第一句话作为摘要"""
-        # 简单的句子提取
-        sentences = re.split(r"[.!?]+", content.strip())
-        if sentences and sentences[0]:
+        content = content.strip()
+        if not content:
+            return ""
+            
+        # 改进的句子分割，支持中文标点
+        sentences = re.split(r"[.!?。！？]+", content)
+        if sentences and sentences[0].strip():
             first_sentence = sentences[0].strip()
-            return (
-                first_sentence[:150] + "..."
-                if len(first_sentence) > 150
-                else first_sentence
-            )
-        return content[:100] + "..." if len(content) > 100 else content
+            # 限制长度为100字符
+            if len(first_sentence) > 100:
+                return first_sentence[:97] + "..."
+            else:
+                return first_sentence
+        
+        # 如果没有找到句子分割，直接截取前100字符
+        if len(content) > 100:
+            return content[:97] + "..."
+        else:
+            return content
 
     def _post_process_segments(
         self, segments: list[dict[str, Any]], preserve_structure: bool

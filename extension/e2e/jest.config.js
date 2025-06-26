@@ -4,6 +4,22 @@ module.exports = {
   verbose: true,
   roots: ['<rootDir>/tests'], // Points to the 'tests' folder within 'e2e'
   testTimeout: 60000, // Increased default timeout for E2E tests (can be overridden in test files)
+  
+  // Handle non-JS files
+  moduleNameMapper: {
+    '\\.(html|css)$': '<rootDir>/utils/file-mock.js',
+  },
+  
+  // Transform configuration
+  transform: {
+    '^.+\\.js$': 'babel-jest',
+  },
+  
+  // Files to ignore from transformation
+  transformIgnorePatterns: [
+    'node_modules/(?!(some-esm-package)/)', // Add any ESM packages that need transformation
+  ],
+  
   reporters: [
     'default', // Keep default Jest reporter
     [
@@ -17,7 +33,7 @@ module.exports = {
       },
     ],
   ],
-  // Optional: if screenshots are taken by tests, Jest doesn't need to handle them directly,
-  // but you might configure a setup file for global test setup/teardown if needed.
-  // setupFilesAfterEnv: ['./jest.setup.js'],
+  
+  // Global setup for Puppeteer
+  setupFilesAfterEnv: ['<rootDir>/utils/jest-setup.js'],
 };
