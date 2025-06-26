@@ -57,10 +57,10 @@ export function adaptAnalysisData(
 // 获取变体样式
 function getVariantStyles(variant: 'default' | 'sidebar' | 'preview' = 'default') {
   const baseStyles = {
-    card: "h-full border-0 shadow rounded-md max-w-[35rem]",
+    card: "h-full border-0 rounded-md max-w-[35rem] bg-transparent shadow-none",
     header: "py-3 px-4",
-    title: "flex items-center gap-2 text-neutral-950 dark:text-neutral-100",
-    icon: "text-neutral-950 dark:text-neutral-100",
+    title: "inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow cursor-pointer transition text-xs font-medium text-neutral-950 dark:text-neutral-100 w-fit bg-transparent",
+    icon: "h-2 w-2 text-neutral-950 dark:text-neutral-100",
     content: "px-4",
     text: "text-sm leading-relaxed text-neutral-950 dark:text-neutral-50",
     markdownBase: "prose prose-sm max-w-none dark:prose-invert prose-p:text-neutral-950 dark:prose-p:text-neutral-50 prose-p:leading-relaxed prose-p:mb-2 prose-p:mt-0 prose-strong:text-neutral-950 dark:prose-strong:text-neutral-100 prose-em:text-neutral-950 dark:prose-em:text-neutral-100 prose-li:text-neutral-950 dark:prose-li:text-neutral-50 prose-li:leading-relaxed prose-li:mb-1 prose-headings:text-neutral-950 dark:prose-headings:text-neutral-100 prose-headings:text-sm prose-headings:font-medium prose-headings:mb-2 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
@@ -70,28 +70,28 @@ function getVariantStyles(variant: 'default' | 'sidebar' | 'preview' = 'default'
     case 'sidebar':
       return {
         ...baseStyles,
-        card: "h-full analysis-card border-0 shadow hover:shadow-md transition-shadow rounded-md max-w-[35rem] mx-auto",
+        card: "h-full analysis-card border-0 rounded-md max-w-[35rem] mx-auto bg-transparent shadow-none",
         header: "pb-3 pt-4 px-4",
-        title: "flex items-center gap-2 text-base text-neutral-950 dark:text-neutral-100",
-        icon: "h-4 w-4 text-neutral-950 dark:text-neutral-100",
+        title: "inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow cursor-pointer transition text-xs font-medium text-neutral-950 dark:text-neutral-100 w-fit bg-transparent",
+        icon: "h-3 w-3 text-neutral-950 dark:text-neutral-100",
         content: "px-8 pb-4",
         text: "text-sm text-neutral-950 dark:text-neutral-50 leading-relaxed reading-content",
       };
     case 'preview':
       return {
         ...baseStyles,
-        card: "h-full analysis-card border-0 shadow hover:shadow-md transition-shadow rounded-md max-w-[35rem] mx-auto",
-        header: "pb-3 pt-4 px-4",
-        title: "flex items-center gap-2 text-sm text-neutral-950 dark:text-neutral-100",
-        icon: "h-4 w-4 text-neutral-950 dark:text-neutral-100",
-        content: "px-8 pb-3",
+        card: "h-full analysis-card border-0 rounded-md max-w-[35rem] mx-auto bg-transparent shadow-none hover:shadow-none",
+        header: "pb-3 pt-4 !px-0",
+        title: "inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow cursor-pointer transition text-xs font-medium text-neutral-950 dark:text-neutral-100 w-fit bg-transparent",
+        icon: "h-3 w-3 text-neutral-950 dark:text-neutral-100",
+        content: "pb-3 !px-0",
         text: "text-sm text-neutral-950 dark:text-neutral-50 leading-relaxed reading-content",
       };
     default:
       return {
         ...baseStyles,
-        title: "flex items-center gap-2 text-base text-neutral-950 dark:text-neutral-100",
-        icon: "h-3 w-3 text-neutral-950 dark:text-neutral-100",
+        title: "inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow cursor-pointer transition text-xs font-medium text-neutral-950 dark:text-neutral-100 w-fit bg-transparent",
+        icon: "h-2 w-2 text-neutral-950 dark:text-neutral-100",
         text: "text-sm text-neutral-950 dark:text-neutral-50 leading-relaxed",
       };
   }
