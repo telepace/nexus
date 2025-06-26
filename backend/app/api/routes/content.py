@@ -3,6 +3,7 @@ import json
 import logging
 import uuid
 from collections.abc import AsyncGenerator
+from datetime import datetime, timezone
 from typing import Any  # Added Optional and Literal
 
 from fastapi import (
@@ -19,15 +20,21 @@ from sqlmodel import Session, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
+from app.core.security import verify_password
 from app.crud.crud_content import (
     create_content_item_sync as crud_create_content_item,
 )
 from app.crud.crud_content import (
-    delete_content_item_sync as crud_delete_content_item,
-)
-from app.crud.crud_content import (
+    create_content_share,
+    deactivate_content_share,
     get_content_chunks,
     get_content_chunks_summary,
+    get_content_share_by_token,
+    get_content_shares_by_content_id,
+    increment_access_count,
+)
+from app.crud.crud_content import (
+    delete_content_item_sync as crud_delete_content_item,
 )
 from app.crud.crud_content import (
     get_content_item_sync as crud_get_content_item,
@@ -46,6 +53,8 @@ from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is
     ContentAnalysisRequest,
     ContentItemCreate,
     ContentItemPublic,
+    ContentShareCreate,
+    ContentSharePublic,
 )
 from app.utils.background_tasks import background_task_manager
 from app.utils.content_processors import ProcessingPipeline
@@ -978,6 +987,342 @@ async def _stream_content_analysis(
         yield f'9:[{{"error":"Stream error: {error_msg}"}}]\n'
 
 
+@router.post(
+    "/{id}/analyze-ai-sdk-updated",
+    summary="Analyze Content with AI SDK (Updated Structure)",
+    description="Analyze content using AI SDK with updated prompt structure.",
+)
+async def analyze_ai_sdk_updated_endpoint(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID = Path(..., description="Content item ID"),
+    request: ContentAnalysisRequest,
+) -> StreamingResponse:
+    """Analyze content using AI SDK with updated prompt structure."""
+    # Get content item
+    content_item = crud_get_content_item(session, id)
+    if not content_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content item not found",
+        )
+
+    # Check ownership
+    if content_item.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to analyze this content",
+        )
+
+    # Check if content has text
+    if not content_item.content_text or content_item.content_text.strip() == "":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Content item has no text content to analyze",
+        )
+
+    # Create AI conversation record
+    ai_conversation = create_ai_conversation(
+        session=session,
+        user_id=current_user.id,
+        content_item_id=content_item.id,
+        content_item_title=content_item.title or "Untitled Content",
+        analysis_instruction=request.analysis_instruction,
+        content_to_analyze=content_item.content_text,
+        model=request.model or "or-gemini-2.5-flash-preview-05-20",
+        temperature=request.temperature,
+        max_tokens=request.max_tokens,
+    )
+
+    async def stream_analysis():
+        try:
+            async for chunk in _stream_content_analysis_ai_sdk(
+                content_item=content_item,
+                request=request,
+                ai_conversation_id=ai_conversation.id,
+            ):
+                yield chunk
+        except Exception as e:
+            logger.error(f"Error in AI SDK analysis streaming: {e}")
+            error_response = {
+                "type": "error",
+                "content": f"Analysis failed: {str(e)}",
+                "finished": True,
+            }
+            yield f"data: {json.dumps(error_response)}\n\n"
+
+    return StreamingResponse(
+        stream_analysis(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+        },
+    )
+
+
+async def _stream_content_analysis_ai_sdk(
+    content_item: ContentItem,
+    request: ContentAnalysisRequest,
+    ai_conversation_id: uuid.UUID,
+) -> AsyncGenerator[str, None]:
+    """Stream AI SDK analysis with updated prompt structure."""
+    import aiohttp
+
+    try:
+        # Prepare messages with updated structure
+        messages = [
+            {"role": "system", "content": content_item.content_text},
+            {"role": "user", "content": request.analysis_instruction},
+        ]
+
+        payload = {
+            "model": request.model or "or-gemini-2.5-flash-preview-05-20",
+            "messages": messages,
+            "temperature": request.temperature,
+            "max_tokens": request.max_tokens,
+            "stream": True,
+        }
+
+        url = f"{settings.LITELLM_PROXY_URL}/chat/completions"
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=payload) as response:
+                if response.status != 200:
+                    raise HTTPException(
+                        status_code=response.status,
+                        detail=f"LiteLLM error: HTTP {response.status}",
+                    )
+
+                full_response = ""
+                async for chunk in response.content.iter_chunked(1024):
+                    chunk_str = chunk.decode("utf-8")
+                    lines = chunk_str.strip().split("\n")
+
+                    for line in lines:
+                        if line.startswith("data: "):
+                            data_part = line[6:].strip()
+                            if data_part == "[DONE]":
+                                # Send final response
+                                final_response = {
+                                    "type": "analysis",
+                                    "content": full_response,
+                                    "finished": True,
+                                }
+                                yield f"data: {json.dumps(final_response)}\n\n"
+
+                                # Update AI conversation with response
+                                from app.core.db import get_db_session
+
+                                with get_db_session() as db_session:
+                                    ai_conversation = db_session.get(
+                                        AIConversation, ai_conversation_id
+                                    )
+                                    if ai_conversation:
+                                        update_ai_conversation_response(
+                                            db_session,
+                                            ai_conversation,
+                                            full_response,
+                                        )
+                                return
+
+                            try:
+                                chunk_data = json.loads(data_part)
+                                if "choices" in chunk_data and chunk_data["choices"]:
+                                    delta = chunk_data["choices"][0].get("delta", {})
+                                    if "content" in delta:
+                                        content = delta["content"]
+                                        full_response += content
+
+                                        # Send streaming response
+                                        stream_response = {
+                                            "type": "analysis",
+                                            "content": content,
+                                            "finished": False,
+                                        }
+                                        yield f"data: {json.dumps(stream_response)}\n\n"
+                            except json.JSONDecodeError:
+                                continue
+
+    except Exception as e:
+        error_response = {
+            "type": "error",
+            "content": f"Analysis failed: {str(e)}",
+            "finished": True,
+        }
+        yield f"data: {json.dumps(error_response)}\n\n"
+
+
+@router.post(
+    "/{id}/completion-updated",
+    summary="Content Completion with Updated Structure",
+    description="Get content completion using updated prompt structure.",
+)
+async def completion_updated_endpoint(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID = Path(..., description="Content item ID"),
+    request: ContentAnalysisRequest,
+) -> StreamingResponse:
+    """Get content completion with updated prompt structure."""
+    # Get content item
+    content_item = crud_get_content_item(session, id)
+    if not content_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content item not found",
+        )
+
+    # Check ownership
+    if content_item.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to analyze this content",
+        )
+
+    # Check if content has text
+    if not content_item.content_text or content_item.content_text.strip() == "":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Content item has no text content to analyze",
+        )
+
+    # Create AI conversation record
+    ai_conversation = create_ai_conversation(
+        session=session,
+        user_id=current_user.id,
+        content_item_id=content_item.id,
+        content_item_title=content_item.title or "Untitled Content",
+        analysis_instruction=request.analysis_instruction,
+        content_to_analyze=content_item.content_text,
+        model=request.model or "or-gemini-2.5-flash-preview-05-20",
+        temperature=request.temperature,
+        max_tokens=request.max_tokens,
+    )
+
+    async def stream_completion():
+        try:
+            async for chunk in _stream_content_completion_updated(
+                content_item=content_item,
+                request=request,
+                ai_conversation_id=ai_conversation.id,
+            ):
+                yield chunk
+        except Exception as e:
+            logger.error(f"Error in completion streaming: {e}")
+            error_response = {
+                "type": "error",
+                "content": f"Completion failed: {str(e)}",
+                "finished": True,
+            }
+            yield f"data: {json.dumps(error_response)}\n\n"
+
+    return StreamingResponse(
+        stream_completion(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+        },
+    )
+
+
+async def _stream_content_completion_updated(
+    content_item: ContentItem,
+    request: ContentAnalysisRequest,
+    ai_conversation_id: uuid.UUID,
+) -> AsyncGenerator[str, None]:
+    """Stream content completion with updated prompt structure."""
+    import aiohttp
+
+    try:
+        # Prepare messages with updated structure
+        messages = [
+            {"role": "system", "content": content_item.content_text},
+            {"role": "user", "content": request.analysis_instruction},
+        ]
+
+        payload = {
+            "model": request.model or "or-gemini-2.5-flash-preview-05-20",
+            "messages": messages,
+            "temperature": request.temperature,
+            "max_tokens": request.max_tokens,
+            "stream": True,
+        }
+
+        url = f"{settings.LITELLM_PROXY_URL}/chat/completions"
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=payload) as response:
+                if response.status != 200:
+                    raise HTTPException(
+                        status_code=response.status,
+                        detail=f"LiteLLM error: HTTP {response.status}",
+                    )
+
+                full_response = ""
+                async for chunk in response.content.iter_chunked(1024):
+                    chunk_str = chunk.decode("utf-8")
+                    lines = chunk_str.strip().split("\n")
+
+                    for line in lines:
+                        if line.startswith("data: "):
+                            data_part = line[6:].strip()
+                            if data_part == "[DONE]":
+                                # Send final response
+                                final_response = {
+                                    "type": "completion",
+                                    "content": full_response,
+                                    "finished": True,
+                                }
+                                yield f"data: {json.dumps(final_response)}\n\n"
+
+                                # Update AI conversation with response
+                                from app.core.db import get_db_session
+
+                                with get_db_session() as db_session:
+                                    ai_conversation = db_session.get(
+                                        AIConversation, ai_conversation_id
+                                    )
+                                    if ai_conversation:
+                                        update_ai_conversation_response(
+                                            db_session,
+                                            ai_conversation,
+                                            full_response,
+                                        )
+                                return
+
+                            try:
+                                chunk_data = json.loads(data_part)
+                                if "choices" in chunk_data and chunk_data["choices"]:
+                                    delta = chunk_data["choices"][0].get("delta", {})
+                                    if "content" in delta:
+                                        content = delta["content"]
+                                        full_response += content
+
+                                        # Send streaming response
+                                        stream_response = {
+                                            "type": "completion",
+                                            "content": content,
+                                            "finished": False,
+                                        }
+                                        yield f"data: {json.dumps(stream_response)}\n\n"
+                            except json.JSONDecodeError:
+                                continue
+
+    except Exception as e:
+        error_response = {
+            "type": "error",
+            "content": f"Completion failed: {str(e)}",
+            "finished": True,
+        }
+        yield f"data: {json.dumps(error_response)}\n\n"
+
+
 @router.get(
     "/{id}/markdown",
     summary="Get Content Markdown",
@@ -1231,6 +1576,7 @@ async def analyze_content_stream_with_template_endpoint(
             analysis_type=analysis_type,
             user_id=current_user.id,
             model=DEFAULT_MODEL,
+            session=session,  # 传递数据库session
         ),
         media_type="text/event-stream",
         headers={
@@ -1249,6 +1595,7 @@ async def _stream_template_analysis(
     analysis_type: str,
     user_id: uuid.UUID,
     model: str,
+    session: Session,
 ) -> AsyncGenerator[str, None]:
     """
     使用模板进行流式分析，返回SSE格式数据
@@ -1258,8 +1605,6 @@ async def _stream_template_analysis(
 
     import aiohttp
     from jinja2 import Environment, FileSystemLoader
-
-    from app.api.deps import get_db
 
     try:
         # 加载Jinja2模板
@@ -1293,19 +1638,17 @@ async def _stream_template_analysis(
         ]
 
         # 创建AIConversation记录
-        with next(get_db()) as db_session:
-            ai_conversation = create_ai_conversation(
-                session=db_session,
-                user_id=user_id,
-                content_item_id=content_item_id,
-                content_item_title=content_item.title or "Untitled",
-                analysis_instruction=analysis_instruction,
-                content_to_analyze=content_text,
-                model=model,
-                temperature=0.3,
-                max_tokens=2000,
-            )
-            conversation_id = ai_conversation.id
+        ai_conversation = create_ai_conversation(
+            session=session,
+            user_id=user_id,
+            content_item_id=content_item_id,
+            content_item_title=content_item.title or "Untitled",
+            analysis_instruction=analysis_instruction,
+            content_to_analyze=content_text,
+            model=model,
+            temperature=0.3,
+            max_tokens=2000,
+        )
 
         # LiteLLM 代理配置
         litellm_url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
@@ -1357,16 +1700,8 @@ async def _stream_template_analysis(
                                 # 保存完整的AI响应
                                 if accumulated_content:
                                     try:
-                                        with next(get_db()) as new_session:
-                                            conversation = new_session.get(
-                                                AIConversation, conversation_id
-                                            )
-                                            if conversation is not None:
-                                                update_ai_conversation_response(
-                                                    new_session,
-                                                    conversation,
-                                                    accumulated_content,
-                                                )
+                                        session.add(ai_conversation)
+                                        session.commit()
                                     except Exception as e:
                                         logger.error(f"Failed to save AI response: {e}")
 
@@ -1383,18 +1718,8 @@ async def _stream_template_analysis(
 
                                     # 保存错误
                                     try:
-                                        with next(get_db()) as new_session:
-                                            conversation = new_session.get(
-                                                AIConversation, conversation_id
-                                            )
-                                            if conversation is not None:
-                                                update_ai_conversation_response(
-                                                    new_session,
-                                                    conversation,
-                                                    accumulated_content,
-                                                    "failed",
-                                                    error_msg,
-                                                )
+                                        session.add(ai_conversation)
+                                        session.commit()
                                     except Exception as e:
                                         logger.error(f"Failed to save error: {e}")
 
@@ -1673,3 +1998,167 @@ def get_supported_processors_endpoint() -> dict[str, Any]:
             ],
         },
     }
+
+
+@router.post(
+    "/{id}/share",
+    response_model=ContentSharePublic,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a Share Link for a Content Item",
+    description="Generates a shareable link for the specified content item. Requires ownership.",
+)
+def create_share_link_endpoint(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID = Path(..., description="ID of the content item to share"),
+    share_data: ContentShareCreate,
+) -> ContentSharePublic:
+    """Create a share link for a content item."""
+    # Verify content item exists and user owns it
+    content_item = crud_get_content_item(session, id)
+    if not content_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content item not found",
+        )
+
+    if content_item.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to share this content",
+        )
+
+    try:
+        # Create the share link
+        content_share = create_content_share(
+            session,
+            content_share_in=share_data,
+            content_item_id=id,
+            _user_id=current_user.id,
+        )
+
+        return ContentSharePublic(
+            id=content_share.id,
+            share_token=content_share.share_token,
+            created_at=content_share.created_at,
+            expires_at=content_share.expires_at,
+            is_active=content_share.is_active,
+        )
+    except Exception as e:
+        logger.error(f"Failed to create share link for content {id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create share link",
+        )
+
+
+@router.get(
+    "/share/{token}",
+    response_model=ContentItemPublic,
+    summary="Access Shared Content",
+    description="Retrieves a content item using a share token. May require a password.",
+)
+def get_shared_content_endpoint(
+    *,
+    session: SessionDep,
+    token: str = Path(..., description="The unique share token"),
+    password: str | None = Query(None, description="Password for protected content"),
+) -> ContentItemPublic:
+    """Access shared content using a share token."""
+    # Get the share record
+    content_share = get_content_share_by_token(session, token)
+    if not content_share:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Share link not found or inactive",
+        )
+
+    # Check if share is active
+    if not content_share.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Share link not found or inactive",
+        )
+
+    # Check if expired
+    if content_share.expires_at:
+        # Ensure we're comparing timezone-aware datetimes
+        expires_at = content_share.expires_at
+        if expires_at.tzinfo is None:
+            # If expires_at is naive, treat it as UTC
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+        current_time = datetime.now(timezone.utc)
+
+        if expires_at < current_time:
+            # Deactivate expired share
+            deactivate_content_share(session, content_share=content_share)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Share link has expired",
+            )
+
+    # Check password if required
+    if content_share.password_hash:
+        if not password:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Password required",
+            )
+        if not verify_password(password, content_share.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Incorrect password",
+            )
+
+    # Get the content item
+    content_item = crud_get_content_item(session, content_share.content_item_id)
+    if not content_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content item not found",
+        )
+
+    # Increment access count
+    increment_access_count(session, content_share=content_share)
+
+    return ContentItemPublic.model_validate(content_item)
+
+
+@router.delete(
+    "/{id}/share",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Deactivate Share Link(s) for a Content Item",
+    description="Deactivates active share links for the specified content item. Requires ownership.",
+)
+def deactivate_share_link_endpoint(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID = Path(
+        ..., description="ID of the content item whose shares to deactivate"
+    ),
+) -> None:
+    """Deactivate all active share links for a content item."""
+    # Verify content item exists and user owns it
+    content_item = crud_get_content_item(session, id)
+    if not content_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content item not found",
+        )
+
+    if content_item.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to manage shares for this content",
+        )
+
+    # Get all active shares for this content item
+    content_shares = get_content_shares_by_content_id(session, id)
+
+    # Deactivate all active shares
+    for share in content_shares:
+        if share.is_active:
+            deactivate_content_share(session, content_share=share)

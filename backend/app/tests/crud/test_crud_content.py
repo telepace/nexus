@@ -148,29 +148,33 @@ def test_update_content_item(db_session_mock: MagicMock):
 def test_delete_content_item(db_session_mock: MagicMock):
     mock_item_to_delete = create_mock_content_item()
     item_id = mock_item_to_delete.id
+    user_id = mock_item_to_delete.user_id
 
-    db_session_mock.get.return_value = (
-        mock_item_to_delete  # Mock get to return the item
-    )
+    db_session_mock.get.return_value = mock_item_to_delete
+    db_session_mock.execute.return_value = None  # Mock execute calls
+    db_session_mock.commit.return_value = None
 
-    deleted_item = delete_content_item(session=db_session_mock, id=item_id)
+    result = delete_content_item(session=db_session_mock, id=item_id, user_id=user_id)
 
     db_session_mock.get.assert_called_once_with(ContentItem, item_id)
-    db_session_mock.delete.assert_called_once_with(mock_item_to_delete)
+    assert (
+        db_session_mock.execute.call_count >= 6
+    )  # Should call execute multiple times for cascade delete
     db_session_mock.commit.assert_called_once()
-    assert deleted_item == mock_item_to_delete
+    assert result is True
 
 
 def test_delete_content_item_not_found(db_session_mock: MagicMock):
     item_id = uuid.uuid4()
+    user_id = uuid.uuid4()
     db_session_mock.get.return_value = None  # Mock get to simulate item not found
 
-    deleted_item = delete_content_item(session=db_session_mock, id=item_id)
+    with pytest.raises(ValueError, match=f"Content item with id {item_id} not found"):
+        delete_content_item(session=db_session_mock, id=item_id, user_id=user_id)
 
     db_session_mock.get.assert_called_once_with(ContentItem, item_id)
-    db_session_mock.delete.assert_not_called()
+    db_session_mock.execute.assert_not_called()
     db_session_mock.commit.assert_not_called()
-    assert deleted_item is None
 
 
 print(

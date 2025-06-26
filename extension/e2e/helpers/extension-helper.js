@@ -318,7 +318,7 @@ class ExtensionHelper {
         targetPage = await this.browser.newPage();
         await targetPage.goto(sidePanelUrl, { waitUntil: 'networkidle2' });
         shouldClosePage = true;
-      }
+      }3
       
       // Set up API mocking first - use once to avoid conflicts
       await targetPage.setRequestInterception(true);

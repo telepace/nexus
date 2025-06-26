@@ -62,6 +62,8 @@ module.exports = {
 5. **Tailwind utilities only** – complex rules belong in `@apply` classes inside token CSS.
 6. **Dark mode** via `.dark`; never use `prefers-color-scheme`.
 7. **Predictable Visual Flow** ⬆️ ***new*** – Structure components to guide the user's eye logically down a strong alignment axis. Avoid breaking established alignment patterns, especially for primary actions.
+8. **🌙 Dark Mode Accessibility** ⬆️ ***MANDATORY*** – Every UI component and color choice MUST be tested and optimized for dark mode. Ensure WCAG AA contrast ratios (≥4.5:1) are met in both light and dark themes. Never ship features without dark mode validation.
+9. **🔍 Visual Hierarchy Enforcement** ⬆️ ***MANDATORY*** – All backgrounds must maintain clear visual separation: main background → sidebar → cards → interactive elements. Test contrast differences are perceptible across different lighting conditions.
 
 ### 1 · Color & Semantics
 
