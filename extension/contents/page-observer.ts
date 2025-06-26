@@ -127,6 +127,10 @@ class PageObserver {
           this.handleExtractContent(sendResponse);
           return true; // 保持消息通道开放
 
+        case 'GET_PAGE_CONTENT':
+          this.handleGetPageContent(sendResponse);
+          return true;
+
         case 'SAVE_PAGE':
           this.handleSavePage(sendResponse);
           return true;
@@ -254,11 +258,25 @@ class PageObserver {
         
         // 使用安全的消息发送方法
         try {
+          // 通知content更新
           await this.sendMessageSafely({
             type: 'PAGE_CONTENT_UPDATED',
             data: pageData
           });
-          console.log('[PageObserver] Successfully notified background of content update');
+          
+          // 🔧 新增：自动触发流式分析
+          await this.sendMessageSafely({
+            type: 'PAGE_CONTENT_EXTRACTED',
+            data: pageData
+          });
+          
+          console.log('[PageObserver] ✅ Content extracted and auto-analysis triggered', {
+            title: pageData.title,
+            wordCount: pageData.metadata.wordCount,
+            contentType: pageData.metadata.contentType,
+            language: pageData.metadata.language
+          });
+          
         } catch (error) {
           // 静默处理连接错误，避免在控制台产生过多噪音
           if (error.message.includes('Extension context invalidated') || 
@@ -497,6 +515,21 @@ class PageObserver {
     try {
       const pageData = this.extractPageData();
       sendResponse({ success: true, data: pageData });
+    } catch (error) {
+      sendResponse({ success: false, error: (error as Error).message });
+    }
+  }
+
+  // 处理获取页面内容请求（用于sidepanel）
+  private handleGetPageContent(sendResponse: (response: any) => void) {
+    try {
+      const pageData = this.extractPageData();
+      sendResponse({ 
+        success: true, 
+        content: pageData.content,
+        title: pageData.title,
+        metadata: pageData.metadata
+      });
     } catch (error) {
       sendResponse({ success: false, error: (error as Error).message });
     }

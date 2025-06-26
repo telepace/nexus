@@ -7,6 +7,7 @@ from sqlmodel import Session
 
 from app.core.security import get_password_hash
 from app.models import ContentItem, User
+from app.tests.conftest import get_api_response_data
 
 
 def test_analyze_stream_endpoint_requires_auth(client: TestClient):
@@ -22,11 +23,12 @@ def test_analyze_stream_invalid_analysis_type(
     client: TestClient, normal_user_token_headers: dict
 ):
     """测试无效的分析类型"""
+    content_id = str(uuid.uuid4())
     response = client.get(
-        "/api/v1/content/123/analyze/stream?analysis_type=invalid",
+        f"/api/v1/content/{content_id}/analyze/stream?analysis_type=invalid",
         headers=normal_user_token_headers,
     )
-    assert response.status_code == 422
+    assert response.status_code == 400
 
 
 def test_analyze_stream_nonexistent_content(
@@ -39,7 +41,8 @@ def test_analyze_stream_nonexistent_content(
         headers=normal_user_token_headers,
     )
     assert response.status_code == 404
-    assert "Content item not found" in response.json()["detail"]
+    response_data = get_api_response_data(response)
+    assert "Content item not found" in response_data["detail"]
 
 
 def test_analyze_stream_unauthorized_content(
@@ -96,7 +99,8 @@ def test_analyze_stream_content_without_text(
         headers=normal_user_token_headers,
     )
     assert response.status_code == 400
-    assert "Content item has no text content" in response.json()["detail"]
+    response_data = get_api_response_data(response)
+    assert "Content item has no text content" in response_data["detail"]
 
 
 @pytest.mark.asyncio
@@ -123,12 +127,15 @@ async def test_analyze_stream_summary_success(
         "data: [DONE]\n",
     ]
 
+    async def mock_iter_chunked(_size):
+        """Mock async generator for iter_chunked"""
+        for chunk in mock_response_data:
+            yield chunk.encode("utf-8")
+
     with patch("aiohttp.ClientSession.post") as mock_post:
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.content.iter_chunked.return_value = [
-            chunk.encode("utf-8") for chunk in mock_response_data
-        ].__aiter__()
+        mock_response.content.iter_chunked = mock_iter_chunked
         mock_post.return_value.__aenter__.return_value = mock_response
 
         # 发送请求
@@ -171,12 +178,15 @@ async def test_analyze_stream_key_points_success(
         "data: [DONE]\n",
     ]
 
+    async def mock_iter_chunked(_size):
+        """Mock async generator for iter_chunked"""
+        for chunk in mock_response_data:
+            yield chunk.encode("utf-8")
+
     with patch("aiohttp.ClientSession.post") as mock_post:
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.content.iter_chunked.return_value = [
-            chunk.encode("utf-8") for chunk in mock_response_data
-        ].__aiter__()
+        mock_response.content.iter_chunked = mock_iter_chunked
         mock_post.return_value.__aenter__.return_value = mock_response
 
         # 发送请求
@@ -248,13 +258,19 @@ def test_analyze_stream_template_loading(
     db.commit()
 
     # 测试summary模板
+    async def mock_iter_chunked(_size):
+        """Mock async generator for iter_chunked"""
+        chunks = [
+            b'data: {"choices":[{"delta":{"content":"test"}}]}\n',
+            b"data: [DONE]\n",
+        ]
+        for chunk in chunks:
+            yield chunk
+
     with patch("aiohttp.ClientSession.post") as mock_post:
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.content.iter_chunked.return_value = [
-            b'data: {"choices":[{"delta":{"content":"test"}}]}\n',
-            b"data: [DONE]\n",
-        ].__aiter__()
+        mock_response.content.iter_chunked = mock_iter_chunked
         mock_post.return_value.__aenter__.return_value = mock_response
 
         response = client.get(

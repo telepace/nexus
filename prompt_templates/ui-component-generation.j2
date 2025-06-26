@@ -1,0 +1,164 @@
+# AI UI组件生成提示模板
+# 专门用于确保AI生成的代码符合UI规范
+
+## 🤖 STRICT AI UI GENERATION RULES
+
+You are generating UI components for the Nexus project. You MUST follow these MANDATORY constraints:
+
+### ⚠️ CRITICAL CONSTRAINTS
+
+#### 🎨 COLORS - ONLY SEMANTIC TOKENS
+**ALLOWED colors (use EXACTLY as shown):**
+```tsx
+className="bg-background text-foreground"
+className="bg-muted text-muted-foreground" 
+className="bg-card text-card-foreground"
+className="bg-primary text-primary-foreground"
+className="text-destructive"
+className="border-border"
+```
+
+**FORBIDDEN (NEVER use these):**
+```tsx
+// ❌ NEVER use specific colors
+className="bg-blue-500 text-green-600"
+className="from-blue-500 to-cyan-500"
+className="text-yellow-500"
+``` 
+
+#### 🗃️ CARD STRUCTURE - MANDATORY PATTERN
+**ALWAYS use this exact structure:**
+```tsx
+<Card>
+  <CardHeader className="pb-6">
+    <CardTitle>{{ title }}</CardTitle>
+    <CardDescription>{{ description }}</CardDescription>
+  </CardHeader>
+  <CardContent className="space-y-4">
+    {{ content }}
+  </CardContent>
+  <CardFooter className="flex justify-end gap-2">
+    <Button variant="outline">Cancel</Button>
+    <Button>Save</Button>
+  </CardFooter>
+</Card>
+```
+
+#### 📐 SPACING - REQUIRED PATTERNS
+```tsx
+// Page layout
+<div className="p-6 space-y-6">
+  <h1 className="text-2xl font-bold">{{ title }}</h1>
+  <div className="space-y-4">
+    {{ content }}
+  </div>
+</div>
+
+// Form layout
+<form className="space-y-6">
+  <div className="space-y-4">
+    {{ form_fields }}
+  </div>
+  <div className="flex justify-end space-x-2">
+    {{ actions }}
+  </div>
+</form>
+```
+
+#### 🚫 ICON RESTRICTIONS
+**ONLY functional icons allowed:**
+```tsx
+// ✅ ALLOWED - functional only
+<X className="h-4 w-4" />          // Close button
+<ChevronDown className="h-4 w-4" /> // Dropdown indicator
+<Loader2 className="h-4 w-4 animate-spin" /> // Loading
+
+// ❌ FORBIDDEN - decorative icons
+<Star className="h-4 w-4 text-yellow-500" />
+<CheckCircle className="h-4 w-4 text-green-500" />
+```
+
+### 🎯 COMPONENT SELECTION
+
+| Need | Use | Example |
+|------|-----|---------|
+| Action buttons | `Button` | `<Button variant="outline">Cancel</Button>` |
+| Text input | `Input` | `<Input placeholder="Enter text" />` |
+| Content container | `Card` | Use full Card structure |
+| Status indicator | `Badge` (no colors) | `<Badge variant="outline">Status</Badge>` |
+| Loading state | `Skeleton` | `<Skeleton className="h-4 w-full" />` |
+
+### 🔧 IMPORTS TEMPLATE
+```tsx
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/ui/card";
+import { Button } from "@/ui/button";
+import { Input } from "@/ui/input";
+import { Label } from "@/ui/label";
+// Only import icons if functionally necessary
+```
+
+### 📋 GENERATION CHECKLIST
+
+Before outputting code, verify:
+- ✅ No hardcoded colors (blue-500, green-600, etc.)
+- ✅ Uses complete Card structure when needed
+- ✅ Proper spacing with space-y-* classes
+- ✅ Only functional icons
+- ✅ No inline styles (style={{ }})
+- ✅ Uses semantic color tokens only
+
+### 🎯 EXAMPLE TEMPLATES
+
+#### Simple Card Component:
+```tsx
+<Card>
+  <CardHeader className="pb-6">
+    <CardTitle>{{ component_title }}</CardTitle>
+    <CardDescription>{{ component_description }}</CardDescription>
+  </CardHeader>
+  <CardContent>
+    <p className="text-muted-foreground">{{ content_text }}</p>
+  </CardContent>
+  <CardFooter>
+    <Button variant="outline">{{ secondary_action }}</Button>
+    <Button>{{ primary_action }}</Button>
+  </CardFooter>
+</Card>
+```
+
+#### Simple Form:
+```tsx
+<form className="space-y-6">
+  <div className="space-y-4">
+    <div>
+      <Label htmlFor="{{ field_id }}">{{ field_label }}</Label>
+      <Input id="{{ field_id }}" type="{{ field_type }}" />
+    </div>
+  </div>
+  <div className="flex justify-end space-x-2">
+    <Button variant="outline" type="button">Cancel</Button>
+    <Button type="submit">Submit</Button>
+  </div>
+</form>
+```
+
+### 🚨 FAILURE CONDITIONS
+
+If your generated code contains ANY of these, you have FAILED:
+- Hardcoded colors (blue-500, green-600, etc.)
+- Decorative icons (Star, CheckCircle, etc.)
+- Floating action buttons (absolute positioning)
+- Gradients (from-* to-*)
+- Inline styles
+- Direct HTML elements instead of Card components
+
+### 🎯 SUCCESS CRITERIA
+
+Your code should be:
+- ✅ Functional and clean
+- ✅ Uses only semantic colors
+- ✅ Deliberately simple (wireframe-level)
+- ✅ Ready for human enhancement
+- ✅ Follows established patterns
+
+Remember: Your role is to provide WIREFRAME-LEVEL code that human developers will enhance and polish. 

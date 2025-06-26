@@ -2,6 +2,7 @@ import { sendToContentScript } from "@plasmohq/messaging";
 // import { getUIManager } from "./lib/ui-manager"; // 🔧 暂时移除UI Manager
 import { generateSummary, saveToLibrary } from "./lib/api";
 import { apiClient, StreamChunk } from './lib/api-client'
+import { streamApi } from './lib/stream-api'
 
 // 🔧 暂时移除UI Manager
 // const uiManager = getUIManager();
@@ -12,9 +13,33 @@ const AUTH_CHECK_INTERVAL = 5 * 60 * 1000;
 // 页面数据缓存
 const pageDataCache = new Map<number, any>();
 
+// 自动分析配置
+interface AutoAnalysisConfig {
+  enabled: boolean;
+  autoSummary: boolean;
+  autoKeypoints: boolean;
+  minWordCount: number;
+  excludeDomains: string[];
+}
+
+// 默认自动分析配置
+const DEFAULT_AUTO_CONFIG: AutoAnalysisConfig = {
+  enabled: true,
+  autoSummary: true,
+  autoKeypoints: true,
+  minWordCount: 300, // 最少300字才自动分析
+  excludeDomains: [
+    'youtube.com',
+    'twitter.com', 
+    'facebook.com',
+    'instagram.com',
+    'reddit.com'
+  ]
+};
+
 // 初始化背景脚本
 async function initialize() {
-  console.log("Nexus Extension Background Script Initialized - Unified Architecture");
+  console.log("Nexus Extension Background Script Initialized - Auto Stream Analysis");
   
   // 启动时同步认证状态
   await checkAuthStatus();
@@ -24,6 +49,35 @@ async function initialize() {
   
   // 定期检查认证状态
   setInterval(checkAuthStatus, AUTH_CHECK_INTERVAL);
+  
+  // 初始化自动分析配置
+  await initializeAutoAnalysisConfig();
+}
+
+// 初始化自动分析配置
+async function initializeAutoAnalysisConfig() {
+  try {
+    const result = await chrome.storage.local.get(['autoAnalysisConfig']);
+    if (!result.autoAnalysisConfig) {
+      await chrome.storage.local.set({ 
+        autoAnalysisConfig: DEFAULT_AUTO_CONFIG 
+      });
+      console.log('[Background] ⚙️ Initialized auto analysis config');
+    }
+  } catch (error) {
+    console.error('[Background] Failed to initialize auto analysis config:', error);
+  }
+}
+
+// 获取自动分析配置
+async function getAutoAnalysisConfig(): Promise<AutoAnalysisConfig> {
+  try {
+    const result = await chrome.storage.local.get(['autoAnalysisConfig']);
+    return result.autoAnalysisConfig || DEFAULT_AUTO_CONFIG;
+  } catch (error) {
+    console.error('[Background] Failed to get auto analysis config:', error);
+    return DEFAULT_AUTO_CONFIG;
+  }
 }
 
 // 为已存在的标签页注入content script
@@ -365,8 +419,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true
   }
 
-  console.log('[Background] ❓ Unknown message type:', request.type);
-  return false
+  // 🔧 添加新的消息处理器
+  switch (request.type) {
+    case 'PAGE_CONTENT_EXTRACTED':
+      handleAutoAnalysis(request.data, sender);
+      break;
+    case 'GET_AUTO_CONFIG':
+      handleGetAutoConfig(sendResponse);
+      return true;
+    case 'UPDATE_AUTO_CONFIG':
+      handleUpdateAutoConfig(request.config, sendResponse);
+      return true;
+    case 'TRIGGER_MANUAL_ANALYSIS':
+      handleManualAnalysis(request.data, sender, sendResponse);
+      return true;
+    case 'GET_CACHED_ANALYSIS':
+      handleGetCachedAnalysis(request.tabId, sendResponse);
+      return true;
+    default:
+      console.log('[Background] ❓ Unknown message type:', request.type);
+      return false
+  }
 })
 
 // 处理页面内容更新
@@ -1030,4 +1103,332 @@ console.log('Nexus background script initialized with unified architecture')
 // 启动
 initialize().catch(error => {
   console.error('Background script initialization failed:', error);
-}); 
+});
+
+// 处理自动分析
+async function handleAutoAnalysis(pageData: any, sender: chrome.runtime.MessageSender) {
+  try {
+    const config = await getAutoAnalysisConfig();
+    
+    if (!config.enabled) {
+      console.log('[Background] 🔇 Auto analysis disabled');
+      return;
+    }
+
+    // 检查认证状态
+    const authStatus = await checkAuthStatus();
+    if (!authStatus.isAuthenticated || !authStatus.token) {
+      console.log('[Background] 🔐 User not authenticated, skipping auto analysis');
+      
+      // 通知侧边栏显示认证提示
+      if (sender.tab?.id) {
+        chrome.runtime.sendMessage({
+          type: 'ANALYSIS_AUTH_REQUIRED',
+          tabId: sender.tab.id,
+          message: '请先登录以使用AI分析功能'
+        });
+      }
+      return;
+    }
+
+    // 检查内容长度
+    if (pageData.metadata.wordCount < config.minWordCount) {
+      console.log(`[Background] 📏 Content too short (${pageData.metadata.wordCount} words), skipping auto analysis`);
+      return;
+    }
+
+    // 检查排除域名
+    const url = new URL(pageData.url);
+    if (config.excludeDomains.some(domain => url.hostname.includes(domain))) {
+      console.log(`[Background] 🚫 Domain ${url.hostname} excluded from auto analysis`);
+      return;
+    }
+
+    console.log(`[Background] 🤖 Starting auto analysis for: ${pageData.title}`);
+
+    // 缓存页面数据
+    if (sender.tab?.id) {
+      pageDataCache.set(sender.tab.id, {
+        ...pageData,
+        analysisStarted: true,
+        timestamp: Date.now()
+      });
+    }
+
+    // 启动流式分析，传递已验证的token
+    await startStreamAnalysis(pageData, sender.tab?.id, authStatus.token);
+
+  } catch (error) {
+    console.error('[Background] Auto analysis error:', error);
+    
+    // 通知侧边栏显示错误
+    if (sender.tab?.id) {
+      chrome.runtime.sendMessage({
+        type: 'ANALYSIS_ERROR',
+        tabId: sender.tab.id,
+        error: error.message || '自动分析失败'
+      });
+    }
+  }
+}
+
+// 启动流式分析
+async function startStreamAnalysis(pageData: any, tabId?: number, token?: string) {
+  try {
+    // 使用传入的token或重新获取认证状态
+    let authToken = token;
+    if (!authToken) {
+      const authStatus = await checkAuthStatus();
+      if (!authStatus.isAuthenticated || !authStatus.token) {
+        throw new Error('Authentication required');
+      }
+      authToken = authStatus.token;
+    }
+
+    streamApi.setToken(authToken);
+
+    const request = {
+      text: pageData.content,
+      lang: pageData.metadata.language === 'zh' ? 'zh' : 'auto',
+      max_tokens: 1024
+    };
+
+    console.log('[Background] 🌊 Starting stream analysis for content length:', pageData.content.length);
+
+    // 并行启动摘要和要点流
+    const config = await getAutoAnalysisConfig();
+    const promises: Promise<void>[] = [];
+
+    if (config.autoSummary) {
+      promises.push(processSummaryStream(request, tabId, pageData));
+    }
+
+    if (config.autoKeypoints) {
+      promises.push(processKeypointsStream(request, tabId, pageData));
+    }
+
+    // 等待所有流完成
+    await Promise.all(promises);
+    
+    console.log('[Background] ✅ Stream analysis completed');
+
+    // 通知side panel更新
+    if (tabId) {
+      chrome.runtime.sendMessage({
+        type: 'ANALYSIS_COMPLETED',
+        tabId: tabId,
+        data: pageData
+      });
+    }
+
+  } catch (error) {
+    console.error('[Background] Stream analysis error:', error);
+    
+    // 检查是否是认证错误
+    const isAuthError = error.message.includes('401') || 
+                       error.message.includes('403') || 
+                       error.message.includes('Authentication') || 
+                       error.message.includes('authentication');
+    
+    if (isAuthError) {
+      console.log('[Background] 🔑 Authentication error detected, clearing stored token');
+      // 清除无效的认证信息
+      await chrome.storage.local.remove(['accessToken', 'user']);
+    }
+    
+    // 通知错误
+    if (tabId) {
+      chrome.runtime.sendMessage({
+        type: 'ANALYSIS_ERROR',
+        tabId: tabId,
+        error: isAuthError ? '认证已过期，请重新登录' : error.message,
+        isAuthError: isAuthError
+      });
+    }
+  }
+}
+
+// 处理摘要流
+async function processSummaryStream(request: any, tabId?: number, pageData?: any) {
+  try {
+    const stream = await streamApi.getSummaryStream(request);
+    const reader = stream.getReader();
+    let summaryContent = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      
+      if (done) break;
+
+      if (value.error) {
+        throw new Error(value.error);
+      }
+
+      if (value.delta) {
+        summaryContent += value.delta;
+        
+        // 实时通知side panel更新
+        chrome.runtime.sendMessage({
+          type: 'SUMMARY_CHUNK',
+          tabId: tabId,
+          delta: value.delta,
+          done: value.done
+        });
+      }
+
+      if (value.done) break;
+    }
+
+    // 保存摘要到缓存
+    if (tabId && pageData) {
+      const cachedData = pageDataCache.get(tabId) || {};
+      pageDataCache.set(tabId, {
+        ...cachedData,
+        summary: summaryContent,
+        summaryCompleted: true
+      });
+    }
+
+    console.log('[Background] ✅ Summary stream completed');
+
+  } catch (error) {
+    console.error('[Background] Summary stream error:', error);
+    throw error;
+  }
+}
+
+// 处理要点流
+async function processKeypointsStream(request: any, tabId?: number, pageData?: any) {
+  try {
+    const stream = await streamApi.getKeypointsStream(request);
+    const reader = stream.getReader();
+    let keypointsContent = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      
+      if (done) break;
+
+      if (value.error) {
+        throw new Error(value.error);
+      }
+
+      if (value.delta) {
+        keypointsContent += value.delta;
+        
+        // 实时通知side panel更新
+        chrome.runtime.sendMessage({
+          type: 'KEYPOINTS_CHUNK',
+          tabId: tabId,
+          delta: value.delta,
+          done: value.done
+        });
+      }
+
+      if (value.done) break;
+    }
+
+    // 保存要点到缓存
+    if (tabId && pageData) {
+      const cachedData = pageDataCache.get(tabId) || {};
+      pageDataCache.set(tabId, {
+        ...cachedData,
+        keypoints: keypointsContent,
+        keypointsCompleted: true
+      });
+    }
+
+    console.log('[Background] ✅ Keypoints stream completed');
+
+  } catch (error) {
+    console.error('[Background] Keypoints stream error:', error);
+    throw error;
+  }
+}
+
+// 获取认证token
+async function getAuthToken(): Promise<string | null> {
+  try {
+    const result = await chrome.storage.local.get(['accessToken']);
+    return result.accessToken || null;
+  } catch (error) {
+    console.error('[Background] Failed to get auth token:', error);
+    return null;
+  }
+}
+
+// 处理获取自动配置
+async function handleGetAutoConfig(sendResponse: (response: any) => void) {
+  try {
+    const config = await getAutoAnalysisConfig();
+    sendResponse({ success: true, config });
+  } catch (error) {
+    console.error('[Background] Failed to get auto config:', error);
+    sendResponse({ success: false, error: error.message });
+  }
+}
+
+// 处理更新自动配置
+async function handleUpdateAutoConfig(newConfig: Partial<AutoAnalysisConfig>, sendResponse: (response: any) => void) {
+  try {
+    const currentConfig = await getAutoAnalysisConfig();
+    const updatedConfig = { ...currentConfig, ...newConfig };
+    
+    await chrome.storage.local.set({ autoAnalysisConfig: updatedConfig });
+    
+    console.log('[Background] ⚙️ Auto config updated:', updatedConfig);
+    sendResponse({ success: true, config: updatedConfig });
+  } catch (error) {
+    console.error('[Background] Failed to update auto config:', error);
+    sendResponse({ success: false, error: error.message });
+  }
+}
+
+// 处理手动分析
+async function handleManualAnalysis(pageData: any, sender: chrome.runtime.MessageSender, sendResponse: (response: any) => void) {
+  try {
+    // 检查认证状态
+    const authStatus = await checkAuthStatus();
+    if (!authStatus.isAuthenticated || !authStatus.token) {
+      console.log('[Background] 🔐 Manual analysis failed: User not authenticated');
+      sendResponse({ 
+        success: false, 
+        error: '请先登录以使用AI分析功能',
+        isAuthError: true
+      });
+      return;
+    }
+
+    // 强制执行分析，传递已验证的token
+    await startStreamAnalysis(pageData, sender.tab?.id, authStatus.token);
+    sendResponse({ success: true });
+  } catch (error) {
+    console.error('[Background] Manual analysis error:', error);
+    
+    const isAuthError = error.message.includes('401') || 
+                       error.message.includes('403') || 
+                       error.message.includes('Authentication') || 
+                       error.message.includes('authentication');
+    
+    sendResponse({ 
+      success: false, 
+      error: isAuthError ? '认证已过期，请重新登录' : error.message,
+      isAuthError: isAuthError
+    });
+  }
+}
+
+// 处理获取缓存分析
+async function handleGetCachedAnalysis(tabId: number, sendResponse: (response: any) => void) {
+  try {
+    const cachedData = pageDataCache.get(tabId);
+    if (cachedData) {
+      sendResponse({ success: true, data: cachedData });
+    } else {
+      sendResponse({ success: false, error: '缓存数据不存在' });
+    }
+  } catch (error) {
+    console.error('[Background] 获取缓存分析失败:', error);
+    sendResponse({ success: false, error: error.message });
+  }
+} 

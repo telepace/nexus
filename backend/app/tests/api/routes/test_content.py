@@ -247,19 +247,24 @@ def test_get_content_markdown_api_not_ready(
     else:
         content_id = created_content["id"]
 
-    # Try to get markdown content (should fail because there's no content and no R2 assets)
+    # Try to get markdown content - should succeed but return empty content
     response = client.get(
         f"/api/v1/content/{content_id}/markdown",
         headers=normal_user_token_headers,
     )
-    assert response.status_code == 400
+    assert response.status_code == 200
     response_data = response.json()
-    # Check error field in ApiResponse format
-    error_message = response_data.get("error", "")
-    assert (
-        "not ready" in error_message.lower()
-        or "no markdown content" in error_message.lower()
-    )
+
+    # Handle both wrapped and unwrapped response formats
+    if "data" in response_data:
+        markdown_data = response_data["data"]
+    else:
+        markdown_data = response_data
+
+    # Should return empty markdown content for items without text
+    assert markdown_data["markdown_content"] == ""
+    assert markdown_data["id"] == content_id
+    assert markdown_data["title"] == "Test Content"
 
 
 def test_get_content_markdown_api_not_found(

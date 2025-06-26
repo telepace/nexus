@@ -430,6 +430,72 @@ backend-migrate-passwords:
 	@echo "===========> Migrating user passwords"
 	@cd $(BACKEND_DIR) && python scripts/migrate_user_passwords.py
 
+## backend-db-clear: Clear all database tables
+.PHONY: backend-db-clear
+backend-db-clear:
+	@echo "===========> Clearing all database tables"
+	@python scripts/db-test-utils.py clear
+
+## backend-db-verify: Verify database data
+.PHONY: backend-db-verify
+backend-db-verify:
+	@echo "===========> Verifying database data"
+	@python scripts/db-test-utils.py verify
+
+## backend-db-summary: Show database data summary
+.PHONY: backend-db-summary
+backend-db-summary:
+	@echo "===========> Showing database data summary"
+	@python scripts/db-test-utils.py summary
+
+## backend-db-reset: Clear database and reinitialize with default data
+.PHONY: backend-db-reset
+backend-db-reset:
+	@echo "===========> Resetting database (clear + init + verify)"
+	@python scripts/db-test-utils.py reset
+
+## backend-db-full-test: Complete database test cycle (clear + init + verify + summary)
+.PHONY: backend-db-full-test
+backend-db-full-test:
+	@echo "===========> Running complete database test cycle"
+	@python scripts/db-test-utils.py full-test
+
+## backend-db-add-users: Add test users to database
+.PHONY: backend-db-add-users
+backend-db-add-users:
+	@echo "===========> Adding test users"
+	@python scripts/db-advanced-test.py users $(or $(COUNT),10)
+
+## backend-db-add-content: Add test content to database
+.PHONY: backend-db-add-content
+backend-db-add-content:
+	@echo "===========> Adding test content"
+	@python scripts/db-advanced-test.py content $(or $(COUNT),20)
+
+## backend-db-add-conversations: Add test conversations to database
+.PHONY: backend-db-add-conversations
+backend-db-add-conversations:
+	@echo "===========> Adding test conversations"
+	@python scripts/db-advanced-test.py conversations $(or $(COUNT),15)
+
+## backend-db-full-dataset: Generate complete test dataset
+.PHONY: backend-db-full-dataset
+backend-db-full-dataset:
+	@echo "===========> Generating complete test dataset"
+	@python scripts/db-advanced-test.py full-dataset
+
+## backend-db-performance: Run database performance tests
+.PHONY: backend-db-performance
+backend-db-performance:
+	@echo "===========> Running database performance tests"
+	@python scripts/db-advanced-test.py performance
+
+## backend-db-stats: Show database statistics
+.PHONY: backend-db-stats
+backend-db-stats:
+	@echo "===========> Showing database statistics"
+	@python scripts/db-advanced-test.py stats
+
 # ==============================================================================
 # FRONTEND TARGETS
 # ==============================================================================
