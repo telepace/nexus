@@ -26,6 +26,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_SHARP_PATH=/tmp/node_modules/sharp
 ENV NEXT_IGNORE_TYPECHECK=1
 
+# 声明构建参数并设置环境变量
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 
