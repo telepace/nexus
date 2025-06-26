@@ -18,231 +18,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AIResult, ConversationListResponse } from "@/lib/api/content";
 import { EnhancedLLMAnalysisSidebar } from "@/components/ui/enhanced-llm-analysis-sidebar";
 import { ConversationHistory } from "@/components/ai/ConversationHistory";
-import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { AnalysisCards, adaptAnalysisData } from "./AnalysisCards";
+import { ContentItemPublic } from "@/app/content-library/types";
 
 interface ContentAnalysisSidebarProps {
-  contentId: string;
-  contentText?: string;
-  analysisResult?: AIResult | null;
+  content: ContentItemPublic;
   conversations?: ConversationListResponse["conversations"];
+  analysisResult?: AIResult | null;
+  isLoading?: boolean;
   className?: string;
 }
-
-// 内容摘要卡片
-const SummaryCard = ({
-  summary,
-}: { summary: Record<string, unknown> | null }) => {
-  if (!summary) return null;
-
-  const summaryText =
-    (summary.text as string) ||
-    (summary.content as string) ||
-    (summary.summary as string) ||
-    (Object.values(summary).find(
-      (val) => typeof val === "string" && val.length > 50,
-    ) as string) ||
-    JSON.stringify(summary);
-
-  return (
-    <Card className="h-full analysis-card shadow-sm hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3 pt-4">
-        <CardTitle className="flex items-center gap-2 text-base text-foreground">
-          <BookOpen className="h-4 w-4 text-foreground" />
-          内容摘要
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-4">
-        <div className="text-sm text-muted-foreground leading-relaxed reading-content">
-          <MarkdownRenderer
-            content={summaryText}
-            className="prose prose-sm max-w-none dark:prose-invert
-              prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-2 prose-p:mt-0
-              prose-strong:text-foreground prose-em:text-foreground
-              prose-li:text-muted-foreground prose-li:leading-relaxed prose-li:mb-1
-              prose-headings:text-foreground prose-headings:text-sm prose-headings:font-medium prose-headings:mb-2
-              [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
-          />
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-// 关键要点卡片
-const KeyPointsCard = ({
-  keyPoints,
-}: { keyPoints: Record<string, unknown> | null }) => {
-  if (!keyPoints) return null;
-
-  let points: string[] = [];
-  let keyPointsContent = "";
-
-  // 尝试提取要点数组
-  if (Array.isArray(keyPoints.points)) {
-    points = keyPoints.points.map((p) =>
-      typeof p === "string" ? p : JSON.stringify(p),
-    );
-  } else if (Array.isArray(keyPoints.items)) {
-    points = keyPoints.items.map((p) =>
-      typeof p === "string" ? p : JSON.stringify(p),
-    );
-  } else if (Array.isArray(keyPoints.key_points)) {
-    points = keyPoints.key_points.map((p) =>
-      typeof p === "string" ? p : JSON.stringify(p),
-    );
-  } else {
-    // 尝试获取原始文本内容（可能是markdown格式）
-    keyPointsContent =
-      (keyPoints.text as string) ||
-      (keyPoints.content as string) ||
-      (keyPoints.markdown as string) ||
-      (Object.values(keyPoints).find(
-        (val) => typeof val === "string" && val.length > 50,
-      ) as string) ||
-      "";
-
-    if (!keyPointsContent) {
-      points = Object.values(keyPoints)
-        .filter((val) => typeof val === "string" && val.length > 10)
-        .map((val) => val as string);
-    }
-  }
-
-  return (
-    <Card className="h-full analysis-card shadow-sm hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3 pt-4">
-        <CardTitle className="flex items-center gap-2 text-base text-foreground">
-          <Lightbulb className="h-4 w-4 text-foreground" />
-          关键要点
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-4">
-        {/* 如果有markdown内容，直接渲染 */}
-        {keyPointsContent ? (
-          <div className="text-sm text-muted-foreground leading-relaxed reading-content">
-            <MarkdownRenderer
-              content={keyPointsContent}
-              className="prose prose-sm max-w-none dark:prose-invert
-                prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-2 prose-p:mt-0
-                prose-strong:text-foreground prose-em:text-foreground
-                prose-li:text-muted-foreground prose-li:leading-relaxed prose-li:mb-1
-                prose-ul:mb-2 prose-ol:mb-2 prose-ul:mt-0 prose-ol:mt-0
-                prose-headings:text-foreground prose-headings:text-sm prose-headings:font-medium prose-headings:mb-2
-                [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
-            />
-          </div>
-        ) : (
-          /* 如果是要点数组，使用自定义样式 */
-          <div className="space-y-3">
-            {points.length > 0 ? (
-              points.map((point, index) => (
-                <div key={index} className="flex gap-3 items-start">
-                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center text-xs font-medium text-amber-700 dark:text-amber-300 mt-0.5">
-                    {index + 1}
-                  </div>
-                  <div className="text-sm text-muted-foreground leading-relaxed reading-content">
-                    <MarkdownRenderer
-                      content={point}
-                      className="prose prose-sm max-w-none dark:prose-invert
-                        prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-1 prose-p:mt-0
-                        prose-strong:text-foreground prose-em:text-foreground
-                        [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
-                    />
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-sm text-muted-foreground reading-content">
-                <MarkdownRenderer
-                  content={JSON.stringify(keyPoints)}
-                  className="prose prose-sm max-w-none dark:prose-invert"
-                />
-              </div>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
-// 内容分析卡片
-const MetadataCard = ({ analysisResult }: { analysisResult: AIResult }) => {
-  const hasMetadata =
-    analysisResult.reading_time_minutes ||
-    analysisResult.difficulty_level ||
-    analysisResult.content_quality_score ||
-    (analysisResult.labels && analysisResult.labels.length > 0);
-
-  if (!hasMetadata) return null;
-
-  return (
-    <Card className="h-full analysis-card shadow-sm hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3 pt-4">
-        <CardTitle className="flex items-center gap-2 text-base text-foreground">
-          <BarChart3 className="h-4 w-4 text-foreground" />
-          内容分析
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-4 space-y-3">
-        {analysisResult.reading_time_minutes && (
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">
-              预计阅读时间: {analysisResult.reading_time_minutes} 分钟
-            </span>
-          </div>
-        )}
-
-        {analysisResult.difficulty_level && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">难度等级:</span>
-            <Badge
-              variant={
-                analysisResult.difficulty_level === "beginner"
-                  ? "secondary"
-                  : analysisResult.difficulty_level === "intermediate"
-                    ? "default"
-                    : "destructive"
-              }
-            >
-              {analysisResult.difficulty_level === "beginner"
-                ? "初级"
-                : analysisResult.difficulty_level === "intermediate"
-                  ? "中级"
-                  : "高级"}
-            </Badge>
-          </div>
-        )}
-
-        {analysisResult.content_quality_score && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">内容质量评分:</span>
-            <Badge variant="outline">
-              {(analysisResult.content_quality_score * 100).toFixed(1)}%
-            </Badge>
-          </div>
-        )}
-
-        {analysisResult.labels && analysisResult.labels.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Tag className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">标签:</span>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {analysisResult.labels.map((label, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {label}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
 
 // 加载骨架屏
 const LoadingSkeleton = () => (
@@ -279,10 +64,10 @@ const EmptyState = ({
 );
 
 export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
-  contentId,
-  contentText,
-  analysisResult,
+  content,
   conversations = [],
+  analysisResult = null,
+  isLoading = false,
   className = "",
 }) => {
   const [activeTab, setActiveTab] = useState<
@@ -291,10 +76,11 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
 
   // 渲染分析结果卡片
   const renderAnalysisCards = () => {
-    if (analysisResult === undefined) {
+    if (isLoading) {
       return <LoadingSkeleton />;
     }
 
+    // 使用 analysisResult 判断有无数据
     if (!analysisResult) {
       return (
         <EmptyState
@@ -304,38 +90,16 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
       );
     }
 
-    const cards = [];
+    const adaptedData = adaptAnalysisData(analysisResult, content.ai_analysis as any);
 
-    // 摘要卡片
-    if (analysisResult.summary) {
-      cards.push(
-        <SummaryCard key="summary" summary={analysisResult.summary} />,
-      );
-    }
-
-    // 关键要点卡片
-    if (analysisResult.key_points) {
-      cards.push(
-        <KeyPointsCard
-          key="key-points"
-          keyPoints={analysisResult.key_points}
-        />,
-      );
-    }
-
-    // 元数据卡片
-    cards.push(<MetadataCard key="metadata" analysisResult={analysisResult} />);
-
-    if (cards.length === 0) {
-      return (
-        <EmptyState
-          title="AI分析结果为空"
-          description="内容分析完成，但没有可显示的结果"
-        />
-      );
-    }
-
-    return <div className="space-y-4">{cards}</div>;
+    return (
+      <AnalysisCards
+        data={adaptedData}
+        loading={false}
+        layout="vertical"
+        variant="sidebar"
+      />
+    );
   };
 
   return (
@@ -376,7 +140,7 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
             >
               <MessageSquare className="h-3 w-3" />
               <span>对话历史</span>
-              {conversations.length > 0 && (
+              {conversations && conversations.length > 0 && (
                 <Badge variant="outline" className="ml-1 text-xs h-4 px-1">
                   {conversations.length}
                 </Badge>
@@ -398,8 +162,8 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
           <TabsContent value="ai-chat" className="h-full mt-0">
             <div className="h-full overflow-hidden">
               <EnhancedLLMAnalysisSidebar
-                contentId={contentId}
-                contentText={contentText}
+                contentId={content.id}
+                contentText={content.summary || ""}
                 className="border-0 h-full"
               />
             </div>
