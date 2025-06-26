@@ -3,7 +3,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Lightbulb, BarChart3} from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { BookOpen, Lightbulb, BarChart3, Star } from "lucide-react";
 import { AIResult } from "@/lib/api/content";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 
@@ -324,9 +325,30 @@ export const MetadataCard = ({
         {qualityScore && (
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">内容质量评分:</span>
-            <Badge variant="outline">
-              {(qualityScore * 100).toFixed(1)}%
-            </Badge>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 cursor-help">
+                  {Array.from({ length: 5 }).map((_, i) => {
+                    const stars = Math.round(qualityScore * 5);
+                    const fullStars = Math.floor(stars);
+                    return (
+                      <Star
+                        key={i}
+                        className={`h-3 w-3 ${
+                          i < fullStars ? "fill-amber-400 text-amber-400" : "text-neutral-300"
+                        }`}
+                      />
+                    );
+                  })}
+                  <span className="text-xs text-neutral-600 ml-1">
+                    {(qualityScore * 5).toFixed(1)}/5.0
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>内容质量评分</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         )}
 

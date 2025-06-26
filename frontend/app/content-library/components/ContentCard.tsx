@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FileText, Link, BookOpen, Star, Clock } from "lucide-react";
 import {
   ProcessingStatusBadge,
@@ -36,23 +37,31 @@ const StarRating = ({ score }: { score: number }) => {
   const stars = Math.round(score * 5); // 转换为 5 星制
   const fullStars = Math.floor(stars);
   const hasHalfStar = stars % 1 !== 0;
+  const ratingScore = (score * 5).toFixed(1); // 转换为5分制
 
   return (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={`h-3 w-3 ${
-            i < fullStars
-              ? "fill-amber-400 text-amber-400"
-              : i === fullStars && hasHalfStar
-                ? "fill-amber-200 text-amber-400"
-                : "text-neutral-300"
-          }`}
-        />
-      ))}
-      <span className="text-xs text-neutral-500 ml-1">{score.toFixed(1)}</span>
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="flex items-center gap-0.5 cursor-help">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Star
+              key={i}
+              className={`h-3 w-3 ${
+                i < fullStars
+                  ? "fill-amber-400 text-amber-400"
+                  : i === fullStars && hasHalfStar
+                    ? "fill-amber-200 text-amber-400"
+                    : "text-neutral-300"
+              }`}
+            />
+          ))}
+          <span className="text-xs text-neutral-500 ml-1">{ratingScore}/5.0</span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>内容质量评分</p>
+      </TooltipContent>
+    </Tooltip>
   );
 };
 

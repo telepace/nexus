@@ -15,6 +15,7 @@ import type { ContentItemPublic } from "../types";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { 
   AnalysisCards, 
@@ -27,21 +28,29 @@ import {
 const StarRating = ({ score }: { score: number }) => {
   const stars = Math.round(score * 5);
   const fullStars = Math.floor(stars);
+  const ratingScore = (score * 5).toFixed(1); // 转换为5分制
 
   return (
-    <div className="flex items-center gap-1">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={`h-4 w-4 ${
-            i < fullStars ? "fill-amber-400 text-amber-400" : "text-neutral-300"
-          }`}
-        />
-      ))}
-      <span className="text-sm text-neutral-600 ml-2">
-        {score.toFixed(1)} / 5.0
-      </span>
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="flex items-center gap-1 cursor-help">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Star
+              key={i}
+              className={`h-4 w-4 ${
+                i < fullStars ? "fill-amber-400 text-amber-400" : "text-neutral-300"
+              }`}
+            />
+          ))}
+          <span className="text-sm text-neutral-600 ml-2">
+            {ratingScore} / 5.0
+          </span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>内容质量评分</p>
+      </TooltipContent>
+    </Tooltip>
   );
 };
 
