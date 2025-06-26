@@ -71,7 +71,7 @@ function getVariantStyles(variant: 'default' | 'sidebar' | 'preview' = 'default'
     case 'sidebar':
       return {
         ...baseStyles,
-        card: "h-full analysis-card border-0 rounded-md max-w-[35rem] mx-auto bg-transparent shadow-none",
+        card: "h-full analysis-card border-0 rounded-md max-w-[35rem] mx-auto bg-transparent shadow-none hover:shadow-none",
         header: "pb-3 pt-4 px-4",
         title: "inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow transition text-xs font-medium text-neutral-950 dark:text-neutral-100 w-fit bg-transparent",
         icon: "h-3 w-3 text-neutral-950 dark:text-neutral-100",

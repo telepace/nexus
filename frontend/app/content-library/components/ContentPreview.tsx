@@ -114,10 +114,10 @@ export const ContentPreview = ({ item }: Props) => {
   if (!panels.length && !item) {
     return (
       <div className="h-full shadow-macos-window linear-bg-2 rounded-sm flex flex-col overflow-hidden">
-        <div className="flex items-center h-header px-4">
+        <div className="flex items-center justify-between h-header px-4">
           <div className="flex items-center gap-2 text-base font-medium">
             <FileText className="h-5 w-5" />
-            内容预览
+            Preview
           </div>
         </div>
         <div className="pb-4 flex-1 overflow-auto mt-12">
@@ -180,7 +180,7 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
       <div className="flex items-center h-header px-4">
         <div className="flex items-center gap-2 text-base font-medium">
           <FileText className="h-5 w-5" />
-          内容预览
+          Preview
         </div>
       </div>
 
@@ -188,28 +188,8 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
       <div className="pb-4 flex-1 overflow-auto">
         <div className="space-y-6 max-w-[28rem] mx-auto">
           {/* 标题 */}
-          <div className="space-y-3 mt-12">
+          <div className="mt-12">
             <h3 className="font-semibold text-lg">{item.title || "无标题"}</h3>
-
-            {/* 查看全文按钮 */}
-            <div className="mb-4">
-              <div
-                role="button"
-                tabIndex={0}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-xl shadow cursor-pointer transition"
-                onClick={() =>
-                  router.push(`/content-library/reader/${item.id}`)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    router.push(`/content-library/reader/${item.id}`);
-                  }
-                }}
-              >
-                <span className="text-xs font-medium">查看全文</span>
-              </div>
-            </div>
           </div>
 
           {/* AI 摘要和关键要点 - 使用统一组件 */}
@@ -250,32 +230,12 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
             </div>
           )}
 
-          {/* 简短描述 */}
-          <div className="space-y-4">
-            {aiResult?.brief_description && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground block mb-2">
-                  简短描述
-                </label>
-                <p className="text-sm leading-relaxed p-3 rounded-lg">
-                  {aiResult.brief_description}
-                </p>
-              </div>
-            )}
-          </div>
+
 
           {/* AI 分析 - 其他分析内容 */}
           <AIAnalysisCard analysis={item.ai_analysis} />
 
-          {/* 内容质量评分 - 移到最底部 */}
-          {aiResult?.content_quality_score != null && (
-            <div>
-              <label className="text-sm font-medium text-muted-foreground block mb-2">
-                内容质量
-              </label>
-              <StarRating score={aiResult.content_quality_score} />
-            </div>
-          )}
+
         </div>
       </div>
     </div>

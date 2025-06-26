@@ -331,11 +331,11 @@ const ChunkItem = React.memo<{
   chunk: ContentChunk & { key: string };
 }>(({ chunk }) => (
   <div className="chunk-item py-4 px-8">
-    <div className="chunk-header mb-2 text-xs text-muted-foreground flex justify-between items-center">
+    <div className="chunk-header mb-2 text-xs text-neutral-200 flex justify-between items-center">
       <span className="font-medium">
         Chunk {chunk.index + 1} • {chunk.type}
       </span>
-      <span className="text-muted-foreground">
+      <span className="text-neutral-200">
         {chunk.word_count} words • {chunk.char_count} chars
       </span>
     </div>
