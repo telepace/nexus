@@ -128,8 +128,10 @@ export function PromptCommandDialog({
 
       {/* 输入框和发送按钮 */}
       <form onSubmit={handleSubmit} className="relative">
-        {/* 现代聊天输入框容器 */}
-        <div className="relative bg-white shadow-md rounded-3xl focus-within:ring-1 focus-within:ring-foreground transition-all duration-200">
+        {/* 输入框容器：在暗色模式下使用深色背景以保证文本可见 */}
+        <div
+          className="relative bg-white dark:bg-zinc-800 shadow-md rounded-3xl focus-within:ring-1 focus-within:ring-foreground transition-all duration-200"
+        >
           <div className="flex items-center gap-3 pl-6 pr-3 py-1">
             <div className="relative flex-1">
               <Input
@@ -180,7 +182,7 @@ export function PromptCommandDialog({
               type="submit"
               disabled={!input.trim() || isExecuting}
               size="icon"
-              className="rounded-full h-6 w-6 shadow-md text-foreground hover:text-foreground bg-neutral-100 hover:bg-neutral-300 cursor-pointer"
+              className="rounded-full h-6 w-6 shadow-md text-foreground hover:text-foreground bg-neutral-100 hover:bg-neutral-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 cursor-pointer"
             >
               <ArrowUpRight className="h-4 w-4" />
             </Button>
