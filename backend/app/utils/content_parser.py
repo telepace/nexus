@@ -29,7 +29,13 @@ class ContentParser:
                 cleaned_html,
                 heading_style="ATX",  # 使用#风格标题
                 bullets="-",  # 使用-作为列表符号
-                strip=["script", "style", "meta", "link", "noscript"],  # 移除不需要的标签
+                strip=[
+                    "script",
+                    "style",
+                    "meta",
+                    "link",
+                    "noscript",
+                ],  # 移除不需要的标签
             )
 
             # 后处理优化
@@ -258,7 +264,9 @@ class ContentParser:
         markdown_content = re.sub(r"\n{3,}", "\n\n", markdown_content)
 
         # 清理标题格式（去除标题前后的多余空格）
-        markdown_content = re.sub(r"(#{1,6})\s+(.+?)\s*$", r"\1 \2", markdown_content, flags=re.MULTILINE)
+        markdown_content = re.sub(
+            r"(#{1,6})\s+(.+?)\s*$", r"\1 \2", markdown_content, flags=re.MULTILINE
+        )
 
         # 确保标题前后有空行
         markdown_content = re.sub(r"([^\n])\n(#{1,6}\s)", r"\1\n\n\2", markdown_content)
@@ -267,10 +275,16 @@ class ContentParser:
         )
 
         # 修复列表格式，确保-后有空格，同时移除前导空格
-        markdown_content = re.sub(r"^\s*-([^\s])", r"- \1", markdown_content, flags=re.MULTILINE)
-        markdown_content = re.sub(r"^\s*-\s{2,}", r"- ", markdown_content, flags=re.MULTILINE)
+        markdown_content = re.sub(
+            r"^\s*-([^\s])", r"- \1", markdown_content, flags=re.MULTILINE
+        )
+        markdown_content = re.sub(
+            r"^\s*-\s{2,}", r"- ", markdown_content, flags=re.MULTILINE
+        )
         # 移除所有列表项的前导空格（包括已经格式正确的）
-        markdown_content = re.sub(r"^\s*(- )", r"\1", markdown_content, flags=re.MULTILINE)
+        markdown_content = re.sub(
+            r"^\s*(- )", r"\1", markdown_content, flags=re.MULTILINE
+        )
 
         # 清理列表格式
         markdown_content = re.sub(r"\n\n(\s*[\*\-\+])", r"\n\1", markdown_content)

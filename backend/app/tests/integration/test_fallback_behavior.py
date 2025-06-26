@@ -2,13 +2,14 @@
 """
 测试URL处理的降级行为
 """
+
 import uuid
-import pytest
+
 from sqlmodel import Session
 
-from app.models.content import ContentItem
-from app.models import User, UserCreate
 from app import crud
+from app.models import UserCreate
+from app.models.content import ContentItem
 
 
 def test_fallback_behavior(db: Session):
@@ -21,7 +22,7 @@ def test_fallback_behavior(db: Session):
         user_create = UserCreate(
             email="test_fallback@example.com",
             password="test_password123",
-            full_name="降级测试用户"
+            full_name="降级测试用户",
         )
         test_user = crud.create_user(session=db, user_create=user_create)
 
@@ -70,15 +71,16 @@ def test_fallback_behavior(db: Session):
     except Exception as e:
         print(f"❌ 测试过程中出现错误: {e}")
         import traceback
+
         traceback.print_exc()
         raise
 
 
 if __name__ == "__main__":
     # 这个部分只在直接运行脚本时执行，不影响pytest
-    from app.tests.conftest import setup_test_environment
     from sqlmodel import Session
+
     from app.core.db import engine as test_engine
-    
+
     with Session(test_engine) as session:
         test_fallback_behavior(session)

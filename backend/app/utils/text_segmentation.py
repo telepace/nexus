@@ -95,17 +95,17 @@ class TextSegmentationService:
 
     async def _segment_by_sections(self, content: str) -> list[dict[str, Any]]:
         """基于章节结构分段"""
-        segments = []
-        
+        segments: list[dict[str, Any]] = []
+
         # 查找所有章节标题的位置
-        lines = content.split('\n')
+        lines = content.split("\n")
         section_starts = []
-        
+
         for i, line in enumerate(lines):
             line_stripped = line.strip()
             if not line_stripped:
                 continue
-                
+
             # 检查是否是真正的标题
             is_heading = (
                 # Markdown标题 (# 开头)
@@ -115,25 +115,26 @@ class TextSegmentationService:
                 # 中文编号标题 (一、二、三 等)
                 or re.match(r"^[一二三四五六七八九十]+[、\.]\s*.+", line_stripped)
             )
-            
+
             if is_heading:
                 section_starts.append((i, line_stripped))
-        
+
         # 如果找到多个标题，根据标题分段
         if len(section_starts) >= 2:
+            # 找到了足够的章节标题，按章节分段
             segments = []
             segment_count = 0
-            
-            for i, (line_idx, heading) in enumerate(section_starts):
+
+            for i, (line_idx, _heading) in enumerate(section_starts):
                 # 确定本节的结束位置
                 if i < len(section_starts) - 1:
                     next_line_idx = section_starts[i + 1][0]
-                    section_content = '\n'.join(lines[line_idx:next_line_idx])
+                    section_content = "\n".join(lines[line_idx:next_line_idx])
                 else:
-                    section_content = '\n'.join(lines[line_idx:])
-                
+                    section_content = "\n".join(lines[line_idx:])
+
                 section_content = section_content.strip()
-                
+
                 # 每个章节创建一个分段（除非章节内容太长需要进一步分割）
                 if len(section_content) <= self.max_segment_length:
                     segment_count += 1
@@ -295,7 +296,7 @@ class TextSegmentationService:
 
         # 从内容的后70%开始寻找分割点
         search_start = int(len(content) * 0.7)
-        
+
         for char in split_chars:
             pos = content.rfind(char, search_start)
             if pos > search_start:  # 确保在合适的位置
@@ -340,7 +341,7 @@ class TextSegmentationService:
         content = content.strip()
         if not content:
             return ""
-            
+
         # 改进的句子分割，支持中文标点
         sentences = re.split(r"[.!?。！？]+", content)
         if sentences and sentences[0].strip():
@@ -350,7 +351,7 @@ class TextSegmentationService:
                 return first_sentence[:97] + "..."
             else:
                 return first_sentence
-        
+
         # 如果没有找到句子分割，直接截取前100字符
         if len(content) > 100:
             return content[:97] + "..."

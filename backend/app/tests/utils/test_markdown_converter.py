@@ -2,7 +2,6 @@
 Tests for MarkdownConverter utility
 """
 
-import pytest
 from app.utils.markdown_converter import MarkdownConverter
 
 
@@ -15,10 +14,10 @@ class TestMarkdownConverter:
 
     def test_initialization(self):
         """Test MarkdownConverter initialization"""
-        assert hasattr(self.converter, 'patterns')
-        assert 'headers' in self.converter.patterns
-        assert 'bold' in self.converter.patterns
-        assert 'code_block' in self.converter.patterns
+        assert hasattr(self.converter, "patterns")
+        assert "headers" in self.converter.patterns
+        assert "bold" in self.converter.patterns
+        assert "code_block" in self.converter.patterns
 
     def test_optimize_structure_basic(self):
         """Test basic structure optimization"""
@@ -38,11 +37,11 @@ More content.
 Final content."""
 
         result = self.converter.optimize_structure(markdown)
-        
+
         # Should have proper spacing around headers
         assert "# Title\n\nSome content" in result
         assert "## Section 1\n\nContent" in result
-        
+
     def test_optimize_structure_with_code_blocks(self):
         """Test structure optimization with code blocks"""
         markdown = """# Code Example
@@ -57,7 +56,7 @@ And more text."""
 
         result = self.converter.optimize_structure(markdown)
         assert "```python" in result
-        assert 'def hello():' in result
+        assert "def hello():" in result
 
     def test_optimize_structure_with_lists(self):
         """Test structure optimization with lists"""
@@ -85,24 +84,24 @@ More content with [link](http://example.com).
 ![image](image.png)"""
 
         metadata = self.converter.extract_metadata(markdown)
-        
-        assert len(metadata['headers']) == 2
-        assert metadata['headers'][0]['level'] == 1
-        assert metadata['headers'][0]['text'] == 'Main Title'
-        assert metadata['has_code'] is True
-        assert metadata['has_links'] is True
-        assert metadata['has_images'] is True
-        assert metadata['word_count'] > 0
+
+        assert len(metadata["headers"]) == 2
+        assert metadata["headers"][0]["level"] == 1
+        assert metadata["headers"][0]["text"] == "Main Title"
+        assert metadata["has_code"] is True
+        assert metadata["has_links"] is True
+        assert metadata["has_images"] is True
+        assert metadata["word_count"] > 0
 
     def test_extract_metadata_empty_content(self):
         """Test metadata extraction with empty content"""
         metadata = self.converter.extract_metadata("")
-        
-        assert metadata['headers'] == []
-        assert metadata['word_count'] == 0
-        assert metadata['has_code'] is False
-        assert metadata['has_links'] is False
-        assert metadata['has_images'] is False
+
+        assert metadata["headers"] == []
+        assert metadata["word_count"] == 0
+        assert metadata["has_code"] is False
+        assert metadata["has_links"] is False
+        assert metadata["has_images"] is False
 
     def test_extract_metadata_with_code_blocks(self):
         """Test metadata extraction with code blocks"""
@@ -116,7 +115,7 @@ def test():
 Some text."""
 
         metadata = self.converter.extract_metadata(markdown)
-        assert metadata['has_code'] is True
+        assert metadata["has_code"] is True
 
     def test_convert_to_plain_text_basic(self):
         """Test basic Markdown to plain text conversion"""
@@ -130,7 +129,7 @@ Some text."""
 [Link text](http://example.com)"""
 
         result = self.converter.convert_to_plain_text(markdown)
-        
+
         assert "Title" in result
         assert "Bold text" in result
         assert "italic text" in result
@@ -172,17 +171,17 @@ Immediate content
 More content"""
 
         result = self.converter._optimize_headers(content)
-        
+
         # Should add proper spacing around headers
-        lines = result.split('\n')
-        assert '# Title' in lines
-        assert '## Section' in lines
+        lines = result.split("\n")
+        assert "# Title" in lines
+        assert "## Section" in lines
 
     def test_clean_excessive_whitespace(self):
         """Test excessive whitespace cleaning"""
         content = "Line 1\n\n\n\nLine 2   \nLine 3"
         result = self.converter._clean_excessive_whitespace(content)
-        
+
         # Should remove excessive newlines and trailing spaces
         assert "\n\n\n" not in result
         assert "Line 2   " not in result
@@ -221,7 +220,7 @@ def test():
         """Test final cleanup step"""
         content = "  Content with spaces  \n\n\n  More content  "
         result = self.converter._final_cleanup(content)
-        
+
         # Should clean trailing spaces and excessive newlines
         assert not result.startswith(" ")
         assert not result.endswith(" ")
@@ -263,16 +262,16 @@ More content.
 Final content."""
 
         metadata = {
-            'headers': [
-                {'level': 1, 'text': 'Main Title'},
-                {'level': 2, 'text': 'Section 1'},
-                {'level': 3, 'text': 'Subsection'},
-                {'level': 2, 'text': 'Section 2'}
+            "headers": [
+                {"level": 1, "text": "Main Title"},
+                {"level": 2, "text": "Section 1"},
+                {"level": 3, "text": "Subsection"},
+                {"level": 2, "text": "Section 2"},
             ],
-            'word_count': 10,
-            'has_code': False,
-            'has_images': False,
-            'has_links': False
+            "word_count": 10,
+            "has_code": False,
+            "has_images": False,
+            "has_links": False,
         }
 
         quality = self.converter._assess_structure_quality(content, metadata)
@@ -283,11 +282,11 @@ Final content."""
         """Test structure quality assessment with poor content"""
         content = "Just plain text without any structure or formatting."
         metadata = {
-            'headers': [],
-            'word_count': 8,
-            'has_code': False,
-            'has_images': False,
-            'has_links': False
+            "headers": [],
+            "word_count": 8,
+            "has_code": False,
+            "has_images": False,
+            "has_links": False,
         }
 
         quality = self.converter._assess_structure_quality(content, metadata)
@@ -304,11 +303,11 @@ Final content."""
         """Test error handling in extract_metadata"""
         # Test with None input
         metadata = self.converter.extract_metadata(None)
-        
+
         # Should return default metadata structure
-        assert 'headers' in metadata
-        assert 'word_count' in metadata
-        assert 'has_code' in metadata
+        assert "headers" in metadata
+        assert "word_count" in metadata
+        assert "has_code" in metadata
 
     def test_error_handling_convert_to_plain_text(self):
         """Test error handling in convert_to_plain_text"""
@@ -333,8 +332,8 @@ Final content."""
 
         # Test metadata extraction
         metadata = self.converter.extract_metadata(markdown)
-        assert len(metadata['headers']) >= 1
-        assert metadata['word_count'] > 0
+        assert len(metadata["headers"]) >= 1
+        assert metadata["word_count"] > 0
 
         # Test plain text conversion
         plain = self.converter.convert_to_plain_text(markdown)
@@ -385,14 +384,14 @@ End of document."""
         optimized = self.converter.optimize_structure(markdown)
         assert "# Main Document" in optimized
         assert "```javascript" in optimized
-        
+
         metadata = self.converter.extract_metadata(markdown)
-        assert len(metadata['headers']) >= 3
-        assert metadata['has_code'] is True
-        assert metadata['has_images'] is True
-        assert metadata['has_links'] is True
-        assert metadata['word_count'] > 20
-        
+        assert len(metadata["headers"]) >= 3
+        assert metadata["has_code"] is True
+        assert metadata["has_images"] is True
+        assert metadata["has_links"] is True
+        assert metadata["word_count"] > 20
+
         plain = self.converter.convert_to_plain_text(markdown)
         assert "Main Document" in plain
         assert "function example()" in plain
@@ -404,12 +403,12 @@ End of document."""
         # Empty string
         assert self.converter.optimize_structure("") == ""
         assert self.converter.convert_to_plain_text("") == ""
-        
+
         # Whitespace only
         whitespace_only = "   \n\n   \t  \n"
         result = self.converter.optimize_structure(whitespace_only)
         assert result.strip() == ""
-        
+
         # Very long content
         long_content = "# Title\n\n" + "A" * 10000
         result = self.converter.optimize_structure(long_content)
@@ -432,9 +431,9 @@ End of document."""
         # Should not crash and should return something reasonable
         optimized = self.converter.optimize_structure(malformed)
         assert isinstance(optimized, str)
-        
+
         metadata = self.converter.extract_metadata(malformed)
         assert isinstance(metadata, dict)
-        
+
         plain = self.converter.convert_to_plain_text(malformed)
-        assert isinstance(plain, str) 
+        assert isinstance(plain, str)

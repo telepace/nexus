@@ -36,7 +36,7 @@ class MarkdownConverter:
                 return None
             if not markdown_content:
                 return ""
-                
+
             content = markdown_content
 
             # 1. 标准化换行符
@@ -81,7 +81,7 @@ class MarkdownConverter:
         try:
             if markdown_content is None:
                 return metadata
-                
+
             # 提取标题
             headers = self.patterns["headers"].findall(markdown_content)
             metadata["headers"] = [
@@ -125,7 +125,7 @@ class MarkdownConverter:
         try:
             if markdown_content is None:
                 return None
-                
+
             content = markdown_content
 
             # 移除代码块
@@ -260,26 +260,26 @@ class MarkdownConverter:
         """最终清理"""
         if not content or not content.strip():
             return ""
-            
+
         # 移除行首行尾的空格
         content = content.strip()
-        
+
         # 移除多余的空格（但保留段落内的正常空格）
-        lines = content.split('\n')
+        lines = content.split("\n")
         cleaned_lines = []
         for line in lines:
             # 移除行首行尾空格，但保留行内的正常空格
             cleaned_line = line.strip()
             cleaned_lines.append(cleaned_line)
-        
-        content = '\n'.join(cleaned_lines)
-        
+
+        content = "\n".join(cleaned_lines)
+
         # 限制连续空行不超过2行
-        content = re.sub(r'\n{3,}', '\n\n', content)
-        
+        content = re.sub(r"\n{3,}", "\n\n", content)
+
         # 确保文档以单个换行符结尾（如果有内容）
         if content:
-            content = content.rstrip() + '\n'
+            content = content.rstrip() + "\n"
 
         return content
 

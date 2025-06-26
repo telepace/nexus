@@ -2,26 +2,27 @@
 """
 测试Jina API集成
 """
+
 import uuid
-import pytest
+
 from sqlmodel import Session
 
-from app.models.content import ContentItem
-from app.models import User, UserCreate
 from app import crud
+from app.models import UserCreate
+from app.models.content import ContentItem
 
 
 def test_jina_processor(db: Session):
     """测试Jina处理器"""
 
     print("\n🧪 开始测试Jina处理器...")
-    
+
     try:
         # 创建一个测试用户
         user_create = UserCreate(
             email="test_jina@example.com",
             password="test_password123",
-            full_name="Jina测试用户"
+            full_name="Jina测试用户",
         )
         test_user = crud.create_user(session=db, user_create=user_create)
 
@@ -47,6 +48,7 @@ def test_jina_processor(db: Session):
     except Exception as e:
         print(f"❌ 测试过程中出现错误: {e}")
         import traceback
+
         traceback.print_exc()
         raise
 
@@ -55,13 +57,13 @@ def test_url_processing_with_jina(db: Session):
     """测试URL处理功能（使用Jina）"""
 
     print("\n🧪 开始测试URL处理功能（使用Jina）...")
-    
+
     try:
         # 创建一个测试用户
         user_create = UserCreate(
             email="test_url_jina@example.com",
             password="test_password123",
-            full_name="URL Jina测试用户"
+            full_name="URL Jina测试用户",
         )
         test_user = crud.create_user(session=db, user_create=user_create)
 
@@ -87,6 +89,7 @@ def test_url_processing_with_jina(db: Session):
     except Exception as e:
         print(f"❌ 测试过程中出现错误: {e}")
         import traceback
+
         traceback.print_exc()
         raise
 
@@ -107,14 +110,14 @@ def test_environment_variables():
 
 if __name__ == "__main__":
     # 这个部分只在直接运行脚本时执行，不影响pytest
-    from app.tests.conftest import setup_test_environment
     from sqlmodel import Session
+
     from app.core.db import engine as test_engine
-    
+
     with Session(test_engine) as session:
         test_jina_processor(session)
         test_url_processing_with_jina(session)
-        
+
     test_jina_api_direct()
     test_environment_variables()
     print("\n🎉 Jina集成测试完成！")
