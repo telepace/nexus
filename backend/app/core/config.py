@@ -315,7 +315,7 @@ class Settings(BaseSettings):
 
     # 内容处理器选择 - 简单配置
     CONTENT_PROCESSOR: str = Field(
-        default="refirecrawladability",
+        default="readability",
         description="选择使用的内容处理器: jina, firecrawl, scrapingbee, readability, markitdown",
     )
 
