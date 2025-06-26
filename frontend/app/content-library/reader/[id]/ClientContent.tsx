@@ -36,13 +36,13 @@ const ReaderSkeleton = () => {
       <div className="flex-1 p-6 space-y-6">
         <div className="space-y-3">
           <div className="w-full h-4 bg-muted rounded"></div>
-          <div className="w-5/6 h-4 bg-muted rounded"></div>
-          <div className="w-full h-4 bg-muted rounded"></div>
-          <div className="w-3/4 h-4 bg-muted rounded"></div>
-        </div>
+            <div className="w-5/6 h-4 bg-muted rounded"></div>
+            <div className="w-full h-4 bg-muted rounded"></div>
+            <div className="w-3/4 h-4 bg-muted rounded"></div>
+          </div>
         <div className="space-y-3">
-          <div className="w-4/5 h-4 bg-muted rounded"></div>
-          <div className="w-full h-4 bg-muted rounded"></div>
+            <div className="w-4/5 h-4 bg-muted rounded"></div>
+            <div className="w-full h-4 bg-muted rounded"></div>
           <div className="w-2/3 h-4 bg-muted rounded"></div>
         </div>
       </div>

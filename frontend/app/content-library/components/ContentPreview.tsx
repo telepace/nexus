@@ -34,18 +34,18 @@ const StarRating = ({ score }: { score: number }) => {
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="inline-flex items-center gap-0.5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
               className={`h-3 w-3 ${
-                i < fullStars ? "fill-amber-400 text-amber-400" : "text-neutral-300"
-              }`}
-            />
-          ))}
+            i < fullStars ? "fill-amber-400 text-amber-400" : "text-neutral-300"
+          }`}
+        />
+      ))}
           <span className="text-xs text-neutral-500 ml-1">
             {ratingScore}/5.0
-          </span>
-        </div>
+      </span>
+    </div>
       </TooltipTrigger>
       <TooltipContent>
         <p>内容质量评分</p>
@@ -113,7 +113,7 @@ export const ContentPreview = ({ item }: Props) => {
 
   if (!panels.length && !item) {
     return (
-      <div className="h-full shadow-macos-window linear-bg-2 rounded-sm flex flex-col overflow-hidden">
+      <div className="h-full shadow-macos-window linear-bg-2 rounded-sm flex flex-col overflow-visible">
         <div className="flex items-center justify-between h-header px-4">
           <div className="flex items-center gap-2 text-base font-medium">
             <FileText className="h-5 w-5" />
@@ -174,7 +174,7 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
     <div
       ref={containerRef}
       tabIndex={-1}
-      className="h-full shadow-macos-window linear-bg-2 rounded-sm flex flex-col overflow-hidden"
+      className="h-full shadow-macos-window linear-bg-2 rounded-sm flex flex-col overflow-visible"
     >
       {/* Header */}
       <div className="flex items-center h-header px-4">
