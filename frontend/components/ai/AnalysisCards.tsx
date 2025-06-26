@@ -43,18 +43,27 @@ export function adaptAnalysisData(
   aiResult?: AIResult | null,
   aiAnalysis?: Record<string, unknown> | null, // 使用更具体的类型而不是any
 ): UnifiedAnalysisData {
-  const summarizer = aiAnalysis?.summarizer as Record<string, unknown> | undefined;
-  const keyPointsExtractor = aiAnalysis?.key_points_extractor as Record<string, unknown> | undefined;
-  
+  const summarizer = aiAnalysis?.summarizer as
+    | Record<string, unknown>
+    | undefined;
+  const keyPointsExtractor = aiAnalysis?.key_points_extractor as
+    | Record<string, unknown>
+    | undefined;
+
   return {
     summary:
-      (typeof summarizer?.summary === 'string' ? summarizer.summary : null) ||
-      (typeof summarizer?.raw_text === 'string' ? summarizer.raw_text : null) ||
+      (typeof summarizer?.summary === "string" ? summarizer.summary : null) ||
+      (typeof summarizer?.raw_text === "string" ? summarizer.raw_text : null) ||
       aiResult?.summary ||
       null,
     keyPoints:
-      keyPointsExtractor?.key_points as string | Record<string, unknown> | null ||
-      (typeof keyPointsExtractor?.raw_text === 'string' ? keyPointsExtractor.raw_text : null) ||
+      (keyPointsExtractor?.key_points as
+        | string
+        | Record<string, unknown>
+        | null) ||
+      (typeof keyPointsExtractor?.raw_text === "string"
+        ? keyPointsExtractor.raw_text
+        : null) ||
       aiResult?.key_points ||
       null,
     metadata: {
@@ -64,7 +73,7 @@ export function adaptAnalysisData(
       labels: aiResult?.labels,
     },
   };
-};
+}
 
 // 获取变体样式
 function getVariantStyles(

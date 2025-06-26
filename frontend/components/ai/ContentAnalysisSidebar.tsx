@@ -1,12 +1,7 @@
 "use client";
 
 import { FC, useState } from "react";
-import {
-  BookOpen,
-  MessageSquare,
-  Sparkles,
-  AlertCircle,
-} from "lucide-react";
+import { BookOpen, MessageSquare, Sparkles, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,7 +11,6 @@ import { EnhancedLLMAnalysisSidebar } from "@/components/ui/enhanced-llm-analysi
 import { ConversationHistory } from "@/components/ai/ConversationHistory";
 import { AnalysisCards, adaptAnalysisData } from "./AnalysisCards";
 import { ContentItemPublic } from "@/app/content-library/types";
-
 
 interface ContentAnalysisSidebarProps {
   content: ContentItemPublic;

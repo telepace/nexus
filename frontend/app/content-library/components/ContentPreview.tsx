@@ -1,8 +1,6 @@
 "use client";
 
-import {
-  FileText,
-} from "lucide-react";
+import { FileText } from "lucide-react";
 import type { ContentItemPublic } from "../types";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -12,10 +10,6 @@ import {
   SummaryCard,
   KeyPointsCard,
 } from "@/components/ai/AnalysisCards";
-
-
-
-
 
 interface Panel {
   id: number;
@@ -163,8 +157,6 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
               </div>
             </div>
           )}
-
-
         </div>
       </div>
     </div>

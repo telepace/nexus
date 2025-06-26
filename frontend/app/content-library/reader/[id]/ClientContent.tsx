@@ -35,13 +35,13 @@ const ReaderSkeleton = () => {
       <div className="flex-1 p-6 space-y-6">
         <div className="space-y-3">
           <div className="w-full h-4 bg-muted rounded"></div>
-            <div className="w-5/6 h-4 bg-muted rounded"></div>
-            <div className="w-full h-4 bg-muted rounded"></div>
-            <div className="w-3/4 h-4 bg-muted rounded"></div>
-          </div>
+          <div className="w-5/6 h-4 bg-muted rounded"></div>
+          <div className="w-full h-4 bg-muted rounded"></div>
+          <div className="w-3/4 h-4 bg-muted rounded"></div>
+        </div>
         <div className="space-y-3">
-            <div className="w-4/5 h-4 bg-muted rounded"></div>
-            <div className="w-full h-4 bg-muted rounded"></div>
+          <div className="w-4/5 h-4 bg-muted rounded"></div>
+          <div className="w-full h-4 bg-muted rounded"></div>
           <div className="w-2/3 h-4 bg-muted rounded"></div>
         </div>
       </div>
@@ -281,7 +281,7 @@ export const ClientContent = ({
   useEffect(() => {
     if (content && onContentItemUpdate) {
       // 将 ContentDetail 转换为 ContentItemPublic 格式
-              const contentItem: Partial<ContentItemPublic> = {
+      const contentItem: Partial<ContentItemPublic> = {
         id: content.id,
         type: content.type,
         title: content.title,
@@ -290,7 +290,7 @@ export const ClientContent = ({
         // 这些字段在新版本的 ReaderLayout 中会通过 contentApi.getContentItem 重新获取
         // 以确保包含 ai_result 和 ai_analysis 数据
       };
-              onContentItemUpdate(contentItem as ContentItemPublic);
+      onContentItemUpdate(contentItem as ContentItemPublic);
     }
   }, [content, onContentItemUpdate]);
 

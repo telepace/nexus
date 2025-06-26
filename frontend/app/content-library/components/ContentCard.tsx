@@ -71,8 +71,6 @@ const StarRating = ({ score }: { score: number }) => {
   );
 };
 
-
-
 export const ContentCard = ({
   item,
   selected,
