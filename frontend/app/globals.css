@@ -790,7 +790,7 @@
     .\32 xl\:w-library-lg {
       width: var(--size-library-lg);
     }
-    
+
     .\32 xl\:max-w-library-lg {
       max-width: var(--size-library-lg);
     }

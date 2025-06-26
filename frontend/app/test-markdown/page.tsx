@@ -120,7 +120,10 @@ export default function TestMarkdownPage() {
             <div className="space-y-4">
               <h3 className="font-semibold">传统格式（向后兼容）</h3>
               <SummaryCard summary={mockLegacySummaryData} variant="default" />
-              <KeyPointsCard keyPoints={mockLegacyKeyPointsData} variant="default" />
+              <KeyPointsCard
+                keyPoints={mockLegacyKeyPointsData}
+                variant="default"
+              />
             </div>
           </div>
         </div>

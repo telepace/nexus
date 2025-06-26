@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useCallback, createContext, useContext, useEffect } from "react";
+import React, {
+  useState,
+  useCallback,
+  createContext,
+  useContext,
+  useEffect,
+} from "react";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SettingsPanel } from "@/components/layout/SettingsPanel";
@@ -12,12 +18,16 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import { ContentItemPublic } from "@/app/content-library/types";
-import { contentApi, ConversationListResponse, AIResult } from "@/lib/api/content";
-import { useAuth, getCookie } from "@/lib/client-auth";
+import {
+  contentApi,
+  ConversationListResponse,
+  AIResult,
+} from "@/lib/api/content";
+import { useAuth } from "@/lib/client-auth";
 
 // 创建上下文来传递内容更新函数和分析数据
 const ReaderContext = createContext<{
-  onContentChange?: (text: string) => void;
+  onContentChange?: () => void;
   onContentItemUpdate?: (item: ContentItemPublic) => void;
   contentItem?: ContentItemPublic | null;
   markLeftReady?: () => void;
@@ -34,27 +44,30 @@ export interface ReaderLayoutProps {
 export default function ReaderLayout({
   children,
   contentId,
-  contentText: initialContentText = "",
 }: ReaderLayoutProps) {
   const { user } = useAuth();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addContentOpen, setAddContentOpen] = useState(false);
-  const [contentText, setContentText] = useState(initialContentText);
-  const [contentItem, setContentItem] = useState<ContentItemPublic | null>(null);
-  const [conversations, setConversations] = useState<ConversationListResponse["conversations"]>([]);
+
+  const [contentItem, setContentItem] = useState<ContentItemPublic | null>(
+    null,
+  );
+  const [conversations, setConversations] = useState<
+    ConversationListResponse["conversations"]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AIResult | null>(null);
-  
+
   const markLeftReady = useCallback(() => {}, []);
 
   // 获取完整的内容项数据和对话历史
   useEffect(() => {
     async function fetchContentData() {
       if (!contentId || !user?.token) return;
-      
+
       try {
         setLoading(true);
-        
+
         // 并行获取内容项和对话历史
         const [item, conversationsResponse] = await Promise.allSettled([
           contentApi.getContentItem(contentId),
@@ -75,7 +88,10 @@ export default function ReaderLayout({
         if (conversationsResponse.status === "fulfilled") {
           setConversations(conversationsResponse.value.conversations);
         } else {
-          console.error("Failed to fetch conversations:", conversationsResponse.reason);
+          console.error(
+            "Failed to fetch conversations:",
+            conversationsResponse.reason,
+          );
         }
       } catch (error) {
         console.error("Failed to fetch content data:", error);
@@ -89,8 +105,8 @@ export default function ReaderLayout({
   }, [contentId, user?.token]);
 
   // 提供给 children 的上下文方法，让 ReaderContent 可以更新内容文本
-  const handleContentChange = useCallback((text: string) => {
-    setContentText(text);
+  const handleContentChange = useCallback(() => {
+    // 目前没有使用文本更新功能
   }, []);
 
   // 更新内容项
@@ -150,10 +166,10 @@ export default function ReaderLayout({
               className="flex flex-col bg-muted/30"
             >
               {contentItem ? (
-              <ContentAnalysisSidebar
+                <ContentAnalysisSidebar
                   content={contentItem}
-                analysisResult={analysisResult}
-                conversations={conversations}
+                  analysisResult={analysisResult}
+                  conversations={conversations}
                   isLoading={loading}
                 />
               ) : (
@@ -162,7 +178,7 @@ export default function ReaderLayout({
                   <div className="flex items-center justify-between px-4 border-b h-header">
                     <div className="w-20 h-6 bg-muted rounded animate-pulse"></div>
                   </div>
-                  
+
                   {/* Tabs Skeleton */}
                   <div className="flex-shrink-0 px-4 py-3">
                     <div className="grid w-full grid-cols-3 gap-1 p-1 bg-muted rounded-lg">
@@ -171,7 +187,7 @@ export default function ReaderLayout({
                       <div className="h-7 bg-muted rounded animate-pulse"></div>
                     </div>
                   </div>
-                  
+
                   {/* Content Body Skeleton */}
                   <div className="flex-1 min-h-0 overflow-auto px-4 space-y-4">
                     <div className="space-y-4">

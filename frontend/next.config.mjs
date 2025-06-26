@@ -85,7 +85,7 @@ const nextConfig = {
     config.externals = config.externals || [];
     if (isServer) {
       config.externals.push({
-        'katex': 'katex'
+        katex: "katex",
       });
     }
 

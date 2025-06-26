@@ -33,7 +33,7 @@ const RightPanelSkeleton = () => (
     <div className="flex items-center justify-between px-4 border-b h-header">
       <div className="w-20 h-6 bg-muted rounded"></div>
     </div>
-    
+
     {/* Tabs Skeleton */}
     <div className="flex-shrink-0 px-4 py-3">
       <div className="grid w-full grid-cols-3 gap-1 p-1 bg-muted rounded-lg">
@@ -42,7 +42,7 @@ const RightPanelSkeleton = () => (
         <div className="h-7 bg-muted rounded"></div>
       </div>
     </div>
-    
+
     {/* Content Body Skeleton */}
     <div className="flex-1 min-h-0 overflow-auto px-4 space-y-4">
       {/* 分析卡片骨架 */}

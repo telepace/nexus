@@ -18,7 +18,6 @@ import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
 import { useReaderContext } from "@/components/layout/ReaderLayout";
 import { ContentItemPublic } from "@/app/content-library/types";
-import { Skeleton } from "@/components/ui/skeleton";
 
 // 骨架屏组件
 const ReaderSkeleton = () => {
@@ -282,7 +281,7 @@ export const ClientContent = ({
   useEffect(() => {
     if (content && onContentItemUpdate) {
       // 将 ContentDetail 转换为 ContentItemPublic 格式
-      const contentItem: Partial<ContentItemPublic> = {
+              const contentItem: Partial<ContentItemPublic> = {
         id: content.id,
         type: content.type,
         title: content.title,
@@ -291,7 +290,7 @@ export const ClientContent = ({
         // 这些字段在新版本的 ReaderLayout 中会通过 contentApi.getContentItem 重新获取
         // 以确保包含 ai_result 和 ai_analysis 数据
       };
-      onContentItemUpdate(contentItem as ContentItemPublic);
+              onContentItemUpdate(contentItem as ContentItemPublic);
     }
   }, [content, onContentItemUpdate]);
 

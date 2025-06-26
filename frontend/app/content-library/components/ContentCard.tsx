@@ -1,7 +1,11 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { FileText, Link, BookOpen, Star, Clock } from "lucide-react";
 import {
   ProcessingStatusBadge,
@@ -55,7 +59,9 @@ const StarRating = ({ score }: { score: number }) => {
               }`}
             />
           ))}
-          <span className="text-xs text-neutral-500 ml-1">{ratingScore}/5.0</span>
+          <span className="text-xs text-neutral-500 ml-1">
+            {ratingScore}/5.0
+          </span>
         </div>
       </TooltipTrigger>
       <TooltipContent>
@@ -65,23 +71,7 @@ const StarRating = ({ score }: { score: number }) => {
   );
 };
 
-// 难度等级指示器
-const DifficultyBadge = ({ level }: { level: string }) => {
-  const config = {
-    beginner: { label: "入门", color: "bg-green-100 text-green-700" },
-    intermediate: { label: "中级", color: "bg-yellow-100 text-yellow-700" },
-    advanced: { label: "高级", color: "bg-red-100 text-red-700" },
-  };
 
-  const { label, color } =
-    config[level as keyof typeof config] || config.intermediate;
-
-  return (
-    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${color}`}>
-      {label}
-    </span>
-  );
-};
 
 export const ContentCard = ({
   item,
@@ -111,7 +101,6 @@ export const ContentCard = ({
   const hasQualityScore = aiResult?.content_quality_score != null;
   const hasLabels = aiResult?.labels && aiResult.labels.length > 0;
   const hasReadingTime = aiResult?.reading_time_minutes != null;
-  const hasDifficulty = aiResult?.difficulty_level != null;
   const briefDescription = aiResult?.brief_description;
 
   return (

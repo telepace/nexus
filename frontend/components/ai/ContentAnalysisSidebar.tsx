@@ -3,15 +3,11 @@
 import { FC, useState } from "react";
 import {
   BookOpen,
-  Lightbulb,
-  BarChart3,
   MessageSquare,
   Sparkles,
-  Clock,
-  Tag,
   AlertCircle,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,6 +16,7 @@ import { EnhancedLLMAnalysisSidebar } from "@/components/ui/enhanced-llm-analysi
 import { ConversationHistory } from "@/components/ai/ConversationHistory";
 import { AnalysisCards, adaptAnalysisData } from "./AnalysisCards";
 import { ContentItemPublic } from "@/app/content-library/types";
+
 
 interface ContentAnalysisSidebarProps {
   content: ContentItemPublic;
@@ -90,16 +87,19 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
       );
     }
 
-    const adaptedData = adaptAnalysisData(analysisResult, content.ai_analysis as any);
+    const adaptedData = adaptAnalysisData(
+      analysisResult,
+      content.ai_analysis as Record<string, unknown> | null,
+    );
 
-      return (
+    return (
       <AnalysisCards
         data={adaptedData}
         loading={false}
         layout="vertical"
         variant="sidebar"
-        />
-      );
+      />
+    );
   };
 
   return (

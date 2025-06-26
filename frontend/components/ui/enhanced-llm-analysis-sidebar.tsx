@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useEffect, useState, useCallback } from "react";
+import React, { FC, useEffect, useState, useCallback } from "react";
 import {
   Loader2,
   History,
@@ -9,7 +9,7 @@ import {
   Lightbulb,
   Target,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { LLMAnalysisCard } from "@/components/ui/llm-analysis-card";
 import { PromptRecommendations } from "@/components/ui/prompt-recommendations";
