@@ -80,23 +80,24 @@ const nextConfig = {
       },
     ],
   },
-  // webpack: (config, { isServer }) => {
-  //   if (!isServer) {
-  //     config.plugins.push(
-  //       new ForkTsCheckerWebpackPlugin({
-  //         async: true, // Run type checking synchronously to block the build
-  //         typescript: {
-  //           configOverwrite: {
-  //             compilerOptions: {
-  //               skipLibCheck: true,
-  //             },
-  //           },
-  //         },
-  //       }),
-  //     );
-  //   }
-  //   return config;
-  // },
+  webpack: (config, { isServer }) => {
+    // 配置KaTeX模块处理
+    config.externals = config.externals || [];
+    if (isServer) {
+      config.externals.push({
+        'katex': 'katex'
+      });
+    }
+
+    // 确保KaTeX在客户端正确加载
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      path: false,
+    };
+
+    return config;
+  },
 };
 
 export default nextConfig;
