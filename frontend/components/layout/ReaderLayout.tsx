@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, createContext, useContext } from "react";
+import React, { useState, useCallback, createContext, useContext, useEffect } from "react";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SettingsPanel } from "@/components/layout/SettingsPanel";
@@ -11,17 +11,15 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
-import { AIResult, ConversationListResponse } from "@/lib/api/content";
+import { ContentItemPublic } from "@/app/content-library/types";
+import { contentApi, ConversationListResponse, AIResult } from "@/lib/api/content";
+import { useAuth, getCookie } from "@/lib/client-auth";
 
 // 创建上下文来传递内容更新函数和分析数据
 const ReaderContext = createContext<{
   onContentChange?: (text: string) => void;
-  onAnalysisUpdate?: (analysisResult: AIResult | null) => void;
-  onConversationsUpdate?: (
-    conversations: ConversationListResponse["conversations"],
-  ) => void;
-  analysisResult?: AIResult | null;
-  conversations?: ConversationListResponse["conversations"];
+  onContentItemUpdate?: (item: ContentItemPublic) => void;
+  contentItem?: ContentItemPublic | null;
   markLeftReady?: () => void;
 }>({});
 
@@ -38,35 +36,67 @@ export default function ReaderLayout({
   contentId,
   contentText: initialContentText = "",
 }: ReaderLayoutProps) {
+  const { user } = useAuth();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addContentOpen, setAddContentOpen] = useState(false);
   const [contentText, setContentText] = useState(initialContentText);
+  const [contentItem, setContentItem] = useState<ContentItemPublic | null>(null);
+  const [conversations, setConversations] = useState<ConversationListResponse["conversations"]>([]);
+  const [loading, setLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AIResult | null>(null);
-  const [conversations, setConversations] = useState<
-    ConversationListResponse["conversations"]
-  >([]);
+  
   const markLeftReady = useCallback(() => {}, []);
+
+  // 获取完整的内容项数据和对话历史
+  useEffect(() => {
+    async function fetchContentData() {
+      if (!contentId || !user?.token) return;
+      
+      try {
+        setLoading(true);
+        
+        // 并行获取内容项和对话历史
+        const [item, conversationsResponse] = await Promise.allSettled([
+          contentApi.getContentItem(contentId),
+          contentApi.getContentConversations(contentId, false),
+        ]);
+
+        // 处理内容项
+        if (item.status === "fulfilled") {
+          setContentItem(item.value);
+          // 提取 ai_result 字段
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setAnalysisResult((item.value as any).ai_result ?? null);
+        } else {
+          console.error("Failed to fetch content item:", item.reason);
+        }
+
+        // 处理对话历史
+        if (conversationsResponse.status === "fulfilled") {
+          setConversations(conversationsResponse.value.conversations);
+        } else {
+          console.error("Failed to fetch conversations:", conversationsResponse.reason);
+        }
+      } catch (error) {
+        console.error("Failed to fetch content data:", error);
+        // 可以选择在此处设置错误状态
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchContentData();
+  }, [contentId, user?.token]);
 
   // 提供给 children 的上下文方法，让 ReaderContent 可以更新内容文本
   const handleContentChange = useCallback((text: string) => {
     setContentText(text);
   }, []);
 
-  // 更新分析结果
-  const handleAnalysisUpdate = useCallback(
-    (newAnalysisResult: AIResult | null) => {
-      setAnalysisResult(newAnalysisResult);
-    },
-    [],
-  );
-
-  // 更新对话历史
-  const handleConversationsUpdate = useCallback(
-    (newConversations: ConversationListResponse["conversations"]) => {
-      setConversations(newConversations);
-    },
-    [],
-  );
+  // 更新内容项
+  const handleContentItemUpdate = useCallback((item: ContentItemPublic) => {
+    setContentItem(item);
+  }, []);
 
   return (
     <SidebarProvider
@@ -98,11 +128,9 @@ export default function ReaderLayout({
               <ReaderContext.Provider
                 value={{
                   onContentChange: handleContentChange,
+                  onContentItemUpdate: handleContentItemUpdate,
+                  contentItem,
                   markLeftReady,
-                  onAnalysisUpdate: handleAnalysisUpdate,
-                  onConversationsUpdate: handleConversationsUpdate,
-                  analysisResult,
-                  conversations,
                 }}
               >
                 <div className="flex-1 flex flex-col bg-background overflow-auto">
@@ -121,13 +149,27 @@ export default function ReaderLayout({
               maxSize={70}
               className="flex flex-col bg-muted/30"
             >
-              <ContentAnalysisSidebar
-                contentId={contentId}
-                contentText={contentText}
-                analysisResult={analysisResult}
-                conversations={conversations}
-                className="border-l-0" // 移除左边框，因为已有分割线
-              />
+              {contentItem ? (
+                <ContentAnalysisSidebar
+                  content={contentItem}
+                  analysisResult={analysisResult}
+                  conversations={conversations}
+                  isLoading={loading}
+                />
+              ) : (
+                <div className="w-80 bg-muted/30 border-l border-border">
+                  <div className="p-4 space-y-4">
+                    <div className="animate-pulse">
+                      <div className="h-4 bg-muted rounded mb-2"></div>
+                      <div className="h-20 bg-muted rounded"></div>
+                    </div>
+                    <div className="animate-pulse">
+                      <div className="h-4 bg-muted rounded mb-2"></div>
+                      <div className="h-32 bg-muted rounded"></div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </ResizablePanel>
           </ResizablePanelGroup>
         </div>
