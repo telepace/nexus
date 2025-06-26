@@ -92,14 +92,14 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
 
     const adaptedData = adaptAnalysisData(analysisResult, content.ai_analysis as any);
 
-    return (
+      return (
       <AnalysisCards
         data={adaptedData}
         loading={false}
         layout="vertical"
         variant="sidebar"
-      />
-    );
+        />
+      );
   };
 
   return (

@@ -217,7 +217,7 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
           <div className="space-y-4">
             {/* 内容摘要 */}
             {unifiedData.summary && (
-              <SummaryCard 
+              <SummaryCard
                 summary={unifiedData.summary} 
                 variant="preview"
               />
@@ -225,7 +225,7 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
 
             {/* 关键要点 */}
             {unifiedData.keyPoints && (
-              <KeyPointsCard 
+              <KeyPointsCard
                 keyPoints={unifiedData.keyPoints} 
                 variant="preview"
               />

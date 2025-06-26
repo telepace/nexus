@@ -115,13 +115,13 @@ export const SummaryCard = ({
     summaryText = summary;
   } else if (summary && typeof summary === "object") {
     summaryText =
-      (summary.text as string) ||
-      (summary.content as string) ||
-      (summary.summary as string) ||
-      (Object.values(summary).find(
-        (val) => typeof val === "string" && val.length > 50,
-      ) as string) ||
-      JSON.stringify(summary);
+    (summary.text as string) ||
+    (summary.content as string) ||
+    (summary.summary as string) ||
+    (Object.values(summary).find(
+      (val) => typeof val === "string" && val.length > 50,
+    ) as string) ||
+    JSON.stringify(summary);
   }
 
   if (!summaryText) return null;
@@ -157,48 +157,48 @@ export const KeyPointsCard = ({
   if (!keyPoints) return null;
 
   const styles = getVariantStyles(variant);
-  
+
   let points: string[] = [];
   let keyPointsContent = "";
 
   if (typeof keyPoints === "string") {
     keyPointsContent = keyPoints;
   } else if (keyPoints && typeof keyPoints === "object") {
-    // 尝试提取要点数组
-    if (Array.isArray(keyPoints.points)) {
-      points = keyPoints.points.map((p) =>
-        typeof p === "string" ? p : JSON.stringify(p),
-      );
-    } else if (Array.isArray(keyPoints.items)) {
-      points = keyPoints.items.map((p) =>
-        typeof p === "string" ? p : JSON.stringify(p),
-      );
-    } else if (Array.isArray(keyPoints.key_points)) {
-      points = keyPoints.key_points.map((p) =>
-        typeof p === "string" ? p : JSON.stringify(p),
-      );
+  // 尝试提取要点数组
+  if (Array.isArray(keyPoints.points)) {
+    points = keyPoints.points.map((p) =>
+      typeof p === "string" ? p : JSON.stringify(p),
+    );
+  } else if (Array.isArray(keyPoints.items)) {
+    points = keyPoints.items.map((p) =>
+      typeof p === "string" ? p : JSON.stringify(p),
+    );
+  } else if (Array.isArray(keyPoints.key_points)) {
+    points = keyPoints.key_points.map((p) =>
+      typeof p === "string" ? p : JSON.stringify(p),
+    );
     } else if (Array.isArray(keyPoints)) {
       points = (keyPoints as unknown[]).map((p) =>
         typeof p === "string" ? p : JSON.stringify(p),
       );
-    } else {
-      // 尝试获取原始文本内容（可能是markdown格式）
-      keyPointsContent =
-        (keyPoints.text as string) ||
-        (keyPoints.content as string) ||
-        (keyPoints.markdown as string) ||
+  } else {
+    // 尝试获取原始文本内容（可能是markdown格式）
+    keyPointsContent =
+      (keyPoints.text as string) ||
+      (keyPoints.content as string) ||
+      (keyPoints.markdown as string) ||
         (keyPoints.raw_text as string) ||
         (Object.values(keyPoints || {}).find(
-          (val) => typeof val === "string" && val.length > 50,
-        ) as string) ||
-        "";
+        (val) => typeof val === "string" && val.length > 50,
+      ) as string) ||
+      "";
 
-      if (!keyPointsContent) {
+    if (!keyPointsContent) {
         points = Object.values(keyPoints || {})
-          .filter((val) => typeof val === "string" && val.length > 10)
-          .map((val) => val as string);
-      }
+        .filter((val) => typeof val === "string" && val.length > 10)
+        .map((val) => val as string);
     }
+  }
   }
 
   if (!keyPointsContent && points.length === 0) return null;
@@ -359,20 +359,20 @@ const LoadingSkeleton = ({ layout = 'grid' }: { layout?: 'grid' | 'vertical' | '
 
   return (
     <div className={containerClass}>
-      {[1, 2, 3].map((i) => (
+    {[1, 2, 3].map((i) => (
         <Card key={i} className={cardHeight}>
-          <CardHeader>
-            <Skeleton className="h-6 w-32" />
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-5/6" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
+        <CardHeader>
+          <Skeleton className="h-6 w-32" />
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-5/6" />
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+);
 };
 
 // 主要的分析卡片组件

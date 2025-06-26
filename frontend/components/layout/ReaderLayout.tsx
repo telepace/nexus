@@ -150,10 +150,10 @@ export default function ReaderLayout({
               className="flex flex-col bg-muted/30"
             >
               {contentItem ? (
-                <ContentAnalysisSidebar
+              <ContentAnalysisSidebar
                   content={contentItem}
-                  analysisResult={analysisResult}
-                  conversations={conversations}
+                analysisResult={analysisResult}
+                conversations={conversations}
                   isLoading={loading}
                 />
               ) : (
