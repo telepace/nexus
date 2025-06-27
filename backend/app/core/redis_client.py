@@ -25,7 +25,7 @@ class RedisClient:
 
         try:
             self._pool = ConnectionPool.from_url(
-                settings.redis_url,
+                settings.REDIS_URL,
                 encoding="utf-8",
                 decode_responses=True,
                 max_connections=20,
@@ -35,7 +35,7 @@ class RedisClient:
 
             # 测试连接
             await self._client.ping()
-            logger.info(f"Redis 连接成功: {settings.redis_url}")
+            logger.info(f"Redis 连接成功: {settings.REDIS_URL}")
 
         except Exception as e:
             logger.warning(f"Redis 连接失败: {e}，将使用数据库直接查询")

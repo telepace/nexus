@@ -9,11 +9,9 @@ interface Props {
   items: ContentItemPublic[];
   selectedItem: ContentItemPublic | null;
   hoveredItem: ContentItemPublic | null;
-  onCardClick: (item: ContentItemPublic, event?: React.MouseEvent) => void;
+  onCardClick: (item: ContentItemPublic) => void;
   onCardHover: (item: ContentItemPublic | null) => void;
   prefetchContent: (item: ContentItemPublic) => void;
-  onItemDeleted?: (itemId: string) => void;
-  onItemUpdated?: (item: ContentItemPublic) => void;
 }
 
 export const ContentList = ({
@@ -23,8 +21,6 @@ export const ContentList = ({
   onCardClick,
   onCardHover,
   prefetchContent,
-  onItemDeleted,
-  onItemUpdated,
 }: Props) => {
   if (!items.length) return null;
 
@@ -39,8 +35,6 @@ export const ContentList = ({
             onCardClick={onCardClick}
             onCardHover={onCardHover}
             prefetchContent={prefetchContent}
-            onItemDeleted={onItemDeleted}
-            onItemUpdated={onItemUpdated}
           />
           {idx !== items.length - 1 && (
             <Separator

@@ -17,7 +17,6 @@ from sqlmodel import Session
 
 from app.models.content import AIResult, ContentItem, Segment
 from app.services.ai.chat_service import ChatService
-from app.services.ai_tag_processor import ai_tag_processor
 
 logger = logging.getLogger(__name__)
 
@@ -363,7 +362,7 @@ class PreprocessingPipeline:
         logger.debug("执行存储层处理")
 
         start_time = datetime.now()
-        storage_stats = {"segments_saved": 0, "ai_result_saved": False, "tags_created": 0, "tag_associations_created": 0}
+        storage_stats = {"segments_saved": 0, "ai_result_saved": False}
 
         try:
             # 获取数据库会话
@@ -390,32 +389,16 @@ class PreprocessingPipeline:
                     session.add(segment)
                     storage_stats["segments_saved"] += 1
 
-                # 3. 处理AI生成的标签
+                # 3. 保存AI结果
                 try:
-                    # 从AI结果中处理标签
-                    created_tags = ai_tag_processor.process_and_create_tags_from_ai_result(
-                        session, ai_results, content_id
-                    )
-                    storage_stats["tags_created"] = len(created_tags)
-                    storage_stats["tag_associations_created"] = len(created_tags)  # 每个标签都会创建一个关联
-                    logger.info(f"为内容 {content_id} 处理了 {len(created_tags)} 个标签")
-                except Exception as e:
-                    logger.error(f"处理标签失败: {str(e)}")
-
-                # 4. 保存AI结果
-                try:
-                    # 确保从content_analysis中提取阅读时间
-                    content_analysis = ai_results.get("content_analysis", {})
-                    reading_time = content_analysis.get("reading_time_minutes") or ai_results.get("reading_time_minutes")
-                    
                     ai_result = AIResult(
                         content_item_id=uuid.UUID(content_id),
                         summary=ai_results.get("summary"),
                         key_points=ai_results.get("key_points"),
                         labels=ai_results.get("labels"),
-                        content_analysis=content_analysis,
-                        reading_time_minutes=reading_time,
-                        difficulty_level=content_analysis.get("difficulty_level"),
+                        content_analysis=ai_results.get("content_analysis"),
+                        reading_time_minutes=ai_results.get("reading_time_minutes"),
+                        difficulty_level=ai_results.get("difficulty_level"),
                         content_quality_score=ai_results.get("content_quality_score"),
                     )
                     session.add(ai_result)
@@ -423,34 +406,13 @@ class PreprocessingPipeline:
                 except Exception as e:
                     logger.error(f"保存AI结果失败: {str(e)}")
 
-                # 5. 更新ContentItem状态和优化信息
-                try:
-                    content_item.processing_status = "completed"
-                    content_item.error_message = None
-                    content_item.last_processed_at = datetime.utcnow()
-                    
-                    # 更新内容项的优化标题和描述（如果AI生成了）
-                    optimized_title = ai_results.get("optimized_title")
-                    brief_description = ai_results.get("brief_description")
-                    
-                    if optimized_title and optimized_title.strip():
-                        # 如果原标题为空或者AI生成的标题更好，则更新
-                        if not content_item.title or len(optimized_title) > len(content_item.title or ""):
-                            content_item.title = optimized_title
-                            logger.info(f"更新内容标题: {optimized_title}")
-                    
-                    if brief_description and brief_description.strip():
-                        # 更新摘要字段（如果存在）
-                        if hasattr(content_item, 'summary') and (not content_item.summary or len(brief_description) > len(content_item.summary or "")):
-                            content_item.summary = brief_description
-                            logger.info(f"更新内容摘要: {brief_description[:50]}...")
-                    
-                    session.add(content_item)
-                except Exception as e:
-                    logger.error(f"更新ContentItem失败: {str(e)}")
+                # 4. 更新ContentItem状态
+                content_item.processing_status = "completed"
+                content_item.error_message = None
+                content_item.last_processed_at = datetime.utcnow()
+                session.add(content_item)
 
                 session.commit()
-                logger.info(f"存储层处理完成 - 标签: {storage_stats['tags_created']}, 关联: {storage_stats['tag_associations_created']}")
 
         except Exception as e:
             logger.error(f"存储层处理失败: {str(e)}")
