@@ -276,13 +276,13 @@ function LoginContent() {
                 <div className="flex justify-between items-center">
                   <Label
                     htmlFor="password"
-                    className="text-sm font-medium text-slate-700 dark:text-slate-300"
+                    className="text-sm font-medium text-neutral-700 dark:text-neutral-300"
                   >
                     密码
                   </Label>
                   <Link
                     href={`/password-recovery${email ? `?email=${encodeURIComponent(email)}` : ""}`}
-                    className="text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300"
+                    className="text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-400 transition-colors duration-300"
                   >
                     忘记密码？
                   </Link>

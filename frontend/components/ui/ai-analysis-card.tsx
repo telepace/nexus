@@ -317,7 +317,7 @@ export function AIAnalysisCard({
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="px-6 pb-6">
         {error && (
           <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
             <div className="flex items-center gap-2 text-destructive">
