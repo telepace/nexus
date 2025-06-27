@@ -1,36 +1,89 @@
-{
-  "content_types": [
-    "文章", "书籍", "报告", "论文", "新闻", "教程"
-  ],
-  "cognitive_levels": [
-    "入门", "进阶", "专业", "概念", "实用"
-  ],
-  "main_topics": [
-    "AI", "开发", "产品", "数据", "安全", "云计算",
-    "商业", "营销", "管理", "创业", "职场", "技能",
-    "学习", "效率", "成长", "目标", "沟通", "心理",
-    "投资", "理财", "健康", "教育", "房产", "育儿",
-    "经济", "心理学", "哲学", "历史", "科学", "法律"
-  ],
-  "specialized_tags": [
-    "机器学习", "深度学习", "NLP", "CV", "推荐系统",
-    "商业模式", "竞品分析", "增长", "数字化", "产品策略",
-    "股票", "基金", "房地产", "风控", "财务",
-    "UX", "UI", "前端", "后端", "架构",
-    "领导力", "团队", "绩效", "人才", "企业文化"
-  ],
-  "quality_tags": [
-    "高价值", "实用性强", "启发性强", "权威来源", "数据详实"
-  ],
-  "status_tags": [
-    "待阅读", "阅读中", "已完成", "重点关注", "需要回顾"
-  ],
-  "personal_tags": [
-    "工作相关", "兴趣爱好", "学习计划", "当前项目", "长期目标"
-  ],
-  "rules": {
-    "max_tags": 5,
-    "required": ["content_types", "cognitive_levels"],
-    "recommended": ["main_topics"]
-  }
-}
+[
+  {"name": "文章", "category": "content_types", "description": "文章类内容"},
+  {"name": "书籍", "category": "content_types", "description": "书籍类内容"},
+  {"name": "报告", "category": "content_types", "description": "报告类内容"},
+  {"name": "论文", "category": "content_types", "description": "论文类内容"},
+  {"name": "新闻", "category": "content_types", "description": "新闻类内容"},
+  {"name": "教程", "category": "content_types", "description": "教程类内容"},
+  
+  {"name": "入门", "category": "cognitive_levels", "description": "入门级内容"},
+  {"name": "进阶", "category": "cognitive_levels", "description": "进阶级内容"},
+  {"name": "专业", "category": "cognitive_levels", "description": "专业级内容"},
+  {"name": "概念", "category": "cognitive_levels", "description": "概念性内容"},
+  {"name": "实用", "category": "cognitive_levels", "description": "实用性内容"},
+  
+  {"name": "人工智能", "category": "main_topics", "description": "人工智能相关内容", "name_en": "AI"},
+  {"name": "开发", "category": "main_topics", "description": "开发相关内容"},
+  {"name": "产品", "category": "main_topics", "description": "产品相关内容"},
+  {"name": "数据", "category": "main_topics", "description": "数据相关内容"},
+  {"name": "安全", "category": "main_topics", "description": "安全相关内容"},
+  {"name": "云计算", "category": "main_topics", "description": "云计算相关内容"},
+  {"name": "商业", "category": "main_topics", "description": "商业相关内容"},
+  {"name": "营销", "category": "main_topics", "description": "营销相关内容"},
+  {"name": "管理", "category": "main_topics", "description": "管理相关内容"},
+  {"name": "创业", "category": "main_topics", "description": "创业相关内容"},
+  {"name": "职场", "category": "main_topics", "description": "职场相关内容"},
+  {"name": "技能", "category": "main_topics", "description": "技能相关内容"},
+  {"name": "学习", "category": "main_topics", "description": "学习相关内容"},
+  {"name": "效率", "category": "main_topics", "description": "效率相关内容"},
+  {"name": "成长", "category": "main_topics", "description": "成长相关内容"},
+  {"name": "目标", "category": "main_topics", "description": "目标相关内容"},
+  {"name": "沟通", "category": "main_topics", "description": "沟通相关内容"},
+  {"name": "心理", "category": "main_topics", "description": "心理相关内容"},
+  {"name": "投资", "category": "main_topics", "description": "投资相关内容"},
+  {"name": "理财", "category": "main_topics", "description": "理财相关内容"},
+  {"name": "健康", "category": "main_topics", "description": "健康相关内容"},
+  {"name": "教育", "category": "main_topics", "description": "教育相关内容"},
+  {"name": "房产", "category": "main_topics", "description": "房产相关内容"},
+  {"name": "育儿", "category": "main_topics", "description": "育儿相关内容"},
+  {"name": "经济", "category": "main_topics", "description": "经济相关内容"},
+  {"name": "心理学", "category": "main_topics", "description": "心理学相关内容"},
+  {"name": "哲学", "category": "main_topics", "description": "哲学相关内容"},
+  {"name": "历史", "category": "main_topics", "description": "历史相关内容"},
+  {"name": "科学", "category": "main_topics", "description": "科学相关内容"},
+  {"name": "法律", "category": "main_topics", "description": "法律相关内容"},
+  
+  {"name": "机器学习", "category": "specialized_tags", "description": "机器学习相关技术", "name_en": "machine learning"},
+  {"name": "深度学习", "category": "specialized_tags", "description": "深度学习相关技术", "name_en": "deep learning"},
+  {"name": "自然语言处理", "category": "specialized_tags", "description": "自然语言处理技术", "name_en": "NLP"},
+  {"name": "计算机视觉", "category": "specialized_tags", "description": "计算机视觉技术", "name_en": "CV"},
+  {"name": "推荐系统", "category": "specialized_tags", "description": "推荐系统相关技术"},
+  {"name": "商业模式", "category": "specialized_tags", "description": "商业模式相关内容"},
+  {"name": "竞品分析", "category": "specialized_tags", "description": "竞品分析相关内容"},
+  {"name": "增长", "category": "specialized_tags", "description": "增长相关内容"},
+  {"name": "数字化", "category": "specialized_tags", "description": "数字化转型相关内容"},
+  {"name": "产品策略", "category": "specialized_tags", "description": "产品策略相关内容"},
+  {"name": "股票", "category": "specialized_tags", "description": "股票投资相关内容"},
+  {"name": "基金", "category": "specialized_tags", "description": "基金投资相关内容"},
+  {"name": "房地产", "category": "specialized_tags", "description": "房地产相关内容"},
+  {"name": "风控", "category": "specialized_tags", "description": "风险控制相关内容"},
+  {"name": "财务", "category": "specialized_tags", "description": "财务相关内容"},
+  {"name": "用户体验", "category": "specialized_tags", "description": "用户体验设计", "name_en": "UX"},
+  {"name": "用户界面", "category": "specialized_tags", "description": "用户界面设计", "name_en": "UI"},
+  {"name": "前端开发", "category": "specialized_tags", "description": "前端开发相关技术"},
+  {"name": "后端开发", "category": "specialized_tags", "description": "后端开发相关技术"},
+  {"name": "系统架构", "category": "specialized_tags", "description": "系统架构设计", "name_en": "architecture"},
+  {"name": "领导力", "category": "specialized_tags", "description": "领导力相关内容"},
+  {"name": "团队管理", "category": "specialized_tags", "description": "团队管理相关内容"},
+  {"name": "绩效管理", "category": "specialized_tags", "description": "绩效管理相关内容"},
+  {"name": "人才管理", "category": "specialized_tags", "description": "人才管理相关内容"},
+  {"name": "企业文化", "category": "specialized_tags", "description": "企业文化相关内容"},
+  
+  {"name": "高价值", "category": "quality_tags", "description": "高价值内容"},
+  {"name": "实用性强", "category": "quality_tags", "description": "实用性强的内容"},
+  {"name": "启发性强", "category": "quality_tags", "description": "启发性强的内容"},
+  {"name": "权威来源", "category": "quality_tags", "description": "权威来源的内容"},
+  {"name": "数据详实", "category": "quality_tags", "description": "数据详实的内容"},
+  
+  {"name": "待阅读", "category": "status_tags", "description": "待阅读的内容"},
+  {"name": "阅读中", "category": "status_tags", "description": "正在阅读的内容"},
+  {"name": "已完成", "category": "status_tags", "description": "已完成阅读的内容"},
+  {"name": "重点关注", "category": "status_tags", "description": "重点关注的内容"},
+  {"name": "需要回顾", "category": "status_tags", "description": "需要回顾的内容"},
+  
+  {"name": "工作相关", "category": "personal_tags", "description": "工作相关的内容"},
+  {"name": "兴趣爱好", "category": "personal_tags", "description": "兴趣爱好相关的内容"},
+  {"name": "学习计划", "category": "personal_tags", "description": "学习计划相关的内容"},
+  {"name": "当前项目", "category": "personal_tags", "description": "当前项目相关的内容"},
+  {"name": "长期目标", "category": "personal_tags", "description": "长期目标相关的内容"}
+]

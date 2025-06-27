@@ -26,6 +26,7 @@ from app.models.content import (
     ContentItem,
     ContentShare,
     Segment,
+    MessageSegmentReference,
 )
 
 # Schema imports - assuming these exist
@@ -428,28 +429,44 @@ def delete_content_item_sync(
 
     try:
         # Delete in proper order to respect foreign key constraints
-        # 1. Delete segments (child table)
+        # 1. Delete favorites first (referencing content_item_id)
+        from app.models.favorite import Favorite
+        session.execute(sa_delete(Favorite).where(Favorite.content_item_id == id))
+
+        # 2. Delete message segment references that reference segments of this content item
+        # First get all segment IDs for this content item
+        segment_ids = session.exec(
+            select(Segment.id).where(Segment.content_item_id == id)
+        ).scalars().all()
+        if segment_ids:
+            session.execute(
+                sa_delete(MessageSegmentReference).where(
+                    MessageSegmentReference.segment_id.in_(segment_ids)
+                )
+            )
+
+        # 3. Delete segments (child table)
         session.execute(sa_delete(Segment).where(Segment.content_item_id == id))
 
-        # 2. Delete content assets (child table)
+        # 4. Delete content assets (child table)
         session.execute(
             sa_delete(ContentAsset).where(ContentAsset.content_item_id == id)
         )
 
-        # 3. Delete content shares (child table)
+        # 5. Delete content shares (child table)
         session.execute(
             sa_delete(ContentShare).where(ContentShare.content_item_id == id)
         )
 
-        # 4. Delete AI results (child table)
+        # 6. Delete AI results (child table)
         session.execute(sa_delete(AIResult).where(AIResult.content_item_id == id))
 
-        # 5. Delete AI conversations (child table)
+        # 7. Delete AI conversations (child table)
         session.execute(
             sa_delete(AIConversation).where(AIConversation.content_item_id == id)
         )
 
-        # 6. Finally delete the content item itself
+        # 8. Finally delete the content item itself
         session.execute(sa_delete(ContentItem).where(ContentItem.id == id))
 
         session.commit()

@@ -38,26 +38,33 @@ class AITagProcessor:
         Returns:
             List[Tag]: 创建或获取到的标签列表
         """
+        logger.info(f"🏷️ 开始处理AI标签结果，内容ID: {content_item_id}")
+        
         # 提取标签列表
         tag_names = self._extract_tags_from_ai_result(ai_result)
         
         if not tag_names:
-            logger.info("AI结果中未发现标签信息")
+            logger.warning(f"⚠️ AI结果中未发现标签信息，内容ID: {content_item_id}")
             return []
+
+        logger.info(f"🔍 从AI结果中提取到 {len(tag_names)} 个原始标签: {tag_names}")
 
         # 过滤和匹配预设标签
         matched_tag_names = self.tag_manager.filter_and_match_preset_tags(tag_names)
+        logger.info(f"✅ 匹配预设标签后得到 {len(matched_tag_names)} 个标签: {matched_tag_names}")
         
         # 批量获取或创建标签
         tags = self.tag_manager.get_or_create_tags_batch(session, matched_tag_names)
+        logger.info(f"📦 批量处理标签完成，实际创建/获取了 {len(tags)} 个标签对象")
         
         # 如果提供了content_item_id，创建关联关系
         if content_item_id and tags:
-            self._create_content_item_tag_associations(
+            associations_created = self._create_content_item_tag_associations(
                 session, content_item_id, tags, ai_result
             )
+            logger.info(f"🔗 创建了 {associations_created} 个内容-标签关联")
         
-        logger.info(f"成功处理 {len(tags)} 个标签: {[tag.name for tag in tags]}")
+        logger.info(f"✅ 标签处理完成: 成功处理 {len(tags)} 个标签 [{', '.join([tag.name for tag in tags])}]")
         return tags
 
     def _extract_tags_from_ai_result(self, ai_result: Dict[str, Any]) -> List[str]:
@@ -106,47 +113,61 @@ class AITagProcessor:
         session: Session, 
         content_item_id: str, 
         tags: List[Tag], 
-        ai_result: Dict[str, Any]
-    ):
+        ai_result: Dict[str, Any] = None
+    ) -> int:
         """
-        创建内容项和标签的关联关系
+        创建内容项与标签的关联关系
         
         Args:
             session: 数据库会话
             content_item_id: 内容项ID
             tags: 标签列表
-            ai_result: AI分析结果（用于提取相关性分数等）
+            ai_result: AI分析结果（可选，用于提取置信度等信息）
+        
+        Returns:
+            int: 创建的关联数量
         """
-        try:
-            from uuid import UUID
-            content_uuid = UUID(content_item_id)
-            
-            # 提取质量分数作为相关性分数
-            relevance_score = self._extract_relevance_score(ai_result)
-            
-            for tag in tags:
+        import uuid
+        from app.models.project import ContentItemTag
+        
+        associations_created = 0
+        
+        for tag in tags:
+            try:
                 # 检查是否已存在关联
-                from sqlmodel import select
-                existing = session.exec(
-                    select(ContentItemTag).where(
-                        ContentItemTag.content_item_id == content_uuid,
-                        ContentItemTag.tag_id == tag.id
-                    )
+                existing = session.query(ContentItemTag).filter_by(
+                    content_item_id=uuid.UUID(content_item_id),
+                    tag_id=tag.id
                 ).first()
                 
                 if not existing:
                     # 创建新的关联
-                    content_tag = ContentItemTag(
-                        content_item_id=content_uuid,
+                    association = ContentItemTag(
+                        content_item_id=uuid.UUID(content_item_id),
                         tag_id=tag.id,
-                        relevance_score=relevance_score,
-                        created_by_ai=True
+                        # 可以从ai_result中提取置信度等信息
+                        confidence_score=ai_result.get("score") if ai_result else None
                     )
-                    session.add(content_tag)
-                    logger.debug(f"创建内容-标签关联: {content_item_id} -> {tag.name}")
-            
+                    session.add(association)
+                    associations_created += 1
+                    logger.debug(f"🔗 创建内容-标签关联: {content_item_id} <-> {tag.name}")
+                else:
+                    logger.debug(f"⚠️ 内容-标签关联已存在: {content_item_id} <-> {tag.name}")
+                    
+            except Exception as e:
+                logger.error(f"❌ 创建内容-标签关联失败: {content_item_id} <-> {tag.name}, 错误: {str(e)}")
+        
+        # 提交更改
+        try:
+            session.commit()
+            if associations_created > 0:
+                logger.info(f"✅ 成功创建 {associations_created} 个内容-标签关联")
         except Exception as e:
-            logger.error(f"创建内容-标签关联失败: {e}")
+            logger.error(f"❌ 提交内容-标签关联失败: {str(e)}")
+            session.rollback()
+            associations_created = 0
+            
+        return associations_created
 
     def _extract_relevance_score(self, ai_result: Dict[str, Any]) -> float:
         """
