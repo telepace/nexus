@@ -140,13 +140,19 @@ export const useGlobalNotificationStore = create<GlobalNotificationStore>()(
 
       // 便捷方法：创建内容处理中通知
       createContentProcessingNotification: (contentId, title, message) => {
+        console.log(`🆕 创建内容处理中通知:`, {
+          contentId,
+          title,
+          message,
+        });
+        
         return get().addNotification({
           type: "content-processing",
           status: "processing",
           title,
           message: message || "正在处理中...",
           contentId,
-          progress: 0,
+          progress: 0, // 确保初始进度为0
           autoHide: false,
         });
       },
@@ -238,6 +244,13 @@ export const useGlobalNotificationStore = create<GlobalNotificationStore>()(
                   n.contentId === evt.content_id && n.status === "processing",
               );
 
+              console.log(`🔍 查找现有通知:`, {
+                content_id: evt.content_id,
+                foundExisting: !!existingNotification,
+                existingProgress: existingNotification?.progress,
+                newProgress: evt.progress,
+              });
+
               if (evt.status === "processing") {
                 if (!existingNotification) {
                   // 创建新的处理中通知 - 优化标题显示
@@ -247,22 +260,50 @@ export const useGlobalNotificationStore = create<GlobalNotificationStore>()(
                     evt.title.trim() !== ""
                       ? evt.title
                       : "新内容";
-                  createContentProcessingNotification(
+                  
+                  console.log(`🆕 创建新的处理中通知:`, {
+                    content_id: evt.content_id,
+                    title: displayTitle,
+                    progress: evt.progress,
+                  });
+                  
+                  const notificationId = createContentProcessingNotification(
                     evt.content_id,
                     displayTitle,
                     evt.progress !== undefined
                       ? `处理进度 ${evt.progress}%`
                       : "内容正在处理中...",
                   );
+                  
+                  // 如果事件包含具体的progress值，立即更新通知
+                  if (evt.progress !== undefined) {
+                    console.log(`🔄 立即更新新通知的进度:`, {
+                      notificationId,
+                      progress: evt.progress,
+                    });
+                    updateNotification(notificationId, {
+                      progress: evt.progress,
+                    });
+                  }
                 } else {
-                  // 更新现有通知的进度
+                  // 更新现有通知的进度 - 修复进度更新逻辑
                   const progressMessage =
                     evt.progress !== undefined
                       ? `处理进度 ${evt.progress}%`
                       : existingNotification.message;
 
+                  // 🔧 修复：使用正确的逻辑判断progress值，避免0值被忽略
+                  const newProgress = evt.progress !== undefined ? evt.progress : existingNotification.progress;
+                  
+                  console.log(`📈 更新现有通知进度:`, {
+                    notificationId: existingNotification.id,
+                    oldProgress: existingNotification.progress,
+                    newProgress: newProgress,
+                    message: progressMessage,
+                  });
+
                   updateNotification(existingNotification.id, {
-                    progress: evt.progress || existingNotification.progress,
+                    progress: newProgress, // 修复后的逻辑
                     message: progressMessage,
                     title:
                       evt.title &&
