@@ -81,6 +81,12 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-app}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-telepace}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_DB=${REDIS_DB:-0}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS_TTL_SECONDS=${REDIS_TTL_SECONDS:-86400}
+      - REDIS_ENABLED=${REDIS_ENABLED:-true}
       - SENTRY_DSN=${SENTRY_DSN:-}
 
   backend:
@@ -114,6 +120,12 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-app}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-telepace}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_DB=${REDIS_DB:-0}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS_TTL_SECONDS=${REDIS_TTL_SECONDS:-86400}
+      - REDIS_ENABLED=${REDIS_ENABLED:-true}
       - SENTRY_DSN=${SENTRY_DSN:-}
       - SUPABASE_URL=${SUPABASE_URL:-}
 
@@ -220,8 +232,11 @@ services:
     networks:
       - traefik-public
       - default
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
+    command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
