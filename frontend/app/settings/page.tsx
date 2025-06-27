@@ -31,8 +31,10 @@ import {
   Eye,
   Trash2,
   Upload,
+  RotateCcw,
 } from "lucide-react";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { resetDeleteConfirmSetting, shouldSkipDeleteConfirm } from "@/app/content-library/components/DeleteConfirmDialog";
 
 /**
  * 用户设置页面 - 包含完整的功能实现
@@ -72,6 +74,9 @@ export default function SettingsPage() {
     profileVisibility: "public" as "public" | "private" | "friends",
   });
 
+  // 删除确认设置状态
+  const [hasSkipDeleteConfirm, setHasSkipDeleteConfirm] = useState(false);
+
   // 头像上传相关状态
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null);
@@ -80,6 +85,8 @@ export default function SettingsPage() {
   // 避免 hydration 不匹配
   useEffect(() => {
     setMounted(true);
+    // 检查删除确认设置
+    setHasSkipDeleteConfirm(shouldSkipDeleteConfirm());
   }, []);
 
   // 处理个人资料更新
@@ -241,6 +248,16 @@ export default function SettingsPage() {
         variant: "destructive",
       });
     }
+  };
+
+  // 处理重置删除确认设置
+  const handleResetDeleteConfirm = () => {
+    resetDeleteConfirmSetting();
+    setHasSkipDeleteConfirm(false);
+    toast({
+      title: "设置已重置",
+      description: "删除内容时将重新显示确认对话框。",
+    });
   };
 
   // 处理头像上传
@@ -811,6 +828,44 @@ export default function SettingsPage() {
                     </div>
                   </RadioGroup>
                 </div>
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label className="text-base font-medium">删除确认</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {hasSkipDeleteConfirm ? "已设置为直接删除，不显示确认对话框" : "删除内容时显示确认对话框"}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResetDeleteConfirm}
+                    disabled={!hasSkipDeleteConfirm}
+                    className="flex items-center gap-2"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    重置为确认模式
+                  </Button>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-3">
+                  <Label className="text-base font-medium">删除账户</Label>
+                  <p className="text-sm text-muted-foreground">
+                    永久删除您的账户和所有相关数据。此操作无法撤销。
+                  </p>
+                </div>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteAccount}
+                  className="w-full sm:w-auto"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  删除账户
+                </Button>
               </CardContent>
             </Card>
 

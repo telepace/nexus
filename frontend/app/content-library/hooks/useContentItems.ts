@@ -28,6 +28,34 @@ export const useContentItems = () => {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
+  // 刷新内容列表的方法
+  const refreshItems = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const token = user?.token || getCookie("accessToken");
+      if (!token) return;
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const res = await fetch(`${apiUrl}/api/v1/content/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+      
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      
+      const data = await res.json();
+      setItems(data);
+      contentCache.setContentList(data);
+    } catch (e: unknown) {
+      console.error("刷新内容列表失败:", e);
+      // 静默失败，不显示错误信息
+    }
+  }, [user]);
+
   // 本地 bus 监听新内容创建
   useEffect(() => {
     const handler = (item: ContentItemPublic) => {
@@ -230,5 +258,6 @@ export const useContentItems = () => {
     error,
     prefetchContent,
     prefetchStats,
+    refreshItems,
   };
 };

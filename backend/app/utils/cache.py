@@ -6,6 +6,7 @@ from sqlmodel import Session, select
 
 from app.core.redis_client import redis_client
 from app.models import ContentItem
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +131,7 @@ async def get_cache_stats() -> dict:
     """
     stats = {
         "redis_enabled": redis_client.is_connected,
-        "redis_url": getattr(redis_client, "_redis_url", "N/A"),
+        "redis_url": settings.redis_url,
     }
 
     if redis_client.is_connected:

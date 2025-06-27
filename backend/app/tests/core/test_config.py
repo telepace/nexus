@@ -88,9 +88,23 @@ class TestSettings:
 
     def test_redis_settings(self):
         """测试Redis设置"""
-        if settings.REDIS_URL:
-            assert isinstance(settings.REDIS_URL, str)
-            assert settings.REDIS_URL.startswith(("redis://", "rediss://"))
+        # 测试Redis配置字段
+        assert hasattr(settings, "REDIS_HOST")
+        assert hasattr(settings, "REDIS_PORT")
+        assert hasattr(settings, "REDIS_DB")
+        assert hasattr(settings, "redis_url")
+        
+        assert isinstance(settings.REDIS_HOST, str)
+        assert isinstance(settings.REDIS_PORT, int)
+        assert isinstance(settings.REDIS_DB, int)
+        assert isinstance(settings.redis_url, str)
+        
+        # 验证端口范围
+        assert 1 <= settings.REDIS_PORT <= 65535
+        
+        # 验证Redis URL格式
+        assert settings.redis_url.startswith("redis://")
+        assert f"{settings.REDIS_HOST}:{settings.REDIS_PORT}" in settings.redis_url
 
     def test_logging_settings(self):
         """测试日志设置"""
