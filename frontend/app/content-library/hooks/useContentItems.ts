@@ -44,9 +44,9 @@ export const useContentItems = () => {
         },
         credentials: "include",
       });
-      
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      
+
       const data = await res.json();
       setItems(data);
       contentCache.setContentList(data);

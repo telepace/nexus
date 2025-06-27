@@ -34,7 +34,10 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { resetDeleteConfirmSetting, shouldSkipDeleteConfirm } from "@/app/content-library/components/DeleteConfirmDialog";
+import {
+  resetDeleteConfirmSetting,
+  shouldSkipDeleteConfirm,
+} from "@/app/content-library/components/DeleteConfirmDialog";
 
 /**
  * 用户设置页面 - 包含完整的功能实现
@@ -835,7 +838,9 @@ export default function SettingsPage() {
                   <div className="space-y-1">
                     <Label className="text-base font-medium">删除确认</Label>
                     <p className="text-sm text-muted-foreground">
-                      {hasSkipDeleteConfirm ? "已设置为直接删除，不显示确认对话框" : "删除内容时显示确认对话框"}
+                      {hasSkipDeleteConfirm
+                        ? "已设置为直接删除，不显示确认对话框"
+                        : "删除内容时显示确认对话框"}
                     </p>
                   </div>
                   <Button

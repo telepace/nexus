@@ -31,7 +31,9 @@ export default function MainLayout({
     isFullscreen ? "h-screen overflow-hidden" : "min-h-screen",
   ].join(" ");
 
-  const insetClasses = isFullscreen ? "h-screen overflow-hidden" : "min-h-screen";
+  const insetClasses = isFullscreen
+    ? "h-screen overflow-hidden"
+    : "min-h-screen";
   const mainClasses = [
     "flex-1",
     isFullscreen ? "h-full overflow-hidden" : "overflow-auto",

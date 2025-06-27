@@ -39,10 +39,10 @@ export default function ContentLibraryPage() {
       ) {
         return;
       }
-      
+
       // 立即跳转，给用户即时反馈
       router.push(`/content-library/reader/${item.id}`);
-      
+
       // 异步预取内容，提升用户体验
       Promise.resolve().then(() => {
         prefetchContent(item);
@@ -66,22 +66,32 @@ export default function ContentLibraryPage() {
   );
 
   // 处理内容项删除
-  const handleItemDeleted = useCallback((itemId: string) => {
-    // 如果删除的是当前选中或悬浮的项目，清除选择
-    setSelectedItem(prev => prev?.id === itemId ? null : prev);
-    setHoveredItem(prev => prev?.id === itemId ? null : prev);
-    // 刷新列表
-    refreshItems();
-  }, [refreshItems]);
+  const handleItemDeleted = useCallback(
+    (itemId: string) => {
+      // 如果删除的是当前选中或悬浮的项目，清除选择
+      setSelectedItem((prev) => (prev?.id === itemId ? null : prev));
+      setHoveredItem((prev) => (prev?.id === itemId ? null : prev));
+      // 刷新列表
+      refreshItems();
+    },
+    [refreshItems],
+  );
 
   // 处理内容项更新
-  const handleItemUpdated = useCallback((updatedItem: ContentItemPublic) => {
-    // 如果更新的是当前选中的项目，更新选中项
-    setSelectedItem(prev => prev?.id === updatedItem.id ? updatedItem : prev);
-    setHoveredItem(prev => prev?.id === updatedItem.id ? updatedItem : prev);
-    // 刷新列表
-    refreshItems();
-  }, [refreshItems]);
+  const handleItemUpdated = useCallback(
+    (updatedItem: ContentItemPublic) => {
+      // 如果更新的是当前选中的项目，更新选中项
+      setSelectedItem((prev) =>
+        prev?.id === updatedItem.id ? updatedItem : prev,
+      );
+      setHoveredItem((prev) =>
+        prev?.id === updatedItem.id ? updatedItem : prev,
+      );
+      // 刷新列表
+      refreshItems();
+    },
+    [refreshItems],
+  );
 
   // 获取要在预览中显示的项目（优先显示悬浮的，其次显示选中的）
   const previewItem = hoveredItem || selectedItem;

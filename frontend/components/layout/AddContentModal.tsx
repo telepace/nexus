@@ -7,7 +7,6 @@ import {
   FileText,
   AlertCircle,
   Trash2,
-  Plus,
   ArrowLeft,
   Paperclip,
 } from "lucide-react";
@@ -550,7 +549,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
                   {/* Empty state when no files selected */}
                   {selectedFiles.length === 0 && (
-                    <div 
+                    <div
                       className="text-center select-none cursor-pointer py-8"
                       onClick={() => fileInputRef.current?.click()}
                     >
@@ -592,11 +591,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
             disabled={isLoading}
             className="flex items-center gap-2"
           >
-            {view === "input" ? (
-              "上传文件"
-            ) : (
-              <ArrowLeft className="h-4 w-4" />
-            )}
+            {view === "input" ? "上传文件" : <ArrowLeft className="h-4 w-4" />}
           </Button>
           <AlertDialogAction
             className={cn(

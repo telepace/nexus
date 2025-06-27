@@ -6,18 +6,18 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { 
-  FileText, 
-  Link, 
-  BookOpen, 
-  Star, 
-  Clock, 
+import {
+  FileText,
+  Link,
+  BookOpen,
+  Star,
+  Clock,
   MoreHorizontal,
   Trash2,
   RotateCcw,
   Brain,
   ExternalLink,
-  Copy
+  Copy,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -37,7 +37,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { contentApi } from "@/lib/api/content";
 import { toast } from "sonner";
-import { DeleteConfirmDialog, shouldSkipDeleteConfirm } from "./DeleteConfirmDialog";
+import {
+  DeleteConfirmDialog,
+  shouldSkipDeleteConfirm,
+} from "./DeleteConfirmDialog";
 
 interface Props {
   item: ContentItemPublic;
@@ -153,7 +156,10 @@ export const ContentCard = ({
   // 处理AI分析
   const handleAIAnalysis = async () => {
     try {
-      await contentApi.analyzeContent(item.id, "请分析这个内容的主要观点和见解");
+      await contentApi.analyzeContent(
+        item.id,
+        "请分析这个内容的主要观点和见解",
+      );
       toast.success("AI 分析已开始，请稍后查看结果");
     } catch (error) {
       console.error("AI 分析失败:", error);
@@ -250,7 +256,7 @@ export const ContentCard = ({
                   <StarRating score={aiResult.content_quality_score!} />
                 )}
               </div>
-              
+
               {/* 三个点菜单 */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -265,45 +271,51 @@ export const ContentCard = ({
                     <span className="sr-only">更多操作</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48" sideOffset={5}>
-                  <DropdownMenuItem 
+                <DropdownMenuContent
+                  align="end"
+                  className="w-48"
+                  sideOffset={5}
+                >
+                  <DropdownMenuItem
                     onClick={handleViewDetails}
                     className="focus:bg-accent/50"
                   >
                     <ExternalLink className="h-4 w-4 mr-2" />
                     查看详情
                   </DropdownMenuItem>
-                  
+
                   {isProcessingFailed && (
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={handleReprocess}
                       disabled={isProcessing}
                       className="focus:bg-accent/50"
                     >
-                      <RotateCcw className={`h-4 w-4 mr-2 ${isProcessing ? 'animate-spin' : ''}`} />
+                      <RotateCcw
+                        className={`h-4 w-4 mr-2 ${isProcessing ? "animate-spin" : ""}`}
+                      />
                       {isProcessing ? "处理中..." : "重新处理"}
                     </DropdownMenuItem>
                   )}
-                  
-                  <DropdownMenuItem 
+
+                  <DropdownMenuItem
                     onClick={handleAIAnalysis}
                     className="focus:bg-accent/50"
                   >
                     <Brain className="h-4 w-4 mr-2" />
                     AI 分析
                   </DropdownMenuItem>
-                  
-                  <DropdownMenuItem 
+
+                  <DropdownMenuItem
                     onClick={handleCopyLink}
                     className="focus:bg-accent/50"
                   >
                     <Copy className="h-4 w-4 mr-2" />
                     复制链接
                   </DropdownMenuItem>
-                  
+
                   <DropdownMenuSeparator />
-                  
-                  <DropdownMenuItem 
+
+                  <DropdownMenuItem
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -312,7 +324,9 @@ export const ContentCard = ({
                     disabled={isDeleting}
                     className="text-destructive focus:text-destructive focus:bg-destructive/10"
                   >
-                    <Trash2 className={`h-4 w-4 mr-2 ${isDeleting ? 'animate-pulse' : ''}`} />
+                    <Trash2
+                      className={`h-4 w-4 mr-2 ${isDeleting ? "animate-pulse" : ""}`}
+                    />
                     {isDeleting ? "删除中..." : "删除"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -369,7 +383,7 @@ export const ContentCard = ({
           </div>
         </div>
       </CardContent>
-      
+
       {/* 删除确认对话框 */}
       <DeleteConfirmDialog
         open={showDeleteDialog}

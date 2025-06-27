@@ -148,7 +148,13 @@ export function AppSidebar({
                     asChild={!item.onClick}
                     isActive={!item.onClick && pathname === item.url}
                     tooltip={item.title}
-                    onClick={item.onClick ? (item.title === "Upload Content" ? onAddContentClick : undefined) : undefined}
+                    onClick={
+                      item.onClick
+                        ? item.title === "Upload Content"
+                          ? onAddContentClick
+                          : undefined
+                        : undefined
+                    }
                   >
                     {item.onClick ? (
                       <>
