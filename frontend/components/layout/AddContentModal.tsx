@@ -8,6 +8,7 @@ import {
   AlertCircle,
   Trash2,
   Plus,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -509,10 +510,10 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                 {/* Drag & drop wrapper */}
                 <div
                   className={cn(
-                    "space-y-2 max-h-40 overflow-y-auto border-2 border-dashed rounded-md p-4 transition-colors",
+                    "space-y-2 max-h-40 overflow-y-auto border border-dashed rounded-md p-4 transition-colors",
                     isDragOver
                       ? "border-primary bg-primary/10"
-                      : "border-muted",
+                      : "border-muted-foreground/40",
                   )}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -591,13 +592,15 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           </div>
         )}
 
-        <AlertDialogFooter className="flex-shrink-0 space-x-2">
+        <AlertDialogFooter className="flex-shrink-0 flex justify-between items-center">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => setView(view === "input" ? "file" : "input")}
             disabled={isLoading}
+            className="flex items-center gap-2"
           >
+            <ArrowLeft className="h-4 w-4" />
             {view === "input" ? "上传本地文件" : "输入链接 / 文本"}
           </Button>
           <AlertDialogAction
