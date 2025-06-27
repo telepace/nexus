@@ -13,7 +13,7 @@ import { Loading } from "@/components/ui/loading";
 
 export default function ContentLibraryPage() {
   const router = useRouter();
-  const { authLoading, loading, error, items, prefetchContent } =
+  const { authLoading, loading, error, items, prefetchContent, refreshItems } =
     useContentItems();
 
   const [selectedItem, setSelectedItem] = useState<ContentItemPublic | null>(
@@ -26,12 +26,29 @@ export default function ContentLibraryPage() {
   // 过滤逻辑
   const filteredItems = items;
 
-  // 处理卡片点击 - 直接跳转到阅读器
+  // 处理卡片点击 - 立即跳转到阅读器
   const handleCardClick = useCallback(
-    (item: ContentItemPublic) => {
+    (item: ContentItemPublic, event?: React.MouseEvent) => {
+      // 阻止事件冒泡，避免与其他交互元素冲突
+      if (
+        event?.target instanceof HTMLElement &&
+        (event.target.closest("button") ||
+          event.target.closest('[role="switch"]') ||
+          event.target.closest("[data-dropdown-trigger]") ||
+          event.target.closest(".dropdown-menu-trigger"))
+      ) {
+        return;
+      }
+      
+      // 立即跳转，给用户即时反馈
       router.push(`/content-library/reader/${item.id}`);
+      
+      // 异步预取内容，提升用户体验
+      Promise.resolve().then(() => {
+        prefetchContent(item);
+      });
     },
-    [router],
+    [router, prefetchContent],
   );
 
   // 处理悬浮事件
@@ -47,6 +64,24 @@ export default function ContentLibraryPage() {
     },
     [prefetchContent],
   );
+
+  // 处理内容项删除
+  const handleItemDeleted = useCallback((itemId: string) => {
+    // 如果删除的是当前选中或悬浮的项目，清除选择
+    setSelectedItem(prev => prev?.id === itemId ? null : prev);
+    setHoveredItem(prev => prev?.id === itemId ? null : prev);
+    // 刷新列表
+    refreshItems();
+  }, [refreshItems]);
+
+  // 处理内容项更新
+  const handleItemUpdated = useCallback((updatedItem: ContentItemPublic) => {
+    // 如果更新的是当前选中的项目，更新选中项
+    setSelectedItem(prev => prev?.id === updatedItem.id ? updatedItem : prev);
+    setHoveredItem(prev => prev?.id === updatedItem.id ? updatedItem : prev);
+    // 刷新列表
+    refreshItems();
+  }, [refreshItems]);
 
   // 获取要在预览中显示的项目（优先显示悬浮的，其次显示选中的）
   const previewItem = hoveredItem || selectedItem;
@@ -96,6 +131,8 @@ export default function ContentLibraryPage() {
                 onCardClick={handleCardClick}
                 onCardHover={handleCardHover}
                 prefetchContent={prefetchContent}
+                onItemDeleted={handleItemDeleted}
+                onItemUpdated={handleItemUpdated}
               />
             )}
           </div>
