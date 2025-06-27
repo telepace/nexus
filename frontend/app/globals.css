@@ -71,8 +71,8 @@
   --radius: 0.625rem;
 
   /* Custom width tokens */
-  --size-library: 35.25rem; /* 564px - left pane fixed width */
-  --size-library-lg: 38rem; /* 608px - large screen library width */
+  --size-library: 40rem; /* 640px - left pane fixed width - 增加以适应单列布局 */
+  --size-library-lg: 42rem; /* 672px - large screen library width - 相应增加 */
   --size-library-card: 28.75rem; /* 460px - card width */
   --size-card-title: 25rem; /* 400px - card text width */
 

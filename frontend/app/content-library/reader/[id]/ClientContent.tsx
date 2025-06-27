@@ -264,16 +264,10 @@ export const ClientContent = ({
     navigationState.saveReaderVisit(contentId);
   }, [contentId]);
 
-  // 当内容加载完成后，通知 ReaderLayout 更新内容文本
+  // 当内容加载完成后，通知parent组件内容已变化
   useEffect(() => {
     if (content && onContentChange) {
-      const contentText =
-        markdownContent ||
-        content.processed_content ||
-        content.content_text ||
-        content.title ||
-        "";
-      onContentChange(contentText);
+      onContentChange();
     }
   }, [content, markdownContent, onContentChange]);
 
