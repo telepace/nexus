@@ -528,9 +528,9 @@ function SidebarMenuButton({
           "group-data-[collapsible=icon]:before:left-1/2 group-data-[collapsible=icon]:before:-translate-x-1/2",
           "group-data-[collapsible=icon]:before:top-0 group-data-[collapsible=icon]:before:translate-y-0",
           "group-data-[collapsible=icon]:before:w-5 group-data-[collapsible=icon]:before:h-1",
-          "group-data-[collapsible=icon]:before:rounded-b-sm group-data-[collapsible=icon]:before:rounded-r-none"
+          "group-data-[collapsible=icon]:before:rounded-b-sm group-data-[collapsible=icon]:before:rounded-r-none",
         ],
-        className
+        className,
       )}
       {...props}
     />
@@ -706,7 +706,7 @@ function SidebarMenuSubButton({
           "text-sidebar-accent-foreground font-medium",
           "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2",
           "before:w-0.5 before:h-3 before:bg-primary before:rounded-r-sm",
-          "before:transition-all before:duration-200"
+          "before:transition-all before:duration-200",
         ],
         size === "sm" && "text-xs",
         size === "md" && "text-sm",

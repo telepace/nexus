@@ -510,7 +510,9 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                 <div
                   className={cn(
                     "space-y-2 max-h-40 overflow-y-auto border-2 border-dashed rounded-md p-4 transition-colors",
-                    isDragOver ? "border-primary bg-primary/10" : "border-muted",
+                    isDragOver
+                      ? "border-primary bg-primary/10"
+                      : "border-muted",
                   )}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}

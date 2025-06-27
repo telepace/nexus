@@ -129,9 +129,7 @@ export function PromptCommandDialog({
       {/* 输入框和发送按钮 */}
       <form onSubmit={handleSubmit} className="relative">
         {/* 输入框容器：在暗色模式下使用深色背景以保证文本可见 */}
-        <div
-          className="relative bg-white dark:bg-zinc-800 shadow-md rounded-3xl focus-within:ring-1 focus-within:ring-foreground transition-all duration-200"
-        >
+        <div className="relative bg-white dark:bg-zinc-800 shadow-md rounded-3xl focus-within:ring-1 focus-within:ring-foreground transition-all duration-200">
           <div className="flex items-center gap-3 pl-6 pr-3 py-1">
             <div className="relative flex-1">
               <Input

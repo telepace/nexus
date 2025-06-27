@@ -3,7 +3,6 @@
 import { FC, useState } from "react";
 import { BookOpen, Sparkles, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AIResult, ConversationListResponse } from "@/lib/api/content";
