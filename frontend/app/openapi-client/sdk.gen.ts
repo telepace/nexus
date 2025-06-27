@@ -8,8 +8,10 @@ import {
   formDataBodySerializer,
 } from "@hey-api/client-axios";
 import type {
-  HealthGetHealthApiError,
-  HealthGetHealthApiResponse,
+  HealthHealthCheckError,
+  HealthHealthCheckResponse,
+  HealthCacheHealthCheckError,
+  HealthCacheHealthCheckResponse,
   LoginAuthLoginData,
   LoginAuthLoginError,
   LoginAuthLoginResponse,
@@ -166,35 +168,47 @@ import type {
   ContentGetContentItemEndpointData,
   ContentGetContentItemEndpointError,
   ContentGetContentItemEndpointResponse,
-  ContentGetContentMarkdownEndpointData,
-  ContentGetContentMarkdownEndpointError,
-  ContentGetContentMarkdownEndpointResponse,
-  ContentGetSupportedProcessorsError,
-  ContentGetSupportedProcessorsResponse,
+  ContentDeleteContentItemEndpointData,
+  ContentDeleteContentItemEndpointError,
+  ContentDeleteContentItemEndpointResponse,
   ContentGetContentChunksEndpointData,
   ContentGetContentChunksEndpointError,
   ContentGetContentChunksEndpointResponse,
   ContentGetContentChunksSummaryEndpointData,
   ContentGetContentChunksSummaryEndpointError,
   ContentGetContentChunksSummaryEndpointResponse,
-  ContentAnalyzeContentStreamData,
-  ContentAnalyzeContentStreamError,
-  ContentAnalyzeContentStreamResponse,
-  ContentAnalyzeContentAiSdkData,
-  ContentAnalyzeContentAiSdkError,
-  ContentAnalyzeContentAiSdkResponse,
-  ContentContentCompletionStreamData,
-  ContentContentCompletionStreamError,
-  ContentContentCompletionStreamResponse,
-  ContentAnalyzeContentAiSdkUpdatedData,
-  ContentAnalyzeContentAiSdkUpdatedError,
-  ContentAnalyzeContentAiSdkUpdatedResponse,
-  ContentContentCompletionStreamUpdatedData,
-  ContentContentCompletionStreamUpdatedError,
-  ContentContentCompletionStreamUpdatedResponse,
-  ContentGetContentProcessingJobsData,
-  ContentGetContentProcessingJobsError,
-  ContentGetContentProcessingJobsResponse,
+  ContentAnalyzeContentStreamEndpointData,
+  ContentAnalyzeContentStreamEndpointError,
+  ContentAnalyzeContentStreamEndpointResponse,
+  ContentAnalyzeAiSdkUpdatedEndpointData,
+  ContentAnalyzeAiSdkUpdatedEndpointError,
+  ContentAnalyzeAiSdkUpdatedEndpointResponse,
+  ContentCompletionUpdatedEndpointData,
+  ContentCompletionUpdatedEndpointError,
+  ContentCompletionUpdatedEndpointResponse,
+  ContentGetContentMarkdownEndpointData,
+  ContentGetContentMarkdownEndpointError,
+  ContentGetContentMarkdownEndpointResponse,
+  ContentGetContentConversationsData,
+  ContentGetContentConversationsError,
+  ContentGetContentConversationsResponse,
+  ContentCreateConversationData,
+  ContentCreateConversationError,
+  ContentCreateConversationResponse,
+  ContentAnalyzeContentStreamWithTemplateEndpointData,
+  ContentAnalyzeContentStreamWithTemplateEndpointError,
+  ContentAnalyzeContentStreamWithTemplateEndpointResponse,
+  ContentAddToFavoritesEndpointData,
+  ContentAddToFavoritesEndpointError,
+  ContentAddToFavoritesEndpointResponse,
+  ContentRemoveFromFavoritesEndpointData,
+  ContentRemoveFromFavoritesEndpointError,
+  ContentRemoveFromFavoritesEndpointResponse,
+  ContentCheckFavoriteStatusEndpointData,
+  ContentCheckFavoriteStatusEndpointError,
+  ContentCheckFavoriteStatusEndpointResponse,
+  ContentGetSupportedProcessorsEndpointError,
+  ContentGetSupportedProcessorsEndpointResponse,
   ContentCreateShareLinkEndpointData,
   ContentCreateShareLinkEndpointError,
   ContentCreateShareLinkEndpointResponse,
@@ -204,12 +218,20 @@ import type {
   ContentGetSharedContentEndpointData,
   ContentGetSharedContentEndpointError,
   ContentGetSharedContentEndpointResponse,
-  ContentGetContentAiConversationsData,
-  ContentGetContentAiConversationsError,
-  ContentGetContentAiConversationsResponse,
-  ContentGetAiConversationDetailsData,
-  ContentGetAiConversationDetailsError,
-  ContentGetAiConversationDetailsResponse,
+  ExtensionGetSummaryStreamData,
+  ExtensionGetSummaryStreamError,
+  ExtensionGetSummaryStreamResponse,
+  ExtensionGetKeypointsStreamData,
+  ExtensionGetKeypointsStreamError,
+  ExtensionGetKeypointsStreamResponse,
+  ExtensionAnalyzeContentData,
+  ExtensionAnalyzeContentError,
+  ExtensionAnalyzeContentResponse,
+  FavoritesGetFavoritesEndpointData,
+  FavoritesGetFavoritesEndpointError,
+  FavoritesGetFavoritesEndpointResponse,
+  FavoritesGetFavoriteContentIdsEndpointError,
+  FavoritesGetFavoriteContentIdsEndpointResponse,
   ImagesGetUploadUrlData,
   ImagesGetUploadUrlError,
   ImagesGetUploadUrlResponse,
@@ -269,6 +291,29 @@ import type {
   AiConversationsGetAiConversationMessagesData,
   AiConversationsGetAiConversationMessagesError,
   AiConversationsGetAiConversationMessagesResponse,
+  AiConversationsChatWithSegmentsData,
+  AiConversationsChatWithSegmentsError,
+  AiConversationsChatWithSegmentsResponse,
+  AiConversationsGetConversationSegmentReferencesData,
+  AiConversationsGetConversationSegmentReferencesError,
+  AiConversationsGetConversationSegmentReferencesResponse,
+  ConversationsGetContentConversationsData,
+  ConversationsGetContentConversationsError,
+  ConversationsGetContentConversationsResponse,
+  ConversationsCreateConversationData,
+  ConversationsCreateConversationError,
+  ConversationsCreateConversationResponse,
+  ConversationsAddMessageToConversationData,
+  ConversationsAddMessageToConversationError,
+  ConversationsAddMessageToConversationResponse,
+  ConversationsTriggerAnalysisData,
+  ConversationsTriggerAnalysisError,
+  ConversationsTriggerAnalysisResponse,
+  ConversationsDeactivateConversationData,
+  ConversationsDeactivateConversationError,
+  ConversationsDeactivateConversationResponse,
+  ConversationsGetAnalysisPromptsError,
+  ConversationsGetAnalysisPromptsResponse,
   PrivateCreateUserData,
   PrivateCreateUserError,
   PrivateCreateUserResponse,
@@ -277,18 +322,36 @@ import type {
 export const client = createClient(createConfig());
 
 /**
- * Get Health Api
+ * Health Check
+ * Basic health check endpoint.
  */
-export const healthGetHealthApi = <ThrowOnError extends boolean = false>(
+export const healthHealthCheck = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<unknown, ThrowOnError>,
 ) => {
   return (options?.client ?? client).get<
-    HealthGetHealthApiResponse,
-    HealthGetHealthApiError,
+    HealthHealthCheckResponse,
+    HealthHealthCheckError,
     ThrowOnError
   >({
     ...options,
     url: "/api/v1/health",
+  });
+};
+
+/**
+ * Cache Health Check
+ * Cache health check endpoint.
+ */
+export const healthCacheHealthCheck = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    HealthCacheHealthCheckResponse,
+    HealthCacheHealthCheckError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/health/cache",
   });
 };
 
@@ -495,7 +558,7 @@ export const usersReadUserMe = <ThrowOnError extends boolean = false>(
 
 /**
  * Delete User Me
- * Delete own user.
+ * Delete current user and all associated data.
  */
 export const usersDeleteUserMe = <ThrowOnError extends boolean = false>(
   options?: OptionsLegacyParser<unknown, ThrowOnError>,
@@ -1358,43 +1421,24 @@ export const contentGetContentItemEndpoint = <
 };
 
 /**
- * Get Content Item as Markdown
- * Retrieves the processed markdown content for a content item. Returns raw markdown text.
+ * Delete Content Item
+ * Delete a content item and all its related data. User can only delete their own content.
  */
-export const contentGetContentMarkdownEndpoint = <
+export const contentDeleteContentItemEndpoint = <
   ThrowOnError extends boolean = false,
 >(
   options: OptionsLegacyParser<
-    ContentGetContentMarkdownEndpointData,
+    ContentDeleteContentItemEndpointData,
     ThrowOnError
   >,
 ) => {
-  return (options?.client ?? client).get<
-    ContentGetContentMarkdownEndpointResponse,
-    ContentGetContentMarkdownEndpointError,
+  return (options?.client ?? client).delete<
+    ContentDeleteContentItemEndpointResponse,
+    ContentDeleteContentItemEndpointError,
     ThrowOnError
   >({
     ...options,
-    url: "/api/v1/content/{id}/markdown",
-  });
-};
-
-/**
- * Get Supported Content Types
- * Get list of supported content types and their processors.
- */
-export const contentGetSupportedProcessors = <
-  ThrowOnError extends boolean = false,
->(
-  options?: OptionsLegacyParser<unknown, ThrowOnError>,
-) => {
-  return (options?.client ?? client).get<
-    ContentGetSupportedProcessorsResponse,
-    ContentGetSupportedProcessorsError,
-    ThrowOnError
-  >({
-    ...options,
-    url: "/api/v1/content/processors/supported",
+    url: "/api/v1/content/{id}",
   });
 };
 
@@ -1443,172 +1487,233 @@ export const contentGetContentChunksSummaryEndpoint = <
 };
 
 /**
- * Analyze Content Stream
- * Stream AI analysis of content using LiteLLM.
- *
- * Args:
- * content_id: ID of the content to analyze
- * system_prompt: System prompt (e.g., prompt template)
- * user_prompt: User prompt (the actual content text)
- * current_user: Current authenticated user
- * db: Database session
- *
- * Returns:
- * StreamingResponse: Server-sent events with analysis chunks
+ * Stream Content Analysis
+ * Perform streaming AI analysis of content using specified instruction.
  */
-export const contentAnalyzeContentStream = <
-  ThrowOnError extends boolean = false,
->(
-  options: OptionsLegacyParser<ContentAnalyzeContentStreamData, ThrowOnError>,
-) => {
-  return (options?.client ?? client).post<
-    ContentAnalyzeContentStreamResponse,
-    ContentAnalyzeContentStreamError,
-    ThrowOnError
-  >({
-    ...options,
-    url: "/api/v1/content/{content_id}/analyze",
-  });
-};
-
-/**
- * Analyze Content Ai Sdk
- * 使用 Vercel AI SDK 兼容格式分析内容，同时将对话存储到AIConversation表中
- */
-export const contentAnalyzeContentAiSdk = <
-  ThrowOnError extends boolean = false,
->(
-  options: OptionsLegacyParser<ContentAnalyzeContentAiSdkData, ThrowOnError>,
-) => {
-  return (options?.client ?? client).post<
-    ContentAnalyzeContentAiSdkResponse,
-    ContentAnalyzeContentAiSdkError,
-    ThrowOnError
-  >({
-    ...options,
-    url: "/api/v1/content/{content_id}/analyze-ai-sdk",
-  });
-};
-
-/**
- * Content Completion Stream
- * Stream content analysis using Vercel AI SDK compatible format，
- * 同时将对话存储到AIConversation表中
- *
- * This endpoint returns pure text streaming for optimal compatibility
- * with Vercel AI SDK useCompletion hook.
- *
- * Args:
- * content_id: ID of the content to analyze
- * prompt: The analysis instruction/prompt from user
- * model: AI model to use
- * temperature: Sampling temperature
- * max_tokens: Maximum tokens to generate
- */
-export const contentContentCompletionStream = <
+export const contentAnalyzeContentStreamEndpoint = <
   ThrowOnError extends boolean = false,
 >(
   options: OptionsLegacyParser<
-    ContentContentCompletionStreamData,
+    ContentAnalyzeContentStreamEndpointData,
     ThrowOnError
   >,
 ) => {
   return (options?.client ?? client).post<
-    ContentContentCompletionStreamResponse,
-    ContentContentCompletionStreamError,
+    ContentAnalyzeContentStreamEndpointResponse,
+    ContentAnalyzeContentStreamEndpointError,
     ThrowOnError
   >({
     ...options,
-    url: "/api/v1/content/{content_id}/completion",
+    url: "/api/v1/content/{id}/analyze-stream",
   });
 };
 
 /**
- * Analyze Content Ai Sdk Updated
- * Stream AI analysis with updated prompt structure: system=content, user=instruction.
- *
- * This endpoint implements the adjusted LLM logic where:
- * - System message contains the article content (provides context)
- * - User message contains the analysis instruction (provides task)
- *
- * Args:
- * content_id: ID of the content to analyze
- * analysis_instruction: The analysis instruction from user (user prompt)
- * model: AI model to use
- * temperature: Sampling temperature
- * max_tokens: Maximum tokens to generate
+ * Analyze Content with AI SDK (Updated Structure)
+ * Analyze content using AI SDK with updated prompt structure.
  */
-export const contentAnalyzeContentAiSdkUpdated = <
+export const contentAnalyzeAiSdkUpdatedEndpoint = <
   ThrowOnError extends boolean = false,
 >(
   options: OptionsLegacyParser<
-    ContentAnalyzeContentAiSdkUpdatedData,
+    ContentAnalyzeAiSdkUpdatedEndpointData,
     ThrowOnError
   >,
 ) => {
   return (options?.client ?? client).post<
-    ContentAnalyzeContentAiSdkUpdatedResponse,
-    ContentAnalyzeContentAiSdkUpdatedError,
+    ContentAnalyzeAiSdkUpdatedEndpointResponse,
+    ContentAnalyzeAiSdkUpdatedEndpointError,
     ThrowOnError
   >({
     ...options,
-    url: "/api/v1/content/{content_id}/analyze-ai-sdk-updated",
+    url: "/api/v1/content/{id}/analyze-ai-sdk-updated",
   });
 };
 
 /**
- * Content Completion Stream Updated
- * Stream content analysis using updated prompt structure: system=content, user=instruction.
- * Compatible with Vercel AI SDK useCompletion hook.
- *
- * This endpoint implements the adjusted LLM logic where:
- * - System message contains the article content (provides context)
- * - User message contains the analysis instruction (provides task)
- *
- * Args:
- * content_id: ID of the content to analyze
- * analysis_instruction: The analysis instruction from user (user prompt)
- * model: AI model to use
- * temperature: Sampling temperature
- * max_tokens: Maximum tokens to generate
+ * Content Completion with Updated Structure
+ * Get content completion using updated prompt structure.
  */
-export const contentContentCompletionStreamUpdated = <
+export const contentCompletionUpdatedEndpoint = <
   ThrowOnError extends boolean = false,
 >(
   options: OptionsLegacyParser<
-    ContentContentCompletionStreamUpdatedData,
+    ContentCompletionUpdatedEndpointData,
     ThrowOnError
   >,
 ) => {
   return (options?.client ?? client).post<
-    ContentContentCompletionStreamUpdatedResponse,
-    ContentContentCompletionStreamUpdatedError,
+    ContentCompletionUpdatedEndpointResponse,
+    ContentCompletionUpdatedEndpointError,
     ThrowOnError
   >({
     ...options,
-    url: "/api/v1/content/{content_id}/completion-updated",
+    url: "/api/v1/content/{id}/completion-updated",
   });
 };
 
 /**
- * Get Content Processing Jobs
- * Get all processing jobs and their results for a content item, including AI analysis results.
+ * Get Content Markdown
+ * Get the processed markdown content of a content item.
  */
-export const contentGetContentProcessingJobs = <
+export const contentGetContentMarkdownEndpoint = <
   ThrowOnError extends boolean = false,
 >(
   options: OptionsLegacyParser<
-    ContentGetContentProcessingJobsData,
+    ContentGetContentMarkdownEndpointData,
     ThrowOnError
   >,
 ) => {
   return (options?.client ?? client).get<
-    ContentGetContentProcessingJobsResponse,
-    ContentGetContentProcessingJobsError,
+    ContentGetContentMarkdownEndpointResponse,
+    ContentGetContentMarkdownEndpointError,
     ThrowOnError
   >({
     ...options,
-    url: "/api/v1/content/{id}/processing-jobs",
+    url: "/api/v1/content/{id}/markdown",
+  });
+};
+
+/**
+ * Get All Conversations for Content
+ * 获取指定内容的所有AI对话，包括自动分析和用户对话。
+ */
+export const contentGetContentConversations = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentGetContentConversationsData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetContentConversationsResponse,
+    ContentGetContentConversationsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{content_id}/conversations",
+  });
+};
+
+/**
+ * Create New Conversation
+ * 为指定内容创建新的AI对话。
+ */
+export const contentCreateConversation = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ContentCreateConversationData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ContentCreateConversationResponse,
+    ContentCreateConversationError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{content_id}/conversations",
+  });
+};
+
+/**
+ * Stream Content Analysis with Templates
+ * Perform streaming AI analysis using predefined templates (summary or key_points).
+ */
+export const contentAnalyzeContentStreamWithTemplateEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentAnalyzeContentStreamWithTemplateEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentAnalyzeContentStreamWithTemplateEndpointResponse,
+    ContentAnalyzeContentStreamWithTemplateEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{id}/analyze/stream",
+  });
+};
+
+/**
+ * Add Content to Favorites
+ * Add a content item to the user's favorites list.
+ */
+export const contentAddToFavoritesEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<ContentAddToFavoritesEndpointData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ContentAddToFavoritesEndpointResponse,
+    ContentAddToFavoritesEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{id}/favorite",
+  });
+};
+
+/**
+ * Remove Content from Favorites
+ * Remove a content item from the user's favorites list.
+ */
+export const contentRemoveFromFavoritesEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentRemoveFromFavoritesEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).delete<
+    ContentRemoveFromFavoritesEndpointResponse,
+    ContentRemoveFromFavoritesEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{id}/favorite",
+  });
+};
+
+/**
+ * Check Favorite Status
+ * Check if a content item is in the user's favorites.
+ */
+export const contentCheckFavoriteStatusEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ContentCheckFavoriteStatusEndpointData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ContentCheckFavoriteStatusEndpointResponse,
+    ContentCheckFavoriteStatusEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/{id}/favorite/status",
+  });
+};
+
+/**
+ * Get Supported Processors
+ * Get information about supported content processors and pipeline configuration.
+ */
+export const contentGetSupportedProcessorsEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ContentGetSupportedProcessorsEndpointResponse,
+    ContentGetSupportedProcessorsEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/content/processors/supported",
   });
 };
 
@@ -1679,46 +1784,96 @@ export const contentGetSharedContentEndpoint = <
 };
 
 /**
- * Get AI Conversations for Content
- * 获取指定内容项的所有AI对话记录
+ * 获取流式摘要
+ * 为浏览器插件提供流式摘要生成服务
  */
-export const contentGetContentAiConversations = <
-  ThrowOnError extends boolean = false,
->(
-  options: OptionsLegacyParser<
-    ContentGetContentAiConversationsData,
-    ThrowOnError
-  >,
+export const extensionGetSummaryStream = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ExtensionGetSummaryStreamData, ThrowOnError>,
 ) => {
-  return (options?.client ?? client).get<
-    ContentGetContentAiConversationsResponse,
-    ContentGetContentAiConversationsError,
+  return (options?.client ?? client).post<
+    ExtensionGetSummaryStreamResponse,
+    ExtensionGetSummaryStreamError,
     ThrowOnError
   >({
     ...options,
-    url: "/api/v1/content/{content_id}/conversations",
+    url: "/api/v1/extension/summary/stream",
   });
 };
 
 /**
- * Get AI Conversation Details
- * 获取指定AI对话的详细信息
+ * 获取流式要点
+ * 为浏览器插件提供流式要点提取服务
  */
-export const contentGetAiConversationDetails = <
+export const extensionGetKeypointsStream = <
   ThrowOnError extends boolean = false,
 >(
-  options: OptionsLegacyParser<
-    ContentGetAiConversationDetailsData,
+  options: OptionsLegacyParser<ExtensionGetKeypointsStreamData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ExtensionGetKeypointsStreamResponse,
+    ExtensionGetKeypointsStreamError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/extension/keypoints/stream",
+  });
+};
+
+/**
+ * 并行获取摘要和要点
+ * 同时生成摘要和要点，为插件优化的批量接口
+ */
+export const extensionAnalyzeContent = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<ExtensionAnalyzeContentData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ExtensionAnalyzeContentResponse,
+    ExtensionAnalyzeContentError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/extension/analyze",
+  });
+};
+
+/**
+ * Get User's Favorites
+ * Get user's favorite content items with pagination.
+ */
+export const favoritesGetFavoritesEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<
+    FavoritesGetFavoritesEndpointData,
     ThrowOnError
   >,
 ) => {
   return (options?.client ?? client).get<
-    ContentGetAiConversationDetailsResponse,
-    ContentGetAiConversationDetailsError,
+    FavoritesGetFavoritesEndpointResponse,
+    FavoritesGetFavoritesEndpointError,
     ThrowOnError
   >({
     ...options,
-    url: "/api/v1/content/conversations/{conversation_id}",
+    url: "/api/v1/favorites/",
+  });
+};
+
+/**
+ * Get User's Favorite Content IDs
+ * Get list of content item IDs that user has favorited.
+ */
+export const favoritesGetFavoriteContentIdsEndpoint = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    FavoritesGetFavoriteContentIdsEndpointResponse,
+    FavoritesGetFavoriteContentIdsEndpointError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/favorites/content-ids",
   });
 };
 
@@ -2121,6 +2276,179 @@ export const aiConversationsGetAiConversationMessages = <
   >({
     ...options,
     url: "/api/v1/ai/conversations/{conversation_id}/messages",
+  });
+};
+
+/**
+ * Chat With Segments
+ * Send a message and get AI response with segment references.
+ *
+ * This endpoint provides enhanced AI responses that include references to
+ * specific content segments, enabling traceability of information sources.
+ */
+export const aiConversationsChatWithSegments = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    AiConversationsChatWithSegmentsData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    AiConversationsChatWithSegmentsResponse,
+    AiConversationsChatWithSegmentsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/ai/conversations/{conversation_id}/chat-with-segments",
+  });
+};
+
+/**
+ * Get Conversation Segment References
+ * Get all segment references for a conversation.
+ */
+export const aiConversationsGetConversationSegmentReferences = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    AiConversationsGetConversationSegmentReferencesData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    AiConversationsGetConversationSegmentReferencesResponse,
+    AiConversationsGetConversationSegmentReferencesError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/ai/conversations/{conversation_id}/segment-references",
+  });
+};
+
+/**
+ * Get All Conversations for Content
+ * 获取指定内容的所有AI对话，包括自动分析和用户对话。
+ */
+export const conversationsGetContentConversations = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ConversationsGetContentConversationsData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).get<
+    ConversationsGetContentConversationsResponse,
+    ConversationsGetContentConversationsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/conversations/content/{content_id}/conversations",
+  });
+};
+
+/**
+ * Create New Conversation
+ * 为指定内容创建新的AI对话。
+ */
+export const conversationsCreateConversation = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ConversationsCreateConversationData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    ConversationsCreateConversationResponse,
+    ConversationsCreateConversationError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/conversations/content/{content_id}/conversations",
+  });
+};
+
+/**
+ * Add Message to Conversation
+ * 向指定对话添加新消息并获取AI响应。
+ */
+export const conversationsAddMessageToConversation = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ConversationsAddMessageToConversationData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).post<
+    ConversationsAddMessageToConversationResponse,
+    ConversationsAddMessageToConversationError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/conversations/conversations/{conversation_id}/messages",
+  });
+};
+
+/**
+ * Trigger Analysis with Predefined Prompt
+ * 使用预设模板对内容进行AI分析。
+ */
+export const conversationsTriggerAnalysis = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<ConversationsTriggerAnalysisData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    ConversationsTriggerAnalysisResponse,
+    ConversationsTriggerAnalysisError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/conversations/content/{content_id}/analysis",
+  });
+};
+
+/**
+ * Deactivate Conversation
+ * 停用指定的对话（软删除）。
+ */
+export const conversationsDeactivateConversation = <
+  ThrowOnError extends boolean = false,
+>(
+  options: OptionsLegacyParser<
+    ConversationsDeactivateConversationData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? client).delete<
+    ConversationsDeactivateConversationResponse,
+    ConversationsDeactivateConversationError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/conversations/conversations/{conversation_id}",
+  });
+};
+
+/**
+ * Get Available Analysis Prompts
+ * 获取所有可用的预设分析Prompt模板。
+ */
+export const conversationsGetAnalysisPrompts = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    ConversationsGetAnalysisPromptsResponse,
+    ConversationsGetAnalysisPromptsError,
+    ThrowOnError
+  >({
+    ...options,
+    url: "/api/v1/conversations/analysis-prompts",
   });
 };
 

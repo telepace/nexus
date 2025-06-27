@@ -1,14 +1,12 @@
 "use client";
 
 import { FC, useState } from "react";
-import { BookOpen, MessageSquare, Sparkles, AlertCircle } from "lucide-react";
+import { BookOpen, Sparkles, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AIResult, ConversationListResponse } from "@/lib/api/content";
 import { EnhancedLLMAnalysisSidebar } from "@/components/ui/enhanced-llm-analysis-sidebar";
-import { ConversationHistory } from "@/components/ai/ConversationHistory";
 import { AnalysisCards, adaptAnalysisData } from "./AnalysisCards";
 import { ContentItemPublic } from "@/app/content-library/types";
 
@@ -61,9 +59,9 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
   isLoading = false,
   className = "",
 }) => {
-  const [activeTab, setActiveTab] = useState<
-    "analysis" | "ai-chat" | "conversations"
-  >("analysis");
+  const [activeTab, setActiveTab] = useState<"analysis" | "ai-chat">(
+    "analysis",
+  );
 
   // 渲染分析结果卡片
   const renderAnalysisCards = () => {
@@ -110,10 +108,10 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
         <Tabs
           value={activeTab}
           onValueChange={(value) =>
-            setActiveTab(value as "analysis" | "ai-chat" | "conversations")
+            setActiveTab(value as "analysis" | "ai-chat")
           }
         >
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger
               value="analysis"
               className="flex items-center gap-1 text-xs"
@@ -127,18 +125,6 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
             >
               <Sparkles className="h-3 w-3" />
               <span>实时AI</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="conversations"
-              className="flex items-center gap-1 text-xs"
-            >
-              <MessageSquare className="h-3 w-3" />
-              <span>对话历史</span>
-              {conversations && conversations.length > 0 && (
-                <Badge variant="outline" className="ml-1 text-xs h-4 px-1">
-                  {conversations.length}
-                </Badge>
-              )}
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -158,18 +144,8 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
               <EnhancedLLMAnalysisSidebar
                 contentId={content.id}
                 contentText={content.summary || ""}
-                className="border-0 h-full"
-              />
-            </div>
-          </TabsContent>
-
-          {/* 对话历史标签页 */}
-          <TabsContent value="conversations" className="h-full mt-0 p-4">
-            <div className="h-full custom-scrollbar">
-              <ConversationHistory
                 conversations={conversations}
-                loading={false}
-                onRefresh={() => {}}
+                className="border-0 h-full"
               />
             </div>
           </TabsContent>

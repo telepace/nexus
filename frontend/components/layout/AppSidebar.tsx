@@ -133,21 +133,31 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        {/* 主要导航，包括 Upload Content */}
+        {/* Upload Content - 突出显示的独立区域 */}
         <SidebarGroup className="!px-4 mt-2">
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* Upload Content */}
               <SidebarMenuItem className="flex items-center gap-2">
                 <SidebarMenuButton
                   onClick={onAddContentClick}
                   tooltip="Upload Content"
+                  className="h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-medium shadow-sm border-0 rounded-lg transition-all duration-200 hover:shadow-md"
                 >
-                  <IconCirclePlus />
-                  <span>Upload Content</span>
+                  <IconCirclePlus className="!size-5" />
+                  <span className="text-sm font-semibold">Upload Content</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
+        {/* 分隔线 */}
+        <div className="mx-4 my-3 border-t border-sidebar-border" />
+
+        {/* 主要导航 */}
+        <SidebarGroup className="!px-4">
+          <SidebarGroupContent>
+            <SidebarMenu>
               {data.navMain.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton

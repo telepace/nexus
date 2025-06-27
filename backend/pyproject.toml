@@ -50,6 +50,8 @@ dependencies = [
     # Added OpenAI for embeddings
     "redis[hiredis]>=5.0.0,<6.0.0",
     # Added Redis for caching
+    "firecrawl-py>=1.0.0,<2.0.0",
+    # Added Firecrawl for web scraping
 ]
 
 [tool.uv]

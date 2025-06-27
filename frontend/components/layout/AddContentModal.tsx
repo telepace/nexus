@@ -79,6 +79,8 @@ export const AddContentModal: FC<AddContentModalProps> = ({
   const { createContentProcessingNotification } = useGlobalNotificationStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Drag & drop state
+  const [isDragOver, setIsDragOver] = useState(false);
 
   /**
    * Checks if the provided text is a valid URL.
@@ -178,6 +180,41 @@ export const AddContentModal: FC<AddContentModalProps> = ({
       return newUrls;
     });
   }, []);
+
+  /**
+   * Handle drag over event – prevent default behaviour and highlight dropzone
+   */
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragOver) {
+      setIsDragOver(true);
+    }
+  };
+
+  /**
+   * Handle drag leave – remove highlight from dropzone
+   */
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  /**
+   * Handle file drop – append dropped files to current selection
+   */
+  const handleDropFiles = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const droppedFiles = Array.from(e.dataTransfer.files || []);
+    if (droppedFiles.length > 0) {
+      setSelectedFiles((prev) => [...prev, ...droppedFiles]);
+      setContentType("file");
+    }
+  };
 
   /**
    * Handles the submission of content addition with optimistic UI updates.
@@ -469,7 +506,18 @@ export const AddContentModal: FC<AddContentModalProps> = ({
             <div className="w-full space-y-4">
               <div className="space-y-2">
                 <Label>已选择的文件 ({selectedFiles.length})</Label>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
+                {/* Drag & drop wrapper */}
+                <div
+                  className={cn(
+                    "space-y-2 max-h-40 overflow-y-auto border-2 border-dashed rounded-md p-4 transition-colors",
+                    isDragOver
+                      ? "border-primary bg-primary/10"
+                      : "border-muted",
+                  )}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDropFiles}
+                >
                   {selectedFiles.map((file, index) => (
                     <div
                       key={index}
@@ -497,6 +545,13 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                       </Button>
                     </div>
                   ))}
+
+                  {/* Empty state when no files selected */}
+                  {selectedFiles.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center select-none">
+                      将文件拖拽到此区域，或点击下方按钮选择文件
+                    </p>
+                  )}
                 </div>
                 <Button
                   variant="outline"

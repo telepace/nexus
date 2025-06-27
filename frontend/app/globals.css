@@ -169,24 +169,24 @@
 
 .dark {
   /* Dark‑mode semantic colors - 优化对比度和可访问性，确保WCAG AA标准 (4.5:1) */
-  --background: oklch(0.08 0 0);       /* 从10.5%降到8% - 更深的背景，提升整体对比度 */
+  --background: oklch(0.08 0 0); /* 从10.5%降到8% - 更深的背景，提升整体对比度 */
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.20 0 0);             /* 从16.5%提升到20% - 与背景形成更强烈的层次对比 */
+  --card: oklch(0.2 0 0); /* 从16.5%提升到20% - 与背景形成更强烈的层次对比 */
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.20 0 0);          /* 与card保持一致 */
+  --popover: oklch(0.2 0 0); /* 与card保持一致 */
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.08 0 0); /* 使用新的背景色 */
-  --secondary: oklch(0.22 0 0);        /* 从19%提升到22% - 更好的视觉层次 */
+  --secondary: oklch(0.22 0 0); /* 从19%提升到22% - 更好的视觉层次 */
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.18 0 0);           /* 保持18% - 与secondary形成层次 */
+  --muted: oklch(0.18 0 0); /* 保持18% - 与secondary形成层次 */
   --muted-foreground: oklch(0.85 0 0); /* 从78%提升到85% - 显著提升辅助文字可读性 */
-  --accent: oklch(0.22 0 0);          /* 与secondary保持一致 */
+  --accent: oklch(0.22 0 0); /* 与secondary保持一致 */
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.08 0 0); /* 使用新的背景色 */
-  --border: oklch(1 0 0 / 20%);        /* 从15%提升到20% - 显著增强边框可见性 */
-  --input: oklch(1 0 0 / 25%);         /* 从20%提升到25% - 更清晰的输入框边框 */
+  --border: oklch(1 0 0 / 20%); /* 从15%提升到20% - 显著增强边框可见性 */
+  --input: oklch(1 0 0 / 25%); /* 从20%提升到25% - 更清晰的输入框边框 */
   --ring: oklch(0.556 0 0);
 
   /* Chart colors (dark) */
@@ -197,11 +197,11 @@
   --chart-5: oklch(0.645 0.246 16.439);
 
   /* Sidebar colors (dark) - 显著优化侧边栏对比度和交互状态 */
-  --sidebar: oklch(0.15 0 0);          /* 从13%提升到15% - 与主背景形成更明显的层次 */
+  --sidebar: oklch(0.15 0 0); /* 从13%提升到15% - 与主背景形成更明显的层次 */
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.25 0 0);   /* 从19%提升到25% - 更明显的交互反馈 */
+  --sidebar-accent: oklch(0.25 0 0); /* 从19%提升到25% - 更明显的交互反馈 */
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 20%); /* 统一边框透明度，提升到20% */
   --sidebar-ring: oklch(0.556 0 0);
@@ -282,7 +282,7 @@
   /* Neutrals - 修复深色模式下的Linear颜色变量 */
   --color-linear-bg-0: oklch(0.08 0 0); /* 主背景 - 与--background一致 */
   --color-linear-bg-1: oklch(0.15 0 0); /* 侧边栏背景 - 与--sidebar一致 */
-  --color-linear-bg-2: oklch(0.20 0 0); /* 卡片背景 - 与--card一致 */
+  --color-linear-bg-2: oklch(0.2 0 0); /* 卡片背景 - 与--card一致 */
   --color-linear-border: oklch(1 0 0 / 20%); /* 边框 - 与--border一致 */
 
   /* Typography - 深色模式下的文字颜色 */

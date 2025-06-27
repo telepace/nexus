@@ -5,8 +5,23 @@
     "/api/v1/health": {
       "get": {
         "tags": ["health"],
-        "summary": "Get Health Api",
-        "operationId": "health-get_health_api",
+        "summary": "Health Check",
+        "description": "Basic health check endpoint.",
+        "operationId": "health-health_check",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    },
+    "/api/v1/health/cache": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Cache Health Check",
+        "description": "Cache health check endpoint.",
+        "operationId": "health-cache_health_check",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -337,7 +352,7 @@
       "delete": {
         "tags": ["users"],
         "summary": "Delete User Me",
-        "description": "Delete own user.",
+        "description": "Delete current user and all associated data.",
         "operationId": "users-delete_user_me",
         "responses": {
           "200": {
@@ -1982,36 +1997,29 @@
             }
           }
         }
-      }
-    },
-    "/api/v1/content/{id}/markdown": {
-      "get": {
+      },
+      "delete": {
         "tags": ["content"],
-        "summary": "Get Content Item as Markdown",
-        "description": "Retrieves the processed markdown content for a content item. Returns raw markdown text.",
-        "operationId": "content-get_content_markdown_endpoint",
+        "summary": "Delete Content Item",
+        "description": "Delete a content item and all its related data. User can only delete their own content.",
+        "operationId": "content-delete_content_item_endpoint",
         "security": [{ "OAuth2PasswordBearer": [] }],
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Content item ID to delete",
+              "title": "Id"
+            },
+            "description": "Content item ID to delete"
           }
         ],
         "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Content-Get Content Markdown Endpoint"
-                }
-              }
-            }
-          },
+          "204": { "description": "Successful Response" },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -2019,20 +2027,6 @@
                 "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
-          }
-        }
-      }
-    },
-    "/api/v1/content/processors/supported": {
-      "get": {
-        "tags": ["content"],
-        "summary": "Get Supported Content Types",
-        "description": "Get list of supported content types and their processors.",
-        "operationId": "content-get_supported_processors",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
           }
         }
       }
@@ -2049,7 +2043,13 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Content item ID",
+              "title": "Id"
+            },
+            "description": "Content item ID"
           },
           {
             "name": "page",
@@ -2115,7 +2115,13 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Content item ID",
+              "title": "Id"
+            },
+            "description": "Content item ID"
           }
         ],
         "responses": {
@@ -2142,224 +2148,166 @@
         }
       }
     },
-    "/api/v1/content/{content_id}/analyze": {
+    "/api/v1/content/{id}/analyze-stream": {
       "post": {
         "tags": ["content"],
-        "summary": "Analyze Content Stream",
-        "description": "Stream AI analysis of content using LiteLLM.\n\nArgs:\n    content_id: ID of the content to analyze\n    system_prompt: System prompt (e.g., prompt template)\n    user_prompt: User prompt (the actual content text)\n    current_user: Current authenticated user\n    db: Database session\n\nReturns:\n    StreamingResponse: Server-sent events with analysis chunks",
-        "operationId": "content-analyze_content_stream",
-        "security": [{ "OAuth2PasswordBearer": [] }],
-        "parameters": [
-          {
-            "name": "content_id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "title": "Content Id" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_content-analyze_content_stream"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/content/{content_id}/analyze-ai-sdk": {
-      "post": {
-        "tags": ["content"],
-        "summary": "Analyze Content Ai Sdk",
-        "description": "\u4f7f\u7528 Vercel AI SDK \u517c\u5bb9\u683c\u5f0f\u5206\u6790\u5185\u5bb9\uff0c\u540c\u65f6\u5c06\u5bf9\u8bdd\u5b58\u50a8\u5230AIConversation\u8868\u4e2d",
-        "operationId": "content-analyze_content_ai_sdk",
-        "security": [{ "OAuth2PasswordBearer": [] }],
-        "parameters": [
-          {
-            "name": "content_id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "title": "Content Id" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_content-analyze_content_ai_sdk"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/content/{content_id}/completion": {
-      "post": {
-        "tags": ["content"],
-        "summary": "Content Completion Stream",
-        "description": "Stream content analysis using Vercel AI SDK compatible format\uff0c\n\u540c\u65f6\u5c06\u5bf9\u8bdd\u5b58\u50a8\u5230AIConversation\u8868\u4e2d\n\nThis endpoint returns pure text streaming for optimal compatibility\nwith Vercel AI SDK useCompletion hook.\n\nArgs:\n    content_id: ID of the content to analyze\n    prompt: The analysis instruction/prompt from user\n    model: AI model to use\n    temperature: Sampling temperature\n    max_tokens: Maximum tokens to generate",
-        "operationId": "content-content_completion_stream",
-        "security": [{ "OAuth2PasswordBearer": [] }],
-        "parameters": [
-          {
-            "name": "content_id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "title": "Content Id" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_content-content_completion_stream"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/content/{content_id}/analyze-ai-sdk-updated": {
-      "post": {
-        "tags": ["content"],
-        "summary": "Analyze Content Ai Sdk Updated",
-        "description": "Stream AI analysis with updated prompt structure: system=content, user=instruction.\n\nThis endpoint implements the adjusted LLM logic where:\n- System message contains the article content (provides context)\n- User message contains the analysis instruction (provides task)\n\nArgs:\n    content_id: ID of the content to analyze\n    analysis_instruction: The analysis instruction from user (user prompt)\n    model: AI model to use\n    temperature: Sampling temperature\n    max_tokens: Maximum tokens to generate",
-        "operationId": "content-analyze_content_ai_sdk_updated",
-        "security": [{ "OAuth2PasswordBearer": [] }],
-        "parameters": [
-          {
-            "name": "content_id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "title": "Content Id" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_content-analyze_content_ai_sdk_updated"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/content/{content_id}/completion-updated": {
-      "post": {
-        "tags": ["content"],
-        "summary": "Content Completion Stream Updated",
-        "description": "Stream content analysis using updated prompt structure: system=content, user=instruction.\nCompatible with Vercel AI SDK useCompletion hook.\n\nThis endpoint implements the adjusted LLM logic where:\n- System message contains the article content (provides context)\n- User message contains the analysis instruction (provides task)\n\nArgs:\n    content_id: ID of the content to analyze\n    analysis_instruction: The analysis instruction from user (user prompt)\n    model: AI model to use\n    temperature: Sampling temperature\n    max_tokens: Maximum tokens to generate",
-        "operationId": "content-content_completion_stream_updated",
-        "security": [{ "OAuth2PasswordBearer": [] }],
-        "parameters": [
-          {
-            "name": "content_id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "title": "Content Id" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_content-content_completion_stream_updated"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/content/{id}/processing-jobs": {
-      "get": {
-        "tags": ["content"],
-        "summary": "Get Content Processing Jobs",
-        "description": "Get all processing jobs and their results for a content item, including AI analysis results.",
-        "operationId": "content-get_content_processing_jobs",
+        "summary": "Stream Content Analysis",
+        "description": "Perform streaming AI analysis of content using specified instruction.",
+        "operationId": "content-analyze_content_stream_endpoint",
         "security": [{ "OAuth2PasswordBearer": [] }],
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Content item ID",
+              "title": "Id"
+            },
+            "description": "Content item ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContentAnalysisRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/content/{id}/analyze-ai-sdk-updated": {
+      "post": {
+        "tags": ["content"],
+        "summary": "Analyze Content with AI SDK (Updated Structure)",
+        "description": "Analyze content using AI SDK with updated prompt structure.",
+        "operationId": "content-analyze_ai_sdk_updated_endpoint",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Content item ID",
+              "title": "Id"
+            },
+            "description": "Content item ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContentAnalysisRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/content/{id}/completion-updated": {
+      "post": {
+        "tags": ["content"],
+        "summary": "Content Completion with Updated Structure",
+        "description": "Get content completion using updated prompt structure.",
+        "operationId": "content-completion_updated_endpoint",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Content item ID",
+              "title": "Id"
+            },
+            "description": "Content item ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContentAnalysisRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/content/{id}/markdown": {
+      "get": {
+        "tags": ["content"],
+        "summary": "Get Content Markdown",
+        "description": "Get the processed markdown content of a content item.",
+        "operationId": "content-get_content_markdown_endpoint",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Content item ID",
+              "title": "Id"
+            },
+            "description": "Content item ID"
           }
         ],
         "responses": {
@@ -2370,7 +2318,7 @@
                 "schema": {
                   "type": "object",
                   "additionalProperties": true,
-                  "title": "Response Content-Get Content Processing Jobs"
+                  "title": "Response Content-Get Content Markdown Endpoint"
                 }
               }
             }
@@ -2380,6 +2328,306 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/content/{content_id}/conversations": {
+      "get": {
+        "tags": ["content"],
+        "summary": "Get All Conversations for Content",
+        "description": "\u83b7\u53d6\u6307\u5b9a\u5185\u5bb9\u7684\u6240\u6709AI\u5bf9\u8bdd\uff0c\u5305\u62ec\u81ea\u52a8\u5206\u6790\u548c\u7528\u6237\u5bf9\u8bdd\u3002",
+        "operationId": "content-get_content_conversations",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "content_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Content Id"
+            }
+          },
+          {
+            "name": "include_inactive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "\u662f\u5426\u5305\u542b\u975e\u6fc0\u6d3b\u72b6\u6001\u7684\u5bf9\u8bdd",
+              "default": false,
+              "title": "Include Inactive"
+            },
+            "description": "\u662f\u5426\u5305\u542b\u975e\u6fc0\u6d3b\u72b6\u6001\u7684\u5bf9\u8bdd"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Content-Get Content Conversations"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["content"],
+        "summary": "Create New Conversation",
+        "description": "\u4e3a\u6307\u5b9a\u5185\u5bb9\u521b\u5efa\u65b0\u7684AI\u5bf9\u8bdd\u3002",
+        "operationId": "content-create_conversation",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "content_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Content Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Conversation Data"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Content-Create Conversation"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/content/{id}/analyze/stream": {
+      "get": {
+        "tags": ["content"],
+        "summary": "Stream Content Analysis with Templates",
+        "description": "Perform streaming AI analysis using predefined templates (summary or key_points).",
+        "operationId": "content-analyze_content_stream_with_template_endpoint",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Content item ID",
+              "title": "Id"
+            },
+            "description": "Content item ID"
+          },
+          {
+            "name": "analysis_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Analysis type: 'summary' or 'key_points'",
+              "title": "Analysis Type"
+            },
+            "description": "Analysis type: 'summary' or 'key_points'"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/content/{id}/favorite": {
+      "post": {
+        "tags": ["content"],
+        "summary": "Add Content to Favorites",
+        "description": "Add a content item to the user's favorites list.",
+        "operationId": "content-add_to_favorites_endpoint",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Content item ID to add to favorites",
+              "title": "Id"
+            },
+            "description": "Content item ID to add to favorites"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" },
+                  "title": "Response Content-Add To Favorites Endpoint"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["content"],
+        "summary": "Remove Content from Favorites",
+        "description": "Remove a content item from the user's favorites list.",
+        "operationId": "content-remove_from_favorites_endpoint",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Content item ID to remove from favorites",
+              "title": "Id"
+            },
+            "description": "Content item ID to remove from favorites"
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/content/{id}/favorite/status": {
+      "get": {
+        "tags": ["content"],
+        "summary": "Check Favorite Status",
+        "description": "Check if a content item is in the user's favorites.",
+        "operationId": "content-check_favorite_status_endpoint",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Content item ID to check",
+              "title": "Id"
+            },
+            "description": "Content item ID to check"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": { "type": "boolean" },
+                  "title": "Response Content-Check Favorite Status Endpoint"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/content/processors/supported": {
+      "get": {
+        "tags": ["content"],
+        "summary": "Get Supported Processors",
+        "description": "Get information about supported content processors and pipeline configuration.",
+        "operationId": "content-get_supported_processors_endpoint",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Content-Get Supported Processors Endpoint"
+                }
               }
             }
           }
@@ -2517,24 +2765,113 @@
         }
       }
     },
-    "/api/v1/content/{content_id}/conversations": {
-      "get": {
-        "tags": ["content"],
-        "summary": "Get AI Conversations for Content",
-        "description": "\u83b7\u53d6\u6307\u5b9a\u5185\u5bb9\u9879\u7684\u6240\u6709AI\u5bf9\u8bdd\u8bb0\u5f55",
-        "operationId": "content-get_content_ai_conversations",
-        "security": [{ "OAuth2PasswordBearer": [] }],
-        "parameters": [
-          {
-            "name": "content_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Content Id"
+    "/api/v1/extension/summary/stream": {
+      "post": {
+        "tags": ["extension"],
+        "summary": "\u83b7\u53d6\u6d41\u5f0f\u6458\u8981",
+        "description": "\u4e3a\u6d4f\u89c8\u5668\u63d2\u4ef6\u63d0\u4f9b\u6d41\u5f0f\u6458\u8981\u751f\u6210\u670d\u52a1",
+        "operationId": "extension-get_summary_stream",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtensionStreamRequest"
+              }
             }
           },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/api/v1/extension/keypoints/stream": {
+      "post": {
+        "tags": ["extension"],
+        "summary": "\u83b7\u53d6\u6d41\u5f0f\u8981\u70b9",
+        "description": "\u4e3a\u6d4f\u89c8\u5668\u63d2\u4ef6\u63d0\u4f9b\u6d41\u5f0f\u8981\u70b9\u63d0\u53d6\u670d\u52a1",
+        "operationId": "extension-get_keypoints_stream",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtensionStreamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/api/v1/extension/analyze": {
+      "post": {
+        "tags": ["extension"],
+        "summary": "\u5e76\u884c\u83b7\u53d6\u6458\u8981\u548c\u8981\u70b9",
+        "description": "\u540c\u65f6\u751f\u6210\u6458\u8981\u548c\u8981\u70b9\uff0c\u4e3a\u63d2\u4ef6\u4f18\u5316\u7684\u6279\u91cf\u63a5\u53e3",
+        "operationId": "extension-analyze_content",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtensionStreamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/api/v1/favorites/": {
+      "get": {
+        "tags": ["favorites"],
+        "summary": "Get User's Favorites",
+        "description": "Get user's favorite content items with pagination.",
+        "operationId": "favorites-get_favorites_endpoint",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
           {
             "name": "skip",
             "in": "query",
@@ -2542,11 +2879,11 @@
             "schema": {
               "type": "integer",
               "minimum": 0,
-              "description": "\u8df3\u8fc7\u7684\u8bb0\u5f55\u6570",
+              "description": "Number of items to skip",
               "default": 0,
               "title": "Skip"
             },
-            "description": "\u8df3\u8fc7\u7684\u8bb0\u5f55\u6570"
+            "description": "Number of items to skip"
           },
           {
             "name": "limit",
@@ -2554,13 +2891,13 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
-              "description": "\u8fd4\u56de\u7684\u6700\u5927\u8bb0\u5f55\u6570",
-              "default": 50,
+              "description": "Maximum number of items to return",
+              "default": 100,
               "title": "Limit"
             },
-            "description": "\u8fd4\u56de\u7684\u6700\u5927\u8bb0\u5f55\u6570"
+            "description": "Maximum number of items to return"
           }
         ],
         "responses": {
@@ -2569,9 +2906,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Content-Get Content Ai Conversations"
+                  "$ref": "#/components/schemas/FavoriteListResponse"
                 }
               }
             }
@@ -2587,47 +2922,27 @@
         }
       }
     },
-    "/api/v1/content/conversations/{conversation_id}": {
+    "/api/v1/favorites/content-ids": {
       "get": {
-        "tags": ["content"],
-        "summary": "Get AI Conversation Details",
-        "description": "\u83b7\u53d6\u6307\u5b9aAI\u5bf9\u8bdd\u7684\u8be6\u7ec6\u4fe1\u606f",
-        "operationId": "content-get_ai_conversation_details",
-        "security": [{ "OAuth2PasswordBearer": [] }],
-        "parameters": [
-          {
-            "name": "conversation_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Conversation Id"
-            }
-          }
-        ],
+        "tags": ["favorites"],
+        "summary": "Get User's Favorite Content IDs",
+        "description": "Get list of content item IDs that user has favorited.",
+        "operationId": "favorites-get_favorite_content_ids_endpoint",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Content-Get Ai Conversation Details"
+                  "items": { "type": "string" },
+                  "type": "array",
+                  "title": "Response Favorites-Get Favorite Content Ids Endpoint"
                 }
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       }
     },
     "/api/v1/images/upload-url": {
@@ -3282,7 +3597,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AIConversationPublic"
+                    "$ref": "#/components/schemas/app__schemas__ai_conversations__AIConversationPublic"
                   },
                   "title": "Response Ai-Conversations-List Ai Conversations"
                 }
@@ -3309,7 +3624,9 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/AIConversationCreate" }
+              "schema": {
+                "$ref": "#/components/schemas/app__schemas__ai_conversations__AIConversationCreate"
+              }
             }
           }
         },
@@ -3417,6 +3734,381 @@
         }
       }
     },
+    "/api/v1/ai/conversations/{conversation_id}/chat-with-segments": {
+      "post": {
+        "tags": ["ai-conversations", "ai-conversations"],
+        "summary": "Chat With Segments",
+        "description": "Send a message and get AI response with segment references.\n\nThis endpoint provides enhanced AI responses that include references to\nspecific content segments, enabling traceability of information sources.",
+        "operationId": "ai-conversations-chat_with_segments",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Conversation Id"
+            }
+          },
+          {
+            "name": "message",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Message" }
+          },
+          {
+            "name": "content_item_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "uuid" },
+                { "type": "null" }
+              ],
+              "title": "Content Item Id"
+            }
+          },
+          {
+            "name": "max_segments",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 1,
+              "default": 8,
+              "title": "Max Segments"
+            }
+          },
+          {
+            "name": "model",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "gpt-4o-mini",
+              "title": "Model"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/conversations/{conversation_id}/segment-references": {
+      "get": {
+        "tags": ["ai-conversations", "ai-conversations"],
+        "summary": "Get Conversation Segment References",
+        "description": "Get all segment references for a conversation.",
+        "operationId": "ai-conversations-get_conversation_segment_references",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/content/{content_id}/conversations": {
+      "get": {
+        "tags": ["conversations"],
+        "summary": "Get All Conversations for Content",
+        "description": "\u83b7\u53d6\u6307\u5b9a\u5185\u5bb9\u7684\u6240\u6709AI\u5bf9\u8bdd\uff0c\u5305\u62ec\u81ea\u52a8\u5206\u6790\u548c\u7528\u6237\u5bf9\u8bdd\u3002",
+        "operationId": "conversations-get_content_conversations",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "content_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Content Id"
+            }
+          },
+          {
+            "name": "include_inactive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "\u662f\u5426\u5305\u542b\u975e\u6fc0\u6d3b\u72b6\u6001\u7684\u5bf9\u8bdd",
+              "default": false,
+              "title": "Include Inactive"
+            },
+            "description": "\u662f\u5426\u5305\u542b\u975e\u6fc0\u6d3b\u72b6\u6001\u7684\u5bf9\u8bdd"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["conversations"],
+        "summary": "Create New Conversation",
+        "description": "\u4e3a\u6307\u5b9a\u5185\u5bb9\u521b\u5efa\u65b0\u7684AI\u5bf9\u8bdd\u3002",
+        "operationId": "conversations-create_conversation",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "content_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Content Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__schemas__conversation__AIConversationCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__conversation__AIConversationPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/conversations/{conversation_id}/messages": {
+      "post": {
+        "tags": ["conversations"],
+        "summary": "Add Message to Conversation",
+        "description": "\u5411\u6307\u5b9a\u5bf9\u8bdd\u6dfb\u52a0\u65b0\u6d88\u606f\u5e76\u83b7\u53d6AI\u54cd\u5e94\u3002",
+        "operationId": "conversations-add_message_to_conversation",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddMessageRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__conversation__AIConversationPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/content/{content_id}/analysis": {
+      "post": {
+        "tags": ["conversations"],
+        "summary": "Trigger Analysis with Predefined Prompt",
+        "description": "\u4f7f\u7528\u9884\u8bbe\u6a21\u677f\u5bf9\u5185\u5bb9\u8fdb\u884cAI\u5206\u6790\u3002",
+        "operationId": "conversations-trigger_analysis",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "content_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Content Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AnalysisPromptRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__conversation__AIConversationPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/conversations/{conversation_id}": {
+      "delete": {
+        "tags": ["conversations"],
+        "summary": "Deactivate Conversation",
+        "description": "\u505c\u7528\u6307\u5b9a\u7684\u5bf9\u8bdd\uff08\u8f6f\u5220\u9664\uff09\u3002",
+        "operationId": "conversations-deactivate_conversation",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" },
+                  "title": "Response Conversations-Deactivate Conversation"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/analysis-prompts": {
+      "get": {
+        "tags": ["conversations"],
+        "summary": "Get Available Analysis Prompts",
+        "description": "\u83b7\u53d6\u6240\u6709\u53ef\u7528\u7684\u9884\u8bbe\u5206\u6790Prompt\u6a21\u677f\u3002",
+        "operationId": "conversations-get_analysis_prompts",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Conversations-Get Analysis Prompts"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/private/users/": {
       "post": {
         "tags": ["private"],
@@ -3454,38 +4146,6 @@
   },
   "components": {
     "schemas": {
-      "AIConversationCreate": {
-        "properties": {
-          "content_item_id": {
-            "anyOf": [
-              { "type": "string", "format": "uuid" },
-              { "type": "null" }
-            ],
-            "title": "Content Item Id"
-          },
-          "title": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Title"
-          },
-          "ai_model_name": {
-            "type": "string",
-            "title": "Ai Model Name",
-            "default": "gemini-2.5-flash-preview-05-20"
-          },
-          "messages": {
-            "items": { "additionalProperties": true, "type": "object" },
-            "type": "array",
-            "title": "Messages"
-          },
-          "summary": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Summary"
-          }
-        },
-        "type": "object",
-        "title": "AIConversationCreate",
-        "description": "Schema for creating a new AI conversation."
-      },
       "AIConversationDetail": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -3501,10 +4161,6 @@
             "title": "Title"
           },
           "ai_model_name": { "type": "string", "title": "Ai Model Name" },
-          "summary": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Summary"
-          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -3533,40 +4189,131 @@
         "title": "AIConversationDetail",
         "description": "Full schema for a single conversation, including messages and meta info."
       },
-      "AIConversationPublic": {
+      "AIMessageSchema": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
-          "content_item_id": {
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "description": "Message role: system, user, or assistant"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "Message content"
+          },
+          "timestamp": {
             "anyOf": [
-              { "type": "string", "format": "uuid" },
+              { "type": "string", "format": "date-time" },
               { "type": "null" }
             ],
-            "title": "Content Item Id"
+            "title": "Timestamp",
+            "description": "Message timestamp"
           },
-          "title": {
+          "message_metadata": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Message Metadata",
+            "description": "Additional metadata"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": ["role", "content"],
+        "title": "AIMessageSchema",
+        "description": "Single message in an AI conversation."
+      },
+      "AIResultPublic": {
+        "properties": {
+          "optimized_title": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Title"
+            "title": "Optimized Title"
           },
-          "ai_model_name": { "type": "string", "title": "Ai Model Name" },
+          "brief_description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Brief Description"
+          },
           "summary": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
             "title": "Summary"
           },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
+          "key_points": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Key Points"
           },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
+          "labels": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Labels"
+          },
+          "content_analysis": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Content Analysis"
+          },
+          "reading_time_minutes": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Reading Time Minutes"
+          },
+          "difficulty_level": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Difficulty Level"
+          },
+          "content_quality_score": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Content Quality Score"
           }
         },
         "type": "object",
-        "required": ["id", "ai_model_name", "created_at", "updated_at"],
-        "title": "AIConversationPublic",
-        "description": "Light-weight schema for listing conversations."
+        "title": "AIResultPublic"
+      },
+      "AddMessageRequest": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "Message content"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "description": "Message role",
+            "default": "user"
+          }
+        },
+        "type": "object",
+        "required": ["content"],
+        "title": "AddMessageRequest",
+        "description": "Schema for adding a message to an existing conversation."
+      },
+      "AnalysisPromptRequest": {
+        "properties": {
+          "prompt_type": {
+            "type": "string",
+            "title": "Prompt Type",
+            "description": "Type of analysis: summary, key_points, questions, insights"
+          },
+          "custom_instruction": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Custom Instruction",
+            "description": "Custom instruction to add to the prompt"
+          }
+        },
+        "type": "object",
+        "required": ["prompt_type"],
+        "title": "AnalysisPromptRequest",
+        "description": "Schema for triggering analysis with predefined prompts."
       },
       "ApiResponse_NoneType_": {
         "properties": {
@@ -3712,143 +4459,6 @@
         "required": ["messages"],
         "title": "Body_chat-create_chat_completion"
       },
-      "Body_content-analyze_content_ai_sdk": {
-        "properties": {
-          "user_prompt": {
-            "type": "string",
-            "title": "User Prompt",
-            "description": "Analysis instruction/prompt"
-          },
-          "model": {
-            "type": "string",
-            "title": "Model",
-            "description": "Model to use",
-            "default": "gemini-2.5-flash-preview-05-20"
-          },
-          "temperature": {
-            "type": "number",
-            "title": "Temperature",
-            "description": "Sampling temperature",
-            "default": 0.7
-          },
-          "max_tokens": {
-            "type": "integer",
-            "title": "Max Tokens",
-            "description": "Maximum tokens to generate",
-            "default": 2000
-          }
-        },
-        "type": "object",
-        "required": ["user_prompt"],
-        "title": "Body_content-analyze_content_ai_sdk"
-      },
-      "Body_content-analyze_content_ai_sdk_updated": {
-        "properties": {
-          "analysis_instruction": {
-            "type": "string",
-            "title": "Analysis Instruction",
-            "description": "Analysis instruction/prompt from user"
-          },
-          "model": {
-            "type": "string",
-            "title": "Model",
-            "description": "Model to use",
-            "default": "gemini-2.5-flash-preview-05-20"
-          },
-          "temperature": {
-            "type": "number",
-            "title": "Temperature",
-            "description": "Sampling temperature",
-            "default": 0.7
-          },
-          "max_tokens": {
-            "type": "integer",
-            "title": "Max Tokens",
-            "description": "Maximum tokens to generate",
-            "default": 2000
-          }
-        },
-        "type": "object",
-        "required": ["analysis_instruction"],
-        "title": "Body_content-analyze_content_ai_sdk_updated"
-      },
-      "Body_content-analyze_content_stream": {
-        "properties": {
-          "system_prompt": {
-            "type": "string",
-            "title": "System Prompt",
-            "description": "System prompt for analysis"
-          },
-          "user_prompt": {
-            "type": "string",
-            "title": "User Prompt",
-            "description": "User prompt (content text)"
-          }
-        },
-        "type": "object",
-        "required": ["system_prompt", "user_prompt"],
-        "title": "Body_content-analyze_content_stream"
-      },
-      "Body_content-content_completion_stream": {
-        "properties": {
-          "prompt": {
-            "type": "string",
-            "title": "Prompt",
-            "description": "Analysis prompt"
-          },
-          "model": {
-            "type": "string",
-            "title": "Model",
-            "description": "Model to use",
-            "default": "gemini-2.5-flash-preview-05-20"
-          },
-          "temperature": {
-            "type": "number",
-            "title": "Temperature",
-            "description": "Sampling temperature",
-            "default": 0.7
-          },
-          "max_tokens": {
-            "type": "integer",
-            "title": "Max Tokens",
-            "description": "Maximum tokens to generate",
-            "default": 2000
-          }
-        },
-        "type": "object",
-        "required": ["prompt"],
-        "title": "Body_content-content_completion_stream"
-      },
-      "Body_content-content_completion_stream_updated": {
-        "properties": {
-          "analysis_instruction": {
-            "type": "string",
-            "title": "Analysis Instruction",
-            "description": "Analysis instruction/prompt from user"
-          },
-          "model": {
-            "type": "string",
-            "title": "Model",
-            "description": "Model to use",
-            "default": "gemini-2.5-flash-preview-05-20"
-          },
-          "temperature": {
-            "type": "number",
-            "title": "Temperature",
-            "description": "Sampling temperature",
-            "default": 0.7
-          },
-          "max_tokens": {
-            "type": "integer",
-            "title": "Max Tokens",
-            "description": "Maximum tokens to generate",
-            "default": 2000
-          }
-        },
-        "type": "object",
-        "required": ["analysis_instruction"],
-        "title": "Body_content-content_completion_stream_updated"
-      },
       "Body_login-login_access_token": {
         "properties": {
           "grant_type": {
@@ -3961,6 +4571,37 @@
         "required": ["messages"],
         "title": "CompletionRequest"
       },
+      "ContentAnalysisRequest": {
+        "properties": {
+          "analysis_instruction": {
+            "type": "string",
+            "title": "Analysis Instruction",
+            "description": "\u7528\u6237\u7684\u5206\u6790\u6307\u4ee4"
+          },
+          "model": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Model",
+            "description": "\u8981\u4f7f\u7528\u7684AI\u6a21\u578b\uff08\u53ef\u9009\uff0c\u540e\u7aef\u4f1a\u81ea\u52a8\u9009\u62e9\u9ed8\u8ba4\u6a21\u578b\uff09",
+            "default": "or-gemini-2.5-flash-preview-05-20"
+          },
+          "temperature": {
+            "type": "number",
+            "title": "Temperature",
+            "description": "\u6e29\u5ea6\u53c2\u6570",
+            "default": 0.7
+          },
+          "max_tokens": {
+            "type": "integer",
+            "title": "Max Tokens",
+            "description": "\u6700\u5927token\u6570",
+            "default": 2000
+          }
+        },
+        "type": "object",
+        "required": ["analysis_instruction"],
+        "title": "ContentAnalysisRequest",
+        "description": "\u5185\u5bb9\u5206\u6790\u8bf7\u6c42schema"
+      },
       "ContentItemCreate": {
         "properties": {
           "type": { "type": "string", "title": "Type" },
@@ -3971,10 +4612,6 @@
           "title": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Title"
-          },
-          "summary": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Summary"
           },
           "content_text": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -3996,10 +4633,6 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Title"
           },
-          "summary": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Summary"
-          },
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "user_id": { "type": "string", "format": "uuid", "title": "User Id" },
           "processing_status": {
@@ -4009,6 +4642,17 @@
           "content_text": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Content Text"
+          },
+          "error_message": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Error Message"
+          },
+          "last_processed_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Last Processed At"
           },
           "created_at": {
             "type": "string",
@@ -4020,12 +4664,11 @@
             "format": "date-time",
             "title": "Updated At"
           },
-          "ai_analysis": {
+          "ai_result": {
             "anyOf": [
-              { "additionalProperties": true, "type": "object" },
+              { "$ref": "#/components/schemas/AIResultPublic" },
               { "type": "null" }
-            ],
-            "title": "Ai Analysis"
+            ]
           }
         },
         "type": "object",
@@ -4081,6 +4724,27 @@
         "type": "object",
         "required": ["id", "share_token", "created_at", "is_active"],
         "title": "ContentSharePublic"
+      },
+      "ConversationListResponse": {
+        "properties": {
+          "conversations": {
+            "items": {
+              "$ref": "#/components/schemas/app__schemas__conversation__AIConversationPublic"
+            },
+            "type": "array",
+            "title": "Conversations"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "has_auto_analysis": {
+            "type": "boolean",
+            "title": "Has Auto Analysis",
+            "description": "Whether auto analysis conversation exists"
+          }
+        },
+        "type": "object",
+        "required": ["conversations", "total", "has_auto_analysis"],
+        "title": "ConversationListResponse",
+        "description": "Response schema for conversation list."
       },
       "EmbeddingData": {
         "properties": {
@@ -4142,6 +4806,80 @@
         "type": "object",
         "required": ["prompt_tokens", "total_tokens"],
         "title": "EmbeddingUsage"
+      },
+      "ExtensionStreamRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 50000,
+            "minLength": 1,
+            "title": "Text",
+            "description": "\u9700\u8981\u5904\u7406\u7684\u6587\u672c\u5185\u5bb9"
+          },
+          "lang": {
+            "type": "string",
+            "enum": ["auto", "zh", "en"],
+            "title": "Lang",
+            "description": "\u5185\u5bb9\u8bed\u8a00\uff0cauto\u4e3a\u81ea\u52a8\u68c0\u6d4b",
+            "default": "auto"
+          },
+          "max_tokens": {
+            "anyOf": [
+              { "type": "integer", "maximum": 4096.0, "minimum": 50.0 },
+              { "type": "null" }
+            ],
+            "title": "Max Tokens",
+            "description": "\u6700\u5927\u751f\u6210token\u6570",
+            "default": 1024
+          }
+        },
+        "type": "object",
+        "required": ["text"],
+        "title": "ExtensionStreamRequest",
+        "description": "\u6269\u5c55\u6d41\u5f0f\u8bf7\u6c42\u6a21\u578b"
+      },
+      "FavoriteListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/FavoriteWithContent" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "skip": { "type": "integer", "title": "Skip" },
+          "limit": { "type": "integer", "title": "Limit" }
+        },
+        "type": "object",
+        "required": ["items", "total", "skip", "limit"],
+        "title": "FavoriteListResponse",
+        "description": "Response schema for favorites list."
+      },
+      "FavoriteWithContent": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "user_id": { "type": "string", "format": "uuid", "title": "User Id" },
+          "content_item_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Content Item Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "content_item": { "$ref": "#/components/schemas/ContentItemPublic" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "content_item_id",
+          "created_at",
+          "content_item"
+        ],
+        "title": "FavoriteWithContent",
+        "description": "Favorite with embedded content item details."
       },
       "GoogleCallbackRequest": {
         "properties": {
@@ -5275,6 +6013,65 @@
         "title": "ProjectCreate",
         "description": "\u521b\u5efa\u9879\u76ee\u7684\u8bf7\u6c42\u6a21\u578b"
       },
+      "app__schemas__ai_conversations__AIConversationCreate": {
+        "properties": {
+          "content_item_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Content Item Id"
+          },
+          "title": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Title"
+          },
+          "ai_model_name": {
+            "type": "string",
+            "title": "Ai Model Name",
+            "default": "gemini-2.5-flash-preview-05-20"
+          },
+          "messages": {
+            "items": { "additionalProperties": true, "type": "object" },
+            "type": "array",
+            "title": "Messages"
+          }
+        },
+        "type": "object",
+        "title": "AIConversationCreate",
+        "description": "Schema for creating a new AI conversation."
+      },
+      "app__schemas__ai_conversations__AIConversationPublic": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "content_item_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Content Item Id"
+          },
+          "title": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Title"
+          },
+          "ai_model_name": { "type": "string", "title": "Ai Model Name" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "ai_model_name", "created_at", "updated_at"],
+        "title": "AIConversationPublic",
+        "description": "Light-weight schema for listing conversations."
+      },
       "app__schemas__common__ApiResponse_ProjectPublic_": {
         "properties": {
           "data": { "$ref": "#/components/schemas/ProjectPublic" },
@@ -5314,6 +6111,92 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[ProjectsPublic]"
+      },
+      "app__schemas__conversation__AIConversationCreate": {
+        "properties": {
+          "title": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Title"
+          },
+          "conversation_type": {
+            "type": "string",
+            "title": "Conversation Type",
+            "description": "Type of conversation",
+            "default": "user_chat"
+          },
+          "ai_model_name": {
+            "type": "string",
+            "title": "Ai Model Name",
+            "description": "AI model to use",
+            "default": "gpt-4"
+          },
+          "initial_message": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Initial Message",
+            "description": "Initial user message"
+          }
+        },
+        "type": "object",
+        "title": "AIConversationCreate",
+        "description": "Schema for creating a new AI conversation."
+      },
+      "app__schemas__conversation__AIConversationPublic": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "user_id": { "type": "string", "format": "uuid", "title": "User Id" },
+          "content_item_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Content Item Id"
+          },
+          "title": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Title"
+          },
+          "conversation_type": {
+            "type": "string",
+            "title": "Conversation Type"
+          },
+          "ai_model_name": { "type": "string", "title": "Ai Model Name" },
+          "messages": {
+            "items": { "$ref": "#/components/schemas/AIMessageSchema" },
+            "type": "array",
+            "title": "Messages"
+          },
+          "summary": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Summary"
+          },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "content_item_id",
+          "title",
+          "conversation_type",
+          "ai_model_name",
+          "messages",
+          "summary",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "AIConversationPublic",
+        "description": "Public schema for AI conversation."
       },
       "app__schemas__projects__ProjectCreate": {
         "properties": {

@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { LLMAnalysis } from "@/lib/stores/llm-analysis-store";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { FavoriteButton } from "@/components/actions/FavoriteButton";
 
 interface LLMAnalysisCardProps {
   analysis: LLMAnalysis;
@@ -210,6 +211,15 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
 
             {!analysis.isLoading && !analysis.error && (
               <>
+                {/* 收藏按钮 */}
+                <FavoriteButton
+                  itemId={analysis.contentId}
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 w-6 p-0"
+                />
+
+                {/* 复制内容 */}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -221,6 +231,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
                   <Copy className="h-3 w-3" />
                 </Button>
 
+                {/* 重新生成 */}
                 {onRegenerate && (
                   <Button
                     variant="ghost"

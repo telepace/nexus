@@ -8,6 +8,7 @@ import {
   Sparkles,
   Lightbulb,
   Target,
+  MessageSquare,
 } from "lucide-react";
 
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -22,11 +23,14 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Prompt } from "@/lib/api/services/prompts";
 import { client } from "@/lib/api/client";
+import { ConversationHistory } from "@/components/ai/ConversationHistory";
+import { ConversationListResponse } from "@/lib/api/content";
 
 interface EnhancedLLMAnalysisSidebarProps {
   contentId: string;
   className?: string;
   contentText?: string;
+  conversations?: ConversationListResponse["conversations"];
 }
 
 // 历史分析数据类型
@@ -52,7 +56,7 @@ interface HistoricalAnalysis {
 
 export const EnhancedLLMAnalysisSidebar: FC<
   EnhancedLLMAnalysisSidebarProps
-> = ({ contentId, className = "", contentText = "" }) => {
+> = ({ contentId, className = "", contentText = "", conversations = [] }) => {
   // 采用远程分支的设计：固定为analysis视图，简化组件
   const activeTab = "analysis" as const;
   const [historicalAnalyses, setHistoricalAnalyses] = useState<LLMAnalysis[]>(
@@ -439,6 +443,19 @@ export const EnhancedLLMAnalysisSidebar: FC<
                     </div>
                   </div>
                 )}
+
+              {/* 对话历史 */}
+              {conversations && conversations.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" /> 对话历史
+                  </h3>
+                  <ConversationHistory
+                    conversations={conversations}
+                    loading={false}
+                  />
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>

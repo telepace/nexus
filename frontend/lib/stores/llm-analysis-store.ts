@@ -108,10 +108,14 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
           ...analysis,
           id: `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           created_at: new Date().toISOString(),
+          isExpanded: true,
         };
 
         set((state) => ({
-          analyses: [...state.analyses, newAnalysis],
+          analyses: [
+            ...state.analyses.map((a) => ({ ...a, isExpanded: false })),
+            newAnalysis,
+          ],
         }));
       },
 
@@ -449,9 +453,9 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
           // 直接使用内容作为自由对话
           await generateAnalysis(
             contentId,
-            "这篇文章讲的是什么", // 用户问题
+            content, // 用户输入的内容作为分析指令
             undefined,
-            "自由对话",
+            content, // 标题显示用户问题
           );
         }
       },

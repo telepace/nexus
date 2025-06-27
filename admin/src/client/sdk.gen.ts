@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { AiConversationsListAiConversationsData, AiConversationsListAiConversationsResponse, AiConversationsCreateAiConversationData, AiConversationsCreateAiConversationResponse, AiConversationsGetAiConversationDetailData, AiConversationsGetAiConversationDetailResponse, AiConversationsGetAiConversationMessagesData, AiConversationsGetAiConversationMessagesResponse, ChatCreateChatCompletionData, ChatCreateChatCompletionResponse, ChatListAvailableModelsResponse, ContentContentEventsEndpointResponse, ContentCreateContentItemEndpointData, ContentCreateContentItemEndpointResponse, ContentProcessContentItemEndpointData, ContentProcessContentItemEndpointResponse, ContentListContentItemsEndpointData, ContentListContentItemsEndpointResponse, ContentGetContentItemEndpointData, ContentGetContentItemEndpointResponse, ContentGetContentMarkdownEndpointData, ContentGetContentMarkdownEndpointResponse, ContentGetSupportedProcessorsResponse, ContentGetContentChunksEndpointData, ContentGetContentChunksEndpointResponse, ContentGetContentChunksSummaryEndpointData, ContentGetContentChunksSummaryEndpointResponse, ContentAnalyzeContentStreamData, ContentAnalyzeContentStreamResponse, ContentAnalyzeContentAiSdkData, ContentAnalyzeContentAiSdkResponse, ContentContentCompletionStreamData, ContentContentCompletionStreamResponse, ContentAnalyzeContentAiSdkUpdatedData, ContentAnalyzeContentAiSdkUpdatedResponse, ContentContentCompletionStreamUpdatedData, ContentContentCompletionStreamUpdatedResponse, ContentGetContentProcessingJobsData, ContentGetContentProcessingJobsResponse, ContentCreateShareLinkEndpointData, ContentCreateShareLinkEndpointResponse, ContentDeactivateShareLinkEndpointData, ContentDeactivateShareLinkEndpointResponse, ContentGetSharedContentEndpointData, ContentGetSharedContentEndpointResponse, ContentGetContentAiConversationsData, ContentGetContentAiConversationsResponse, ContentGetAiConversationDetailsData, ContentGetAiConversationDetailsResponse, DashboardAnalyzeQueryData, DashboardAnalyzeQueryResponse, DashboardGetDashboardMetricsResponse, DashboardGetRecentActivitiesData, DashboardGetRecentActivitiesResponse, DashboardConfirmRoutingData, DashboardConfirmRoutingResponse, DashboardCreateProjectData, DashboardCreateProjectResponse, DashboardGetUserProjectsData, DashboardGetUserProjectsResponse, GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthGetHealthApiResponse, ImagesGetUploadUrlData, ImagesGetUploadUrlResponse, ImagesCreateImageRecordData, ImagesCreateImageRecordResponse, ImagesListImagesData, ImagesListImagesResponse, ImagesReadImageData, ImagesReadImageResponse, ImagesDeleteImageData, ImagesDeleteImageResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateProjectData, ItemsCreateProjectResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LlmCreateCompletionData, LlmCreateCompletionResponse, LlmCreateEmbeddingData, LlmCreateEmbeddingResponse, LoginAuthLoginData, LoginAuthLoginResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginLoginAccessTokenHeadResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PreprocessingProcessContentData, PreprocessingProcessContentResponse, PreprocessingBatchProcessContentData, PreprocessingBatchProcessContentResponse, PreprocessingGetProcessingStatusData, PreprocessingGetProcessingStatusResponse, PreprocessingGetContentSegmentsData, PreprocessingGetContentSegmentsResponse, PreprocessingValidateContentData, PreprocessingValidateContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsGetUserEnabledPromptsData, PromptsGetUserEnabledPromptsResponse, PromptsGetUserDisabledPromptsData, PromptsGetUserDisabledPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, PromptsTogglePromptEnabledData, PromptsTogglePromptEnabledResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersReadUserMeHeadResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UsersUploadUserAvatarData, UsersUploadUserAvatarResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { AiConversationsListAiConversationsData, AiConversationsListAiConversationsResponse, AiConversationsCreateAiConversationData, AiConversationsCreateAiConversationResponse, AiConversationsGetAiConversationDetailData, AiConversationsGetAiConversationDetailResponse, AiConversationsGetAiConversationMessagesData, AiConversationsGetAiConversationMessagesResponse, AiConversationsChatWithSegmentsData, AiConversationsChatWithSegmentsResponse, AiConversationsGetConversationSegmentReferencesData, AiConversationsGetConversationSegmentReferencesResponse, ChatCreateChatCompletionData, ChatCreateChatCompletionResponse, ChatListAvailableModelsResponse, ContentContentEventsEndpointResponse, ContentCreateContentItemEndpointData, ContentCreateContentItemEndpointResponse, ContentProcessContentItemEndpointData, ContentProcessContentItemEndpointResponse, ContentListContentItemsEndpointData, ContentListContentItemsEndpointResponse, ContentGetContentItemEndpointData, ContentGetContentItemEndpointResponse, ContentDeleteContentItemEndpointData, ContentDeleteContentItemEndpointResponse, ContentGetContentChunksEndpointData, ContentGetContentChunksEndpointResponse, ContentGetContentChunksSummaryEndpointData, ContentGetContentChunksSummaryEndpointResponse, ContentAnalyzeContentStreamEndpointData, ContentAnalyzeContentStreamEndpointResponse, ContentAnalyzeAiSdkUpdatedEndpointData, ContentAnalyzeAiSdkUpdatedEndpointResponse, ContentCompletionUpdatedEndpointData, ContentCompletionUpdatedEndpointResponse, ContentGetContentMarkdownEndpointData, ContentGetContentMarkdownEndpointResponse, ContentGetContentConversationsData, ContentGetContentConversationsResponse, ContentCreateConversationData, ContentCreateConversationResponse, ContentAnalyzeContentStreamWithTemplateEndpointData, ContentAnalyzeContentStreamWithTemplateEndpointResponse, ContentAddToFavoritesEndpointData, ContentAddToFavoritesEndpointResponse, ContentRemoveFromFavoritesEndpointData, ContentRemoveFromFavoritesEndpointResponse, ContentCheckFavoriteStatusEndpointData, ContentCheckFavoriteStatusEndpointResponse, ContentGetSupportedProcessorsEndpointResponse, ContentCreateShareLinkEndpointData, ContentCreateShareLinkEndpointResponse, ContentDeactivateShareLinkEndpointData, ContentDeactivateShareLinkEndpointResponse, ContentGetSharedContentEndpointData, ContentGetSharedContentEndpointResponse, ConversationsGetContentConversationsData, ConversationsGetContentConversationsResponse, ConversationsCreateConversationData, ConversationsCreateConversationResponse, ConversationsAddMessageToConversationData, ConversationsAddMessageToConversationResponse, ConversationsTriggerAnalysisData, ConversationsTriggerAnalysisResponse, ConversationsDeactivateConversationData, ConversationsDeactivateConversationResponse, ConversationsGetAnalysisPromptsResponse, DashboardAnalyzeQueryData, DashboardAnalyzeQueryResponse, DashboardGetDashboardMetricsResponse, DashboardGetRecentActivitiesData, DashboardGetRecentActivitiesResponse, DashboardConfirmRoutingData, DashboardConfirmRoutingResponse, DashboardCreateProjectData, DashboardCreateProjectResponse, DashboardGetUserProjectsData, DashboardGetUserProjectsResponse, ExtensionGetSummaryStreamData, ExtensionGetSummaryStreamResponse, ExtensionGetKeypointsStreamData, ExtensionGetKeypointsStreamResponse, ExtensionAnalyzeContentData, ExtensionAnalyzeContentResponse, FavoritesGetFavoritesEndpointData, FavoritesGetFavoritesEndpointResponse, FavoritesGetFavoriteContentIdsEndpointResponse, GoogleOauthGoogleCallbackApiData, GoogleOauthGoogleCallbackApiResponse, GoogleOauthGoogleLoginData, GoogleOauthGoogleLoginResponse, GoogleOauthGoogleCallbackData, GoogleOauthGoogleCallbackResponse, HealthHealthCheckResponse, HealthCacheHealthCheckResponse, ImagesGetUploadUrlData, ImagesGetUploadUrlResponse, ImagesCreateImageRecordData, ImagesCreateImageRecordResponse, ImagesListImagesData, ImagesListImagesResponse, ImagesReadImageData, ImagesReadImageResponse, ImagesDeleteImageData, ImagesDeleteImageResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateProjectData, ItemsCreateProjectResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LlmCreateCompletionData, LlmCreateCompletionResponse, LlmCreateEmbeddingData, LlmCreateEmbeddingResponse, LoginAuthLoginData, LoginAuthLoginResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginLoginAccessTokenHeadResponse, LoginTestTokenResponse, LoginLogoutResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PreprocessingProcessContentData, PreprocessingProcessContentResponse, PreprocessingBatchProcessContentData, PreprocessingBatchProcessContentResponse, PreprocessingGetProcessingStatusData, PreprocessingGetProcessingStatusResponse, PreprocessingGetContentSegmentsData, PreprocessingGetContentSegmentsResponse, PreprocessingValidateContentData, PreprocessingValidateContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, PromptsReadTagsData, PromptsReadTagsResponse, PromptsCreateTagData, PromptsCreateTagResponse, PromptsUpdateTagData, PromptsUpdateTagResponse, PromptsDeleteTagData, PromptsDeleteTagResponse, PromptsCreatePromptData, PromptsCreatePromptResponse, PromptsReadPromptsData, PromptsReadPromptsResponse, PromptsGetUserEnabledPromptsData, PromptsGetUserEnabledPromptsResponse, PromptsGetUserDisabledPromptsData, PromptsGetUserDisabledPromptsResponse, PromptsReadPromptData, PromptsReadPromptResponse, PromptsUpdatePromptData, PromptsUpdatePromptResponse, PromptsDeletePromptData, PromptsDeletePromptResponse, PromptsReadPromptVersionsData, PromptsReadPromptVersionsResponse, PromptsCreatePromptVersionData, PromptsCreatePromptVersionResponse, PromptsReadPromptVersionData, PromptsReadPromptVersionResponse, PromptsDuplicatePromptData, PromptsDuplicatePromptResponse, PromptsTogglePromptEnabledData, PromptsTogglePromptEnabledResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersReadUserMeHeadResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UsersUploadUserAvatarData, UsersUploadUserAvatarResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class AiConversationsService {
     /**
@@ -13,7 +13,7 @@ export class AiConversationsService {
      * @param data.skip
      * @param data.limit
      * @param data.contentItemId
-     * @returns AIConversationPublic Successful Response
+     * @returns app__schemas__ai_conversations__AIConversationPublic Successful Response
      * @throws ApiError
      */
     public static listAiConversations(data: AiConversationsListAiConversationsData = {}): CancelablePromise<AiConversationsListAiConversationsResponse> {
@@ -82,6 +82,61 @@ export class AiConversationsService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/ai/conversations/{conversation_id}/messages',
+            path: {
+                conversation_id: data.conversationId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Chat With Segments
+     * Send a message and get AI response with segment references.
+     *
+     * This endpoint provides enhanced AI responses that include references to
+     * specific content segments, enabling traceability of information sources.
+     * @param data The data for the request.
+     * @param data.conversationId
+     * @param data.message
+     * @param data.contentItemId
+     * @param data.maxSegments
+     * @param data.model
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static chatWithSegments(data: AiConversationsChatWithSegmentsData): CancelablePromise<AiConversationsChatWithSegmentsResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/ai/conversations/{conversation_id}/chat-with-segments',
+            path: {
+                conversation_id: data.conversationId
+            },
+            query: {
+                message: data.message,
+                content_item_id: data.contentItemId,
+                max_segments: data.maxSegments,
+                model: data.model
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Conversation Segment References
+     * Get all segment references for a conversation.
+     * @param data The data for the request.
+     * @param data.conversationId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getConversationSegmentReferences(data: AiConversationsGetConversationSegmentReferencesData): CancelablePromise<AiConversationsGetConversationSegmentReferencesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/ai/conversations/{conversation_id}/segment-references',
             path: {
                 conversation_id: data.conversationId
             },
@@ -231,17 +286,17 @@ export class ContentService {
     }
     
     /**
-     * Get Content Item as Markdown
-     * Retrieves the processed markdown content for a content item. Returns raw markdown text.
+     * Delete Content Item
+     * Delete a content item and all its related data. User can only delete their own content.
      * @param data The data for the request.
-     * @param data.id
-     * @returns unknown Successful Response
+     * @param data.id Content item ID to delete
+     * @returns void Successful Response
      * @throws ApiError
      */
-    public static getContentMarkdownEndpoint(data: ContentGetContentMarkdownEndpointData): CancelablePromise<ContentGetContentMarkdownEndpointResponse> {
+    public static deleteContentItemEndpoint(data: ContentDeleteContentItemEndpointData): CancelablePromise<ContentDeleteContentItemEndpointResponse> {
         return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/content/{id}/markdown',
+            method: 'DELETE',
+            url: '/api/v1/content/{id}',
             path: {
                 id: data.id
             },
@@ -252,23 +307,10 @@ export class ContentService {
     }
     
     /**
-     * Get Supported Content Types
-     * Get list of supported content types and their processors.
-     * @returns unknown Successful Response
-     * @throws ApiError
-     */
-    public static getSupportedProcessors(): CancelablePromise<ContentGetSupportedProcessorsResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/content/processors/supported'
-        });
-    }
-    
-    /**
      * Get Content Chunks
      * Retrieves content chunks for efficient rendering with pagination support.
      * @param data The data for the request.
-     * @param data.id
+     * @param data.id Content item ID
      * @param data.page Page number (1-based)
      * @param data.size Number of chunks per page
      * @returns unknown Successful Response
@@ -295,7 +337,7 @@ export class ContentService {
      * Get Content Chunks Summary
      * Get summary information about content chunks without the actual content.
      * @param data The data for the request.
-     * @param data.id
+     * @param data.id Content item ID
      * @returns unknown Successful Response
      * @throws ApiError
      */
@@ -313,30 +355,20 @@ export class ContentService {
     }
     
     /**
-     * Analyze Content Stream
-     * Stream AI analysis of content using LiteLLM.
-     *
-     * Args:
-     * content_id: ID of the content to analyze
-     * system_prompt: System prompt (e.g., prompt template)
-     * user_prompt: User prompt (the actual content text)
-     * current_user: Current authenticated user
-     * db: Database session
-     *
-     * Returns:
-     * StreamingResponse: Server-sent events with analysis chunks
+     * Stream Content Analysis
+     * Perform streaming AI analysis of content using specified instruction.
      * @param data The data for the request.
-     * @param data.contentId
+     * @param data.id Content item ID
      * @param data.requestBody
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static analyzeContentStream(data: ContentAnalyzeContentStreamData): CancelablePromise<ContentAnalyzeContentStreamResponse> {
+    public static analyzeContentStreamEndpoint(data: ContentAnalyzeContentStreamEndpointData): CancelablePromise<ContentAnalyzeContentStreamEndpointResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/content/{content_id}/analyze',
+            url: '/api/v1/content/{id}/analyze-stream',
             path: {
-                content_id: data.contentId
+                id: data.id
             },
             body: data.requestBody,
             mediaType: 'application/json',
@@ -347,20 +379,20 @@ export class ContentService {
     }
     
     /**
-     * Analyze Content Ai Sdk
-     * 使用 Vercel AI SDK 兼容格式分析内容，同时将对话存储到AIConversation表中
+     * Analyze Content with AI SDK (Updated Structure)
+     * Analyze content using AI SDK with updated prompt structure.
      * @param data The data for the request.
-     * @param data.contentId
+     * @param data.id Content item ID
      * @param data.requestBody
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static analyzeContentAiSdk(data: ContentAnalyzeContentAiSdkData): CancelablePromise<ContentAnalyzeContentAiSdkResponse> {
+    public static analyzeAiSdkUpdatedEndpoint(data: ContentAnalyzeAiSdkUpdatedEndpointData): CancelablePromise<ContentAnalyzeAiSdkUpdatedEndpointResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/content/{content_id}/analyze-ai-sdk',
+            url: '/api/v1/content/{id}/analyze-ai-sdk-updated',
             path: {
-                content_id: data.contentId
+                id: data.id
             },
             body: data.requestBody,
             mediaType: 'application/json',
@@ -371,31 +403,20 @@ export class ContentService {
     }
     
     /**
-     * Content Completion Stream
-     * Stream content analysis using Vercel AI SDK compatible format，
-     * 同时将对话存储到AIConversation表中
-     *
-     * This endpoint returns pure text streaming for optimal compatibility
-     * with Vercel AI SDK useCompletion hook.
-     *
-     * Args:
-     * content_id: ID of the content to analyze
-     * prompt: The analysis instruction/prompt from user
-     * model: AI model to use
-     * temperature: Sampling temperature
-     * max_tokens: Maximum tokens to generate
+     * Content Completion with Updated Structure
+     * Get content completion using updated prompt structure.
      * @param data The data for the request.
-     * @param data.contentId
+     * @param data.id Content item ID
      * @param data.requestBody
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static contentCompletionStream(data: ContentContentCompletionStreamData): CancelablePromise<ContentContentCompletionStreamResponse> {
+    public static completionUpdatedEndpoint(data: ContentCompletionUpdatedEndpointData): CancelablePromise<ContentCompletionUpdatedEndpointResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/content/{content_id}/completion',
+            url: '/api/v1/content/{id}/completion-updated',
             path: {
-                content_id: data.contentId
+                id: data.id
             },
             body: data.requestBody,
             mediaType: 'application/json',
@@ -406,94 +427,173 @@ export class ContentService {
     }
     
     /**
-     * Analyze Content Ai Sdk Updated
-     * Stream AI analysis with updated prompt structure: system=content, user=instruction.
-     *
-     * This endpoint implements the adjusted LLM logic where:
-     * - System message contains the article content (provides context)
-     * - User message contains the analysis instruction (provides task)
-     *
-     * Args:
-     * content_id: ID of the content to analyze
-     * analysis_instruction: The analysis instruction from user (user prompt)
-     * model: AI model to use
-     * temperature: Sampling temperature
-     * max_tokens: Maximum tokens to generate
+     * Get Content Markdown
+     * Get the processed markdown content of a content item.
      * @param data The data for the request.
-     * @param data.contentId
-     * @param data.requestBody
+     * @param data.id Content item ID
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static analyzeContentAiSdkUpdated(data: ContentAnalyzeContentAiSdkUpdatedData): CancelablePromise<ContentAnalyzeContentAiSdkUpdatedResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/content/{content_id}/analyze-ai-sdk-updated',
-            path: {
-                content_id: data.contentId
-            },
-            body: data.requestBody,
-            mediaType: 'application/json',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Content Completion Stream Updated
-     * Stream content analysis using updated prompt structure: system=content, user=instruction.
-     * Compatible with Vercel AI SDK useCompletion hook.
-     *
-     * This endpoint implements the adjusted LLM logic where:
-     * - System message contains the article content (provides context)
-     * - User message contains the analysis instruction (provides task)
-     *
-     * Args:
-     * content_id: ID of the content to analyze
-     * analysis_instruction: The analysis instruction from user (user prompt)
-     * model: AI model to use
-     * temperature: Sampling temperature
-     * max_tokens: Maximum tokens to generate
-     * @param data The data for the request.
-     * @param data.contentId
-     * @param data.requestBody
-     * @returns unknown Successful Response
-     * @throws ApiError
-     */
-    public static contentCompletionStreamUpdated(data: ContentContentCompletionStreamUpdatedData): CancelablePromise<ContentContentCompletionStreamUpdatedResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/content/{content_id}/completion-updated',
-            path: {
-                content_id: data.contentId
-            },
-            body: data.requestBody,
-            mediaType: 'application/json',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Get Content Processing Jobs
-     * Get all processing jobs and their results for a content item, including AI analysis results.
-     * @param data The data for the request.
-     * @param data.id
-     * @returns unknown Successful Response
-     * @throws ApiError
-     */
-    public static getContentProcessingJobs(data: ContentGetContentProcessingJobsData): CancelablePromise<ContentGetContentProcessingJobsResponse> {
+    public static getContentMarkdownEndpoint(data: ContentGetContentMarkdownEndpointData): CancelablePromise<ContentGetContentMarkdownEndpointResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/content/{id}/processing-jobs',
+            url: '/api/v1/content/{id}/markdown',
             path: {
                 id: data.id
             },
             errors: {
                 422: 'Validation Error'
             }
+        });
+    }
+    
+    /**
+     * Get All Conversations for Content
+     * 获取指定内容的所有AI对话，包括自动分析和用户对话。
+     * @param data The data for the request.
+     * @param data.contentId
+     * @param data.includeInactive 是否包含非激活状态的对话
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getContentConversations(data: ContentGetContentConversationsData): CancelablePromise<ContentGetContentConversationsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/content/{content_id}/conversations',
+            path: {
+                content_id: data.contentId
+            },
+            query: {
+                include_inactive: data.includeInactive
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create New Conversation
+     * 为指定内容创建新的AI对话。
+     * @param data The data for the request.
+     * @param data.contentId
+     * @param data.requestBody
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static createConversation(data: ContentCreateConversationData): CancelablePromise<ContentCreateConversationResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/content/{content_id}/conversations',
+            path: {
+                content_id: data.contentId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Stream Content Analysis with Templates
+     * Perform streaming AI analysis using predefined templates (summary or key_points).
+     * @param data The data for the request.
+     * @param data.id Content item ID
+     * @param data.analysisType Analysis type: 'summary' or 'key_points'
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static analyzeContentStreamWithTemplateEndpoint(data: ContentAnalyzeContentStreamWithTemplateEndpointData): CancelablePromise<ContentAnalyzeContentStreamWithTemplateEndpointResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/content/{id}/analyze/stream',
+            path: {
+                id: data.id
+            },
+            query: {
+                analysis_type: data.analysisType
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Add Content to Favorites
+     * Add a content item to the user's favorites list.
+     * @param data The data for the request.
+     * @param data.id Content item ID to add to favorites
+     * @returns string Successful Response
+     * @throws ApiError
+     */
+    public static addToFavoritesEndpoint(data: ContentAddToFavoritesEndpointData): CancelablePromise<ContentAddToFavoritesEndpointResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/content/{id}/favorite',
+            path: {
+                id: data.id
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Remove Content from Favorites
+     * Remove a content item from the user's favorites list.
+     * @param data The data for the request.
+     * @param data.id Content item ID to remove from favorites
+     * @returns void Successful Response
+     * @throws ApiError
+     */
+    public static removeFromFavoritesEndpoint(data: ContentRemoveFromFavoritesEndpointData): CancelablePromise<ContentRemoveFromFavoritesEndpointResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/content/{id}/favorite',
+            path: {
+                id: data.id
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Check Favorite Status
+     * Check if a content item is in the user's favorites.
+     * @param data The data for the request.
+     * @param data.id Content item ID to check
+     * @returns boolean Successful Response
+     * @throws ApiError
+     */
+    public static checkFavoriteStatusEndpoint(data: ContentCheckFavoriteStatusEndpointData): CancelablePromise<ContentCheckFavoriteStatusEndpointResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/content/{id}/favorite/status',
+            path: {
+                id: data.id
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Supported Processors
+     * Get information about supported content processors and pipeline configuration.
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getSupportedProcessorsEndpoint(): CancelablePromise<ContentGetSupportedProcessorsEndpointResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/content/processors/supported'
         });
     }
     
@@ -567,26 +667,27 @@ export class ContentService {
         });
     }
     
+}
+
+export class ConversationsService {
     /**
-     * Get AI Conversations for Content
-     * 获取指定内容项的所有AI对话记录
+     * Get All Conversations for Content
+     * 获取指定内容的所有AI对话，包括自动分析和用户对话。
      * @param data The data for the request.
      * @param data.contentId
-     * @param data.skip 跳过的记录数
-     * @param data.limit 返回的最大记录数
-     * @returns unknown Successful Response
+     * @param data.includeInactive 是否包含非激活状态的对话
+     * @returns ConversationListResponse Successful Response
      * @throws ApiError
      */
-    public static getContentAiConversations(data: ContentGetContentAiConversationsData): CancelablePromise<ContentGetContentAiConversationsResponse> {
+    public static getContentConversations(data: ConversationsGetContentConversationsData): CancelablePromise<ConversationsGetContentConversationsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/content/{content_id}/conversations',
+            url: '/api/v1/conversations/content/{content_id}/conversations',
             path: {
                 content_id: data.contentId
             },
             query: {
-                skip: data.skip,
-                limit: data.limit
+                include_inactive: data.includeInactive
             },
             errors: {
                 422: 'Validation Error'
@@ -595,23 +696,108 @@ export class ContentService {
     }
     
     /**
-     * Get AI Conversation Details
-     * 获取指定AI对话的详细信息
+     * Create New Conversation
+     * 为指定内容创建新的AI对话。
      * @param data The data for the request.
-     * @param data.conversationId
-     * @returns unknown Successful Response
+     * @param data.contentId
+     * @param data.requestBody
+     * @returns app__schemas__conversation__AIConversationPublic Successful Response
      * @throws ApiError
      */
-    public static getAiConversationDetails(data: ContentGetAiConversationDetailsData): CancelablePromise<ContentGetAiConversationDetailsResponse> {
+    public static createConversation(data: ConversationsCreateConversationData): CancelablePromise<ConversationsCreateConversationResponse> {
         return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/content/conversations/{conversation_id}',
+            method: 'POST',
+            url: '/api/v1/conversations/content/{content_id}/conversations',
+            path: {
+                content_id: data.contentId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Add Message to Conversation
+     * 向指定对话添加新消息并获取AI响应。
+     * @param data The data for the request.
+     * @param data.conversationId
+     * @param data.requestBody
+     * @returns app__schemas__conversation__AIConversationPublic Successful Response
+     * @throws ApiError
+     */
+    public static addMessageToConversation(data: ConversationsAddMessageToConversationData): CancelablePromise<ConversationsAddMessageToConversationResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/conversations/conversations/{conversation_id}/messages',
+            path: {
+                conversation_id: data.conversationId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Trigger Analysis with Predefined Prompt
+     * 使用预设模板对内容进行AI分析。
+     * @param data The data for the request.
+     * @param data.contentId
+     * @param data.requestBody
+     * @returns app__schemas__conversation__AIConversationPublic Successful Response
+     * @throws ApiError
+     */
+    public static triggerAnalysis(data: ConversationsTriggerAnalysisData): CancelablePromise<ConversationsTriggerAnalysisResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/conversations/content/{content_id}/analysis',
+            path: {
+                content_id: data.contentId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Deactivate Conversation
+     * 停用指定的对话（软删除）。
+     * @param data The data for the request.
+     * @param data.conversationId
+     * @returns string Successful Response
+     * @throws ApiError
+     */
+    public static deactivateConversation(data: ConversationsDeactivateConversationData): CancelablePromise<ConversationsDeactivateConversationResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/conversations/conversations/{conversation_id}',
             path: {
                 conversation_id: data.conversationId
             },
             errors: {
                 422: 'Validation Error'
             }
+        });
+    }
+    
+    /**
+     * Get Available Analysis Prompts
+     * 获取所有可用的预设分析Prompt模板。
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getAnalysisPrompts(): CancelablePromise<ConversationsGetAnalysisPromptsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/conversations/analysis-prompts'
         });
     }
     
@@ -744,6 +930,108 @@ export class DashboardService {
     
 }
 
+export class ExtensionService {
+    /**
+     * 获取流式摘要
+     * 为浏览器插件提供流式摘要生成服务
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getSummaryStream(data: ExtensionGetSummaryStreamData): CancelablePromise<ExtensionGetSummaryStreamResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/extension/summary/stream',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * 获取流式要点
+     * 为浏览器插件提供流式要点提取服务
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getKeypointsStream(data: ExtensionGetKeypointsStreamData): CancelablePromise<ExtensionGetKeypointsStreamResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/extension/keypoints/stream',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * 并行获取摘要和要点
+     * 同时生成摘要和要点，为插件优化的批量接口
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static analyzeContent(data: ExtensionAnalyzeContentData): CancelablePromise<ExtensionAnalyzeContentResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/extension/analyze',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+}
+
+export class FavoritesService {
+    /**
+     * Get User's Favorites
+     * Get user's favorite content items with pagination.
+     * @param data The data for the request.
+     * @param data.skip Number of items to skip
+     * @param data.limit Maximum number of items to return
+     * @returns FavoriteListResponse Successful Response
+     * @throws ApiError
+     */
+    public static getFavoritesEndpoint(data: FavoritesGetFavoritesEndpointData = {}): CancelablePromise<FavoritesGetFavoritesEndpointResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/favorites/',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get User's Favorite Content IDs
+     * Get list of content item IDs that user has favorited.
+     * @returns string Successful Response
+     * @throws ApiError
+     */
+    public static getFavoriteContentIdsEndpoint(): CancelablePromise<FavoritesGetFavoriteContentIdsEndpointResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/favorites/content-ids'
+        });
+    }
+    
+}
+
 export class GoogleOauthService {
     /**
      * Google Callback Api
@@ -820,14 +1108,28 @@ export class GoogleOauthService {
 
 export class HealthService {
     /**
-     * Get Health Api
+     * Health Check
+     * Basic health check endpoint.
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static getHealthApi(): CancelablePromise<HealthGetHealthApiResponse> {
+    public static healthCheck(): CancelablePromise<HealthHealthCheckResponse> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/health'
+        });
+    }
+    
+    /**
+     * Cache Health Check
+     * Cache health check endpoint.
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static cacheHealthCheck(): CancelablePromise<HealthCacheHealthCheckResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/health/cache'
         });
     }
     
@@ -1892,7 +2194,7 @@ export class UsersService {
     
     /**
      * Delete User Me
-     * Delete own user.
+     * Delete current user and all associated data.
      * @returns Message Successful Response
      * @throws ApiError
      */
