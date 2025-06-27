@@ -29,7 +29,7 @@ export const ContentList = ({
   if (!items.length) return null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 flex flex-col items-center">
       {items.map((item, idx) => (
         <React.Fragment key={item.id}>
           <ContentCard

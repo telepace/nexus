@@ -39,10 +39,10 @@ export default function ContentLibraryPage() {
       ) {
         return;
       }
-      
+
       // 立即跳转，给用户即时反馈
       router.push(`/content-library/reader/${item.id}`);
-      
+
       // 异步预取内容，提升用户体验
       Promise.resolve().then(() => {
         prefetchContent(item);
@@ -66,22 +66,32 @@ export default function ContentLibraryPage() {
   );
 
   // 处理内容项删除
-  const handleItemDeleted = useCallback((itemId: string) => {
-    // 如果删除的是当前选中或悬浮的项目，清除选择
-    setSelectedItem(prev => prev?.id === itemId ? null : prev);
-    setHoveredItem(prev => prev?.id === itemId ? null : prev);
-    // 刷新列表
-    refreshItems();
-  }, [refreshItems]);
+  const handleItemDeleted = useCallback(
+    (itemId: string) => {
+      // 如果删除的是当前选中或悬浮的项目，清除选择
+      setSelectedItem((prev) => (prev?.id === itemId ? null : prev));
+      setHoveredItem((prev) => (prev?.id === itemId ? null : prev));
+      // 刷新列表
+      refreshItems();
+    },
+    [refreshItems],
+  );
 
   // 处理内容项更新
-  const handleItemUpdated = useCallback((updatedItem: ContentItemPublic) => {
-    // 如果更新的是当前选中的项目，更新选中项
-    setSelectedItem(prev => prev?.id === updatedItem.id ? updatedItem : prev);
-    setHoveredItem(prev => prev?.id === updatedItem.id ? updatedItem : prev);
-    // 刷新列表
-    refreshItems();
-  }, [refreshItems]);
+  const handleItemUpdated = useCallback(
+    (updatedItem: ContentItemPublic) => {
+      // 如果更新的是当前选中的项目，更新选中项
+      setSelectedItem((prev) =>
+        prev?.id === updatedItem.id ? updatedItem : prev,
+      );
+      setHoveredItem((prev) =>
+        prev?.id === updatedItem.id ? updatedItem : prev,
+      );
+      // 刷新列表
+      refreshItems();
+    },
+    [refreshItems],
+  );
 
   // 获取要在预览中显示的项目（优先显示悬浮的，其次显示选中的）
   const previewItem = hoveredItem || selectedItem;
@@ -111,12 +121,11 @@ export default function ContentLibraryPage() {
   return (
     <MainLayout pageTitle="Content Library" fullscreen>
       {/* 页面主体：左右两栏 */}
-      <div className="flex h-screen overflow-visible bg-gradient-to-br from-background via-background to-muted/20">
-        {/* 左栏：默认固定 35.25rem，2xl时固定宽度变为37.5rem */}
-        <section className="flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar px-6 w-library flex-none 2xl:w-library-lg">
+      <div className="flex h-full bg-gradient-to-br from-background via-background to-muted/20">
+        <section className="flex flex-col overflow-y-auto no-scrollbar px-6 w-library flex-none 2xl:w-library-lg">
           {/* Header 仅存在于左栏 */}
           <header className="flex items-center h-header px-2 md:px-6 border-b shrink-0 bg-background/80">
-            <h1 className="text-lg font-semibold">Library</h1>
+            <h1 className="text-base font-medium">Library</h1>
           </header>
 
           {/* 列表 */}
@@ -139,8 +148,8 @@ export default function ContentLibraryPage() {
         </section>
 
         {/* 右栏：剩余空间自适应 */}
-        <aside className="flex-1 pr-2 py-2 pl-0 flex h-screen overflow-visible">
-          <div className="flex-1 h-full">
+        <aside className="flex-1 pr-2 py-2 pl-0 flex h-full ">
+          <div className="flex-1">
             <ContentPreview item={previewItem} />
           </div>
         </aside>

@@ -58,7 +58,7 @@ export const DeleteConfirmDialog = ({
             </div>
           </div>
         </AlertDialogHeader>
-        
+
         <div className="py-4">
           <div className="bg-muted/50 rounded-lg p-4 mb-4">
             <div className="flex items-center gap-2 text-sm">
@@ -69,7 +69,7 @@ export const DeleteConfirmDialog = ({
               {itemTitle || "无标题"}
             </p>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Checkbox
               id="skip-confirm"
@@ -86,9 +86,7 @@ export const DeleteConfirmDialog = ({
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>
-            取消
-          </AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>取消</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
             disabled={isDeleting}
@@ -122,4 +120,4 @@ export const shouldSkipDeleteConfirm = (): boolean => {
 export const resetDeleteConfirmSetting = (): void => {
   if (typeof window === "undefined") return;
   localStorage.removeItem(SKIP_CONFIRM_KEY);
-}; 
+};

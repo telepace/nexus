@@ -68,7 +68,7 @@ describe("DashboardPage 集成测试", () => {
     const mockFetchItems = fetchItems as jest.MockedFunction<typeof fetchItems>;
 
     mockFetchItems.mockResolvedValue({
-      error: "API返回了意外的数据格式",
+      error: "测试错误信息",
       status: 400,
     });
 
@@ -76,11 +76,7 @@ describe("DashboardPage 集成测试", () => {
 
     await waitFor(() => {
       expect(screen.getByText("错误")).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          "服务器返回了意外的数据格式，这可能是一个临时问题。请尝试刷新页面。",
-        ),
-      ).toBeInTheDocument();
+      expect(screen.getByText("测试错误信息")).toBeInTheDocument();
     });
   });
 
@@ -95,11 +91,9 @@ describe("DashboardPage 集成测试", () => {
     render(<DashboardPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("No Items Yet")).toBeInTheDocument();
+      expect(screen.getByText("还没有内容")).toBeInTheDocument();
       expect(
-        screen.getByText(
-          "You don't have any content yet. Add one to get started.",
-        ),
+        screen.getByText("开始添加你的第一个内容项目"),
       ).toBeInTheDocument();
     });
   });
@@ -142,15 +136,15 @@ describe("DashboardPage 集成测试", () => {
     render(<DashboardPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("Dashboard")).toBeInTheDocument();
+      expect(screen.getByText("仪表板")).toBeInTheDocument();
       expect(screen.getByText("Test Article")).toBeInTheDocument();
       expect(screen.getByText("Test Video")).toBeInTheDocument();
       expect(screen.getByText("Test summary")).toBeInTheDocument();
-      expect(screen.getByText("No summary")).toBeInTheDocument();
+      expect(screen.getByText("无摘要")).toBeInTheDocument();
       expect(screen.getByText("article")).toBeInTheDocument();
       expect(screen.getByText("video")).toBeInTheDocument();
-      expect(screen.getByText("completed")).toBeInTheDocument();
-      expect(screen.getByText("pending")).toBeInTheDocument();
+      expect(screen.getByText("已完成")).toBeInTheDocument();
+      expect(screen.getByText("等待中")).toBeInTheDocument();
     });
   });
 
