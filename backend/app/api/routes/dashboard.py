@@ -170,7 +170,7 @@ async def get_recent_activities(
             "pending": "📝",
             "failed": "❌",
         }
-        
+
         # 构建简洁的描述
         description_parts = []
         if content.processing_status == "completed":
@@ -181,7 +181,7 @@ async def get_recent_activities(
             description_parts.append("等待处理")
         elif content.processing_status == "failed":
             description_parts.append("处理失败")
-        
+
         # 只有在项目不是"未分类"时才显示归类信息
         if project_name != "未分类":
             description_parts.append(f"归类到 {project_name}")
@@ -190,7 +190,9 @@ async def get_recent_activities(
             {
                 "type": "content_processing",
                 "title": f"{status_map.get(content.processing_status, '')} {content.title or '无标题文档'}",
-                "description": " · ".join(description_parts) if description_parts else "内容处理",
+                "description": " · ".join(description_parts)
+                if description_parts
+                else "内容处理",
                 "timestamp": content.updated_at.isoformat(),
                 "status": content.processing_status,
             }
