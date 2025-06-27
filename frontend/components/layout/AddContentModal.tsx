@@ -9,6 +9,7 @@ import {
   Trash2,
   Plus,
   ArrowLeft,
+  Paperclip,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -428,14 +429,14 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           {view === "input" && (
             <>
               {/* 文本/链接输入区域 */}
-              <div className="space-y-4">
+              <div className="w-full space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="content-input">文本内容 / 链接</Label>
                   <Textarea
                     id="content-input"
                     role="textbox"
                     placeholder="粘贴链接或输入文本内容，支持多个链接同时添加。"
-                    className="min-h-[120px] max-h-[120px] resize-none"
+                    className="min-h-40 max-h-40 resize-none"
                     value={content}
                     onChange={(e) => handleContentChange(e.target.value)}
                   />
@@ -510,7 +511,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                 {/* Drag & drop wrapper */}
                 <div
                   className={cn(
-                    "space-y-2 max-h-40 overflow-y-auto border border-dashed rounded-md p-4 transition-colors",
+                    "space-y-2 min-h-40 max-h-40 overflow-y-auto border border-dashed rounded-md p-4 transition-colors",
                     isDragOver
                       ? "border-primary bg-primary/10"
                       : "border-muted-foreground/40",
@@ -522,7 +523,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                   {selectedFiles.map((file, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700"
+                      className="flex items-center justify-between bg-transparent p-2 rounded border border-gray-200 dark:border-gray-700"
                     >
                       <div className="flex items-center min-w-0 flex-1">
                         <FileText className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400 flex-shrink-0" />
@@ -553,33 +554,24 @@ export const AddContentModal: FC<AddContentModalProps> = ({
                       className="text-center select-none cursor-pointer py-8"
                       onClick={() => fileInputRef.current?.click()}
                     >
-                      <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                      <Paperclip className="h-8 w-8 mx-auto mb-4 text-muted-foreground opacity-50" />
                       <p className="text-sm text-muted-foreground mb-2">
                         将文件拖拽到此区域，或点击选择文件
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground mb-4">
                         支持 PDF、DOCX、TXT 等文档格式
                       </p>
                     </div>
                   )}
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  添加更多文件
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileSelect}
-                />
               </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={handleFileSelect}
+              />
             </div>
           )}
         </div>
@@ -592,21 +584,24 @@ export const AddContentModal: FC<AddContentModalProps> = ({
           </div>
         )}
 
-        <AlertDialogFooter className="flex-shrink-0 flex justify-between items-center">
+        <AlertDialogFooter className="flex-shrink-0 flex justify-between items-center sm:justify-between">
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={() => setView(view === "input" ? "file" : "input")}
             disabled={isLoading}
             className="flex items-center gap-2"
           >
-            <ArrowLeft className="h-4 w-4" />
-            {view === "input" ? "上传本地文件" : "输入链接 / 文本"}
+            {view === "input" ? (
+              "上传文件"
+            ) : (
+              <ArrowLeft className="h-4 w-4" />
+            )}
           </Button>
           <AlertDialogAction
             className={cn(
               buttonVariants({ size: "sm" }),
-              "min-w-[4rem] bg-primary hover:bg-primary/90",
+              "min-w-[3.5rem] bg-primary hover:bg-primary/90",
             )}
             onClick={handleAddContent}
             disabled={
