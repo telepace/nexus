@@ -176,24 +176,24 @@ export default function ReaderLayout({
                 <div className="flex flex-col h-full bg-background">
                   {/* Header Skeleton */}
                   <div className="flex items-center justify-between px-4 border-b h-header">
-                    <div className="w-20 h-6 bg-muted rounded animate-pulse"></div>
+                    <div className="w-20 h-6 bg-muted rounded animate-shimmer"></div>
                   </div>
 
                   {/* Tabs Skeleton */}
                   <div className="flex-shrink-0 px-4 py-3">
                     <div className="grid w-full grid-cols-3 gap-1 p-1 bg-muted rounded-lg">
-                      <div className="h-7 bg-background rounded animate-pulse"></div>
-                      <div className="h-7 bg-muted rounded animate-pulse"></div>
-                      <div className="h-7 bg-muted rounded animate-pulse"></div>
+                      <div className="h-7 bg-background rounded animate-shimmer"></div>
+                      <div className="h-7 bg-muted rounded animate-shimmer"></div>
+                      <div className="h-7 bg-muted rounded animate-shimmer"></div>
                     </div>
                   </div>
 
                   {/* Content Body Skeleton */}
                   <div className="flex-1 min-h-0 overflow-auto px-4 space-y-4">
                     <div className="space-y-4">
-                      <div className="w-full h-32 bg-muted rounded-lg animate-pulse"></div>
-                      <div className="w-full h-40 bg-muted rounded-lg animate-pulse"></div>
-                      <div className="w-full h-28 bg-muted rounded-lg animate-pulse"></div>
+                      <div className="w-full h-32 bg-muted rounded-lg animate-shimmer"></div>
+                      <div className="w-full h-40 bg-muted rounded-lg animate-shimmer"></div>
+                      <div className="w-full h-28 bg-muted rounded-lg animate-shimmer"></div>
                     </div>
                   </div>
                 </div>
