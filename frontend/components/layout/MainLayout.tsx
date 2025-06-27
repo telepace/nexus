@@ -35,16 +35,16 @@ export default function MainLayout({
         } as React.CSSProperties
       }
     >
-      <div className="flex min-h-screen max-w-none w-screen page-top-highlight">
+      <div className="flex h-screen max-w-none w-screen page-top-highlight overflow-hidden">
         {/* 侧边栏 */}
         <AppSidebar
           onSettingsClick={() => setSettingsOpen(true)}
           onAddContentClick={() => setAddContentOpen(true)}
         />
 
-        <SidebarInset>
+        <SidebarInset className="h-screen overflow-hidden">
           {/* 主内容区域 */}
-          <main className="flex-1">
+          <main className="flex-1 h-full overflow-hidden">
             {isFullscreen ? (
               children
             ) : (

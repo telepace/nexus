@@ -111,12 +111,11 @@ export default function ContentLibraryPage() {
   return (
     <MainLayout pageTitle="Content Library" fullscreen>
       {/* 页面主体：左右两栏 */}
-      <div className="flex h-screen overflow-visible bg-gradient-to-br from-background via-background to-muted/20">
-        {/* 左栏：默认固定 35.25rem，2xl时固定宽度变为37.5rem */}
-        <section className="flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar px-6 w-library flex-none 2xl:w-library-lg">
+      <div className="flex h-full bg-gradient-to-br from-background via-background to-muted/20">
+        <section className="flex flex-col overflow-y-auto no-scrollbar px-6 w-library flex-none 2xl:w-library-lg">
           {/* Header 仅存在于左栏 */}
           <header className="flex items-center h-header px-2 md:px-6 border-b shrink-0 bg-background/80">
-            <h1 className="text-lg font-semibold">Library</h1>
+            <h1 className="text-base font-medium">Library</h1>
           </header>
 
           {/* 列表 */}
@@ -139,8 +138,8 @@ export default function ContentLibraryPage() {
         </section>
 
         {/* 右栏：剩余空间自适应 */}
-        <aside className="flex-1 pr-2 py-2 pl-0 flex h-screen overflow-visible">
-          <div className="flex-1 h-full">
+        <aside className="flex-1 pr-2 py-2 pl-0 flex h-full ">
+          <div className="flex-1">
             <ContentPreview item={previewItem} />
           </div>
         </aside>
