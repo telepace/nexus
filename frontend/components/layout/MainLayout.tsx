@@ -25,6 +25,18 @@ export default function MainLayout({
   // 如果没有 pageTitle 或者是 fullscreen 模式，使用全屏布局
   const isFullscreen = fullscreen || !pageTitle;
 
+  // 根据布局模式动态设置包装器和主区域的样式
+  const wrapperClasses = [
+    "flex max-w-none w-screen page-top-highlight",
+    isFullscreen ? "h-screen overflow-hidden" : "min-h-screen",
+  ].join(" ");
+
+  const insetClasses = isFullscreen ? "h-screen overflow-hidden" : "min-h-screen";
+  const mainClasses = [
+    "flex-1",
+    isFullscreen ? "h-full overflow-hidden" : "overflow-auto",
+  ].join(" ");
+
   return (
     <SidebarProvider
       defaultOpen={true}
@@ -35,16 +47,16 @@ export default function MainLayout({
         } as React.CSSProperties
       }
     >
-      <div className="flex h-screen max-w-none w-screen page-top-highlight overflow-hidden">
+      <div className={wrapperClasses}>
         {/* 侧边栏 */}
         <AppSidebar
           onSettingsClick={() => setSettingsOpen(true)}
           onAddContentClick={() => setAddContentOpen(true)}
         />
 
-        <SidebarInset className="h-screen overflow-hidden">
+        <SidebarInset className={insetClasses}>
           {/* 主内容区域 */}
-          <main className="flex-1 h-full overflow-hidden">
+          <main className={mainClasses}>
             {isFullscreen ? (
               children
             ) : (
