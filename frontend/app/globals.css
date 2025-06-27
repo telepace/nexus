@@ -71,8 +71,8 @@
   --radius: 0.625rem;
 
   /* Custom width tokens */
-  --size-library: 35.25rem; /* 564px - left pane fixed width */
-  --size-library-lg: 38rem; /* 608px - large screen library width */
+  --size-library: 37rem; 
+  --size-library-lg: 40rem; 
   --size-library-card: 28.75rem; /* 460px - card width */
   --size-card-title: 25rem; /* 400px - card text width */
 
