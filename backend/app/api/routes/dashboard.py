@@ -140,13 +140,16 @@ async def get_recent_activities(
             if project:
                 project_name = project.title
 
+        # 简化查询文本显示
+        query_preview = route["query_text"][:50]
+        if len(route["query_text"]) > 50:
+            query_preview += "..."
+
         activities.append(
             {
                 "type": "routing",
-                "title": f'问题"{route["query_text"][:30]}..."智能路由到"{project_name}"',
-                "description": route.get("routing_context", {}).get(
-                    "reasoning", "AI 自动路由"
-                ),
+                "title": f"🤖 智能路由：{query_preview}",
+                "description": f"已路由到 {project_name}",
                 "timestamp": route["created_at"],
                 "confidence": route.get("confidence_score"),
             }
@@ -160,18 +163,34 @@ async def get_recent_activities(
             if project:
                 project_name = project.title
 
+        # 简化状态显示
         status_map = {
-            "completed": "已完成处理",
-            "processing": "正在处理",
-            "pending": "等待处理",
-            "failed": "处理失败",
+            "completed": "✓",
+            "processing": "⏳",
+            "pending": "📝",
+            "failed": "❌",
         }
+        
+        # 构建简洁的描述
+        description_parts = []
+        if content.processing_status == "completed":
+            description_parts.append("已完成分析")
+        elif content.processing_status == "processing":
+            description_parts.append("正在处理中")
+        elif content.processing_status == "pending":
+            description_parts.append("等待处理")
+        elif content.processing_status == "failed":
+            description_parts.append("处理失败")
+        
+        # 只有在项目不是"未分类"时才显示归类信息
+        if project_name != "未分类":
+            description_parts.append(f"归类到 {project_name}")
 
         activities.append(
             {
                 "type": "content_processing",
-                "title": f"文档《{content.title or '无标题'}》{status_map.get(content.processing_status, '状态未知')}",
-                "description": f'自动归类到"{project_name}"并生成摘要',
+                "title": f"{status_map.get(content.processing_status, '')} {content.title or '无标题文档'}",
+                "description": " · ".join(description_parts) if description_parts else "内容处理",
                 "timestamp": content.updated_at.isoformat(),
                 "status": content.processing_status,
             }
