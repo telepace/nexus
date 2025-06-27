@@ -42,6 +42,11 @@ import { logout } from "@/components/actions/logout-action";
 const data = {
   navMain: [
     {
+      title: "Upload Content",
+      icon: IconCirclePlus,
+      onClick: true, // 标记这是一个onClick按钮而不是链接
+    },
+    {
       title: "Content Library",
       url: "/content-library",
       icon: IconHome,
@@ -133,27 +138,6 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Upload Content - 突出显示的独立区域 */}
-        <SidebarGroup className="!px-4 mt-2">
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem className="flex items-center gap-2">
-                <SidebarMenuButton
-                  onClick={onAddContentClick}
-                  tooltip="Upload Content"
-                  className="h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-medium shadow-sm border-0 rounded-lg transition-all duration-200 hover:shadow-md"
-                >
-                  <IconCirclePlus className="!size-5" />
-                  <span className="text-sm font-semibold">Upload Content</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* 分隔线 */}
-        <div className="mx-4 my-3 border-t border-sidebar-border" />
-
         {/* 主要导航 */}
         <SidebarGroup className="!px-4">
           <SidebarGroupContent>
@@ -161,14 +145,22 @@ export function AppSidebar({
               {data.navMain.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
-                    asChild
-                    isActive={pathname === item.url}
+                    asChild={!item.onClick}
+                    isActive={!item.onClick && pathname === item.url}
                     tooltip={item.title}
+                    onClick={item.onClick ? (item.title === "Upload Content" ? onAddContentClick : undefined) : undefined}
                   >
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
+                    {item.onClick ? (
+                      <>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </>
+                    ) : (
+                      <Link href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
