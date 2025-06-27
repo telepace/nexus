@@ -502,7 +502,7 @@ export const AddContentModal: FC<AddContentModalProps> = ({
             </div>
           )}
 
-          {contentType === "file" && (
+          {view === "file" && (
             <div className="w-full space-y-4">
               <div className="space-y-2">
                 <Label>已选择的文件 ({selectedFiles.length})</Label>
@@ -548,9 +548,18 @@ export const AddContentModal: FC<AddContentModalProps> = ({
 
                   {/* Empty state when no files selected */}
                   {selectedFiles.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center select-none">
-                      将文件拖拽到此区域，或点击下方按钮选择文件
-                    </p>
+                    <div 
+                      className="text-center select-none cursor-pointer py-8"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                      <p className="text-sm text-muted-foreground mb-2">
+                        将文件拖拽到此区域，或点击选择文件
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        支持 PDF、DOCX、TXT 等文档格式
+                      </p>
+                    </div>
                   )}
                 </div>
                 <Button
