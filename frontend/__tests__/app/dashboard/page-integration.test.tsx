@@ -116,6 +116,9 @@ describe("DashboardPage 集成测试", () => {
         updated_at: "2024-01-01T00:00:00Z",
         source_uri: "https://example.com",
         content_text: "Test content",
+        ai_result: {
+          brief_description: "Test summary",
+        },
       },
       {
         id: "2",
@@ -128,6 +131,7 @@ describe("DashboardPage 集成测试", () => {
         updated_at: "2024-01-01T00:00:00Z",
         source_uri: "https://youtube.com/watch?v=123",
         content_text: null,
+        ai_result: null,
       },
     ];
 
@@ -167,6 +171,9 @@ describe("DashboardPage 集成测试", () => {
         updated_at: "2024-01-01T00:00:00Z",
         source_uri: "https://example.com",
         content_text: "Test content",
+        ai_result: {
+          brief_description: "Test summary",
+        },
       },
     ];
 

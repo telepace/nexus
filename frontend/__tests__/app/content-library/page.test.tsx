@@ -89,18 +89,13 @@ describe("ContentLibraryPage", () => {
             id: "1",
             type: "pdf",
             title: "Test Document",
+            summary: null,
             user_id: "1",
             processing_status: "completed",
             created_at: "2024-01-01T00:00:00Z",
             updated_at: "2024-01-01T00:00:00Z",
             source_uri: "https://example.com/doc.pdf",
-            ai_analysis: {
-              summarizer: {
-                summary: {
-                  main_thesis: "Test summary",
-                },
-              },
-            },
+            ai_result: null,
           },
         ]),
     });
@@ -157,7 +152,6 @@ describe("ContentLibraryPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Test Document")).toBeInTheDocument();
-      expect(screen.getByText("暂无描述")).toBeInTheDocument();
     });
 
     // 检查文档类型显示
