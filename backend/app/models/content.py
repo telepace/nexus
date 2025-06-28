@@ -353,3 +353,45 @@ class MessageSegmentReference(MessageSegmentReferenceBase, table=True):
             "primaryjoin": "foreign(MessageSegmentReference.segment_id) == Segment.id"
         }
     )
+
+
+class DeepResearchJobBase(SQLModel):
+    """Base model for deep research jobs."""
+
+    user_id: uuid.UUID = Field(foreign_key="user.id", index=True)
+    query: str = Field(max_length=2048, description="Research query")
+    status: str = Field(
+        default="pending",
+        sa_column_args=[
+            CheckConstraint(
+                "status IN ('pending', 'processing', 'completed', 'failed')"
+            )
+        ],
+        max_length=20,
+        index=True,
+    )
+    markdown_path: str | None = Field(default=None, max_length=1024)
+    error_message: str | None = Field(default=None)
+
+    # Research configuration
+    depth: int = Field(default=3, ge=1, le=5, description="Research depth")
+    breadth: int = Field(default=2, ge=1, le=5, description="Research breadth")
+
+    # Results metadata
+    research_meta: dict | None = Field(default=None, sa_column=Column(JSONB))
+
+    created_at: datetime = Field(default_factory=now_utc, nullable=False)
+    updated_at: datetime = Field(
+        default_factory=now_utc,
+        nullable=False,
+        sa_column_kwargs={"onupdate": now_utc},
+    )
+    completed_at: datetime | None = Field(default=None)
+
+
+class DeepResearchJob(DeepResearchJobBase, table=True):
+    """Represents a deep research job that processes queries using GPT Researcher."""
+
+    __tablename__ = "deep_research_jobs"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)

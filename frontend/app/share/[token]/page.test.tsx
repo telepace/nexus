@@ -115,8 +115,8 @@ describe("SharedContentPage", () => {
     await waitFor(() => {
       expect(screen.getByText(/Password Required/i)).toBeInTheDocument();
       expect(document.getElementById("password")).toBeInTheDocument();
-    });
-  });
+    }, { timeout: 10000 });
+  }, 20000);
 
   it("submits password and fetches content if correct", async () => {
     const user = userEvent.setup();

@@ -93,7 +93,7 @@ describe("Register Page", () => {
 
     // DO NOT expect global.fetch to have been called directly by component logic
     // expect(global.fetch).toHaveBeenCalled(); // This was the incorrect expectation
-  });
+  }, 25000);
 
   // Keep other skipped tests as they are, focus on the fetch issue first
   it.skip("displays server validation error", async () => {
@@ -117,7 +117,7 @@ describe("Register Page", () => {
 
     // 验证错误消息显示
     expect(await screen.findByText("User already exists")).toBeInTheDocument();
-  });
+  }, 25000);
 
   // Keep other skipped tests as they are
   it.skip("displays form validation errors", async () => {

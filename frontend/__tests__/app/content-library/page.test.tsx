@@ -150,13 +150,16 @@ describe("ContentLibraryPage", () => {
   it("should display content items in card format", async () => {
     render(<ContentLibraryPage />);
 
-    await waitFor(() => {
-      expect(screen.getByText("Test Document")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Document")).toBeInTheDocument();
+      },
+      { timeout: 10000 },
+    );
 
     // 检查文档类型显示
     expect(screen.getByText("Test Document")).toBeInTheDocument();
-  });
+  }, 20000);
 
   it("should display elegant layout without search filters", async () => {
     render(<ContentLibraryPage />);

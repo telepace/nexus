@@ -344,6 +344,9 @@ export default function OptimizedAddContentDialog({
 
   // 粘贴处理
   const handlePaste = useCallback((e: ClipboardEvent) => {
+    // 阻止浏览器默认粘贴行为，避免重复插入
+    e.preventDefault();
+
     const pastedText = e.clipboardData?.getData("text") || "";
     if (pastedText.trim()) {
       setContent(pastedText.trim());

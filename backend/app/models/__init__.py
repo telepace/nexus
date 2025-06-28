@@ -34,6 +34,7 @@ from .content import (
     ContentAsset,
     ContentItem,
     ContentShare,
+    DeepResearchJob,
     MessageSegmentReference,
     Segment,
 )
@@ -92,6 +93,7 @@ __all__ = [
     "ContentItem",
     "ContentAsset",
     "ContentShare",
+    "DeepResearchJob",
     "AIResult",
     "AIConversation",
     "Segment",

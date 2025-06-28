@@ -13,6 +13,11 @@ const inter = Inter({
 export const metadata = {
   title: "Nexus",
   description: "Nexus dashboard and management system",
+  // Favicon icons (shared with Telepace)
+  icons: [
+    { rel: "icon", url: "/favicon.ico" },
+    { rel: "icon", url: "/img/favicon.svg", type: "image/svg+xml" },
+  ],
 };
 
 export default function RootLayout({
