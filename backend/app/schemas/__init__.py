@@ -3,6 +3,12 @@ from .ai_conversations import (
     AIConversationDetail,
     AIConversationPublic,
 )
+from .deep_research import (
+    DeepResearchJobCreate,
+    DeepResearchJobPublic,
+    DeepResearchJobResponse,
+    DeepResearchJobResult,
+)
 from .image import (
     ImageBase,
     ImageCreate,
@@ -26,5 +32,9 @@ __all__ = [
     "AIConversationCreate",
     "AIConversationPublic",
     "AIConversationDetail",
+    "DeepResearchJobCreate",
+    "DeepResearchJobPublic",
+    "DeepResearchJobResponse",
+    "DeepResearchJobResult",
     # Add other schema names here as you create/import them
 ]

@@ -6,6 +6,7 @@ from app.api.routes import (
     content,  # Add content router
     conversations,  # Add conversations router
     dashboard,  # Add dashboard router
+    deep_research,  # Add deep research router
     extension_stream,  # Add extension stream router
     favorites,  # Add favorites router
     google_oauth,
@@ -58,6 +59,9 @@ api_router.include_router(
 api_router.include_router(
     conversations.router, prefix="/conversations", tags=["conversations"]
 )  # Include conversations router
+api_router.include_router(
+    deep_research.router, prefix="/deep-research", tags=["deep-research"]
+)  # Include deep research router
 
 
 if settings.ENVIRONMENT == "local":

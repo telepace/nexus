@@ -21,6 +21,7 @@ from app.models import (
     ContentAsset,
     ContentItem,
     ContentShare,
+    DeepResearchJob,
     Image,
     Project,
     Segment,
@@ -133,6 +134,7 @@ def db() -> Generator[Session, None, None]:
             session.execute(delete(ContentAsset))
             session.execute(delete(ContentShare))
             session.execute(delete(Favorite))  # Favorite 依赖于 ContentItem 和 User
+            session.execute(delete(DeepResearchJob))  # DeepResearchJob 依赖于 User
             session.execute(delete(ContentItem))  # ContentItem 依赖于 User
             session.execute(delete(Project))  # Project 可能依赖于 User
             # 删除 prompt_versions 表（在删除 prompts 之前）
@@ -175,6 +177,7 @@ def db() -> Generator[Session, None, None]:
             session.execute(delete(ContentAsset))
             session.execute(delete(ContentShare))
             session.execute(delete(Favorite))  # Favorite 依赖于 ContentItem 和 User
+            session.execute(delete(DeepResearchJob))  # DeepResearchJob 依赖于 User
             session.execute(delete(ContentItem))  # ContentItem 依赖于 User
             session.execute(delete(Project))  # Project 可能依赖于 User
             # 删除 prompt_versions 表（在删除 prompts 之前）
@@ -378,6 +381,8 @@ def cleanup_test_data(session: Session) -> None:
     session.execute(delete(Segment))
     session.execute(delete(ContentAsset))
     session.execute(delete(ContentShare))
+    session.execute(delete(Favorite))
+    session.execute(delete(DeepResearchJob))
     session.execute(delete(ContentItem))
     session.execute(delete(Image))
     session.execute(delete(Project))
@@ -394,6 +399,8 @@ def cleanup_tables(session: Session) -> None:
     session.execute(delete(Segment))
     session.execute(delete(ContentAsset))
     session.execute(delete(ContentShare))
+    session.execute(delete(Favorite))
+    session.execute(delete(DeepResearchJob))
     session.execute(delete(ContentItem))
     session.execute(delete(Image))
     session.execute(delete(Project))
