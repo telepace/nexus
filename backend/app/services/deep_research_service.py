@@ -188,15 +188,35 @@ class DeepResearchService:
                         "TAVILY_API_KEY not set, deep research may have limited search capabilities"
                     )
 
-                # 确保 GPT Researcher 使用与系统一致的模型
+                # 设置模型
                 default_model = getattr(settings, "DEFAULT_LLM_MODEL", "gpt-3.5-turbo")
-                os.environ.setdefault("FAST_LLM", f"openai:{default_model}")
-                os.environ.setdefault("SMART_LLM", f"openai:{default_model}")
-
-                # 设置在 LiteLLM 配置中映射到 OpenRouter 的 embedding 模型
-                os.environ.setdefault(
-                    "EMBEDDING", "openai:openai-text-embedding-3-small"
-                )
+                os.environ["FAST_LLM"] = f"openai:{default_model}"
+                os.environ["SMART_LLM"] = f"openai:{default_model}"
+                
+                # 修复 embedding 模型配置 - 始终使用直接的 OpenAI API
+                # 因为 OpenRouter 不支持 embedding 模型
+                if hasattr(settings, 'OPENAI_API_KEY') and settings.OPENAI_API_KEY:
+                    # 临时设置环境变量用于 embedding，不影响 LLM 调用
+                    original_openai_key = os.environ.get("OPENAI_API_KEY")
+                    original_openai_base = os.environ.get("OPENAI_API_BASE")
+                    
+                    # 为 embedding 设置直接的 OpenAI API
+                    os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
+                    if hasattr(settings, 'OPENAI_BASE_URL') and settings.OPENAI_BASE_URL:
+                        os.environ["OPENAI_API_BASE"] = settings.OPENAI_BASE_URL
+                    elif "OPENAI_API_BASE" in os.environ:
+                        # 移除可能的 LiteLLM proxy base URL
+                        del os.environ["OPENAI_API_BASE"]
+                    
+                    os.environ["EMBEDDING"] = "openai:text-embedding-3-small"
+                    print("✅ 设置 embedding 模型: text-embedding-3-small (direct OpenAI API)")
+                else:
+                    # 回退配置
+                    os.environ["EMBEDDING"] = "openai:text-embedding-3-small"
+                    print("⚠️ 使用默认 embedding 配置")
+                
+                print(f"✅ 设置模型: {default_model}")
+                print()
 
                 researcher = GPTResearcher(
                     query=query,

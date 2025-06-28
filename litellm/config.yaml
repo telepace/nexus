@@ -137,8 +137,9 @@ model_list:
 
   - model_name: openai-text-embedding-3-small
     litellm_params:
-      model: openrouter/openai/text-embedding-3-small
-      api_key: "os.environ/OR_API_KEY"
+      model: text-embedding-3-small
+      api_key: "os.environ/OPENAI_API_KEY"
+      api_base: "os.environ/OPENAI_BASE_URL"
 
 litellm_settings:
   drop_params: True
