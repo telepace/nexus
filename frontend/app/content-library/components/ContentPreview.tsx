@@ -52,7 +52,7 @@ export const ContentPreview = ({ item }: Props) => {
             Preview
           </div>
         </div>
-        <div className="pb-4 flex-1 overflow-auto mt-12">
+        <div className="pb-4 px-6 flex-1 overflow-auto mt-12">
           <div className="text-center py-12">
             <FileText className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-4" />
             <p className="text-sm text-muted-foreground">
@@ -116,7 +116,7 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
       </div>
 
       {/* Body */}
-      <div className="pb-4 flex-1 overflow-auto">
+      <div className="pb-4 px-6 flex-1 overflow-auto">
         <div className="space-y-6 max-w-[28rem] mx-auto">
           {/* 标题 */}
           <div className="mt-12">
