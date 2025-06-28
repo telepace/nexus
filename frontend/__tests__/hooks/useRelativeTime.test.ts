@@ -21,4 +21,4 @@ describe("calcRelativeLabelAndNext", () => {
     const { label } = _internalCalcRelative(now - 90000 * 1000, now); // 25h
     expect(label).toBe("1d");
   });
-}); 
+});

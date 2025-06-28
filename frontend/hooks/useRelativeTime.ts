@@ -36,7 +36,10 @@ function calcRelativeLabelAndNext(createdAt: number, now: number) {
  * @param createdAt ISO 字符串或 Date
  */
 export function useRelativeTime(createdAt: string | Date): string {
-  const createdMs = typeof createdAt === "string" ? new Date(createdAt).getTime() : createdAt.getTime();
+  const createdMs =
+    typeof createdAt === "string"
+      ? new Date(createdAt).getTime()
+      : createdAt.getTime();
   const [label, setLabel] = useState(() => {
     return calcRelativeLabelAndNext(createdMs, Date.now()).label;
   });
@@ -46,7 +49,10 @@ export function useRelativeTime(createdAt: string | Date): string {
 
   useEffect(() => {
     const update = () => {
-      const { label: newLabel, nextMs } = calcRelativeLabelAndNext(createdMs, Date.now());
+      const { label: newLabel, nextMs } = calcRelativeLabelAndNext(
+        createdMs,
+        Date.now(),
+      );
       setLabel(newLabel);
       timerRef.current = setTimeout(update, nextMs);
     };
@@ -63,4 +69,4 @@ export function useRelativeTime(createdAt: string | Date): string {
 }
 
 // 为单元测试暴露内部计算函数
-export const _internalCalcRelative = calcRelativeLabelAndNext; 
+export const _internalCalcRelative = calcRelativeLabelAndNext;

@@ -35,28 +35,36 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
     switch (notification.status) {
       case "processing":
         return {
-          icon: <Loader2 className="h-5 w-5 animate-spin text-[oklch(var(--color-primary))]" />,
+          icon: (
+            <Loader2 className="h-5 w-5 animate-spin text-[oklch(var(--color-primary))]" />
+          ),
           borderColor: "border-[oklch(var(--color-border))]",
           bgColor: "bg-[oklch(var(--color-accent))]",
           titleColor: "text-[oklch(var(--color-accent-foreground))]",
         };
       case "completed":
         return {
-          icon: <CheckCircle className="h-5 w-5 text-[oklch(var(--color-chart-1))]" />,
+          icon: (
+            <CheckCircle className="h-5 w-5 text-[oklch(var(--color-chart-1))]" />
+          ),
           borderColor: "border-[oklch(var(--color-border))]",
           bgColor: "bg-[oklch(var(--color-muted))]",
           titleColor: "text-[oklch(var(--color-foreground))]",
         };
       case "error":
         return {
-          icon: <AlertCircle className="h-5 w-5 text-[oklch(var(--color-destructive))]" />,
+          icon: (
+            <AlertCircle className="h-5 w-5 text-[oklch(var(--color-destructive))]" />
+          ),
           borderColor: "border-[oklch(var(--color-border))]",
           bgColor: "bg-[oklch(var(--color-destructive))]",
           titleColor: "text-[oklch(var(--color-destructive-foreground))]",
         };
       default:
         return {
-          icon: <AlertCircle className="h-5 w-5 text-[oklch(var(--color-muted-foreground))]" />,
+          icon: (
+            <AlertCircle className="h-5 w-5 text-[oklch(var(--color-muted-foreground))]" />
+          ),
           borderColor: "border-[oklch(var(--color-border))]",
           bgColor: "bg-[oklch(var(--color-muted))]",
           titleColor: "text-[oklch(var(--color-foreground))]",
