@@ -41,6 +41,7 @@ import {
   DeleteConfirmDialog,
   shouldSkipDeleteConfirm,
 } from "./DeleteConfirmDialog";
+import { useRelativeTime } from "@/hooks/useRelativeTime";
 
 interface Props {
   item: ContentItemPublic;
@@ -115,6 +116,9 @@ export const ContentCard = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // 相对时间标签
+  const relativeLabel = useRelativeTime(item.created_at);
 
   // 处理点击事件 - 立即跳转到阅读器
   const handleClick = (event: React.MouseEvent) => {
@@ -375,9 +379,7 @@ export const ContentCard = ({
                   size="sm"
                   className="text-neutral-400"
                 />
-                <span>
-                  {new Date(item.created_at).toLocaleDateString("zh-CN")}
-                </span>
+                <span>{relativeLabel}</span>
               </div>
             </div>
           </div>
