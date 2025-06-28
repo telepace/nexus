@@ -51,8 +51,8 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
         return {
           icon: <AlertCircle className="h-5 w-5 text-[oklch(var(--color-destructive))]" />,
           borderColor: "border-[oklch(var(--color-border))]",
-          bgColor: "bg-[oklch(var(--color-destructive)/0.1)]",
-          titleColor: "text-[oklch(var(--color-destructive))]",
+          bgColor: "bg-[oklch(var(--color-destructive))]",
+          titleColor: "text-[oklch(var(--color-destructive-foreground))]",
         };
       default:
         return {

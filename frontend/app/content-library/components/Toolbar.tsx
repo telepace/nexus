@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Filter, Grid3X3, List, ChevronDown, Tag } from "lucide-react";
+import { Search, Filter, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,7 +34,7 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
   const [search, setSearch] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("time");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode] = useState<ViewMode>("grid");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
   // 从所有内容项中提取唯一标签
@@ -99,18 +99,36 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
               onOpenChange={setShowFilterDropdown}
             >
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 px-2 flex items-center gap-1"
+                >
                   <Filter className="h-4 w-4" />
-                  <span>筛选</span>
                   {selectedTags.length > 0 && (
                     <Badge variant="secondary" className="h-5 px-1.5 text-xs">
                       {selectedTags.length}
                     </Badge>
                   )}
-                  <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-80">
+                {/* 排序方式 */}
+                <DropdownMenuLabel>排序方式</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {sortOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => setSortBy(option.value)}
+                    className={sortBy === option.value ? "bg-accent" : ""}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+
+                <DropdownMenuSeparator />
+
+                {/* 按标签筛选 */}
                 <DropdownMenuLabel className="flex items-center gap-2">
                   <Tag className="h-4 w-4" />
                   按标签筛选
@@ -205,53 +223,7 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
             />
           </div>
 
-          {/* 右侧：排序和视图控制 */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* 排序选择 */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9 gap-2">
-                  <span>
-                    {sortOptions.find((opt) => opt.value === sortBy)?.label}
-                  </span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>排序方式</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {sortOptions.map((option) => (
-                  <DropdownMenuItem
-                    key={option.value}
-                    onClick={() => setSortBy(option.value)}
-                    className={sortBy === option.value ? "bg-accent" : ""}
-                  >
-                    {option.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* 视图切换 */}
-            <div className="flex border rounded-md overflow-hidden">
-              <Button
-                variant={viewMode === "grid" ? "default" : "ghost"}
-                size="sm"
-                className="h-9 px-2.5 rounded-none"
-                onClick={() => setViewMode("grid")}
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
-                size="sm"
-                className="h-9 px-2.5 rounded-none"
-                onClick={() => setViewMode("list")}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          {/* 右侧控件已合并/移除 */}
         </div>
       </div>
     </div>
