@@ -5,13 +5,13 @@
 }
 
 @keyframes contentFadeIn {
-  from { 
-    opacity: 0; 
-    transform: translateY(20px); 
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -71,9 +71,10 @@
 
 /* 加载状态 */
 .loadingShimmer {
-  background: linear-gradient(90deg, 
-    hsla(var(--muted), 0.3) 25%, 
-    hsla(var(--muted), 0.5) 50%, 
+  background: linear-gradient(
+    90deg,
+    hsla(var(--muted), 0.3) 25%,
+    hsla(var(--muted), 0.5) 50%,
     hsla(var(--muted), 0.3) 75%
   );
   background-size: 200% 100%;
@@ -106,4 +107,4 @@
   .responsiveGrid {
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   }
-} 
+}

@@ -40,19 +40,20 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
   // 从所有内容项中提取唯一标签
   const allTags = Array.from(
     new Set(
-      items
-        .flatMap(item => item.ai_result?.labels || [])
-        .filter(Boolean)
-    )
+      items.flatMap((item) => item.ai_result?.labels || []).filter(Boolean),
+    ),
   ).sort();
 
   // 计算每个标签的使用次数
-  const tagCounts = allTags.reduce((acc, tag) => {
-    acc[tag] = items.filter(item => 
-      item.ai_result?.labels?.includes(tag)
-    ).length;
-    return acc;
-  }, {} as Record<string, number>);
+  const tagCounts = allTags.reduce(
+    (acc, tag) => {
+      acc[tag] = items.filter((item) =>
+        item.ai_result?.labels?.includes(tag),
+      ).length;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   // 当筛选条件变化时通知父组件
   useEffect(() => {
@@ -66,10 +67,8 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
 
   // 处理标签选择
   const handleTagToggle = (tag: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tag)
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   };
 
@@ -95,13 +94,12 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
         <div className="flex items-center gap-3">
           {/* 左侧：标签筛选 */}
           <div className="flex items-center gap-2 shrink-0">
-            <DropdownMenu open={showFilterDropdown} onOpenChange={setShowFilterDropdown}>
+            <DropdownMenu
+              open={showFilterDropdown}
+              onOpenChange={setShowFilterDropdown}
+            >
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="h-9 gap-2"
-                >
+                <Button variant="outline" size="sm" className="h-9 gap-2">
                   <Filter className="h-4 w-4" />
                   <span>筛选</span>
                   {selectedTags.length > 0 && (
@@ -118,25 +116,27 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
                   按标签筛选
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                
+
                 {allTags.length === 0 ? (
                   <div className="px-2 py-6 text-center text-sm text-muted-foreground">
                     暂无可用标签
                   </div>
                 ) : (
                   <div className="max-h-64 overflow-y-auto">
-                    {allTags.map(tag => (
+                    {allTags.map((tag) => (
                       <DropdownMenuItem
                         key={tag}
                         className="flex items-center justify-between cursor-pointer"
                         onClick={() => handleTagToggle(tag)}
                       >
                         <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${
-                            selectedTags.includes(tag) 
-                              ? "bg-primary" 
-                              : "bg-muted"
-                          }`} />
+                          <div
+                            className={`w-2 h-2 rounded-full ${
+                              selectedTags.includes(tag)
+                                ? "bg-primary"
+                                : "bg-muted"
+                            }`}
+                          />
                           <span className="truncate">{tag}</span>
                         </div>
                         <Badge variant="outline" className="h-5 px-1.5 text-xs">
@@ -146,7 +146,7 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
                     ))}
                   </div>
                 )}
-                
+
                 {selectedTags.length > 0 && (
                   <>
                     <DropdownMenuSeparator />
@@ -164,7 +164,7 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
             {/* 已选择的标签 - 紧凑显示 */}
             {selectedTags.length > 0 && (
               <div className="flex items-center gap-1 max-w-48 overflow-x-auto">
-                {selectedTags.slice(0, 2).map(tag => (
+                {selectedTags.slice(0, 2).map((tag) => (
                   <Badge
                     key={tag}
                     variant="secondary"
@@ -211,14 +211,16 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="h-9 gap-2">
-                  <span>{sortOptions.find(opt => opt.value === sortBy)?.label}</span>
+                  <span>
+                    {sortOptions.find((opt) => opt.value === sortBy)?.label}
+                  </span>
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>排序方式</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {sortOptions.map(option => (
+                {sortOptions.map((option) => (
                   <DropdownMenuItem
                     key={option.value}
                     onClick={() => setSortBy(option.value)}
@@ -254,4 +256,4 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
       </div>
     </div>
   );
-}; 
+};

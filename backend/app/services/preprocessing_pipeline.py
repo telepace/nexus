@@ -375,7 +375,12 @@ class PreprocessingPipeline:
         logger.debug("执行存储层处理")
 
         start_time = datetime.now()
-        storage_stats = {"segments_saved": 0, "ai_result_saved": False, "tags_created": 0, "tag_associations_created": 0}
+        storage_stats = {
+            "segments_saved": 0,
+            "ai_result_saved": False,
+            "tags_created": 0,
+            "tag_associations_created": 0,
+        }
 
         try:
             # 获取数据库会话
@@ -406,12 +411,18 @@ class PreprocessingPipeline:
                 try:
                     logger.info(f"🏷️ 开始处理AI生成的标签，内容ID: {content_id}")
                     # 从AI结果中处理标签
-                    created_tags = ai_tag_processor.process_and_create_tags_from_ai_result(
-                        session, ai_results, content_id
+                    created_tags = (
+                        ai_tag_processor.process_and_create_tags_from_ai_result(
+                            session, ai_results, content_id
+                        )
                     )
                     storage_stats["tags_created"] = len(created_tags)
-                    storage_stats["tag_associations_created"] = len(created_tags)  # 每个标签都会创建一个关联
-                    logger.info(f"✅ 标签处理完成: 为内容 {content_id} 成功处理了 {len(created_tags)} 个标签")
+                    storage_stats["tag_associations_created"] = len(
+                        created_tags
+                    )  # 每个标签都会创建一个关联
+                    logger.info(
+                        f"✅ 标签处理完成: 为内容 {content_id} 成功处理了 {len(created_tags)} 个标签"
+                    )
                     if created_tags:
                         tag_names = [tag.name for tag in created_tags]
                         logger.info(f"🏷️ 已创建的标签: {tag_names}")
@@ -424,8 +435,10 @@ class PreprocessingPipeline:
                 try:
                     # 确保从content_analysis中提取阅读时间
                     content_analysis = ai_results.get("content_analysis", {})
-                    reading_time = content_analysis.get("reading_time_minutes") or ai_results.get("reading_time_minutes")
-                    
+                    reading_time = content_analysis.get(
+                        "reading_time_minutes"
+                    ) or ai_results.get("reading_time_minutes")
+
                     ai_result = AIResult(
                         content_item_id=uuid.UUID(content_id),
                         summary=ai_results.get("summary"),
@@ -446,29 +459,36 @@ class PreprocessingPipeline:
                     content_item.processing_status = "completed"
                     content_item.error_message = None
                     content_item.last_processed_at = datetime.utcnow()
-                    
+
                     # 更新内容项的优化标题和描述（如果AI生成了）
                     optimized_title = ai_results.get("optimized_title")
                     brief_description = ai_results.get("brief_description")
-                    
+
                     if optimized_title and optimized_title.strip():
                         # 如果原标题为空或者AI生成的标题更好，则更新
-                        if not content_item.title or len(optimized_title) > len(content_item.title or ""):
+                        if not content_item.title or len(optimized_title) > len(
+                            content_item.title or ""
+                        ):
                             content_item.title = optimized_title
                             logger.info(f"更新内容标题: {optimized_title}")
-                    
+
                     if brief_description and brief_description.strip():
                         # 更新摘要字段（如果存在）
-                        if hasattr(content_item, 'summary') and (not content_item.summary or len(brief_description) > len(content_item.summary or "")):
+                        if hasattr(content_item, "summary") and (
+                            not content_item.summary
+                            or len(brief_description) > len(content_item.summary or "")
+                        ):
                             content_item.summary = brief_description
                             logger.info(f"更新内容摘要: {brief_description[:50]}...")
-                    
+
                     session.add(content_item)
                 except Exception as e:
                     logger.error(f"更新ContentItem失败: {str(e)}")
 
                 session.commit()
-                logger.info(f"存储层处理完成 - 标签: {storage_stats['tags_created']}, 关联: {storage_stats['tag_associations_created']}")
+                logger.info(
+                    f"存储层处理完成 - 标签: {storage_stats['tags_created']}, 关联: {storage_stats['tag_associations_created']}"
+                )
 
         except Exception as e:
             logger.error(f"存储层处理失败: {str(e)}")
@@ -593,7 +613,9 @@ class PreprocessingPipeline:
             ):
                 reading_time_minutes = None
 
-            logger.info(f"✅ 标签生成成功: 生成了 {len(tags)} 个标签, 评分: {score}, 阅读时间: {reading_time_minutes}分钟")
+            logger.info(
+                f"✅ 标签生成成功: 生成了 {len(tags)} 个标签, 评分: {score}, 阅读时间: {reading_time_minutes}分钟"
+            )
             if tags:
                 logger.info(f"🏷️ 生成的标签列表: {tags}")
 

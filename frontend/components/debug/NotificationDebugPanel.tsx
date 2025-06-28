@@ -20,7 +20,7 @@ const NotificationDebugPanel: React.FC = () => {
     // 测试从0开始的进度更新
     const contentId = `test-progress-${Date.now()}`;
     console.log(`🧪 开始测试从0开始的进度更新:`, { contentId });
-    
+
     createContentProcessingNotification(
       contentId,
       "测试进度更新",
@@ -29,12 +29,12 @@ const NotificationDebugPanel: React.FC = () => {
 
     // 模拟后端SSE事件，从0%开始
     const progressSteps = [0, 10, 25, 50, 75, 90, 100];
-    
+
     progressSteps.forEach((progress, index) => {
       setTimeout(() => {
         console.log(`📊 模拟进度更新:`, { contentId, progress });
         updateContentProgress(contentId, progress, `处理进度 ${progress}%`);
-        
+
         if (progress === 100) {
           setTimeout(() => {
             createContentCompletedNotification(
@@ -114,7 +114,11 @@ const NotificationDebugPanel: React.FC = () => {
             测试通知流程
           </Button>
 
-          <Button onClick={testProgressFromZero} variant="outline" className="w-full">
+          <Button
+            onClick={testProgressFromZero}
+            variant="outline"
+            className="w-full"
+          >
             🔧 测试从0%开始的进度更新
           </Button>
 

@@ -3,23 +3,25 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  RefreshCw, 
-  Search, 
-  Filter,
+import {
+  RefreshCw,
+  Search,
   FileText,
   Lightbulb,
   Tags,
   BarChart3,
+  AlertCircle,
+  Globe,
+  Type,
   Clock,
-  AlertCircle
+  RotateCcw,
 } from "lucide-react";
 import { useAuth } from "@/lib/client-auth";
 import { DetailedProcessingStatus } from "@/components/ui/DetailedProcessingStatus";
 import { ProcessingStatusBadge } from "@/components/ui/ProcessingStatusBadge";
+import type { ProcessingStatus } from "@/components/ui/ProcessingStatusBadge";
 import MainLayout from "@/components/layout/MainLayout";
 
 interface ContentProcessingItem {
@@ -65,7 +67,7 @@ export default function ProcessingMonitorPage() {
   const loadProcessingData = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // 这里应该调用实际的 API，现在使用模拟数据
       const mockItems: ContentProcessingItem[] = [
@@ -78,13 +80,13 @@ export default function ProcessingMonitorPage() {
           updated_at: "2024-01-15T10:35:00Z",
           ai_processing_details: {
             summary_status: "completed",
-            key_points_status: "completed", 
+            key_points_status: "completed",
             labels_status: "processing",
-            content_analysis_status: "completed"
-          }
+            content_analysis_status: "completed",
+          },
         },
         {
-          id: "2", 
+          id: "2",
           title: "深度学习算法详解",
           type: "pdf",
           processing_status: "completed",
@@ -93,25 +95,25 @@ export default function ProcessingMonitorPage() {
           ai_processing_details: {
             summary_status: "completed",
             key_points_status: "completed",
-            labels_status: "completed", 
-            content_analysis_status: "completed"
-          }
+            labels_status: "completed",
+            content_analysis_status: "completed",
+          },
         },
         {
           id: "3",
           title: "Python 编程指南",
           type: "text",
           processing_status: "failed",
-          created_at: "2024-01-15T08:20:00Z", 
+          created_at: "2024-01-15T08:20:00Z",
           updated_at: "2024-01-15T08:25:00Z",
           error_message: "标签生成失败：API 调用超时",
           ai_processing_details: {
             summary_status: "completed",
             key_points_status: "completed",
             labels_status: "failed",
-            content_analysis_status: "completed"
-          }
-        }
+            content_analysis_status: "completed",
+          },
+        },
       ];
 
       const mockStats: ProcessingStats = {
@@ -123,8 +125,8 @@ export default function ProcessingMonitorPage() {
         ai_tasks_summary: {
           summary_completed: 32,
           key_points_completed: 30,
-          labels_completed: 25
-        }
+          labels_completed: 25,
+        },
       };
 
       setItems(mockItems);
@@ -140,15 +142,26 @@ export default function ProcessingMonitorPage() {
 
   useEffect(() => {
     loadProcessingData();
-    
+
     // 设置自动刷新
     const interval = setInterval(loadProcessingData, 10000); // 每10秒刷新
     return () => clearInterval(interval);
   }, []);
 
-  const filteredItems = items.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || item.processing_status === statusFilter;
+  // 模拟 API 调用重新处理
+  const retryProcessing = async (itemId: string) => {
+    console.log(`重新处理项目: ${itemId}`);
+    // 这里应该调用实际的重新处理 API
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await loadProcessingData();
+  };
+
+  const filteredItems = items.filter((item) => {
+    const matchesSearch = item.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || item.processing_status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -156,7 +169,7 @@ export default function ProcessingMonitorPage() {
     return new Date(dateString).toLocaleTimeString("zh-CN", {
       hour: "2-digit",
       minute: "2-digit",
-      second: "2-digit"
+      second: "2-digit",
     });
   };
 
@@ -169,7 +182,9 @@ export default function ProcessingMonitorPage() {
               <div className="text-center">
                 <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">访问被拒绝</h3>
-                <p className="text-muted-foreground">只有管理员可以访问处理监控页面</p>
+                <p className="text-muted-foreground">
+                  只有管理员可以访问处理监控页面
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -196,7 +211,9 @@ export default function ProcessingMonitorPage() {
               onClick={loadProcessingData}
               disabled={isLoading}
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+              />
               刷新
             </Button>
             <span className="text-xs text-muted-foreground">
@@ -226,7 +243,9 @@ export default function ProcessingMonitorPage() {
                   <BarChart3 className="h-4 w-4 text-green-500" />
                   <div>
                     <p className="text-sm font-medium">摘要完成</p>
-                    <p className="text-2xl font-bold">{stats.ai_tasks_summary.summary_completed}</p>
+                    <p className="text-2xl font-bold">
+                      {stats.ai_tasks_summary.summary_completed}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -238,7 +257,9 @@ export default function ProcessingMonitorPage() {
                   <Lightbulb className="h-4 w-4 text-yellow-500" />
                   <div>
                     <p className="text-sm font-medium">要点完成</p>
-                    <p className="text-2xl font-bold">{stats.ai_tasks_summary.key_points_completed}</p>
+                    <p className="text-2xl font-bold">
+                      {stats.ai_tasks_summary.key_points_completed}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -250,7 +271,9 @@ export default function ProcessingMonitorPage() {
                   <Tags className="h-4 w-4 text-purple-500" />
                   <div>
                     <p className="text-sm font-medium">标签完成</p>
-                    <p className="text-2xl font-bold">{stats.ai_tasks_summary.labels_completed}</p>
+                    <p className="text-2xl font-bold">
+                      {stats.ai_tasks_summary.labels_completed}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -319,43 +342,80 @@ export default function ProcessingMonitorPage() {
             ) : (
               <div className="space-y-4">
                 {filteredItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="border border-border rounded-lg p-4 space-y-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-medium">{item.title}</h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline">{item.type}</Badge>
-                          <ProcessingStatusBadge status={item.processing_status as any} />
-                          <span className="text-xs text-muted-foreground">
-                            创建于 {formatTime(item.created_at)}
-                          </span>
+                  <Card key={item.id} className="border-l-4 border-l-blue-200">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            {item.type === "url" && (
+                              <Globe className="h-4 w-4 text-blue-500" />
+                            )}
+                            {item.type === "pdf" && (
+                              <FileText className="h-4 w-4 text-red-500" />
+                            )}
+                            {item.type === "text" && (
+                              <Type className="h-4 w-4 text-gray-500" />
+                            )}
+                            <CardTitle className="text-base">
+                              {item.title}
+                            </CardTitle>
+                          </div>
+                          <ProcessingStatusBadge
+                            status={item.processing_status}
+                          />
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          {formatTime(item.updated_at)}
                         </div>
                       </div>
-                    </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {/* AI 处理详情 */}
+                        {item.ai_processing_details && (
+                          <DetailedProcessingStatus
+                            overallStatus={
+                              item.processing_status as ProcessingStatus
+                            }
+                            steps={{
+                              content_extraction: "completed",
+                              summary:
+                                item.ai_processing_details.summary_status,
+                              key_points:
+                                item.ai_processing_details.key_points_status,
+                              labels: item.ai_processing_details.labels_status,
+                            }}
+                            compact
+                          />
+                        )}
 
-                    {item.error_message && (
-                      <div className="p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-600 dark:text-red-400">
-                        {item.error_message}
+                        {/* 错误信息 */}
+                        {item.error_message && (
+                          <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-medium text-red-800">
+                                处理失败
+                              </p>
+                              <p className="text-sm text-red-600 mt-1">
+                                {item.error_message}
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => retryProcessing(item.id)}
+                              className="ml-auto"
+                            >
+                              <RotateCcw className="h-3 w-3 mr-1" />
+                              重试
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    )}
-
-                    {/* 详细处理状态 */}
-                    {item.ai_processing_details && (
-                      <DetailedProcessingStatus
-                        overallStatus={item.processing_status as any}
-                        steps={{
-                          content_extraction: item.processing_status as any,
-                          summary: item.ai_processing_details.summary_status,
-                          key_points: item.ai_processing_details.key_points_status,
-                          labels: item.ai_processing_details.labels_status,
-                        }}
-                        compact={true}
-                      />
-                    )}
-                  </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
@@ -364,4 +424,4 @@ export default function ProcessingMonitorPage() {
       </div>
     </MainLayout>
   );
-} 
+}

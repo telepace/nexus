@@ -1,38 +1,42 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   X,
   Search,
   Sparkles,
   ArrowRight,
   Zap,
-  Link as LinkIcon,
   FileText,
   Type,
   Upload,
-  Image,
-  Video,
   File,
   Plus,
   Trash2,
   AlertCircle,
+  BookOpen,
+  Camera,
+  Film,
+  FileImage,
+  Paperclip,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
 import { contentCache } from "@/lib/services/content-cache";
 import { eventBus } from "@/lib/event-bus";
 import { useGlobalNotificationStore } from "@/lib/stores/useGlobalNotificationStore";
 
-// 极简基础组件 - 基于参考设计
+// 更精致的基础组件
 const Dialog = ({ children, open, onOpenChange }) => {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="fixed inset-0 bg-black/3 backdrop-blur-[2px]"
+        className="fixed inset-0 bg-black/5 backdrop-blur-[3px] transition-all duration-300"
         onClick={() => onOpenChange(false)}
       />
-      <div className="relative z-10">{children}</div>
+      <div className="relative z-10 transition-all duration-300 ease-out">
+        {children}
+      </div>
     </div>
   );
 };
@@ -46,24 +50,28 @@ const Button = ({
   size = "default",
 }) => {
   const variants = {
-    default: "bg-gray-900 text-white hover:bg-gray-800",
-    research: "bg-blue-600 text-white hover:bg-blue-700",
-    upload: "bg-green-600 text-white hover:bg-green-700",
-    ghost: "text-gray-400 hover:text-gray-600",
+    default:
+      "bg-gray-900 text-white hover:bg-gray-800 shadow-sm hover:shadow-md",
+    research:
+      "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-sm hover:shadow-md",
+    upload:
+      "bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 shadow-sm hover:shadow-md",
+    ghost: "text-gray-500 hover:text-gray-700 hover:bg-gray-50",
     destructive: "text-red-500 hover:text-red-700 hover:bg-red-50",
+    secondary: "bg-gray-100 text-gray-700 hover:bg-gray-200",
   };
 
   const sizes = {
-    default: "h-7 px-3 text-xs",
-    sm: "h-6 px-2 text-xs",
-    lg: "h-9 px-4 text-sm",
+    default: "h-8 px-4 text-sm",
+    sm: "h-6 px-3 text-xs",
+    lg: "h-10 px-5 text-sm",
   };
 
   return (
     <button
       className={`
         inline-flex items-center justify-center rounded-lg font-medium 
-        transition-all duration-150 focus:outline-none
+        transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20
         disabled:opacity-50 disabled:pointer-events-none
         ${sizes[size]}
         ${variants[variant]} ${className}
@@ -76,12 +84,7 @@ const Button = ({
   );
 };
 
-interface AddContentModalProps {
-  open: boolean;
-  onClose: () => void;
-}
-
-// 与内容库页面保持一致的公共内容项类型定义
+// 内容项类型定义
 interface ContentItemPublic {
   id: string;
   type: string;
@@ -95,194 +98,238 @@ interface ContentItemPublic {
   ai_analysis?: unknown | null;
 }
 
-// 文件类型检测
+// 增强的文件类型检测
 const getFileType = (file: File) => {
   const { type, name } = file;
   const extension = name.split(".").pop()?.toLowerCase();
 
-  if (type.startsWith("image/")) return "image";
-  if (type.startsWith("video/")) return "video";
-  if (type.includes("pdf")) return "pdf";
-  if (type.includes("word") || extension === "docx" || extension === "doc")
-    return "document";
-  if (type.includes("text") || extension === "txt" || extension === "md")
-    return "text";
-  return "file";
-};
-
-// 增强的内容分析 - 基于参考代码的分析逻辑
-const analyzeContent = (text: string, files: File[] = []) => {
-  if (!text.trim() && files.length === 0) return null;
-
-  // 优先分析文件
-  if (files.length > 0) {
-    const fileTypes = files.map(getFileType);
-    const uniqueTypes = [...new Set(fileTypes)];
-
-    if (uniqueTypes.includes("image")) {
-      return {
-        type: "images",
-        icon: Image,
-        label: `${files.length} 张图片`,
-        color: "text-purple-600",
-        bgColor: "bg-purple-50",
-        borderColor: "border-purple-100",
-      };
-    }
-
-    if (uniqueTypes.includes("video")) {
-      return {
-        type: "videos",
-        icon: Video,
-        label: `${files.length} 个视频`,
-        color: "text-orange-600",
-        bgColor: "bg-orange-50",
-        borderColor: "border-orange-100",
-      };
-    }
-
-    if (uniqueTypes.includes("pdf") || uniqueTypes.includes("document")) {
-      return {
-        type: "documents",
-        icon: FileText,
-        label: `${files.length} 个文档`,
-        color: "text-blue-600",
-        bgColor: "bg-blue-50",
-        borderColor: "border-blue-100",
-      };
-    }
-
+  // 图片类型
+  if (type.startsWith("image/")) {
     return {
-      type: "files",
-      icon: File,
-      label: `${files.length} 个文件`,
-      color: "text-gray-600",
-      bgColor: "bg-gray-50",
-      borderColor: "border-gray-100",
-    };
-  }
-
-  const trimmedText = text.trim();
-
-  // 检测链接
-  const urlRegex = /https?:\/\/[^\s\n]+/g;
-  const urls = text.match(urlRegex);
-  if (urls && urls.length > 0) {
-    return {
-      type: "link",
-      icon: LinkIcon,
-      label: `${urls.length} 个链接`,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
-      borderColor: "border-green-100",
-    };
-  }
-
-  // 检测研究需求 - 增强的关键词
-  const researchKeywords = [
-    "如何",
-    "什么",
-    "为什么",
-    "分析",
-    "研究",
-    "趋势",
-    "发展",
-    "影响",
-    "比较",
-    "评估",
-    "调查",
-    "报告",
-  ];
-  const isQuestion = trimmedText.includes("?") || trimmedText.includes("？");
-  const isShortRequest =
-    trimmedText.length < 100 && trimmedText.split("\n").length <= 2;
-  const hasResearchKeywords = researchKeywords.some((keyword) =>
-    trimmedText.includes(keyword),
-  );
-
-  if ((isQuestion || hasResearchKeywords) && isShortRequest) {
-    return {
-      type: "research",
-      icon: Search,
-      label: "Deep Research",
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-100",
-    };
-  }
-
-  // 检测长文章
-  if (text.length > 500) {
-    return {
-      type: "article",
-      icon: FileText,
-      label: "长文章",
+      category: "image",
+      icon: FileImage,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
       borderColor: "border-purple-100",
     };
   }
 
-  // 检测多行文本
-  if (text.includes("\n") && text.split("\n").length > 3) {
+  // 视频类型
+  if (type.startsWith("video/")) {
     return {
-      type: "multiline",
+      category: "video",
+      icon: Film,
+      color: "text-orange-600",
+      bgColor: "bg-orange-50",
+      borderColor: "border-orange-100",
+    };
+  }
+
+  // PDF
+  if (type.includes("pdf")) {
+    return {
+      category: "pdf",
+      icon: FileText,
+      color: "text-red-600",
+      bgColor: "bg-red-50",
+      borderColor: "border-red-100",
+    };
+  }
+
+  // 文档
+  if (type.includes("word") || extension === "docx" || extension === "doc") {
+    return {
+      category: "document",
+      icon: FileText,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+      borderColor: "border-blue-100",
+    };
+  }
+
+  // 文本
+  if (type.includes("text") || extension === "txt" || extension === "md") {
+    return {
+      category: "text",
       icon: Type,
-      label: "多行文本",
       color: "text-gray-600",
       bgColor: "bg-gray-50",
       borderColor: "border-gray-100",
     };
   }
 
+  // 默认文件
   return {
-    type: "text",
-    icon: Type,
-    label: "文本",
+    category: "file",
+    icon: Paperclip,
     color: "text-gray-600",
     bgColor: "bg-gray-50",
     borderColor: "border-gray-100",
   };
 };
 
-// URL检测和提取
-const isURL = (text: string) => {
-  try {
-    new URL(text);
-    return true;
-  } catch {
-    return false;
+// 增强的内容分析系统
+const analyzeContent = (text: string, files: File[] = []) => {
+  if (!text.trim() && files.length === 0) return null;
+
+  // 文件分析优先
+  if (files.length > 0) {
+    const fileTypes = files.map(getFileType);
+    const categories = [...new Set(fileTypes.map((ft) => ft.category))];
+
+    if (categories.includes("image")) {
+      return {
+        type: "images",
+        icon: Camera,
+        label: `${files.length} 张图片`,
+        color: "text-purple-600",
+        bgColor: "bg-purple-50",
+        borderColor: "border-purple-100",
+        description: "即将分析图片内容",
+      };
+    }
+
+    if (categories.includes("video")) {
+      return {
+        type: "videos",
+        icon: Film,
+        label: `${files.length} 个视频`,
+        color: "text-orange-600",
+        bgColor: "bg-orange-50",
+        borderColor: "border-orange-100",
+        description: "即将提取视频内容",
+      };
+    }
+
+    if (categories.includes("pdf") || categories.includes("document")) {
+      return {
+        type: "documents",
+        icon: BookOpen,
+        label: `${files.length} 个文档`,
+        color: "text-blue-600",
+        bgColor: "bg-blue-50",
+        borderColor: "border-blue-100",
+        description: "即将解析文档内容",
+      };
+    }
+
+    return {
+      type: "files",
+      icon: Paperclip,
+      label: `${files.length} 个文件`,
+      color: "text-gray-600",
+      bgColor: "bg-gray-50",
+      borderColor: "border-gray-100",
+      description: "即将处理文件",
+    };
   }
+
+  const trimmedText = text.trim();
+
+  // URL检测
+  const urlRegex = /https?:\/\/[^\s\n]+/g;
+  const urls = text.match(urlRegex);
+  if (urls && urls.length > 0) {
+    return {
+      type: "link",
+      icon: Globe,
+      label: `${urls.length} 个链接`,
+      color: "text-green-600",
+      bgColor: "bg-green-50",
+      borderColor: "border-green-100",
+      description: "即将获取网页内容",
+    };
+  }
+
+  // 研究需求检测 - 更智能的算法
+  const researchPatterns = [
+    /^(如何|怎么|怎样)/,
+    /^(什么是|什么叫)/,
+    /^(为什么|为何)/,
+    /(分析|研究|调查|报告)/,
+    /(趋势|发展|影响|前景)/,
+    /(比较|对比|评估|判断)/,
+    /[？?]$/,
+  ];
+
+  const isQuestion = trimmedText.includes("?") || trimmedText.includes("？");
+  const isShortRequest =
+    trimmedText.length < 150 && trimmedText.split("\n").length <= 3;
+  const hasResearchPattern = researchPatterns.some((pattern) =>
+    pattern.test(trimmedText),
+  );
+
+  if ((isQuestion || hasResearchPattern) && isShortRequest) {
+    return {
+      type: "research",
+      icon: Search,
+      label: "AI 研究",
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+      borderColor: "border-blue-100",
+      description: "即将进行深度研究分析",
+    };
+  }
+
+  // 长文章检测
+  if (text.length > 800) {
+    return {
+      type: "article",
+      icon: BookOpen,
+      label: "长文章",
+      color: "text-purple-600",
+      bgColor: "bg-purple-50",
+      borderColor: "border-purple-100",
+      description: "即将分析文章内容",
+    };
+  }
+
+  // 多段落文本
+  if (
+    text.includes("\n") &&
+    text.split("\n").filter((line) => line.trim()).length > 3
+  ) {
+    return {
+      type: "multiline",
+      icon: Type,
+      label: "多段落文本",
+      color: "text-gray-600",
+      bgColor: "bg-gray-50",
+      borderColor: "border-gray-100",
+      description: "即将处理文本内容",
+    };
+  }
+
+  // 默认文本
+  return {
+    type: "text",
+    icon: Type,
+    label: "文本内容",
+    color: "text-gray-600",
+    bgColor: "bg-gray-50",
+    borderColor: "border-gray-100",
+    description: "即将保存文本",
+  };
 };
 
+// URL提取
 const extractUrls = (text: string) => {
-  const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
-  const urls = text.match(urlRegex) || [];
-
-  return urls
-    .map((url: string) => {
-      const cleanedUrl = url.replace(/[.,;:!?]+$/, "");
-      return isURL(cleanedUrl) ? cleanedUrl : null;
-    })
-    .filter((url): url is string => url !== null);
+  const urlRegex = /https?:\/\/[^\s\n]+/g;
+  return text.match(urlRegex) || [];
 };
 
-/**
- * 优化重构的添加内容模态框组件
- *
- * 基于参考代码的设计风格和技巧进行重构：
- * - 固定尺寸容器，避免界面跳动
- * - 智能内容分析和类型检测
- * - 统一的视觉语言和交互体验
- * - 优化的文件拖拽和上传流程
- */
-export const AddContentModal: React.FC<AddContentModalProps> = ({
+interface EnhancedAddContentDialogProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function EnhancedAddContentDialog({
   open,
   onClose,
-}) => {
+}: EnhancedAddContentDialogProps) {
   const [content, setContent] = useState("");
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState("");
 
@@ -294,21 +341,17 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   const { createContentProcessingNotification } = useGlobalNotificationStore();
 
   // 内容分析
-  const contentAnalysis = analyzeContent(content, selectedFiles);
+  const contentAnalysis = analyzeContent(content, files);
   const isResearch = contentAnalysis?.type === "research";
   const detectedUrls = extractUrls(content);
 
-  // 自适应高度 - 固定高度，避免跳动
+  // 自适应高度
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
-      const scrollHeight = textarea.scrollHeight;
-      const currentHeight = parseInt(textarea.style.height) || 120;
-
-      if (scrollHeight > currentHeight) {
-        const newHeight = Math.min(scrollHeight, 180);
-        textarea.style.height = newHeight + "px";
-      }
+      textarea.style.height = "auto";
+      const scrollHeight = Math.min(textarea.scrollHeight, 200);
+      textarea.style.height = Math.max(scrollHeight, 100) + "px";
     }
   }, [content]);
 
@@ -316,38 +359,40 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
-        const filesArray = Array.from(e.target.files);
-        setSelectedFiles((prev) => [...prev, ...filesArray]);
+        const newFiles = Array.from(e.target.files);
+        setFiles((prev) => [...prev, ...newFiles]);
+        setError("");
       }
     },
     [],
   );
 
   const removeFile = useCallback((index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   // 拖拽处理
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(true);
   }, []);
 
-  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
   }, []);
 
-  const handleDropFiles = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
 
     const droppedFiles = Array.from(e.dataTransfer.files || []);
     if (droppedFiles.length > 0) {
-      setSelectedFiles((prev) => [...prev, ...droppedFiles]);
+      setFiles((prev) => [...prev, ...droppedFiles]);
+      setError("");
     }
   }, []);
 
@@ -356,14 +401,15 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
     const pastedText = e.clipboardData?.getData("text") || "";
     if (pastedText.trim()) {
       setContent(pastedText.trim());
+      setError("");
     }
   }, []);
 
-  // 提交处理 - 优化的逻辑
+  // 提交处理
   const handleSubmit = useCallback(async () => {
-    if (!content.trim() && selectedFiles.length === 0) return;
+    if (!content.trim() && files.length === 0) return;
 
-    setIsLoading(true);
+    setIsProcessing(true);
     setError("");
 
     try {
@@ -415,7 +461,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
         }
       }
 
-      // 处理文本内容 - 更智能的判断逻辑
+      // 处理文本内容
       if (
         content.trim() &&
         (detectedUrls.length === 0 ||
@@ -458,19 +504,20 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
       }
 
       // 处理文件 (暂时提示)
-      if (selectedFiles.length > 0) {
+      if (files.length > 0) {
         setError("文件上传功能正在开发中，敬请期待");
         return;
       }
 
-      // 成功处理 - 乐观UI更新
+      // 成功处理
       if (newlyCreatedItems.length > 0) {
         // 重置表单
         setContent("");
-        setSelectedFiles([]);
+        setFiles([]);
         setError("");
         onClose();
 
+        // 更新缓存和通知
         contentCache.clearContentList();
         newlyCreatedItems.forEach((item) => {
           eventBus.emit("contentCreated", item);
@@ -482,18 +529,18 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
         error instanceof Error ? error.message : "添加内容时发生错误，请重试",
       );
     } finally {
-      setIsLoading(false);
+      setIsProcessing(false);
     }
   }, [
     content,
-    selectedFiles,
+    files,
     detectedUrls,
     user?.token,
     createContentProcessingNotification,
     onClose,
   ]);
 
-  // 快捷键处理 - 基于参考代码的快捷键逻辑
+  // 快捷键处理
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Enter" && e.metaKey) {
@@ -509,6 +556,11 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
     if (open) {
       document.addEventListener("keydown", handleKeyDown);
       document.addEventListener("paste", handlePaste);
+      // 聚焦到文本框
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+
       return () => {
         document.removeEventListener("keydown", handleKeyDown);
         document.removeEventListener("paste", handlePaste);
@@ -520,119 +572,122 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      {/* 固定尺寸容器，避免跳动 */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 w-[580px] max-w-[90vw] min-h-[380px] flex flex-col overflow-hidden">
-        {/* 固定头部 */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50 flex-shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center">
-              <Sparkles className="w-3.5 h-3.5 text-white" />
+      {/* 主容器 - 固定尺寸，现代化设计 */}
+      <div className="w-[600px] h-[420px] bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col">
+        {/* 头部 */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-50">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <span className="font-medium text-gray-900">添加内容</span>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">添加内容</h2>
+              <p className="text-xs text-gray-500">输入文本、链接或上传文件</p>
+            </div>
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onClose}
-            className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+            className="w-8 h-8 p-0 rounded-lg hover:bg-gray-100"
           >
             <X className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
 
-        {/* 主体区域 - 固定布局 */}
-        <div className="flex-1 flex flex-col p-5">
+        <div className="flex-1 flex flex-col p-6">
           {/* 内容类型提示 - 固定高度区域 */}
-          <div className="h-10 flex items-center mb-3">
+          <div className="h-12 flex items-center mb-4">
             {contentAnalysis && (
               <div
                 className={`
-                flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-all duration-200
+                flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-300
                 ${contentAnalysis.bgColor} ${contentAnalysis.borderColor}
               `}
               >
                 <contentAnalysis.icon
                   className={`w-4 h-4 ${contentAnalysis.color}`}
                 />
-                <span
-                  className={`text-sm font-medium ${contentAnalysis.color}`}
-                >
-                  {contentAnalysis.label}
-                </span>
+                <div className="flex flex-col">
+                  <span
+                    className={`text-sm font-medium ${contentAnalysis.color}`}
+                  >
+                    {contentAnalysis.label}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {contentAnalysis.description}
+                  </span>
+                </div>
                 {isResearch && (
-                  <Zap className="w-3.5 h-3.5 text-blue-500 ml-1" />
+                  <div className="ml-2 w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Zap className="w-3 h-3 text-blue-600" />
+                  </div>
                 )}
               </div>
             )}
           </div>
 
-          {/* 输入区 - 可扩展但有最大高度 */}
-          <div className="flex-1 min-h-[120px] max-h-[180px] mb-4">
+          {/* 输入区域 */}
+          <div className="flex-1 min-h-[100px] max-h-[200px] mb-4">
             <textarea
               ref={textareaRef}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="输入研究主题、粘贴链接或文本内容..."
-              className="w-full h-full p-3 bg-gray-50 rounded-lg border-0 outline-none resize-none text-gray-900 placeholder:text-gray-400 text-sm leading-relaxed transition-all focus:bg-white focus:ring-2 focus:ring-blue-500/10"
-              style={{ minHeight: "120px" }}
+              className="w-full h-full p-4 bg-gray-50 rounded-xl border-0 outline-none resize-none text-gray-900 placeholder:text-gray-400 text-sm leading-relaxed transition-all focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:shadow-sm"
+              style={{ minHeight: "100px" }}
             />
           </div>
 
           {/* 文件上传区域 */}
           <div
             className={`
-              border-2 border-dashed rounded-lg p-4 transition-all duration-200 mb-4
-              ${isDragOver ? "border-blue-400 bg-blue-50" : "border-gray-200 hover:border-gray-300"}
+              relative border-2 border-dashed rounded-xl p-4 transition-all duration-200
+              ${
+                isDragOver
+                  ? "border-blue-400 bg-blue-50"
+                  : "border-gray-200 hover:border-gray-300"
+              }
+              ${files.length > 0 ? "border-gray-300 bg-gray-50" : ""}
             `}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            onDrop={handleDropFiles}
+            onDrop={handleDrop}
           >
-            {selectedFiles.length > 0 ? (
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {selectedFiles.map((file, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between bg-white p-2 rounded border"
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      {getFileType(file) === "image" && (
-                        <Image
-                          className="w-4 h-4 text-purple-500 flex-shrink-0"
-                          aria-label="图片文件"
-                        />
-                      )}
-                      {getFileType(file) === "video" && (
-                        <Video className="w-4 h-4 text-orange-500 flex-shrink-0" />
-                      )}
-                      {(getFileType(file) === "pdf" ||
-                        getFileType(file) === "document") && (
-                        <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                      )}
-                      {getFileType(file) === "file" && (
-                        <File className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm text-gray-900 truncate">
-                          {file.name}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {(file.size / 1024).toFixed(1)} KB
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removeFile(index)}
-                      className="ml-2"
+            {files.length > 0 ? (
+              <div className="space-y-2">
+                {files.map((file, index) => {
+                  const fileType = getFileType(file);
+                  return (
+                    <div
+                      key={index}
+                      className={`
+                      flex items-center gap-3 p-2 rounded-lg border
+                      ${fileType.bgColor} ${fileType.borderColor}
+                    `}
                     >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                ))}
+                      <fileType.icon className={`w-4 h-4 ${fileType.color}`} />
+                      <span className="flex-1 text-sm text-gray-700 truncate">
+                        {file.name}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {(file.size / 1024 / 1024).toFixed(1)} MB
+                      </span>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                        className="w-6 h-6 p-0"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-4">
-                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-3" />
                 <p className="text-sm text-gray-500 mb-1">
                   拖拽文件到此处，或点击选择文件
                 </p>
@@ -646,10 +701,10 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => fileInputRef.current?.click()}
-              className="mt-2 w-full"
+              className="mt-3 w-full h-8"
             >
-              <Plus className="w-3 h-3 mr-1" />
-              {selectedFiles.length > 0 ? "添加更多文件" : "选择文件"}
+              <Plus className="w-3 h-3 mr-2" />
+              {files.length > 0 ? "添加更多文件" : "选择文件"}
             </Button>
 
             <input
@@ -661,39 +716,84 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
             />
           </div>
 
-          {/* 错误信息 */}
+          {/* 状态信息 */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2">
+            <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3">
               <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
-          {/* 固定底部操作区 */}
-          <div className="flex items-center justify-between pt-3 border-t border-gray-50 flex-shrink-0">
-            <span className="text-xs text-gray-400">⌘+Enter 快速添加</span>
+          {/* 底部操作区 */}
+          <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-50">
+            <div className="flex items-center gap-2 text-xs text-gray-400">
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 bg-gray-200 rounded border flex items-center justify-center">
+                  <span className="text-[8px] font-bold">⌘</span>
+                </span>
+                + Enter 快速添加
+              </span>
+              {isResearch && (
+                <span className="flex items-center gap-1 text-blue-500">
+                  <span className="w-3 h-3 bg-blue-200 rounded border flex items-center justify-center">
+                    <span className="text-[8px] font-bold">⇧</span>
+                  </span>
+                  + 深度研究
+                </span>
+              )}
+            </div>
 
-            <div className="flex gap-2">
-              <Button variant="ghost" onClick={onClose}>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                disabled={isProcessing}
+              >
                 取消
               </Button>
 
+              {isResearch && (
+                <Button
+                  variant="research"
+                  size="sm"
+                  onClick={() => handleSubmit(true)}
+                  disabled={
+                    (!content.trim() && files.length === 0) || isProcessing
+                  }
+                  className="gap-2"
+                >
+                  {isProcessing ? (
+                    <>
+                      <div className="w-3 h-3 border border-white/40 border-t-white rounded-full animate-spin" />
+                      研究中
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-3 h-3" />
+                      深度研究
+                    </>
+                  )}
+                </Button>
+              )}
+
               <Button
+                size="sm"
                 onClick={handleSubmit}
                 disabled={
-                  (!content.trim() && selectedFiles.length === 0) || isLoading
+                  (!content.trim() && files.length === 0) || isProcessing
                 }
-                className="gap-1"
+                className="gap-2"
               >
-                {isLoading ? (
+                {isProcessing ? (
                   <>
-                    <div className="w-2.5 h-2.5 border border-white/40 border-t-white rounded-full animate-spin" />
+                    <div className="w-3 h-3 border border-white/40 border-t-white rounded-full animate-spin" />
                     处理中
                   </>
                 ) : (
                   <>
-                    添加
-                    <ArrowRight className="w-2.5 h-2.5" />
+                    添加内容
+                    <ArrowRight className="w-3 h-3" />
                   </>
                 )}
               </Button>
@@ -703,4 +803,4 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
       </div>
     </Dialog>
   );
-};
+}

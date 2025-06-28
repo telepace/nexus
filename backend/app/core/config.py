@@ -143,7 +143,7 @@ class Settings(BaseSettings):
     REDIS_PORT: int = Field(default=6379, description="Redis 服务器端口")
     REDIS_DB: int = Field(default=0, description="Redis 数据库编号")
     REDIS_PASSWORD: str | None = Field(default=None, description="Redis 密码")
-    
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def redis_url(self) -> str:
@@ -151,7 +151,7 @@ class Settings(BaseSettings):
         if self.REDIS_PASSWORD:
             return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
-    
+
     REDIS_TTL_SECONDS: int = Field(
         default=86400, description="Redis 缓存 TTL，默认 24 小时"
     )

@@ -3,10 +3,8 @@ AI聊天服务
 提供基于模板的AI内容生成功能
 """
 
-import asyncio
 import json
 import logging
-import os
 import random
 from pathlib import Path
 from typing import Any
@@ -50,7 +48,9 @@ class ChatService:
                 preset_tag_names = tag_manager.get_preset_tag_names()
                 context = context.copy()  # 避免修改原始context
                 context["existing_tags"] = preset_tag_names
-                logger.info(f"为 labels.j2 模板添加了 {len(preset_tag_names)} 个预设标签")
+                logger.info(
+                    f"为 labels.j2 模板添加了 {len(preset_tag_names)} 个预设标签"
+                )
 
             # 加载模板
             template = self.template_env.get_template(template_name)
@@ -92,16 +92,20 @@ class ChatService:
                                 json_content = json_content[start_idx:end_idx].strip()
 
                         parsed = json.loads(json_content)
-                        
+
                         # 如果是 labels.j2 模板，对AI生成的标签进行预设标签匹配和过滤
                         if template_name == "labels.j2" and "tags" in parsed:
                             ai_generated_tags = parsed["tags"]
                             if isinstance(ai_generated_tags, list):
                                 # 使用标签管理器进行匹配和过滤
-                                matched_tags = tag_manager.filter_and_match_preset_tags(ai_generated_tags)
+                                matched_tags = tag_manager.filter_and_match_preset_tags(
+                                    ai_generated_tags
+                                )
                                 parsed["tags"] = matched_tags
-                                logger.info(f"标签匹配完成: {ai_generated_tags} -> {matched_tags}")
-                        
+                                logger.info(
+                                    f"标签匹配完成: {ai_generated_tags} -> {matched_tags}"
+                                )
+
                         logger.info(f"✅ {template_name} JSON parsing successful")
                         return parsed  # type: ignore[return-value]
                     except json.JSONDecodeError as json_err:
@@ -252,12 +256,12 @@ class ChatService:
 
         # 从预设标签中随机选择一些作为mock结果
         preset_tag_names = tag_manager.get_preset_tag_names()
-        
+
         if preset_tag_names:
             # 基于内容关键词匹配预设标签
             content_lower = content.lower()
             matched_tags = []
-            
+
             # 技术相关关键词映射
             tech_keywords = {
                 "ai": ["人工智能", "机器学习", "深度学习"],
@@ -271,21 +275,27 @@ class ChatService:
                 "教育": ["教育培训", "个人成长"],
                 "工具": ["效率工具", "工具推荐"],
             }
-            
+
             # 匹配相关标签
             for keyword, related_tags in tech_keywords.items():
                 if keyword in content_lower:
                     for tag in related_tags:
                         if tag in preset_tag_names and tag not in matched_tags:
                             matched_tags.append(tag)
-            
+
             # 如果没有匹配到，随机选择一些通用标签
             if not matched_tags:
                 general_tags = ["技术文档", "工具推荐", "个人成长", "效率工具"]
-                matched_tags = [tag for tag in general_tags if tag in preset_tag_names][:3]
-            
+                matched_tags = [tag for tag in general_tags if tag in preset_tag_names][
+                    :3
+                ]
+
             # 限制标签数量在3-6个
-            tags = matched_tags[:6] if len(matched_tags) >= 3 else matched_tags + ["技术文档"][:6]
+            tags = (
+                matched_tags[:6]
+                if len(matched_tags) >= 3
+                else matched_tags + ["技术文档"][:6]
+            )
         else:
             # 回退到原始关键词方式
             keywords = ["技术文档", "学习资源", "工具推荐"]
@@ -329,7 +339,7 @@ class ChatService:
             base_reading_time = int(base_reading_time * 1.2)
 
         reading_time_minutes = max(1, base_reading_time)
-        
+
         # 生成优化标题和简短描述
         optimized_title = content.split("。")[0][:30] + "..." if content else "内容分析"
         brief_description = content[:80] + "..." if len(content) > 80 else content

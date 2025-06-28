@@ -325,7 +325,8 @@ export default function DashboardPage() {
                                   {item.title || "无标题"}
                                 </h4>
                                 <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                                  {item.ai_result?.brief_description || "无摘要"}
+                                  {item.ai_result?.brief_description ||
+                                    "无摘要"}
                                 </p>
                                 <div className="flex items-center gap-2">
                                   <Badge variant="outline" className="text-xs">

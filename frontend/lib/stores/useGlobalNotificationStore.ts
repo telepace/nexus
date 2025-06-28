@@ -145,7 +145,7 @@ export const useGlobalNotificationStore = create<GlobalNotificationStore>()(
           title,
           message,
         });
-        
+
         return get().addNotification({
           type: "content-processing",
           status: "processing",
@@ -260,13 +260,13 @@ export const useGlobalNotificationStore = create<GlobalNotificationStore>()(
                     evt.title.trim() !== ""
                       ? evt.title
                       : "新内容";
-                  
+
                   console.log(`🆕 创建新的处理中通知:`, {
                     content_id: evt.content_id,
                     title: displayTitle,
                     progress: evt.progress,
                   });
-                  
+
                   const notificationId = createContentProcessingNotification(
                     evt.content_id,
                     displayTitle,
@@ -274,7 +274,7 @@ export const useGlobalNotificationStore = create<GlobalNotificationStore>()(
                       ? `处理进度 ${evt.progress}%`
                       : "内容正在处理中...",
                   );
-                  
+
                   // 如果事件包含具体的progress值，立即更新通知
                   if (evt.progress !== undefined) {
                     console.log(`🔄 立即更新新通知的进度:`, {
@@ -293,8 +293,11 @@ export const useGlobalNotificationStore = create<GlobalNotificationStore>()(
                       : existingNotification.message;
 
                   // 🔧 修复：使用正确的逻辑判断progress值，避免0值被忽略
-                  const newProgress = evt.progress !== undefined ? evt.progress : existingNotification.progress;
-                  
+                  const newProgress =
+                    evt.progress !== undefined
+                      ? evt.progress
+                      : existingNotification.progress;
+
                   console.log(`📈 更新现有通知进度:`, {
                     notificationId: existingNotification.id,
                     oldProgress: existingNotification.progress,

@@ -25,8 +25,8 @@ from app.models.content import (
     ContentChunk,
     ContentItem,
     ContentShare,
-    Segment,
     MessageSegmentReference,
+    Segment,
 )
 
 # Schema imports - assuming these exist
@@ -431,13 +431,16 @@ def delete_content_item_sync(
         # Delete in proper order to respect foreign key constraints
         # 1. Delete favorites first (referencing content_item_id)
         from app.models.favorite import Favorite
+
         session.execute(sa_delete(Favorite).where(Favorite.content_item_id == id))
 
         # 2. Delete message segment references that reference segments of this content item
         # First get all segment IDs for this content item
-        segment_ids = session.exec(
-            select(Segment.id).where(Segment.content_item_id == id)
-        ).scalars().all()
+        segment_ids = (
+            session.exec(select(Segment.id).where(Segment.content_item_id == id))
+            .scalars()
+            .all()
+        )
         if segment_ids:
             session.execute(
                 sa_delete(MessageSegmentReference).where(

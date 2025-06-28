@@ -36,7 +36,7 @@ export const ContentList = ({
         "transition-all duration-300 ease-out",
         viewMode === "grid"
           ? "grid grid-cols-1 gap-4 max-w-2xl mx-auto"
-          : "space-y-0"
+          : "space-y-0",
       )}
     >
       {items.map((item) => (

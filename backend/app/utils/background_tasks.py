@@ -578,15 +578,19 @@ class BackgroundTaskManager:
                 self._tasks[content_id]["status"] = "completed"
                 # 安全地创建清理任务，避免 "Task was destroyed but it is pending" 警告
                 try:
-                    cleanup_task = asyncio.create_task(self._cleanup_task_record(content_id))
+                    cleanup_task = asyncio.create_task(
+                        self._cleanup_task_record(content_id)
+                    )
                     # 将任务添加到后台集合中以防止被垃圾回收
                     # 或者使用 asyncio.ensure_future() 并妥善处理
-                    if not hasattr(self, '_cleanup_tasks'):
+                    if not hasattr(self, "_cleanup_tasks"):
                         self._cleanup_tasks = set()
                     self._cleanup_tasks.add(cleanup_task)
                     cleanup_task.add_done_callback(self._cleanup_tasks.discard)
                 except Exception as e:
-                    logger.warning(f"Failed to create cleanup task for {content_id}: {e}")
+                    logger.warning(
+                        f"Failed to create cleanup task for {content_id}: {e}"
+                    )
                     # 直接删除任务记录作为备用方案
                     if content_id in self._tasks:
                         del self._tasks[content_id]
