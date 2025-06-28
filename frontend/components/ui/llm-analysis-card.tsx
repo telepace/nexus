@@ -148,7 +148,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
               {score > 0 && <RatingStars score={score} />}
             </div>
           </CardHeader>
-          <CardContent className="pt-0">
+          <CardContent className="pt-0 px-6 pb-6">
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => (
                 <Badge key={tag} variant="outline" className="text-xs">
@@ -270,7 +270,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
       </CardHeader>
 
       {analysis.isExpanded && (
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 px-6 pb-6">
           {analysis.isLoading ? (
             <div className="space-y-3">
               {/* 正在生成AI分析"灰色背景有border的提示元素 */}

@@ -305,7 +305,7 @@ export function EnhancedLLMAnalysisCard({
       </CardHeader>
 
       {isExpanded && (
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 px-6 pb-6">
           {analysis.error ? (
             <div className="space-y-3">
               <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">

@@ -189,8 +189,8 @@ export default function ContentLibraryPage() {
         </section>
 
         {/* 右栏：剩余空间自适应 */}
-        <aside className="flex-1 pr-2 py-2 pl-0 flex h-screen overflow-visible">
-          <div className="flex-1 h-full">
+        <aside className="flex-1 pr-2 py-2 pl-0 flex h-full ">
+          <div className="flex-1">
             <ContentPreview item={previewItem} />
           </div>
         </aside>

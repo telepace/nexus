@@ -193,7 +193,7 @@ function LoginContent() {
         </div>
 
         <Card className="w-full rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm transition-all duration-300 hover:shadow-blue-100 dark:hover:shadow-blue-900/20">
-          <CardContent className="pt-6 px-6">
+          <CardContent className="pt-6 px-6 pb-6">
             <Button
               variant="outline"
               className="w-full py-6 border-slate-200 dark:border-slate-700 flex items-center justify-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all duration-300 mb-6 relative group overflow-hidden"
@@ -260,7 +260,7 @@ function LoginContent() {
                   邮箱
                 </Label>
                 <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-neutral-100/50 to-neutral-50/30 dark:from-neutral-800/20 dark:to-neutral-700/10 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
                   <Input
                     id="email"
                     type="email"
@@ -268,7 +268,7 @@ function LoginContent() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your.email@example.com"
                     required
-                    className="relative h-11 border-slate-200 dark:border-slate-700 rounded-md focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:border-slate-400 transition-all duration-300 bg-white dark:bg-slate-800"
+                    className="relative h-11 border-border dark:border-border rounded-md focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-ring transition-all duration-300 bg-background dark:bg-background"
                   />
                 </div>
               </div>
@@ -276,19 +276,19 @@ function LoginContent() {
                 <div className="flex justify-between items-center">
                   <Label
                     htmlFor="password"
-                    className="text-sm font-medium text-slate-700 dark:text-slate-300"
+                    className="text-sm font-medium text-neutral-700 dark:text-neutral-300"
                   >
                     密码
                   </Label>
                   <Link
                     href={`/password-recovery${email ? `?email=${encodeURIComponent(email)}` : ""}`}
-                    className="text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300"
+                    className="text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-400 transition-colors duration-300"
                   >
                     忘记密码？
                   </Link>
                 </div>
                 <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-neutral-100/50 to-neutral-50/30 dark:from-neutral-800/20 dark:to-neutral-700/10 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
                   <Input
                     id="password"
                     type="password"
@@ -296,7 +296,7 @@ function LoginContent() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
                     required
-                    className="relative h-11 border-slate-200 dark:border-slate-700 rounded-md focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:border-slate-400 transition-all duration-300 bg-white dark:bg-slate-800"
+                    className="relative h-11 border-border dark:border-border rounded-md focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-ring transition-all duration-300 bg-background dark:bg-background"
                   />
                 </div>
               </div>

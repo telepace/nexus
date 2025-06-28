@@ -356,7 +356,7 @@ export const StreamingText = forwardRef<HTMLDivElement, StreamingTextProps>(
           </CardHeader>
         )}
 
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 px-6 pb-6">
           <div
             ref={contentRef}
             className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"

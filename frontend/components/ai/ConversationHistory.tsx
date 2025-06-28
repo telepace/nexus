@@ -208,8 +208,7 @@ export const ConversationHistory = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" />
+        <h3 className="text-sm font-medium flex items-center gap-2">
           AI 对话历史 ({conversations.length})
         </h3>
         {onRefresh && (

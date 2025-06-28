@@ -22,8 +22,10 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-10 px-4 py-2 has-[>svg]:px-3.5",
+        "2xs": "h-4 rounded px-1.5 text-xs gap-1 has-[>svg]:px-1",
+        xs: "h-6 rounded px-2 text-xs gap-1 has-[>svg]:px-1.5",
         sm: "h-8 rounded-md gap-1.5 px-3 text-xs has-[>svg]:px-2.5",
+        default: "h-10 px-4 py-2 has-[>svg]:px-3.5",
         lg: "h-12 rounded-lg px-6 py-3 text-base has-[>svg]:px-5",
         icon: "size-10",
       },
@@ -61,7 +63,7 @@ function Button({
  * 按钮组组件，用于管理多个按钮之间的间距和布局
  */
 interface ButtonGroupProps extends React.ComponentProps<"div"> {
-  size?: "sm" | "default" | "lg";
+  size?: "2xs" | "xs" | "sm" | "default" | "lg";
   orientation?: "horizontal" | "vertical";
   justify?: "start" | "center" | "end" | "between";
   responsive?: boolean; // 是否在小屏幕上自动变为垂直布局
@@ -76,6 +78,8 @@ function ButtonGroup({
   ...props
 }: ButtonGroupProps) {
   const spacing = {
+    "2xs": "gap-1",
+    xs: "gap-1.5",
     sm: "gap-2",
     default: "gap-3",
     lg: "gap-4",

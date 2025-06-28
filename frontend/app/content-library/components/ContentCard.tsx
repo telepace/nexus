@@ -10,6 +10,7 @@ import {
   FileText,
   Link,
   BookOpen,
+  Star,
   Clock,
   MoreHorizontal,
   Trash2,

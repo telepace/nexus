@@ -23,7 +23,7 @@ describe("AddContentModal", () => {
 
     // 检查按钮
     expect(
-      screen.getByRole("button", { name: /上传本地文件/i }),
+      screen.getByRole("button", { name: /上传文件/i }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /添加/i })).toBeInTheDocument();
     // 关闭按钮
@@ -72,7 +72,7 @@ describe("AddContentModal", () => {
 
     // 检查文件上传按钮文本存在
     expect(
-      screen.getByRole("button", { name: /上传本地文件/i }),
+      screen.getByRole("button", { name: /上传文件/i }),
     ).toBeInTheDocument();
   });
 });

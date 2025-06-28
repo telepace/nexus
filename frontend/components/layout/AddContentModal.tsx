@@ -624,6 +624,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                       size="sm"
                       onClick={() => removeFile(index)}
                       className="ml-2"
+                      disabled={false}
                     >
                       <Trash2 className="w-3 h-3" />
                     </Button>
@@ -647,6 +648,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
               size="sm"
               onClick={() => fileInputRef.current?.click()}
               className="mt-2 w-full"
+              disabled={false}
             >
               <Plus className="w-3 h-3 mr-1" />
               {selectedFiles.length > 0 ? "添加更多文件" : "选择文件"}
@@ -674,7 +676,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
             <span className="text-xs text-gray-400">⌘+Enter 快速添加</span>
 
             <div className="flex gap-2">
-              <Button variant="ghost" onClick={onClose}>
+              <Button variant="ghost" onClick={onClose} disabled={false}>
                 取消
               </Button>
 
