@@ -22,6 +22,7 @@ import { useAuth, getCookie } from "@/lib/auth";
 import { contentCache } from "@/lib/services/content-cache";
 import { eventBus } from "@/lib/event-bus";
 import { useGlobalNotificationStore } from "@/lib/stores/useGlobalNotificationStore";
+import { extractAndNormalizeUrls } from "@/lib/utils";
 
 // 极简基础组件 - 基于参考设计
 const Dialog = ({ children, open, onOpenChange }) => {
@@ -245,7 +246,7 @@ const analyzeContent = (text: string, files: File[] = []) => {
   };
 };
 
-// URL检测和提取
+// URL检测和提取 - 使用新的智能URL提取函数
 const isURL = (text: string) => {
   try {
     new URL(text);
@@ -256,15 +257,7 @@ const isURL = (text: string) => {
 };
 
 const extractUrls = (text: string) => {
-  const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
-  const urls = text.match(urlRegex) || [];
-
-  return urls
-    .map((url: string) => {
-      const cleanedUrl = url.replace(/[.,;:!?]+$/, "");
-      return isURL(cleanedUrl) ? cleanedUrl : null;
-    })
-    .filter((url): url is string => url !== null);
+  return extractAndNormalizeUrls(text);
 };
 
 /**
@@ -359,13 +352,25 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
 
   // 粘贴处理
   const handlePaste = useCallback((e: ClipboardEvent) => {
-    // 阻止浏览器默认插入行为，避免出现重复粘贴内容
+    // 防止默认粘贴行为，我们手动处理
     e.preventDefault();
-
+    
     const pastedText = e.clipboardData?.getData("text") || "";
+    console.log('[粘贴事件] 原始粘贴数据:', pastedText);
+    
     if (pastedText.trim()) {
-      // 直接设置内容，替代浏览器默认行为
-      setContent(pastedText.trim());
+      const trimmedText = pastedText.trim();
+      console.log('[粘贴事件] 处理后的文本:', trimmedText);
+      
+      // 直接设置到textarea
+      if (textareaRef.current) {
+        textareaRef.current.value = trimmedText;
+        // 触发React的onChange事件
+        const event = new Event('input', { bubbles: true });
+        textareaRef.current.dispatchEvent(event);
+      }
+      
+      setContent(trimmedText);
     }
   }, []);
 
@@ -757,12 +762,11 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
             <textarea
               ref={textareaRef}
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder={
-                isResearch
-                  ? "输入您想要深度研究的问题或主题..."
-                  : "输入研究主题、粘贴链接或文本内容..."
-              }
+              onChange={(e) => {
+                console.log('[onChange事件] 新值:', e.target.value);
+                setContent(e.target.value);
+              }}
+              placeholder="输入研究主题、粘贴链接或文本内容..."
               className="w-full h-full p-3 bg-gray-50 rounded-lg border-0 outline-none resize-none text-gray-900 placeholder:text-gray-400 text-sm leading-relaxed transition-all focus:bg-white focus:ring-2 focus:ring-blue-500/10"
               style={{ minHeight: "120px" }}
             />

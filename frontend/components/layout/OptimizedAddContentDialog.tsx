@@ -16,11 +16,16 @@ import {
   File,
   Plus,
   Trash2,
+  Camera,
+  Film,
+  BookOpen,
+  Paperclip,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
 import { contentCache } from "@/lib/services/content-cache";
 import { eventBus } from "@/lib/event-bus";
 import { useGlobalNotificationStore } from "@/lib/stores/useGlobalNotificationStore";
+import { extractAndNormalizeUrls } from "@/lib/utils";
 
 // 极简基础组件
 const Dialog = ({ children, open, onOpenChange }) => {
@@ -104,19 +109,19 @@ const getFileType = (file: File) => {
   return "file";
 };
 
-// 增强的内容分析
+// 增强的内容分析系统
 const analyzeContent = (text: string, files: File[] = []) => {
   if (!text.trim() && files.length === 0) return null;
 
-  // 优先分析文件
+  // 文件分析优先
   if (files.length > 0) {
     const fileTypes = files.map(getFileType);
-    const uniqueTypes = [...new Set(fileTypes)];
+    const categories = [...new Set(fileTypes.map((ft) => ft.category))];
 
-    if (uniqueTypes.includes("image")) {
+    if (categories.includes("image")) {
       return {
         type: "images",
-        icon: Image,
+        icon: Camera,
         label: `${files.length} 张图片`,
         color: "text-purple-600",
         bgColor: "bg-purple-50",
@@ -124,10 +129,10 @@ const analyzeContent = (text: string, files: File[] = []) => {
       };
     }
 
-    if (uniqueTypes.includes("video")) {
+    if (categories.includes("video")) {
       return {
         type: "videos",
-        icon: Video,
+        icon: Film,
         label: `${files.length} 个视频`,
         color: "text-orange-600",
         bgColor: "bg-orange-50",
@@ -135,10 +140,10 @@ const analyzeContent = (text: string, files: File[] = []) => {
       };
     }
 
-    if (uniqueTypes.includes("pdf") || uniqueTypes.includes("document")) {
+    if (categories.includes("pdf") || categories.includes("document")) {
       return {
         type: "documents",
-        icon: FileText,
+        icon: BookOpen,
         label: `${files.length} 个文档`,
         color: "text-blue-600",
         bgColor: "bg-blue-50",
@@ -148,7 +153,7 @@ const analyzeContent = (text: string, files: File[] = []) => {
 
     return {
       type: "files",
-      icon: File,
+      icon: Paperclip,
       label: `${files.length} 个文件`,
       color: "text-gray-600",
       bgColor: "bg-gray-50",
@@ -158,9 +163,8 @@ const analyzeContent = (text: string, files: File[] = []) => {
 
   const trimmedText = text.trim();
 
-  // 检测链接
-  const urlRegex = /https?:\/\/[^\s\n]+/g;
-  const urls = text.match(urlRegex);
+  // 检测链接 - 使用新的智能URL提取函数
+  const urls = extractAndNormalizeUrls(trimmedText, true);
   if (urls && urls.length > 0) {
     return {
       type: "link",
@@ -239,29 +243,6 @@ const analyzeContent = (text: string, files: File[] = []) => {
   };
 };
 
-// 检测URL
-const isURL = (text: string) => {
-  try {
-    new URL(text);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-// 提取URLs
-const extractUrls = (text: string) => {
-  const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
-  const urls = text.match(urlRegex) || [];
-
-  return urls
-    .map((url: string) => {
-      const cleanedUrl = url.replace(/[.,;:!?]+$/, "");
-      return isURL(cleanedUrl) ? cleanedUrl : null;
-    })
-    .filter((url): url is string => url !== null);
-};
-
 interface OptimizedAddContentDialogProps {
   open: boolean;
   onClose: () => void;
@@ -287,7 +268,7 @@ export default function OptimizedAddContentDialog({
   // 内容分析
   const contentAnalysis = analyzeContent(content, files);
   const isResearch = contentAnalysis?.type === "research";
-  const detectedUrls = extractUrls(content);
+  const detectedUrls = extractAndNormalizeUrls(content, true);
 
   // 自适应高度
   useEffect(() => {
@@ -344,12 +325,25 @@ export default function OptimizedAddContentDialog({
 
   // 粘贴处理
   const handlePaste = useCallback((e: ClipboardEvent) => {
-    // 阻止浏览器默认粘贴行为，避免重复插入
+    // 防止默认粘贴行为，我们手动处理
     e.preventDefault();
-
+    
     const pastedText = e.clipboardData?.getData("text") || "";
+    console.log('[粘贴事件] 原始粘贴数据:', pastedText);
+    
     if (pastedText.trim()) {
-      setContent(pastedText.trim());
+      const trimmedText = pastedText.trim();
+      console.log('[粘贴事件] 处理后的文本:', trimmedText);
+      
+      // 直接设置到textarea
+      if (textareaRef.current) {
+        textareaRef.current.value = trimmedText;
+        // 触发React的onChange事件
+        const event = new Event('input', { bubbles: true });
+        textareaRef.current.dispatchEvent(event);
+      }
+      
+      setContent(trimmedText);
     }
   }, []);
 
@@ -564,7 +558,10 @@ export default function OptimizedAddContentDialog({
             <textarea
               ref={textareaRef}
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => {
+                console.log('[onChange事件] 新值:', e.target.value);
+                setContent(e.target.value);
+              }}
               placeholder="输入研究主题、粘贴链接或文本内容..."
               className="w-full h-full p-3 bg-gray-50 rounded-lg border-0 outline-none resize-none text-gray-900 placeholder:text-gray-400 text-sm leading-relaxed transition-all focus:bg-white focus:ring-2 focus:ring-blue-500/10"
               style={{ minHeight: "120px" }}
