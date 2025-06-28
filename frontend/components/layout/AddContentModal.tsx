@@ -275,6 +275,7 @@ const extractUrls = (text: string) => {
  * - 智能内容分析和类型检测
  * - 统一的视觉语言和交互体验
  * - 优化的文件拖拽和上传流程
+ * - 增强的Deep Research支持
  */
 export const AddContentModal: React.FC<AddContentModalProps> = ({
   open,
@@ -285,6 +286,8 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState("");
+  const [researchConfig, setResearchConfig] = useState({ depth: 3, breadth: 2 });
+  const [showResearchConfig, setShowResearchConfig] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -353,11 +356,58 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
 
   // 粘贴处理
   const handlePaste = useCallback((e: ClipboardEvent) => {
+    // 阻止浏览器默认插入行为，避免出现重复粘贴内容
+    e.preventDefault();
+
     const pastedText = e.clipboardData?.getData("text") || "";
     if (pastedText.trim()) {
+      // 直接设置内容，替代浏览器默认行为
       setContent(pastedText.trim());
     }
   }, []);
+
+  // Deep Research API调用
+  const createDeepResearchJob = useCallback(async (query: string, token: string) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+    
+    const researchData = {
+      query: query.trim(),
+      depth: researchConfig.depth,
+      breadth: researchConfig.breadth,
+    };
+
+    console.log('🔍 创建Deep Research任务:', researchData);
+
+    const response = await fetch(`${apiUrl}/api/v1/deep-research/create`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(researchData),
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Deep Research API错误:', errorData);
+      
+      let errorMessage = `深度研究任务创建失败 (${response.status})`;
+      if (errorData.detail) {
+        errorMessage = errorData.detail;
+      } else if (errorData.error) {
+        errorMessage = errorData.error;
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log('✅ Deep Research任务创建成功:', result);
+    return result;
+  }, [researchConfig]);
 
   // 提交处理 - 优化的逻辑
   const handleSubmit = useCallback(async () => {
@@ -375,6 +425,34 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
       const newlyCreatedItems: ContentItemPublic[] = [];
+
+      // 处理Deep Research类型
+      if (isResearch && content.trim() && detectedUrls.length === 0) {
+        try {
+          const researchResult = await createDeepResearchJob(content.trim(), token);
+          
+          // 显示成功消息
+          createContentProcessingNotification(
+            researchResult.job_id,
+            "深度研究任务",
+            `正在深度研究："${content.trim().substring(0, 50)}${content.trim().length > 50 ? '...' : ''}"`,
+          );
+
+          // 重置表单并关闭模态框
+          setContent("");
+          setSelectedFiles([]);
+          setError("");
+          setShowResearchConfig(false);
+          onClose();
+          
+          return; // 对于深度研究，直接返回，不继续处理其他内容
+        } catch (researchError) {
+          console.error('Deep Research失败，回退到普通文本处理:', researchError);
+          setError(`深度研究失败: ${researchError instanceof Error ? researchError.message : '未知错误'}。将作为普通文本处理。`);
+          
+          // 继续作为普通文本处理，不return
+        }
+      }
 
       // 处理URLs
       if (detectedUrls.length > 0) {
@@ -469,6 +547,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
         setContent("");
         setSelectedFiles([]);
         setError("");
+        setShowResearchConfig(false);
         onClose();
 
         contentCache.clearContentList();
@@ -488,8 +567,11 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
     content,
     selectedFiles,
     detectedUrls,
+    isResearch,
+    researchConfig,
     user?.token,
     createContentProcessingNotification,
+    createDeepResearchJob,
     onClose,
   ]);
 
@@ -516,6 +598,17 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
     }
   }, [open, handleKeyDown, handlePaste]);
 
+  // 重置状态当模态框关闭时
+  useEffect(() => {
+    if (!open) {
+      setContent("");
+      setSelectedFiles([]);
+      setError("");
+      setIsLoading(false);
+      setShowResearchConfig(false);
+    }
+  }, [open]);
+
   if (!open) return null;
 
   return (
@@ -541,28 +634,76 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
         {/* 主体区域 - 固定布局 */}
         <div className="flex-1 flex flex-col p-5">
           {/* 内容类型提示 - 固定高度区域 */}
-          <div className="h-10 flex items-center mb-3">
-            {contentAnalysis && (
-              <div
-                className={`
-                flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-all duration-200
-                ${contentAnalysis.bgColor} ${contentAnalysis.borderColor}
-              `}
-              >
-                <contentAnalysis.icon
-                  className={`w-4 h-4 ${contentAnalysis.color}`}
-                />
-                <span
-                  className={`text-sm font-medium ${contentAnalysis.color}`}
+          <div className="h-10 flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              {contentAnalysis && (
+                <div
+                  className={`
+                  flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-all duration-200
+                  ${contentAnalysis.bgColor} ${contentAnalysis.borderColor}
+                `}
                 >
-                  {contentAnalysis.label}
-                </span>
-                {isResearch && (
-                  <Zap className="w-3.5 h-3.5 text-blue-500 ml-1" />
-                )}
-              </div>
+                  <contentAnalysis.icon
+                    className={`w-4 h-4 ${contentAnalysis.color}`}
+                  />
+                  <span
+                    className={`text-sm font-medium ${contentAnalysis.color}`}
+                  >
+                    {contentAnalysis.label}
+                  </span>
+                  {isResearch && (
+                    <Zap className="w-3.5 h-3.5 text-blue-500 ml-1" />
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* 研究配置按钮 */}
+            {isResearch && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowResearchConfig(!showResearchConfig)}
+                className="text-blue-600 hover:text-blue-700"
+                disabled={false}
+              >
+                配置 {showResearchConfig ? "▼" : "▶"}
+              </Button>
             )}
           </div>
+
+          {/* 研究配置面板 */}
+          {isResearch && showResearchConfig && (
+            <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+              <div className="text-sm font-medium text-blue-900 mb-2">研究配置</div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-blue-700 block mb-1">深度 (1-5)</label>
+                  <select
+                    value={researchConfig.depth}
+                    onChange={(e) => setResearchConfig(prev => ({ ...prev, depth: parseInt(e.target.value) }))}
+                    className="w-full p-1 text-sm border border-blue-200 rounded bg-white"
+                  >
+                    {[1, 2, 3, 4, 5].map(n => (
+                      <option key={n} value={n}>{n} - {n === 1 ? '快速' : n === 3 ? '标准' : n === 5 ? '深入' : '中等'}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-blue-700 block mb-1">广度 (1-5)</label>
+                  <select
+                    value={researchConfig.breadth}
+                    onChange={(e) => setResearchConfig(prev => ({ ...prev, breadth: parseInt(e.target.value) }))}
+                    className="w-full p-1 text-sm border border-blue-200 rounded bg-white"
+                  >
+                    {[1, 2, 3, 4, 5].map(n => (
+                      <option key={n} value={n}>{n} - {n === 1 ? '聚焦' : n === 3 ? '平衡' : n === 5 ? '全面' : '中等'}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* 输入区 - 可扩展但有最大高度 */}
           <div className="flex-1 min-h-[120px] max-h-[180px] mb-4">
@@ -570,7 +711,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
               ref={textareaRef}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="输入研究主题、粘贴链接或文本内容..."
+              placeholder={isResearch ? "输入您想要深度研究的问题或主题..." : "输入研究主题、粘贴链接或文本内容..."}
               className="w-full h-full p-3 bg-gray-50 rounded-lg border-0 outline-none resize-none text-gray-900 placeholder:text-gray-400 text-sm leading-relaxed transition-all focus:bg-white focus:ring-2 focus:ring-blue-500/10"
               style={{ minHeight: "120px" }}
             />
@@ -673,10 +814,12 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
 
           {/* 固定底部操作区 */}
           <div className="flex items-center justify-between pt-3 border-t border-gray-50 flex-shrink-0">
-            <span className="text-xs text-gray-400">⌘+Enter 快速添加</span>
+            <span className="text-xs text-gray-400">
+              {isResearch ? "🔍 将启动AI深度研究" : "⌘+Enter 快速添加"}
+            </span>
 
             <div className="flex gap-2">
-              <Button variant="ghost" onClick={onClose} disabled={false}>
+              <Button variant="ghost" onClick={onClose} disabled={isLoading}>
                 取消
               </Button>
 
@@ -686,16 +829,26 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                   (!content.trim() && selectedFiles.length === 0) || isLoading
                 }
                 className="gap-1"
+                variant={isResearch ? "research" : "default"}
               >
                 {isLoading ? (
                   <>
                     <div className="w-2.5 h-2.5 border border-white/40 border-t-white rounded-full animate-spin" />
-                    处理中
+                    {isResearch ? "启动研究..." : "处理中"}
                   </>
                 ) : (
                   <>
-                    添加
-                    <ArrowRight className="w-2.5 h-2.5" />
+                    {isResearch ? (
+                      <>
+                        <Search className="w-3 h-3" />
+                        开始研究
+                      </>
+                    ) : (
+                      <>
+                        添加
+                        <ArrowRight className="w-2.5 h-2.5" />
+                      </>
+                    )}
                   </>
                 )}
               </Button>

@@ -33,6 +33,7 @@ class ContentType(Enum):
     DOCUMENT = "document"
     VIDEO_TRANSCRIPT = "video_transcript"
     PODCAST_TRANSCRIPT = "podcast_transcript"
+    DEEP_RESEARCH = "deep_research"
 
 
 class ProcessingStatus(Enum):
@@ -57,6 +58,7 @@ class DocumentMetadata:
     language: str = "en"
     domain: str | None = None
     estimated_words: int = 0
+    description: str | None = None
 
 
 @dataclass
@@ -250,7 +252,7 @@ class PreprocessingPipeline:
                     "id": "segment_1",
                     "content": content,
                     "order": 1,
-                    "type": "full_content",
+                    "type": "paragraph",  # 修改为数据库约束允许的类型
                     "word_count": self._estimate_word_count(content),
                 }
             ]
@@ -265,7 +267,7 @@ class PreprocessingPipeline:
                             "id": f"segment_{i + 1}",
                             "content": para.strip(),
                             "order": i + 1,
-                            "type": "paragraph",
+                            "type": "paragraph",  # 使用数据库约束允许的类型
                             "word_count": self._estimate_word_count(para),
                         }
                     )

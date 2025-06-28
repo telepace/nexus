@@ -6,6 +6,7 @@ Deep Research Service
 import logging
 import os
 import uuid
+import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -15,8 +16,18 @@ from sqlmodel import Session
 from app.core.config import settings
 from app.core.db import engine
 from app.models.content import ContentItem, DeepResearchJob
-from app.services.preprocessing_pipeline import DocumentMetadata, PreprocessingPipeline
+from app.services.preprocessing_pipeline import DocumentMetadata, PreprocessingPipeline, ContentType
 from app.utils.timezone import now_utc
+
+# 导入兼容性模块以确保修复生效
+try:
+    from app.utils.pydantic_compatibility import apply_fixes
+    apply_fixes()
+except ImportError:
+    # 如果兼容性模块不存在，应用基本修复
+    warnings.filterwarnings("ignore", category=DeprecationWarning, module="pydantic")
+    warnings.filterwarnings("ignore", message=".*root_validator.*")
+    warnings.filterwarnings("ignore", message=".*ClassVar.*")
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +74,7 @@ class DeepResearchService:
                 markdown_path = await self._save_markdown(job_id, markdown_content)
 
                 # 创建ContentItem以便复用现有的预处理流程
-                await self._create_content_item_for_research(
+                content_item = await self._create_content_item_for_research(
                     session, job, markdown_content, markdown_path
                 )
 
@@ -71,16 +82,23 @@ class DeepResearchService:
                 metadata = DocumentMetadata(
                     title=f"深度研究: {job.query[:100]}",
                     source_url=f"deep_research:{job.id}",
-                    content_type="deep_research",
+                    content_type=ContentType.DEEP_RESEARCH,
                     language="zh",
                     author="GPT Researcher",
                     description=f"关于 '{job.query}' 的深度研究报告",
                 )
 
-                # 使用PreprocessingPipeline的AI初始化层进行预处理
-                pipeline = PreprocessingPipeline()
-                ai_results, ai_stats = await pipeline._ai_initialization_layer(
-                    markdown_content, metadata
+                # 使用完整的PreprocessingPipeline进行处理，包括分段和存储
+                from app.services.ai.chat_service import ChatService
+
+                pipeline = PreprocessingPipeline(chat_service=ChatService())
+                
+                # 调用完整的预处理管道，传入已创建的 content_item_id
+                preprocessing_result = await pipeline.process_content(
+                    content=markdown_content,
+                    metadata=metadata,
+                    user_preferences={},  # 可选的用户偏好设置
+                    content_item_id=content_item.id  # 让管道更新同一条记录
                 )
 
                 # 更新任务状态和结果
@@ -88,15 +106,26 @@ class DeepResearchService:
                 job.markdown_path = markdown_path
                 job.research_meta = {
                     "research_meta": research_meta,
-                    "ai_results": ai_results,
-                    "ai_stats": ai_stats,
+                    "preprocessing_result": {
+                        "content_id": preprocessing_result.content_id,
+                        "status": preprocessing_result.status.value,
+                        "segments_count": len(preprocessing_result.segments),
+                        "reading_time_minutes": preprocessing_result.reading_time_minutes,
+                        "difficulty_level": preprocessing_result.difficulty_level,
+                        "content_quality_score": preprocessing_result.content_quality_score,
+                    },
+                    "ai_results": {
+                        "summary": preprocessing_result.summary,
+                        "key_points": preprocessing_result.key_points,
+                        "labels": preprocessing_result.labels,
+                    },
                 }
                 job.completed_at = now_utc()
                 job.updated_at = now_utc()
                 session.add(job)
                 session.commit()
 
-                logger.info(f"深度研究任务完成: {job_id}")
+                logger.info(f"深度研究任务完成: {job_id}, 创建了 {len(preprocessing_result.segments)} 个分段")
                 return True
 
         except Exception as e:
@@ -127,26 +156,41 @@ class DeepResearchService:
             original_base_url = os.environ.get("OPENAI_API_BASE")
 
             try:
-                # 配置使用LiteLLM proxy
-                if settings.LITELLM_MASTER_KEY:
-                    os.environ["OPENAI_API_KEY"] = settings.LITELLM_MASTER_KEY
+                # 优先使用 LiteLLM proxy，如果不可用则回退到直接 API
+                use_litellm_proxy = (
+                    settings.LITELLM_MASTER_KEY and settings.LITELLM_PROXY_URL
+                )
+                base_url: str | None = None
+
+                if use_litellm_proxy:
+                    # 配置使用LiteLLM proxy
+                    if settings.LITELLM_MASTER_KEY:
+                        os.environ["OPENAI_API_KEY"] = settings.LITELLM_MASTER_KEY
+                    if settings.LITELLM_PROXY_URL:
+                        base_url = str(settings.LITELLM_PROXY_URL).rstrip("/")
+                        os.environ["OPENAI_API_BASE"] = f"{base_url}/v1"
+                        logger.info(f"配置GPT Researcher使用LiteLLM proxy: {base_url}")
                 else:
-                    # 如果没有设置master key，使用默认占位符
-                    os.environ["OPENAI_API_KEY"] = "dummy-key"
+                    # 回退到直接使用配置的 OpenAI API
+                    logger.info("LiteLLM proxy 不可用，使用直接 OpenAI API")
+                    # 保持现有的环境变量配置
 
-                # 设置base URL为LiteLLM proxy
-                base_url = str(settings.LITELLM_PROXY_URL).rstrip("/")
-                os.environ["OPENAI_API_BASE"] = f"{base_url}/v1"
-
-                logger.info(f"配置GPT Researcher使用LiteLLM proxy: {base_url}")
-
-                # 如果还没有设置搜索API密钥，给出警告
+                # 检查搜索API密钥
                 if not os.getenv("TAVILY_API_KEY"):
                     logger.warning(
                         "TAVILY_API_KEY not set, deep research may have limited search capabilities"
                     )
 
-                # 配置研究参数
+                # 确保 GPT Researcher 使用与系统一致的模型
+                default_model = getattr(settings, "DEFAULT_LLM_MODEL", "gpt-3.5-turbo")
+                os.environ.setdefault("FAST_LLM", f"openai:{default_model}")
+                os.environ.setdefault("SMART_LLM", f"openai:{default_model}")
+
+                # 设置在 LiteLLM 配置中映射到 OpenRouter 的 embedding 模型
+                os.environ.setdefault(
+                    "EMBEDDING", "openai:openai-text-embedding-3-small"
+                )
+
                 researcher = GPTResearcher(
                     query=query,
                     report_type="research_report",
@@ -157,7 +201,50 @@ class DeepResearchService:
                 logger.info(f"开始深度研究: {query}")
 
                 # 执行研究
-                await researcher.conduct_research()
+                try:
+                    await researcher.conduct_research()
+                except Exception as e:
+                    # 如果使用了 LiteLLM proxy 且出现网络 / 代理相关错误，则回退到直接 OpenAI API
+                    proxy_error_signals = [
+                        "Bad Gateway",
+                        "502",
+                        "Failed to establish a new connection",
+                        "Connection refused",
+                    ]
+                    embedding_error_signal = "Invalid model name passed in model"
+
+                    if use_litellm_proxy and (
+                        any(sig in str(e) for sig in proxy_error_signals)
+                        or embedding_error_signal in str(e)
+                    ):
+                        logger.warning(
+                            "LiteLLM proxy 请求失败，正在回退到直接 OpenAI API: %s", e
+                        )
+
+                        # 清理代理相关环境变量，恢复为直接 API
+                        if "OPENAI_API_BASE" in os.environ:
+                            del os.environ["OPENAI_API_BASE"]
+
+                        # 恢复 API Key（优先使用配置中的默认 Key）
+                        if settings.OPENAI_API_KEY:
+                            os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
+                        elif original_api_key:
+                            os.environ["OPENAI_API_KEY"] = original_api_key
+
+                        # 更新标志位
+                        use_litellm_proxy = False
+
+                        # 重新创建 researcher 并再次尝试
+                        researcher = GPTResearcher(
+                            query=query,
+                            report_type="research_report",
+                            source_urls=None,
+                            config_path=None,
+                        )
+
+                        await researcher.conduct_research()
+                    else:
+                        raise
 
                 # 生成报告
                 markdown_content = await researcher.write_report()
@@ -169,11 +256,12 @@ class DeepResearchService:
                     "breadth": breadth,
                     "sources_count": len(getattr(researcher, "visited_urls", [])),
                     "research_duration": getattr(researcher, "research_time", 0),
-                    "model_used": settings.DEFAULT_LLM_MODEL,
+                    "model_used": default_model,
                     "report_type": "research_report",
                     "generated_at": datetime.now().isoformat(),
-                    "litellm_proxy_used": True,
-                    "proxy_url": base_url,
+                    "litellm_proxy_used": use_litellm_proxy,
+                    "proxy_url": base_url if use_litellm_proxy else None,
+                    "gpt_researcher_version": "0.12.3+",
                 }
 
                 logger.info(f"深度研究完成, 生成内容长度: {len(markdown_content)} 字符")
@@ -197,7 +285,13 @@ class DeepResearchService:
             raise Exception("GPT Researcher 依赖未安装或配置错误")
         except Exception as e:
             logger.error(f"深度研究执行失败: {e}")
-            raise
+            # 提供更详细的错误信息
+            if "API" in str(e) or "connection" in str(e).lower():
+                raise Exception(f"API连接错误: {e}. 请检查网络连接和API配置")
+            elif "key" in str(e).lower():
+                raise Exception(f"API密钥错误: {e}. 请检查API密钥配置")
+            else:
+                raise
 
     async def _save_markdown(self, job_id: uuid.UUID, content: str) -> str:
         """
@@ -248,7 +342,7 @@ class DeepResearchService:
             source_uri=f"deep_research:{job.id}",
             title=f"深度研究: {job.query[:100]}",
             content_text=markdown_content,
-            processing_status="completed",  # 直接设置为已完成
+            processing_status="processing",  # 设置为处理中，等待预处理管道完成
             last_processed_at=now_utc(),
             meta_info={
                 "deep_research_job_id": str(job.id),
@@ -317,22 +411,22 @@ class DeepResearchService:
                         result["research_meta"] = job.research_meta.get(
                             "research_meta", {}
                         )
+                        
+                        # 获取预处理结果
+                        preprocessing_result = job.research_meta.get("preprocessing_result", {})
                         ai_results = job.research_meta.get("ai_results", {})
 
-                        # 展开AI结果到顶级字段
+                        # 展开预处理和AI结果到顶级字段
                         result.update(
                             {
-                                "title": ai_results.get("title"),
+                                "segments_count": preprocessing_result.get("segments_count", 0),
+                                "title": ai_results.get("summary", {}).get("title") if ai_results.get("summary") else None,
                                 "summary": ai_results.get("summary"),
                                 "key_points": ai_results.get("key_points"),
                                 "labels": ai_results.get("labels"),
-                                "reading_time_minutes": ai_results.get(
-                                    "reading_time_minutes"
-                                ),
-                                "difficulty_level": ai_results.get("difficulty_level"),
-                                "content_quality_score": ai_results.get(
-                                    "content_quality_score"
-                                ),
+                                "reading_time_minutes": preprocessing_result.get("reading_time_minutes"),
+                                "difficulty_level": preprocessing_result.get("difficulty_level"),
+                                "content_quality_score": preprocessing_result.get("content_quality_score"),
                             }
                         )
 

@@ -135,6 +135,11 @@ model_list:
       model: openrouter/tng/deepseek-r1t-chimera
       api_key: "os.environ/OR_API_KEY"
 
+  - model_name: openai-text-embedding-3-small
+    litellm_params:
+      model: openrouter/openai/text-embedding-3-small
+      api_key: "os.environ/OR_API_KEY"
+
 litellm_settings:
   drop_params: True
   # 暂时禁用 prometheus 回调以避免兼容性问题

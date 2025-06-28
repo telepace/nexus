@@ -52,7 +52,8 @@ dependencies = [
     # Added Redis for caching
     "firecrawl-py>=1.0.0,<2.0.0",
     # Added Firecrawl for web scraping
-    "gpt-researcher>=0.4.0,<1.0.0",
+    "gpt-researcher>=0.12.3,<1.0.0",
+    "langchain-text-splitters>=0.3.8",
     # Added GPT Researcher for deep research capabilities
 ]
 
