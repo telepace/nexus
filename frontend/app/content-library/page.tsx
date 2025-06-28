@@ -1,15 +1,24 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { ContentList } from "./components/ContentList";
 import { ContentPreview } from "./components/ContentPreview";
+import { Toolbar } from "./components/Toolbar";
 import { useContentItems } from "./hooks/useContentItems";
 import type { ContentItemPublic } from "./types";
 import { useRouter } from "next/navigation";
 import { Loading } from "@/components/ui/loading";
+import { filterAndSortItems } from "./utils/filtering";
+
+interface FilterOptions {
+  search: string;
+  selectedTags: string[];
+  sortBy: "time" | "rating" | "title" | "views";
+  viewMode: "grid" | "list";
+}
 
 export default function ContentLibraryPage() {
   const router = useRouter();
@@ -22,9 +31,25 @@ export default function ContentLibraryPage() {
   const [hoveredItem, setHoveredItem] = useState<ContentItemPublic | null>(
     null,
   );
+  const [filters, setFilters] = useState<FilterOptions>({
+    search: "",
+    selectedTags: [],
+    sortBy: "time",
+    viewMode: "grid",
+  });
 
-  // 过滤逻辑
-  const filteredItems = items;
+  // 应用筛选和排序
+  const filteredItems = useMemo(() => {
+    return filterAndSortItems(items, filters);
+  }, [items, filters]);
+
+  // 处理筛选条件变化
+  const handleFiltersChange = useCallback((newFilters: FilterOptions) => {
+    setFilters(newFilters);
+    // 清除选中项，避免筛选后显示不匹配的预览
+    setSelectedItem(null);
+    setHoveredItem(null);
+  }, []);
 
   // 处理卡片点击 - 立即跳转到阅读器
   const handleCardClick = useCallback(
@@ -121,22 +146,38 @@ export default function ContentLibraryPage() {
   return (
     <MainLayout pageTitle="Content Library" fullscreen>
       {/* 页面主体：左右两栏 */}
-      <div className="flex h-full bg-gradient-to-br from-background via-background to-muted/20">
-        <section className="flex flex-col overflow-y-auto no-scrollbar px-6 w-library flex-none 2xl:w-library-lg">
+      <div className="flex h-screen overflow-visible bg-gradient-to-br from-background via-background to-muted/20">
+        {/* 左栏：默认固定 35.25rem，2xl时固定宽度变为37.5rem */}
+        <section className="flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar w-library flex-none 2xl:w-library-lg">
           {/* Header 仅存在于左栏 */}
-          <header className="flex items-center h-header px-2 md:px-6 border-b shrink-0 bg-background/80">
-            <h1 className="text-base font-medium">Library</h1>
+          <header className="flex items-center h-header px-4 md:px-6 border-b shrink-0 bg-background/80">
+            <h1 className="text-lg font-semibold">Library</h1>
           </header>
+
+          {/* 工具栏 */}
+          <Toolbar items={items} onFiltersChange={handleFiltersChange} />
 
           {/* 列表 */}
           <div className="flex-1 px-4 md:px-6 pb-6 pt-6">
             {filteredItems.length === 0 ? (
-              <div className="text-center py-12">暂无内容</div>
+              <div className="text-center py-12">
+                {filters.search || filters.selectedTags.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-muted-foreground">未找到匹配的内容</p>
+                    <p className="text-sm text-muted-foreground">
+                      尝试调整搜索条件或清除筛选
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">暂无内容</p>
+                )}
+              </div>
             ) : (
               <ContentList
                 items={filteredItems}
                 selectedItem={selectedItem}
                 hoveredItem={hoveredItem}
+                viewMode={filters.viewMode}
                 onCardClick={handleCardClick}
                 onCardHover={handleCardHover}
                 prefetchContent={prefetchContent}

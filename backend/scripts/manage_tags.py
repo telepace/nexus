@@ -5,7 +5,6 @@
 """
 
 import argparse
-import asyncio
 import sys
 from pathlib import Path
 
@@ -13,6 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlmodel import Session, create_engine, select
+
 from app.core.config import settings
 from app.models.prompt import Tag
 from app.services.ai_tag_processor import ai_tag_processor
@@ -22,17 +22,17 @@ from app.utils.tag_manager import tag_manager
 def sync_preset_tags():
     """同步预设标签到数据库"""
     engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
-    
+
     with Session(engine) as session:
         print("开始同步预设标签到数据库...")
-        
+
         # 获取当前标签数量
         current_tags = session.exec(select(Tag)).all()
         print(f"同步前数据库中有 {len(current_tags)} 个标签")
-        
+
         # 执行同步
         new_count = ai_tag_processor.sync_preset_tags_to_database(session)
-        
+
         # 获取同步后标签数量
         updated_tags = session.exec(select(Tag)).all()
         print(f"同步完成！新创建了 {new_count} 个标签")
@@ -42,7 +42,7 @@ def sync_preset_tags():
 def list_tags(category=None):
     """列出标签信息"""
     engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
-    
+
     with Session(engine) as session:
         if category:
             # 显示特定分类的预设标签
@@ -70,22 +70,22 @@ def show_categories():
 def show_stats():
     """显示标签系统统计信息"""
     engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
-    
+
     # 预设标签统计
     preset_tags = tag_manager.load_preset_tags()
     categories = tag_manager.get_categories()
-    
-    print(f"\n=== 标签系统统计 ===")
+
+    print("\n=== 标签系统统计 ===")
     print(f"预设标签总数: {len(preset_tags)}")
     print(f"预设标签分类: {len(categories)}")
-    
+
     # 数据库标签统计
     with Session(engine) as session:
         db_tags = session.exec(select(Tag)).all()
         print(f"数据库标签总数: {len(db_tags)}")
-        
+
         # 分类统计
-        print(f"\n=== 分类详情 ===")
+        print("\n=== 分类详情 ===")
         for category in categories:
             category_tags = tag_manager.get_tags_by_category(category)
             print(f"{category}: {len(category_tags)} 个标签")
@@ -97,10 +97,10 @@ def test_tag_matching():
         ["AI", "machine learning", "编程", "product"],
         ["深度学习", "神经网络", "web development"],
         ["blockchain", "安全", "数据库设计", "DevOps"],
-        ["用户体验", "设计思维", "产品经理", "agile"]
+        ["用户体验", "设计思维", "产品经理", "agile"],
     ]
-    
-    print(f"\n=== 标签匹配测试 ===")
+
+    print("\n=== 标签匹配测试 ===")
     for i, ai_tags in enumerate(test_cases, 1):
         matched = tag_manager.filter_and_match_preset_tags(ai_tags)
         print(f"\n测试 {i}:")
@@ -114,15 +114,12 @@ def main():
     parser.add_argument(
         "action",
         choices=["sync", "list", "categories", "stats", "test"],
-        help="执行的操作"
+        help="执行的操作",
     )
-    parser.add_argument(
-        "--category",
-        help="指定标签分类（仅用于list操作）"
-    )
-    
+    parser.add_argument("--category", help="指定标签分类（仅用于list操作）")
+
     args = parser.parse_args()
-    
+
     try:
         if args.action == "sync":
             sync_preset_tags()
@@ -137,9 +134,9 @@ def main():
     except Exception as e:
         print(f"❌ 执行失败: {e}")
         sys.exit(1)
-    
+
     print("✅ 操作完成")
 
 
 if __name__ == "__main__":
-    main() 
+    main()

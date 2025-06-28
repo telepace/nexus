@@ -71,8 +71,8 @@
   --radius: 0.625rem;
 
   /* Custom width tokens */
-  --size-library: 37rem;
-  --size-library-lg: 40rem;
+  --size-library: 40rem; /* 640px - left pane fixed width - 增加以适应单列布局 */
+  --size-library-lg: 42rem; /* 672px - large screen library width - 相应增加 */
   --size-library-card: 28.75rem; /* 460px - card width */
   --size-card-title: 25rem; /* 400px - card text width */
 
@@ -165,6 +165,16 @@
   /* Dia icon palette */
   --color-dia-icon-bg: #f1f2f2; /* icon container background */
   --color-dia-icon: #fcfcfc; /* icon itself / fg */
+
+  /* Content Library Colors - 日式极简风格 */
+  --library-bg: #ffffff;
+  --library-border: rgba(0, 0, 0, 0.06);
+  --library-border-hover: rgba(0, 0, 0, 0.12);
+  --library-text: #000000;
+  --library-text-muted: #666666;
+  --library-text-subtle: #999999;
+  --library-tag-bg: rgba(0, 0, 0, 0.04);
+  --library-tag-bg-hover: rgba(0, 0, 0, 0.08);
 }
 
 .dark {

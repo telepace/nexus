@@ -1,0 +1,110 @@
+/* 内容库布局动画 */
+.contentFadeIn {
+  animation: contentFadeIn 0.6s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+@keyframes contentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 卡片悬浮效果 */
+.cardHover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cardHover:hover {
+  transform: translateY(-2px);
+}
+
+/* 视图切换动画 */
+.viewTransition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 筛选动画 */
+.filterSlideIn {
+  animation: filterSlideIn 0.3s ease-out forwards;
+}
+
+@keyframes filterSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 搜索输入聚焦效果 */
+.searchFocus {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.searchFocus:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 标签动画 */
+.tagAnimation {
+  transition: all 0.2s ease;
+}
+
+.tagAnimation:hover {
+  transform: translateY(-1px);
+}
+
+/* 网格到列表视图的平滑过渡 */
+.gridToList {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 加载状态 */
+.loadingShimmer {
+  background: linear-gradient(
+    90deg,
+    hsla(var(--muted), 0.3) 25%,
+    hsla(var(--muted), 0.5) 50%,
+    hsla(var(--muted), 0.3) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* 响应式网格 */
+.responsiveGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .responsiveGrid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+@media (min-width: 1536px) {
+  .responsiveGrid {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+}

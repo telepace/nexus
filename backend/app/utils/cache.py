@@ -4,9 +4,9 @@ import logging
 
 from sqlmodel import Session, select
 
+from app.core.config import settings
 from app.core.redis_client import redis_client
 from app.models import ContentItem
-from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 

@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   X,
   Search,
   Sparkles,
   ArrowRight,
   Zap,
-  Link as LinkIcon,
+  Link,
   FileText,
   Type,
   Upload,
@@ -16,14 +16,13 @@ import {
   File,
   Plus,
   Trash2,
-  AlertCircle,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
 import { contentCache } from "@/lib/services/content-cache";
 import { eventBus } from "@/lib/event-bus";
 import { useGlobalNotificationStore } from "@/lib/stores/useGlobalNotificationStore";
 
-// 极简基础组件 - 基于参考设计
+// 极简基础组件
 const Dialog = ({ children, open, onOpenChange }) => {
   if (!open) return null;
   return (
@@ -76,12 +75,7 @@ const Button = ({
   );
 };
 
-interface AddContentModalProps {
-  open: boolean;
-  onClose: () => void;
-}
-
-// 与内容库页面保持一致的公共内容项类型定义
+// 内容项类型定义
 interface ContentItemPublic {
   id: string;
   type: string;
@@ -110,7 +104,7 @@ const getFileType = (file: File) => {
   return "file";
 };
 
-// 增强的内容分析 - 基于参考代码的分析逻辑
+// 增强的内容分析
 const analyzeContent = (text: string, files: File[] = []) => {
   if (!text.trim() && files.length === 0) return null;
 
@@ -170,7 +164,7 @@ const analyzeContent = (text: string, files: File[] = []) => {
   if (urls && urls.length > 0) {
     return {
       type: "link",
-      icon: LinkIcon,
+      icon: Link,
       label: `${urls.length} 个链接`,
       color: "text-green-600",
       bgColor: "bg-green-50",
@@ -178,7 +172,7 @@ const analyzeContent = (text: string, files: File[] = []) => {
     };
   }
 
-  // 检测研究需求 - 增强的关键词
+  // 检测研究需求
   const researchKeywords = [
     "如何",
     "什么",
@@ -245,7 +239,7 @@ const analyzeContent = (text: string, files: File[] = []) => {
   };
 };
 
-// URL检测和提取
+// 检测URL
 const isURL = (text: string) => {
   try {
     new URL(text);
@@ -255,6 +249,7 @@ const isURL = (text: string) => {
   }
 };
 
+// 提取URLs
 const extractUrls = (text: string) => {
   const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
   const urls = text.match(urlRegex) || [];
@@ -267,22 +262,18 @@ const extractUrls = (text: string) => {
     .filter((url): url is string => url !== null);
 };
 
-/**
- * 优化重构的添加内容模态框组件
- *
- * 基于参考代码的设计风格和技巧进行重构：
- * - 固定尺寸容器，避免界面跳动
- * - 智能内容分析和类型检测
- * - 统一的视觉语言和交互体验
- * - 优化的文件拖拽和上传流程
- */
-export const AddContentModal: React.FC<AddContentModalProps> = ({
+interface OptimizedAddContentDialogProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function OptimizedAddContentDialog({
   open,
   onClose,
-}) => {
+}: OptimizedAddContentDialogProps) {
   const [content, setContent] = useState("");
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState("");
 
@@ -294,16 +285,16 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   const { createContentProcessingNotification } = useGlobalNotificationStore();
 
   // 内容分析
-  const contentAnalysis = analyzeContent(content, selectedFiles);
+  const contentAnalysis = analyzeContent(content, files);
   const isResearch = contentAnalysis?.type === "research";
   const detectedUrls = extractUrls(content);
 
-  // 自适应高度 - 固定高度，避免跳动
+  // 自适应高度
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
       const scrollHeight = textarea.scrollHeight;
-      const currentHeight = parseInt(textarea.style.height) || 120;
+      const currentHeight = parseInt(textarea.style.height) || 100;
 
       if (scrollHeight > currentHeight) {
         const newHeight = Math.min(scrollHeight, 180);
@@ -316,38 +307,38 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
-        const filesArray = Array.from(e.target.files);
-        setSelectedFiles((prev) => [...prev, ...filesArray]);
+        const newFiles = Array.from(e.target.files);
+        setFiles((prev) => [...prev, ...newFiles]);
       }
     },
     [],
   );
 
   const removeFile = useCallback((index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   // 拖拽处理
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(true);
   }, []);
 
-  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
   }, []);
 
-  const handleDropFiles = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
 
     const droppedFiles = Array.from(e.dataTransfer.files || []);
     if (droppedFiles.length > 0) {
-      setSelectedFiles((prev) => [...prev, ...droppedFiles]);
+      setFiles((prev) => [...prev, ...droppedFiles]);
     }
   }, []);
 
@@ -359,11 +350,11 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
     }
   }, []);
 
-  // 提交处理 - 优化的逻辑
+  // 提交处理
   const handleSubmit = useCallback(async () => {
-    if (!content.trim() && selectedFiles.length === 0) return;
+    if (!content.trim() && files.length === 0) return;
 
-    setIsLoading(true);
+    setIsProcessing(true);
     setError("");
 
     try {
@@ -415,7 +406,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
         }
       }
 
-      // 处理文本内容 - 更智能的判断逻辑
+      // 处理文本内容
       if (
         content.trim() &&
         (detectedUrls.length === 0 ||
@@ -458,19 +449,20 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
       }
 
       // 处理文件 (暂时提示)
-      if (selectedFiles.length > 0) {
+      if (files.length > 0) {
         setError("文件上传功能正在开发中，敬请期待");
         return;
       }
 
-      // 成功处理 - 乐观UI更新
+      // 成功处理
       if (newlyCreatedItems.length > 0) {
         // 重置表单
         setContent("");
-        setSelectedFiles([]);
+        setFiles([]);
         setError("");
         onClose();
 
+        // 更新缓存和通知
         contentCache.clearContentList();
         newlyCreatedItems.forEach((item) => {
           eventBus.emit("contentCreated", item);
@@ -482,18 +474,18 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
         error instanceof Error ? error.message : "添加内容时发生错误，请重试",
       );
     } finally {
-      setIsLoading(false);
+      setIsProcessing(false);
     }
   }, [
     content,
-    selectedFiles,
+    files,
     detectedUrls,
     user?.token,
     createContentProcessingNotification,
     onClose,
   ]);
 
-  // 快捷键处理 - 基于参考代码的快捷键逻辑
+  // 快捷键处理
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Enter" && e.metaKey) {
@@ -521,7 +513,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       {/* 固定尺寸容器，避免跳动 */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 w-[580px] max-w-[90vw] min-h-[380px] flex flex-col overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 w-[580px] max-w-[90vw] min-h-[320px] flex flex-col overflow-hidden">
         {/* 固定头部 */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50 flex-shrink-0">
           <div className="flex items-center gap-2.5">
@@ -538,7 +530,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
           </button>
         </div>
 
-        {/* 主体区域 - 固定布局 */}
+        {/* 主体区域 */}
         <div className="flex-1 flex flex-col p-5">
           {/* 内容类型提示 - 固定高度区域 */}
           <div className="h-10 flex items-center mb-3">
@@ -564,8 +556,8 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
             )}
           </div>
 
-          {/* 输入区 - 可扩展但有最大高度 */}
-          <div className="flex-1 min-h-[120px] max-h-[180px] mb-4">
+          {/* 输入区域 */}
+          <div className="flex-1 min-h-[120px] max-h-[200px] mb-4">
             <textarea
               ref={textareaRef}
               value={content}
@@ -584,11 +576,11 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
             `}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            onDrop={handleDropFiles}
+            onDrop={handleDrop}
           >
-            {selectedFiles.length > 0 ? (
+            {files.length > 0 ? (
               <div className="space-y-2 max-h-32 overflow-y-auto">
-                {selectedFiles.map((file, index) => (
+                {files.map((file, index) => (
                   <div
                     key={index}
                     className="flex items-center justify-between bg-white p-2 rounded border"
@@ -624,7 +616,6 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                       size="sm"
                       onClick={() => removeFile(index)}
                       className="ml-2"
-                      disabled={false}
                     >
                       <Trash2 className="w-3 h-3" />
                     </Button>
@@ -648,10 +639,9 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
               size="sm"
               onClick={() => fileInputRef.current?.click()}
               className="mt-2 w-full"
-              disabled={false}
             >
               <Plus className="w-3 h-3 mr-1" />
-              {selectedFiles.length > 0 ? "添加更多文件" : "选择文件"}
+              {files.length > 0 ? "添加更多文件" : "选择文件"}
             </Button>
 
             <input
@@ -665,29 +655,53 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
 
           {/* 错误信息 */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+            <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg">
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
           {/* 固定底部操作区 */}
           <div className="flex items-center justify-between pt-3 border-t border-gray-50 flex-shrink-0">
-            <span className="text-xs text-gray-400">⌘+Enter 快速添加</span>
+            <span className="text-xs text-gray-400">
+              {isResearch ? "⌘+⇧+Enter 深度研究" : "⌘+Enter 快速添加"}
+            </span>
 
             <div className="flex gap-2">
-              <Button variant="ghost" onClick={onClose} disabled={false}>
+              <Button variant="ghost" onClick={onClose}>
                 取消
               </Button>
+
+              {isResearch && (
+                <Button
+                  variant="research"
+                  onClick={handleSubmit}
+                  disabled={
+                    (!content.trim() && files.length === 0) || isProcessing
+                  }
+                  className="gap-1.5"
+                >
+                  {isProcessing ? (
+                    <>
+                      <div className="w-2.5 h-2.5 border border-white/40 border-t-white rounded-full animate-spin" />
+                      研究中
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-3 h-3" />
+                      研究
+                    </>
+                  )}
+                </Button>
+              )}
 
               <Button
                 onClick={handleSubmit}
                 disabled={
-                  (!content.trim() && selectedFiles.length === 0) || isLoading
+                  (!content.trim() && files.length === 0) || isProcessing
                 }
                 className="gap-1"
               >
-                {isLoading ? (
+                {isProcessing ? (
                   <>
                     <div className="w-2.5 h-2.5 border border-white/40 border-t-white rounded-full animate-spin" />
                     处理中
@@ -705,4 +719,4 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
       </div>
     </Dialog>
   );
-};
+}
