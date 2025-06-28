@@ -286,7 +286,10 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState("");
-  const [researchConfig, setResearchConfig] = useState({ depth: 3, breadth: 2 });
+  const [researchConfig, setResearchConfig] = useState({
+    depth: 3,
+    breadth: 2,
+  });
   const [showResearchConfig, setShowResearchConfig] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -367,47 +370,50 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   }, []);
 
   // Deep Research API调用
-  const createDeepResearchJob = useCallback(async (query: string, token: string) => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
-    const researchData = {
-      query: query.trim(),
-      depth: researchConfig.depth,
-      breadth: researchConfig.breadth,
-    };
+  const createDeepResearchJob = useCallback(
+    async (query: string, token: string) => {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-    console.log('🔍 创建Deep Research任务:', researchData);
+      const researchData = {
+        query: query.trim(),
+        depth: researchConfig.depth,
+        breadth: researchConfig.breadth,
+      };
 
-    const response = await fetch(`${apiUrl}/api/v1/deep-research/create`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(researchData),
-      credentials: "include",
-    });
+      console.log("🔍 创建Deep Research任务:", researchData);
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Deep Research API错误:', errorData);
-      
-      let errorMessage = `深度研究任务创建失败 (${response.status})`;
-      if (errorData.detail) {
-        errorMessage = errorData.detail;
-      } else if (errorData.error) {
-        errorMessage = errorData.error;
-      } else if (errorData.message) {
-        errorMessage = errorData.message;
+      const response = await fetch(`${apiUrl}/api/v1/deep-research/create`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(researchData),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Deep Research API错误:", errorData);
+
+        let errorMessage = `深度研究任务创建失败 (${response.status})`;
+        if (errorData.detail) {
+          errorMessage = errorData.detail;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+
+        throw new Error(errorMessage);
       }
-      
-      throw new Error(errorMessage);
-    }
 
-    const result = await response.json();
-    console.log('✅ Deep Research任务创建成功:', result);
-    return result;
-  }, [researchConfig]);
+      const result = await response.json();
+      console.log("✅ Deep Research任务创建成功:", result);
+      return result;
+    },
+    [researchConfig],
+  );
 
   // 提交处理 - 优化的逻辑
   const handleSubmit = useCallback(async () => {
@@ -429,13 +435,16 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
       // 处理Deep Research类型
       if (isResearch && content.trim() && detectedUrls.length === 0) {
         try {
-          const researchResult = await createDeepResearchJob(content.trim(), token);
-          
+          const researchResult = await createDeepResearchJob(
+            content.trim(),
+            token,
+          );
+
           // 显示成功消息
           createContentProcessingNotification(
             researchResult.job_id,
             "深度研究任务",
-            `正在深度研究："${content.trim().substring(0, 50)}${content.trim().length > 50 ? '...' : ''}"`,
+            `正在深度研究："${content.trim().substring(0, 50)}${content.trim().length > 50 ? "..." : ""}"`,
           );
 
           // 重置表单并关闭模态框
@@ -444,12 +453,17 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
           setError("");
           setShowResearchConfig(false);
           onClose();
-          
+
           return; // 对于深度研究，直接返回，不继续处理其他内容
         } catch (researchError) {
-          console.error('Deep Research失败，回退到普通文本处理:', researchError);
-          setError(`深度研究失败: ${researchError instanceof Error ? researchError.message : '未知错误'}。将作为普通文本处理。`);
-          
+          console.error(
+            "Deep Research失败，回退到普通文本处理:",
+            researchError,
+          );
+          setError(
+            `深度研究失败: ${researchError instanceof Error ? researchError.message : "未知错误"}。将作为普通文本处理。`,
+          );
+
           // 继续作为普通文本处理，不return
         }
       }
@@ -568,7 +582,6 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
     selectedFiles,
     detectedUrls,
     isResearch,
-    researchConfig,
     user?.token,
     createContentProcessingNotification,
     createDeepResearchJob,
@@ -657,7 +670,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                 </div>
               )}
             </div>
-            
+
             {/* 研究配置按钮 */}
             {isResearch && (
               <Button
@@ -675,29 +688,63 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
           {/* 研究配置面板 */}
           {isResearch && showResearchConfig && (
             <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
-              <div className="text-sm font-medium text-blue-900 mb-2">研究配置</div>
+              <div className="text-sm font-medium text-blue-900 mb-2">
+                研究配置
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-blue-700 block mb-1">深度 (1-5)</label>
+                  <label className="text-xs text-blue-700 block mb-1">
+                    深度 (1-5)
+                  </label>
                   <select
                     value={researchConfig.depth}
-                    onChange={(e) => setResearchConfig(prev => ({ ...prev, depth: parseInt(e.target.value) }))}
+                    onChange={(e) =>
+                      setResearchConfig((prev) => ({
+                        ...prev,
+                        depth: parseInt(e.target.value),
+                      }))
+                    }
                     className="w-full p-1 text-sm border border-blue-200 rounded bg-white"
                   >
-                    {[1, 2, 3, 4, 5].map(n => (
-                      <option key={n} value={n}>{n} - {n === 1 ? '快速' : n === 3 ? '标准' : n === 5 ? '深入' : '中等'}</option>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>
+                        {n} -{" "}
+                        {n === 1
+                          ? "快速"
+                          : n === 3
+                            ? "标准"
+                            : n === 5
+                              ? "深入"
+                              : "中等"}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-blue-700 block mb-1">广度 (1-5)</label>
+                  <label className="text-xs text-blue-700 block mb-1">
+                    广度 (1-5)
+                  </label>
                   <select
                     value={researchConfig.breadth}
-                    onChange={(e) => setResearchConfig(prev => ({ ...prev, breadth: parseInt(e.target.value) }))}
+                    onChange={(e) =>
+                      setResearchConfig((prev) => ({
+                        ...prev,
+                        breadth: parseInt(e.target.value),
+                      }))
+                    }
                     className="w-full p-1 text-sm border border-blue-200 rounded bg-white"
                   >
-                    {[1, 2, 3, 4, 5].map(n => (
-                      <option key={n} value={n}>{n} - {n === 1 ? '聚焦' : n === 3 ? '平衡' : n === 5 ? '全面' : '中等'}</option>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>
+                        {n} -{" "}
+                        {n === 1
+                          ? "聚焦"
+                          : n === 3
+                            ? "平衡"
+                            : n === 5
+                              ? "全面"
+                              : "中等"}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -711,7 +758,11 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
               ref={textareaRef}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder={isResearch ? "输入您想要深度研究的问题或主题..." : "输入研究主题、粘贴链接或文本内容..."}
+              placeholder={
+                isResearch
+                  ? "输入您想要深度研究的问题或主题..."
+                  : "输入研究主题、粘贴链接或文本内容..."
+              }
               className="w-full h-full p-3 bg-gray-50 rounded-lg border-0 outline-none resize-none text-gray-900 placeholder:text-gray-400 text-sm leading-relaxed transition-all focus:bg-white focus:ring-2 focus:ring-blue-500/10"
               style={{ minHeight: "120px" }}
             />

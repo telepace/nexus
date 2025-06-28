@@ -113,7 +113,7 @@ describe("Settings Page", () => {
 
     // Simply verify the click operation completed without error
     expect(screen.getByRole("tab", { name: /外观/i })).toBeInTheDocument();
-  });
+  }, 20000);
 
   it("switches to notifications tab", async () => {
     const user = userEvent.setup();

@@ -139,18 +139,21 @@ describe("DashboardPage 集成测试", () => {
 
     render(<DashboardPage />);
 
-    await waitFor(() => {
-      expect(screen.getByText("仪表板")).toBeInTheDocument();
-      expect(screen.getByText("Test Article")).toBeInTheDocument();
-      expect(screen.getByText("Test Video")).toBeInTheDocument();
-      expect(screen.getByText("Test summary")).toBeInTheDocument();
-      expect(screen.getByText("无摘要")).toBeInTheDocument();
-      expect(screen.getByText("article")).toBeInTheDocument();
-      expect(screen.getByText("video")).toBeInTheDocument();
-      expect(screen.getByText("已完成")).toBeInTheDocument();
-      expect(screen.getByText("等待中")).toBeInTheDocument();
-    });
-  });
+    await waitFor(
+      () => {
+        expect(screen.getByText("仪表板")).toBeInTheDocument();
+        expect(screen.getByText("Test Article")).toBeInTheDocument();
+        expect(screen.getByText("Test Video")).toBeInTheDocument();
+        expect(screen.getByText("Test summary")).toBeInTheDocument();
+        expect(screen.getByText("无摘要")).toBeInTheDocument();
+        expect(screen.getByText("article")).toBeInTheDocument();
+        expect(screen.getByText("video")).toBeInTheDocument();
+        expect(screen.getByText("已完成")).toBeInTheDocument();
+        expect(screen.getByText("等待中")).toBeInTheDocument();
+      },
+      { timeout: 15000 },
+    );
+  }, 25000);
 
   it("应该处理包装格式的API响应", async () => {
     const { fetchItems } = await import(

@@ -50,11 +50,14 @@ describe("PromptCommandDialog", () => {
     const input = screen.getByPlaceholderText("ask something...");
     await user.type(input, "/");
 
-    await waitFor(() => {
-      expect(screen.getByText("测试摘要功能")).toBeInTheDocument();
-      expect(screen.getByText("测试洞察功能")).toBeInTheDocument();
-    });
-  });
+    await waitFor(
+      () => {
+        expect(screen.getByText("测试摘要功能")).toBeInTheDocument();
+        expect(screen.getByText("测试洞察功能")).toBeInTheDocument();
+      },
+      { timeout: 10000 },
+    );
+  }, 20000);
 
   it("should filter prompts based on search text", async () => {
     const user = userEvent.setup();

@@ -16,12 +16,17 @@ from sqlmodel import Session
 from app.core.config import settings
 from app.core.db import engine
 from app.models.content import ContentItem, DeepResearchJob
-from app.services.preprocessing_pipeline import DocumentMetadata, PreprocessingPipeline, ContentType
+from app.services.preprocessing_pipeline import (
+    ContentType,
+    DocumentMetadata,
+    PreprocessingPipeline,
+)
 from app.utils.timezone import now_utc
 
 # 导入兼容性模块以确保修复生效
 try:
     from app.utils.pydantic_compatibility import apply_fixes
+
     apply_fixes()
 except ImportError:
     # 如果兼容性模块不存在，应用基本修复
@@ -92,13 +97,13 @@ class DeepResearchService:
                 from app.services.ai.chat_service import ChatService
 
                 pipeline = PreprocessingPipeline(chat_service=ChatService())
-                
+
                 # 调用完整的预处理管道，传入已创建的 content_item_id
                 preprocessing_result = await pipeline.process_content(
                     content=markdown_content,
                     metadata=metadata,
                     user_preferences={},  # 可选的用户偏好设置
-                    content_item_id=content_item.id  # 让管道更新同一条记录
+                    content_item_id=content_item.id,  # 让管道更新同一条记录
                 )
 
                 # 更新任务状态和结果
@@ -125,7 +130,9 @@ class DeepResearchService:
                 session.add(job)
                 session.commit()
 
-                logger.info(f"深度研究任务完成: {job_id}, 创建了 {len(preprocessing_result.segments)} 个分段")
+                logger.info(
+                    f"深度研究任务完成: {job_id}, 创建了 {len(preprocessing_result.segments)} 个分段"
+                )
                 return True
 
         except Exception as e:
@@ -411,22 +418,34 @@ class DeepResearchService:
                         result["research_meta"] = job.research_meta.get(
                             "research_meta", {}
                         )
-                        
+
                         # 获取预处理结果
-                        preprocessing_result = job.research_meta.get("preprocessing_result", {})
+                        preprocessing_result = job.research_meta.get(
+                            "preprocessing_result", {}
+                        )
                         ai_results = job.research_meta.get("ai_results", {})
 
                         # 展开预处理和AI结果到顶级字段
                         result.update(
                             {
-                                "segments_count": preprocessing_result.get("segments_count", 0),
-                                "title": ai_results.get("summary", {}).get("title") if ai_results.get("summary") else None,
+                                "segments_count": preprocessing_result.get(
+                                    "segments_count", 0
+                                ),
+                                "title": ai_results.get("summary", {}).get("title")
+                                if ai_results.get("summary")
+                                else None,
                                 "summary": ai_results.get("summary"),
                                 "key_points": ai_results.get("key_points"),
                                 "labels": ai_results.get("labels"),
-                                "reading_time_minutes": preprocessing_result.get("reading_time_minutes"),
-                                "difficulty_level": preprocessing_result.get("difficulty_level"),
-                                "content_quality_score": preprocessing_result.get("content_quality_score"),
+                                "reading_time_minutes": preprocessing_result.get(
+                                    "reading_time_minutes"
+                                ),
+                                "difficulty_level": preprocessing_result.get(
+                                    "difficulty_level"
+                                ),
+                                "content_quality_score": preprocessing_result.get(
+                                    "content_quality_score"
+                                ),
                             }
                         )
 

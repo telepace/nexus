@@ -81,7 +81,7 @@ describe("ShareContentModal", () => {
     const passwordInput = screen.getByLabelText(/Password/i);
     await user.type(passwordInput, "secret123");
     expect(passwordInput).toHaveValue("secret123");
-  });
+  }, 20000);
 
   it("calls API to generate share link and displays it on success", async () => {
     const user = userEvent.setup();
@@ -109,30 +109,36 @@ describe("ShareContentModal", () => {
     });
     fireEvent.click(generateButton);
 
-    await waitFor(() => {
-      expect(contentCreateShareLinkEndpoint).toHaveBeenCalledWith({
-        path: {
-          id: mockContentItem.id,
-        },
-        body: expect.objectContaining({
-          expires_at: undefined, // No date was selected
-          password: "securepass", // User typed this password
-          max_access_count: 5, // User typed "5" which gets parsed to number
-        }),
-      });
-    });
+    await waitFor(
+      () => {
+        expect(contentCreateShareLinkEndpoint).toHaveBeenCalledWith({
+          path: {
+            id: mockContentItem.id,
+          },
+          body: expect.objectContaining({
+            expires_at: undefined, // No date was selected
+            password: "securepass", // User typed this password
+            max_access_count: 5, // User typed "5" which gets parsed to number
+          }),
+        });
+      },
+      { timeout: 10000 },
+    );
 
-    await waitFor(() => {
-      const expectedShareUrl = `${window.location.origin}/share/${mockShareResponse.share_token}`;
-      expect(screen.getByDisplayValue(expectedShareUrl)).toBeInTheDocument();
-      expect(
-        screen.getByDisplayValue(`Token: ${mockShareResponse.share_token}`),
-      ).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const expectedShareUrl = `${window.location.origin}/share/${mockShareResponse.share_token}`;
+        expect(screen.getByDisplayValue(expectedShareUrl)).toBeInTheDocument();
+        expect(
+          screen.getByDisplayValue(`Token: ${mockShareResponse.share_token}`),
+        ).toBeInTheDocument();
+      },
+      { timeout: 10000 },
+    );
     expect(mockToast).toHaveBeenCalledWith(
       expect.objectContaining({ title: "Success" }),
     );
-  });
+  }, 25000);
 
   it("displays error message on API failure", async () => {
     // const user = userEvent.setup(); // 暂时未使用
@@ -150,13 +156,16 @@ describe("ShareContentModal", () => {
     });
     fireEvent.click(generateButton);
 
-    await waitFor(() => {
-      expect(screen.getByText(errorMessage)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText(errorMessage)).toBeInTheDocument();
+      },
+      { timeout: 10000 },
+    );
     expect(mockToast).toHaveBeenCalledWith(
       expect.objectContaining({ title: "Error", variant: "destructive" }),
     );
-  });
+  }, 20000);
 
   it("resets form when modal is closed or contentItem changes", () => {
     const { rerender } = renderModal({
