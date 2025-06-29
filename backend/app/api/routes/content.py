@@ -785,7 +785,7 @@ async def analyze_content_stream_endpoint(
         )
 
     # 统一使用内置默认模型，忽略前端传入的 model
-    DEFAULT_MODEL = "or-gemini-2.5-flash-preview-05-20"
+    DEFAULT_MODEL = "or-deepseek-r1"
     resolved_model = DEFAULT_MODEL
 
     # 创建AIConversation记录
@@ -1030,7 +1030,7 @@ async def analyze_ai_sdk_updated_endpoint(
         content_item_title=content_item.title or "Untitled Content",
         analysis_instruction=request.analysis_instruction,
         content_to_analyze=content_item.content_text,
-        model=request.model or "or-gemini-2.5-flash-preview-05-20",
+        model=request.model or "or-deepseek-r1",
         temperature=request.temperature,
         max_tokens=request.max_tokens,
     )
@@ -1079,7 +1079,7 @@ async def _stream_content_analysis_ai_sdk(
         ]
 
         payload = {
-            "model": request.model or "or-gemini-2.5-flash-preview-05-20",
+            "model": request.model or "or-deepseek-r1",
             "messages": messages,
             "temperature": request.temperature,
             "max_tokens": request.max_tokens,
@@ -1198,7 +1198,7 @@ async def completion_updated_endpoint(
         content_item_title=content_item.title or "Untitled Content",
         analysis_instruction=request.analysis_instruction,
         content_to_analyze=content_item.content_text,
-        model=request.model or "or-gemini-2.5-flash-preview-05-20",
+        model=request.model or "or-deepseek-r1",
         temperature=request.temperature,
         max_tokens=request.max_tokens,
     )
@@ -1247,7 +1247,7 @@ async def _stream_content_completion_updated(
         ]
 
         payload = {
-            "model": request.model or "or-gemini-2.5-flash-preview-05-20",
+            "model": request.model or "or-deepseek-r1",
             "messages": messages,
             "temperature": request.temperature,
             "max_tokens": request.max_tokens,
@@ -1565,7 +1565,7 @@ async def analyze_content_stream_with_template_endpoint(
         )
 
     # 统一使用内置默认模型
-    DEFAULT_MODEL = "or-gemini-2.5-flash-preview-05-20"
+    DEFAULT_MODEL = "or-deepseek-r1"
 
     # 返回流式响应 - 使用新的处理器
     return StreamingResponse(
