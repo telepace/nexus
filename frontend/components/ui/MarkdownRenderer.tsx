@@ -77,11 +77,11 @@ export function MarkdownRenderer({
         "prose prose-slate dark:prose-invert max-w-none",
         // 自定义样式
         "prose-headings:scroll-m-16 prose-headings:tracking-tight",
-        "prose-h1:text-3xl prose-h1:font-bold prose-h1:lg:text-4xl",
-        "prose-h2:border-b prose-h2:pb-1.5 prose-h2:text-2xl prose-h2:font-semibold prose-h2:tracking-tight prose-h2:first:mt-0",
-        "prose-h3:text-xl prose-h3:font-semibold prose-h3:tracking-tight",
-        "prose-h4:text-lg prose-h4:font-semibold prose-h4:tracking-tight",
-        "prose-p:leading-6 prose-p:[&:not(:first-child)]:mt-4",
+        "prose-h1:text-2xl prose-h1:font-bold prose-h1:lg:text-4xl",
+        "prose-h2:border-b prose-h2:pb-1.5 prose-h2:text-xl prose-h2:font-semibold prose-h2:tracking-tight prose-h2:first:mt-0",
+        "prose-h3:text-lg prose-h3:font-semibold prose-h3:tracking-tight",
+        "prose-h4:text-base prose-h4:font-semibold prose-h4:tracking-tight",
+        "prose-p:leading-6 prose-p:[&:not(:first-child)]:mb-3 prose-p:mb-3",
         "prose-blockquote:mt-4 prose-blockquote:border-l-2 prose-blockquote:pl-4 prose-blockquote:italic",
         "prose-ul:my-4 prose-ul:ml-4 prose-ul:list-disc prose-ul:[&>li]:mt-1",
         "prose-ol:my-4 prose-ol:ml-4 prose-ol:list-decimal prose-ol:[&>li]:mt-1",
@@ -116,7 +116,7 @@ export function MarkdownRenderer({
           // 自定义组件渲染
           h1: ({ children, ...props }) => (
             <h1
-              className="scroll-m-16 text-3xl font-bold tracking-tight lg:text-4xl"
+              className="scroll-m-16 text-xl font-bold tracking-tight lg:text-2xl"
               {...props}
             >
               {children}
@@ -124,7 +124,7 @@ export function MarkdownRenderer({
           ),
           h2: ({ children, ...props }) => (
             <h2
-              className="scroll-m-16 border-b pb-1.5 text-2xl font-semibold tracking-tight first:mt-0"
+              className="scroll-m-16 border-b pb-1.5 text-xl font-semibold tracking-tight first:mt-0"
               {...props}
             >
               {children}
@@ -132,7 +132,7 @@ export function MarkdownRenderer({
           ),
           h3: ({ children, ...props }) => (
             <h3
-              className="scroll-m-16 text-xl font-semibold tracking-tight"
+              className="scroll-m-16 text-lg font-semibold tracking-tight"
               {...props}
             >
               {children}
@@ -140,14 +140,14 @@ export function MarkdownRenderer({
           ),
           h4: ({ children, ...props }) => (
             <h4
-              className="scroll-m-16 text-lg font-semibold tracking-tight"
+              className="scroll-m-16 text-base font-medium tracking-tight mt-6 mb-2"
               {...props}
             >
               {children}
             </h4>
           ),
           p: ({ children, ...props }) => (
-            <p className="leading-6 [&:not(:first-child)]:mt-4" {...props}>
+            <p className="leading-6 mt-3" {...props}>
               {children}
             </p>
           ),
@@ -157,7 +157,7 @@ export function MarkdownRenderer({
             </blockquote>
           ),
           ul: ({ children, ...props }) => (
-            <ul className="my-4 ml-4 list-disc [&>li]:mt-1" {...props}>
+            <ul className="my-3 ml-4 list-disc [&>li]:mt-1" {...props}>
               {children}
             </ul>
           ),

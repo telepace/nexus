@@ -35,31 +35,39 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
     switch (notification.status) {
       case "processing":
         return {
-          icon: <Loader2 className="h-5 w-5 animate-spin text-blue-500" />,
-          borderColor: "border-blue-200",
-          bgColor: "bg-blue-50 dark:bg-blue-950/20",
-          titleColor: "text-blue-900 dark:text-blue-100",
+          icon: (
+            <Loader2 className="h-5 w-5 animate-spin text-[oklch(var(--color-primary))]" />
+          ),
+          borderColor: "border-[oklch(var(--color-border))]",
+          bgColor: "bg-[oklch(var(--color-accent))]",
+          titleColor: "text-[oklch(var(--color-accent-foreground))]",
         };
       case "completed":
         return {
-          icon: <CheckCircle className="h-5 w-5 text-green-500" />,
-          borderColor: "border-green-200",
-          bgColor: "bg-green-50 dark:bg-green-950/20",
-          titleColor: "text-green-900 dark:text-green-100",
+          icon: (
+            <CheckCircle className="h-5 w-5 text-[oklch(var(--color-chart-1))]" />
+          ),
+          borderColor: "border-[oklch(var(--color-border))]",
+          bgColor: "bg-[oklch(var(--color-muted))]",
+          titleColor: "text-[oklch(var(--color-foreground))]",
         };
       case "error":
         return {
-          icon: <AlertCircle className="h-5 w-5 text-red-500" />,
-          borderColor: "border-red-200",
-          bgColor: "bg-red-50 dark:bg-red-950/20",
-          titleColor: "text-red-900 dark:text-red-100",
+          icon: (
+            <AlertCircle className="h-5 w-5 text-[oklch(var(--color-destructive))]" />
+          ),
+          borderColor: "border-[oklch(var(--color-border))]",
+          bgColor: "bg-[oklch(var(--color-destructive))]",
+          titleColor: "text-[oklch(var(--color-destructive-foreground))]",
         };
       default:
         return {
-          icon: <AlertCircle className="h-5 w-5 text-gray-500" />,
-          borderColor: "border-gray-200",
-          bgColor: "bg-gray-50 dark:bg-gray-950/20",
-          titleColor: "text-gray-900 dark:text-gray-100",
+          icon: (
+            <AlertCircle className="h-5 w-5 text-[oklch(var(--color-muted-foreground))]" />
+          ),
+          borderColor: "border-[oklch(var(--color-border))]",
+          bgColor: "bg-[oklch(var(--color-muted))]",
+          titleColor: "text-[oklch(var(--color-foreground))]",
         };
     }
   };

@@ -6,7 +6,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { SettingsPanel } from "@/components/layout/SettingsPanel";
 import { AddContentModal } from "@/components/layout/AddContentModal";
 
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 
 export interface MainLayoutProps {
   children: React.ReactNode;

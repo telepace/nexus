@@ -153,7 +153,8 @@ export const useGlobalNotificationStore = create<GlobalNotificationStore>()(
           message: message || "正在处理中...",
           contentId,
           progress: 0, // 确保初始进度为0
-          autoHide: false,
+          autoHide: true, // 修改: 允许自动隐藏
+          duration: 2000, // 修改: 3秒后自动隐藏
         });
       },
 

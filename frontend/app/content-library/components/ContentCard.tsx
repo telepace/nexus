@@ -10,6 +10,7 @@ import {
   FileText,
   Link,
   BookOpen,
+  Star,
   Clock,
   MoreHorizontal,
   Trash2,
@@ -17,7 +18,6 @@ import {
   Brain,
   ExternalLink,
   Copy,
-  Calendar,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -41,15 +41,12 @@ import {
   DeleteConfirmDialog,
   shouldSkipDeleteConfirm,
 } from "./DeleteConfirmDialog";
-import { cn } from "@/lib/utils";
-
-export type ViewMode = "grid" | "list";
+import { useRelativeTime } from "@/hooks/useRelativeTime";
 
 interface Props {
   item: ContentItemPublic;
   selected: boolean;
   hovered: boolean;
-  viewMode?: ViewMode;
   onCardClick: (item: ContentItemPublic, event?: React.MouseEvent) => void;
   onCardHover: (item: ContentItemPublic | null) => void;
   prefetchContent: (item: ContentItemPublic) => void;
@@ -70,76 +67,45 @@ const getContentIcon = (type: string) => {
   }
 };
 
-// 星级评分组件 - 日式简约风格
-const StarRating = ({
-  score,
-  compact = false,
-}: { score: number; compact?: boolean }) => {
+// 星级评分组件
+const StarRating = ({ score }: { score: number }) => {
   const stars = Math.round(score * 5); // 转换为 5 星制
   const fullStars = Math.floor(stars);
+  const hasHalfStar = stars % 1 !== 0;
   const ratingScore = (score * 5).toFixed(1); // 转换为5分制
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div
-          className={cn("inline-flex items-center gap-1", compact && "gap-0.5")}
-        >
-          <div className="flex gap-0.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className={cn(compact ? "w-3 h-3" : "w-3 h-3", "relative")}
-                style={{
-                  clipPath:
-                    "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
-                }}
-              >
-                <div
-                  className={cn(
-                    "w-full h-full transition-colors duration-200",
-                    i < fullStars ? "bg-amber-400" : "bg-black/8",
-                  )}
-                />
-              </div>
-            ))}
-          </div>
-          {!compact && (
-            <span className="text-xs text-neutral-500 ml-1 font-light">
-              {ratingScore}
-            </span>
-          )}
+        <div className="inline-flex items-center gap-0.5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Star
+              key={i}
+              className={`h-3 w-3 ${
+                i < fullStars
+                  ? "fill-amber-400 text-amber-400"
+                  : i === fullStars && hasHalfStar
+                    ? "fill-amber-200 text-amber-400"
+                    : "text-neutral-300"
+              }`}
+            />
+          ))}
+          <span className="text-xs text-neutral-500 ml-1">
+            {ratingScore}/5.0
+          </span>
         </div>
       </TooltipTrigger>
       <TooltipContent>
-        <p>内容质量评分: {ratingScore}/5.0</p>
+        <p>内容质量评分</p>
       </TooltipContent>
     </Tooltip>
   );
-};
-
-// 格式化时间
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffTime = Math.abs(now.getTime() - date.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 1) return "今天";
-  if (diffDays === 2) return "昨天";
-  if (diffDays <= 7) return `${diffDays}天前`;
-
-  return date.toLocaleDateString("zh-CN", {
-    month: "short",
-    day: "numeric",
-  });
 };
 
 export const ContentCard = ({
   item,
   selected,
   hovered,
-  viewMode = "grid",
   onCardClick,
   onCardHover,
   prefetchContent,
@@ -150,6 +116,9 @@ export const ContentCard = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // 相对时间标签
+  const relativeLabel = useRelativeTime(item.created_at);
 
   // 处理点击事件 - 立即跳转到阅读器
   const handleClick = (event: React.MouseEvent) => {
@@ -250,207 +219,20 @@ export const ContentCard = ({
   const hasQualityScore = aiResult?.content_quality_score != null;
   const hasLabels = aiResult?.labels && aiResult.labels.length > 0;
   const hasReadingTime = aiResult?.reading_time_minutes != null;
-  const briefDescription = aiResult?.brief_description || item.summary;
+  const briefDescription = aiResult?.brief_description;
   const isProcessingFailed = item.processing_status === "failed";
 
-  // 网格视图布局 - 日式极简风格
-  if (viewMode === "grid") {
-    return (
-      <Card
-        key={item.id}
-        tabIndex={0}
-        className={cn(
-          "group cursor-pointer overflow-hidden transition-all duration-300 ease-out relative",
-          // 日式极简：纯白背景 + 极细边框
-          "bg-white border border-black/6 rounded-md",
-          // 悬浮效果：微妙阴影 + 轻微上移
-          "hover:border-black/12 hover:shadow-lg hover:shadow-black/8 hover:-translate-y-0.5",
-          // 选中和悬浮状态
-          selected && "border-black/15 shadow-md shadow-black/8",
-          hovered && !selected && "border-black/10 shadow-sm shadow-black/5",
-        )}
-        onClick={handleClick}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onMouseDown={createRipple}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            handleClick(e as unknown as React.MouseEvent);
-          }
-        }}
-      >
-        {/* 悬浮时的渐变overlay */}
-        <div className="absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none group-hover:opacity-100">
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.4) 100%)",
-            }}
-          />
-        </div>
-
-        <CardContent className="p-5 relative z-10">
-          {/* 头部区域 */}
-          <div className="flex items-start gap-3 mb-4">
-            {/* 优化图标容器 - 更小更精致 */}
-            <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center shrink-0 group-hover:bg-black/8 transition-colors duration-200">
-              <div className="text-neutral-600 group-hover:text-neutral-700 transition-colors duration-200">
-                {getContentIcon(item.type)}
-              </div>
-            </div>
-
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2">
-                {/* 优化标题样式 - 更好的垂直对齐 */}
-                <h3 className="font-medium text-base line-clamp-2 text-neutral-900 leading-tight tracking-tight pt-0.5">
-                  {item.title || "无标题"}
-                </h3>
-
-                {/* 三个点菜单 */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0 hover:bg-black/5"
-                      data-dropdown-trigger
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={handleViewDetails}>
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      查看详情
-                    </DropdownMenuItem>
-
-                    {isProcessingFailed && (
-                      <DropdownMenuItem
-                        onClick={handleReprocess}
-                        disabled={isProcessing}
-                      >
-                        <RotateCcw
-                          className={cn(
-                            "h-4 w-4 mr-2",
-                            isProcessing && "animate-spin",
-                          )}
-                        />
-                        {isProcessing ? "处理中..." : "重新处理"}
-                      </DropdownMenuItem>
-                    )}
-
-                    <DropdownMenuItem onClick={handleAIAnalysis}>
-                      <Brain className="h-4 w-4 mr-2" />
-                      AI 分析
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem onClick={handleCopyLink}>
-                      <Copy className="h-4 w-4 mr-2" />
-                      复制链接
-                    </DropdownMenuItem>
-
-                    <DropdownMenuSeparator />
-
-                    <DropdownMenuItem
-                      onClick={handleDelete}
-                      disabled={isDeleting}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Trash2
-                        className={cn(
-                          "h-4 w-4 mr-2",
-                          isDeleting && "animate-spin",
-                        )}
-                      />
-                      {isDeleting ? "删除中..." : "删除"}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          </div>
-
-          {/* 描述 */}
-          {briefDescription && (
-            <p className="text-sm text-neutral-600 line-clamp-2 mb-4 leading-relaxed font-light">
-              {briefDescription}
-            </p>
-          )}
-
-          {/* 标签 - 统一样式，无颜色区分 */}
-          {hasLabels && (
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              {aiResult.labels!.slice(0, 3).map((label) => (
-                <span
-                  key={label}
-                  className="inline-flex items-center px-2 py-1 bg-black/4 text-neutral-600 text-xs font-light rounded-sm border-none transition-all duration-200 hover:bg-black/8 hover:text-neutral-800 hover:-translate-y-px"
-                >
-                  {label}
-                </span>
-              ))}
-              {aiResult.labels!.length > 3 && (
-                <span className="inline-flex items-center px-2 py-1 border border-black/8 text-neutral-500 text-xs font-light rounded-sm">
-                  +{aiResult.labels!.length - 3}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* 底部元信息 - 评分、阅读时间、发布时间在一行 */}
-          <div className="flex items-center justify-between text-xs text-neutral-400 font-light">
-            <div className="flex items-center gap-3">
-              {/* 评分 */}
-              {hasQualityScore && (
-                <StarRating score={aiResult.content_quality_score!} compact />
-              )}
-
-              {/* 阅读时间 */}
-              {hasReadingTime && (
-                <div className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  <span>{aiResult.reading_time_minutes} 分钟</span>
-                </div>
-              )}
-
-              {/* 处理状态 */}
-              <ProcessingStatusBadge
-                status={item.processing_status as ProcessingStatus}
-              />
-            </div>
-
-            {/* 发布时间 */}
-            <div className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              <span>{formatDate(item.created_at)}</span>
-            </div>
-          </div>
-        </CardContent>
-
-        {/* 删除确认对话框 */}
-        <DeleteConfirmDialog
-          open={showDeleteDialog}
-          onOpenChange={setShowDeleteDialog}
-          onConfirm={performDelete}
-          itemTitle={item.title || "无标题"}
-        />
-      </Card>
-    );
-  }
-
-  // 列表视图布局 - 保持简约风格
   return (
     <Card
       key={item.id}
       tabIndex={0}
-      className={cn(
-        "group cursor-pointer transition-all duration-200 ease-out border-0 border-b border-black/4 rounded-none",
-        "hover:bg-black/2",
-        selected && "bg-black/3",
-        hovered && !selected && "bg-black/1",
-      )}
+      className={`group cursor-pointer rounded-lg overflow-hidden transition-colors duration-200 ease-out w-libraryCard ${
+        selected
+          ? "bg-[var(--color-linear-bg-2)] border-[var(--mac-gray-5)] shadow-md"
+          : hovered
+            ? "bg-muted/50 border-muted-foreground/20 shadow-sm"
+            : "bg-transparent border border-transparent shadow-none hover:shadow-none hover:bg-transparent hover:border-transparent"
+      }`}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -462,137 +244,156 @@ export const ContentCard = ({
         }
       }}
     >
-      <CardContent className="p-4 flex items-center gap-4">
-        {/* 图标 - 优化尺寸和样式 */}
-        <div className="w-7 h-7 rounded-lg bg-black/5 flex items-center justify-center shrink-0 group-hover:bg-black/8 transition-colors duration-200">
-          <div className="text-neutral-600 group-hover:text-neutral-700 transition-colors duration-200">
+      <CardContent className="p-4 pl-1 flex flex-col h-full">
+        <div className="flex items-start gap-2 flex-1 min-w-0">
+          <div className="w-10 h-10 rounded-lg bg-transparent flex items-center justify-center">
             {getContentIcon(item.type)}
           </div>
-        </div>
+          <div className="flex-1 min-w-0 space-y-2">
+            {/* 标题区域 - 添加三个点菜单 */}
+            <div className="flex items-start justify-between gap-2">
+              <div className="space-y-1 flex-1 min-w-0">
+                <h3 className="font-medium text-base line-clamp-2 text-neutral-800 dark:text-neutral-100 max-w-cardTitle break-words">
+                  {item.title || "无标题"}
+                </h3>
+                {hasQualityScore && (
+                  <StarRating score={aiResult.content_quality_score!} />
+                )}
+              </div>
 
-        {/* 内容区域 */}
-        <div className="flex-1 min-w-0 grid grid-cols-12 gap-4 items-center">
-          {/* 标题和描述 */}
-          <div className="col-span-6 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-medium text-sm line-clamp-1 text-neutral-900">
-                {item.title || "无标题"}
-              </h3>
-              {hasQualityScore && (
-                <StarRating score={aiResult.content_quality_score!} compact />
-              )}
+              {/* 三个点菜单 */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0 hover:bg-accent/50"
+                    data-dropdown-trigger
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                    <span className="sr-only">更多操作</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-48"
+                  sideOffset={5}
+                >
+                  <DropdownMenuItem
+                    onClick={handleViewDetails}
+                    className="focus:bg-accent/50"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    查看详情
+                  </DropdownMenuItem>
+
+                  {isProcessingFailed && (
+                    <DropdownMenuItem
+                      onClick={handleReprocess}
+                      disabled={isProcessing}
+                      className="focus:bg-accent/50"
+                    >
+                      <RotateCcw
+                        className={`h-4 w-4 mr-2 ${isProcessing ? "animate-spin" : ""}`}
+                      />
+                      {isProcessing ? "处理中..." : "重新处理"}
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuItem
+                    onClick={handleAIAnalysis}
+                    className="focus:bg-accent/50"
+                  >
+                    <Brain className="h-4 w-4 mr-2" />
+                    AI 分析
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={handleCopyLink}
+                    className="focus:bg-accent/50"
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    复制链接
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDelete(e);
+                    }}
+                    disabled={isDeleting}
+                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                  >
+                    <Trash2
+                      className={`h-4 w-4 mr-2 ${isDeleting ? "animate-pulse" : ""}`}
+                    />
+                    {isDeleting ? "删除中..." : "删除"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            {briefDescription && (
-              <p className="text-xs text-neutral-600 line-clamp-1 font-light">
-                {briefDescription}
-              </p>
-            )}
-          </div>
 
-          {/* 标签 */}
-          <div className="col-span-3 min-w-0">
+            {/* 简短描述（优先显示）或摘要 */}
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-3 leading-relaxed max-w-cardTitle break-words">
+              {briefDescription || item.summary || "暂无描述"}
+            </p>
+
+            {/* 标签 */}
             {hasLabels && (
-              <div className="flex gap-1 overflow-hidden">
-                {aiResult.labels!.slice(0, 2).map((label) => (
+              <div className="flex flex-wrap gap-1 max-w-cardTitle">
+                {aiResult.labels!.slice(0, 3).map((label, index) => (
                   <span
-                    key={label}
-                    className="inline-flex items-center px-1.5 py-0.5 bg-black/4 text-neutral-600 text-xs font-light rounded-sm shrink-0"
+                    key={index}
+                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
                   >
                     {label}
                   </span>
                 ))}
-                {aiResult.labels!.length > 2 && (
-                  <span className="text-xs text-neutral-400 font-light">
-                    +{aiResult.labels!.length - 2}
+                {aiResult.labels!.length > 3 && (
+                  <span className="text-xs text-neutral-400">
+                    +{aiResult.labels!.length - 3}
                   </span>
                 )}
               </div>
             )}
-          </div>
 
-          {/* 元信息 */}
-          <div className="col-span-2 flex items-center justify-between text-xs text-neutral-400 font-light">
-            <div className="flex items-center gap-2">
-              {hasReadingTime && (
-                <div className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  <span>{aiResult.reading_time_minutes}分钟</span>
-                </div>
-              )}
-            </div>
-            <span>{formatDate(item.created_at)}</span>
-          </div>
-
-          {/* 操作按钮 */}
-          <div className="col-span-1 flex justify-end">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-black/5"
-                  data-dropdown-trigger
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={handleViewDetails}>
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  查看详情
-                </DropdownMenuItem>
-
-                {isProcessingFailed && (
-                  <DropdownMenuItem
-                    onClick={handleReprocess}
-                    disabled={isProcessing}
-                  >
-                    <RotateCcw
-                      className={cn(
-                        "h-4 w-4 mr-2",
-                        isProcessing && "animate-spin",
-                      )}
-                    />
-                    {isProcessing ? "处理中..." : "重新处理"}
-                  </DropdownMenuItem>
+            {/* 底部信息栏 */}
+            <div className="flex items-center justify-between text-xs text-neutral-400">
+              <div className="flex items-center gap-3">
+                {/* 阅读时间 */}
+                {hasReadingTime && (
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>{aiResult.reading_time_minutes} 分钟</span>
+                  </div>
                 )}
+              </div>
 
-                <DropdownMenuItem onClick={handleAIAnalysis}>
-                  <Brain className="h-4 w-4 mr-2" />
-                  AI 分析
-                </DropdownMenuItem>
-
-                <DropdownMenuItem onClick={handleCopyLink}>
-                  <Copy className="h-4 w-4 mr-2" />
-                  复制链接
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuItem
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2
-                    className={cn("h-4 w-4 mr-2", isDeleting && "animate-spin")}
-                  />
-                  {isDeleting ? "删除中..." : "删除"}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              <div className="flex items-center gap-2">
+                <ProcessingStatusBadge
+                  status={item.processing_status as ProcessingStatus}
+                  size="sm"
+                  className="text-neutral-400"
+                />
+                <span>{relativeLabel}</span>
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* 删除确认对话框 */}
-        <DeleteConfirmDialog
-          open={showDeleteDialog}
-          onOpenChange={setShowDeleteDialog}
-          onConfirm={performDelete}
-          itemTitle={item.title || "无标题"}
-        />
       </CardContent>
+
+      {/* 删除确认对话框 */}
+      <DeleteConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={performDelete}
+        itemTitle={item.title || "无标题"}
+        isDeleting={isDeleting}
+      />
     </Card>
   );
 };
