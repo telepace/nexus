@@ -135,9 +135,11 @@ model_list:
       model: openrouter/tng/deepseek-r1t-chimera
       api_key: "os.environ/OR_API_KEY"
 
-  - model_name: openai-text-embedding-3-small
+  # ChatAnywhere Embedding Model
+  # 参考文档: https://chatanywhere.apifox.cn/api-92222081
+  - model_name: text-embedding-3-small
     litellm_params:
-      model: text-embedding-3-small
+      model: text-embedding-ada-002
       api_key: "os.environ/OPENAI_API_KEY"
       api_base: "os.environ/OPENAI_BASE_URL"
 

@@ -138,6 +138,10 @@ class Settings(BaseSettings):
     # LLM 配置
     DEFAULT_LLM_MODEL: str = "or-gemini-2.5-flash-preview-05-20"
 
+    # OpenAI / ChatAnywhere 配置
+    OPENAI_API_KEY: str | None = None
+    OPENAI_BASE_URL: str = "https://api.openai.com"  # 默认为官方端点，可通过环境变量覆盖
+
     # Redis 配置
     REDIS_HOST: str = Field(default="localhost", description="Redis 服务器主机地址")
     REDIS_PORT: int = Field(default=6379, description="Redis 服务器端口")

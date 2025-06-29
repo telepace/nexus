@@ -158,154 +158,74 @@ class DeepResearchService:
             # 动态导入gpt_researcher以避免启动时的依赖问题
             from gpt_researcher import GPTResearcher
 
-            # 设置环境变量使用项目的LiteLLM proxy
-            original_api_key = os.environ.get("OPENAI_API_KEY")
-            original_base_url = os.environ.get("OPENAI_API_BASE")
+            # -------- ChatAnywhere 直连模式 ----------
+            # 始终绕过 LiteLLM proxy，直接调用 ChatAnywhere 的 OpenAI 兼容端点
+            # 1. 清理可能存在的 LITELLM_PROXY_URL
+            original_proxy_url = os.environ.pop("LITELLM_PROXY_URL", None)
 
+            # 2. 强制设置 ChatAnywhere API Key & Base URL
+            os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
+            os.environ["OPENAI_API_BASE"] = settings.OPENAI_BASE_URL  # https://api.chatanywhere.cn
+
+            # 3. 明确指定 embedding 模型
+            os.environ["EMBEDDING"] = "openai:text-embedding-3-small"
+
+            # 4. 始终使用 openai provider，不再检测 proxy
+            use_litellm_proxy = False
+            base_url = settings.OPENAI_BASE_URL
+
+            # 检查搜索API密钥
+            if not os.getenv("TAVILY_API_KEY"):
+                logger.warning(
+                    "TAVILY_API_KEY not set, deep research may have limited search capabilities"
+                )
+
+            # 5. 选择拥有更大上下文窗口的 ChatAnywhere 模型（128k），避免 context length exceeded
+            default_model = "gpt-4.1"
+
+            # 设置环境变量供 GPT Researcher 读取
+            os.environ["FAST_LLM"] = f"openai:{default_model}"
+            os.environ["SMART_LLM"] = f"openai:{default_model}"
+            
+            print(f"✅ 设置模型: {default_model}")
+            print()
+
+            researcher = GPTResearcher(
+                query=query,
+                report_type="research_report",
+                source_urls=None,
+                config_path=None,
+            )
+
+            logger.info(f"开始深度研究: {query}")
+
+            # 执行研究
             try:
-                # 优先使用 LiteLLM proxy，如果不可用则回退到直接 API
-                use_litellm_proxy = (
-                    settings.LITELLM_MASTER_KEY and settings.LITELLM_PROXY_URL
-                )
-                base_url: str | None = None
+                await researcher.conduct_research()
+            except Exception as e:
+                raise
 
-                if use_litellm_proxy:
-                    # 配置使用LiteLLM proxy
-                    if settings.LITELLM_MASTER_KEY:
-                        os.environ["OPENAI_API_KEY"] = settings.LITELLM_MASTER_KEY
-                    if settings.LITELLM_PROXY_URL:
-                        base_url = str(settings.LITELLM_PROXY_URL).rstrip("/")
-                        os.environ["OPENAI_API_BASE"] = f"{base_url}/v1"
-                        logger.info(f"配置GPT Researcher使用LiteLLM proxy: {base_url}")
-                else:
-                    # 回退到直接使用配置的 OpenAI API
-                    logger.info("LiteLLM proxy 不可用，使用直接 OpenAI API")
-                    # 保持现有的环境变量配置
+            # 生成报告
+            markdown_content = await researcher.write_report()
 
-                # 检查搜索API密钥
-                if not os.getenv("TAVILY_API_KEY"):
-                    logger.warning(
-                        "TAVILY_API_KEY not set, deep research may have limited search capabilities"
-                    )
+            # 收集元数据
+            research_meta = {
+                "query": query,
+                "depth": depth,
+                "breadth": breadth,
+                "sources_count": len(getattr(researcher, "visited_urls", [])),
+                "research_duration": getattr(researcher, "research_time", 0),
+                "model_used": default_model,
+                "report_type": "research_report",
+                "generated_at": datetime.now().isoformat(),
+                "litellm_proxy_used": use_litellm_proxy,
+                "proxy_url": base_url if use_litellm_proxy else None,
+                "gpt_researcher_version": "0.12.3+",
+            }
 
-                # 设置模型
-                default_model = getattr(settings, "DEFAULT_LLM_MODEL", "gpt-3.5-turbo")
-                os.environ["FAST_LLM"] = f"openai:{default_model}"
-                os.environ["SMART_LLM"] = f"openai:{default_model}"
-                
-                # 修复 embedding 模型配置 - 始终使用直接的 OpenAI API
-                # 因为 OpenRouter 不支持 embedding 模型
-                if hasattr(settings, 'OPENAI_API_KEY') and settings.OPENAI_API_KEY:
-                    # 临时设置环境变量用于 embedding，不影响 LLM 调用
-                    original_openai_key = os.environ.get("OPENAI_API_KEY")
-                    original_openai_base = os.environ.get("OPENAI_API_BASE")
-                    
-                    # 为 embedding 设置直接的 OpenAI API
-                    os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
-                    if hasattr(settings, 'OPENAI_BASE_URL') and settings.OPENAI_BASE_URL:
-                        os.environ["OPENAI_API_BASE"] = settings.OPENAI_BASE_URL
-                    elif "OPENAI_API_BASE" in os.environ:
-                        # 移除可能的 LiteLLM proxy base URL
-                        del os.environ["OPENAI_API_BASE"]
-                    
-                    os.environ["EMBEDDING"] = "openai:text-embedding-3-small"
-                    print("✅ 设置 embedding 模型: text-embedding-3-small (direct OpenAI API)")
-                else:
-                    # 回退配置
-                    os.environ["EMBEDDING"] = "openai:text-embedding-3-small"
-                    print("⚠️ 使用默认 embedding 配置")
-                
-                print(f"✅ 设置模型: {default_model}")
-                print()
+            logger.info(f"深度研究完成, 生成内容长度: {len(markdown_content)} 字符")
 
-                researcher = GPTResearcher(
-                    query=query,
-                    report_type="research_report",
-                    source_urls=None,
-                    config_path=None,
-                )
-
-                logger.info(f"开始深度研究: {query}")
-
-                # 执行研究
-                try:
-                    await researcher.conduct_research()
-                except Exception as e:
-                    # 如果使用了 LiteLLM proxy 且出现网络 / 代理相关错误，则回退到直接 OpenAI API
-                    proxy_error_signals = [
-                        "Bad Gateway",
-                        "502",
-                        "Failed to establish a new connection",
-                        "Connection refused",
-                    ]
-                    embedding_error_signal = "Invalid model name passed in model"
-
-                    if use_litellm_proxy and (
-                        any(sig in str(e) for sig in proxy_error_signals)
-                        or embedding_error_signal in str(e)
-                    ):
-                        logger.warning(
-                            "LiteLLM proxy 请求失败，正在回退到直接 OpenAI API: %s", e
-                        )
-
-                        # 清理代理相关环境变量，恢复为直接 API
-                        if "OPENAI_API_BASE" in os.environ:
-                            del os.environ["OPENAI_API_BASE"]
-
-                        # 恢复 API Key（优先使用配置中的默认 Key）
-                        if settings.OPENAI_API_KEY:
-                            os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
-                        elif original_api_key:
-                            os.environ["OPENAI_API_KEY"] = original_api_key
-
-                        # 更新标志位
-                        use_litellm_proxy = False
-
-                        # 重新创建 researcher 并再次尝试
-                        researcher = GPTResearcher(
-                            query=query,
-                            report_type="research_report",
-                            source_urls=None,
-                            config_path=None,
-                        )
-
-                        await researcher.conduct_research()
-                    else:
-                        raise
-
-                # 生成报告
-                markdown_content = await researcher.write_report()
-
-                # 收集元数据
-                research_meta = {
-                    "query": query,
-                    "depth": depth,
-                    "breadth": breadth,
-                    "sources_count": len(getattr(researcher, "visited_urls", [])),
-                    "research_duration": getattr(researcher, "research_time", 0),
-                    "model_used": default_model,
-                    "report_type": "research_report",
-                    "generated_at": datetime.now().isoformat(),
-                    "litellm_proxy_used": use_litellm_proxy,
-                    "proxy_url": base_url if use_litellm_proxy else None,
-                    "gpt_researcher_version": "0.12.3+",
-                }
-
-                logger.info(f"深度研究完成, 生成内容长度: {len(markdown_content)} 字符")
-
-                return markdown_content, research_meta
-
-            finally:
-                # 恢复原始环境变量
-                if original_api_key is not None:
-                    os.environ["OPENAI_API_KEY"] = original_api_key
-                elif "OPENAI_API_KEY" in os.environ:
-                    del os.environ["OPENAI_API_KEY"]
-
-                if original_base_url is not None:
-                    os.environ["OPENAI_API_BASE"] = original_base_url
-                elif "OPENAI_API_BASE" in os.environ:
-                    del os.environ["OPENAI_API_BASE"]
+            return markdown_content, research_meta
 
         except ImportError as e:
             logger.error(f"无法导入 gpt_researcher: {e}")
