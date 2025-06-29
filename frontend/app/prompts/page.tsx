@@ -17,7 +17,7 @@ import { SearchForm } from "./searchForm";
 import { PromptCards } from "./_components/PromptCards";
 
 export const metadata = {
-  title: "Prompt Hub",
+  title: "Prompt Library",
   description: "查看和管理提示词",
 };
 
@@ -63,7 +63,7 @@ export default async function PromptsPage({
     <ErrorBoundary
       fallback={
         <div className="container py-10">
-          <h1 className="text-2xl font-bold mb-6">Prompt Hub</h1>
+          <h1 className="text-2xl font-bold mb-6">Prompt Library</h1>
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>页面加载错误</AlertTitle>
@@ -79,13 +79,15 @@ export default async function PromptsPage({
     >
       <Suspense
         fallback={
-          <div className="container py-10">
-            <h1 className="text-2xl font-bold mb-6">Prompt Hub</h1>
-            <div className="">
-              <div className="rounded-md bg-gray-200 h-8 w-24 mb-4"></div>
-              <div className="rounded-md bg-gray-200 h-4 w-full mb-2"></div>
-              <div className="rounded-md bg-gray-200 h-4 w-full mb-2"></div>
-              <div className="rounded-md bg-gray-200 h-4 w-3/4 mb-2"></div>
+          <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+            <div className="bg-white/70 backdrop-blur-xl border-b border-slate-200/50">
+              <div className="max-w-7xl mx-auto px-8 py-8">
+                <div className="animate-pulse">
+                  <div className="h-8 bg-slate-200 rounded-lg w-48 mb-4"></div>
+                  <div className="h-4 bg-slate-200 rounded w-96 mb-8"></div>
+                  <div className="h-12 bg-slate-200 rounded-full w-80"></div>
+                </div>
+              </div>
             </div>
           </div>
         }
@@ -143,106 +145,90 @@ async function PromptsContent({
     const tags = tagsResult;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="space-y-8">
-            {/* Header */}
-            <div className="text-center space-y-4">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                AI 提示词库
-              </h1>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
-                创建、管理和分享你的AI提示词，提升工作效率
-              </p>
-            </div>
-
-            {/* Search and Actions */}
-            <div className="space-y-4">
-              {/* 搜索区域 */}
-              <SearchForm tags={tags} />
-
-              {/* 操作按钮和统计信息 */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <span className="font-medium text-foreground">
-                      {prompts.length}
-                    </span>
-                    个提示词
-                  </span>
-                  {(query || selectedTags.length > 0) && (
-                    <span className="flex items-center gap-1">
-                      <div className="w-1 h-1 rounded-full bg-muted-foreground" />
-                      已应用筛选条件
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    asChild
-                    size="sm"
-                    className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-sm"
-                  >
-                    <Link href="/prompts/create">
-                      <Plus className="mr-2 h-4 w-4" />
-                      创建提示词
-                    </Link>
-                  </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/prompts/tags">
-                      <TagIcon className="mr-2 h-4 w-4" />
-                      管理标签
-                    </Link>
-                  </Button>
-                </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+        {/* Minimalist Header */}
+        <div className="bg-white/70 backdrop-blur-xl border-b border-slate-200/50">
+          <div className="max-w-7xl mx-auto px-8 py-8">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-3xl font-light text-slate-900 tracking-tight">
+                  Prompt Library
+                </h1>
+                <p className="text-slate-500 text-sm font-light mt-2">
+                  创建、管理和分享你的AI提示词，提升工作效率
+                </p>
               </div>
+              <button className="px-6 py-2.5 bg-slate-900 text-white rounded-full hover:bg-slate-800 transition-all duration-300 font-medium text-sm tracking-wide">
+                <Plus className="h-4 w-4 inline mr-2" />
+                <Link href="/prompts/create" className="text-white">
+                  New Prompt
+                </Link>
+              </button>
             </div>
-
-            {/* Content */}
-            {prompts.length === 0 ? (
-              <Card className="border-0 shadow-lg">
-                <div className="p-12 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                    <TagIcon className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">
-                    {query || selectedTags.length > 0
-                      ? "未找到匹配的提示词"
-                      : "暂无提示词"}
-                  </h3>
-                  <p className="text-muted-foreground mb-6">
-                    {query || selectedTags.length > 0
-                      ? "尝试调整搜索条件或清除筛选器"
-                      : "创建你的第一个AI提示词，开始构建专属的提示词库"}
-                  </p>
-                  <Button asChild>
-                    <Link href="/prompts/create">创建提示词</Link>
-                  </Button>
-                </div>
-              </Card>
-            ) : (
-              <PromptCardsContainer prompts={prompts} />
-            )}
+            
+            {/* Clean Controls */}
+            <SearchForm tags={tags} />
           </div>
+        </div>
+
+        {/* Content */}
+        <div className="max-w-7xl mx-auto px-8 py-10">
+          {/* Stats */}
+          <div className="mb-8">
+            <p className="text-slate-500 text-sm font-light">
+              {prompts.length} prompts found
+              {(query || selectedTags.length > 0) && (
+                <span className="ml-2 text-slate-400">• 已应用筛选条件</span>
+              )}
+            </p>
+          </div>
+
+          {/* Content */}
+          {prompts.length === 0 ? (
+            <div className="text-center py-24">
+              <div className="w-24 h-24 mx-auto mb-8 rounded-3xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                <TagIcon className="h-12 w-12 text-slate-400" />
+              </div>
+              <h3 className="text-2xl font-light text-slate-900 mb-3">
+                {query || selectedTags.length > 0
+                  ? "No prompts found"
+                  : "暂无提示词"}
+              </h3>
+              <p className="text-slate-500 text-sm font-light mb-8 max-w-md mx-auto">
+                {query || selectedTags.length > 0
+                  ? "Try adjusting your search terms or tag filters to find what you're looking for"
+                  : "创建你的第一个AI提示词，开始构建专属的提示词库"}
+              </p>
+              <Button
+                asChild
+                className="px-8 py-3 bg-slate-900 text-white rounded-full hover:bg-slate-800 transition-colors duration-300 font-medium text-sm"
+              >
+                <Link href="/prompts/create">Create New Prompt</Link>
+              </Button>
+            </div>
+          ) : (
+            <PromptCardsContainer prompts={prompts} />
+          )}
         </div>
       </div>
     );
   } catch (error) {
     console.error("PromptsContent error:", error);
     return (
-      <div className="container py-10">
-        <h1 className="text-2xl font-bold mb-6">Prompt Hub</h1>
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>加载失败</AlertTitle>
-          <AlertDescription>
-            {error instanceof Error ? error.message : "未知错误"}
-          </AlertDescription>
-        </Alert>
-        <Button asChild>
-          <Link href="/prompts/create">创建提示词</Link>
-        </Button>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+        <div className="max-w-7xl mx-auto px-8 py-10">
+          <h1 className="text-3xl font-light text-slate-900 tracking-tight mb-6">Prompt Library</h1>
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>加载失败</AlertTitle>
+            <AlertDescription>
+              {error instanceof Error ? error.message : "未知错误"}
+            </AlertDescription>
+          </Alert>
+          <Button asChild>
+            <Link href="/prompts/create">创建提示词</Link>
+          </Button>
+        </div>
       </div>
     );
   }

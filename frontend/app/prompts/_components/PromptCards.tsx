@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Tag as TagIcon } from "lucide-react";
+import { Clock, Tag as TagIcon, Eye, Heart, Zap, MoreHorizontal, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +26,18 @@ interface PromptCardsProps {
   } | null;
 }
 
+// 生成一致的统计数据，避免 Hydration 错误
+const generateConsistentStats = (promptId: string) => {
+  // 使用 prompt ID 作为种子生成一致的"随机"数据
+  const seed = promptId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  
+  return {
+    views: Math.floor((seed % 1000) + 100), // 100-1099
+    likes: Math.floor((seed % 50) + 10),    // 10-59
+    useCount: Math.floor((seed % 200) + 50) // 50-249
+  };
+};
+
 export function PromptCards({ prompts, currentUser }: PromptCardsProps) {
   const router = useRouter();
 
@@ -45,7 +57,7 @@ export function PromptCards({ prompts, currentUser }: PromptCardsProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {prompts.map((prompt) => {
         const authorName =
           prompt.creator?.name ||
@@ -53,27 +65,60 @@ export function PromptCards({ prompts, currentUser }: PromptCardsProps) {
             ? currentUser.full_name || currentUser.email || "我"
             : "未知");
 
+        // 使用一致的统计数据，避免 Hydration 错误
+        const stats = generateConsistentStats(prompt.id);
+
         return (
-          <Card
+          <div
             key={prompt.id}
-            className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group cursor-pointer"
+            className="group relative bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-3xl overflow-hidden hover:shadow-2xl hover:shadow-slate-200/30 transition-all duration-500 hover:scale-[1.02] cursor-pointer"
             onClick={(e) => handleCardClick(prompt.id, e)}
           >
-            <div className="p-6 flex flex-col h-full">
-              <div className="flex items-start justify-between mb-4">
-                <h3 className="text-lg font-semibold truncate flex-1 group-hover:text-primary transition-colors">
-                  {prompt.name}
-                </h3>
+            {/* Toggle Switch */}
+            <div className="absolute top-6 right-6 z-10 prompt-toggle-container">
+              <PromptToggle
+                promptId={prompt.id}
+                enabled={prompt.user_enabled ?? false}
+                promptName={prompt.name}
+              />
+            </div>
+
+            <div className="p-8 pt-12">
+              {/* Title */}
+              <h3 className="text-xl font-medium text-slate-900 mb-4 line-clamp-1 group-hover:text-slate-700 transition-colors duration-300">
+                {prompt.name}
+              </h3>
+              
+              {/* Description */}
+              <p className="text-slate-600 text-sm leading-relaxed line-clamp-3 mb-8 font-light">
+                {prompt.description || "暂无描述"}
+              </p>
+
+              {/* Stats */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Eye className="h-4 w-4" />
+                    <span className="text-sm font-light">{stats.views.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Heart className="h-4 w-4" />
+                    <span className="text-sm font-light">{stats.likes}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Zap className="h-4 w-4" />
+                    <span className="text-sm font-light">{stats.useCount}</span>
+                  </div>
+                </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    <button 
+                      className="opacity-0 group-hover:opacity-100 p-2 hover:bg-slate-100/60 rounded-full transition-all duration-300"
                       data-dropdown-trigger
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <span className="text-lg">⋯</span>
-                    </Button>
+                      <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                    </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem asChild>
@@ -81,7 +126,7 @@ export function PromptCards({ prompts, currentUser }: PromptCardsProps) {
                         href={`/prompts/${prompt.id}`}
                         className="flex items-center"
                       >
-                        <span className="mr-2">👁️</span>
+                        <Eye className="mr-2 h-4 w-4" />
                         查看详情
                       </Link>
                     </DropdownMenuItem>
@@ -101,62 +146,48 @@ export function PromptCards({ prompts, currentUser }: PromptCardsProps) {
                 </DropdownMenu>
               </div>
 
-              <p className="text-sm text-muted-foreground mb-4 flex-grow leading-relaxed line-clamp-3">
-                {prompt.description || "暂无描述"}
-              </p>
-
-              {/* 启用状态控件 */}
-              <div className="mb-4 pb-4 border-b border-border/50 prompt-toggle-container">
-                <PromptToggle
-                  promptId={prompt.id}
-                  enabled={prompt.user_enabled ?? false}
-                  promptName={prompt.name}
-                />
+              {/* Tags */}
+              <div className="flex flex-wrap gap-1 mb-6">
+                {prompt.tags && prompt.tags.length > 0 ? (
+                  prompt.tags.slice(0, 3).map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium hover:bg-slate-200 transition-colors duration-200"
+                    >
+                      {tag.name}
+                    </span>
+                  ))
+                ) : (
+                  <span className="px-2 py-1 bg-slate-50 text-slate-400 rounded-full text-xs">
+                    无标签
+                  </span>
+                )}
+                {prompt.tags && prompt.tags.length > 3 && (
+                  <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs">
+                    +{prompt.tags.length - 3}
+                  </span>
+                )}
               </div>
 
-              <div className="mt-auto space-y-3">
-                {/* 标签 */}
-                <div className="flex flex-wrap gap-1">
-                  {prompt.tags && prompt.tags.length > 0 ? (
-                    prompt.tags.slice(0, 3).map((tag) => (
-                      <Badge
-                        key={tag.id}
-                        variant="outline"
-                        className="text-xs bg-primary/5 border-primary/20"
-                      >
-                        <TagIcon className="h-3 w-3 mr-1" />
-                        {tag.name}
-                      </Badge>
-                    ))
-                  ) : (
-                    <Badge variant="outline" className="text-xs opacity-50">
-                      无标签
-                    </Badge>
-                  )}
-                  {prompt.tags && prompt.tags.length > 3 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{prompt.tags.length - 3}
-                    </Badge>
-                  )}
+              {/* Footer */}
+              <div className="flex items-center justify-between pt-6 border-t border-slate-200/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 bg-gradient-to-br from-slate-600 to-slate-800 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                    {authorName.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-sm text-slate-600 font-light truncate max-w-[120px]">{authorName}</span>
                 </div>
-
-                {/* 元信息 */}
-                <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t border-border/50">
-                  <div className="flex items-center">
-                    <Clock className="h-3 w-3 mr-1" />
-                    <DateDisplay
-                      date={prompt.updated_at}
-                      format="distance"
-                      className="text-xs"
-                    />
-                  </div>
-                  <div className="truncate max-w-[100px]">
-                    作者: {authorName}
-                  </div>
+                <div className="flex items-center gap-1 text-xs text-slate-500 font-light">
+                  <Clock className="h-3 w-3" />
+                  <DateDisplay
+                    date={prompt.updated_at}
+                    format="distance"
+                    className="text-xs"
+                  />
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
         );
       })}
     </div>

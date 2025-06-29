@@ -5,9 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Search, X, Filter } from "lucide-react";
+import { Search, X, Filter, Tag, Grid3X3, List } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -26,7 +24,15 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
   const [selectedTags, setSelectedTags] = useState<string[]>(
     searchParams.get("tags") ? searchParams.get("tags")!.split(",") : [],
   );
-  const [isTagsOpen, setIsTagsOpen] = useState(false);
+  const [showTagFilter, setShowTagFilter] = useState(false);
+  const [viewMode, setViewMode] = useState('grid');
+  const [sortBy, setSortBy] = useState(searchParams.get("sort") || "updated_at");
+
+  const sortOptions = [
+    { id: 'updated_at', name: '最新更新' },
+    { id: 'created_at', name: '最新创建' },
+    { id: 'name', name: '按名称' },
+  ];
 
   // 处理搜索表单提交
   const handleSubmit = (e: React.FormEvent) => {
@@ -66,226 +72,157 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
   };
 
   // 清除所有过滤条件
-  const clearAllFilters = () => {
-    setSearchQuery("");
+  const clearAllTags = () => {
     setSelectedTags([]);
-
-    // 保留排序参数
-    const params = new URLSearchParams();
-    const sort = searchParams.get("sort");
-    const order = searchParams.get("order");
-    if (sort) params.set("sort", sort);
-    if (order) params.set("order", order);
-
-    router.push(`/prompts${params.toString() ? `?${params.toString()}` : ""}`);
-  };
-
-  // 清除搜索关键词
-  const clearSearch = () => {
-    setSearchQuery("");
     const params = new URLSearchParams(searchParams.toString());
-    params.delete("query");
+    params.delete("tags");
     router.push(`/prompts?${params.toString()}`);
   };
 
   // 查找选中标签的完整信息
   const selectedTagsInfo = tags.filter((tag) => selectedTags.includes(tag.id));
+  const allTags = [...new Set(tags)];
 
   return (
-    <div className="space-y-4">
-      {/* 主搜索和操作区域 */}
-      <Card className="p-4">
-        <div className="space-y-4">
-          {/* 搜索栏和主要操作按钮 */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* 搜索输入 */}
-            <form onSubmit={handleSubmit} className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 text-muted-foreground transform -translate-y-1/2" />
-                <Input
-                  type="search"
-                  placeholder="搜索提示词名称、描述..."
-                  className="pl-10 pr-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                {searchQuery && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-1 top-1/2 h-7 w-7 p-0 transform -translate-y-1/2 hover:bg-muted"
-                    onClick={clearSearch}
-                  >
-                    <X className="h-3 w-3" />
-                    <span className="sr-only">清除搜索</span>
-                  </Button>
-                )}
-              </div>
-            </form>
-
-            {/* 操作按钮组 */}
-            <div className="flex gap-2">
-              {/* 标签筛选 */}
-              <Popover open={isTagsOpen} onOpenChange={setIsTagsOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Filter className="h-4 w-4" />
-                    标签筛选
-                    {selectedTags.length > 0 && (
-                      <Badge
-                        variant="secondary"
-                        className="ml-1 px-1.5 py-0.5 text-xs"
-                      >
-                        {selectedTags.length}
-                      </Badge>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-0" align="end">
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium text-sm">选择标签</h4>
-                      {selectedTags.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-2 text-xs"
-                          onClick={() => {
-                            setSelectedTags([]);
-                            const params = new URLSearchParams(
-                              searchParams.toString(),
-                            );
-                            params.delete("tags");
-                            router.push(`/prompts?${params.toString()}`);
-                          }}
-                        >
-                          清除全部
-                        </Button>
-                      )}
-                    </div>
-
-                    <Separator className="mb-3" />
-
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {tags.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          暂无可用标签
-                        </p>
-                      ) : (
-                        tags.map((tag) => (
-                          <div
-                            key={tag.id}
-                            className={`flex items-center justify-between p-2 rounded-md cursor-pointer transition-colors
-                              ${
-                                selectedTags.includes(tag.id)
-                                  ? "bg-primary/10 border border-primary/20"
-                                  : "hover:bg-muted"
-                              }`}
-                            onClick={() => toggleTag(tag.id)}
-                          >
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: tag.color || "#666" }}
-                              />
-                              <span className="text-sm font-medium">
-                                {tag.name}
-                              </span>
-                            </div>
-                            {selectedTags.includes(tag.id) && (
-                              <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                                <X className="h-2.5 w-2.5 text-primary-foreground" />
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-
-              {/* 搜索按钮 */}
-              <Button
-                type="submit"
-                onClick={handleSubmit}
-                className="flex items-center gap-2"
-              >
-                <Search className="h-4 w-4" />
-                搜索
-              </Button>
-            </div>
+    <div className="space-y-6">
+      {/* Main Controls */}
+      <div className="flex items-center justify-between gap-6">
+        <div className="flex items-center gap-4">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4 transition-colors duration-200" />
+            <input
+              type="text"
+              placeholder="Search prompts..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSubmit(e);
+                }
+              }}
+              className="pl-12 pr-6 py-3 w-80 border-0 bg-slate-100/60 rounded-full text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-200 focus:shadow-lg transition-all duration-300 text-sm hover:bg-slate-100/80"
+            />
           </div>
 
-          {/* 已选择的筛选条件展示 */}
-          {(searchQuery || selectedTags.length > 0) && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">
-                  当前筛选条件
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-2 text-xs"
-                  onClick={clearAllFilters}
-                >
-                  清除全部
-                </Button>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {/* 搜索关键词 */}
-                {searchQuery && (
-                  <Badge
-                    variant="secondary"
-                    className="flex items-center gap-1.5 px-2.5 py-1"
-                  >
-                    <Search className="h-3 w-3" />
-                    <span className="text-xs">关键词: {searchQuery}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-3 w-3 p-0 hover:bg-transparent"
-                      onClick={clearSearch}
-                    >
-                      <X className="h-2.5 w-2.5" />
-                    </Button>
-                  </Badge>
-                )}
-
-                {/* 选中的标签 */}
-                {selectedTagsInfo.map((tag) => (
-                  <Badge
-                    key={tag.id}
-                    variant="secondary"
-                    className="flex items-center gap-1.5 px-2.5 py-1"
-                    style={{
-                      backgroundColor: `${tag.color}15` || "#f3f3f3",
-                      borderColor: `${tag.color}30` || "#e0e0e0",
-                    }}
-                  >
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: tag.color || "#666" }}
-                    />
-                    <span className="text-xs">{tag.name}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-3 w-3 p-0 hover:bg-transparent"
-                      onClick={() => toggleTag(tag.id)}
-                    >
-                      <X className="h-2.5 w-2.5" />
-                    </Button>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Tag Filter */}
+          <button 
+            onClick={() => setShowTagFilter(!showTagFilter)}
+            className={`flex items-center gap-2 px-4 py-3 rounded-full border transition-all duration-300 text-sm font-medium ${
+              selectedTags.length > 0 || showTagFilter
+                ? 'bg-slate-900 text-white border-slate-900'
+                : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+            }`}
+          >
+            <Tag className="h-4 w-4" />
+            <span>Tags</span>
+            {selectedTags.length > 0 && (
+              <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs">
+                {selectedTags.length}
+              </span>
+            )}
+          </button>
         </div>
-      </Card>
+
+        <div className="flex items-center gap-4">
+          {/* Sort */}
+          <select 
+            value={sortBy}
+            onChange={(e) => {
+              setSortBy(e.target.value);
+              const params = new URLSearchParams(searchParams.toString());
+              params.set("sort", e.target.value);
+              router.push(`/prompts?${params.toString()}`);
+            }}
+            className="appearance-none bg-white/60 border border-slate-200 rounded-full px-4 py-3 pr-10 text-sm text-slate-700 focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-200 transition-all duration-300"
+          >
+            {sortOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+
+          {/* View Toggle */}
+          <div className="flex bg-white border border-slate-200 rounded-full overflow-hidden">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-3 transition-all duration-300 ${
+                viewMode === 'grid'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              <Grid3X3 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-3 transition-all duration-300 ${
+                viewMode === 'list'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              <List className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Tag Filter Panel */}
+      {showTagFilter && (
+        <div className="p-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-200/50">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-slate-900">Filter by Tags</h3>
+            {selectedTags.length > 0 && (
+              <button 
+                onClick={clearAllTags}
+                className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {allTags.map((tag) => (
+              <button
+                key={tag.id}
+                onClick={() => toggleTag(tag.id)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                  selectedTags.includes(tag.id)
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {tag.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Selected Tags Display */}
+      {selectedTags.length > 0 && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-slate-500">Filtered by:</span>
+          <div className="flex items-center gap-2">
+            {selectedTagsInfo.map((tag) => (
+              <span
+                key={tag.id}
+                className="flex items-center gap-1 px-3 py-1 bg-slate-900 text-white rounded-full text-sm"
+              >
+                {tag.name}
+                <button
+                  onClick={() => toggleTag(tag.id)}
+                  className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

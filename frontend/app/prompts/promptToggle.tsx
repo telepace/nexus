@@ -34,6 +34,7 @@ export function PromptToggle({
           variant: "destructive",
         });
       } else {
+        // 获取实际的状态
         const actualStatus = result.data?.user_enabled ?? !isEnabled;
         setIsEnabled(actualStatus as boolean);
         toast({
@@ -54,23 +55,26 @@ export function PromptToggle({
   };
 
   return (
-    <div
-      className="flex items-center space-x-2"
-      onClick={(e) => e.stopPropagation()}
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        handleToggle();
+      }}
+      disabled={isLoading}
+      className={`group relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2 hover:scale-105 ${
+        isEnabled 
+          ? 'bg-slate-900 shadow-lg' 
+          : 'bg-slate-300 hover:bg-slate-400'
+      } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
-      <Switch
-        id={`enabled-${promptId}`}
-        checked={isEnabled}
-        onCheckedChange={handleToggle}
-        disabled={isLoading}
-        className="data-[state=checked]:bg-green-600"
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-all duration-300 shadow-sm group-hover:shadow-md ${
+          isEnabled ? 'translate-x-6' : 'translate-x-1'
+        } ${isLoading ? 'animate-pulse' : ''}`}
       />
-      <Label
-        htmlFor={`enabled-${promptId}`}
-        className={`text-xs cursor-pointer ${isEnabled ? "text-green-600" : "text-gray-500"}`}
-      >
-        {isLoading ? "..." : isEnabled ? "已启用" : "已禁用"}
-      </Label>
-    </div>
+      <span className="sr-only">
+        {isLoading ? "切换中..." : isEnabled ? "已启用" : "已禁用"}
+      </span>
+    </button>
   );
 }

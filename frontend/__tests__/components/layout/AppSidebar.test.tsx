@@ -45,7 +45,7 @@ const renderSidebar = (mockOnAddContentClick?: jest.Mock) => {
 describe("AppSidebar", () => {
   it("renders the sidebar", () => {
     renderSidebar();
-    expect(screen.getByText("Telepace")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Telepace" })).toBeInTheDocument();
   });
 
   it("renders all navigation links", () => {
@@ -67,8 +67,9 @@ describe("AppSidebar", () => {
   it("renders the logo div", () => {
     renderSidebar();
 
-    const logoDiv = screen.getByText("Telepace").closest("div");
-    expect(logoDiv).toBeInTheDocument();
+    const logoLink = screen.getByRole("link", { name: "Telepace" });
+    expect(logoLink).toBeInTheDocument();
+    expect(logoLink).toHaveAttribute("href", "/dashboard");
   });
 
   it("renders user information", () => {

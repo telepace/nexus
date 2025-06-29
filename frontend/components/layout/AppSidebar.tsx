@@ -117,7 +117,9 @@ export function AppSidebar({
           {/* 左侧：Logo和品牌名称 - 在折叠状态下隐藏 */}
           <div className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:hidden">
             <IconInnerShadowTop className="!size-5" />
-            <span className="text-base font-semibold">Telepace</span>
+            <Link href="/dashboard" className="text-base font-semibold hover:text-primary transition-colors duration-200">
+              Telepace
+            </Link>
           </div>
           {/* 右侧：Sidebar Trigger - 在折叠状态下居中 */}
           <SidebarTrigger className="h-8 w-8 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:border-sidebar-accent-foreground/20" />

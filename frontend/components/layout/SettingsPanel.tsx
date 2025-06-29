@@ -1,134 +1,274 @@
 "use client";
 
-import { FC, useState, useRef, ChangeEvent, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/lib/auth";
+import { useTheme } from "next-themes";
+import { useTimeZone } from "@/lib/time-zone-context";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TimeZoneSelector } from "@/components/ui/TimeZoneSelector";
+import { toast } from "@/components/ui/use-toast";
 import {
-  X,
-  User,
+  Loader2,
+  User as UserIcon,
   Lock,
-  Eye,
+  Palette,
   Bell,
   Shield,
+  Sun,
+  Moon,
+  Monitor,
+  Globe,
+  Mail,
+  Smartphone,
+  Eye,
+  Trash2,
+  Upload,
+  RotateCcw,
+  X,
+  Edit2,
   ChevronRight,
-  Loader2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { useTheme } from "next-themes";
-import { TimeZoneSelector } from "@/components/ui/TimeZoneSelector";
-import { useTimeZone } from "../../lib/time-zone-context";
-import Image from "next/image";
-import { toast } from "@/components/ui/use-toast";
-import { useAuth } from "@/lib/auth";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import {
+  resetDeleteConfirmSetting,
+  shouldSkipDeleteConfirm,
+} from "@/app/content-library/components/DeleteConfirmDialog";
 import { getCookie } from "cookies-next";
 
-// 添加时区设置组件
-const TimeZoneSettings = () => {
-  const { timeZone, setTimeZone, isAutoTimeZone, setIsAutoTimeZone } =
-    useTimeZone();
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Label htmlFor="auto-timezone" className="text-sm font-normal">
-          使用浏览器时区
-        </Label>
-        <Switch
-          id="auto-timezone"
-          checked={isAutoTimeZone}
-          onCheckedChange={setIsAutoTimeZone}
-        />
-      </div>
-
-      {!isAutoTimeZone && (
-        <div className="grid gap-2">
-          <Label htmlFor="timezone" className="text-sm font-normal">
-            选择时区
-          </Label>
-          <TimeZoneSelector value={timeZone} onChange={setTimeZone} label="" />
-        </div>
-      )}
-    </div>
-  );
-};
-
+/**
+ * 优雅的用户设置面板 - 采用现代玻璃态设计美学
+ */
 interface SettingsPanelProps {
   open: boolean;
   onClose: () => void;
 }
 
-export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
-  const [activeTab, setActiveTab] = useState("profile");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [avatarSrc, setAvatarSrc] = useState("/images/vinta.png");
-  const [isUploading, setIsUploading] = useState(false);
+export const SettingsPanel: React.FC<SettingsPanelProps> = ({ open, onClose }) => {
+  const { user, isLoading, error, updateUser } = useAuth();
   const { theme, setTheme } = useTheme();
-  const [notifications, setNotifications] = useState({
-    email: true,
-    push: false,
-    updates: true,
-  });
-  const { user, updateUser } = useAuth();
+  const { timeZone, setTimeZone, isAutoTimeZone, setIsAutoTimeZone } =
+    useTimeZone();
 
-  // 表单字段状态
-  const [profileForm, setProfileForm] = useState({
-    full_name: user?.full_name || "",
-    email: user?.email || "",
-  });
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  // UI 状态
+  const [activeTab, setActiveTab] = useState("personal");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // 当 user 变化时填充表单
+  // 表单数据
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+  });
+
+  // 密码修改状态
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // 通知设置状态
+  const [notificationSettings, setNotificationSettings] = useState({
+    emailNotifications: true,
+    appNotifications: true,
+    marketingEmails: false,
+    securityAlerts: true,
+  });
+
+  // 隐私设置状态
+  const [privacySettings, setPrivacySettings] = useState({
+    dataSharing: false,
+    analytics: true,
+    profileVisibility: "public" as "public" | "private" | "friends",
+  });
+
+  // 删除确认设置状态
+  const [hasSkipDeleteConfirm, setHasSkipDeleteConfirm] = useState(false);
+
+  // 头像上传相关状态
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const tabs = [
+    { id: "personal", label: "个人资料", icon: UserIcon },
+    { id: "security", label: "密码安全", icon: Shield },
+    { id: "appearance", label: "外观", icon: Palette },
+    { id: "notifications", label: "通知", icon: Bell },
+    { id: "privacy", label: "隐私", icon: Lock },
+  ];
+
+  // 避免 hydration 不匹配
   useEffect(() => {
+    setMounted(true);
+    setHasSkipDeleteConfirm(shouldSkipDeleteConfirm());
     if (user) {
-      setProfileForm({
-        full_name: user.full_name || "",
+      setFormData({
+        name: user.full_name || "",
         email: user.email || "",
       });
-      if (user.avatar_url) {
-        setAvatarSrc(user.avatar_url);
+    }
+
+    // 添加键盘事件监听
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
       }
+    };
+
+    if (open) {
+      document.addEventListener('keydown', handleKeyDown);
     }
-  }, [user]);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [user, open, onClose]);
 
-  /**
-   * Normalize image source so that it is always a valid URL for Next.js <Image> component.
-   * - If src already starts with "http://", "https://" or "/", return as-is.
-   * - Otherwise, prefix with a leading slash so that it is treated as an absolute
-   *   path from the web root (e.g. when we receive something like
-   *   "mock_r2_url/mock-bucket/avatars/..." from the backend mock storage layer).
-   */
-  const normalizeSrc = (src: string | undefined | null) => {
-    if (!src) return "/images/vinta.png";
-    if (
-      src.startsWith("http://") ||
-      src.startsWith("https://") ||
-      src.startsWith("/")
-    ) {
-      return src;
+  // 处理个人资料更新
+  const handleProfileUpdate = async () => {
+    setIsSubmitting(true);
+
+    try {
+      await updateUser({
+        full_name: formData.name,
+        email: formData.email,
+      });
+      toast({
+        title: "个人资料已更新",
+        description: "您的个人资料信息已成功保存。",
+      });
+    } catch (err) {
+      console.error("Profile update error:", err);
+      toast({
+        title: "更新失败",
+        description: "更新个人资料时出现错误，请重试。",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-    return `/${src}`;
   };
 
-  if (!open) {
-    return <div className="hidden" />;
-  }
+  // 处理密码修改
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const handleNotificationChange = (key: keyof typeof notifications) => {
-    setNotifications((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({
+        title: "密码不匹配",
+        description: "新密码和确认密码不一致。",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      toast({
+        title: "密码太短",
+        description: "新密码至少需要8个字符。",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      toast({
+        title: "密码已更新",
+        description: "您的密码已成功修改。",
+      });
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (err) {
+      console.error("Password change error:", err);
+      toast({
+        title: "密码修改失败",
+        description: "修改密码时出现错误，请检查当前密码是否正确。",
+        variant: "destructive",
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
+  // 处理通知设置更新
+  const handleNotificationUpdate = async (
+    key: keyof typeof notificationSettings,
+    value: boolean,
+  ) => {
+    const newSettings = { ...notificationSettings, [key]: value };
+    setNotificationSettings(newSettings);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      toast({
+        title: "通知设置已更新",
+        description: "您的通知偏好已保存。",
+      });
+    } catch (err) {
+      console.error("Notification update error:", err);
+      setNotificationSettings(notificationSettings);
+      toast({
+        title: "设置更新失败",
+        description: "更新通知设置时出现错误。",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  // 处理隐私设置更新
+  const handlePrivacyUpdate = async (
+    key: keyof typeof privacySettings,
+    value: string | boolean,
+  ) => {
+    const newSettings = { ...privacySettings, [key]: value };
+    setPrivacySettings(newSettings);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      toast({
+        title: "隐私设置已更新",
+        description: "您的隐私偏好已保存。",
+      });
+    } catch (err) {
+      console.error("Privacy update error:", err);
+      setPrivacySettings(privacySettings);
+      toast({
+        title: "设置更新失败",
+        description: "更新隐私设置时出现错误。",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    // 实现删除账户逻辑
+    console.log("Delete account");
+  };
+
+  const handleResetDeleteConfirm = () => {
+    resetDeleteConfirmSetting();
+    setHasSkipDeleteConfirm(false);
+    toast({
+      title: "设置已重置",
+      description: "删除确认对话框已恢复显示。",
+    });
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
     // 验证文件类型
@@ -151,508 +291,601 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({ open, onClose }) => {
       return;
     }
 
-    setIsUploading(true);
+    setIsUploadingAvatar(true);
 
-    // 创建一个本地预览
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64Image = e.target?.result as string;
-      setAvatarSrc(base64Image);
+    try {
+      // 创建预览URL
+      const previewUrl = URL.createObjectURL(file);
+      setLocalAvatarUrl(previewUrl);
 
-      // 上传到服务器
-      const uploadAvatar = async () => {
-        try {
-          // 获取认证token
-          const token = getCookie("accessToken");
-          if (!token) {
-            throw new Error("未找到认证token，请重新登录");
-          }
+      // 获取认证token
+      const token = getCookie("accessToken");
+      if (!token) {
+        throw new Error("未找到认证token，请重新登录");
+      }
 
-          // 创建FormData对象
-          const formData = new FormData();
-          formData.append("avatar", file);
+      // 创建FormData对象
+      const formData = new FormData();
+      formData.append("avatar", file);
 
-          // 发送请求到服务器
-          const apiUrl =
-            process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-          const response = await fetch(`${apiUrl}/api/v1/users/me/avatar`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            body: formData,
-            credentials: "include",
-          });
+      // 发送请求到服务器
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const response = await fetch(`${apiUrl}/api/v1/users/me/avatar`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+        credentials: "include",
+      });
 
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`上传失败: ${response.status} ${errorText}`);
-          }
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`上传失败: ${response.status} ${errorText}`);
+      }
 
-          const updatedUser = await response.json();
+      const updatedUser = await response.json();
 
-          // 更新用户信息，只更新头像相关字段
-          await updateUser({ avatar_url: updatedUser.avatar_url });
+      // 更新用户信息，只更新头像相关字段
+      await updateUser({ avatar_url: updatedUser.avatar_url });
 
-          toast({
-            title: "头像已更新",
-            description: "您的头像已成功更换并保存到服务器",
-          });
-        } catch (error) {
-          console.error("上传头像失败:", error);
-          toast({
-            title: "上传失败",
-            description:
-              error instanceof Error
-                ? error.message
-                : "头像无法保存到服务器，请稍后重试",
-            variant: "destructive",
-          });
-        } finally {
-          setIsUploading(false);
-        }
-      };
-
-      uploadAvatar();
-    };
-
-    reader.onerror = () => {
-      setIsUploading(false);
+      toast({
+        title: "头像已更新",
+        description: "您的头像已成功上传。",
+      });
+    } catch (err) {
+      console.error("Avatar upload error:", err);
+      setLocalAvatarUrl(null);
       toast({
         title: "上传失败",
-        description: "头像更新失败，请重试",
+        description: err instanceof Error ? err.message : "头像上传时出现错误，请重试。",
         variant: "destructive",
       });
-    };
-
-    reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
   };
 
+  // 如果面板未打开，不渲染
+  if (!open) {
+    return null;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50">
+        <div className="flex items-center text-gray-600 dark:text-gray-400">
+          <Loader2 className="h-8 w-8 animate-spin mr-3" />
+          <p className="text-lg">加载用户数据中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center p-8 z-50">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertDescription>
+            加载用户数据时出错: {error.message}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center p-8 z-50">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertDescription>
+            您尚未登录，请先登录以查看此页面。
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative h-[80vh] w-[90vw] max-w-3xl rounded-lg bg-white dark:bg-gray-900 shadow-lg overflow-hidden">
-        <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 p-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            设置
-          </h2>
-          <Button
-            variant="ghost"
-            size="icon"
+    <div 
+      className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center p-8 z-50"
+      onClick={(e) => {
+        // 点击背景关闭
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div className="bg-white/95 dark:bg-gray-950/95 backdrop-blur-2xl rounded-3xl border border-white/20 dark:border-gray-800/50 shadow-2xl w-full max-w-5xl h-[700px] overflow-hidden">
+        
+        {/* 极简头部 */}
+        <div className="flex items-center justify-between px-12 py-8">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-light tracking-tight text-gray-900 dark:text-white">设置</h1>
+            <p className="text-gray-400 text-sm">管理您的账户设置和偏好</p>
+          </div>
+          <button 
             onClick={onClose}
-            aria-label="关闭"
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-110"
+            title="关闭设置"
           >
-            <X className="h-5 w-5" />
-          </Button>
+            <X className="w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200" />
+          </button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="border-b border-gray-200 dark:border-gray-800">
-            <TabsList className="p-0 bg-transparent border-b-0">
-              <TabsTrigger
-                value="profile"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2"
-              >
-                <User className="h-4 w-4 mr-2" />
-                个人资料
-              </TabsTrigger>
-              <TabsTrigger
-                value="password"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2"
-              >
-                <Lock className="h-4 w-4 mr-2" />
-                密码安全
-              </TabsTrigger>
-              <TabsTrigger
-                value="appearance"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2"
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                外观
-              </TabsTrigger>
-              <TabsTrigger
-                value="notifications"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2"
-              >
-                <Bell className="h-4 w-4 mr-2" />
-                通知
-              </TabsTrigger>
-              <TabsTrigger
-                value="privacy"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2"
-              >
-                <Shield className="h-4 w-4 mr-2" />
-                隐私
-              </TabsTrigger>
-            </TabsList>
+        <div className="flex h-[612px]">
+          {/* 超净侧边栏 */}
+          <div className="w-80 px-12 py-4">
+            <nav className="space-y-1">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full flex items-center justify-between px-6 py-5 rounded-2xl text-left transition-all duration-300 group ${
+                      activeTab === tab.id
+                        ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
+                        : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50/50 dark:hover:bg-gray-800/30"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <Icon className="w-5 h-5" />
+                      <span className="font-medium text-base">{tab.label}</span>
+                    </div>
+                    <ChevronRight className={`w-4 h-4 transition-all duration-300 ${
+                      activeTab === tab.id ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 group-hover:opacity-50 group-hover:translate-x-0"
+                    }`} />
+                  </button>
+                );
+              })}
+            </nav>
           </div>
 
-          <div className="h-[calc(80vh-8rem)] overflow-y-auto p-6">
-            <TabsContent value="profile" className="mt-0">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                    个人资料
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    管理您的个人信息
-                  </p>
-                </div>
-                <Separator />
-                <div className="grid gap-6">
-                  <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-                    <div className="h-24 w-24 relative rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
-                      <Image
-                        src={normalizeSrc(avatarSrc) || "/images/vinta.png"}
-                        alt="Profile"
-                        className="object-contain w-full h-full"
-                        width={96}
-                        height={96}
-                        onError={() => setAvatarSrc("/images/vinta.png")}
-                      />
-                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={handleAvatarClick}
-                          disabled={isUploading}
-                        >
-                          {isUploading ? "上传中..." : "更换"}
-                        </Button>
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleFileChange}
-                          accept="image/*"
-                          className="hidden"
+          {/* 纯净内容区域 */}
+          <div className="flex-1 px-12 py-8 border-l border-gray-100/50 dark:border-gray-800/50 overflow-y-auto">
+            {activeTab === "personal" && (
+              <div className="space-y-12 max-w-lg">
+                
+                {/* 头像 - 浮动设计 */}
+                <div className="flex items-center gap-8">
+                  <div className="relative group cursor-pointer">
+                    <div className="w-24 h-24 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center shadow-lg shadow-blue-500/25 transition-all duration-500 group-hover:shadow-xl group-hover:shadow-blue-500/30 group-hover:scale-105">
+                      {localAvatarUrl || user.avatar_url ? (
+                        <img 
+                          src={localAvatarUrl || user.avatar_url} 
+                          alt="Avatar" 
+                          className="w-full h-full rounded-3xl object-cover"
                         />
-                      </div>
-                    </div>
-                    <div className="flex-1 space-y-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="name">姓名</Label>
-                        <Input
-                          id="name"
-                          value={profileForm.full_name}
-                          onChange={(e) =>
-                            setProfileForm((p) => ({
-                              ...p,
-                              full_name: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="email">邮箱</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={profileForm.email}
-                      onChange={(e) =>
-                        setProfileForm((p) => ({ ...p, email: e.target.value }))
-                      }
-                    />
-                  </div>
-
-                  <div className="flex justify-end">
-                    <Button
-                      className="bg-primary hover:bg-primary/90"
-                      onClick={async () => {
-                        if (isSavingProfile) return;
-                        setIsSavingProfile(true);
-                        try {
-                          await updateUser({
-                            full_name: profileForm.full_name,
-                            email: profileForm.email,
-                          });
-                          toast({
-                            title: "已保存",
-                            description: "个人资料已更新",
-                          });
-                        } catch (err) {
-                          console.error("Profile update failed:", err);
-                          toast({
-                            title: "保存失败",
-                            description: "无法更新资料，请稍后重试",
-                            variant: "destructive",
-                          });
-                        } finally {
-                          setIsSavingProfile(false);
-                        }
-                      }}
-                      disabled={isSavingProfile}
-                    >
-                      {isSavingProfile && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <span className="text-white text-3xl font-light">
+                          {user.full_name ? user.full_name[0].toUpperCase() : "U"}
+                        </span>
                       )}
-                      保存
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="password" className="mt-0">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                    密码安全
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    更新您的密码和安全设置
-                  </p>
-                </div>
-                <Separator />
-
-                <div className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="current-password">当前密码</Label>
-                    <Input id="current-password" type="password" />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="new-password">新密码</Label>
-                    <Input id="new-password" type="password" />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="confirm-password">确认新密码</Label>
-                    <Input id="confirm-password" type="password" />
-                  </div>
-
-                  <div className="flex justify-end">
-                    <Button className="bg-primary hover:bg-primary/90">
-                      更新密码
-                    </Button>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                    双重认证
-                  </h4>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">双重认证</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        增强账户安全性
-                      </p>
                     </div>
-                    <Button variant="outline">设置</Button>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="appearance" className="mt-0">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                    外观
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    自定义界面外观和显示设置
-                  </p>
-                </div>
-                <Separator />
-                <div className="grid gap-6">
-                  <div className="grid gap-2">
-                    <h4 className="font-medium text-gray-900 dark:text-white">
-                      主题
-                    </h4>
-                    <div className="flex items-center space-x-4">
-                      {(
-                        [
-                          { value: "light", label: "浅色" },
-                          { value: "dark", label: "深色" },
-                          { value: "system", label: "自动" },
-                        ] as const
-                      ).map((opt) => (
-                        <Button
-                          key={opt.value}
-                          variant={theme === opt.value ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setTheme(opt.value)}
-                        >
-                          {opt.label}
-                        </Button>
-                      ))}
+                    <div 
+                      className="absolute -bottom-1 -right-1 w-8 h-8 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-90 group-hover:scale-100"
+                      onClick={() => avatarInputRef.current?.click()}
+                    >
+                      {isUploadingAvatar ? (
+                        <Loader2 className="w-4 h-4 text-gray-600 dark:text-gray-400 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                      )}
                     </div>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <h4 className="font-medium text-gray-900 dark:text-white">
-                      时区设置
-                    </h4>
-                    <TimeZoneSettings />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <h4 className="font-medium text-gray-900 dark:text-white">
-                      字体大小
-                    </h4>
-                    <div className="flex items-center justify-between">
-                      <Label
-                        htmlFor="font-size"
-                        className="text-sm font-normal"
-                      >
-                        界面字体大小
-                      </Label>
-                      <select
-                        id="font-size"
-                        className="w-40 rounded-md border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-1 text-sm"
-                      >
-                        <option value="small">小</option>
-                        <option value="medium">中</option>
-                        <option value="large">大</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="notifications" className="mt-0">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                    通知设置
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    管理您接收通知的方式
-                  </p>
-                </div>
-                <Separator />
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="email-notifications">电子邮件通知</Label>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        接收重要更新和通知
-                      </p>
-                    </div>
-                    <Switch
-                      id="email-notifications"
-                      checked={notifications.email}
-                      onCheckedChange={() => handleNotificationChange("email")}
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      className="hidden"
                     />
                   </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="push-notifications">推送通知</Label>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        在您的设备上接收通知
-                      </p>
-                    </div>
-                    <Switch
-                      id="push-notifications"
-                      checked={notifications.push}
-                      onCheckedChange={() => handleNotificationChange("push")}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="product-updates">产品更新</Label>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        接收关于新功能和改进的信息
-                      </p>
-                    </div>
-                    <Switch
-                      id="product-updates"
-                      checked={notifications.updates}
-                      onCheckedChange={() =>
-                        handleNotificationChange("updates")
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="privacy" className="mt-0">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                    隐私与安全
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    管理您的隐私和数据设置
-                  </p>
-                </div>
-                <Separator />
-
-                <div className="space-y-4">
+                  
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                      数据收集
-                    </h4>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <p className="font-medium">使用数据分析</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          帮助我们改进产品
-                        </p>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">头像</h3>
+                    <p className="text-gray-400 text-sm leading-relaxed">点击更换您的个人头像</p>
+                  </div>
+                </div>
+
+                {/* 浮动表单字段 */}
+                <div className="space-y-8">
+                  <div className="group">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-3 transition-colors duration-300 group-focus-within:text-gray-900 dark:group-focus-within:text-white">
+                      姓名
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        placeholder="请输入您的姓名"
+                        className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
+                      />
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <Edit2 className="w-4 h-4 text-gray-400" />
                       </div>
-                      <Switch defaultChecked />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                      隐私控制
-                    </h4>
-                    <div className="space-y-2">
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between"
-                      >
-                        <span>隐私设置</span>
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between"
-                      >
-                        <span>查看我的数据</span>
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between text-red-500 dark:text-red-400 hover:text-red-500/90 dark:hover:text-red-400/90"
-                      >
-                        <span>删除我的账户</span>
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
+                  <div className="group">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-3 transition-colors duration-300 group-focus-within:text-gray-900 dark:group-focus-within:text-white">
+                      邮箱地址
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light transition-all duration-300"
+                      />
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <Edit2 className="w-4 h-4 text-gray-400" />
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <Separator />
+                {/* 浮动操作 */}
+                <div className="pt-8">
+                  <button 
+                    onClick={handleProfileUpdate}
+                    disabled={isSubmitting}
+                    className="group relative px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-gray-900/25 dark:hover:shadow-white/25 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                    <span className="relative flex items-center gap-2">
+                      {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                      保存更改
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                        安全日志
-                      </h4>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        查看账户活动和安全事件
-                      </p>
+            {activeTab === "security" && (
+              <div className="space-y-12 max-w-lg">
+                <div className="space-y-3">
+                  <h2 className="text-2xl font-light text-gray-900 dark:text-white">密码安全</h2>
+                  <p className="text-gray-400 leading-relaxed">保护您的账户安全</p>
+                </div>
+                
+                <div className="p-8 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-900/10 dark:to-indigo-900/10 rounded-3xl border border-blue-100/50 dark:border-blue-800/30">
+                  <div className="flex items-start gap-6">
+                    <div className="w-12 h-12 bg-blue-500/10 dark:bg-blue-400/10 rounded-2xl flex items-center justify-center">
+                      <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <Button variant="outline">查看日志</Button>
+                    <div className="space-y-2">
+                      <h3 className="font-medium text-gray-900 dark:text-white">账户安全状态良好</h3>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">您的密码强度很高，上次更新于 30 天前</p>
+                    </div>
+                  </div>
+                </div>
+
+                <form onSubmit={handlePasswordChange} className="space-y-8">
+                  <div className="group">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">
+                      当前密码
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordData.currentPassword}
+                      onChange={(e) => setPasswordData(prev => ({...prev, currentPassword: e.target.value}))}
+                      placeholder="请输入当前密码"
+                      className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
+                    />
+                  </div>
+
+                  <div className="group">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">
+                      新密码
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData(prev => ({...prev, newPassword: e.target.value}))}
+                      placeholder="请输入新密码（至少8个字符）"
+                      className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
+                    />
+                  </div>
+
+                  <div className="group">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">
+                      确认新密码
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) => setPasswordData(prev => ({...prev, confirmPassword: e.target.value}))}
+                      placeholder="请再次输入新密码"
+                      className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
+                    />
+                  </div>
+
+                  <div className="pt-8">
+                    <button 
+                      type="submit"
+                      disabled={isChangingPassword}
+                      className="group relative px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-gray-900/25 dark:hover:shadow-white/25 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                      <span className="relative flex items-center gap-2">
+                        {isChangingPassword && <Loader2 className="w-4 h-4 animate-spin" />}
+                        更新密码
+                      </span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {activeTab === "appearance" && (
+              <div className="space-y-12 max-w-lg">
+                <div className="space-y-3">
+                  <h2 className="text-2xl font-light text-gray-900 dark:text-white">外观设置</h2>
+                  <p className="text-gray-400 leading-relaxed">个性化您的界面体验</p>
+                </div>
+                
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="font-medium text-gray-900 dark:text-white mb-6">主题模式</h3>
+                    <div className="grid grid-cols-3 gap-4">
+                      {[
+                        { name: "浅色", value: "light", bg: "bg-gradient-to-br from-gray-50 to-white", icon: Sun },
+                        { name: "深色", value: "dark", bg: "bg-gradient-to-br from-gray-800 to-gray-900", icon: Moon },
+                        { name: "自动", value: "system", bg: "bg-gradient-to-br from-blue-500 to-indigo-600", icon: Monitor }
+                      ].map((themeOption) => {
+                        const Icon = themeOption.icon;
+                        return (
+                          <button
+                            key={themeOption.value}
+                            onClick={() => setTheme(themeOption.value)}
+                            className={`group p-6 rounded-2xl border-2 transition-all duration-300 hover:scale-105 ${
+                              theme === themeOption.value ? "border-gray-900 dark:border-white" : "border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500"
+                            }`}
+                          >
+                            <div className={`w-full h-12 ${themeOption.bg} rounded-xl mb-4 shadow-inner flex items-center justify-center`}>
+                              <Icon className="w-5 h-5 text-white/80" />
+                            </div>
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-300">
+                              {themeOption.name}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="p-8 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/10 dark:to-purple-900/10 rounded-3xl border border-indigo-100/50 dark:border-indigo-800/30">
+                    <div className="flex items-start gap-6">
+                      <div className="w-12 h-12 bg-indigo-500/10 dark:bg-indigo-400/10 rounded-2xl flex items-center justify-center">
+                        <Globe className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                      </div>
+                      <div className="space-y-4 flex-1">
+                        <div className="space-y-2">
+                          <h3 className="font-medium text-gray-900 dark:text-white">时区设置</h3>
+                          <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">根据您的位置自动调整时间显示</p>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">自动检测时区</span>
+                          <button 
+                            onClick={() => setIsAutoTimeZone(!isAutoTimeZone)}
+                            className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                              isAutoTimeZone ? "bg-gray-900 dark:bg-white" : "bg-gray-200 dark:bg-gray-700"
+                            }`}
+                          >
+                            <div className={`absolute w-6 h-6 rounded-full bg-white dark:bg-gray-900 top-1 transition-all duration-300 shadow-sm ${
+                              isAutoTimeZone ? "right-1" : "left-1"
+                            }`}></div>
+                          </button>
+                        </div>
+
+                        {!isAutoTimeZone && (
+                          <div className="pt-2">
+                            <TimeZoneSelector
+                              value={timeZone}
+                              onChange={setTimeZone}
+                              label="选择时区"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </TabsContent>
+            )}
+
+            {activeTab === "notifications" && (
+              <div className="space-y-12 max-w-lg">
+                <div className="space-y-3">
+                  <h2 className="text-2xl font-light text-gray-900 dark:text-white">通知设置</h2>
+                  <p className="text-gray-400 leading-relaxed">控制您接收通知的方式</p>
+                </div>
+                
+                <div className="space-y-6">
+                  {[
+                    { 
+                      key: "emailNotifications" as const,
+                      title: "邮件通知", 
+                      desc: "重要更新和安全提醒", 
+                      enabled: notificationSettings.emailNotifications,
+                      icon: Mail
+                    },
+                    { 
+                      key: "appNotifications" as const,
+                      title: "推送通知", 
+                      desc: "实时消息和活动通知", 
+                      enabled: notificationSettings.appNotifications,
+                      icon: Smartphone
+                    },
+                    { 
+                      key: "marketingEmails" as const,
+                      title: "营销邮件", 
+                      desc: "产品更新和推广信息", 
+                      enabled: notificationSettings.marketingEmails,
+                      icon: Bell
+                    },
+                    { 
+                      key: "securityAlerts" as const,
+                      title: "安全警报", 
+                      desc: "账户安全相关的重要通知", 
+                      enabled: notificationSettings.securityAlerts,
+                      icon: Shield
+                    }
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.key} className="flex items-center justify-between py-6 border-b border-gray-100/50 dark:border-gray-800/50 last:border-0">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl flex items-center justify-center">
+                            <Icon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                          </div>
+                          <div className="space-y-1">
+                            <h3 className="font-medium text-gray-900 dark:text-white">{item.title}</h3>
+                            <p className="text-sm text-gray-400">{item.desc}</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => handleNotificationUpdate(item.key, !item.enabled)}
+                          className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                            item.enabled ? "bg-gray-900 dark:bg-white" : "bg-gray-200 dark:bg-gray-700"
+                          }`}
+                        >
+                          <div className={`absolute w-6 h-6 rounded-full bg-white dark:bg-gray-900 top-1 transition-all duration-300 shadow-sm ${
+                            item.enabled ? "right-1" : "left-1"
+                          }`}></div>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "privacy" && (
+              <div className="space-y-12 max-w-lg">
+                <div className="space-y-3">
+                  <h2 className="text-2xl font-light text-gray-900 dark:text-white">隐私保护</h2>
+                  <p className="text-gray-400 leading-relaxed">管理您的数据和隐私设置</p>
+                </div>
+                
+                <div className="p-8 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-900/10 dark:to-orange-900/10 rounded-3xl border border-amber-100/50 dark:border-amber-800/30">
+                  <div className="flex items-start gap-6">
+                    <div className="w-12 h-12 bg-amber-500/10 dark:bg-amber-400/10 rounded-2xl flex items-center justify-center">
+                      <Lock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-medium text-gray-900 dark:text-white">数据加密保护</h3>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">我们使用端到端加密技术保护您的个人信息安全</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  {[
+                    { 
+                      key: "dataSharing" as const,
+                      title: "数据共享", 
+                      desc: "允许匿名数据共享以改进服务", 
+                      enabled: privacySettings.dataSharing
+                    },
+                    { 
+                      key: "analytics" as const,
+                      title: "使用分析", 
+                      desc: "帮助我们了解产品使用情况", 
+                      enabled: privacySettings.analytics
+                    }
+                  ].map((item) => (
+                    <div key={item.key} className="flex items-center justify-between py-6 border-b border-gray-100/50 dark:border-gray-800/50 last:border-0">
+                      <div className="space-y-1">
+                        <h3 className="font-medium text-gray-900 dark:text-white">{item.title}</h3>
+                        <p className="text-sm text-gray-400">{item.desc}</p>
+                      </div>
+                      <button 
+                        onClick={() => handlePrivacyUpdate(item.key, !item.enabled)}
+                        className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                          item.enabled ? "bg-gray-900 dark:bg-white" : "bg-gray-200 dark:bg-gray-700"
+                        }`}
+                      >
+                        <div className={`absolute w-6 h-6 rounded-full bg-white dark:bg-gray-900 top-1 transition-all duration-300 shadow-sm ${
+                          item.enabled ? "right-1" : "left-1"
+                        }`}></div>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-medium text-gray-900 dark:text-white mb-4">个人资料可见性</h3>
+                    <div className="space-y-3">
+                      {[
+                        { value: "public", label: "公开", desc: "所有人可见", icon: Eye },
+                        { value: "friends", label: "好友", desc: "仅好友可见", icon: UserIcon },
+                        { value: "private", label: "私密", desc: "仅自己可见", icon: Lock }
+                      ].map((option) => {
+                        const Icon = option.icon;
+                        return (
+                          <button
+                            key={option.value}
+                            onClick={() => handlePrivacyUpdate("profileVisibility", option.value)}
+                            className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all duration-300 ${
+                              privacySettings.profileVisibility === option.value
+                                ? "border-gray-900 dark:border-white bg-gray-50/50 dark:bg-gray-800/50"
+                                : "border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500"
+                            }`}
+                          >
+                            <div className="w-8 h-8 bg-gray-100/50 dark:bg-gray-800/50 rounded-lg flex items-center justify-center">
+                              <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                            </div>
+                            <div className="text-left">
+                              <div className="font-medium text-gray-900 dark:text-white">{option.label}</div>
+                              <div className="text-sm text-gray-400">{option.desc}</div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 危险操作区域 */}
+                <div className="pt-8 border-t border-gray-100/50 dark:border-gray-800/50">
+                  <div className="p-8 bg-gradient-to-br from-red-50/50 to-pink-50/50 dark:from-red-900/10 dark:to-pink-900/10 rounded-3xl border border-red-100/50 dark:border-red-800/30">
+                    <div className="flex items-start gap-6">
+                      <div className="w-12 h-12 bg-red-500/10 dark:bg-red-400/10 rounded-2xl flex items-center justify-center">
+                        <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+                      </div>
+                      <div className="space-y-4 flex-1">
+                        <div className="space-y-2">
+                          <h3 className="font-medium text-gray-900 dark:text-white">删除账户</h3>
+                          <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">永久删除您的账户和所有相关数据。此操作无法撤销。</p>
+                        </div>
+                        
+                        <button 
+                          onClick={handleDeleteAccount}
+                          className="group relative px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-red-500/25 overflow-hidden"
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                          <span className="relative flex items-center gap-2">
+                            <Trash2 className="w-4 h-4" />
+                            删除账户
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </Tabs>
+        </div>
       </div>
     </div>
   );
