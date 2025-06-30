@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import MainLayout from "@/components/layout/MainLayout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { ContentList } from "./components/ContentList";
@@ -123,78 +122,70 @@ export default function ContentLibraryPage() {
 
   // Loading states
   if (authLoading || loading) {
-    return (
-      <MainLayout pageTitle="Content Library">
-        <Loading />
-      </MainLayout>
-    );
+    return <Loading />;
   }
 
   // Error state
   if (error) {
     return (
-      <MainLayout pageTitle="Content Library">
-        <Alert variant="destructive" className="m-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      </MainLayout>
+      <Alert variant="destructive" className="m-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <MainLayout pageTitle="Content Library" fullscreen>
-      {/* 页面主体：左右两栏 */}
-      <div className="flex h-screen overflow-visible bg-gradient-to-br from-background via-background to-muted/20">
-        {/* 左栏：默认固定 35.25rem，2xl时固定宽度变为37.5rem */}
-        <section className="flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar w-library flex-none 2xl:w-library-lg">
-          {/* Header 仅存在于左栏 */}
-          <header className="flex items-center h-header px-4 md:px-6 border-b shrink-0 bg-background/80">
-            <h1 className="text-lg font-semibold">Library</h1>
-          </header>
+    /* 页面主体：左右两栏 */
+    <div className="flex h-screen overflow-visible bg-gradient-to-br from-background via-background to-muted/20">
+      {/* 左栏：默认固定 35.25rem，2xl时固定宽度变为37.5rem */}
+      <section className="flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar w-library flex-none 2xl:w-library-lg">
+        {/* Header 仅存在于左栏 */}
+        <header className="flex items-center h-header px-4 md:px-6 border-b shrink-0 bg-background/80">
+          <h1 className="text-lg font-semibold">Library</h1>
+        </header>
 
-          {/* 工具栏 */}
-          <Toolbar items={items} onFiltersChange={handleFiltersChange} />
+        {/* 工具栏 */}
+        <Toolbar items={items} onFiltersChange={handleFiltersChange} />
 
-          {/* 列表 */}
-          <div className="flex-1 px-4 md:px-6 pb-6 pt-6">
-            {filteredItems.length === 0 ? (
-              <div className="text-center py-12">
-                {filters.search || filters.selectedTags.length > 0 ? (
-                  <div className="space-y-2">
-                    <p className="text-muted-foreground">未找到匹配的内容</p>
-                    <p className="text-sm text-muted-foreground">
-                      尝试调整搜索条件或清除筛选
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">暂无内容</p>
-                )}
-              </div>
-            ) : (
-              <ContentList
-                items={filteredItems}
-                selectedItem={selectedItem}
-                hoveredItem={hoveredItem}
-                viewMode={filters.viewMode}
-                onCardClick={handleCardClick}
-                onCardHover={handleCardHover}
-                prefetchContent={prefetchContent}
-                onItemDeleted={handleItemDeleted}
-                onItemUpdated={handleItemUpdated}
-              />
-            )}
-          </div>
-        </section>
+        {/* 列表 */}
+        <div className="flex-1 px-4 md:px-6 pb-6 pt-6">
+          {filteredItems.length === 0 ? (
+            <div className="text-center py-12">
+              {filters.search || filters.selectedTags.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-muted-foreground">未找到匹配的内容</p>
+                  <p className="text-sm text-muted-foreground">
+                    尝试调整搜索条件或清除筛选
+                  </p>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">暂无内容</p>
+              )}
+            </div>
+          ) : (
+            <ContentList
+              items={filteredItems}
+              selectedItem={selectedItem}
+              hoveredItem={hoveredItem}
+              viewMode={filters.viewMode}
+              onCardClick={handleCardClick}
+              onCardHover={handleCardHover}
+              prefetchContent={prefetchContent}
+              onItemDeleted={handleItemDeleted}
+              onItemUpdated={handleItemUpdated}
+            />
+          )}
+        </div>
+      </section>
 
-        {/* 右栏：剩余空间自适应 */}
-        <aside className="flex-1 pr-2 py-2 pl-0 flex h-full ">
-          <div className="flex-1">
-            <ContentPreview item={previewItem} />
-          </div>
-        </aside>
-      </div>
-    </MainLayout>
+      {/* 右栏：剩余空间自适应 */}
+      <aside className="flex-1 pr-2 py-2 pl-0 flex h-full ">
+        <div className="flex-1">
+          <ContentPreview item={previewItem} />
+        </div>
+      </aside>
+    </div>
   );
 }

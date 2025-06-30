@@ -5,7 +5,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 
 // Mock Next.js router
 jest.mock("next/navigation", () => ({
-  usePathname: () => "/dashboard",
+  usePathname: () => "/home",
 }));
 
 // Mock auth hook
@@ -51,17 +51,17 @@ describe("AppSidebar", () => {
   it("renders all navigation links", () => {
     renderSidebar();
 
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    expect(screen.getByText("Home")).toBeInTheDocument();
+    expect(screen.getByText("Content Library")).toBeInTheDocument();
     expect(screen.getByText("Favorites")).toBeInTheDocument();
     expect(screen.getByText("Prompts")).toBeInTheDocument();
-    expect(screen.getByText("Content Library")).toBeInTheDocument();
   });
 
   it("shows the active state for current route", () => {
     renderSidebar();
 
-    const dashboardLink = screen.getByRole("link", { name: /dashboard/i });
-    expect(dashboardLink).toHaveAttribute("data-active", "true");
+    const homeLink = screen.getByRole("link", { name: /home/i });
+    expect(homeLink).toHaveAttribute("data-active", "true");
   });
 
   it("renders the logo div", () => {
@@ -69,7 +69,7 @@ describe("AppSidebar", () => {
 
     const logoLink = screen.getByRole("link", { name: "Telepace" });
     expect(logoLink).toBeInTheDocument();
-    expect(logoLink).toHaveAttribute("href", "/dashboard");
+    expect(logoLink).toHaveAttribute("href", "/home");
   });
 
   it("renders user information", () => {
@@ -82,17 +82,17 @@ describe("AppSidebar", () => {
   it("renders upload content section", () => {
     renderSidebar();
 
-    // 测试Upload Content按钮存在
-    const uploadContentButtons = screen.getAllByText("Upload Content");
-    expect(uploadContentButtons.length).toBeGreaterThan(0);
+    // 测试Upload按钮存在
+    const uploadButton = screen.getByText("Upload");
+    expect(uploadButton).toBeInTheDocument();
   });
 
-  it("calls onAddContentClick when Upload Content button is clicked", () => {
+  it("calls onAddContentClick when Upload button is clicked", () => {
     const mockOnAddContentClick = jest.fn();
     renderSidebar(mockOnAddContentClick);
 
-    const uploadContentButton = screen.getByText("Upload Content");
-    fireEvent.click(uploadContentButton);
+    const uploadButton = screen.getByText("Upload");
+    fireEvent.click(uploadButton);
 
     expect(mockOnAddContentClick).toHaveBeenCalledTimes(1);
   });

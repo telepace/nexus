@@ -120,7 +120,7 @@ export default function ReaderLayout({
       style={
         {
           "--sidebar-width": "240px", // 展开时的宽度
-          "--sidebar-width-icon": "4rem", // 折叠时的宽度
+          "--sidebar-width-icon": "3.5rem", // 折叠时的宽度，更紧凑
         } as React.CSSProperties
       }
     >

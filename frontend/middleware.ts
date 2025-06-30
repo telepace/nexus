@@ -15,6 +15,14 @@ import { readUserMe } from "@/app/clientService";
 export async function middleware(request: NextRequest) {
   console.log("[Middleware] 处理路径:", request.nextUrl.pathname);
 
+  const { pathname } = request.nextUrl;
+
+  // 对于根路径，直接放行，让页面组件自己处理登录状态
+  if (pathname === "/") {
+    console.log("[Middleware] 根路径，直接放行");
+    return NextResponse.next();
+  }
+
   // 检查cookies
   const token = request.cookies.get("accessToken");
   console.log("[Middleware] accessToken:", token ? "存在" : "不存在");
@@ -44,7 +52,7 @@ export async function middleware(request: NextRequest) {
 
     console.log("[Middleware] 验证成功, 用户:", data?.email);
 
-    const { pathname, search } = request.nextUrl;
+    const { search } = request.nextUrl;
 
     // Scenario 1: Setup not complete
     if (data.is_setup_complete === false && pathname !== "/setup") {
@@ -73,7 +81,9 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/dashboard/:path*",
+    "/home/:path*",
     "/settings/:path*",
     "/setup",
     "/favorites/:path*",

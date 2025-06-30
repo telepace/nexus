@@ -84,13 +84,13 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
   const allTags = [...new Set(tags)];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Main Controls */}
-      <div className="flex items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4 transition-colors duration-200" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
             <input
               type="text"
               placeholder="Search prompts..."
@@ -101,14 +101,14 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
                   handleSubmit(e);
                 }
               }}
-              className="pl-12 pr-6 py-3 w-80 border-0 bg-slate-100/60 rounded-full text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-200 focus:shadow-lg transition-all duration-300 text-sm hover:bg-slate-100/80"
+              className="pl-10 pr-4 py-2.5 w-72 border-0 bg-slate-100/60 rounded-full text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-200 focus:shadow-lg transition-all duration-200 text-sm hover:bg-slate-100/80"
             />
           </div>
 
           {/* Tag Filter */}
           <button 
             onClick={() => setShowTagFilter(!showTagFilter)}
-            className={`flex items-center gap-2 px-4 py-3 rounded-full border transition-all duration-300 text-sm font-medium ${
+            className={`flex items-center gap-2 px-3 py-2.5 rounded-full border transition-all duration-200 text-sm font-medium ${
               selectedTags.length > 0 || showTagFilter
                 ? 'bg-slate-900 text-white border-slate-900'
                 : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
@@ -117,14 +117,14 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
             <Tag className="h-4 w-4" />
             <span>Tags</span>
             {selectedTags.length > 0 && (
-              <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs">
+              <span className="bg-white/20 text-white px-1.5 py-0.5 rounded-full text-xs">
                 {selectedTags.length}
               </span>
             )}
           </button>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {/* Sort */}
           <select 
             value={sortBy}
@@ -134,7 +134,7 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
               params.set("sort", e.target.value);
               router.push(`/prompts?${params.toString()}`);
             }}
-            className="appearance-none bg-white/60 border border-slate-200 rounded-full px-4 py-3 pr-10 text-sm text-slate-700 focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-200 transition-all duration-300"
+            className="appearance-none bg-white/60 border border-slate-200 rounded-full px-3 py-2.5 pr-8 text-sm text-slate-700 focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-200 transition-all duration-200"
           >
             {sortOptions.map((option) => (
               <option key={option.id} value={option.id}>
@@ -147,7 +147,7 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
           <div className="flex bg-white border border-slate-200 rounded-full overflow-hidden">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-3 transition-all duration-300 ${
+              className={`p-2.5 transition-colors duration-200 ${
                 viewMode === 'grid'
                   ? 'bg-slate-900 text-white'
                   : 'text-slate-500 hover:bg-slate-50'
@@ -157,7 +157,7 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-3 transition-all duration-300 ${
+              className={`p-2.5 transition-colors duration-200 ${
                 viewMode === 'list'
                   ? 'bg-slate-900 text-white'
                   : 'text-slate-500 hover:bg-slate-50'
@@ -171,8 +171,8 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
 
       {/* Tag Filter Panel */}
       {showTagFilter && (
-        <div className="p-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-200/50">
-          <div className="flex items-center justify-between mb-4">
+        <div className="p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-200/50">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-medium text-slate-900">Filter by Tags</h3>
             {selectedTags.length > 0 && (
               <button 
@@ -183,12 +183,12 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
               </button>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {allTags.map((tag) => (
               <button
                 key={tag.id}
                 onClick={() => toggleTag(tag.id)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors duration-200 ${
                   selectedTags.includes(tag.id)
                     ? 'bg-slate-900 text-white'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'

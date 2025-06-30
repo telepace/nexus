@@ -51,7 +51,7 @@ export default function Page() {
   useEffect(() => {
     // 如果用户已登录，重定向到首页
     if (user && !isLoading) {
-      router.push("/dashboard");
+      router.push("/home");
     }
   }, [user, isLoading, router]);
 

@@ -53,8 +53,8 @@ function GoogleAuthCallbackContent() {
 
       // 跳转到仪表盘
       setTimeout(() => {
-        console.log("Navigating to dashboard after Google login");
-        router.push("/dashboard");
+        console.log("Navigating to home after Google login");
+        router.push("/home");
       }, 1500);
     } catch (error) {
       console.error("Error processing Google login token:", error);

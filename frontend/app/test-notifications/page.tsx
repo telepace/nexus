@@ -34,7 +34,7 @@ export default function TestNotificationsPage() {
                 🌐 跨页面测试
               </h3>
               <p className="text-green-800 dark:text-green-200">
-                创建通知后，尝试导航到其他页面（如 /dashboard 或
+                创建通知后，尝试导航到其他页面（如 /home 或
                 /content-library）， 通知应该继续显示在页面右上角。
               </p>
             </div>
@@ -65,7 +65,7 @@ export default function TestNotificationsPage() {
             <h3 className="font-medium mb-2">快速导航测试</h3>
             <div className="flex flex-wrap gap-2">
               <a
-                href="/dashboard"
+                href="/home"
                 className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-sm hover:bg-blue-200 dark:hover:bg-blue-800"
               >
                 仪表板

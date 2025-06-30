@@ -1045,3 +1045,41 @@
   -webkit-box-orient: horizontal;
   -webkit-line-clamp: none;
 }
+
+/* =============================================================================
+ * 性能优化样式 - 减少重绘和回流
+ * ============================================================================= */
+
+/* 优化滚动性能 */
+.prompt-cards-container {
+  contain: layout style paint;
+  will-change: scroll-position;
+}
+
+/* 优化卡片渲染性能 */
+.prompt-card {
+  contain: layout style;
+  transform: translateZ(0); /* 开启硬件加速 */
+}
+
+/* 减少动画期间的重绘 */
+.prompt-card:hover {
+  will-change: transform, box-shadow;
+}
+
+.prompt-card:not(:hover) {
+  will-change: auto;
+}
+
+/* 优化 toggle 开关性能 */
+.prompt-toggle {
+  contain: layout style;
+  transform: translateZ(0);
+}
+
+/* 优化文本渲染 */
+.text-optimized {
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

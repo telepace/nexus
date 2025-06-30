@@ -37,7 +37,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   resetDeleteConfirmSetting,
   shouldSkipDeleteConfirm,
-} from "@/app/content-library/components/DeleteConfirmDialog";
+} from "@/app/(withSidebar)/content-library/components/DeleteConfirmDialog";
 import { getCookie } from "cookies-next";
 
 /**

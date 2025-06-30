@@ -61,15 +61,15 @@ export function PromptToggle({
         handleToggle();
       }}
       disabled={isLoading}
-      className={`group relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2 hover:scale-105 ${
+      className={`group relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-1 prompt-toggle ${
         isEnabled 
-          ? 'bg-slate-900 shadow-lg' 
+          ? 'bg-slate-900' 
           : 'bg-slate-300 hover:bg-slate-400'
       } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
       <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-all duration-300 shadow-sm group-hover:shadow-md ${
-          isEnabled ? 'translate-x-6' : 'translate-x-1'
+        className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200 ${
+          isEnabled ? 'translate-x-5' : 'translate-x-1'
         } ${isLoading ? 'animate-pulse' : ''}`}
       />
       <span className="sr-only">

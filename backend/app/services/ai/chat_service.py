@@ -18,6 +18,14 @@ from app.utils.tag_manager import tag_manager
 logger = logging.getLogger(__name__)
 
 
+# 模板-模型映射配置
+TEMPLATE_MODEL_MAPPING = {
+    "summary.j2": "or-deepseek-r1",           # Summary生成使用推理能力更强的R1模型
+    "key_points.j2": "or-deepseek-r1",        # KeyPoint提取使用推理能力更强的R1模型
+    "labels.j2": "deepseek-v3-ensemble",      # Labels生成使用更经济的V3模型
+}
+
+
 class ChatService:
     """AI聊天服务类"""
 
@@ -30,7 +38,7 @@ class ChatService:
         )
 
     async def generate_with_template(
-        self, template_name: str, context: dict[str, Any]
+        self, template_name: str, context: dict[str, Any], model: str | None = None
     ) -> dict[str, Any]:
         """
         使用模板生成AI响应
@@ -38,6 +46,7 @@ class ChatService:
         Args:
             template_name: 模板文件名
             context: 模板上下文变量
+            model: 可选的模型名称，如果不指定则使用模板映射或全局默认
 
         Returns:
             dict: AI生成的响应结果
@@ -67,7 +76,19 @@ class ChatService:
 
             # ---- 使用 LiteLLM 代理调用 LLM ----
             try:
-                ai_content = await self._call_litellm_proxy(system_content, prompt)
+                # 选择模型：优先级为 传入的model > 模板映射 > 全局默认
+                selected_model = (
+                    model 
+                    or TEMPLATE_MODEL_MAPPING.get(template_name) 
+                    or settings.DEFAULT_LLM_MODEL
+                )
+                
+                logger.info(
+                    f"Using model '{selected_model}' for template '{template_name}' "
+                    f"(source: {'explicit' if model else 'template_mapping' if template_name in TEMPLATE_MODEL_MAPPING else 'default'})"
+                )
+                
+                ai_content = await self._call_litellm_proxy(system_content, prompt, selected_model)
 
                 # 针对不同模板的解析策略
                 if (
@@ -154,13 +175,16 @@ class ChatService:
             logger.error(f"模板生成失败: {template_name}, 错误: {str(e)}")
             return {}
 
-    async def _call_litellm_proxy(self, system_content: str, user_prompt: str) -> str:
+    async def _call_litellm_proxy(self, system_content: str, user_prompt: str, model: str | None = None) -> str:
         """通过LiteLLM代理调用LLM"""
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
+                # 选择模型：使用传入的model参数或全局默认
+                selected_model = model or settings.DEFAULT_LLM_MODEL
+                
                 # 构建请求数据
                 request_data = {
-                    "model": settings.DEFAULT_LLM_MODEL,
+                    "model": selected_model,
                     "messages": [
                         {"role": "system", "content": system_content},
                         {"role": "user", "content": user_prompt},
@@ -179,7 +203,7 @@ class ChatService:
                 url = f"{base_url}/v1/chat/completions"
 
                 logger.debug(
-                    f"Calling LiteLLM proxy: {url} with model: {settings.DEFAULT_LLM_MODEL}"
+                    f"Calling LiteLLM proxy: {url} with model: {selected_model}"
                 )
 
                 response = await client.post(
