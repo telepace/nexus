@@ -345,7 +345,7 @@ export const ContentCard = ({
             {/* 标签 */}
             {hasLabels && (
               <div className="flex flex-wrap gap-1 max-w-cardTitle">
-                {aiResult.labels!.slice(0, 3).map((label, index) => (
+                {aiResult.labels!.map((label, index) => (
                   <span
                     key={index}
                     className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--library-tag-bg)] text-muted-foreground hover:bg-[var(--library-tag-bg-hover)] transition-colors duration-150 ease-out"
@@ -353,11 +353,6 @@ export const ContentCard = ({
                     {label}
                   </span>
                 ))}
-                {aiResult.labels!.length > 3 && (
-                  <span className="text-xs text-neutral-400">
-                    +{aiResult.labels!.length - 3}
-                  </span>
-                )}
               </div>
             )}
 
