@@ -226,7 +226,7 @@ export const ContentCard = ({
     <Card
       key={item.id}
       tabIndex={0}
-      className={`group cursor-pointer rounded-lg overflow-hidden transition-colors duration-200 ease-out w-libraryCard ${
+      className={`group cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ease-out w-libraryCard ${
         selected
           ? "bg-[var(--color-linear-bg-2)] border-[var(--mac-gray-5)] shadow-md"
           : hovered
@@ -348,7 +348,7 @@ export const ContentCard = ({
                 {aiResult.labels!.slice(0, 3).map((label, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--library-tag-bg)] text-muted-foreground hover:bg-[var(--library-tag-bg-hover)] transition-colors duration-150 ease-out"
                   >
                     {label}
                   </span>
