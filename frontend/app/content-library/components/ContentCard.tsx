@@ -267,7 +267,7 @@ export const ContentCard = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0 hover:bg-accent/50"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0 hover:bg-accent/50 focus-visible:ring-0 focus-visible:border-transparent"
                     data-dropdown-trigger
                     onClick={(e) => e.stopPropagation()}
                   >
