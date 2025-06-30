@@ -420,6 +420,10 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   const handleSubmit = useCallback(() => {
     if (!content.trim() && selectedFiles.length === 0) return;
 
+    // 显示"正在上传"提示，立即反馈给用户
+    const previewText = content.length > 30 ? content.slice(0, 30) + "…" : content || (detectedUrls[0] ?? "内容");
+    const loadingToastId = toast.loading(`正在上传: ${previewText}`);
+
     // 立即关闭 Modal，实现"秒关窗"体验
     onClose();
 
@@ -568,6 +572,9 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
         toast.error(
           error instanceof Error ? error.message : "添加内容时发生错误，请重试",
         );
+      } finally {
+        // 无论成功还是失败，关闭"正在上传"提示
+        toast.dismiss(loadingToastId);
       }
     })();
   }, [
