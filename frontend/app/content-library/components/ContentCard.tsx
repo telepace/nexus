@@ -326,7 +326,7 @@ export const ContentCard = ({
                       handleDelete(e);
                     }}
                     disabled={isDeleting}
-                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                    className="text-[var(--destructive)] focus:text-[var(--destructive)] focus:bg-[var(--destructive)/0.1]"
                   >
                     <Trash2
                       className={`h-4 w-4 mr-2 ${isDeleting ? "animate-pulse" : ""}`}
