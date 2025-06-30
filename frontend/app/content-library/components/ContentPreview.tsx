@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText } from "lucide-react";
+import { Library } from "lucide-react";
 import type { ContentItemPublic } from "../types";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -45,16 +45,16 @@ export const ContentPreview = ({ item }: Props) => {
 
   if (!panels.length && !item) {
     return (
-      <div className="h-full shadow-macos-window linear-bg-2 rounded-sm flex flex-col overflow-visible">
+      <div className="relative z-10 h-full shadow-macos-window linear-bg-2 rounded-sm flex flex-col overflow-visible">
         <div className="flex items-center justify-between h-header px-4">
           <div className="flex items-center gap-2 text-base font-medium">
-            <FileText className="h-5 w-5" />
+            <Library className="h-5 w-5" />
             Preview
           </div>
         </div>
         <div className="pb-4 px-6 flex-1 overflow-auto mt-12">
           <div className="text-center py-12">
-            <FileText className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-4" />
+            <Library className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-4" />
             <p className="text-sm text-muted-foreground">
               点击内容卡片查看预览
             </p>
@@ -105,19 +105,19 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
     <div
       ref={containerRef}
       tabIndex={-1}
-      className="h-full shadow-macos-window linear-bg-2 rounded-sm flex flex-col overflow-visible"
+      className="relative z-10 h-full shadow-macos-window linear-bg-2 rounded-sm flex flex-col overflow-visible"
     >
       {/* Header */}
       <div className="flex items-center h-header px-4">
         <div className="flex items-center gap-2 text-base font-medium">
-          <FileText className="h-5 w-5" />
+          <Library className="h-5 w-5" />
           Preview
         </div>
       </div>
 
       {/* Body */}
       <div className="pb-4 px-6 flex-1 overflow-auto">
-        <div className="space-y-6 max-w-[28rem] mx-auto">
+        <div className="space-y-6 max-w-[var(--size-body)] 2xl:max-w-[var(--size-body-lg)] mx-auto">
           {/* 标题 */}
           <div className="mt-12">
             <h3 className="font-semibold text-lg">{item.title || "无标题"}</h3>

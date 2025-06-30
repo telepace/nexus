@@ -1,20 +1,20 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   Search,
   Sparkles,
   ArrowRight,
   Zap,
-  Link as LinkIcon,
+  LinkIcon,
   FileText,
   Type,
   Upload,
   Image,
   Video,
   File,
-  Plus,
   Trash2,
   AlertCircle,
 } from "lucide-react";
@@ -24,17 +24,57 @@ import { eventBus } from "@/lib/event-bus";
 import { useGlobalNotificationStore } from "@/lib/stores/useGlobalNotificationStore";
 import { extractAndNormalizeUrls } from "@/lib/utils";
 
-// 极简基础组件 - 基于参考设计
+// 极简基础组件 - 基于参考设计，加入 Fade & Scale 动效
 const Dialog = ({ children, open, onOpenChange }) => {
-  if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="fixed inset-0 bg-black/3 backdrop-blur-[2px]"
-        onClick={() => onOpenChange(false)}
-      />
-      <div className="relative z-10">{children}</div>
-    </div>
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          {/* 背景遮罩 */}
+          <motion.div
+            style={{
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.3)",
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            onTap={() => onOpenChange(false)}
+          />
+          {/* 内容容器 */}
+          <motion.div
+            style={{
+              position: "relative",
+              zIndex: 10,
+            }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{
+              duration: 0.25,
+              ease: [0.16, 1, 0.3, 1],
+            }}
+          >
+            {children}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
@@ -47,11 +87,14 @@ const Button = ({
   size = "default",
 }) => {
   const variants = {
-    default: "bg-gray-900 text-white hover:bg-gray-800",
-    research: "bg-blue-600 text-white hover:bg-blue-700",
-    upload: "bg-green-600 text-white hover:bg-green-700",
-    ghost: "text-gray-400 hover:text-gray-600",
-    destructive: "text-red-500 hover:text-red-700 hover:bg-red-50",
+    default: "bg-primary text-primary-foreground hover:bg-primary/90",
+    research:
+      "bg-[oklch(var(--chart-1))] text-primary-foreground hover:bg-[oklch(var(--chart-1))]/90",
+    upload:
+      "bg-[oklch(var(--chart-2))] text-primary-foreground hover:bg-[oklch(var(--chart-2))]/90",
+    ghost: "text-muted-foreground hover:text-foreground hover:bg-accent",
+    destructive:
+      "text-destructive hover:text-destructive hover:bg-destructive/10",
   };
 
   const sizes = {
@@ -64,7 +107,7 @@ const Button = ({
     <button
       className={`
         inline-flex items-center justify-center rounded-lg font-medium 
-        transition-all duration-150 focus:outline-none
+        transition-all duration-150 focus:outline-none focus-ring
         disabled:opacity-50 disabled:pointer-events-none
         ${sizes[size]}
         ${variants[variant]} ${className}
@@ -125,9 +168,9 @@ const analyzeContent = (text: string, files: File[] = []) => {
         type: "images",
         icon: Image,
         label: `${files.length} 张图片`,
-        color: "text-purple-600",
-        bgColor: "bg-purple-50",
-        borderColor: "border-purple-100",
+        color: "text-[oklch(var(--chart-4))]",
+        bgColor: "bg-accent",
+        borderColor: "border-border",
       };
     }
 
@@ -136,9 +179,9 @@ const analyzeContent = (text: string, files: File[] = []) => {
         type: "videos",
         icon: Video,
         label: `${files.length} 个视频`,
-        color: "text-orange-600",
-        bgColor: "bg-orange-50",
-        borderColor: "border-orange-100",
+        color: "text-[oklch(var(--chart-5))]",
+        bgColor: "bg-accent",
+        borderColor: "border-border",
       };
     }
 
@@ -147,9 +190,9 @@ const analyzeContent = (text: string, files: File[] = []) => {
         type: "documents",
         icon: FileText,
         label: `${files.length} 个文档`,
-        color: "text-blue-600",
-        bgColor: "bg-blue-50",
-        borderColor: "border-blue-100",
+        color: "text-[oklch(var(--chart-1))]",
+        bgColor: "bg-accent",
+        borderColor: "border-border",
       };
     }
 
@@ -157,9 +200,9 @@ const analyzeContent = (text: string, files: File[] = []) => {
       type: "files",
       icon: File,
       label: `${files.length} 个文件`,
-      color: "text-gray-600",
-      bgColor: "bg-gray-50",
-      borderColor: "border-gray-100",
+      color: "text-muted-foreground",
+      bgColor: "bg-muted",
+      borderColor: "border-border",
     };
   }
 
@@ -173,9 +216,9 @@ const analyzeContent = (text: string, files: File[] = []) => {
       type: "link",
       icon: LinkIcon,
       label: `${urls.length} 个链接`,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
-      borderColor: "border-green-100",
+      color: "text-[oklch(var(--chart-2))]",
+      bgColor: "bg-accent",
+      borderColor: "border-border",
     };
   }
 
@@ -206,9 +249,9 @@ const analyzeContent = (text: string, files: File[] = []) => {
       type: "research",
       icon: Search,
       label: "Deep Research",
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-100",
+      color: "text-[oklch(var(--chart-1))]",
+      bgColor: "bg-accent",
+      borderColor: "border-border",
     };
   }
 
@@ -218,9 +261,9 @@ const analyzeContent = (text: string, files: File[] = []) => {
       type: "article",
       icon: FileText,
       label: "长文章",
-      color: "text-purple-600",
-      bgColor: "bg-purple-50",
-      borderColor: "border-purple-100",
+      color: "text-[oklch(var(--chart-4))]",
+      bgColor: "bg-accent",
+      borderColor: "border-border",
     };
   }
 
@@ -230,9 +273,9 @@ const analyzeContent = (text: string, files: File[] = []) => {
       type: "multiline",
       icon: Type,
       label: "多行文本",
-      color: "text-gray-600",
-      bgColor: "bg-gray-50",
-      borderColor: "border-gray-100",
+      color: "text-muted-foreground",
+      bgColor: "bg-muted",
+      borderColor: "border-border",
     };
   }
 
@@ -240,9 +283,9 @@ const analyzeContent = (text: string, files: File[] = []) => {
     type: "text",
     icon: Type,
     label: "文本",
-    color: "text-gray-600",
-    bgColor: "bg-gray-50",
-    borderColor: "border-gray-100",
+    color: "text-muted-foreground",
+    bgColor: "bg-muted",
+    borderColor: "border-border",
   };
 };
 
@@ -420,66 +463,124 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
     [researchConfig],
   );
 
-  // 提交处理 - 优化的逻辑
-  const handleSubmit = useCallback(async () => {
+  // 提交处理（立刻关闭窗口，后台异步执行）
+  const handleSubmit = useCallback(() => {
     if (!content.trim() && selectedFiles.length === 0) return;
 
-    setIsLoading(true);
-    setError("");
+    // 显示"正在上传"提示，立即反馈给用户
+    const previewText =
+      content.length > 30
+        ? content.slice(0, 30) + "…"
+        : content || (detectedUrls[0] ?? "内容");
+    const loadingToastId = toast.loading(`正在上传: ${previewText}`);
 
-    try {
-      const token = user?.token || getCookie("accessToken");
-      if (!token) {
-        setError("请先登录后再添加内容");
-        return;
-      }
+    // 立即关闭 Modal，实现"秒关窗"体验
+    onClose();
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      const newlyCreatedItems: ContentItemPublic[] = [];
+    // 捕获当前输入，避免后续状态变化
+    const contentSnapshot = content;
+    const filesSnapshot = [...selectedFiles];
+    const urlsSnapshot = [...detectedUrls];
+    const isResearchSnapshot = isResearch;
 
-      // 处理Deep Research类型
-      if (isResearch && content.trim() && detectedUrls.length === 0) {
-        try {
-          const researchResult = await createDeepResearchJob(
-            content.trim(),
-            token,
-          );
-
-          // 显示成功消息
-          createContentProcessingNotification(
-            researchResult.job_id,
-            "深度研究任务",
-            `正在深度研究："${content.trim().substring(0, 50)}${content.trim().length > 50 ? "..." : ""}"`,
-          );
-
-          // 重置表单并关闭模态框
-          setContent("");
-          setSelectedFiles([]);
-          setError("");
-          setShowResearchConfig(false);
-          onClose();
-
-          return; // 对于深度研究，直接返回，不继续处理其他内容
-        } catch (researchError) {
-          console.error(
-            "Deep Research失败，回退到普通文本处理:",
-            researchError,
-          );
-          setError(
-            `深度研究失败: ${researchError instanceof Error ? researchError.message : "未知错误"}。将作为普通文本处理。`,
-          );
-
-          // 继续作为普通文本处理，不return
+    // fire-and-forget：后台执行原本的上传逻辑，但不再操作本组件状态
+    (async () => {
+      try {
+        const token = user?.token || getCookie("accessToken");
+        if (!token) {
+          toast.error("请先登录后再添加内容");
+          return;
         }
-      }
 
-      // 处理URLs
-      if (detectedUrls.length > 0) {
-        for (const url of detectedUrls) {
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const newlyCreatedItems: ContentItemPublic[] = [];
+
+        // 处理Deep Research类型
+        if (
+          isResearchSnapshot &&
+          contentSnapshot.trim() &&
+          urlsSnapshot.length === 0
+        ) {
+          try {
+            const researchResult = await createDeepResearchJob(
+              contentSnapshot.trim(),
+              token,
+            );
+
+            // 显示成功消息
+            createContentProcessingNotification(
+              researchResult.job_id,
+              "深度研究任务",
+              `正在深度研究:"${contentSnapshot.trim().substring(0, 50)}${contentSnapshot.trim().length > 50 ? "..." : ""}"`,
+            );
+
+            return; // 对于深度研究，直接返回，不继续处理其他内容
+          } catch (researchError) {
+            console.error(
+              "Deep Research失败，回退到普通文本处理:",
+              researchError,
+            );
+            toast.error(
+              `深度研究失败: ${researchError instanceof Error ? researchError.message : "未知错误"}。将作为普通文本处理。`,
+            );
+            // 继续作为普通文本处理，不return
+          }
+        }
+
+        // 处理URLs
+        if (urlsSnapshot.length > 0) {
+          for (const url of urlsSnapshot) {
+            const contentData = {
+              type: "url",
+              source_uri: url,
+              summary: `从 ${url} 获取的网页内容`,
+            };
+
+            const response = await fetch(`${apiUrl}/api/v1/content/create`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(contentData),
+              credentials: "include",
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(
+                errorData.error || `创建内容失败: ${response.status}`,
+              );
+            }
+
+            const createdItem: ContentItemPublic = await response.json();
+            newlyCreatedItems.push(createdItem);
+
+            if (createdItem.processing_status === "processing") {
+              createContentProcessingNotification(
+                createdItem.id,
+                createdItem.title || "处理网页内容",
+                `正在分析来自 ${url} 的内容...`,
+              );
+            }
+          }
+        }
+
+        // 处理文本内容 - 更智能的判断逻辑
+        if (
+          contentSnapshot.trim() &&
+          (urlsSnapshot.length === 0 ||
+            contentSnapshot.replace(/https?:\/\/[^\s\n]+/g, "").trim().length >
+              50)
+        ) {
           const contentData = {
-            type: "url",
-            source_uri: url,
-            summary: `从 ${url} 获取的网页内容`,
+            type: "text",
+            content_text: contentSnapshot,
+            summary:
+              contentSnapshot.length > 100
+                ? contentSnapshot.substring(0, 100) + "..."
+                : contentSnapshot,
           };
 
           const response = await fetch(`${apiUrl}/api/v1/content/create`, {
@@ -505,83 +606,35 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
           if (createdItem.processing_status === "processing") {
             createContentProcessingNotification(
               createdItem.id,
-              createdItem.title || "处理网页内容",
-              `正在分析来自 ${url} 的内容...`,
+              createdItem.title || "处理文本内容",
+              "正在分析文本内容...",
             );
           }
         }
-      }
 
-      // 处理文本内容 - 更智能的判断逻辑
-      if (
-        content.trim() &&
-        (detectedUrls.length === 0 ||
-          content.replace(/https?:\/\/[^\s\n]+/g, "").trim().length > 50)
-      ) {
-        const contentData = {
-          type: "text",
-          content_text: content,
-          summary:
-            content.length > 100 ? content.substring(0, 100) + "..." : content,
-        };
-
-        const response = await fetch(`${apiUrl}/api/v1/content/create`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(contentData),
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            errorData.error || `创建内容失败: ${response.status}`,
-          );
+        // 处理文件 (暂时提示)
+        if (filesSnapshot.length > 0) {
+          toast.error("文件上传功能正在开发中，敬请期待");
+          return;
         }
 
-        const createdItem: ContentItemPublic = await response.json();
-        newlyCreatedItems.push(createdItem);
-
-        if (createdItem.processing_status === "processing") {
-          createContentProcessingNotification(
-            createdItem.id,
-            createdItem.title || "处理文本内容",
-            "正在分析文本内容...",
-          );
+        // 成功处理 - 乐观UI更新
+        if (newlyCreatedItems.length > 0) {
+          contentCache.clearContentList();
+          newlyCreatedItems.forEach((item) => {
+            eventBus.emit("contentCreated", item);
+          });
         }
+      } catch (error) {
+        console.error("添加内容时发生错误:", error);
+        toast.error(
+          error instanceof Error ? error.message : "添加内容时发生错误，请重试",
+        );
+      } finally {
+        // 无论成功还是失败，关闭"正在上传"提示
+        toast.dismiss(loadingToastId);
       }
-
-      // 处理文件 (暂时提示)
-      if (selectedFiles.length > 0) {
-        setError("文件上传功能正在开发中，敬请期待");
-        return;
-      }
-
-      // 成功处理 - 乐观UI更新
-      if (newlyCreatedItems.length > 0) {
-        // 重置表单
-        setContent("");
-        setSelectedFiles([]);
-        setError("");
-        setShowResearchConfig(false);
-        onClose();
-
-        contentCache.clearContentList();
-        newlyCreatedItems.forEach((item) => {
-          eventBus.emit("contentCreated", item);
-        });
-      }
-    } catch (error) {
-      console.error("添加内容时发生错误:", error);
-      setError(
-        error instanceof Error ? error.message : "添加内容时发生错误，请重试",
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    })();
   }, [
     content,
     selectedFiles,
@@ -627,138 +680,117 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
     }
   }, [open]);
 
-  if (!open) return null;
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       {/* 固定尺寸容器，避免跳动 */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 w-[580px] max-w-[90vw] min-h-[380px] flex flex-col overflow-hidden">
+      <div className="bg-card rounded-2xl shadow-xl border border-border w-[580px] max-w-[90vw] min-h-[380px] flex flex-col overflow-hidden">
         {/* 固定头部 */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 flex-shrink-0">
+          {/* 左侧：图标 + 标题 + 类型徽章 */}
           <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center">
-              <Sparkles className="w-3.5 h-3.5 text-white" />
+            <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
+              <Sparkles className="w-3.5 h-3.5 text-primary-foreground" />
             </div>
-            <span className="font-medium text-gray-900">添加内容</span>
+            <span className="font-medium text-card-foreground">添加内容</span>
+            {contentAnalysis && (
+              <div
+                className={`flex items-center gap-1 px-2 py-0.5 rounded border text-xs ${contentAnalysis.bgColor} ${contentAnalysis.borderColor}`}
+              >
+                <contentAnalysis.icon
+                  className={`w-3 h-3 ${contentAnalysis.color}`}
+                />
+                <span className={`${contentAnalysis.color}`}>
+                  {contentAnalysis.label}
+                </span>
+                {isResearch && (
+                  <Zap className="w-3 h-3 text-[oklch(var(--chart-1))]" />
+                )}
+              </div>
+            )}
           </div>
-          <button
-            onClick={onClose}
-            className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
 
-        {/* 主体区域 - 固定布局 */}
-        <div className="flex-1 flex flex-col p-5">
-          {/* 内容类型提示 - 固定高度区域 */}
-          <div className="h-10 flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              {contentAnalysis && (
-                <div
-                  className={`
-                  flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-all duration-200
-                  ${contentAnalysis.bgColor} ${contentAnalysis.borderColor}
-                `}
-                >
-                  <contentAnalysis.icon
-                    className={`w-4 h-4 ${contentAnalysis.color}`}
-                  />
-                  <span
-                    className={`text-sm font-medium ${contentAnalysis.color}`}
-                  >
-                    {contentAnalysis.label}
-                  </span>
-                  {isResearch && (
-                    <Zap className="w-3.5 h-3.5 text-blue-500 ml-1" />
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* 研究配置按钮 */}
+          {/* 右侧：配置按钮 + 关闭按钮 */}
+          <div className="flex items-center gap-2">
             {isResearch && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowResearchConfig(!showResearchConfig)}
-                className="text-blue-600 hover:text-blue-700"
+                className="text-[oklch(var(--chart-1))] hover:text-[oklch(var(--chart-1))]/80 text-xs px-1.5 h-6"
                 disabled={false}
               >
                 配置 {showResearchConfig ? "▼" : "▶"}
               </Button>
             )}
+            <button
+              onClick={onClose}
+              className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors focus-ring"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
+        </div>
 
-          {/* 研究配置面板 */}
-          {isResearch && showResearchConfig && (
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
-              <div className="text-sm font-medium text-blue-900 mb-2">
-                研究配置
+        {/* 研究配置面板 */}
+        {isResearch && showResearchConfig && (
+          <div className="p-2 bg-accent rounded border border-border text-xs">
+            <div className="font-medium text-foreground mb-1">研究配置</div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] text-muted-foreground block mb-1">
+                  深度 (1-5)
+                </label>
+                <select
+                  value={researchConfig.depth}
+                  onChange={(e) =>
+                    setResearchConfig((prev) => ({
+                      ...prev,
+                      depth: parseInt(e.target.value),
+                    }))
+                  }
+                  className="w-full p-1 text-xs border border-input rounded bg-background text-foreground focus-ring"
+                >
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-blue-700 block mb-1">
-                    深度 (1-5)
-                  </label>
-                  <select
-                    value={researchConfig.depth}
-                    onChange={(e) =>
-                      setResearchConfig((prev) => ({
-                        ...prev,
-                        depth: parseInt(e.target.value),
-                      }))
-                    }
-                    className="w-full p-1 text-sm border border-blue-200 rounded bg-white"
-                  >
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <option key={n} value={n}>
-                        {n} -{" "}
-                        {n === 1
-                          ? "快速"
-                          : n === 3
-                            ? "标准"
-                            : n === 5
-                              ? "深入"
-                              : "中等"}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs text-blue-700 block mb-1">
-                    广度 (1-5)
-                  </label>
-                  <select
-                    value={researchConfig.breadth}
-                    onChange={(e) =>
-                      setResearchConfig((prev) => ({
-                        ...prev,
-                        breadth: parseInt(e.target.value),
-                      }))
-                    }
-                    className="w-full p-1 text-sm border border-blue-200 rounded bg-white"
-                  >
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <option key={n} value={n}>
-                        {n} -{" "}
-                        {n === 1
-                          ? "聚焦"
-                          : n === 3
-                            ? "平衡"
-                            : n === 5
-                              ? "全面"
-                              : "中等"}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground block mb-1">
+                  广度 (1-5)
+                </label>
+                <select
+                  value={researchConfig.breadth}
+                  onChange={(e) =>
+                    setResearchConfig((prev) => ({
+                      ...prev,
+                      breadth: parseInt(e.target.value),
+                    }))
+                  }
+                  className="w-full p-1 text-xs border border-input rounded bg-background text-foreground focus-ring"
+                >
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* 输入区 - 可扩展但有最大高度 */}
-          <div className="flex-1 min-h-[120px] max-h-[180px] mb-4">
+        {/* 主体区域 - 固定布局 */}
+        <div className="flex-1 flex flex-col p-5">
+          {/* 上传内容输入区 */}
+          <div className="mb-2">
+            <span className="text-sm font-semibold text-card-foreground">
+              上传内容
+            </span>
+          </div>
+          <div className="mb-2">
             <textarea
               ref={textareaRef}
               value={content}
@@ -772,45 +804,53 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
             />
           </div>
 
-          {/* 文件上传区域 */}
+          {/* 上传文件标题 */}
+          <div className="mb-2">
+            <span className="text-sm font-semibold text-card-foreground">
+              上传文件
+            </span>
+          </div>
+
+          {/* 文件上传区域（点击区域触发 file input） */}
           <div
             className={`
-              border-2 border-dashed rounded-lg p-4 transition-all duration-200 mb-4
-              ${isDragOver ? "border-blue-400 bg-blue-50" : "border-gray-200 hover:border-gray-300"}
+              border-2 border-dashed rounded-lg p-4 transition-all duration-200 mb-4 h-[10rem]
+              ${isDragOver ? "border-[oklch(var(--chart-1))] bg-accent" : "border-border hover:border-ring"}
             `}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDropFiles}
+            onClick={() => fileInputRef.current?.click()}
           >
             {selectedFiles.length > 0 ? (
               <div className="space-y-2 max-h-32 overflow-y-auto">
                 {selectedFiles.map((file, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between bg-white p-2 rounded border"
+                    className="flex items-center justify-between bg-background p-2 rounded border border-border"
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       {getFileType(file) === "image" && (
                         <Image
-                          className="w-4 h-4 text-purple-500 flex-shrink-0"
+                          className="w-4 h-4 text-[oklch(var(--chart-4))] flex-shrink-0"
                           aria-label="图片文件"
                         />
                       )}
                       {getFileType(file) === "video" && (
-                        <Video className="w-4 h-4 text-orange-500 flex-shrink-0" />
+                        <Video className="w-4 h-4 text-[oklch(var(--chart-5))] flex-shrink-0" />
                       )}
                       {(getFileType(file) === "pdf" ||
                         getFileType(file) === "document") && (
-                        <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                        <FileText className="w-4 h-4 text-[oklch(var(--chart-1))] flex-shrink-0" />
                       )}
                       {getFileType(file) === "file" && (
-                        <File className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                        <File className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm text-gray-900 truncate">
+                        <div className="text-sm text-foreground truncate">
                           {file.name}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           {(file.size / 1024).toFixed(1)} KB
                         </div>
                       </div>
@@ -818,7 +858,10 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => removeFile(index)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFile(index);
+                      }}
                       className="ml-2"
                       disabled={false}
                     >
@@ -828,48 +871,37 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                 ))}
               </div>
             ) : (
-              <div className="text-center py-4">
-                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-500 mb-1">
+              <div className="text-center py-4 pointer-events-none">
+                <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground mb-1">
                   拖拽文件到此处，或点击选择文件
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   支持 PDF、Word、图片、视频等格式
                 </p>
               </div>
             )}
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              className="mt-2 w-full"
-              disabled={false}
-            >
-              <Plus className="w-3 h-3 mr-1" />
-              {selectedFiles.length > 0 ? "添加更多文件" : "选择文件"}
-            </Button>
-
             <input
               ref={fileInputRef}
               type="file"
               multiple
               className="hidden"
               onChange={handleFileSelect}
+              title="上传内容"
             />
           </div>
 
           {/* 错误信息 */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-              <p className="text-sm text-red-600">{error}</p>
+            <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0" />
+              <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
 
           {/* 固定底部操作区 */}
-          <div className="flex items-center justify-between pt-3 border-t border-gray-50 flex-shrink-0">
-            <span className="text-xs text-gray-400">
+          <div className="flex items-center justify-between pt-3 flex-shrink-0">
+            <span className="text-xs text-muted-foreground">
               {isResearch ? "🔍 将启动AI深度研究" : "⌘+Enter 快速添加"}
             </span>
 
@@ -888,7 +920,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
               >
                 {isLoading ? (
                   <>
-                    <div className="w-2.5 h-2.5 border border-white/40 border-t-white rounded-full animate-spin" />
+                    <div className="w-2.5 h-2.5 border border-primary-foreground/40 border-t-primary-foreground rounded-full animate-spin" />
                     {isResearch ? "启动研究..." : "处理中"}
                   </>
                 ) : (

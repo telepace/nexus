@@ -226,7 +226,7 @@ export const ContentCard = ({
     <Card
       key={item.id}
       tabIndex={0}
-      className={`group cursor-pointer rounded-lg overflow-hidden transition-colors duration-200 ease-out w-libraryCard ${
+      className={`group cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ease-out w-libraryCard ${
         selected
           ? "bg-[var(--color-linear-bg-2)] border-[var(--mac-gray-5)] shadow-md"
           : hovered
@@ -267,7 +267,7 @@ export const ContentCard = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0 hover:bg-accent/50"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0 hover:bg-accent/50 focus-visible:ring-0 focus-visible:border-transparent"
                     data-dropdown-trigger
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -326,11 +326,9 @@ export const ContentCard = ({
                       handleDelete(e);
                     }}
                     disabled={isDeleting}
-                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                    className="text-[var(--destructive)] focus:text-[var(--destructive)] hover:bg-[var(--destructive)/0.1]"
                   >
-                    <Trash2
-                      className={`h-4 w-4 mr-2 ${isDeleting ? "animate-pulse" : ""}`}
-                    />
+                    <Trash2 className={`h-4 w-4 mr-2`} />
                     {isDeleting ? "删除中..." : "删除"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -345,19 +343,14 @@ export const ContentCard = ({
             {/* 标签 */}
             {hasLabels && (
               <div className="flex flex-wrap gap-1 max-w-cardTitle">
-                {aiResult.labels!.slice(0, 3).map((label, index) => (
+                {aiResult.labels!.map((label, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--library-tag-bg)] text-muted-foreground hover:bg-[var(--library-tag-bg-hover)] transition-colors duration-150 ease-out"
                   >
                     {label}
                   </span>
                 ))}
-                {aiResult.labels!.length > 3 && (
-                  <span className="text-xs text-neutral-400">
-                    +{aiResult.labels!.length - 3}
-                  </span>
-                )}
               </div>
             )}
 
@@ -379,7 +372,7 @@ export const ContentCard = ({
                   size="sm"
                   className="text-neutral-400"
                 />
-                <span>{relativeLabel}</span>
+                <span className="w-5 text-right">{relativeLabel}</span>
               </div>
             </div>
           </div>

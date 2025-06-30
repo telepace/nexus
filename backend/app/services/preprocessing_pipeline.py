@@ -349,6 +349,11 @@ class PreprocessingPipeline:
             "summary": summary,
             "key_points": key_points,
             "labels": labels_result.get("tags", []),
+            "content_quality_score": (
+                round(min(1.0, max(0.0, float(labels_result.get("score", 0)) / 5.0)), 2)
+                if labels_result.get("score") is not None
+                else None
+            ),
             "content_analysis": content_analysis,
         }
 
@@ -526,10 +531,12 @@ class PreprocessingPipeline:
         """输出层：格式化最终结果"""
         logger.debug("执行输出层处理")
 
-        # 计算内容质量分数
-        quality_score = self._calculate_quality_score(
-            markdown_content, ai_results, metadata
-        )
+        # 优先使用 AI 评分；若缺失则回退到启发式算法
+        quality_score = ai_results.get("content_quality_score")
+        if quality_score is None:
+            quality_score = self._calculate_quality_score(
+                markdown_content, ai_results, metadata
+            )
 
         # 估算阅读时间 - 优先使用 LLM 生成的时间，否则回退到算法估算
         ai_reading_time = ai_results.get("reading_time_minutes")

@@ -8,6 +8,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import * as LucideIcons from "lucide-react";
+
+const CircleCheckBig =
+  ((LucideIcons as Record<string, unknown>)
+    .CircleCheckBig as React.ComponentType<{ className?: string }>) ||
+  CheckCircle2;
 
 export type ProcessingStatus =
   | "pending"
@@ -44,7 +50,7 @@ const statusConfigs: Record<ProcessingStatus, StatusConfig> = {
     textClass: "text-neutral-600",
   },
   completed: {
-    icon: CheckCircle2,
+    icon: CircleCheckBig,
     label: "处理完成",
     textClass: "text-neutral-600",
   },

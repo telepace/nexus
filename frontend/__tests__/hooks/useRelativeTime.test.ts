@@ -6,7 +6,7 @@ describe("calcRelativeLabelAndNext", () => {
   it.each([
     { diffSec: 1, expected: "1s" },
     { diffSec: 59, expected: "59s" },
-    { diffSec: 60, expected: "60s" },
+    { diffSec: 60, expected: "1m" }, // 60秒应该显示为1分钟
   ])("returns $expected for $diffSec seconds diff", ({ diffSec, expected }) => {
     const { label } = _internalCalcRelative(now - diffSec * 1000, now);
     expect(label).toBe(expected);

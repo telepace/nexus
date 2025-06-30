@@ -88,7 +88,7 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
   ];
 
   return (
-    <div className="border-b bg-background/80 backdrop-blur-sm">
+    <div className="bg-background/80 backdrop-blur-sm">
       <div className="px-4 md:px-6 py-3">
         {/* 单行布局：筛选 + 搜索 + 控制按钮 */}
         <div className="flex items-center gap-3">

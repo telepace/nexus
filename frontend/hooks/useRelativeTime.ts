@@ -5,20 +5,28 @@ import { useEffect, useRef, useState } from "react";
 /**
  * 返回相对时间字符串以及下一次应当刷新的毫秒数。
  * 规则：
- * - < 1h   ->  显示秒 (xs)，每秒刷新
- * - < 24h  ->  显示小时 (xh)，到下一个整小时刷新
- * - >=24h  ->  显示天 (xd)，到下一个整天刷新
+ * - < 60s  ->  显示秒 (1s...59s)，每秒刷新
+ * - < 1h   ->  显示分钟 (1m...59m)，每分钟刷新
+ * - < 24h  ->  显示小时 (1h...23h)，到下一个整小时刷新
+ * - >=24h  ->  显示天 (1d, 2d...)，到下一个整天刷新
  */
 function calcRelativeLabelAndNext(createdAt: number, now: number) {
   const diffSec = Math.max(1, Math.floor((now - createdAt) / 1000));
 
-  // < 1 小时：显示秒
-  if (diffSec < 3600) {
+  // < 60 秒：显示秒 (最多59s)
+  if (diffSec < 60) {
     const nextInMs = 1000 - ((now - createdAt) % 1000);
     return { label: `${diffSec}s`, nextMs: nextInMs };
   }
 
-  // < 24 小时：显示小时
+  // < 1 小时：显示分钟 (1m...59m)
+  if (diffSec < 3600) {
+    const minutes = Math.floor(diffSec / 60);
+    const secondsToNextMinute = 60 - (diffSec % 60);
+    return { label: `${minutes}m`, nextMs: secondsToNextMinute * 1000 };
+  }
+
+  // < 24 小时：显示小时 (1h...23h)
   if (diffSec < 86400) {
     const hours = Math.floor(diffSec / 3600);
     const secondsToNextHour = 3600 - (diffSec % 3600);

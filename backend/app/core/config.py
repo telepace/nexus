@@ -136,7 +136,7 @@ class Settings(BaseSettings):
     LITELLM_MASTER_KEY: str | None = None
 
     # LLM 配置
-    DEFAULT_LLM_MODEL: str = "or-gemini-2.5-flash-preview-05-20"
+    DEFAULT_LLM_MODEL: str = "or-deepseek-r1"
 
     # OpenAI / ChatAnywhere 配置
     OPENAI_API_KEY: str | None = None

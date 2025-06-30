@@ -63,7 +63,8 @@ export const useContentItems = () => {
         prev.some((i) => i.id === item.id) ? prev : [item, ...prev],
       );
       contentCache.clearContentList();
-      toast.success(`新内容已添加: ${item.title || "未知内容"}`);
+      // 移除重复的toast，统一使用SSE通知
+      // toast.success(`新内容已添加: ${item.title || "未知内容"}`);
     };
     eventBus.on("contentCreated", handler);
     return () => eventBus.off("contentCreated", handler);

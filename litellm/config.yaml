@@ -1,6 +1,6 @@
 # LiteLLM Configuration File
 general_settings:
-  completion_model: or-gemini-2.5-flash-preview-05-20
+  completion_model: or-deepseek-r1
   database_url: "os.environ/DATABASE_URL"
   drop_params: false
   environment_variables:
@@ -130,9 +130,9 @@ model_list:
       model: openrouter/qwen/qwen3-235b-a22b
       api_key: "os.environ/OR_API_KEY"
 
-  - model_name: or-deepseek-r1t-chimera
+  - model_name: or-deepseek-r1
     litellm_params:
-      model: openrouter/tng/deepseek-r1t-chimera
+      model: openrouter/deepseek/deepseek-r1-0528
       api_key: "os.environ/OR_API_KEY"
 
   # ChatAnywhere Embedding Model
