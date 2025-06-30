@@ -979,32 +979,32 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.5 0 0 / 0.1);
+  background-color: rgba(96, 96, 96, 0.6); /* 深灰 60% 透明度 */
   border-radius: 4px;
   transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.4 0 0 / 0.15); /* 悬停时稍微深一点，增加透明度 */
+  background-color: rgba(96, 96, 96, 0.8); /* 悬停更深 */
 }
 
 /* 暗色模式的滚动条 */
 .dark ::-webkit-scrollbar-thumb {
-  background: oklch(0.7 0 0 / 0.15); /* 暗色模式：15% 透明度的亮灰色 */
+  background-color: rgba(160, 160, 160, 0.4);
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.8 0 0 / 0.25); /* 暗色模式悬停时稍微亮一点 */
+  background-color: rgba(160, 160, 160, 0.6);
 }
 
 /* Firefox 滚动条样式 */
 * {
   scrollbar-width: thin;
-  scrollbar-color: oklch(0.5 0 0 / 0.1) transparent;
+  scrollbar-color: rgba(96, 96, 96, 0.6) transparent;
 }
 
 .dark * {
-  scrollbar-color: oklch(0.7 0 0 / 0.15) transparent;
+  scrollbar-color: rgba(160, 160, 160, 0.4) transparent;
 }
 
 /* =============================================================================
