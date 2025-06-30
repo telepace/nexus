@@ -19,11 +19,13 @@ import {
   Film,
   FileImage,
   Paperclip,
+  Globe,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
 import { contentCache } from "@/lib/services/content-cache";
 import { eventBus } from "@/lib/event-bus";
 import { useGlobalNotificationStore } from "@/lib/stores/useGlobalNotificationStore";
+import { extractAndNormalizeUrls } from "@/lib/utils";
 
 // 更精致的基础组件
 const Dialog = ({ children, open, onOpenChange }) => {
@@ -168,6 +170,11 @@ const getFileType = (file: File) => {
   };
 };
 
+// URL提取 - 使用新的智能URL提取函数
+const extractUrls = (text: string) => {
+  return extractAndNormalizeUrls(text);
+};
+
 // 增强的内容分析系统
 const analyzeContent = (text: string, files: File[] = []) => {
   if (!text.trim() && files.length === 0) return null;
@@ -226,9 +233,8 @@ const analyzeContent = (text: string, files: File[] = []) => {
 
   const trimmedText = text.trim();
 
-  // URL检测
-  const urlRegex = /https?:\/\/[^\s\n]+/g;
-  const urls = text.match(urlRegex);
+  // URL检测 - 使用新的智能URL提取函数
+  const urls = extractAndNormalizeUrls(trimmedText);
   if (urls && urls.length > 0) {
     return {
       type: "link",
@@ -312,12 +318,6 @@ const analyzeContent = (text: string, files: File[] = []) => {
   };
 };
 
-// URL提取
-const extractUrls = (text: string) => {
-  const urlRegex = /https?:\/\/[^\s\n]+/g;
-  return text.match(urlRegex) || [];
-};
-
 interface EnhancedAddContentDialogProps {
   open: boolean;
   onClose: () => void;
@@ -398,12 +398,25 @@ export default function EnhancedAddContentDialog({
 
   // 粘贴处理
   const handlePaste = useCallback((e: ClipboardEvent) => {
-    // 阻止浏览器默认粘贴行为，避免重复插入
+    // 防止默认粘贴行为，我们手动处理
     e.preventDefault();
-
+    
     const pastedText = e.clipboardData?.getData("text") || "";
+    console.log('[粘贴事件] 原始粘贴数据:', pastedText);
+    
     if (pastedText.trim()) {
-      setContent(pastedText.trim());
+      const trimmedText = pastedText.trim();
+      console.log('[粘贴事件] 处理后的文本:', trimmedText);
+      
+      // 直接设置到textarea
+      if (textareaRef.current) {
+        textareaRef.current.value = trimmedText;
+        // 触发React的onChange事件
+        const event = new Event('input', { bubbles: true });
+        textareaRef.current.dispatchEvent(event);
+      }
+      
+      setContent(trimmedText);
       setError("");
     }
   }, []);
@@ -635,7 +648,10 @@ export default function EnhancedAddContentDialog({
             <textarea
               ref={textareaRef}
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => {
+                console.log('[onChange事件] 新值:', e.target.value);
+                setContent(e.target.value);
+              }}
               placeholder="输入研究主题、粘贴链接或文本内容..."
               className="w-full h-full p-4 bg-gray-50 rounded-xl border-0 outline-none resize-none text-gray-900 placeholder:text-gray-400 text-sm leading-relaxed transition-all focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:shadow-sm"
               style={{ minHeight: "100px" }}
