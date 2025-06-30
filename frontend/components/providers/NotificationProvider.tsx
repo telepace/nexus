@@ -27,8 +27,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   return (
     <>
       {children}
-      {/* 全局通知容器 */}
-      <GlobalNotificationContainer maxVisible={5} />
+      {/* 全局通知容器 - 暂时隐藏 */}
+      {/* TODO: 恢复全局通知显示 */}
+      {false && <GlobalNotificationContainer maxVisible={5} />}
     </>
   );
 };
