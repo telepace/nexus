@@ -117,7 +117,7 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
 
       {/* Body */}
       <div className="pb-4 px-6 flex-1 overflow-auto">
-        <div className="space-y-6 max-w-[28rem] mx-auto">
+        <div className="space-y-6 max-w-[var(--size-body)] 2xl:max-w-[var(--size-body-lg)] mx-auto">
           {/* 标题 */}
           <div className="mt-12">
             <h3 className="font-semibold text-lg">{item.title || "无标题"}</h3>

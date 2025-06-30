@@ -75,6 +75,8 @@
   --size-library-lg: 36rem;
   --size-library-card: 28.75rem; /* 460px - card width */
   --size-card-title: 25rem; /* 400px - card text width */
+  --size-body: 28rem; /* 448px - body content width */
+  --size-body-lg: 36rem; /* 512px - large body content width */
 
   /* === Custom Color Palettes (Tailwind v4 tokens) === */
   /* -------------------------------------------------
