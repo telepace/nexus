@@ -379,7 +379,7 @@ export const ContentCard = ({
                   size="sm"
                   className="text-neutral-400"
                 />
-                <span>{relativeLabel}</span>
+                <span className="w-5 text-right">{relativeLabel}</span>
               </div>
             </div>
           </div>
