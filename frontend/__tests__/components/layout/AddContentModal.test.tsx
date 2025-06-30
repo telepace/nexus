@@ -23,10 +23,12 @@ describe("AddContentModal", () => {
       screen.getByPlaceholderText("输入研究主题、粘贴链接或文本内容..."),
     ).toBeInTheDocument();
 
-    // 检查按钮
+    // 检查文件上传区域
     expect(
-      screen.getByRole("button", { name: /选择文件/i }),
+      screen.getByText("拖拽文件到此处，或点击选择文件"),
     ).toBeInTheDocument();
+
+    // 检查按钮
     expect(screen.getByRole("button", { name: /添加/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /取消/i })).toBeInTheDocument();
   });
@@ -75,9 +77,12 @@ describe("AddContentModal", () => {
   it("应该显示文件上传选项", () => {
     render(<AddContentModal open={true} onClose={jest.fn()} />);
 
-    // 检查文件上传按钮文本存在
+    // 检查文件上传区域文本存在
     expect(
-      screen.getByRole("button", { name: /选择文件/i }),
+      screen.getByText("拖拽文件到此处，或点击选择文件"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("支持 PDF、Word、图片、视频等格式"),
     ).toBeInTheDocument();
   });
 });

@@ -8,14 +8,13 @@ import {
   Sparkles,
   ArrowRight,
   Zap,
-  Link as LinkIcon,
+  LinkIcon,
   FileText,
   Type,
   Upload,
   Image,
   Video,
   File,
-  Plus,
   Trash2,
   AlertCircle,
 } from "lucide-react";
@@ -55,7 +54,7 @@ const Dialog = ({ children, open, onOpenChange }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            {...({ onClick: () => onOpenChange(false) } as any)}
+            onTap={() => onOpenChange(false)}
           />
           {/* 内容容器 */}
           <motion.div
@@ -66,9 +65,9 @@ const Dialog = ({ children, open, onOpenChange }) => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ 
+            transition={{
               duration: 0.25,
-              ease: [0.16, 1, 0.3, 1]
+              ease: [0.16, 1, 0.3, 1],
             }}
           >
             {children}
@@ -89,10 +88,13 @@ const Button = ({
 }) => {
   const variants = {
     default: "bg-primary text-primary-foreground hover:bg-primary/90",
-    research: "bg-[oklch(var(--chart-1))] text-primary-foreground hover:bg-[oklch(var(--chart-1))]/90",
-    upload: "bg-[oklch(var(--chart-2))] text-primary-foreground hover:bg-[oklch(var(--chart-2))]/90",
+    research:
+      "bg-[oklch(var(--chart-1))] text-primary-foreground hover:bg-[oklch(var(--chart-1))]/90",
+    upload:
+      "bg-[oklch(var(--chart-2))] text-primary-foreground hover:bg-[oklch(var(--chart-2))]/90",
     ghost: "text-muted-foreground hover:text-foreground hover:bg-accent",
-    destructive: "text-destructive hover:text-destructive hover:bg-destructive/10",
+    destructive:
+      "text-destructive hover:text-destructive hover:bg-destructive/10",
   };
 
   const sizes = {
@@ -462,7 +464,10 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
     if (!content.trim() && selectedFiles.length === 0) return;
 
     // 显示"正在上传"提示，立即反馈给用户
-    const previewText = content.length > 30 ? content.slice(0, 30) + "…" : content || (detectedUrls[0] ?? "内容");
+    const previewText =
+      content.length > 30
+        ? content.slice(0, 30) + "…"
+        : content || (detectedUrls[0] ?? "内容");
     const loadingToastId = toast.loading(`正在上传: ${previewText}`);
 
     // 立即关闭 Modal，实现"秒关窗"体验
@@ -483,24 +488,29 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
           return;
         }
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
         const newlyCreatedItems: ContentItemPublic[] = [];
 
         // 处理Deep Research类型
-        if (isResearchSnapshot && contentSnapshot.trim() && urlsSnapshot.length === 0) {
+        if (
+          isResearchSnapshot &&
+          contentSnapshot.trim() &&
+          urlsSnapshot.length === 0
+        ) {
           try {
             const researchResult = await createDeepResearchJob(
               contentSnapshot.trim(),
               token,
             );
-            
+
             // 显示成功消息
             createContentProcessingNotification(
               researchResult.job_id,
               "深度研究任务",
               `正在深度研究:"${contentSnapshot.trim().substring(0, 50)}${contentSnapshot.trim().length > 50 ? "..." : ""}"`,
             );
-            
+
             return; // 对于深度研究，直接返回，不继续处理其他内容
           } catch (researchError) {
             console.error(
@@ -557,13 +567,16 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
         if (
           contentSnapshot.trim() &&
           (urlsSnapshot.length === 0 ||
-            contentSnapshot.replace(/https?:\/\/[^\s\n]+/g, "").trim().length > 50)
+            contentSnapshot.replace(/https?:\/\/[^\s\n]+/g, "").trim().length >
+              50)
         ) {
           const contentData = {
             type: "text",
             content_text: contentSnapshot,
             summary:
-              contentSnapshot.length > 100 ? contentSnapshot.substring(0, 100) + "..." : contentSnapshot,
+              contentSnapshot.length > 100
+                ? contentSnapshot.substring(0, 100) + "..."
+                : contentSnapshot,
           };
 
           const response = await fetch(`${apiUrl}/api/v1/content/create`, {
@@ -676,10 +689,18 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
             </div>
             <span className="font-medium text-card-foreground">添加内容</span>
             {contentAnalysis && (
-              <div className={`flex items-center gap-1 px-2 py-0.5 rounded border text-xs ${contentAnalysis.bgColor} ${contentAnalysis.borderColor}`}>
-                <contentAnalysis.icon className={`w-3 h-3 ${contentAnalysis.color}`} />
-                <span className={`${contentAnalysis.color}`}>{contentAnalysis.label}</span>
-                {isResearch && <Zap className="w-3 h-3 text-[oklch(var(--chart-1))]" />}
+              <div
+                className={`flex items-center gap-1 px-2 py-0.5 rounded border text-xs ${contentAnalysis.bgColor} ${contentAnalysis.borderColor}`}
+              >
+                <contentAnalysis.icon
+                  className={`w-3 h-3 ${contentAnalysis.color}`}
+                />
+                <span className={`${contentAnalysis.color}`}>
+                  {contentAnalysis.label}
+                </span>
+                {isResearch && (
+                  <Zap className="w-3 h-3 text-[oklch(var(--chart-1))]" />
+                )}
               </div>
             )}
           </div>
@@ -712,30 +733,44 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
             <div className="font-medium text-foreground mb-1">研究配置</div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[10px] text-muted-foreground block mb-1">深度 (1-5)</label>
+                <label className="text-[10px] text-muted-foreground block mb-1">
+                  深度 (1-5)
+                </label>
                 <select
                   value={researchConfig.depth}
                   onChange={(e) =>
-                    setResearchConfig((prev) => ({ ...prev, depth: parseInt(e.target.value) }))
+                    setResearchConfig((prev) => ({
+                      ...prev,
+                      depth: parseInt(e.target.value),
+                    }))
                   }
                   className="w-full p-1 text-xs border border-input rounded bg-background text-foreground focus-ring"
                 >
-                  {[1,2,3,4,5].map((n) => (
-                    <option key={n} value={n}>{n}</option>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="text-[10px] text-muted-foreground block mb-1">广度 (1-5)</label>
+                <label className="text-[10px] text-muted-foreground block mb-1">
+                  广度 (1-5)
+                </label>
                 <select
                   value={researchConfig.breadth}
                   onChange={(e) =>
-                    setResearchConfig((prev) => ({ ...prev, breadth: parseInt(e.target.value) }))
+                    setResearchConfig((prev) => ({
+                      ...prev,
+                      breadth: parseInt(e.target.value),
+                    }))
                   }
                   className="w-full p-1 text-xs border border-input rounded bg-background text-foreground focus-ring"
                 >
-                  {[1,2,3,4,5].map((n) => (
-                    <option key={n} value={n}>{n}</option>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -747,7 +782,9 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
         <div className="flex-1 flex flex-col p-5">
           {/* 上传内容输入区 */}
           <div className="mb-2">
-            <span className="text-sm font-semibold text-card-foreground">上传内容</span>
+            <span className="text-sm font-semibold text-card-foreground">
+              上传内容
+            </span>
           </div>
           <div className="mb-2">
             <textarea
@@ -765,7 +802,9 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
 
           {/* 上传文件标题 */}
           <div className="mb-2">
-            <span className="text-sm font-semibold text-card-foreground">上传文件</span>
+            <span className="text-sm font-semibold text-card-foreground">
+              上传文件
+            </span>
           </div>
 
           {/* 文件上传区域（点击区域触发 file input） */}

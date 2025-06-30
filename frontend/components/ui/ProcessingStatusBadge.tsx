@@ -10,9 +10,10 @@ import {
 } from "@/components/ui/tooltip";
 import * as LucideIcons from "lucide-react";
 
-// @ts-ignore - CircleCheckBig may not exist in older lucide-react versions
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CircleCheckBig = (LucideIcons as any).CircleCheckBig || CheckCircle2;
+const CircleCheckBig =
+  ((LucideIcons as Record<string, unknown>)
+    .CircleCheckBig as React.ComponentType<{ className?: string }>) ||
+  CheckCircle2;
 
 export type ProcessingStatus =
   | "pending"
