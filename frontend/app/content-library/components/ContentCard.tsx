@@ -326,10 +326,10 @@ export const ContentCard = ({
                       handleDelete(e);
                     }}
                     disabled={isDeleting}
-                    className="text-[var(--destructive)] focus:text-[var(--destructive)] focus:bg-[var(--destructive)/0.1]"
+                    className="text-[var(--destructive)] focus:text-[var(--destructive)] hover:bg-[var(--destructive)/0.1]"
                   >
                     <Trash2
-                      className={`h-4 w-4 mr-2 ${isDeleting ? "animate-pulse" : ""}`}
+                      className={`h-4 w-4 mr-2`}
                     />
                     {isDeleting ? "删除中..." : "删除"}
                   </DropdownMenuItem>
