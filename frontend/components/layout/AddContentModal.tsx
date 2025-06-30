@@ -668,131 +668,88 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
       {/* 固定尺寸容器，避免跳动 */}
       <div className="bg-card rounded-2xl shadow-xl border border-border w-[580px] max-w-[90vw] min-h-[380px] flex flex-col overflow-hidden">
         {/* 固定头部 */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 flex-shrink-0">
+          {/* 左侧：图标 + 标题 + 类型徽章 */}
           <div className="flex items-center gap-2.5">
             <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
               <Sparkles className="w-3.5 h-3.5 text-primary-foreground" />
             </div>
             <span className="font-medium text-card-foreground">添加内容</span>
+            {contentAnalysis && (
+              <div className={`flex items-center gap-1 px-2 py-0.5 rounded border text-xs ${contentAnalysis.bgColor} ${contentAnalysis.borderColor}`}>
+                <contentAnalysis.icon className={`w-3 h-3 ${contentAnalysis.color}`} />
+                <span className={`${contentAnalysis.color}`}>{contentAnalysis.label}</span>
+                {isResearch && <Zap className="w-3 h-3 text-[oklch(var(--chart-1))]" />}
+              </div>
+            )}
           </div>
-          <button
-            onClick={onClose}
-            className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors focus-ring"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
 
-        {/* 主体区域 - 固定布局 */}
-        <div className="flex-1 flex flex-col p-5">
-          {/* 内容类型提示 - 固定高度区域 */}
-          <div className="h-10 flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              {contentAnalysis && (
-                <div
-                  className={`
-                  flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-all duration-200
-                  ${contentAnalysis.bgColor} ${contentAnalysis.borderColor}
-                `}
-                >
-                  <contentAnalysis.icon
-                    className={`w-4 h-4 ${contentAnalysis.color}`}
-                  />
-                  <span
-                    className={`text-sm font-medium ${contentAnalysis.color}`}
-                  >
-                    {contentAnalysis.label}
-                  </span>
-                  {isResearch && (
-                    <Zap className="w-3.5 h-3.5 text-[oklch(var(--chart-1))] ml-1" />
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* 研究配置按钮 */}
+          {/* 右侧：配置按钮 + 关闭按钮 */}
+          <div className="flex items-center gap-2">
             {isResearch && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowResearchConfig(!showResearchConfig)}
-                className="text-[oklch(var(--chart-1))] hover:text-[oklch(var(--chart-1))]/80"
+                className="text-[oklch(var(--chart-1))] hover:text-[oklch(var(--chart-1))]/80 text-xs px-1.5 h-6"
                 disabled={false}
               >
                 配置 {showResearchConfig ? "▼" : "▶"}
               </Button>
             )}
+            <button
+              onClick={onClose}
+              className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors focus-ring"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
+        </div>
 
-          {/* 研究配置面板 */}
-          {isResearch && showResearchConfig && (
-            <div className="mb-4 p-3 bg-accent rounded-lg border border-border">
-              <div className="text-sm font-medium text-foreground mb-2">
-                研究配置
+        {/* 研究配置面板 */}
+        {isResearch && showResearchConfig && (
+          <div className="p-2 bg-accent rounded border border-border text-xs">
+            <div className="font-medium text-foreground mb-1">研究配置</div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] text-muted-foreground block mb-1">深度 (1-5)</label>
+                <select
+                  value={researchConfig.depth}
+                  onChange={(e) =>
+                    setResearchConfig((prev) => ({ ...prev, depth: parseInt(e.target.value) }))
+                  }
+                  className="w-full p-1 text-xs border border-input rounded bg-background text-foreground focus-ring"
+                >
+                  {[1,2,3,4,5].map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-muted-foreground block mb-1">
-                    深度 (1-5)
-                  </label>
-                  <select
-                    value={researchConfig.depth}
-                    onChange={(e) =>
-                      setResearchConfig((prev) => ({
-                        ...prev,
-                        depth: parseInt(e.target.value),
-                      }))
-                    }
-                    className="w-full p-1 text-sm border border-input rounded bg-background text-foreground focus-ring"
-                  >
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <option key={n} value={n}>
-                        {n} -{" "}
-                        {n === 1
-                          ? "快速"
-                          : n === 3
-                            ? "标准"
-                            : n === 5
-                              ? "深入"
-                              : "中等"}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground block mb-1">
-                    广度 (1-5)
-                  </label>
-                  <select
-                    value={researchConfig.breadth}
-                    onChange={(e) =>
-                      setResearchConfig((prev) => ({
-                        ...prev,
-                        breadth: parseInt(e.target.value),
-                      }))
-                    }
-                    className="w-full p-1 text-sm border border-input rounded bg-background text-foreground focus-ring"
-                  >
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <option key={n} value={n}>
-                        {n} -{" "}
-                        {n === 1
-                          ? "聚焦"
-                          : n === 3
-                            ? "平衡"
-                            : n === 5
-                              ? "全面"
-                              : "中等"}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground block mb-1">广度 (1-5)</label>
+                <select
+                  value={researchConfig.breadth}
+                  onChange={(e) =>
+                    setResearchConfig((prev) => ({ ...prev, breadth: parseInt(e.target.value) }))
+                  }
+                  className="w-full p-1 text-xs border border-input rounded bg-background text-foreground focus-ring"
+                >
+                  {[1,2,3,4,5].map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* 输入区 - 可扩展但有最大高度 */}
-          <div className="flex-1 min-h-[120px] max-h-[180px] mb-4">
+        {/* 主体区域 - 固定布局 */}
+        <div className="flex-1 flex flex-col p-5">
+          {/* 上传内容输入区 */}
+          <div className="mb-2">
+            <span className="text-sm font-semibold text-card-foreground">上传内容</span>
+          </div>
+          <div className="mb-2">
             <textarea
               ref={textareaRef}
               value={content}
@@ -802,20 +759,25 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                   ? "输入您想要深度研究的问题或主题..."
                   : "输入研究主题、粘贴链接或文本内容..."
               }
-              className="w-full h-full p-3 bg-transparent rounded-lg border border-input outline-none resize-none text-foreground placeholder:text-muted-foreground text-sm leading-relaxed transition-all focus:border-ring focus:ring-2 focus:ring-ring/20"
-              style={{ minHeight: "120px" }}
+              className="w-full h-[10rem] p-3 bg-transparent rounded-lg border border-input outline-none resize-none text-foreground placeholder:text-muted-foreground text-sm leading-relaxed transition-all focus:border-ring focus:ring-2 focus:ring-ring/20"
             />
           </div>
 
-          {/* 文件上传区域 */}
+          {/* 上传文件标题 */}
+          <div className="mb-2">
+            <span className="text-sm font-semibold text-card-foreground">上传文件</span>
+          </div>
+
+          {/* 文件上传区域（点击区域触发 file input） */}
           <div
             className={`
-              border-2 border-dashed rounded-lg p-4 transition-all duration-200 mb-4
+              border-2 border-dashed rounded-lg p-4 transition-all duration-200 mb-4 h-[10rem]
               ${isDragOver ? "border-[oklch(var(--chart-1))] bg-accent" : "border-border hover:border-ring"}
             `}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDropFiles}
+            onClick={() => fileInputRef.current?.click()}
           >
             {selectedFiles.length > 0 ? (
               <div className="space-y-2 max-h-32 overflow-y-auto">
@@ -853,7 +815,10 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => removeFile(index)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFile(index);
+                      }}
                       className="ml-2"
                       disabled={false}
                     >
@@ -863,7 +828,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                 ))}
               </div>
             ) : (
-              <div className="text-center py-4">
+              <div className="text-center py-4 pointer-events-none">
                 <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground mb-1">
                   拖拽文件到此处，或点击选择文件
@@ -873,24 +838,13 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                 </p>
               </div>
             )}
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              className="mt-2 w-full"
-              disabled={false}
-            >
-              <Plus className="w-3 h-3 mr-1" />
-              {selectedFiles.length > 0 ? "添加更多文件" : "选择文件"}
-            </Button>
-
             <input
               ref={fileInputRef}
               type="file"
               multiple
               className="hidden"
               onChange={handleFileSelect}
+              title="上传内容"
             />
           </div>
 
@@ -903,7 +857,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
           )}
 
           {/* 固定底部操作区 */}
-          <div className="flex items-center justify-between pt-3 border-t border-border flex-shrink-0">
+          <div className="flex items-center justify-between pt-3 flex-shrink-0">
             <span className="text-xs text-muted-foreground">
               {isResearch ? "🔍 将启动AI深度研究" : "⌘+Enter 快速添加"}
             </span>
