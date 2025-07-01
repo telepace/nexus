@@ -1,7 +1,7 @@
-export { FavoriteCard } from './FavoriteCard';
-export { FavoritePreview } from './FavoritePreview';
-export { FavoriteToolbar } from './FavoriteToolbar';
-export { FavoriteList } from './FavoriteList';
+export { FavoriteCard } from "./FavoriteCard";
+export { FavoritePreview } from "./FavoritePreview";
+export { FavoriteToolbar } from "./FavoriteToolbar";
+export { FavoriteList } from "./FavoriteList";
 
 // 共享类型定义
 export interface FavoriteItemData {
@@ -24,4 +24,4 @@ export interface FavoriteItemData {
     ai_analysis?: any;
   };
   created_at: string;
-} 
+}

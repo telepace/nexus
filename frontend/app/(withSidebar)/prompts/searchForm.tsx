@@ -25,13 +25,15 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
     searchParams.get("tags") ? searchParams.get("tags")!.split(",") : [],
   );
   const [showTagFilter, setShowTagFilter] = useState(false);
-  const [viewMode, setViewMode] = useState('grid');
-  const [sortBy, setSortBy] = useState(searchParams.get("sort") || "updated_at");
+  const [viewMode, setViewMode] = useState("grid");
+  const [sortBy, setSortBy] = useState(
+    searchParams.get("sort") || "updated_at",
+  );
 
   const sortOptions = [
-    { id: 'updated_at', name: '最新更新' },
-    { id: 'created_at', name: '最新创建' },
-    { id: 'name', name: '按名称' },
+    { id: "updated_at", name: "最新更新" },
+    { id: "created_at", name: "最新创建" },
+    { id: "name", name: "按名称" },
   ];
 
   // 处理搜索表单提交
@@ -97,7 +99,7 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === "Enter") {
                   handleSubmit(e);
                 }
               }}
@@ -106,12 +108,12 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
           </div>
 
           {/* Tag Filter */}
-          <button 
+          <button
             onClick={() => setShowTagFilter(!showTagFilter)}
             className={`flex items-center gap-2 px-3 py-2.5 rounded-full border transition-all duration-200 text-sm font-medium ${
               selectedTags.length > 0 || showTagFilter
-                ? 'bg-slate-900 text-white border-slate-900'
-                : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                ? "bg-slate-900 text-white border-slate-900"
+                : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
             }`}
           >
             <Tag className="h-4 w-4" />
@@ -126,7 +128,7 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
 
         <div className="flex items-center gap-3">
           {/* Sort */}
-          <select 
+          <select
             value={sortBy}
             onChange={(e) => {
               setSortBy(e.target.value);
@@ -146,21 +148,21 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
           {/* View Toggle */}
           <div className="flex bg-white border border-slate-200 rounded-full overflow-hidden">
             <button
-              onClick={() => setViewMode('grid')}
+              onClick={() => setViewMode("grid")}
               className={`p-2.5 transition-colors duration-200 ${
-                viewMode === 'grid'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-500 hover:bg-slate-50'
+                viewMode === "grid"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-500 hover:bg-slate-50"
               }`}
             >
               <Grid3X3 className="h-4 w-4" />
             </button>
             <button
-              onClick={() => setViewMode('list')}
+              onClick={() => setViewMode("list")}
               className={`p-2.5 transition-colors duration-200 ${
-                viewMode === 'list'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-500 hover:bg-slate-50'
+                viewMode === "list"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-500 hover:bg-slate-50"
               }`}
             >
               <List className="h-4 w-4" />
@@ -173,9 +175,11 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
       {showTagFilter && (
         <div className="p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-200/50">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-slate-900">Filter by Tags</h3>
+            <h3 className="text-sm font-medium text-slate-900">
+              Filter by Tags
+            </h3>
             {selectedTags.length > 0 && (
-              <button 
+              <button
                 onClick={clearAllTags}
                 className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
               >
@@ -190,8 +194,8 @@ export function SearchForm({ tags }: { tags: TagData[] }) {
                 onClick={() => toggleTag(tag.id)}
                 className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors duration-200 ${
                   selectedTags.includes(tag.id)
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? "bg-slate-900 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
               >
                 {tag.name}

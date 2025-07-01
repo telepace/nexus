@@ -82,7 +82,7 @@ class SegmentAwareChatService:
             ai_response = await self.chat_service.generate_with_template(
                 "segment_aware_chat.j2",
                 {"user_question": user_message, "segments": segments},
-                model
+                model,
             )
 
             # 4. Parse response to extract segment references

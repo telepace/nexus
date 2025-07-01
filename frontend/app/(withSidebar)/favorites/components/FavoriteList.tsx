@@ -55,4 +55,4 @@ export const FavoriteList = ({
       ))}
     </div>
   );
-}; 
+};

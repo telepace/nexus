@@ -25,9 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import {
-  ProcessingStatusBadge,
-} from "@/components/ui/ProcessingStatusBadge";
+import { ProcessingStatusBadge } from "@/components/ui/ProcessingStatusBadge";
 import { FavoriteButton } from "@/components/actions/FavoriteButton";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -121,7 +119,7 @@ export const FavoriteCard = ({
   onItemDeleted,
 }: Props) => {
   const router = useRouter();
-  
+
   // 相对时间标签
   const relativeLabel = useRelativeTime(item.created_at);
   const contentRelativeLabel = useRelativeTime(item.content_item.created_at);
@@ -189,7 +187,7 @@ export const FavoriteCard = ({
           <div className="w-10 h-10 rounded-lg bg-transparent flex items-center justify-center">
             {getContentIcon(content_item.type)}
           </div>
-          
+
           <div className="flex-1 min-w-0 space-y-2">
             {/* 标题和菜单区域 */}
             <div className="flex items-start justify-between gap-2">
@@ -238,10 +236,10 @@ export const FavoriteCard = ({
                   </DropdownMenuItem>
 
                   <DropdownMenuSeparator />
-                  
+
                   <div className="px-2 py-1.5">
-                    <FavoriteButton 
-                      itemId={content_item.id} 
+                    <FavoriteButton
+                      itemId={content_item.id}
                       size="sm"
                       className="w-full justify-start h-8"
                     />
@@ -290,11 +288,11 @@ export const FavoriteCard = ({
             <div className="flex items-center justify-between text-xs text-neutral-500 mt-auto pt-2">
               <div className="flex items-center gap-3">
                 {/* 处理状态 */}
-                <ProcessingStatusBadge 
+                <ProcessingStatusBadge
                   status={content_item.processing_status as any}
                   size="sm"
                 />
-                
+
                 {/* 阅读时间 */}
                 {hasReadingTime && (
                   <div className="flex items-center gap-1">
@@ -315,4 +313,4 @@ export const FavoriteCard = ({
       </CardContent>
     </Card>
   );
-}; 
+};

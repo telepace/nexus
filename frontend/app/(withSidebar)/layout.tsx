@@ -16,7 +16,7 @@ export default function WithSidebarLayout({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addContentOpen, setAddContentOpen] = useState(false);
   const isMobile = useIsMobile();
-  
+
   // 计算默认打开状态：桌面端默认展开，移动端默认折叠
   // 实际状态会在 SidebarProvider 内部从 cookie 读取
   const defaultOpen = !isMobile;
@@ -31,7 +31,10 @@ export default function WithSidebarLayout({
         } as React.CSSProperties
       }
     >
-      <div className="flex max-w-none w-full page-top-highlight min-h-screen" suppressHydrationWarning>
+      <div
+        className="flex max-w-none w-full page-top-highlight min-h-screen"
+        suppressHydrationWarning
+      >
         {/* 侧边栏 */}
         <AppSidebar
           onSettingsClick={() => setSettingsOpen(true)}
@@ -40,9 +43,7 @@ export default function WithSidebarLayout({
 
         <SidebarInset className="min-h-screen">
           {/* 主内容区域 */}
-          <main className="flex-1 overflow-auto">
-            {children}
-          </main>
+          <main className="flex-1 overflow-auto">{children}</main>
         </SidebarInset>
 
         {/* 设置面板 */}
@@ -62,4 +63,4 @@ export default function WithSidebarLayout({
       <Toaster position="top-right" richColors />
     </SidebarProvider>
   );
-} 
+}

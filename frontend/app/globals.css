@@ -177,6 +177,15 @@
   --library-text-subtle: #999999;
   --library-tag-bg: rgba(0, 0, 0, 0.04);
   --library-tag-bg-hover: rgba(0, 0, 0, 0.08);
+
+  /* Content Library Semantic Colors - Light Mode */
+  --content-card-bg: #ffffff;
+  --content-card-border: rgba(0, 0, 0, 0.06);
+  --content-card-border-hover: rgba(0, 0, 0, 0.12);
+  --content-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px
+    rgba(0, 0, 0, 0.08);
+  --content-card-shadow-hover: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px
+    rgba(0, 0, 0, 0.08);
 }
 
 .dark {
@@ -307,6 +316,25 @@
   /* Dia icon palette - 深色模式适配 */
   --color-dia-icon-bg: oklch(0.22 0 0); /* icon容器背景 */
   --color-dia-icon: oklch(0.08 0 0); /* icon本身/前景 */
+
+  /* Content Library Colors - 暗色模式适配 */
+  --library-bg: oklch(0.2 0 0);
+  --library-border: rgba(255, 255, 255, 0.08);
+  --library-border-hover: rgba(255, 255, 255, 0.16);
+  --library-text: #ffffff;
+  --library-text-muted: #a3a3a3;
+  --library-text-subtle: #737373;
+  --library-tag-bg: rgba(255, 255, 255, 0.08);
+  --library-tag-bg-hover: rgba(255, 255, 255, 0.12);
+
+  /* Content Library Semantic Colors - Dark Mode */
+  --content-card-bg: oklch(0.2 0 0);
+  --content-card-border: rgba(255, 255, 255, 0.08);
+  --content-card-border-hover: rgba(255, 255, 255, 0.16);
+  --content-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px
+    rgba(0, 0, 0, 0.3);
+  --content-card-shadow-hover: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px
+    rgba(0, 0, 0, 0.3);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -943,14 +971,14 @@
   }
 }
 
-/* Ripple effect animation */
+/* Ripple effect animation - 更精致的触碰反馈 */
 @keyframes ripple {
   0% {
     transform: scale(0);
     opacity: 1;
   }
   100% {
-    transform: scale(4);
+    transform: scale(2.5);
     opacity: 0;
   }
 }
@@ -1103,8 +1131,13 @@
 
 /* Custom animations for modern interface */
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-5px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 .analysis-card {
@@ -1153,7 +1186,7 @@
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: rgba(75, 85, 99, 0.3);
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(75, 85, 99, 0.5);
   }
@@ -1206,7 +1239,7 @@
     border-radius: 0 !important;
     margin: 0 !important;
   }
-  
+
   /* 移动端对话框 */
   .dialog-mobile {
     position: fixed;
@@ -1219,7 +1252,7 @@
     border-radius: 0;
     margin: 0;
   }
-  
+
   /* 移动端安全区域 */
   .mobile-safe {
     padding-top: env(safe-area-inset-top);
@@ -1227,13 +1260,13 @@
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
-  
+
   /* 移动端文本优化 */
   .text-mobile {
     font-size: clamp(14px, 4vw, 16px);
     line-height: 1.5;
   }
-  
+
   /* 移动端触摸优化 */
   .touch-target {
     min-height: 44px;
@@ -1246,12 +1279,12 @@
   .small-screen-stack {
     flex-direction: column !important;
   }
-  
+
   .small-screen-full {
     width: 100% !important;
     max-width: none !important;
   }
-  
+
   .small-screen-hide {
     display: none !important;
   }
@@ -1262,11 +1295,11 @@
   .container-mobile {
     padding: 0.5rem;
   }
-  
+
   .container-mobile .text-lg {
     font-size: 1rem;
   }
-  
+
   .container-mobile .space-y-4 > * + * {
     margin-top: 0.75rem;
   }
@@ -1276,7 +1309,7 @@
   .container-xs {
     padding: 0.25rem;
   }
-  
+
   .container-xs .text-base {
     font-size: 0.875rem;
   }
@@ -1341,7 +1374,7 @@
   .panel-layout {
     flex-direction: column;
   }
-  
+
   .panel-layout .panel {
     height: auto;
     min-height: 50vh;
@@ -1362,7 +1395,7 @@
   .animate-scale-in {
     animation: none;
   }
-  
+
   .transition-all,
   .transition-transform,
   .transition-opacity {
@@ -1375,7 +1408,7 @@
   .border-muted {
     border-color: currentColor;
   }
-  
+
   .text-muted-foreground {
     color: currentColor;
     opacity: 0.8;
@@ -1385,7 +1418,8 @@
 /* 深色模式优化 */
 @media (prefers-color-scheme: dark) {
   .shadow-dialog-desktop {
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px
+      rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -1394,11 +1428,11 @@
   .hover\:scale-105:hover {
     transform: none;
   }
-  
+
   .touch-device .hover-trigger {
     display: none;
   }
-  
+
   /* 增大触摸目标 */
   .touch-device button,
   .touch-device a,

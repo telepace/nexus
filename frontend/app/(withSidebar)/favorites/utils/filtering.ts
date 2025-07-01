@@ -39,7 +39,9 @@ export function filterAndSortFavorites(
       return (
         content_item.title?.toLowerCase().includes(searchTerm) ||
         content_item.summary?.toLowerCase().includes(searchTerm) ||
-        content_item.ai_result?.brief_description?.toLowerCase().includes(searchTerm) ||
+        content_item.ai_result?.brief_description
+          ?.toLowerCase()
+          .includes(searchTerm) ||
         content_item.ai_result?.labels?.some((label) =>
           label.toLowerCase().includes(searchTerm),
         ) ||
@@ -61,28 +63,33 @@ export function filterAndSortFavorites(
     switch (filters.sortBy) {
       case "time":
         // 按收藏时间排序，最新的在前
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
       case "content_time":
         // 按内容创建时间排序，最新的在前
-        return new Date(b.content_item.created_at).getTime() - new Date(a.content_item.created_at).getTime();
-      
+        return (
+          new Date(b.content_item.created_at).getTime() -
+          new Date(a.content_item.created_at).getTime()
+        );
+
       case "rating":
         // 按内容质量评分排序，高分在前
         const scoreA = a.content_item.ai_result?.content_quality_score ?? 0;
         const scoreB = b.content_item.ai_result?.content_quality_score ?? 0;
         return scoreB - scoreA;
-      
+
       case "title":
         // 按标题字母顺序排序
         const titleA = a.content_item.title || "";
         const titleB = b.content_item.title || "";
         return titleA.localeCompare(titleB, "zh-CN");
-      
+
       default:
         return 0;
     }
   });
 
   return filteredItems;
-} 
+}

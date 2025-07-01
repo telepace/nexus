@@ -141,17 +141,19 @@ class Settings(BaseSettings):
     # AI任务模型配置 - 支持为不同任务指定不同模型
     AI_TASK_MODELS: dict[str, str] = Field(
         default={
-            "summary": "or-deepseek-r1",           # Summary生成使用推理能力更强的R1模型
-            "key_points": "or-deepseek-r1",        # KeyPoint提取使用推理能力更强的R1模型  
-            "labels": "deepseek-v3-ensemble",      # Labels生成使用更经济的V3模型
+            "summary": "or-deepseek-r1",  # Summary生成使用推理能力更强的R1模型
+            "key_points": "or-deepseek-r1",  # KeyPoint提取使用推理能力更强的R1模型
+            "labels": "deepseek-v3-ensemble",  # Labels生成使用更经济的V3模型
             "chat": "or-gemini-2.5-flash-preview-05-20",  # 对话聊天使用默认模型
         },
-        description="AI任务模型映射配置"
+        description="AI任务模型映射配置",
     )
 
     # OpenAI / ChatAnywhere 配置
     OPENAI_API_KEY: str | None = None
-    OPENAI_BASE_URL: str = "https://api.openai.com"  # 默认为官方端点，可通过环境变量覆盖
+    OPENAI_BASE_URL: str = (
+        "https://api.openai.com"  # 默认为官方端点，可通过环境变量覆盖
+    )
 
     # Redis 配置
     REDIS_HOST: str = Field(default="localhost", description="Redis 服务器主机地址")

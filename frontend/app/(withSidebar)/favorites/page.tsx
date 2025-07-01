@@ -80,7 +80,9 @@ export default function FavoritesPage() {
   const router = useRouter();
   const { data, isLoading, error, mutate } = useFavoritesList();
 
-  const [selectedItem, setSelectedItem] = useState<FavoriteItemData | null>(null);
+  const [selectedItem, setSelectedItem] = useState<FavoriteItemData | null>(
+    null,
+  );
   const [hoveredItem, setHoveredItem] = useState<FavoriteItemData | null>(null);
   const [filters, setFilters] = useState<FilterOptions>({
     search: "",
@@ -178,9 +180,9 @@ export default function FavoritesPage() {
         </header>
 
         {/* 工具栏 */}
-        <FavoriteToolbar 
-          items={(data?.items as FavoriteItemData[]) || []} 
-          onFiltersChange={handleFiltersChange} 
+        <FavoriteToolbar
+          items={(data?.items as FavoriteItemData[]) || []}
+          onFiltersChange={handleFiltersChange}
         />
 
         {/* 内容列表 */}

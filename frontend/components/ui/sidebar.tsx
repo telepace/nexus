@@ -76,7 +76,7 @@ function SidebarProvider({
   // 客户端 hydration 后立即读取 cookie，减少闪烁
   React.useEffect(() => {
     setIsHydrated(true);
-    
+
     // 立即读取 cookie 状态
     const cookies = document.cookie.split(";");
     for (const cookie of cookies) {

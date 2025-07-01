@@ -56,14 +56,15 @@ export default function RootPage() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="text-lg px-8 py-3">
-                <Link href="/login">
-                  立即登录
-                </Link>
+                <Link href="/login">立即登录</Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="text-lg px-8 py-3">
-                <Link href="/register">
-                  免费注册
-                </Link>
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="text-lg px-8 py-3"
+              >
+                <Link href="/register">免费注册</Link>
               </Button>
             </div>
 

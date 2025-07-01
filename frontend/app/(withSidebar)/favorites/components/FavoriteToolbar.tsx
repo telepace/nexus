@@ -57,7 +57,9 @@ export const FavoriteToolbar = ({ items, onFiltersChange }: Props) => {
   // 从所有收藏项中提取唯一标签
   const allTags = Array.from(
     new Set(
-      items.flatMap((item) => item.content_item.ai_result?.labels || []).filter(Boolean),
+      items
+        .flatMap((item) => item.content_item.ai_result?.labels || [])
+        .filter(Boolean),
     ),
   ).sort();
 
@@ -242,4 +244,4 @@ export const FavoriteToolbar = ({ items, onFiltersChange }: Props) => {
       </div>
     </div>
   );
-}; 
+};

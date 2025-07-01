@@ -403,22 +403,22 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   const handlePaste = useCallback((e: ClipboardEvent) => {
     // 防止默认粘贴行为，我们手动处理
     e.preventDefault();
-    
+
     const pastedText = e.clipboardData?.getData("text") || "";
-    console.log('[粘贴事件] 原始粘贴数据:', pastedText);
-    
+    console.log("[粘贴事件] 原始粘贴数据:", pastedText);
+
     if (pastedText.trim()) {
       const trimmedText = pastedText.trim();
-      console.log('[粘贴事件] 处理后的文本:', trimmedText);
-      
+      console.log("[粘贴事件] 处理后的文本:", trimmedText);
+
       // 直接设置到textarea
       if (textareaRef.current) {
         textareaRef.current.value = trimmedText;
         // 触发React的onChange事件
-        const event = new Event('input', { bubbles: true });
+        const event = new Event("input", { bubbles: true });
         textareaRef.current.dispatchEvent(event);
       }
-      
+
       setContent(trimmedText);
     }
   }, []);
@@ -689,11 +689,13 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       {/* 响应式容器 - 根据屏幕尺寸调整 */}
-      <div className={`bg-card rounded-2xl shadow-xl border border-border flex flex-col overflow-hidden transition-all duration-300 ${
-        isMobile 
-          ? 'w-full h-full max-w-none max-h-none m-0 rounded-none' // 移动端全屏
-          : 'w-[580px] max-w-[90vw] min-h-[380px] max-h-[90vh]' // 桌面端固定尺寸
-      }`}>
+      <div
+        className={`bg-card rounded-2xl shadow-xl border border-border flex flex-col overflow-hidden transition-all duration-300 ${
+          isMobile
+            ? "w-full h-full max-w-none max-h-none m-0 rounded-none" // 移动端全屏
+            : "w-[580px] max-w-[90vw] min-h-[380px] max-h-[90vh]" // 桌面端固定尺寸
+        }`}
+      >
         {/* 固定头部 */}
         <div className="flex items-center justify-between px-5 py-4 flex-shrink-0 border-b border-border">
           {/* 左侧：图标 + 标题 + 类型徽章 */}
@@ -809,15 +811,17 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                 ref={textareaRef}
                 value={content}
                 onChange={(e) => {
-                  console.log('[onChange事件] 新值:', e.target.value);
+                  console.log("[onChange事件] 新值:", e.target.value);
                   setContent(e.target.value);
                 }}
                 placeholder="输入研究主题、粘贴链接或文本内容..."
                 className={`w-full p-3 bg-muted/50 rounded-lg border-0 outline-none resize-none text-card-foreground placeholder:text-muted-foreground text-sm leading-relaxed transition-all focus:bg-background focus:ring-2 focus:ring-primary/20 ${
-                  isMobile ? 'min-h-[120px] max-h-[200px]' : 'min-h-[120px] max-h-[180px]'
+                  isMobile
+                    ? "min-h-[120px] max-h-[200px]"
+                    : "min-h-[120px] max-h-[180px]"
                 }`}
               />
-              
+
               {/* 字符计数 */}
               {content.length > 0 && (
                 <div className="text-xs text-muted-foreground text-right">
@@ -944,15 +948,21 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
             <div className="flex flex-col gap-3">
               {/* 快捷键提示 */}
               <div className="text-xs text-muted-foreground text-center">
-                {isMobile ? '点击添加按钮提交' : '⌘ + Enter 快速添加 • ⌘ + Shift + Enter 深度研究'}
+                {isMobile
+                  ? "点击添加按钮提交"
+                  : "⌘ + Enter 快速添加 • ⌘ + Shift + Enter 深度研究"}
               </div>
 
               {/* 操作按钮 */}
-              <div className={`flex gap-2 ${isMobile ? 'flex-col' : 'flex-row-reverse'}`}>
+              <div
+                className={`flex gap-2 ${isMobile ? "flex-col" : "flex-row-reverse"}`}
+              >
                 <Button
                   onClick={handleSubmit}
-                  disabled={isLoading || (!content.trim() && selectedFiles.length === 0)}
-                  className={`${isMobile ? 'w-full' : 'flex-shrink-0'}`}
+                  disabled={
+                    isLoading || (!content.trim() && selectedFiles.length === 0)
+                  }
+                  className={`${isMobile ? "w-full" : "flex-shrink-0"}`}
                 >
                   {isLoading ? (
                     <>
@@ -976,7 +986,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                   variant="outline"
                   onClick={onClose}
                   disabled={isLoading}
-                  className={isMobile ? 'w-full' : ''}
+                  className={isMobile ? "w-full" : ""}
                 >
                   取消
                 </Button>

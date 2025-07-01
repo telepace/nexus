@@ -57,7 +57,7 @@ export default function ContentLibraryPage() {
 
   // 切换预览面板
   const togglePreview = useCallback(() => {
-    setShowPreview(prev => !prev);
+    setShowPreview((prev) => !prev);
   }, []);
 
   // 应用筛选和排序
@@ -110,7 +110,7 @@ export default function ContentLibraryPage() {
     (item: ContentItemPublic | null) => {
       // 移动端不使用悬浮效果
       if (isMobile) return;
-      
+
       setHoveredItem(item);
       if (item) {
         // 将悬浮的项目设为选中项，提供更直观的体验
@@ -171,26 +171,30 @@ export default function ContentLibraryPage() {
 
   return (
     /* 页面主体：响应式布局 */
-    <div className="flex h-screen overflow-visible bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="flex h-screen overflow-visible bg-neutral-50">
       {/* 左栏：内容列表 */}
-      <section className={`flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-300 ${
-        isMobile 
-          ? (showPreview ? 'hidden' : 'w-full') 
-          : showPreview 
-            ? 'w-library flex-none 2xl:w-library-lg' 
-            : 'w-full'
-      }`}>
+      <section
+        className={`flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-300 ${
+          isMobile
+            ? showPreview
+              ? "hidden"
+              : "w-full"
+            : showPreview
+              ? "w-library flex-none 2xl:w-library-lg"
+              : "w-full"
+        }`}
+      >
         {/* Header */}
-        <header className="flex items-center justify-between h-header px-4 md:px-6 border-b shrink-0 bg-background/80">
-          <h1 className="text-lg font-semibold">Library</h1>
-          
+        <header className="flex items-center justify-between h-header px-6 border-b border-black/[0.06] shrink-0 bg-white/80 backdrop-blur-sm">
+          <h1 className="text-lg font-semibold text-neutral-900">Library</h1>
+
           {/* 预览切换按钮 */}
           {!isMobile && (
             <Button
               onClick={togglePreview}
               size="sm"
               variant="ghost"
-              className="ml-auto"
+              className="ml-auto text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
             >
               {showPreview ? (
                 <PanelRightClose className="h-4 w-4" />
@@ -205,18 +209,20 @@ export default function ContentLibraryPage() {
         <Toolbar items={items} onFiltersChange={handleFiltersChange} />
 
         {/* 列表 */}
-        <div className="flex-1 px-4 md:px-6 pb-6 pt-6">
+        <div className="flex-1 px-6 pb-8 pt-8">
           {filteredItems.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-16">
               {filters.search || filters.selectedTags.length > 0 ? (
-                <div className="space-y-2">
-                  <p className="text-muted-foreground">未找到匹配的内容</p>
-                  <p className="text-sm text-muted-foreground">
+                <div className="space-y-3">
+                  <p className="text-neutral-600 font-medium">
+                    未找到匹配的内容
+                  </p>
+                  <p className="text-sm text-neutral-500">
                     尝试调整搜索条件或清除筛选
                   </p>
                 </div>
               ) : (
-                <p className="text-muted-foreground">暂无内容</p>
+                <p className="text-neutral-600 font-medium">暂无内容</p>
               )}
             </div>
           ) : (
@@ -237,21 +243,24 @@ export default function ContentLibraryPage() {
 
       {/* 右栏：内容预览 */}
       {showPreview && (
-        <section className={`flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-300 ${
-          isMobile 
-            ? 'w-full' 
-            : 'flex-1 min-w-0'
-        }`}>
+        <section
+          className={`flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-300 border-l border-black/[0.06] ${
+            isMobile ? "w-full" : "flex-1 min-w-0"
+          }`}
+        >
           {isMobile && (
-            <header className="flex items-center justify-between h-header px-4 border-b bg-background/80">
-              <h2 className="text-lg font-semibold">预览</h2>
-              <div className="flex items-center gap-2">
+            <header className="flex items-center justify-between h-header px-6 border-b border-black/[0.06] bg-white/80 backdrop-blur-sm">
+              <h2 className="text-lg font-semibold text-neutral-900">预览</h2>
+              <div className="flex items-center gap-3">
                 {/* 打开阅读器按钮 */}
                 {previewItem && (
                   <Button
-                    onClick={() => router.push(`/content-library/reader/${previewItem.id}`)}
+                    onClick={() =>
+                      router.push(`/content-library/reader/${previewItem.id}`)
+                    }
                     size="sm"
                     variant="outline"
+                    className="border-neutral-200 text-neutral-700 hover:bg-neutral-50"
                   >
                     打开
                   </Button>
@@ -260,20 +269,21 @@ export default function ContentLibraryPage() {
                   onClick={togglePreview}
                   size="sm"
                   variant="ghost"
+                  className="text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
                 >
                   <PanelRightClose className="h-4 w-4" />
                 </Button>
               </div>
             </header>
           )}
-          
-          <div className="flex-1 overflow-auto">
+
+          <div className="flex-1 overflow-auto bg-white">
             {previewItem ? (
               <ContentPreview item={previewItem} />
             ) : (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
-                <div className="text-center space-y-2">
-                  <p>选择一个内容项来预览</p>
+              <div className="flex items-center justify-center h-full text-neutral-500">
+                <div className="text-center space-y-3">
+                  <p className="font-medium">选择一个内容项来预览</p>
                   <p className="text-sm">点击左侧列表中的任意项目</p>
                 </div>
               </div>
@@ -281,14 +291,14 @@ export default function ContentLibraryPage() {
           </div>
         </section>
       )}
-      
+
       {/* 移动端预览切换按钮 */}
       {isMobile && !showPreview && selectedItem && (
-        <div className="fixed bottom-4 right-4 z-50">
+        <div className="fixed bottom-6 right-6 z-50">
           <Button
             onClick={togglePreview}
             size="sm"
-            className="rounded-full shadow-lg bg-primary hover:bg-primary/90"
+            className="rounded-full shadow-lg bg-neutral-900 hover:bg-neutral-800 text-white h-12 w-12"
           >
             <PanelRightOpen className="h-4 w-4" />
           </Button>

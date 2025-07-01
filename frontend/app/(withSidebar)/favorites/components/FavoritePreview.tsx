@@ -47,8 +47,12 @@ export const FavoritePreview = ({ item }: Props) => {
 
   // 修复: 将hooks调用移到条件判断之前，使用默认值避免错误
   // 这确保了hooks始终按相同顺序调用，符合React的Hook规则
-  const favoriteTime = useRelativeTime(item?.created_at || new Date().toISOString());
-  const contentTime = useRelativeTime(item?.content_item?.created_at || new Date().toISOString());
+  const favoriteTime = useRelativeTime(
+    item?.created_at || new Date().toISOString(),
+  );
+  const contentTime = useRelativeTime(
+    item?.content_item?.created_at || new Date().toISOString(),
+  );
 
   useEffect(() => {
     containerRef.current?.scrollTo({ top: 0 });
@@ -78,7 +82,7 @@ export const FavoritePreview = ({ item }: Props) => {
   const { content_item } = item;
   const aiResult = content_item.ai_result;
   const aiAnalysis = content_item.ai_analysis;
-  
+
   // 使用适配器函数统一数据格式
   const unifiedData = adaptAnalysisData(aiResult, aiAnalysis);
 
@@ -116,10 +120,7 @@ export const FavoritePreview = ({ item }: Props) => {
             <ExternalLink className="h-3 w-3 mr-1.5" />
             查看原文
           </Button>
-          <FavoriteButton 
-            itemId={content_item.id} 
-            size="sm"
-          />
+          <FavoriteButton itemId={content_item.id} size="sm" />
         </div>
       </div>
 
@@ -131,14 +132,16 @@ export const FavoritePreview = ({ item }: Props) => {
             <h3 className="font-semibold text-xl mb-3 leading-tight">
               {content_item.title || "无标题"}
             </h3>
-            
+
             {/* 质量评分 */}
             {aiResult?.content_quality_score != null && (
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-sm text-muted-foreground">质量评分:</span>
                 <div className="inline-flex items-center gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => {
-                    const stars = Math.round(aiResult.content_quality_score! * 5);
+                    const stars = Math.round(
+                      aiResult.content_quality_score! * 5,
+                    );
                     const fullStars = Math.floor(stars);
                     return (
                       <Star
@@ -183,7 +186,7 @@ export const FavoritePreview = ({ item }: Props) => {
               <label className="text-sm font-medium text-muted-foreground block">
                 来源
               </label>
-              <div 
+              <div
                 className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={handleOpenSource}
               >
@@ -236,20 +239,23 @@ export const FavoritePreview = ({ item }: Props) => {
             <label className="text-sm font-medium text-muted-foreground block">
               处理状态
             </label>
-            <Badge 
-              variant={content_item.processing_status === "completed" ? "default" : "secondary"}
+            <Badge
+              variant={
+                content_item.processing_status === "completed"
+                  ? "default"
+                  : "secondary"
+              }
               className="text-xs"
             >
-              {content_item.processing_status === "completed" ? "已完成" : content_item.processing_status}
+              {content_item.processing_status === "completed"
+                ? "已完成"
+                : content_item.processing_status}
             </Badge>
           </div>
 
           {/* 底部操作区域 */}
           <div className="flex gap-2 pt-4 border-t border-border/40">
-            <Button
-              onClick={handleViewContent}
-              className="flex-1"
-            >
+            <Button onClick={handleViewContent} className="flex-1">
               <ExternalLink className="h-4 w-4 mr-2" />
               阅读完整内容
             </Button>
@@ -268,4 +274,4 @@ export const FavoritePreview = ({ item }: Props) => {
       </div>
     </div>
   );
-}; 
+};

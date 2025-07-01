@@ -58,41 +58,38 @@ interface Props {
 const getContentIcon = (type: string) => {
   switch (type) {
     case "pdf":
-      return <FileText className="h-4 w-4" />;
+      return <FileText className="h-4 w-4 text-neutral-500" />;
     case "url":
-      return <Link className="h-4 w-4" />;
+      return <Link className="h-4 w-4 text-neutral-500" />;
     case "text":
-      return <BookOpen className="h-4 w-4" />;
+      return <BookOpen className="h-4 w-4 text-neutral-500" />;
     default:
-      return <FileText className="h-4 w-4" />;
+      return <FileText className="h-4 w-4 text-neutral-500" />;
   }
 };
 
-// 星级评分组件
+// 星级评分组件 - 更简洁的设计
 const StarRating = ({ score }: { score: number }) => {
-  const stars = Math.round(score * 5); // 转换为 5 星制
+  const stars = Math.round(score * 5);
   const fullStars = Math.floor(stars);
-  const hasHalfStar = stars % 1 !== 0;
-  const ratingScore = (score * 5).toFixed(1); // 转换为5分制
+  const ratingScore = (score * 5).toFixed(1);
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="inline-flex items-center gap-0.5">
+        <div className="inline-flex items-center gap-1">
           {Array.from({ length: 5 }).map((_, i) => (
             <Star
               key={i}
               className={`h-3 w-3 ${
                 i < fullStars
                   ? "fill-amber-400 text-amber-400"
-                  : i === fullStars && hasHalfStar
-                    ? "fill-amber-200 text-amber-400"
-                    : "text-neutral-300"
+                  : "text-neutral-200"
               }`}
             />
           ))}
-          <span className="text-xs text-neutral-500 ml-1">
-            {ratingScore}/5.0
+          <span className="text-xs text-neutral-400 ml-1 font-medium">
+            {ratingScore}
           </span>
         </div>
       </TooltipTrigger>
@@ -123,7 +120,6 @@ export const ContentCard = ({
 
   // 处理点击事件 - 立即跳转到阅读器
   const handleClick = (event: React.MouseEvent) => {
-    // 立即调用点击处理函数，提供即时反馈
     onCardClick(item, event);
   };
 
@@ -186,13 +182,11 @@ export const ContentCard = ({
 
   // 处理删除
   const handleDelete = async (event?: React.MouseEvent) => {
-    // 阻止事件传播，防止触发卡片点击
     if (event) {
       event.preventDefault();
       event.stopPropagation();
     }
 
-    // 检查是否跳过确认
     if (shouldSkipDeleteConfirm()) {
       await performDelete();
     } else {
@@ -227,13 +221,21 @@ export const ContentCard = ({
     <Card
       key={item.id}
       tabIndex={0}
-      className={`group cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ease-out w-libraryCard relative ${
-        selected
-          ? "bg-[var(--color-linear-bg-2)] border-[var(--mac-gray-5)] shadow-md"
-          : hovered
-            ? "bg-muted/50 border-muted-foreground/20 shadow-sm"
-            : "bg-transparent border border-transparent shadow-none hover:shadow-none hover:bg-transparent hover:border-transparent"
-      }`}
+      className={`
+        group cursor-pointer relative overflow-hidden
+        w-libraryCard
+        transition-all duration-200 ease-out
+        bg-white border border-black/[0.06]
+        hover:border-black/[0.12] hover:shadow-[0_1px_3px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.08)]
+        hover:-translate-y-0.5
+        active:translate-y-0 active:shadow-[0_1px_2px_rgba(0,0,0,0.08)]
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-200 focus-visible:ring-offset-2
+        ${
+          selected
+            ? "border-black/[0.12] shadow-[0_1px_3px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.08)] -translate-y-0.5"
+            : ""
+        }
+      `}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -245,42 +247,54 @@ export const ContentCard = ({
         }
       }}
     >
-      <CardContent className="p-4 pl-1 flex flex-col h-full">
-        <div className="flex items-start gap-2 flex-1 min-w-0">
-          <div className="w-10 h-10 rounded-lg bg-transparent flex items-center justify-center">
+      <CardContent className="p-6 flex flex-col h-full">
+        <div className="flex items-start gap-4 flex-1 min-w-0">
+          {/* 图标容器 - 更精致的设计 */}
+          <div className="w-10 h-10 rounded-lg bg-neutral-50 flex items-center justify-center shrink-0 border border-black/[0.04]">
             {getContentIcon(item.type)}
           </div>
-          <div className="flex-1 min-w-0 space-y-2">
-            {/* 标题区域 - 添加三个点菜单和微妙的收藏按钮 */}
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-1 flex-1 min-w-0">
+
+          <div className="flex-1 min-w-0 space-y-3">
+            {/* 标题和操作区域 */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-2 flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-medium text-base line-clamp-2 text-neutral-800 dark:text-neutral-100 max-w-cardTitle break-words flex-1">
+                  <h3 className="font-semibold text-base leading-tight line-clamp-2 text-neutral-900 max-w-cardTitle break-words flex-1">
                     {item.title || "无标题"}
                   </h3>
-                  
-                  {/* 极简收藏按钮 - 只在悬浮时显示 */}
+
+                  {/* 收藏按钮 - 更微妙的显示 */}
                   <FavoriteButton
                     itemId={item.id}
                     size="sm"
                     variant="ghost"
-                    className={`h-6 w-6 p-0 opacity-0 group-hover:opacity-60 hover:opacity-100 transition-all duration-200 shrink-0 ${
-                      hovered ? 'opacity-60' : ''
-                    }`}
+                    className={`
+                      h-7 w-7 p-0 shrink-0 text-neutral-400 hover:text-neutral-600
+                      opacity-0 group-hover:opacity-100 transition-all duration-200
+                      hover:bg-neutral-100
+                      ${hovered || selected ? "opacity-100" : ""}
+                    `}
                   />
                 </div>
+
+                {/* 质量评分 */}
                 {hasQualityScore && (
                   <StarRating score={aiResult.content_quality_score!} />
                 )}
               </div>
 
-              {/* 三个点菜单 */}
+              {/* 操作菜单 */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0 hover:bg-accent/50 focus-visible:ring-0 focus-visible:border-transparent"
+                    className={`
+                      h-8 w-8 shrink-0 text-neutral-400 hover:text-neutral-600
+                      opacity-0 group-hover:opacity-100 transition-all duration-200
+                      hover:bg-neutral-100 focus-visible:ring-0
+                      ${hovered || selected ? "opacity-100" : ""}
+                    `}
                     data-dropdown-trigger
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -290,14 +304,14 @@ export const ContentCard = ({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-48"
-                  sideOffset={5}
+                  className="w-48 bg-white border border-black/[0.08] shadow-lg"
+                  sideOffset={8}
                 >
                   <DropdownMenuItem
                     onClick={handleViewDetails}
-                    className="focus:bg-accent/50"
+                    className="focus:bg-neutral-50 text-neutral-700"
                   >
-                    <ExternalLink className="h-4 w-4 mr-2" />
+                    <ExternalLink className="h-4 w-4 mr-3" />
                     查看详情
                   </DropdownMenuItem>
 
@@ -305,10 +319,10 @@ export const ContentCard = ({
                     <DropdownMenuItem
                       onClick={handleReprocess}
                       disabled={isProcessing}
-                      className="focus:bg-accent/50"
+                      className="focus:bg-neutral-50 text-neutral-700"
                     >
                       <RotateCcw
-                        className={`h-4 w-4 mr-2 ${isProcessing ? "animate-spin" : ""}`}
+                        className={`h-4 w-4 mr-3 ${isProcessing ? "animate-spin" : ""}`}
                       />
                       {isProcessing ? "处理中..." : "重新处理"}
                     </DropdownMenuItem>
@@ -316,21 +330,21 @@ export const ContentCard = ({
 
                   <DropdownMenuItem
                     onClick={handleAIAnalysis}
-                    className="focus:bg-accent/50"
+                    className="focus:bg-neutral-50 text-neutral-700"
                   >
-                    <Brain className="h-4 w-4 mr-2" />
+                    <Brain className="h-4 w-4 mr-3" />
                     AI 分析
                   </DropdownMenuItem>
 
                   <DropdownMenuItem
                     onClick={handleCopyLink}
-                    className="focus:bg-accent/50"
+                    className="focus:bg-neutral-50 text-neutral-700"
                   >
-                    <Copy className="h-4 w-4 mr-2" />
+                    <Copy className="h-4 w-4 mr-3" />
                     复制链接
                   </DropdownMenuItem>
 
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="bg-black/[0.06]" />
 
                   <DropdownMenuItem
                     onClick={(e) => {
@@ -339,53 +353,62 @@ export const ContentCard = ({
                       handleDelete(e);
                     }}
                     disabled={isDeleting}
-                    className="text-[var(--destructive)] focus:text-[var(--destructive)] hover:bg-[var(--destructive)/0.1]"
+                    className="text-red-600 focus:text-red-700 focus:bg-red-50"
                   >
-                    <Trash2 className={`h-4 w-4 mr-2`} />
+                    <Trash2 className="h-4 w-4 mr-3" />
                     {isDeleting ? "删除中..." : "删除"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
 
-            {/* 简短描述（优先显示）或摘要 */}
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-3 leading-relaxed max-w-cardTitle break-words">
+            {/* 描述文本 - 更好的可读性 */}
+            <p className="text-sm text-neutral-600 line-clamp-3 leading-relaxed max-w-cardTitle break-words">
               {briefDescription || item.summary || "暂无描述"}
             </p>
 
-            {/* 标签 */}
+            {/* 标签 - 更精致的设计 */}
             {hasLabels && (
-              <div className="flex flex-wrap gap-1 max-w-cardTitle">
-                {aiResult.labels!.map((label, index) => (
+              <div className="flex flex-wrap gap-1.5 max-w-cardTitle">
+                {aiResult.labels!.slice(0, 3).map((label, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--library-tag-bg)] text-muted-foreground hover:bg-[var(--library-tag-bg-hover)] transition-colors duration-150 ease-out"
+                    className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-neutral-50 text-neutral-600 border border-black/[0.04] hover:bg-neutral-100 transition-colors duration-150"
                   >
                     {label}
                   </span>
                 ))}
+                {aiResult.labels!.length > 3 && (
+                  <span className="text-xs text-neutral-400 self-center">
+                    +{aiResult.labels!.length - 3}
+                  </span>
+                )}
               </div>
             )}
 
-            {/* 底部信息栏 */}
-            <div className="flex items-center justify-between text-xs text-neutral-400">
+            {/* 底部信息栏 - 更清晰的布局 */}
+            <div className="flex items-center justify-between text-xs pt-2 border-t border-black/[0.04]">
               <div className="flex items-center gap-3">
                 {/* 阅读时间 */}
                 {hasReadingTime && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5 text-neutral-500">
                     <Clock className="h-3 w-3" />
-                    <span>{aiResult.reading_time_minutes} 分钟</span>
+                    <span className="font-medium">
+                      {aiResult.reading_time_minutes} 分钟
+                    </span>
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <ProcessingStatusBadge
                   status={item.processing_status as ProcessingStatus}
                   size="sm"
-                  className="text-neutral-400"
+                  className="text-neutral-500"
                 />
-                <span className="w-5 text-right">{relativeLabel}</span>
+                <span className="text-neutral-400 font-medium">
+                  {relativeLabel}
+                </span>
               </div>
             </div>
           </div>

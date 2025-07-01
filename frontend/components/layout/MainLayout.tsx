@@ -54,17 +54,17 @@ export default function MainLayout({
         </SidebarInset>
 
         {/* Settings Panel */}
-        <SettingsPanel 
-          open={settingsOpen} 
-          onClose={() => setSettingsOpen(false)} 
+        <SettingsPanel
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
         />
 
         {/* Add Content Modal */}
-        <AddContentModal 
-          open={addContentOpen} 
-          onClose={() => setAddContentOpen(false)} 
+        <AddContentModal
+          open={addContentOpen}
+          onClose={() => setAddContentOpen(false)}
         />
       </div>
     </SidebarProvider>
   );
-} 
+}

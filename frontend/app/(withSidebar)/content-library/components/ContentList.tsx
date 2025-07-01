@@ -2,7 +2,6 @@
 
 import type { ContentItemPublic } from "../types";
 import { ContentCard } from "./ContentCard";
-import { Separator } from "@/components/ui/separator";
 import React from "react";
 
 interface Props {
@@ -30,26 +29,19 @@ export const ContentList = ({
   if (!items.length) return null;
 
   return (
-    <div className="space-y-4 flex flex-col items-center">
-      {items.map((item, idx) => (
-        <React.Fragment key={item.id}>
-          <ContentCard
-            item={item}
-            selected={selectedItem?.id === item.id}
-            hovered={hoveredItem?.id === item.id}
-            onCardClick={onCardClick}
-            onCardHover={onCardHover}
-            prefetchContent={prefetchContent}
-            onItemDeleted={onItemDeleted}
-            onItemUpdated={onItemUpdated}
-          />
-          {idx !== items.length - 1 && (
-            <Separator
-              className="ml-[3.25rem]"
-              style={{ width: "calc(var(--size-card-title) - 0.5rem)" }}
-            />
-          )}
-        </React.Fragment>
+    <div className="space-y-6 flex flex-col items-center">
+      {items.map((item) => (
+        <ContentCard
+          key={item.id}
+          item={item}
+          selected={selectedItem?.id === item.id}
+          hovered={hoveredItem?.id === item.id}
+          onCardClick={onCardClick}
+          onCardHover={onCardHover}
+          prefetchContent={prefetchContent}
+          onItemDeleted={onItemDeleted}
+          onItemUpdated={onItemUpdated}
+        />
       ))}
     </div>
   );

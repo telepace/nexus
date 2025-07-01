@@ -3,12 +3,16 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings, ChevronUp, RefreshCw, Star, Upload, Heart, MessageSquare } from "lucide-react";
 import {
-  IconInnerShadowTop,
-  IconUser,
-  IconArchive,
-} from "@tabler/icons-react";
+  Settings,
+  ChevronUp,
+  RefreshCw,
+  Star,
+  Upload,
+  Heart,
+  MessageSquare,
+} from "lucide-react";
+import { IconInnerShadowTop, IconUser, IconArchive } from "@tabler/icons-react";
 
 import {
   Sidebar,
@@ -51,7 +55,7 @@ const data = {
     },
     {
       title: "Favorites",
-      url: "/favorites", 
+      url: "/favorites",
       icon: Heart,
     },
     {
@@ -123,8 +127,8 @@ export function AppSidebar({
         <div className="flex h-header shrink-0 items-center justify-center gap-2 border-b border-gray-100/50 px-4 group-data-[collapsible=icon]:px-2 backdrop-blur-sm">
           {/* 展开状态：Logo + 品牌名称 + 独立展开按钮 */}
           <div className="flex items-center justify-between w-full group-data-[collapsible=icon]:hidden">
-            <Link 
-              href="/home" 
+            <Link
+              href="/home"
               className="flex items-center gap-2 overflow-hidden hover:opacity-80 transition-opacity"
               onClick={handleNavItemClick}
             >
@@ -137,11 +141,9 @@ export function AppSidebar({
             </Link>
             <SidebarTrigger className="h-8 w-8 rounded-lg hover:bg-gradient-to-br hover:from-gray-50/60 hover:to-gray-100/40 hover:text-sidebar-accent-foreground transition-all duration-300 border border-transparent hover:border-gray-200/40" />
           </div>
-          
+
           {/* 折叠状态：优化设计，更精致的视觉效果 */}
-          <SidebarTrigger 
-            className="hidden group-data-[collapsible=icon]:flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-white/80 to-gray-50/60 shadow-lg hover:shadow-xl border border-gray-200/30 hover:border-primary/30 transition-all duration-300 hover:scale-105 backdrop-blur-sm"
-          >
+          <SidebarTrigger className="hidden group-data-[collapsible=icon]:flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-white/80 to-gray-50/60 shadow-lg hover:shadow-xl border border-gray-200/30 hover:border-primary/30 transition-all duration-300 hover:scale-105 backdrop-blur-sm">
             <IconInnerShadowTop className="!size-5 text-primary drop-shadow-sm" />
           </SidebarTrigger>
         </div>
@@ -151,7 +153,7 @@ export function AppSidebar({
         {/* Upload Content 区域 - 折叠状态下更精致 */}
         <div className="mb-6 group-data-[collapsible=icon]:mb-4">
           <div className="px-4 py-6 group-data-[collapsible=icon]:px-3 group-data-[collapsible=icon]:py-4">
-            <div 
+            <div
               className={cn(
                 "relative overflow-hidden rounded-xl transition-all duration-500 ease-out group cursor-pointer",
                 "bg-gradient-to-br from-primary/5 via-primary/3 to-primary/8",
@@ -159,7 +161,7 @@ export function AppSidebar({
                 "shadow-sm hover:shadow-lg hover:shadow-primary/5",
                 "hover:scale-[1.02] active:scale-[0.98]",
                 // 折叠状态样式 - 更圆润的正方形设计
-                "group-data-[collapsible=icon]:rounded-2xl group-data-[collapsible=icon]:aspect-square group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:shadow-md group-data-[collapsible=icon]:bg-gradient-to-br group-data-[collapsible=icon]:from-primary/8 group-data-[collapsible=icon]:to-primary/12 group-data-[collapsible=icon]:hover:shadow-lg group-data-[collapsible=icon]:hover:from-primary/12 group-data-[collapsible=icon]:hover:to-primary/15"
+                "group-data-[collapsible=icon]:rounded-2xl group-data-[collapsible=icon]:aspect-square group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:shadow-md group-data-[collapsible=icon]:bg-gradient-to-br group-data-[collapsible=icon]:from-primary/8 group-data-[collapsible=icon]:to-primary/12 group-data-[collapsible=icon]:hover:shadow-lg group-data-[collapsible=icon]:hover:from-primary/12 group-data-[collapsible=icon]:hover:to-primary/15",
               )}
               onMouseEnter={() => setIsUploadHovered(true)}
               onMouseLeave={() => setIsUploadHovered(false)}
@@ -169,18 +171,22 @@ export function AppSidebar({
               }}
             >
               {/* 背景动效 */}
-              <div className={cn(
-                "absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/8 to-primary/0 opacity-0 transition-opacity duration-700 rounded-inherit",
-                isUploadHovered && "opacity-100"
-              )} />
-              
+              <div
+                className={cn(
+                  "absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/8 to-primary/0 opacity-0 transition-opacity duration-700 rounded-inherit",
+                  isUploadHovered && "opacity-100",
+                )}
+              />
+
               {/* 内容 */}
               <div className="relative flex items-center gap-3 p-4 group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center">
-                <div className={cn(
-                  "flex items-center justify-center transition-all duration-300",
-                  "text-primary/70 group-hover:text-primary group-hover:scale-110",
-                  "group-data-[collapsible=icon]:drop-shadow-sm"
-                )}>
+                <div
+                  className={cn(
+                    "flex items-center justify-center transition-all duration-300",
+                    "text-primary/70 group-hover:text-primary group-hover:scale-110",
+                    "group-data-[collapsible=icon]:drop-shadow-sm",
+                  )}
+                >
                   <Upload className="w-5 h-5 group-data-[collapsible=icon]:w-6 group-data-[collapsible=icon]:h-6 drop-shadow-sm" />
                 </div>
                 <div className="flex-1 group-data-[collapsible=icon]:hidden">
@@ -215,7 +221,7 @@ export function AppSidebar({
                         // 折叠状态调整 - 更精致的设计
                         "group-data-[collapsible=icon]:mx-3 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:rounded-2xl group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:shadow-sm",
                         // 选中状态样式 - 更优雅的指示器
-                        isActive 
+                        isActive
                           ? [
                               "bg-gray-100/60 text-gray-800",
                               "border border-gray-200/40",
@@ -237,19 +243,23 @@ export function AppSidebar({
                               "hover:border hover:border-gray-100/60",
                               "hover:shadow-sm hover:shadow-gray-50/40",
                               "hover:transform hover:translate-x-1",
-                              "group-data-[collapsible=icon]:hover:transform-none group-data-[collapsible=icon]:hover:scale-105 group-data-[collapsible=icon]:hover:shadow-md group-data-[collapsible=icon]:hover:bg-gray-50/80"
-                            ]
+                              "group-data-[collapsible=icon]:hover:transform-none group-data-[collapsible=icon]:hover:scale-105 group-data-[collapsible=icon]:hover:shadow-md group-data-[collapsible=icon]:hover:bg-gray-50/80",
+                            ],
                       )}
                     >
-                      <Link 
-                        href={item.url} 
+                      <Link
+                        href={item.url}
                         className="flex items-center gap-3 w-full group-data-[collapsible=icon]:justify-center"
                         onClick={handleNavItemClick}
                       >
-                        <div className={cn(
-                          "flex items-center justify-center shrink-0 transition-all duration-300",
-                          isActive ? "text-gray-600" : "text-gray-400 group-hover:text-gray-600"
-                        )}>
+                        <div
+                          className={cn(
+                            "flex items-center justify-center shrink-0 transition-all duration-300",
+                            isActive
+                              ? "text-gray-600"
+                              : "text-gray-400 group-hover:text-gray-600",
+                          )}
+                        >
                           <item.icon className="w-4 h-4 group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5 drop-shadow-sm" />
                         </div>
                         <span className="text-sm font-medium tracking-tight group-data-[collapsible=icon]:hidden">
@@ -284,13 +294,13 @@ export function AppSidebar({
                       "w-full p-3 hover:bg-gray-50/60 transition-all duration-300 rounded-xl mx-2",
                       // 折叠状态下的样式优化 - 更精致的设计
                       "group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-3 group-data-[collapsible=icon]:rounded-2xl group-data-[collapsible=icon]:justify-center",
-                      "group-data-[collapsible=icon]:hover:scale-105 group-data-[collapsible=icon]:shadow-sm group-data-[collapsible=icon]:hover:shadow-md"
+                      "group-data-[collapsible=icon]:hover:scale-105 group-data-[collapsible=icon]:shadow-sm group-data-[collapsible=icon]:hover:shadow-md",
                     )}
                   >
                     <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
-                      <UserAvatar 
-                        user={user} 
-                        size="md" 
+                      <UserAvatar
+                        user={user}
+                        size="md"
                         showFallback={true}
                         className="group-data-[collapsible=icon]:w-6 group-data-[collapsible=icon]:h-6 ring-2 ring-white/50 shadow-sm"
                       />
@@ -313,7 +323,7 @@ export function AppSidebar({
                   align="end"
                   sideOffset={4}
                 >
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation();
                       onSettingsClick();
@@ -334,10 +344,12 @@ export function AppSidebar({
                     <RefreshCw
                       className={`mr-2 h-4 w-4 text-gray-500 ${isSyncing ? "animate-spin" : ""}`}
                     />
-                    <span className="text-gray-700">{isSyncing ? "同步中..." : "同步登录状态"}</span>
+                    <span className="text-gray-700">
+                      {isSyncing ? "同步中..." : "同步登录状态"}
+                    </span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-gray-100/60" />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation();
                       logout();
@@ -350,22 +362,22 @@ export function AppSidebar({
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className={cn(
-                "p-3 space-y-3 rounded-xl bg-gradient-to-br from-gray-50/30 to-gray-100/20 border border-gray-100/60 mx-2",
-                // 折叠状态下只显示头像
-                "group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:space-y-0 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center"
-              )}>
+              <div
+                className={cn(
+                  "p-3 space-y-3 rounded-xl bg-gradient-to-br from-gray-50/30 to-gray-100/20 border border-gray-100/60 mx-2",
+                  // 折叠状态下只显示头像
+                  "group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:space-y-0 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center",
+                )}
+              >
                 <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
-                  <UserAvatar 
-                    user={user} 
-                    size="md" 
+                  <UserAvatar
+                    user={user}
+                    size="md"
                     showFallback={true}
                     className="group-data-[collapsible=icon]:w-6 group-data-[collapsible=icon]:h-6"
                   />
                   <div className="flex-1 text-sm group-data-[collapsible=icon]:hidden">
-                    <div className="font-medium text-gray-500">
-                      未登录
-                    </div>
+                    <div className="font-medium text-gray-500">未登录</div>
                   </div>
                 </div>
                 <Button
@@ -388,7 +400,7 @@ export function AppSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
-      
+
       {/* 添加侧边栏边缘，提供更好的交互区域 */}
       <SidebarRail />
     </Sidebar>

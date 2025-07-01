@@ -3,13 +3,13 @@ AI聊天服务
 提供基于模板的AI内容生成功能
 """
 
+import asyncio
 import json
 import logging
 import random
 from pathlib import Path
 from typing import Any
 
-import asyncio
 import requests
 from jinja2 import Environment, FileSystemLoader
 
@@ -21,9 +21,9 @@ logger = logging.getLogger(__name__)
 
 # 模板-模型映射配置
 TEMPLATE_MODEL_MAPPING = {
-    "summary.j2": "or-deepseek-r1",           # Summary生成使用推理能力更强的R1模型
-    "key_points.j2": "or-deepseek-r1",        # KeyPoint提取使用推理能力更强的R1模型
-    "labels.j2": "deepseek-v3-ensemble",      # Labels生成使用更经济的V3模型
+    "summary.j2": "or-deepseek-r1",  # Summary生成使用推理能力更强的R1模型
+    "key_points.j2": "or-deepseek-r1",  # KeyPoint提取使用推理能力更强的R1模型
+    "labels.j2": "deepseek-v3-ensemble",  # Labels生成使用更经济的V3模型
 }
 
 
@@ -79,17 +79,19 @@ class ChatService:
             try:
                 # 选择模型：优先级为 传入的model > 模板映射 > 全局默认
                 selected_model = (
-                    model 
-                    or TEMPLATE_MODEL_MAPPING.get(template_name) 
+                    model
+                    or TEMPLATE_MODEL_MAPPING.get(template_name)
                     or settings.DEFAULT_LLM_MODEL
                 )
-                
+
                 logger.info(
                     f"Using model '{selected_model}' for template '{template_name}' "
                     f"(source: {'explicit' if model else 'template_mapping' if template_name in TEMPLATE_MODEL_MAPPING else 'default'})"
                 )
-                
-                ai_content = await self._call_litellm_proxy(system_content, prompt, selected_model)
+
+                ai_content = await self._call_litellm_proxy(
+                    system_content, prompt, selected_model
+                )
 
                 # 针对不同模板的解析策略
                 if (
@@ -176,13 +178,16 @@ class ChatService:
             logger.error(f"模板生成失败: {template_name}, 错误: {str(e)}")
             return {}
 
-    async def _call_litellm_proxy(self, system_content: str, user_prompt: str, model: str | None = None) -> str:
+    async def _call_litellm_proxy(
+        self, system_content: str, user_prompt: str, model: str | None = None
+    ) -> str:
         """通过LiteLLM代理调用LLM"""
+
         def sync_request():
             """同步的requests调用"""
             # 选择模型：使用传入的model参数或全局默认
             selected_model = model or settings.DEFAULT_LLM_MODEL
-            
+
             # 构建请求数据
             request_data = {
                 "model": selected_model,
@@ -203,9 +208,7 @@ class ChatService:
             base_url = str(settings.LITELLM_PROXY_URL).rstrip("/")
             url = f"{base_url}/v1/chat/completions"
 
-            logger.debug(
-                f"Calling LiteLLM proxy: {url} with model: {selected_model}"
-            )
+            logger.debug(f"Calling LiteLLM proxy: {url} with model: {selected_model}")
 
             response = requests.post(
                 url,
@@ -225,12 +228,12 @@ class ChatService:
             logger.info(f"✅ LLM response received, content length: {len(content)}")
             logger.debug(f"🔍 LLM response content preview: {content[:200]}")
             return content.strip()
-        
+
         try:
             # 在线程池中运行同步请求，避免阻塞异步事件循环
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(None, sync_request)
-            
+
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 401:
                 logger.error(

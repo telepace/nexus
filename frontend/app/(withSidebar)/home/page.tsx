@@ -89,25 +89,51 @@ const ContributionGraph = ({ className }: { className?: string }) => {
   };
 
   const contributionData = generateContributionData();
-  const totalContributions = contributionData.flat().filter(level => level > 0).length;
+  const totalContributions = contributionData
+    .flat()
+    .filter((level) => level > 0).length;
 
   return (
-    <div className={cn("bg-white rounded-lg border border-gray-100 p-5 shadow-sm", className)}>
+    <div
+      className={cn(
+        "bg-white rounded-lg border border-gray-100 p-5 shadow-sm",
+        className,
+      )}
+    >
       <div className="mb-4">
         <div className="text-sm font-medium text-gray-900 mb-1">成长足迹</div>
         <div className="text-xs text-gray-500">
-          过去一年共学习 <span className="font-semibold text-gray-700">{totalContributions}</span> 天
+          过去一年共学习{" "}
+          <span className="font-semibold text-gray-700">
+            {totalContributions}
+          </span>{" "}
+          天
         </div>
       </div>
-      
+
       <div className="relative">
         {/* 月份标签 */}
         <div className="grid grid-cols-12 gap-0.5 mb-1 pl-3 text-xs text-gray-400">
-          {['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((month, index) => (
-            <span key={index} className="text-center">{month}</span>
+          {[
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+          ].map((month, index) => (
+            <span key={index} className="text-center">
+              {month}
+            </span>
           ))}
         </div>
-        
+
         {/* 贡献网格 */}
         <div className="flex gap-0.5">
           {/* 星期标签 */}
@@ -120,7 +146,7 @@ const ContributionGraph = ({ className }: { className?: string }) => {
             <span className="h-2.5 leading-none"></span>
             <span className="h-2.5 leading-none"></span>
           </div>
-          
+
           {/* 贡献单元格 */}
           <div className="grid grid-flow-col grid-rows-7 gap-0.5 flex-1">
             {contributionData.map((week, weekIndex) =>
@@ -133,15 +159,15 @@ const ContributionGraph = ({ className }: { className?: string }) => {
                     level === 1 && "bg-green-200",
                     level === 2 && "bg-green-300",
                     level === 3 && "bg-green-500",
-                    level === 4 && "bg-green-700"
+                    level === 4 && "bg-green-700",
                   )}
                   title={`${level} 个洞察 · ${new Date().toLocaleDateString()}`}
                 />
-              ))
+              )),
             )}
           </div>
         </div>
-        
+
         {/* 图例 */}
         <div className="flex items-center justify-end gap-1 mt-2 text-xs text-gray-400">
           <span>Less</span>
@@ -175,7 +201,9 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [inputText, setInputText] = useState("");
-  const [activeTab, setActiveTab] = useState<"Ask" | "Research" | "Build">("Ask");
+  const [activeTab, setActiveTab] = useState<"Ask" | "Research" | "Build">(
+    "Ask",
+  );
 
   const greeting = getGreeting();
 
@@ -271,7 +299,7 @@ export default function HomePage() {
             <span className="font-medium text-gray-900 text-sm">Nexus</span>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <button className="w-7 h-7 hover:bg-gray-100 rounded-md flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors">
             <Search className="w-4 h-4" />
@@ -292,7 +320,9 @@ export default function HomePage() {
           <div className="w-9 h-9 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center text-xl">
             {greeting.icon}
           </div>
-          <h1 className="text-2xl font-medium text-gray-900 tracking-tight">{greeting.text}</h1>
+          <h1 className="text-2xl font-medium text-gray-900 tracking-tight">
+            {greeting.text}
+          </h1>
         </div>
 
         {/* 大型输入区域 */}
@@ -305,7 +335,7 @@ export default function HomePage() {
               className="w-full min-h-[140px] p-5 border border-gray-200 rounded-xl bg-white text-base text-gray-900 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all shadow-sm hover:shadow-md"
             />
           </div>
-          
+
           <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-1">
               {["Ask", "Research", "Build"].map((tab) => (
@@ -316,14 +346,14 @@ export default function HomePage() {
                     "px-3 py-1.5 text-xs font-medium rounded-lg transition-all",
                     activeTab === tab
                       ? "bg-gray-900 text-white shadow-sm"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
                   )}
                 >
                   {tab}
                 </button>
               ))}
             </div>
-            
+
             <div className="flex items-center gap-1">
               <button className="w-8 h-8 hover:bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors">
                 <Paperclip className="w-4 h-4" />
@@ -346,31 +376,48 @@ export default function HomePage() {
             <section className="space-y-4">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-gray-600" />
-                <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide">学习轨迹</h2>
+                <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                  学习轨迹
+                </h2>
               </div>
-              
+
               <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
                 <div className="space-y-4">
-                  {metrics?.recent_active_projects?.slice(0, 3).map((project, index) => (
-                    <div key={project.id} className="flex items-start gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                      <div className={cn(
-                        "w-4 h-4 rounded-full border-2 mt-0.5 flex-shrink-0",
-                        index === 0 ? "bg-blue-500 border-blue-500" : "bg-gray-100 border-gray-300"
-                      )} />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900 mb-1">{project.title}</div>
-                        <div className="text-xs text-gray-500">
-                          {index === 0 ? "进行中 · 今天" : "已完成 · " + formatDate(project.updated_at)}
+                  {metrics?.recent_active_projects
+                    ?.slice(0, 3)
+                    .map((project, index) => (
+                      <div
+                        key={project.id}
+                        className="flex items-start gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                      >
+                        <div
+                          className={cn(
+                            "w-4 h-4 rounded-full border-2 mt-0.5 flex-shrink-0",
+                            index === 0
+                              ? "bg-blue-500 border-blue-500"
+                              : "bg-gray-100 border-gray-300",
+                          )}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 mb-1">
+                            {project.title}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {index === 0
+                              ? "进行中 · 今天"
+                              : "已完成 · " + formatDate(project.updated_at)}
+                          </div>
                         </div>
+                        <ArrowRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
-                      <ArrowRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  )) || (
+                    )) || (
                     <div className="text-center py-8">
                       <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                         <BookOpen className="w-5 h-5 text-gray-400" />
                       </div>
-                      <div className="text-sm text-gray-500">开始你的第一个学习项目</div>
+                      <div className="text-sm text-gray-500">
+                        开始你的第一个学习项目
+                      </div>
                     </div>
                   )}
                 </div>
@@ -381,15 +428,21 @@ export default function HomePage() {
             <section className="space-y-4">
               <div className="flex items-center gap-2">
                 <Brain className="w-4 h-4 text-gray-600" />
-                <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide">洞察积累</h2>
+                <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                  洞察积累
+                </h2>
               </div>
-              
+
               <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
                 <div className="space-y-4">
                   {items.slice(0, 3).map((item) => (
-                    <div key={item.id} className="p-4 border border-gray-100 rounded-lg hover:border-gray-200 hover:shadow-sm transition-all cursor-pointer">
+                    <div
+                      key={item.id}
+                      className="p-4 border border-gray-100 rounded-lg hover:border-gray-200 hover:shadow-sm transition-all cursor-pointer"
+                    >
                       <div className="text-sm text-gray-900 leading-relaxed mb-2">
-                        {item.ai_result?.brief_description || "AI 正在分析这个内容，将为你提供独特的洞察和见解。"}
+                        {item.ai_result?.brief_description ||
+                          "AI 正在分析这个内容，将为你提供独特的洞察和见解。"}
                       </div>
                       <div className="flex items-center gap-2 text-xs text-gray-500">
                         <span className="font-medium">{item.title}</span>
@@ -398,7 +451,7 @@ export default function HomePage() {
                       </div>
                     </div>
                   ))}
-                  
+
                   <Link href="/content-library">
                     <button className="w-full py-3 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors font-medium">
                       查看全部洞察
@@ -418,28 +471,38 @@ export default function HomePage() {
             <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <Zap className="w-4 h-4 text-gray-600" />
-                <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">推荐空间</h3>
+                <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                  推荐空间
+                </h3>
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
                   <div className="text-lg">🎨</div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900">UI/UX设计进阶</div>
-                    <div className="text-xs text-gray-500">基于你的设计兴趣</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      UI/UX设计进阶
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      基于你的设计兴趣
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
                   <div className="text-lg">🤖</div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900">AI工具应用</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      AI工具应用
+                    </div>
                     <div className="text-xs text-gray-500">热门推荐</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
                   <div className="text-lg">📈</div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900">数据可视化</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      数据可视化
+                    </div>
                     <div className="text-xs text-gray-500">技能补充</div>
                   </div>
                 </div>
@@ -450,21 +513,33 @@ export default function HomePage() {
             <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <Inbox className="w-4 h-4 text-gray-600" />
-                <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">待处理内容</h3>
+                <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                  待处理内容
+                </h3>
               </div>
-              
+
               <div className="space-y-3 mb-4">
-                {items.filter(item => item.processing_status === 'pending').slice(0, 3).map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
-                    <div className="w-2 h-2 bg-orange-400 rounded-full flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 truncate">{item.title || "无标题内容"}</div>
-                      <div className="text-xs text-gray-500">{item.type} · {formatDate(item.updated_at || "")}</div>
+                {items
+                  .filter((item) => item.processing_status === "pending")
+                  .slice(0, 3)
+                  .map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
+                    >
+                      <div className="w-2 h-2 bg-orange-400 rounded-full flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">
+                          {item.title || "无标题内容"}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {item.type} · {formatDate(item.updated_at || "")}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
-              
+
               <Link href="/content-library">
                 <button className="w-full py-3 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors font-medium">
                   处理全部
@@ -476,9 +551,11 @@ export default function HomePage() {
             <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <Flame className="w-4 h-4 text-gray-600" />
-                <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">热门话题</h3>
+                <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                  热门话题
+                </h3>
               </div>
-              
+
               <div className="space-y-2">
                 {[
                   { name: "GPT-4", count: 256 },
@@ -491,8 +568,12 @@ export default function HomePage() {
                     key={topic.name}
                     className="flex items-center justify-between px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors"
                   >
-                    <span className="text-sm text-gray-700 font-medium">{topic.name}</span>
-                    <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-full">{topic.count}</span>
+                    <span className="text-sm text-gray-700 font-medium">
+                      {topic.name}
+                    </span>
+                    <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-full">
+                      {topic.count}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -502,22 +583,30 @@ export default function HomePage() {
             <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <BarChart3 className="w-4 h-4 text-gray-600" />
-                <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">本周概览</h3>
+                <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                  本周概览
+                </h3>
               </div>
-              
+
               {metrics && (
                 <div className="space-y-3">
                   <div className="flex justify-between items-center py-2 border-b border-gray-100">
                     <span className="text-sm text-gray-600">学习时间</span>
-                    <span className="text-sm font-medium text-gray-900">12.5h</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      12.5h
+                    </span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-gray-100">
                     <span className="text-sm text-gray-600">活跃项目</span>
-                    <span className="text-sm font-medium text-gray-900">{metrics.growth_indicators.active_projects}</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {metrics.growth_indicators.active_projects}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-gray-100">
                     <span className="text-sm text-gray-600">AI 洞察</span>
-                    <span className="text-sm font-medium text-gray-900">{metrics.growth_indicators.ai_insights}</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {metrics.growth_indicators.ai_insights}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-sm text-gray-600">知识连接</span>
@@ -531,4 +620,4 @@ export default function HomePage() {
       </div>
     </div>
   );
-} 
+}

@@ -169,7 +169,7 @@ async function PromptsContent({
                 </Link>
               </button>
             </div>
-            
+
             {/* Clean Controls */}
             <SearchForm tags={tags} />
           </div>
@@ -221,7 +221,9 @@ async function PromptsContent({
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
         <div className="max-w-full mx-auto px-6 lg:px-8 xl:px-12 py-10">
-          <h1 className="text-3xl font-light text-slate-900 tracking-tight mb-6">Prompt Library</h1>
+          <h1 className="text-3xl font-light text-slate-900 tracking-tight mb-6">
+            Prompt Library
+          </h1>
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>加载失败</AlertTitle>

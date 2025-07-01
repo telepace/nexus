@@ -9,14 +9,15 @@ export const createRipple = (event: React.MouseEvent<HTMLElement>) => {
   ripple.style.cssText = `
     position: absolute;
     border-radius: 50%;
-    background: rgba(var(--primary), 0.3);
+    background: rgba(0, 0, 0, 0.08);
     transform: scale(0);
-    animation: ripple 0.6s linear;
+    animation: ripple 400ms cubic-bezier(0.4, 0, 0.2, 1);
     left: ${x}px;
     top: ${y}px;
     width: ${size}px;
     height: ${size}px;
     pointer-events: none;
+    z-index: 1;
   `;
 
   button.style.position = "relative";
@@ -25,5 +26,5 @@ export const createRipple = (event: React.MouseEvent<HTMLElement>) => {
 
   setTimeout(() => {
     ripple.remove();
-  }, 600);
+  }, 400);
 };

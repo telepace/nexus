@@ -88,12 +88,12 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
   ];
 
   return (
-    <div className="bg-background/80 backdrop-blur-sm">
-      <div className="px-4 md:px-6 py-3">
+    <div className="bg-white/80 backdrop-blur-sm border-b border-black/[0.06]">
+      <div className="px-6 py-4">
         {/* 单行布局：筛选 + 搜索 + 控制按钮 */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {/* 左侧：标签筛选 */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             <DropdownMenu
               open={showFilterDropdown}
               onOpenChange={setShowFilterDropdown}
@@ -102,41 +102,52 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-9 px-2 flex items-center gap-1"
+                  className="h-9 px-3 flex items-center gap-2 border-neutral-200 text-neutral-700 hover:bg-neutral-50"
                 >
                   <Filter className="h-4 w-4" />
+                  <span className="text-sm">筛选</span>
                   {selectedTags.length > 0 && (
-                    <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+                    <Badge
+                      variant="secondary"
+                      className="h-5 px-2 text-xs bg-neutral-100 text-neutral-700"
+                    >
                       {selectedTags.length}
                     </Badge>
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-80">
+              <DropdownMenuContent
+                align="start"
+                className="w-80 bg-white border-neutral-200 shadow-lg"
+              >
                 {/* 排序方式 */}
-                <DropdownMenuLabel>排序方式</DropdownMenuLabel>
-                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-neutral-900 font-medium">
+                  排序方式
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-neutral-100" />
                 {sortOptions.map((option) => (
                   <DropdownMenuItem
                     key={option.value}
                     onClick={() => setSortBy(option.value)}
-                    className={sortBy === option.value ? "bg-accent" : ""}
+                    className={`text-neutral-700 hover:bg-neutral-50 ${
+                      sortBy === option.value ? "bg-neutral-50 font-medium" : ""
+                    }`}
                   >
                     {option.label}
                   </DropdownMenuItem>
                 ))}
 
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-neutral-100" />
 
                 {/* 按标签筛选 */}
-                <DropdownMenuLabel className="flex items-center gap-2">
+                <DropdownMenuLabel className="flex items-center gap-2 text-neutral-900 font-medium">
                   <Tag className="h-4 w-4" />
                   按标签筛选
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-neutral-100" />
 
                 {allTags.length === 0 ? (
-                  <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                  <div className="px-2 py-6 text-center text-sm text-neutral-500">
                     暂无可用标签
                   </div>
                 ) : (
@@ -144,20 +155,23 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
                     {allTags.map((tag) => (
                       <DropdownMenuItem
                         key={tag}
-                        className="flex items-center justify-between cursor-pointer"
+                        className="flex items-center justify-between cursor-pointer text-neutral-700 hover:bg-neutral-50"
                         onClick={() => handleTagToggle(tag)}
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                           <div
                             className={`w-2 h-2 rounded-full ${
                               selectedTags.includes(tag)
-                                ? "bg-primary"
-                                : "bg-muted"
+                                ? "bg-neutral-900"
+                                : "bg-neutral-300"
                             }`}
                           />
                           <span className="truncate">{tag}</span>
                         </div>
-                        <Badge variant="outline" className="h-5 px-1.5 text-xs">
+                        <Badge
+                          variant="outline"
+                          className="h-5 px-2 text-xs border-neutral-200 text-neutral-600"
+                        >
                           {tagCounts[tag]}
                         </Badge>
                       </DropdownMenuItem>
@@ -167,10 +181,10 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
 
                 {selectedTags.length > 0 && (
                   <>
-                    <DropdownMenuSeparator />
+                    <DropdownMenuSeparator className="bg-neutral-100" />
                     <DropdownMenuItem
                       onClick={clearFilters}
-                      className="text-muted-foreground"
+                      className="text-neutral-500 hover:bg-neutral-50 hover:text-neutral-700"
                     >
                       清除所有筛选
                     </DropdownMenuItem>
@@ -181,19 +195,19 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
 
             {/* 已选择的标签 - 紧凑显示 */}
             {selectedTags.length > 0 && (
-              <div className="flex items-center gap-1 max-w-48 overflow-x-auto">
+              <div className="flex items-center gap-2 max-w-48 overflow-x-auto">
                 {selectedTags.slice(0, 2).map((tag) => (
                   <Badge
                     key={tag}
                     variant="secondary"
-                    className="shrink-0 cursor-pointer hover:bg-secondary/80 text-xs"
+                    className="shrink-0 cursor-pointer bg-neutral-100 text-neutral-700 hover:bg-neutral-200 text-xs border border-neutral-200"
                     onClick={() => handleTagToggle(tag)}
                   >
                     {tag}
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-auto p-0 ml-1 hover:bg-transparent"
+                      className="h-auto p-0 ml-1.5 hover:bg-transparent text-neutral-500 hover:text-neutral-700"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleTagToggle(tag);
@@ -204,7 +218,10 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
                   </Badge>
                 ))}
                 {selectedTags.length > 2 && (
-                  <Badge variant="outline" className="text-xs shrink-0">
+                  <Badge
+                    variant="outline"
+                    className="shrink-0 text-xs border-neutral-200 text-neutral-500"
+                  >
                     +{selectedTags.length - 2}
                   </Badge>
                 )}
@@ -212,18 +229,21 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
             )}
           </div>
 
-          {/* 中间：搜索框 - 自适应宽度 */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          {/* 中间：搜索框 */}
+          <div className="flex-1 relative max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
             <Input
-              placeholder="搜索内容标题、描述或标签..."
+              placeholder="搜索内容..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-9 bg-background border-input focus-visible:ring-2 focus-visible:ring-ring"
+              className="pl-10 h-9 border-neutral-200 bg-white focus:border-neutral-300 focus:ring-1 focus:ring-neutral-200"
             />
           </div>
 
-          {/* 右侧控件已合并/移除 */}
+          {/* 右侧：结果计数 */}
+          <div className="text-sm text-neutral-500 shrink-0">
+            {items.length} 项内容
+          </div>
         </div>
       </div>
     </div>

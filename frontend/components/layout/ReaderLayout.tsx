@@ -52,7 +52,7 @@ export default function ReaderLayout({
   const isMobile = useIsMobile();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addContentOpen, setAddContentOpen] = useState(false);
-  
+
   // 移动端右侧面板控制
   const [showRightPanel, setShowRightPanel] = useState(!isMobile);
 
@@ -132,7 +132,7 @@ export default function ReaderLayout({
 
   // 切换右侧面板显示
   const toggleRightPanel = useCallback(() => {
-    setShowRightPanel(prev => !prev);
+    setShowRightPanel((prev) => !prev);
   }, []);
 
   // 动态计算面板尺寸
@@ -169,7 +169,9 @@ export default function ReaderLayout({
             // 移动端：垂直布局或单面板
             <div className="flex flex-col h-full w-full">
               {/* 主阅读区域 */}
-              <div className={`flex-1 flex flex-col bg-background overflow-auto ${showRightPanel ? 'hidden' : ''}`}>
+              <div
+                className={`flex-1 flex flex-col bg-background overflow-auto ${showRightPanel ? "hidden" : ""}`}
+              >
                 <ReaderContext.Provider
                   value={{
                     onContentChange: handleContentChange,
@@ -180,7 +182,7 @@ export default function ReaderLayout({
                 >
                   {children}
                 </ReaderContext.Provider>
-                
+
                 {/* 移动端切换按钮 */}
                 <div className="fixed bottom-4 right-4 z-50">
                   <Button

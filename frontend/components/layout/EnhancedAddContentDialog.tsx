@@ -400,22 +400,22 @@ export default function EnhancedAddContentDialog({
   const handlePaste = useCallback((e: ClipboardEvent) => {
     // 防止默认粘贴行为，我们手动处理
     e.preventDefault();
-    
+
     const pastedText = e.clipboardData?.getData("text") || "";
-    console.log('[粘贴事件] 原始粘贴数据:', pastedText);
-    
+    console.log("[粘贴事件] 原始粘贴数据:", pastedText);
+
     if (pastedText.trim()) {
       const trimmedText = pastedText.trim();
-      console.log('[粘贴事件] 处理后的文本:', trimmedText);
-      
+      console.log("[粘贴事件] 处理后的文本:", trimmedText);
+
       // 直接设置到textarea
       if (textareaRef.current) {
         textareaRef.current.value = trimmedText;
         // 触发React的onChange事件
-        const event = new Event('input', { bubbles: true });
+        const event = new Event("input", { bubbles: true });
         textareaRef.current.dispatchEvent(event);
       }
-      
+
       setContent(trimmedText);
       setError("");
     }
@@ -649,7 +649,7 @@ export default function EnhancedAddContentDialog({
               ref={textareaRef}
               value={content}
               onChange={(e) => {
-                console.log('[onChange事件] 新值:', e.target.value);
+                console.log("[onChange事件] 新值:", e.target.value);
                 setContent(e.target.value);
               }}
               placeholder="输入研究主题、粘贴链接或文本内容..."

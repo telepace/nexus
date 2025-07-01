@@ -34,8 +34,8 @@ export default function TestNotificationsPage() {
                 🌐 跨页面测试
               </h3>
               <p className="text-green-800 dark:text-green-200">
-                创建通知后，尝试导航到其他页面（如 /home 或
-                /content-library）， 通知应该继续显示在页面右上角。
+                创建通知后，尝试导航到其他页面（如 /home 或 /content-library），
+                通知应该继续显示在页面右上角。
               </p>
             </div>
 
