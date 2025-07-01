@@ -9,7 +9,8 @@ import random
 from pathlib import Path
 from typing import Any
 
-import httpx
+import asyncio
+import requests
 from jinja2 import Environment, FileSystemLoader
 
 from app.core.config import settings
@@ -177,55 +178,60 @@ class ChatService:
 
     async def _call_litellm_proxy(self, system_content: str, user_prompt: str, model: str | None = None) -> str:
         """通过LiteLLM代理调用LLM"""
+        def sync_request():
+            """同步的requests调用"""
+            # 选择模型：使用传入的model参数或全局默认
+            selected_model = model or settings.DEFAULT_LLM_MODEL
+            
+            # 构建请求数据
+            request_data = {
+                "model": selected_model,
+                "messages": [
+                    {"role": "system", "content": system_content},
+                    {"role": "user", "content": user_prompt},
+                ],
+                "temperature": 0.3,
+                "max_tokens": 2000,
+            }
+
+            # 准备请求头，包含认证信息
+            headers = {"Content-Type": "application/json"}
+            if settings.LITELLM_MASTER_KEY:
+                headers["Authorization"] = f"Bearer {settings.LITELLM_MASTER_KEY}"
+
+            # 调用LiteLLM代理
+            base_url = str(settings.LITELLM_PROXY_URL).rstrip("/")
+            url = f"{base_url}/v1/chat/completions"
+
+            logger.debug(
+                f"Calling LiteLLM proxy: {url} with model: {selected_model}"
+            )
+
+            response = requests.post(
+                url,
+                json=request_data,
+                headers=headers,
+                timeout=60.0,
+            )
+
+            response.raise_for_status()
+            response_data = response.json()
+
+            # 提取LLM响应内容
+            if "choices" not in response_data or not response_data["choices"]:
+                raise ValueError("Invalid LLM response: missing choices")
+
+            content = response_data["choices"][0]["message"]["content"]
+            logger.info(f"✅ LLM response received, content length: {len(content)}")
+            logger.debug(f"🔍 LLM response content preview: {content[:200]}")
+            return content.strip()
+        
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                # 选择模型：使用传入的model参数或全局默认
-                selected_model = model or settings.DEFAULT_LLM_MODEL
-                
-                # 构建请求数据
-                request_data = {
-                    "model": selected_model,
-                    "messages": [
-                        {"role": "system", "content": system_content},
-                        {"role": "user", "content": user_prompt},
-                    ],
-                    "temperature": 0.3,
-                    "max_tokens": 2000,
-                }
-
-                # 准备请求头，包含认证信息
-                headers = {"Content-Type": "application/json"}
-                if settings.LITELLM_MASTER_KEY:
-                    headers["Authorization"] = f"Bearer {settings.LITELLM_MASTER_KEY}"
-
-                # 调用LiteLLM代理
-                base_url = str(settings.LITELLM_PROXY_URL).rstrip("/")
-                url = f"{base_url}/v1/chat/completions"
-
-                logger.debug(
-                    f"Calling LiteLLM proxy: {url} with model: {selected_model}"
-                )
-
-                response = await client.post(
-                    url,
-                    json=request_data,
-                    headers=headers,
-                    timeout=60.0,
-                )
-
-                response.raise_for_status()
-                response_data = response.json()
-
-                # 提取LLM响应内容
-                if "choices" not in response_data or not response_data["choices"]:
-                    raise ValueError("Invalid LLM response: missing choices")
-
-                content = response_data["choices"][0]["message"]["content"]
-                logger.info(f"✅ LLM response received, content length: {len(content)}")
-                logger.debug(f"🔍 LLM response content preview: {content[:200]}")
-                return content.strip()
-
-        except httpx.HTTPStatusError as e:
+            # 在线程池中运行同步请求，避免阻塞异步事件循环
+            loop = asyncio.get_event_loop()
+            return await loop.run_in_executor(None, sync_request)
+            
+        except requests.exceptions.HTTPError as e:
             if e.response.status_code == 401:
                 logger.error(
                     "LLM API authentication failed. Check LITELLM_MASTER_KEY configuration."
@@ -234,7 +240,7 @@ class ChatService:
             else:
                 logger.error(f"LLM API HTTP error {e.response.status_code}: {e}")
                 raise Exception(f"LLM API error: {e}")
-        except httpx.RequestError as e:
+        except requests.exceptions.RequestException as e:
             logger.error(f"LLM API request failed: {e}")
             raise Exception(f"LLM API request failed: {e}")
         except Exception as e:

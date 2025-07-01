@@ -455,9 +455,18 @@ class BackgroundTaskManager:
                                                 "difficulty_level", "intermediate"
                                             )
                                         )
-                                        existing_ai_result.content_quality_score = preprocessing_pipeline._calculate_quality_score(
-                                            cleaned_content, ai_results, metadata
-                                        )
+                                        
+                                        # 优先使用LLM返回的评分，否则使用算法计算
+                                        llm_score = ai_results.get("content_quality_score")
+                                        if llm_score is not None and isinstance(llm_score, (int, float)) and 0 <= llm_score <= 1:
+                                            existing_ai_result.content_quality_score = float(llm_score)
+                                            logger.info(f"✅ 使用LLM评分: {llm_score}")
+                                        else:
+                                            existing_ai_result.content_quality_score = preprocessing_pipeline._calculate_quality_score(
+                                                cleaned_content, ai_results, metadata
+                                            )
+                                            logger.info(f"✅ 使用算法评分: {existing_ai_result.content_quality_score}")
+                                        
                                         existing_ai_result.updated_at = now_utc()
                                         session.add(existing_ai_result)
                                         logger.info(
@@ -465,6 +474,17 @@ class BackgroundTaskManager:
                                         )
                                     else:
                                         # 创建新结果
+                                        # 优先使用LLM返回的评分，否则使用算法计算
+                                        llm_score = ai_results.get("content_quality_score")
+                                        if llm_score is not None and isinstance(llm_score, (int, float)) and 0 <= llm_score <= 1:
+                                            quality_score = float(llm_score)
+                                            logger.info(f"✅ 使用LLM评分: {llm_score}")
+                                        else:
+                                            quality_score = preprocessing_pipeline._calculate_quality_score(
+                                                cleaned_content, ai_results, metadata
+                                            )
+                                            logger.info(f"✅ 使用算法评分: {quality_score}")
+                                        
                                         ai_result = AIResult(
                                             content_item_id=content_item.id,
                                             optimized_title=optimized_title,
@@ -479,9 +499,7 @@ class BackgroundTaskManager:
                                             difficulty_level=ai_results.get(
                                                 "content_analysis", {}
                                             ).get("difficulty_level", "intermediate"),
-                                            content_quality_score=preprocessing_pipeline._calculate_quality_score(
-                                                cleaned_content, ai_results, metadata
-                                            ),
+                                            content_quality_score=quality_score,
                                         )
                                         session.add(ai_result)
                                         logger.info(
@@ -499,9 +517,58 @@ class BackgroundTaskManager:
 
                                 except Exception as preprocessing_err:
                                     logger.error(
-                                        f"Failed to run AI preprocessing pipeline for {content_id}: {preprocessing_err}"
+                                        f"❌ AI preprocessing pipeline failed for {content_id}: {preprocessing_err}",
+                                        exc_info=True  # 添加详细的异常堆栈信息
                                     )
-                                    # 不让AI分析失败影响整体处理状态
+                                    
+                                    # 记录AI处理失败状态到内容项
+                                    content_item.error_message = f"AI分析失败: {str(preprocessing_err)}"
+                                    session.add(content_item)
+                                    
+                                    # 通知前端AI处理失败
+                                    try:
+                                        await content_event_manager.notify_content_status(
+                                            user_id=user_id,
+                                            content_id=content_id,
+                                            status="processing",
+                                            progress=75,
+                                            title=content_item.title or "新内容",
+                                            error=f"AI分析失败: {str(preprocessing_err)}"
+                                        )
+                                    except Exception as notify_err:
+                                        logger.error(f"Failed to notify AI processing error: {notify_err}")
+                                    
+                                    # 为了调试，让我们也创建一个基本的AI结果记录，表明处理失败
+                                    try:
+                                        from sqlmodel import select
+                                        from app.models.content import AIResult
+                                        
+                                        existing_ai_result = session.exec(
+                                            select(AIResult).where(
+                                                AIResult.content_item_id == content_item.id
+                                            )
+                                        ).first()
+                                        
+                                        if not existing_ai_result:
+                                            # 创建一个标记失败的AI结果记录
+                                            ai_result = AIResult(
+                                                content_item_id=content_item.id,
+                                                optimized_title=None,
+                                                brief_description=None,
+                                                summary={"error": f"AI处理失败: {str(preprocessing_err)}"},
+                                                key_points={"error": f"AI处理失败: {str(preprocessing_err)}"},
+                                                labels=["处理失败"],
+                                                content_analysis={"processing_error": str(preprocessing_err)},
+                                                reading_time_minutes=max(1, len(cleaned_content.split()) // 200),
+                                                difficulty_level="unknown",
+                                                content_quality_score=0.0,
+                                            )
+                                            session.add(ai_result)
+                                            logger.info(f"Created error AI result record for content {content_id}")
+                                    except Exception as ai_result_err:
+                                        logger.error(f"Failed to create error AI result: {ai_result_err}")
+                                    
+                                    # 不让AI分析失败影响整体处理状态，但要记录错误
 
                                 logger.info(
                                     f"Replaced segments for {content_id} (total {len(chunks)})"

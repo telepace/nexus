@@ -31,7 +31,7 @@ export default function WithSidebarLayout({
         } as React.CSSProperties
       }
     >
-      <div className="flex max-w-none w-screen page-top-highlight min-h-screen" suppressHydrationWarning>
+      <div className="flex max-w-none w-full page-top-highlight min-h-screen" suppressHydrationWarning>
         {/* 侧边栏 */}
         <AppSidebar
           onSettingsClick={() => setSettingsOpen(true)}

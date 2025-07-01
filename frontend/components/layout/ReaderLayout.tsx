@@ -24,6 +24,9 @@ import {
   AIResult,
 } from "@/lib/api/content";
 import { useAuth } from "@/lib/client-auth";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
+import { PanelRightOpen, PanelRightClose } from "lucide-react";
 
 // 创建上下文来传递内容更新函数和分析数据
 const ReaderContext = createContext<{
@@ -46,8 +49,12 @@ export default function ReaderLayout({
   contentId,
 }: ReaderLayoutProps) {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addContentOpen, setAddContentOpen] = useState(false);
+  
+  // 移动端右侧面板控制
+  const [showRightPanel, setShowRightPanel] = useState(!isMobile);
 
   const [contentItem, setContentItem] = useState<ContentItemPublic | null>(
     null,
@@ -59,6 +66,15 @@ export default function ReaderLayout({
   const [analysisResult, setAnalysisResult] = useState<AIResult | null>(null);
 
   const markLeftReady = useCallback(() => {}, []);
+
+  // 响应移动端变化，自动调整右侧面板显示
+  useEffect(() => {
+    if (isMobile) {
+      setShowRightPanel(false);
+    } else {
+      setShowRightPanel(true);
+    }
+  }, [isMobile]);
 
   // 获取完整的内容项数据和对话历史
   useEffect(() => {
@@ -114,6 +130,22 @@ export default function ReaderLayout({
     setContentItem(item);
   }, []);
 
+  // 切换右侧面板显示
+  const toggleRightPanel = useCallback(() => {
+    setShowRightPanel(prev => !prev);
+  }, []);
+
+  // 动态计算面板尺寸
+  const getLeftPanelSize = () => {
+    if (isMobile) return 100; // 移动端主面板占满
+    return showRightPanel ? 55 : 100; // 桌面端根据右侧面板状态调整
+  };
+
+  const getRightPanelSize = () => {
+    if (isMobile) return 0;
+    return showRightPanel ? 45 : 0;
+  };
+
   return (
     <SidebarProvider
       defaultOpen={false} // 默认折叠左侧边栏
@@ -124,82 +156,163 @@ export default function ReaderLayout({
         } as React.CSSProperties
       }
     >
-      <div className="flex min-h-screen bg-background max-w-none w-screen">
+      <div className="flex min-h-screen bg-background max-w-none w-full">
         {/* 左侧边栏 - 默认折叠 */}
         <AppSidebar
           onSettingsClick={() => setSettingsOpen(true)}
           onAddContentClick={() => setAddContentOpen(true)}
         />
 
-        {/* 主内容区域 - 使用可调整大小的面板 */}
+        {/* 主内容区域 - 使用响应式布局 */}
         <div className="flex-1 flex w-full min-w-0 h-screen">
-          <ResizablePanelGroup direction="horizontal" className="h-full">
-            {/* 主阅读区域 - 默认占50%，可调整 */}
-            <ResizablePanel
-              defaultSize={50}
-              minSize={30}
-              maxSize={80}
-              className="flex flex-col"
-            >
-              <ReaderContext.Provider
-                value={{
-                  onContentChange: handleContentChange,
-                  onContentItemUpdate: handleContentItemUpdate,
-                  contentItem,
-                  markLeftReady,
-                }}
-              >
-                <div className="flex-1 flex flex-col bg-background overflow-auto">
+          {isMobile ? (
+            // 移动端：垂直布局或单面板
+            <div className="flex flex-col h-full w-full">
+              {/* 主阅读区域 */}
+              <div className={`flex-1 flex flex-col bg-background overflow-auto ${showRightPanel ? 'hidden' : ''}`}>
+                <ReaderContext.Provider
+                  value={{
+                    onContentChange: handleContentChange,
+                    onContentItemUpdate: handleContentItemUpdate,
+                    contentItem,
+                    markLeftReady,
+                  }}
+                >
                   {children}
+                </ReaderContext.Provider>
+                
+                {/* 移动端切换按钮 */}
+                <div className="fixed bottom-4 right-4 z-50">
+                  <Button
+                    onClick={toggleRightPanel}
+                    size="sm"
+                    className="rounded-full shadow-lg bg-primary hover:bg-primary/90"
+                  >
+                    <PanelRightOpen className="h-4 w-4" />
+                  </Button>
                 </div>
-              </ReaderContext.Provider>
-            </ResizablePanel>
+              </div>
 
-            {/* 可拖拽的分割线 */}
-            <ResizableHandle className="bg-border hover:bg-primary/20 transition-colors" />
-
-            {/* AI 分析区域 - 默认占50%，可调整 */}
-            <ResizablePanel
-              defaultSize={50}
-              minSize={20}
-              maxSize={70}
-              className="flex flex-col bg-muted/30"
-            >
-              {contentItem ? (
-                <ContentAnalysisSidebar
-                  content={contentItem}
-                  analysisResult={analysisResult}
-                  conversations={conversations}
-                  isLoading={loading}
-                />
-              ) : (
-                <div className="flex flex-col h-full bg-background">
-                  {/* Header Skeleton */}
-                  <div className="flex items-center justify-between px-4 border-b h-header">
-                    <div className="w-20 h-6 bg-muted rounded animate-shimmer"></div>
+              {/* AI 分析区域 - 移动端全屏显示 */}
+              {showRightPanel && (
+                <div className="flex flex-col h-full bg-muted/30">
+                  <div className="flex items-center justify-between px-4 py-2 border-b bg-background">
+                    <h2 className="font-medium">AI分析</h2>
+                    <Button
+                      onClick={toggleRightPanel}
+                      size="sm"
+                      variant="ghost"
+                    >
+                      <PanelRightClose className="h-4 w-4" />
+                    </Button>
                   </div>
-
-                  {/* Tabs Skeleton */}
-                  <div className="flex-shrink-0 px-4 py-3">
-                    <div className="grid w-full grid-cols-3 gap-1 p-1 bg-muted rounded-lg">
-                      <div className="h-7 bg-background rounded animate-shimmer"></div>
-                      <div className="h-7 bg-muted rounded animate-shimmer"></div>
-                      <div className="h-7 bg-muted rounded animate-shimmer"></div>
-                    </div>
-                  </div>
-
-                  {/* Content Body Skeleton */}
-                  <div className="flex-1 min-h-0 overflow-auto px-4 space-y-4">
-                    <div className="space-y-4">
-                      <div className="w-full h-32 bg-muted rounded-lg animate-shimmer"></div>
-                      <div className="w-full h-40 bg-muted rounded-lg animate-shimmer"></div>
-                      <div className="w-full h-28 bg-muted rounded-lg animate-shimmer"></div>
-                    </div>
+                  <div className="flex-1 overflow-auto">
+                    {contentItem ? (
+                      <ContentAnalysisSidebar
+                        content={contentItem}
+                        analysisResult={analysisResult}
+                        conversations={conversations}
+                        isLoading={loading}
+                      />
+                    ) : (
+                      <div className="flex flex-col h-full bg-background p-4">
+                        <div className="text-center text-muted-foreground">
+                          加载中...
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
-            </ResizablePanel>
-          </ResizablePanelGroup>
+            </div>
+          ) : (
+            // 桌面端：水平可调整布局
+            <ResizablePanelGroup direction="horizontal" className="h-full">
+              {/* 主阅读区域 */}
+              <ResizablePanel
+                defaultSize={getLeftPanelSize()}
+                minSize={30}
+                maxSize={80}
+                className="flex flex-col"
+              >
+                <ReaderContext.Provider
+                  value={{
+                    onContentChange: handleContentChange,
+                    onContentItemUpdate: handleContentItemUpdate,
+                    contentItem,
+                    markLeftReady,
+                  }}
+                >
+                  <div className="flex-1 flex flex-col bg-background overflow-auto">
+                    {children}
+                  </div>
+                </ReaderContext.Provider>
+              </ResizablePanel>
+
+              {/* 分割线 - 仅在显示右侧面板时显示 */}
+              {showRightPanel && (
+                <ResizableHandle className="bg-border hover:bg-primary/20 transition-colors" />
+              )}
+
+              {/* AI 分析区域 */}
+              {showRightPanel && (
+                <ResizablePanel
+                  defaultSize={getRightPanelSize()}
+                  minSize={20}
+                  maxSize={70}
+                  className="flex flex-col bg-muted/30"
+                >
+                  {contentItem ? (
+                    <ContentAnalysisSidebar
+                      content={contentItem}
+                      analysisResult={analysisResult}
+                      conversations={conversations}
+                      isLoading={loading}
+                    />
+                  ) : (
+                    <div className="flex flex-col h-full bg-background">
+                      {/* Header Skeleton */}
+                      <div className="flex items-center justify-between px-4 border-b h-header">
+                        <div className="w-20 h-6 bg-muted rounded animate-shimmer"></div>
+                      </div>
+
+                      {/* Tabs Skeleton */}
+                      <div className="flex-shrink-0 px-4 py-3">
+                        <div className="grid w-full grid-cols-3 gap-1 p-1 bg-muted rounded-lg">
+                          <div className="h-7 bg-background rounded animate-shimmer"></div>
+                          <div className="h-7 bg-muted rounded animate-shimmer"></div>
+                          <div className="h-7 bg-muted rounded animate-shimmer"></div>
+                        </div>
+                      </div>
+
+                      {/* Content Body Skeleton */}
+                      <div className="flex-1 min-h-0 overflow-auto px-4 space-y-4">
+                        <div className="space-y-4">
+                          <div className="w-full h-32 bg-muted rounded-lg animate-shimmer"></div>
+                          <div className="w-full h-40 bg-muted rounded-lg animate-shimmer"></div>
+                          <div className="w-full h-28 bg-muted rounded-lg animate-shimmer"></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </ResizablePanel>
+              )}
+
+              {/* 桌面端右侧面板切换按钮 */}
+              {!showRightPanel && (
+                <div className="absolute top-4 right-4 z-10">
+                  <Button
+                    onClick={toggleRightPanel}
+                    size="sm"
+                    variant="outline"
+                    className="shadow-sm"
+                  >
+                    <PanelRightOpen className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </ResizablePanelGroup>
+          )}
         </div>
 
         {/* 设置面板 */}

@@ -31,6 +31,7 @@ import {
   ProcessingStatusBadge,
   ProcessingStatus,
 } from "@/components/ui/ProcessingStatusBadge";
+import { FavoriteButton } from "@/components/actions/FavoriteButton";
 import { createRipple } from "../utils/ripple";
 import type { ContentItemPublic } from "../types";
 import { useState } from "react";
@@ -226,7 +227,7 @@ export const ContentCard = ({
     <Card
       key={item.id}
       tabIndex={0}
-      className={`group cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ease-out w-libraryCard ${
+      className={`group cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ease-out w-libraryCard relative ${
         selected
           ? "bg-[var(--color-linear-bg-2)] border-[var(--mac-gray-5)] shadow-md"
           : hovered
@@ -250,12 +251,24 @@ export const ContentCard = ({
             {getContentIcon(item.type)}
           </div>
           <div className="flex-1 min-w-0 space-y-2">
-            {/* 标题区域 - 添加三个点菜单 */}
+            {/* 标题区域 - 添加三个点菜单和微妙的收藏按钮 */}
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-1 flex-1 min-w-0">
-                <h3 className="font-medium text-base line-clamp-2 text-neutral-800 dark:text-neutral-100 max-w-cardTitle break-words">
-                  {item.title || "无标题"}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium text-base line-clamp-2 text-neutral-800 dark:text-neutral-100 max-w-cardTitle break-words flex-1">
+                    {item.title || "无标题"}
+                  </h3>
+                  
+                  {/* 极简收藏按钮 - 只在悬浮时显示 */}
+                  <FavoriteButton
+                    itemId={item.id}
+                    size="sm"
+                    variant="ghost"
+                    className={`h-6 w-6 p-0 opacity-0 group-hover:opacity-60 hover:opacity-100 transition-all duration-200 shrink-0 ${
+                      hovered ? 'opacity-60' : ''
+                    }`}
+                  />
+                </div>
                 {hasQualityScore && (
                   <StarRating score={aiResult.content_quality_score!} />
                 )}

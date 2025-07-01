@@ -46,15 +46,17 @@ export default async function PromptsPage({
   // 如果未认证，将在 getAuthState 内部重定向到登录页
   if (!authState.isAuthenticated) {
     return (
-      <div className="container py-10">
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>认证错误</AlertTitle>
-          <AlertDescription>未登录或会话已过期，请登录</AlertDescription>
-        </Alert>
-        <Button asChild>
-          <Link href="/login">去登录</Link>
-        </Button>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+        <div className="max-w-full mx-auto px-6 lg:px-8 xl:px-12 py-10">
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>认证错误</AlertTitle>
+            <AlertDescription>未登录或会话已过期，请登录</AlertDescription>
+          </Alert>
+          <Button asChild>
+            <Link href="/login">去登录</Link>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -62,18 +64,20 @@ export default async function PromptsPage({
   return (
     <ErrorBoundary
       fallback={
-        <div className="container py-10">
-          <h1 className="text-2xl font-bold mb-6">Prompt Library</h1>
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>页面加载错误</AlertTitle>
-            <AlertDescription>
-              加载数据时出现意外错误，请稍后再试或联系管理员
-            </AlertDescription>
-          </Alert>
-          <Button asChild>
-            <Link href="/prompts/create">创建提示词</Link>
-          </Button>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+          <div className="max-w-full mx-auto px-6 lg:px-8 xl:px-12 py-10">
+            <h1 className="text-2xl font-bold mb-6">Prompt Library</h1>
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>页面加载错误</AlertTitle>
+              <AlertDescription>
+                加载数据时出现意外错误，请稍后再试或联系管理员
+              </AlertDescription>
+            </Alert>
+            <Button asChild>
+              <Link href="/prompts/create">创建提示词</Link>
+            </Button>
+          </div>
         </div>
       }
     >
@@ -81,7 +85,7 @@ export default async function PromptsPage({
         fallback={
           <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
             <div className="bg-white/70 backdrop-blur-xl border-b border-slate-200/50">
-              <div className="max-w-7xl mx-auto px-8 py-8">
+              <div className="max-w-full mx-auto px-6 lg:px-8 xl:px-12 py-8">
                 <div className="animate-pulse">
                   <div className="h-8 bg-slate-200 rounded-lg w-48 mb-4"></div>
                   <div className="h-4 bg-slate-200 rounded w-96 mb-8"></div>
@@ -148,7 +152,7 @@ async function PromptsContent({
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
         {/* Minimalist Header */}
         <div className="bg-white/70 backdrop-blur-xl border-b border-slate-200/50">
-          <div className="max-w-7xl mx-auto px-8 py-8">
+          <div className="max-w-full mx-auto px-6 lg:px-8 xl:px-12 py-8">
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h1 className="text-3xl font-light text-slate-900 tracking-tight">
@@ -172,7 +176,7 @@ async function PromptsContent({
         </div>
 
         {/* Content */}
-        <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="max-w-full mx-auto px-6 lg:px-8 xl:px-12 py-6">
           {/* Stats */}
           <div className="mb-6">
             <p className="text-slate-500 text-sm font-light">
@@ -216,7 +220,7 @@ async function PromptsContent({
     console.error("PromptsContent error:", error);
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
-        <div className="max-w-7xl mx-auto px-8 py-10">
+        <div className="max-w-full mx-auto px-6 lg:px-8 xl:px-12 py-10">
           <h1 className="text-3xl font-light text-slate-900 tracking-tight mb-6">Prompt Library</h1>
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />

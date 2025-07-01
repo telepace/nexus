@@ -8,13 +8,54 @@ module.exports = {
   ],
   theme: {
     extend: {
+      screens: {
+        'xs': '475px',    // 额外的小屏幕断点
+        '3xl': '1920px',  // 额外的大屏幕断点
+        // 容器查询断点
+        '@container': {
+          'xs': '20rem',
+          'sm': '24rem', 
+          'md': '28rem',
+          'lg': '32rem',
+          'xl': '36rem',
+          '2xl': '42rem',
+        },
+      },
       width: {
         'library': '35.25rem',     // 564px - content-library左栏宽度
         'library-lg': '37.5rem',   // 600px - 2xl屏幕下的左栏宽度
         'cardTitle': '18rem',      // 卡片标题最大宽度
+        // 响应式容器宽度
+        'container-xs': 'min(100%, 475px)',
+        'container-sm': 'min(100%, 640px)',
+        'container-md': 'min(100%, 768px)',
+        'container-lg': 'min(100%, 1024px)',
+        'container-xl': 'min(100%, 1280px)',
+      },
+      maxWidth: {
+        'prose': '65ch',           // 优化阅读宽度
+        'screen-xs': '475px',
+        'screen-2xl': '1536px',
+        // 动态最大宽度
+        'dialog-mobile': '100vw',
+        'dialog-desktop': '90vw',
+      },
+      minWidth: {
+        'dialog': '320px',         // 最小对话框宽度
+        'sidebar': '240px',        // 最小侧边栏宽度
+        'content': '280px',        // 最小内容区域宽度
       },
       height: {
         'header': '3.5rem',        // 56px - 页面头部高度
+        'dialog-mobile': '100vh',
+        'dialog-desktop': '90vh',
+        'screen-safe': '100dvh',   // 动态视口高度
+      },
+      spacing: {
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
+        'safe-right': 'env(safe-area-inset-right)',
       },
       colors: {
         // 日式极简美学色彩系统
@@ -34,10 +75,14 @@ module.exports = {
       },
       boxShadow: {
         'macos-window': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        'dialog-mobile': '0 0 0 1px rgba(0, 0, 0, 0.05)',
+        'dialog-desktop': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',
         'slide-in': 'slideIn 0.3s ease-out',
+        'slide-up': 'slideUp 0.3s ease-out',
+        'scale-in': 'scaleIn 0.2s ease-out',
       },
       keyframes: {
         fadeIn: {
@@ -47,6 +92,14 @@ module.exports = {
         slideIn: {
           'from': { opacity: '0', transform: 'translateX(-10px)' },
           'to': { opacity: '1', transform: 'translateX(0)' },
+        },
+        slideUp: {
+          'from': { opacity: '0', transform: 'translateY(20px)' },
+          'to': { opacity: '1', transform: 'translateY(0)' },
+        },
+        scaleIn: {
+          'from': { opacity: '0', transform: 'scale(0.95)' },
+          'to': { opacity: '1', transform: 'scale(1)' },
         },
       },
       // 添加无滚动条的工具类
@@ -60,14 +113,21 @@ module.exports = {
           '-ms-overflow-style': 'none',  /* IE and Edge */
           'scrollbar-width': 'none',  /* Firefox */
         },
+        '.safe-area-inset': {
+          'padding-top': 'env(safe-area-inset-top)',
+          'padding-bottom': 'env(safe-area-inset-bottom)',
+          'padding-left': 'env(safe-area-inset-left)',
+          'padding-right': 'env(safe-area-inset-right)',
+        },
       },
     },
   },
   plugins: [
     require("tailwindcss-animate"), 
     require("@tailwindcss/typography"),
-    // 添加自定义无滚动条插件
-    function({ addUtilities }) {
+    require('@tailwindcss/container-queries'),
+    // 添加自定义工具类插件
+    function({ addUtilities, addComponents, theme }) {
       const newUtilities = {
         '.no-scrollbar': {
           /* Hide scrollbar for Chrome, Safari and Opera */
@@ -78,8 +138,81 @@ module.exports = {
           '-ms-overflow-style': 'none',  /* IE and Edge */
           'scrollbar-width': 'none',  /* Firefox */
         },
+        '.safe-area-inset': {
+          'padding-top': 'env(safe-area-inset-top)',
+          'padding-bottom': 'env(safe-area-inset-bottom)', 
+          'padding-left': 'env(safe-area-inset-left)',
+          'padding-right': 'env(safe-area-inset-right)',
+        },
+        '.overflow-safe': {
+          'overflow': 'auto',
+          'overscroll-behavior': 'contain',
+        },
+        // 响应式容器工具类
+        '.container-responsive': {
+          'width': '100%',
+          'max-width': '100%',
+          'margin-left': 'auto',
+          'margin-right': 'auto',
+          'padding-left': '1rem',
+          'padding-right': '1rem',
+          '@media (min-width: 640px)': {
+            'max-width': '640px',
+          },
+          '@media (min-width: 768px)': {
+            'max-width': '768px',
+          },
+          '@media (min-width: 1024px)': {
+            'max-width': '1024px',
+          },
+          '@media (min-width: 1280px)': {
+            'max-width': '1280px',
+          },
+        },
+        // 响应式文本大小
+        '.text-responsive': {
+          'font-size': 'clamp(0.875rem, 2.5vw, 1rem)',
+          'line-height': '1.5',
+        },
+        '.text-responsive-lg': {
+          'font-size': 'clamp(1rem, 3vw, 1.25rem)',
+          'line-height': '1.4',
+        },
       };
+
+      const newComponents = {
+        '.dialog-responsive': {
+          'position': 'fixed',
+          'inset': '0',
+          'z-index': '50',
+          'display': 'flex',
+          'align-items': 'center',
+          'justify-content': 'center',
+          'padding': '1rem',
+          '@media (max-width: 768px)': {
+            'padding': '0',
+            'align-items': 'flex-end',
+          },
+        },
+        '.panel-split': {
+          'display': 'flex',
+          'height': '100vh',
+          '@media (max-width: 768px)': {
+            'flex-direction': 'column',
+          },
+        },
+        '.panel-responsive': {
+          'flex': '1',
+          'min-width': '0',
+          'overflow': 'auto',
+          '@media (max-width: 768px)': {
+            'height': '50vh',
+          },
+        },
+      };
+
       addUtilities(newUtilities);
+      addComponents(newComponents);
     },
   ],
 };

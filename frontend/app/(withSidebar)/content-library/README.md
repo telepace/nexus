@@ -259,4 +259,185 @@ if (viewMode === "custom") {
 - [ ] 添加批量操作功能
 - [ ] 增强移动端体验
 - [ ] 添加快捷键支持
-- [ ] 支持主题切换（保持极简风格） 
+- [ ] 支持主题切换（保持极简风格）
+
+## 功能特性
+
+### 🎯 智能交互
+- **即时跳转**: 点击卡片直接跳转到阅读器，提供即时反馈
+- **智能预览**: 悬浮卡片预取内容，右侧实时预览
+- **优雅收藏**: 悬浮时显示收藏按钮，一键添加/取消收藏 ❤️
+
+### 🔍 高效筛选
+- **实时搜索**: 标题、摘要、标签全文搜索
+- **标签筛选**: 多标签组合筛选，智能匹配
+- **多维排序**: 时间、评分、标题、浏览量排序
+- **视图切换**: 网格/列表视图无缝切换
+
+### 📊 内容分析
+- **AI 评分**: 内容质量智能评分（5星制）
+- **阅读时间**: 智能预估阅读时长
+- **标签提取**: AI 自动生成内容标签
+- **状态跟踪**: 处理状态实时更新
+
+### 🎨 视觉体验
+- **流畅动画**: 悬浮、点击、切换动画效果
+- **响应式布局**: 适配不同屏幕尺寸
+- **优雅过渡**: 筛选、排序平滑过渡
+- **模糊背景**: 收藏按钮毛玻璃效果
+
+## 核心组件
+
+### ContentCard
+- **悬浮收藏**: 鼠标悬浮时优雅显示收藏按钮
+- **操作菜单**: 三点菜单提供完整操作选项
+- **状态反馈**: 处理、删除状态实时反馈
+- **星级评分**: 可视化内容质量评分
+
+### ContentList
+- **高性能渲染**: 虚拟化长列表支持
+- **无缝分割**: 优雅的分割线设计
+- **响应式网格**: 自适应卡片布局
+
+### ContentPreview
+- **实时预览**: 悬浮内容即时预览
+- **富文本渲染**: Markdown 内容美化显示
+- **加载状态**: 优雅的骨架屏效果
+
+### Toolbar
+- **智能搜索**: 防抖搜索，性能优化
+- **视觉筛选**: 标签气泡式选择
+- **快速排序**: 一键切换排序方式
+
+## 交互设计
+
+### 悬浮交互
+```tsx
+// 悬浮时显示收藏按钮
+<div className={`absolute top-2 right-2 z-10 transition-all duration-300 ease-out ${
+  hovered ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-2 scale-95 pointer-events-none"
+}`}>
+  <FavoriteButton
+    itemId={item.id}
+    size="sm"
+    variant="ghost"
+    className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-lg hover:shadow-xl"
+  />
+</div>
+```
+
+### 点击反馈
+- **即时跳转**: 点击卡片立即导航
+- **事件隔离**: 防止操作按钮事件冒泡
+- **涟漪效果**: 点击时的视觉反馈
+
+### 状态管理
+- **乐观更新**: 操作成功率高，先更新 UI
+- **错误处理**: 操作失败时回滚状态
+- **缓存同步**: 自动同步收藏状态
+
+## 性能优化
+
+### 预取策略
+- **悬浮预取**: 鼠标悬浮时预取内容
+- **智能缓存**: React Query 缓存管理
+- **防抖搜索**: 减少不必要的 API 调用
+
+### 渲染优化
+- **memo 缓存**: 防止不必要的重渲染
+- **虚拟化**: 大量数据时的性能保障
+- **懒加载**: 按需加载内容
+
+### 网络优化
+- **并发请求**: 合理的请求并发控制
+- **重试机制**: 网络失败时的自动重试
+- **超时控制**: 防止长时间等待
+
+## API 集成
+
+### 收藏功能
+```typescript
+// 添加收藏
+POST /api/v1/content/{id}/favorite
+
+// 取消收藏  
+DELETE /api/v1/content/{id}/favorite
+
+// 获取收藏列表
+GET /api/v1/favorites/content-ids
+```
+
+### 内容操作
+```typescript
+// 获取内容列表
+GET /api/v1/content/
+
+// 删除内容
+DELETE /api/v1/content/{id}
+
+// 重新处理
+POST /api/v1/content/{id}/reprocess
+```
+
+## 技术栈
+
+- **React 18**: 并发特性，Suspense
+- **TypeScript**: 类型安全，开发体验
+- **Tailwind CSS**: 原子化 CSS，响应式设计
+- **Framer Motion**: 流畅动画效果
+- **React Query**: 数据获取和缓存
+- **Lucide Icons**: 现代图标库
+
+## 使用示例
+
+### 基本使用
+```tsx
+import ContentLibraryPage from './page';
+
+// 直接使用，无需额外配置
+<ContentLibraryPage />
+```
+
+### 自定义筛选
+```tsx
+const [filters, setFilters] = useState({
+  search: "",
+  selectedTags: [],
+  sortBy: "time",
+  viewMode: "grid"
+});
+```
+
+### 事件处理
+```tsx
+const handleCardClick = (item: ContentItemPublic) => {
+  // 自定义点击处理
+  router.push(`/reader/${item.id}`);
+};
+
+const handleFavorite = (itemId: string) => {
+  // 自定义收藏处理
+  mutate();
+};
+```
+
+## 最佳实践
+
+### 性能建议
+- 合理使用 `useMemo` 和 `useCallback`
+- 避免在渲染函数中创建对象
+- 使用 React Query 的缓存策略
+
+### 用户体验
+- 提供即时反馈，减少等待感
+- 保持操作的一致性和可预测性
+- 优雅处理错误状态
+
+### 可访问性
+- 支持键盘导航
+- 提供屏幕阅读器支持
+- 合理的焦点管理
+
+---
+
+💡 **Tips**: 悬浮任意内容卡片，右上角会优雅地显示收藏按钮，点击即可添加到收藏夹！ 

@@ -252,12 +252,9 @@ def create_content_item_endpoint(
             content_in.content_text
         )
 
-    # For text content, set status to completed since no processing needed
-    # For URL and other types, set to processing and trigger background task
-    if content_in.type == "text":
-        content_item_data["processing_status"] = "completed"
-    else:
-        content_item_data["processing_status"] = "processing"
+    # 所有类型的内容都需要经过后台处理以获得LLM分析
+    # 包括文本内容的AI分析、摘要生成、关键要点提取等
+    content_item_data["processing_status"] = "processing"
 
     # Create a ContentItem model instance
     db_content_item = ContentItem(**content_item_data)
@@ -267,11 +264,10 @@ def create_content_item_endpoint(
         session=session, content_item_in=db_content_item
     )
 
-    # Start background processing for non-text content
-    if content_in.type != "text":
-        background_task_manager.start_content_processing(
-            content_id=str(created_item.id), user_id=str(current_user.id)
-        )
+    # 启动后台处理，包括文本内容的LLM分析
+    background_task_manager.start_content_processing(
+        content_id=str(created_item.id), user_id=str(current_user.id)
+    )
 
     # Convert ContentItem to ContentItemPublic
     public_item = ContentItemPublic(

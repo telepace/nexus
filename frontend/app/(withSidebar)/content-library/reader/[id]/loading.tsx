@@ -58,7 +58,7 @@ const RightPanelSkeleton = () => (
 // Reader 布局骨架
 const ReaderLayoutSkeleton = () => {
   return (
-    <div className="flex min-h-screen bg-background w-screen">
+    <div className="flex min-h-screen bg-background w-full">
       {/* 模拟左侧边栏 */}
       <div className="w-[4rem] bg-muted/20 border-r shrink-0"></div>
       {/* 主内容区域 */}

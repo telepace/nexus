@@ -151,30 +151,30 @@ export function FavoriteButton({
       disabled={isLoading}
       className={cn(
         "transition-all duration-200 ease-in-out",
-        "hover:scale-105 active:scale-95",
-        "text-amber-500 hover:text-amber-600",
-        "hover:bg-amber-50 dark:hover:bg-amber-950/20",
-        "focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2",
+        "hover:scale-110 active:scale-95",
+        "text-neutral-400 hover:text-amber-500",
+        "hover:bg-transparent",
+        "focus-visible:ring-1 focus-visible:ring-amber-500/30 focus-visible:ring-offset-1",
         isLoading && "opacity-50 cursor-not-allowed",
         sizeClasses[size],
         className,
       )}
-      aria-label={isFavorited ? "Unfavorite" : "Favorite"}
+      aria-label={isFavorited ? "取消收藏" : "添加收藏"}
       tabIndex={0}
     >
       {isLoading ? (
         <Loader2
           size={iconSizes[size]}
-          className="animate-spin text-amber-500"
+          className="animate-spin text-neutral-400"
         />
       ) : (
         <Heart
           size={iconSizes[size]}
           className={cn(
-            "transition-colors",
+            "transition-all duration-200 ease-out",
             isFavorited
-              ? "text-amber-500 fill-amber-500 drop-shadow-sm"
-              : "text-amber-500 hover:text-amber-600",
+              ? "text-amber-500 fill-amber-500"
+              : "text-neutral-400 hover:text-amber-500",
           )}
         />
       )}
