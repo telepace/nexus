@@ -22,25 +22,20 @@ from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
 from app.core.security import verify_password
 from app.crud.crud_content import (
-    create_content_item_sync as crud_create_content_item,
-)
-from app.crud.crud_content import (
-    create_content_share,
-    deactivate_content_share,
+    create_content_item_sync,
+    get_content_item_sync as crud_get_content_item,
+    get_content_items_sync,
+    update_content_item_sync,
+    delete_content_item_sync,
     get_content_chunks,
+    get_all_content_chunks,
     get_content_chunks_summary,
+    create_content_share,
     get_content_share_by_token,
     get_content_shares_by_content_id,
+    update_content_share,
     increment_access_count,
-)
-from app.crud.crud_content import (
-    delete_content_item_sync as crud_delete_content_item,
-)
-from app.crud.crud_content import (
-    get_content_item_sync as crud_get_content_item,
-)
-from app.crud.crud_content import (
-    get_content_items_sync as crud_get_content_items,
+    deactivate_content_share,
 )
 from app.models import (
     AIConversation,
@@ -260,7 +255,7 @@ def create_content_item_endpoint(
     db_content_item = ContentItem(**content_item_data)
 
     # The CRUD function will handle adding to session, commit, refresh
-    created_item = crud_create_content_item(
+    created_item = create_content_item_sync(
         session=session, content_item_in=db_content_item
     )
 
@@ -359,7 +354,7 @@ async def process_content_item_endpoint(
     pipeline = ProcessingPipeline()
 
     # Process in background with new pipeline
-    background_tasks.add_task(process_content_background_async, pipeline, item, session)
+    background_tasks.add_task(process_content_background_async, pipeline, id, session)
 
     # Update status to processing
     item.processing_status = "processing"
@@ -384,40 +379,58 @@ async def process_content_item_endpoint(
 
 
 async def process_content_background_async(
-    pipeline, content_item: ContentItem, session
+    pipeline, content_item_id: uuid.UUID, session_config
 ):
     """异步后台任务处理内容，支持AI分析"""
+    # 创建新的session以避免绑定问题
+    from app.core.database import engine
+    from sqlmodel import Session
+    
     try:
-        # 使用新的异步处理管道
-        result = await pipeline.process_async(content_item, session)
+        with Session(engine) as session:
+            # 重新查询ContentItem对象以确保正确绑定到session
+            content_item = session.get(ContentItem, content_item_id)
+            if not content_item:
+                logger.error(f"ContentItem not found: {content_item_id}")
+                return
 
-        if result.success:
-            logger.info(
-                f"Content processing completed successfully for {content_item.id}"
-            )
+            # 使用新的异步处理管道
+            result = await pipeline.process_async(content_item, session)
 
-            # 检查是否有AI分析结果
-            if result.metadata:
-                ai_results = {}
-                for key, value in result.metadata.items():
-                    if key.endswith("_result"):
-                        ai_results[key] = value
+            if result.success:
+                logger.info(
+                    f"Content processing completed successfully for {content_item.id}"
+                )
 
-                if ai_results:
-                    logger.info(
-                        f"AI analysis results available for {content_item.id}: {list(ai_results.keys())}"
-                    )
-        else:
-            logger.error(
-                f"Content processing failed for {content_item.id}: {result.error_message}"
-            )
+                # 检查是否有AI分析结果
+                if result.metadata:
+                    ai_results = {}
+                    for key, value in result.metadata.items():
+                        if key.endswith("_result"):
+                            ai_results[key] = value
+
+                    if ai_results:
+                        logger.info(
+                            f"AI analysis results available for {content_item.id}: {list(ai_results.keys())}"
+                        )
+            else:
+                logger.error(
+                    f"Content processing failed for {content_item.id}: {result.error_message}"
+                )
 
     except Exception as e:
-        logger.error(f"Background processing failed for {content_item.id}: {str(e)}")
-        content_item.processing_status = "failed"
-        content_item.error_message = str(e)
-        session.add(content_item)
-        session.commit()
+        logger.error(f"Background processing failed for {content_item_id}: {str(e)}")
+        # 在新的session中更新错误状态
+        try:
+            with Session(engine) as session:
+                content_item = session.get(ContentItem, content_item_id)
+                if content_item:
+                    content_item.processing_status = "failed"
+                    content_item.error_message = str(e)
+                    session.add(content_item)
+                    session.commit()
+        except Exception as update_err:
+            logger.error(f"Failed to update error status: {update_err}")
 
 
 def process_content_background(processor, content_item: ContentItem, session):
@@ -470,7 +483,7 @@ def list_content_items_endpoint(
     Retrieve content items for the current user.
     """
     # Filter by current user's ID for security
-    items = crud_get_content_items(
+    items = get_content_items_sync(
         session=session, skip=skip, limit=limit, user_id=current_user.id
     )
 
@@ -602,8 +615,9 @@ def get_content_chunks_endpoint(
     id: uuid.UUID = Path(..., description="Content item ID"),
     page: int = Query(1, ge=1, description="Page number (1-based)"),
     size: int = Query(10, ge=1, le=50, description="Number of chunks per page"),
+    all: bool = Query(False, description="Get all chunks at once, ignoring pagination"),
 ) -> dict[str, Any]:
-    """Get content chunks with pagination."""
+    """Get content chunks with pagination or all at once."""
 
     # 验证内容项存在且属于当前用户
     content_item = crud_get_content_item(session=session, id=id)
@@ -619,10 +633,33 @@ def get_content_chunks_endpoint(
         )
 
     try:
-        # 获取分块数据
-        chunks, total_count = get_content_chunks(
-            session=session, content_item_id=id, page=page, size=size
-        )
+        if all:
+            # 获取所有分块数据，忽略分页参数
+            chunks, total_count = get_all_content_chunks(
+                session=session, content_item_id=id
+            )
+            # 设置分页信息表示已获取全部
+            pagination_info = {
+                "page": 1,
+                "size": total_count,
+                "total_chunks": total_count,
+                "total_pages": 1,
+                "has_next": False,
+                "has_prev": False,
+            }
+        else:
+            # 使用原有的分页逻辑
+            chunks, total_count = get_content_chunks(
+                session=session, content_item_id=id, page=page, size=size
+            )
+            pagination_info = {
+                "page": page,
+                "size": size,
+                "total_chunks": total_count,
+                "total_pages": (total_count + size - 1) // size,
+                "has_next": page * size < total_count,
+                "has_prev": page > 1,
+            }
 
         # 转换为返回格式
         chunk_data = []
@@ -650,14 +687,7 @@ def get_content_chunks_endpoint(
         return {
             "content_id": str(id),  # 前端期望的是 content_id
             "chunks": chunk_data,
-            "pagination": {
-                "page": page,
-                "size": size,
-                "total_chunks": total_count,  # 前端期望的是 total_chunks
-                "total_pages": (total_count + size - 1) // size,
-                "has_next": page * size < total_count,  # 添加前端期望的字段
-                "has_prev": page > 1,
-            },
+            "pagination": pagination_info,
             "summary": {  # 添加前端期望的 summary 字段
                 "total_chunks": total_count,
                 "total_words": total_words,
@@ -913,7 +943,7 @@ async def _stream_content_analysis(
                                 if "error" in parsed:
                                     error_msg = parsed.get("message", "Unknown error")
 
-                                    # 在新的数据库会话中保存错误
+                                    # 保存错误
                                     try:
                                         with next(get_db()) as new_session:
                                             conversation = new_session.get(
@@ -1741,8 +1771,20 @@ async def _stream_template_analysis(
                                 continue
 
     except Exception as e:
-        logger.error(f"Template analysis failed: {e}")
-        error_msg = f"Analysis failed: {str(e)}"
+        error_msg = str(e)
+        logger.error(f"Stream analysis failed for content {content_item_id}: {error_msg}")
+        
+        # 检查是否是Session绑定错误
+        if "not bound to a Session" in error_msg:
+            error_msg = "内容处理过程中出现数据库连接问题，请重试或刷新页面后再试"
+        elif "timeout" in error_msg.lower():
+            error_msg = "AI分析超时，请稍后重试"
+        elif "connection" in error_msg.lower():
+            error_msg = "网络连接问题，请检查网络后重试"
+        else:
+            error_msg = f"AI分析失败: {error_msg}"
+        
+        # 发送友好的错误消息
         yield f"data: {json.dumps({'type': 'error', 'content': error_msg, 'finished': True})}\n\n"
 
 
@@ -1769,7 +1811,7 @@ def delete_content_item_endpoint(
     Only the owner of the content item can delete it.
     """
     try:
-        success = crud_delete_content_item(
+        success = delete_content_item_sync(
             session=session, id=id, user_id=current_user.id
         )
 
@@ -2058,18 +2100,41 @@ def create_share_link_endpoint(
 def get_shared_content_endpoint(
     *,
     session: SessionDep,
-    token: str = Path(..., description="The unique share token"),
+    token: str = Path(..., description="The unique share token or content ID"),
     password: str | None = Query(None, description="Password for protected content"),
 ) -> ContentItemPublic:
-    """Access shared content using a share token."""
-    # Get the share record
+    """Access shared content using a share token or content ID."""
+    import uuid
+    
+    # First, try to get the share record by token
     content_share = get_content_share_by_token(session, token)
+    
+    # If no share record found, check if token is a valid UUID (content ID)
     if not content_share:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Share link not found or inactive",
-        )
-
+        try:
+            # Try to parse as UUID (content ID)
+            content_id = uuid.UUID(token)
+            
+            # Get the content item directly
+            content_item = crud_get_content_item(session, content_id)
+            if not content_item:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Content not found",
+                )
+            
+            # For direct content ID access, return the content without share restrictions
+            # This is a fallback mechanism for backward compatibility
+            return ContentItemPublic.model_validate(content_item)
+            
+        except ValueError:
+            # Not a valid UUID, and no share record found
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Share link not found or inactive",
+            )
+    
+    # If we have a share record, proceed with standard share validation
     # Check if share is active
     if not content_share.is_active:
         raise HTTPException(

@@ -122,7 +122,11 @@ export function AppSidebar({
   }, []);
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar
+      collapsible="icon"
+      className="group-data-[state=collapsed]:border-none"
+      {...props}
+    >
       <SidebarHeader className="p-0">
         <div className="flex h-header shrink-0 items-center justify-center gap-2 border-b border-gray-100/50 px-4 group-data-[collapsible=icon]:px-2 backdrop-blur-sm">
           {/* 展开状态：Logo + 品牌名称 + 独立展开按钮 */}

@@ -152,7 +152,7 @@ export default function ReaderLayout({
       style={
         {
           "--sidebar-width": "240px", // 展开时的宽度
-          "--sidebar-width-icon": "3.5rem", // 折叠时的宽度，更紧凑
+          "--sidebar-width-icon": "3rem", // 折叠时的宽度，保留图标可见且空白适中
         } as React.CSSProperties
       }
     >
@@ -183,49 +183,50 @@ export default function ReaderLayout({
                   {children}
                 </ReaderContext.Provider>
 
-                {/* 移动端切换按钮 */}
-                <div className="fixed bottom-4 right-4 z-50">
+                {/* AI 分析区域 - 移动端全屏显示 */}
+                {showRightPanel && (
+                  <div className="flex flex-col h-full bg-muted/30">
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-muted/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm">
+                      <h2 className="font-semibold text-base">AI分析</h2>
+                      <Button
+                        onClick={toggleRightPanel}
+                        size="sm"
+                        variant="ghost"
+                        className="hover:bg-muted/60 dark:hover:bg-muted/40 transition-all duration-200 ease-out"
+                      >
+                        <PanelRightClose className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="flex-1 overflow-auto">
+                      {contentItem ? (
+                        <ContentAnalysisSidebar
+                          content={contentItem}
+                          analysisResult={analysisResult}
+                          conversations={conversations}
+                          isLoading={loading}
+                        />
+                      ) : (
+                        <div className="flex flex-col h-full bg-background p-6">
+                          <div className="text-center text-muted-foreground">
+                            加载中...
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 移动端切换按钮 - 优化样式和位置 */}
+                <div className="fixed bottom-6 right-6 z-50">
                   <Button
                     onClick={toggleRightPanel}
                     size="sm"
-                    className="rounded-full shadow-lg bg-primary hover:bg-primary/90"
+                    className="rounded-full shadow-lg bg-primary hover:bg-primary/90 transition-all duration-200 ease-out hover:scale-105 w-12 h-12 p-0"
                   >
-                    <PanelRightOpen className="h-4 w-4" />
+                    <PanelRightOpen className="h-5 w-5" />
                   </Button>
                 </div>
               </div>
-
-              {/* AI 分析区域 - 移动端全屏显示 */}
-              {showRightPanel && (
-                <div className="flex flex-col h-full bg-muted/30">
-                  <div className="flex items-center justify-between px-4 py-2 border-b bg-background">
-                    <h2 className="font-medium">AI分析</h2>
-                    <Button
-                      onClick={toggleRightPanel}
-                      size="sm"
-                      variant="ghost"
-                    >
-                      <PanelRightClose className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="flex-1 overflow-auto">
-                    {contentItem ? (
-                      <ContentAnalysisSidebar
-                        content={contentItem}
-                        analysisResult={analysisResult}
-                        conversations={conversations}
-                        isLoading={loading}
-                      />
-                    ) : (
-                      <div className="flex flex-col h-full bg-background p-4">
-                        <div className="text-center text-muted-foreground">
-                          加载中...
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           ) : (
             // 桌面端：水平可调整布局
@@ -273,26 +274,25 @@ export default function ReaderLayout({
                     />
                   ) : (
                     <div className="flex flex-col h-full bg-background">
-                      {/* Header Skeleton */}
-                      <div className="flex items-center justify-between px-4 border-b h-header">
-                        <div className="w-20 h-6 bg-muted rounded animate-shimmer"></div>
+                      {/* Header Skeleton - 优化对比度 */}
+                      <div className="flex items-center justify-between px-6 border-b border-muted/40 bg-muted/10 backdrop-blur supports-[backdrop-filter]:bg-muted/40 shadow-sm h-14">
+                        <div className="w-20 h-5 bg-muted/30 dark:bg-muted/20 rounded animate-pulse"></div>
                       </div>
 
-                      {/* Tabs Skeleton */}
-                      <div className="flex-shrink-0 px-4 py-3">
-                        <div className="grid w-full grid-cols-3 gap-1 p-1 bg-muted rounded-lg">
-                          <div className="h-7 bg-background rounded animate-shimmer"></div>
-                          <div className="h-7 bg-muted rounded animate-shimmer"></div>
-                          <div className="h-7 bg-muted rounded animate-shimmer"></div>
+                      {/* Tabs Skeleton - 改善间距和对比度 */}
+                      <div className="flex-shrink-0 px-6 py-4">
+                        <div className="grid w-full grid-cols-3 gap-1 p-1 bg-muted/30 dark:bg-muted/20 rounded-lg">
+                          <div className="h-7 bg-background/80 rounded animate-pulse"></div>
+                          <div className="h-7 bg-muted/40 dark:bg-muted/30 rounded animate-pulse"></div>
+                          <div className="h-7 bg-muted/40 dark:bg-muted/30 rounded animate-pulse"></div>
                         </div>
                       </div>
 
-                      {/* Content Body Skeleton */}
-                      <div className="flex-1 min-h-0 overflow-auto px-4 space-y-4">
+                      {/* Content Body Skeleton - 简化骨架屏 */}
+                      <div className="flex-1 min-h-0 overflow-auto px-6 space-y-6">
                         <div className="space-y-4">
-                          <div className="w-full h-32 bg-muted rounded-lg animate-shimmer"></div>
-                          <div className="w-full h-40 bg-muted rounded-lg animate-shimmer"></div>
-                          <div className="w-full h-28 bg-muted rounded-lg animate-shimmer"></div>
+                          <div className="w-full h-24 bg-muted/30 dark:bg-muted/20 rounded-lg animate-pulse"></div>
+                          <div className="w-full h-32 bg-muted/30 dark:bg-muted/20 rounded-lg animate-pulse"></div>
                         </div>
                       </div>
                     </div>
@@ -300,14 +300,14 @@ export default function ReaderLayout({
                 </ResizablePanel>
               )}
 
-              {/* 桌面端右侧面板切换按钮 */}
+              {/* 桌面端右侧面板切换按钮 - 优化位置和样式 */}
               {!showRightPanel && (
-                <div className="absolute top-4 right-4 z-10">
+                <div className="absolute top-6 right-6 z-10">
                   <Button
                     onClick={toggleRightPanel}
                     size="sm"
                     variant="outline"
-                    className="shadow-sm"
+                    className="shadow-sm bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 hover:bg-muted/60 transition-all duration-200 ease-out border-muted/40"
                   >
                     <PanelRightOpen className="h-4 w-4" />
                   </Button>

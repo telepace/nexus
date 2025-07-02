@@ -87,7 +87,8 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
     "zod": "^3.25.20",
-    "zustand": "^5.0.5"
+    "zustand": "^5.0.5",
+    "react-window": "^1.8.7"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

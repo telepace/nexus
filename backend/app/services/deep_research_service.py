@@ -186,7 +186,7 @@ class DeepResearchService:
             # 设置环境变量供 GPT Researcher 读取
             os.environ["FAST_LLM"] = f"openai:{default_model}"
             os.environ["SMART_LLM"] = f"openai:{default_model}"
-            
+
             print(f"✅ 设置模型: {default_model}")
             print()
 
@@ -202,7 +202,7 @@ class DeepResearchService:
             # 执行研究
             try:
                 await researcher.conduct_research()
-            except Exception as e:
+            except Exception:
                 raise
 
             # 生成报告

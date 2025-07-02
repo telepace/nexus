@@ -173,14 +173,58 @@ export function AIAnalysisCard({
         });
       } catch (error) {
         setHasStarted(false);
-        const errorMessage =
-          error instanceof Error ? error.message : "分析失败";
-        onError?.(error instanceof Error ? error : new Error(errorMessage));
+        
+        // 智能错误处理 - 识别不同类型的错误并提供相应提示
+        let errorMessage = "分析失败";
+        let suggestion = "请稍后重试";
+        
+        if (error instanceof Error) {
+          const errorStr = error.message.toLowerCase();
+          
+          if (errorStr.includes("not bound to a session") || 
+              errorStr.includes("数据库连接问题")) {
+            errorMessage = "数据库连接异常";
+            suggestion = "请刷新页面后重试，或联系技术支持";
+          } else if (errorStr.includes("timeout") || errorStr.includes("超时")) {
+            errorMessage = "分析超时";
+            suggestion = "内容较长导致处理时间过长，请稍后重试";
+          } else if (errorStr.includes("network") || errorStr.includes("网络")) {
+            errorMessage = "网络连接问题";
+            suggestion = "请检查网络连接后重试";
+          } else if (errorStr.includes("unauthorized") || errorStr.includes("401")) {
+            errorMessage = "认证失效";
+            suggestion = "请重新登录后重试";
+          } else if (errorStr.includes("forbidden") || errorStr.includes("403")) {
+            errorMessage = "权限不足";
+            suggestion = "您没有权限执行此操作";
+          } else if (errorStr.includes("not found") || errorStr.includes("404")) {
+            errorMessage = "内容不存在";
+            suggestion = "请确认内容是否已被删除";
+          } else if (errorStr.includes("500") || errorStr.includes("internal")) {
+            errorMessage = "服务器内部错误";
+            suggestion = "服务器出现问题，请稍后重试或联系技术支持";
+          } else {
+            errorMessage = error.message || "未知错误";
+          }
+        }
+        
+        const finalError = new Error(`${errorMessage}: ${suggestion}`);
+        onError?.(finalError);
+        
         toast({
-          title: "分析失败",
-          description: errorMessage,
+          title: errorMessage,
+          description: suggestion,
           variant: "destructive",
+          action: (
+            <button
+              onClick={handleRetryAnalysis}
+              className="text-sm underline hover:no-underline"
+            >
+              重试
+            </button>
+          ),
         });
+        
         console.error("Content analysis failed:", error);
       }
     } else {

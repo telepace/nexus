@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, memo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -13,36 +13,36 @@ import {
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/client-auth";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
-import VirtualScrollRenderer from "@/components/ui/VirtualScrollRenderer";
+import { SeamlessContentRenderer } from "@/components/ui/SeamlessContentRenderer";
+import { SimpleContentRenderer } from "@/components/ui/SimpleContentRenderer";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
 import { useReaderContext } from "@/components/layout/ReaderLayout";
-import { ContentItemPublic } from "@/app/content-library/types";
+import { ContentItemPublic } from "@/app/openapi-client/types.gen";
 
-// 骨架屏组件
+// 骨架屏组件 - 优化对比度和动画
 const ReaderSkeleton = () => {
   return (
     <div className="flex flex-col h-full">
-      {/* Header Skeleton */}
-      <div className="flex items-center justify-between px-4 h-header border-b shrink-0">
-        <div className="flex items-center space-x-4">
-          <div className="w-8 h-8 bg-muted rounded"></div>
-          <div className="w-48 h-6 bg-muted rounded"></div>
+      {/* Header Skeleton - 统一高度 h-14 */}
+      <div className="flex items-center justify-between px-6 h-14 border-b border-muted/40 bg-muted/10 backdrop-blur supports-[backdrop-filter]:bg-muted/40 shadow-sm shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="w-8 h-8 bg-muted/30 dark:bg-muted/20 rounded animate-pulse"></div>
+          <div className="w-48 h-5 bg-muted/30 dark:bg-muted/20 rounded animate-pulse"></div>
         </div>
-        <div className="w-8 h-8 bg-muted rounded"></div>
+        <div className="w-8 h-8 bg-muted/30 dark:bg-muted/20 rounded animate-pulse"></div>
       </div>
-      {/* Main Content Skeleton */}
-      <div className="flex-1 p-6 space-y-6">
-        <div className="space-y-3">
-          <div className="w-full h-4 bg-muted rounded"></div>
-          <div className="w-5/6 h-4 bg-muted rounded"></div>
-          <div className="w-full h-4 bg-muted rounded"></div>
-          <div className="w-3/4 h-4 bg-muted rounded"></div>
+      
+      {/* Main Content Skeleton - 简化为2-3组，使用8px网格间距 */}
+      <div className="flex-1 px-4 sm:px-6 lg:px-10 xl:px-14 py-8 space-y-6 max-w-none lg:max-w-4xl xl:max-w-5xl mx-0 w-full">
+        <div className="space-y-4">
+          <div className="w-full h-4 bg-muted/30 dark:bg-muted/20 rounded animate-pulse"></div>
+          <div className="w-5/6 h-4 bg-muted/30 dark:bg-muted/20 rounded animate-pulse"></div>
+          <div className="w-full h-4 bg-muted/30 dark:bg-muted/20 rounded animate-pulse"></div>
         </div>
-        <div className="space-y-3">
-          <div className="w-4/5 h-4 bg-muted rounded"></div>
-          <div className="w-full h-4 bg-muted rounded"></div>
-          <div className="w-2/3 h-4 bg-muted rounded"></div>
+        <div className="space-y-4">
+          <div className="w-4/5 h-4 bg-muted/30 dark:bg-muted/20 rounded animate-pulse"></div>
+          <div className="w-full h-4 bg-muted/30 dark:bg-muted/20 rounded animate-pulse"></div>
         </div>
       </div>
     </div>
@@ -69,63 +69,70 @@ const ProcessedContentRenderer = memo(
     content,
     markdownContent,
     contentId,
+    scrollContainerRef,
   }: {
     content: ContentDetail;
     markdownContent?: string | null;
     contentId: string;
+    scrollContainerRef: React.RefObject<HTMLDivElement>;
   }) => {
     const router = useRouter();
 
-    // 优先使用虚拟滚动渲染
-    if (contentId && content.processing_status === "completed") {
+    // 智能选择渲染器：根据内容大小决定使用简单渲染还是分块渲染
+    const contentText = markdownContent || content.processed_content || content.content_text;
+    
+    // 设置阈值：内容超过 50KB 或预估超过 30 个chunks 时使用虚拟滚动
+    const CONTENT_SIZE_THRESHOLD = 50 * 1024; // 50KB
+    const shouldUseVirtualScroll = contentText && (
+      contentText.length > CONTENT_SIZE_THRESHOLD ||
+      contentText.split('\n\n').length > 30 // 粗略估算段落数
+    );
+
+    // 完整内容可用且需要虚拟滚动时，使用 SeamlessContentRenderer
+    if (contentId && content.processing_status === "completed" && shouldUseVirtualScroll) {
       return (
         <div className="relative h-full">
-          {/* 内容类型指示器（隐藏） */}
-          <div className="hidden">
-            <div className="flex items-center justify-between p-3">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                  AI 处理版本
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
-                <FileText className="h-3 w-3" />
-                <span>智能分段显示</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 虚拟滚动渲染器 */}
+          {/* 大文档：使用虚拟滚动渲染器 */}
           <div className="absolute inset-0 animate-in fade-in duration-300 delay-100">
-            <VirtualScrollRenderer
+            <SeamlessContentRenderer
               contentId={contentId}
-              className="w-full h-full px-6 py-4"
-              chunkSize={15}
-              maxVisibleChunks={50}
+              className="w-full h-full px-4 sm:px-6 lg:px-10 xl:px-14 py-6"
+              initialChunkSize={15}
             />
           </div>
         </div>
       );
     }
 
-    // 回退到传统渲染
-    const contentToRender =
-      markdownContent || content.processed_content || content.content_text;
-
-    if (!contentToRender) {
+    // 小文档或中等文档：使用简单渲染器
+    if (contentText) {
       return (
-        <div className="flex justify-center items-center h-96 max-w-4xl mx-auto">
+        <div className="relative h-full">
+          <div className="absolute inset-0 animate-in fade-in duration-300 delay-100">
+            <SimpleContentRenderer
+              content={contentText}
+              title={content.title || undefined}
+              className="w-full h-full px-4 sm:px-6 lg:px-10 xl:px-14 py-6 scrollbar-thin scrollbar-thumb-muted/20 scrollbar-track-transparent hover:scrollbar-thumb-muted/40 transition-colors"
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // 内容不可用的处理
+    if (!contentText) {
+      return (
+        <div className="flex justify-center items-center h-96 max-w-none lg:max-w-4xl xl:max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 xl:px-16">
           <div className="text-center p-8">
-            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">
+            <AlertCircle className="h-12 w-12 text-muted-foreground/60 mx-auto mb-6" />
+            <h3 className="text-lg font-semibold mb-3 text-foreground">
               {content.processing_status === "completed"
                 ? "内容暂不可用"
                 : content.processing_status === "failed"
                   ? "内容处理失败"
                   : "内容正在处理中"}
             </h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
               {content.processing_status === "completed"
                 ? "处理后的内容暂不可用，请稍后再试"
                 : content.processing_status === "failed"
@@ -137,6 +144,7 @@ const ProcessedContentRenderer = memo(
                 <Button
                   variant="default"
                   size="sm"
+                  className="transition-all duration-200 ease-out hover:shadow-md"
                   onClick={async () => {
                     try {
                       const apiUrl =
@@ -165,26 +173,85 @@ const ProcessedContentRenderer = memo(
                       router.refresh();
                     } catch (err) {
                       console.error(err);
-                      alert("重新处理请求失败，请稍后再试");
+                      
+                      // 智能错误处理
+                      let errorMessage = "重新处理请求失败";
+                      let suggestion = "请稍后再试";
+                      
+                      if (err instanceof Error) {
+                        const errorStr = err.message.toLowerCase();
+                        
+                        if (errorStr.includes("not bound to a session") || 
+                            errorStr.includes("数据库连接问题")) {
+                          errorMessage = "系统数据库连接异常";
+                          suggestion = "请刷新页面后重试，如果问题持续存在请联系技术支持";
+                        } else if (errorStr.includes("未找到登录凭据") || 
+                                 errorStr.includes("unauthorized")) {
+                          errorMessage = "登录状态已过期";
+                          suggestion = "请重新登录后重试";
+                          // 可以选择自动跳转到登录页
+                          setTimeout(() => router.push("/login"), 2000);
+                        } else if (errorStr.includes("403") || 
+                                 errorStr.includes("forbidden")) {
+                          errorMessage = "权限不足";
+                          suggestion = "您没有权限重新处理此内容";
+                        } else if (errorStr.includes("404") || 
+                                 errorStr.includes("not found")) {
+                          errorMessage = "内容不存在";
+                          suggestion = "此内容可能已被删除，请返回内容库查看";
+                        } else if (errorStr.includes("500") || 
+                                 errorStr.includes("internal")) {
+                          errorMessage = "服务器内部错误";
+                          suggestion = "服务器正在处理问题，请稍后重试或联系技术支持";
+                        } else if (errorStr.includes("network") || 
+                                 errorStr.includes("fetch")) {
+                          errorMessage = "网络连接问题";
+                          suggestion = "请检查网络连接后重试";
+                        }
+                      }
+                      
+                      // 使用更友好的提示方式
+                      if (typeof window !== 'undefined' && window.confirm) {
+                        const retry = window.confirm(
+                          `${errorMessage}。${suggestion}\n\n点击"确定"返回内容库，点击"取消"稍后重试。`
+                        );
+                        if (retry) {
+                          router.push("/content-library");
+                        }
+                      } else {
+                        alert(`${errorMessage}。${suggestion}`);
+                      }
                     }
                   }}
                 >
-                  重新处理
+                  再试一次
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
+                  className="transition-all duration-200 ease-out hover:shadow-md"
                   onClick={() => router.push("/content-library")}
                 >
                   返回内容库
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="transition-all duration-200 ease-out text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    // 这里可以添加反馈功能
+                    alert("反馈功能即将推出");
+                  }}
+                >
+                  反馈问题
                 </Button>
               </div>
             )}
             {content.processing_status !== "completed" &&
               content.processing_status !== "failed" && (
-                <div className="flex items-center justify-center gap-2 mt-4">
+                <div className="flex items-center justify-center gap-2 mt-6">
                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  <span className="text-sm text-primary">
+                  <span className="text-sm text-primary font-medium">
                     AI 正在处理内容...
                   </span>
                 </div>
@@ -194,42 +261,8 @@ const ProcessedContentRenderer = memo(
       );
     }
 
-    // 优化的传统 markdown 渲染
-    return (
-      <div className="relative h-full animate-in fade-in duration-300">
-        <div className="hidden">
-          <div className="flex items-center justify-between p-3">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                AI 处理版本
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
-              <FileText className="h-3 w-3" />
-              <span>标准渲染模式</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="absolute inset-0 overflow-auto animate-in fade-in duration-300 delay-100">
-          {markdownContent ||
-          contentToRender.includes("#") ||
-          contentToRender.includes("**") ? (
-            <MarkdownRenderer
-              content={contentToRender}
-              className="prose prose-sm max-w-[35rem] dark:prose-invert px-8 pyx-8 py-4 mx-auto [&>*:first-child]:mt-0"
-            />
-          ) : (
-            <div className="prose prose-sm max-w-[35rem] dark:prose-invert px-8 pyx-8 py-4 mx-auto [&>*:first-child]:mt-0">
-              <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                {contentToRender}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+    // 默认返回空内容（不应该到达这里）
+    return null;
   },
 );
 
@@ -240,6 +273,43 @@ interface ClientContentProps {
   initialData?: ContentDetail | null;
   initialMarkdown?: string | null;
 }
+
+// 阅读进度条组件
+const ReadingProgress = ({ targetRef }: { targetRef: React.RefObject<HTMLDivElement> }) => {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const updateProgress = () => {
+      if (!targetRef.current) return;
+      
+      const { scrollTop, scrollHeight, clientHeight } = targetRef.current;
+      const totalScrollable = scrollHeight - clientHeight;
+      
+      if (totalScrollable <= 0) {
+        setProgress(0);
+        return;
+      }
+      
+      const currentProgress = (scrollTop / totalScrollable) * 100;
+      setProgress(Math.min(100, Math.max(0, currentProgress)));
+    };
+
+    const target = targetRef.current;
+    if (!target) return;
+
+    target.addEventListener('scroll', updateProgress);
+    updateProgress(); // 初始计算
+
+    return () => target.removeEventListener('scroll', updateProgress);
+  }, [targetRef]);
+
+  return (
+    <div 
+      className="absolute bottom-0 left-0 h-0.5 bg-primary/60 transition-[width] duration-200 ease-out"
+      style={{ width: `${progress}%` }}
+    />
+  );
+};
 
 export const ClientContent = ({
   contentId,
@@ -258,6 +328,9 @@ export const ClientContent = ({
   );
   const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
+  
+  // 添加滚动容器引用用于进度条
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // 记录访问
   useEffect(() => {
@@ -429,18 +502,19 @@ export const ClientContent = ({
 
   return (
     <div className="h-full flex flex-col animate-in fade-in duration-300">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 border-b h-header">
-        <div className="flex items-center space-x-4 flex-1 min-w-0">
+      {/* Header - 优化高度、背景和间距 */}
+      <div className="flex items-center justify-between px-6 border-b border-muted/40 bg-muted/10 backdrop-blur supports-[backdrop-filter]:bg-muted/40 shadow-sm h-14 relative">
+        <div className="flex items-center gap-4 flex-1 min-w-0">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => router.push("/content-library")}
-            className="hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="hover:bg-muted/60 dark:hover:bg-muted/40 transition-all duration-200 ease-out hover:translate-x-0.5"
+            title="返回内容库"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-sm font-medium truncate">
+          <h1 className="text-base lg:text-lg font-medium truncate leading-none">
             {content.title || "Untitled"}
           </h1>
         </div>
@@ -450,21 +524,26 @@ export const ClientContent = ({
               variant="ghost"
               size="sm"
               onClick={() => window.open(content.source_uri!, "_blank")}
-              title="查看原始内容"
+              className="hover:bg-muted/60 dark:hover:bg-muted/40 transition-all duration-200 ease-out hover:scale-105"
+              title="在新标签打开原文"
             >
-              <ExternalLink className="h-3 w-3" />
+              <ExternalLink className="h-4 w-4" />
             </Button>
           )}
         </div>
+        
+        {/* 阅读进度条 */}
+        <ReadingProgress targetRef={scrollContainerRef} />
       </div>
 
       {/* Main Content - 专注显示AI处理后的内容 */}
       <div className="flex-1 min-h-0">
-        <div className="h-full py-2">
+        <div className="h-full" ref={scrollContainerRef}>
           <ProcessedContentRenderer
             content={content}
             markdownContent={markdownContent}
             contentId={contentId}
+            scrollContainerRef={scrollContainerRef}
           />
         </div>
       </div>

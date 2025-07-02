@@ -342,7 +342,7 @@ const ChunkItem = React.memo<{
     <div className="chunk-content">
       <MarkdownRenderer
         content={chunk.content}
-        className="prose prose-sm max-w-[35rem] dark:prose-invert mx-auto [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+        className="prose prose-sm max-w-[35rem] dark:prose-invert [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
       />
     </div>
   </div>

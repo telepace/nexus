@@ -18,15 +18,14 @@ from sqlmodel import select as sqlmodel_select
 from app.core import security  # For password hashing
 from app.core.storage import StorageInterface
 from app.crud import crud_image  # crud_image module itself
-from app.models.content import (
+from app.models import (
     AIConversation,
     AIResult,
     ContentAsset,
-    ContentChunk,
     ContentItem,
     ContentShare,
+    Segment,  # Use Segment instead of ContentChunk
     MessageSegmentReference,
-    Segment,
 )
 
 # Schema imports - assuming these exist
@@ -35,6 +34,9 @@ from app.schemas.image import ImageCreate
 
 # Image processing imports
 from app.utils.image_processor import process_base64_image, process_web_image
+
+# Import aliases for backward compatibility
+from app.models.content import ContentChunk
 
 logger = logging.getLogger(__name__)
 
@@ -586,3 +588,32 @@ def delete_content_share(db: Session, *, id: uuid.UUID) -> ContentShare | None:
         db.delete(content_share)
         db.commit()
     return content_share
+
+
+def get_all_content_chunks(
+    session: Session, content_item_id: uuid.UUID
+) -> tuple[list[ContentChunk], int]:
+    """
+    Get all content chunks for a content item without pagination.
+    Optimized for scenarios where user wants complete content at once.
+    
+    Args:
+        session: Database session
+        content_item_id: ID of the content item
+        
+    Returns:
+        Tuple of (all_chunks_list, total_count)
+    """
+    # Get all chunks ordered by segment_index - single optimized query
+    chunks_statement = (
+        sqlmodel_select(ContentChunk)
+        .where(ContentChunk.content_item_id == content_item_id)
+        .order_by(ContentChunk.segment_index)
+    )
+    chunks_result = session.exec(chunks_statement)
+    chunks = chunks_result.all()
+    
+    # Count is simply the length of the result
+    total_count = len(chunks)
+    
+    return list(chunks), total_count
