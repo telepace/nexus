@@ -68,8 +68,14 @@ class ChatService:
             # 渲染模板得到 prompt
             prompt: str = template.render(**context)
 
-            # 新策略：将原始内容作为 system prompt，将渲染后的模板作为 user prompt
-            system_content: str = context.get("content", "")
+            # 新策略：优先使用带标号的内容作为 system prompt，如果没有则回退到原始内容
+            formatted_content = context.get("content_with_segment_numbers")
+            if formatted_content:
+                system_content = formatted_content
+                logger.info(f"✅ 使用带段落标号的格式化内容，长度: {len(system_content)}")
+            else:
+                system_content = context.get("content", "")
+                logger.info(f"⚠️ 回退到原始内容，长度: {len(system_content)}")
 
             logger.info(
                 f"Using template {template_name} to build prompt, system_content_length={len(system_content)}, user_prompt_length={len(prompt)}"

@@ -305,6 +305,7 @@ class ContentChunker:
             content_chunk = ContentChunk(
                 content_item_id=content_item_id,
                 segment_index=chunk_info.index,
+                display_number=chunk_info.index + 1,  # 1-based display number
                 content=sanitized_content,
                 segment_type=chunk_info.chunk_type,
                 word_count=len(sanitized_content.split()),

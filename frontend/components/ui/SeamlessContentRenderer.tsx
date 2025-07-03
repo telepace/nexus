@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { FixedSizeList as List } from "react-window";
+import { VariableSizeList as List } from "react-window";
 import { contentApi } from "@/lib/api/content";
 import type {
   ContentChunk,
@@ -15,7 +15,7 @@ interface SeamlessContentRendererProps {
   contentId: string;
   className?: string;
   initialChunkSize?: number; // Size for first screen load
-  itemHeight?: number; // Fixed height for virtual scrolling
+  itemHeight?: number; // Default height for virtual scrolling
   virtualScrollThreshold?: number; // Threshold for using virtual scrolling
 }
 
@@ -24,13 +24,13 @@ interface SeamlessContentRendererProps {
  * 1. Fast first screen load with pagination
  * 2. Background prefetch of all content for seamless reading
  * 3. Hybrid rendering: normal scroll for small docs, virtual scroll for large docs
- * 4. Fixed item height to prevent overlapping issues
+ * 4. Variable item height to prevent overlapping issues
  */
 export const SeamlessContentRenderer: React.FC<SeamlessContentRendererProps> = ({
   contentId,
   className = "",
   initialChunkSize = 15,
-  itemHeight = 280, // Increased fixed height to accommodate most content
+  itemHeight = 400, // Default height for virtual scrolling
   virtualScrollThreshold = 50, // Use virtual scrolling for documents with > 50 chunks
 }) => {
   const [chunks, setChunks] = useState<ContentChunk[]>([]);
@@ -40,6 +40,9 @@ export const SeamlessContentRenderer: React.FC<SeamlessContentRendererProps> = (
   const [isFullContentLoaded, setIsFullContentLoaded] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   
+  // 存储每个chunk的实际高度
+  const [chunkHeights, setChunkHeights] = useState<number[]>([]);
+  
   const listRef = useRef<List>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(600);
@@ -48,6 +51,51 @@ export const SeamlessContentRenderer: React.FC<SeamlessContentRendererProps> = (
   const shouldUseVirtualScroll = useMemo(() => {
     return totalChunks > virtualScrollThreshold;
   }, [totalChunks, virtualScrollThreshold]);
+
+  // 初始化chunk高度数组
+  useEffect(() => {
+    if (chunks.length > 0) {
+      setChunkHeights(prev => {
+        const newHeights = new Array(chunks.length).fill(itemHeight);
+        // 保留已有的高度测量值
+        for (let i = 0; i < Math.min(prev.length, newHeights.length); i++) {
+          if (prev[i] > 0) {
+            newHeights[i] = prev[i];
+          }
+        }
+        return newHeights;
+      });
+    }
+  }, [chunks.length, itemHeight]);
+
+  // 更新单个chunk高度的函数
+  const updateItemHeight = useCallback((index: number, height: number) => {
+    setChunkHeights(prev => {
+      // 确保高度有效且有显著变化（避免小的浮点数差异导致频繁更新）
+      const currentHeight = prev[index] ?? itemHeight;
+      const heightDiff = Math.abs(height - currentHeight);
+      
+      if (height > 0 && heightDiff > 1) { // 至少1px的差异才更新
+        const newHeights = [...prev];
+        newHeights[index] = height;
+        
+        // 延迟调用resetAfterIndex到下一个事件循环，避免在渲染过程中更新
+        setTimeout(() => {
+          if (listRef.current) {
+            listRef.current.resetAfterIndex(index);
+          }
+        }, 0);
+        
+        return newHeights;
+      }
+      return prev;
+    });
+  }, [itemHeight]);
+
+  // 获取单个项目的高度
+  const getItemSize = useCallback((index: number) => {
+    return chunkHeights[index] ?? itemHeight;
+  }, [chunkHeights, itemHeight]);
 
   // Update container height when container ref changes
   useEffect(() => {
@@ -127,19 +175,49 @@ export const SeamlessContentRenderer: React.FC<SeamlessContentRendererProps> = (
     loadContent();
   }, [loadInitialChunks, loadAllChunks]);
 
-  // Render each chunk item for virtual scrolling (fixed height)
+  // 可变高度的虚拟列表项目渲染器
   const renderVirtualChunkItem = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
     const chunk = chunks[index];
     if (!chunk) return null;
 
     return (
       <div style={style}>
-        <div className="px-2">
+        <div 
+          className="px-2"
+          ref={(el) => {
+            if (el) {
+              // 延迟测量高度，避免在渲染过程中更新状态
+              setTimeout(() => {
+                const initialHeight = el.offsetHeight;
+                if (initialHeight > 0) {
+                  updateItemHeight(index, initialHeight);
+                }
+              }, 0);
+              
+              // 使用ResizeObserver来监测高度变化
+              const resizeObserver = new ResizeObserver((entries) => {
+                for (const entry of entries) {
+                  const height = entry.contentRect.height;
+                  if (height > 0) {
+                    updateItemHeight(index, height);
+                  }
+                }
+              });
+              
+              resizeObserver.observe(el);
+              
+              // 返回清理函数
+              return () => {
+                resizeObserver.disconnect();
+              };
+            }
+          }}
+        >
           <ChunkItem chunk={chunk} />
         </div>
       </div>
     );
-  }, [chunks]);
+  }, [chunks, updateItemHeight]);
 
   // Retry handler
   const retryLoad = useCallback(() => {
@@ -188,13 +266,13 @@ export const SeamlessContentRenderer: React.FC<SeamlessContentRendererProps> = (
       {chunks.length > 0 && (
         <>
           {shouldUseVirtualScroll ? (
-            // Large documents: Use virtual scrolling with fixed height
+            // Large documents: Use virtual scrolling with variable height
             containerHeight > 0 && (
               <List
                 ref={listRef}
                 height={containerHeight}
                 itemCount={chunks.length}
-                itemSize={itemHeight} // Fixed height to prevent overlapping
+                itemSize={getItemSize}
                 itemData={chunks}
                 overscanCount={5} // More overscan for smoother scrolling
                 className="scrollbar-thin scrollbar-thumb-muted/20 scrollbar-track-transparent hover:scrollbar-thumb-muted/40 transition-colors"
