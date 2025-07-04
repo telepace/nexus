@@ -198,7 +198,6 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
         getAnalysisColor(analysis.type),
         analysis.isExpanded ? "shadow-md" : "",
       )}
-      data-exclude-selection
     >
       <CardHeader>
         <div className="flex items-center justify-between">

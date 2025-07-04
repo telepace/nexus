@@ -491,5 +491,5 @@ export const AnalysisCards = ({
       ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3"
       : "space-y-4";
 
-  return <div className={containerClass} data-exclude-selection>{cards}</div>;
+  return <div className={containerClass}>{cards}</div>;
 };

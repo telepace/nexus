@@ -970,20 +970,55 @@ def should_update_title(title: str | None) -> bool:
 
 
 class FirecrawlProcessor(ProcessingStep):
-    """使用 Firecrawl API 的处理器 - 简化版本，只保留主要内容"""
+    """使用 Firecrawl API 的处理器 - 增强版本，支持代理和重试"""
 
     def __init__(self):
         self.api_key = getattr(settings, "FIRECRAWL_API_KEY", None)
+        self.max_retries = getattr(settings, "CONTENT_PROCESSOR_MAX_RETRIES", 3)
 
     def can_handle(self, content_type: str) -> bool:
         return content_type == "url" and bool(self.api_key)
 
+    def _setup_proxy_environment(self):
+        """设置代理环境变量供 firecrawl-py 使用"""
+        import os
+        
+        # 保存原始环境变量
+        self._original_env = {}
+        
+        # 检查并设置代理环境变量
+        proxy_vars = ["http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"]
+        for var in proxy_vars:
+            if var in os.environ:
+                self._original_env[var] = os.environ[var]
+        
+        # 如果没有设置代理，但系统有代理配置，则设置
+        if not any(var in os.environ for var in proxy_vars):
+            # 检查系统代理配置
+            system_proxy = os.getenv("all_proxy") or os.getenv("ALL_PROXY")
+            if system_proxy and "socks" not in system_proxy.lower():
+                os.environ["http_proxy"] = system_proxy
+                os.environ["https_proxy"] = system_proxy
+                logger.info(f"为 Firecrawl 设置代理: {system_proxy}")
+
+    def _restore_environment(self):
+        """恢复原始环境变量"""
+        import os
+        
+        if hasattr(self, '_original_env'):
+            # 恢复原始环境变量
+            for var, value in self._original_env.items():
+                os.environ[var] = value
+
     def process(
         self, context: ProcessingContext, result: ProcessingResult
     ) -> ProcessingResult:
-        """使用 Firecrawl 处理 URL 内容 - 只保留主要内容"""
+        """使用 Firecrawl 处理 URL 内容 - 增强版本，支持代理和重试"""
         content_item = context.content_item
         logger.info(f"🔥 使用 Firecrawl 处理: {content_item.source_uri}")
+
+        # 设置代理环境
+        self._setup_proxy_environment()
 
         try:
             # 使用同步 firecrawl-py 库
@@ -998,7 +1033,41 @@ class FirecrawlProcessor(ProcessingStep):
                 "waitFor": 0,  # 不等待，快速返回
             }
 
-            response = app.scrape_url(url=content_item.source_uri, params=params)
+            # 重试机制
+            last_error = None
+            for attempt in range(self.max_retries):
+                try:
+                    if attempt > 0:
+                        import time
+                        delay = min(2 ** attempt, 10)  # 指数退避，最大10秒
+                        logger.info(f"🔄 Firecrawl 重试第 {attempt + 1} 次，等待 {delay} 秒...")
+                        time.sleep(delay)
+
+                    response = app.scrape_url(url=content_item.source_uri, params=params)
+                    
+                    # 如果成功，跳出重试循环
+                    if response and isinstance(response, dict):
+                        break
+                        
+                except Exception as e:
+                    last_error = e
+                    error_str = str(e)
+                    
+                    # 检查是否是网络连接问题
+                    if any(keyword in error_str.lower() for keyword in [
+                        "connection reset", "connection aborted", "connection refused",
+                        "timeout", "network", "proxy", "ssl"
+                    ]):
+                        logger.warning(f"🔧 Firecrawl 网络错误 (尝试 {attempt + 1}/{self.max_retries}): {error_str}")
+                        if attempt < self.max_retries - 1:
+                            continue
+                    else:
+                        # 非网络错误，直接失败
+                        logger.error(f"❌ Firecrawl 非网络错误: {error_str}")
+                        break
+            else:
+                # 所有重试都失败了
+                raise last_error if last_error else Exception("所有重试都失败")
 
             if response and isinstance(response, dict):
                 # 提取markdown内容
@@ -1011,6 +1080,12 @@ class FirecrawlProcessor(ProcessingStep):
                 if not markdown_content:
                     result.success = False
                     result.error_message = "Firecrawl 未返回有效的 markdown 内容"
+                    result.metadata = {
+                        "processor": "firecrawl",
+                        "error_type": "empty_content",
+                        "should_retry": False,
+                        "fallback_recommended": True,
+                    }
                     return result
 
                 # 清理内容
@@ -1043,6 +1118,7 @@ class FirecrawlProcessor(ProcessingStep):
                     "processed_at": datetime.utcnow().isoformat(),
                     "content_length": len(markdown_content),
                     "only_main_content": True,
+                    "retries_used": attempt,
                 }
 
                 # 更新结果
@@ -1056,16 +1132,71 @@ class FirecrawlProcessor(ProcessingStep):
                 logger.info("✅ Firecrawl 处理完成")
             else:
                 result.success = False
-                result.error_message = "Firecrawl 未返回有效的 markdown 内容"
+                result.error_message = "Firecrawl 未返回有效的响应"
+                result.metadata = {
+                    "processor": "firecrawl",
+                    "error_type": "invalid_response",
+                    "should_retry": True,
+                    "fallback_recommended": True,
+                }
 
         except ImportError:
             result.success = False
             result.error_message = "请安装 firecrawl-py: pip install firecrawl-py"
+            result.metadata = {
+                "processor": "firecrawl",
+                "error_type": "missing_dependency",
+                "should_retry": False,
+                "fallback_recommended": True,
+            }
             logger.error("❌ 缺少 firecrawl-py 依赖")
         except Exception as e:
+            error_str = str(e)
             result.success = False
-            result.error_message = f"Firecrawl 处理失败: {str(e)}"
-            logger.error(f"❌ Firecrawl 错误: {str(e)}")
+            
+            # 分析错误类型并提供具体建议
+            if "connection reset" in error_str.lower() or "connection aborted" in error_str.lower():
+                result.error_message = f"Firecrawl 网络连接被重置，可能是代理或网络配置问题: {error_str}"
+                result.metadata = {
+                    "processor": "firecrawl",
+                    "error_type": "connection_reset",
+                    "should_retry": True,
+                    "fallback_recommended": True,
+                    "suggestions": [
+                        "检查网络代理配置",
+                        "验证 Firecrawl API 服务状态",
+                        "尝试使用其他处理器作为备用方案"
+                    ]
+                }
+            elif "timeout" in error_str.lower():
+                result.error_message = f"Firecrawl API 请求超时: {error_str}"
+                result.metadata = {
+                    "processor": "firecrawl",
+                    "error_type": "timeout",
+                    "should_retry": True,
+                    "fallback_recommended": True,
+                }
+            elif "proxy" in error_str.lower():
+                result.error_message = f"Firecrawl 代理配置问题: {error_str}"
+                result.metadata = {
+                    "processor": "firecrawl",
+                    "error_type": "proxy_error",
+                    "should_retry": False,
+                    "fallback_recommended": True,
+                }
+            else:
+                result.error_message = f"Firecrawl 处理失败: {error_str}"
+                result.metadata = {
+                    "processor": "firecrawl",
+                    "error_type": "general_error",
+                    "should_retry": False,
+                    "fallback_recommended": True,
+                }
+            
+            logger.error(f"❌ Firecrawl 错误: {error_str}")
+        finally:
+            # 恢复环境变量
+            self._restore_environment()
 
         return result
 

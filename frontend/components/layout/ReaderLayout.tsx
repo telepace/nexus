@@ -185,8 +185,8 @@ export default function ReaderLayout({
 
                 {/* AI 分析区域 - 移动端全屏显示 */}
                 {showRightPanel && (
-                  <div className="flex flex-col h-full bg-muted/30">
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-muted/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm">
+                  <div className="flex flex-col h-full bg-muted/30 insight-pane ai-analysis-panel" data-exclude-selection>
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-muted/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm" data-exclude-selection>
                       <h2 className="font-semibold text-base">AI分析</h2>
                       <Button
                         onClick={toggleRightPanel}
@@ -197,7 +197,7 @@ export default function ReaderLayout({
                         <PanelRightClose className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="flex-1 overflow-auto">
+                    <div className="flex-1 overflow-auto" data-exclude-selection>
                       {contentItem ? (
                         <ContentAnalysisSidebar
                           content={contentItem}
@@ -206,7 +206,7 @@ export default function ReaderLayout({
                           isLoading={loading}
                         />
                       ) : (
-                        <div className="flex flex-col h-full bg-background p-6">
+                        <div className="flex flex-col h-full bg-background p-6" data-exclude-selection>
                           <div className="text-center text-muted-foreground">
                             加载中...
                           </div>
@@ -263,7 +263,8 @@ export default function ReaderLayout({
                   defaultSize={getRightPanelSize()}
                   minSize={20}
                   maxSize={70}
-                  className="flex flex-col bg-muted/30"
+                  className="flex flex-col bg-muted/30 insight-pane ai-analysis-panel"
+                  data-exclude-selection
                 >
                   {contentItem ? (
                     <ContentAnalysisSidebar

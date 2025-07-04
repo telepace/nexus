@@ -3,10 +3,11 @@
 import React from "react";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { JsonlRenderer } from "./JsonlRenderer";
+import { JsonObjectRenderer } from "./JsonObjectRenderer";
 import { cn } from "@/lib/utils";
 
 interface UniversalContentRendererProps {
-  /** Content string that could be JSONL or Markdown format */
+  /** Content string that could be JSONL, JSON object, or Markdown format */
   content: string | null | undefined;
   /** Additional class names for the container */
   className?: string;
@@ -14,7 +15,7 @@ interface UniversalContentRendererProps {
 
 /**
  * Universal content renderer that automatically detects format and renders accordingly.
- * Supports both JSONL and Markdown content with automatic fallback.
+ * Supports JSONL, JSON objects, and Markdown content with automatic fallback.
  */
 export function UniversalContentRenderer({ 
   content, 
@@ -37,6 +38,24 @@ export function UniversalContentRenderer({
     }
   };
 
+  // Helper to detect JSON object format
+  const isJsonObject = (str: string): boolean => {
+    try {
+      const trimmed = str.trim();
+      // Check if it starts and ends with {} or []
+      if (
+        (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+        (trimmed.startsWith('[') && trimmed.endsWith(']'))
+      ) {
+        JSON.parse(trimmed);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
   if (!content) {
     return (
       <div
@@ -51,6 +70,12 @@ export function UniversalContentRenderer({
     return (
       <div data-testid="universal-content-renderer" className={className}>
         <JsonlRenderer content={content} />
+      </div>
+    );
+  } else if (isJsonObject(content)) {
+    return (
+      <div data-testid="universal-content-renderer" className={className}>
+        <JsonObjectRenderer data={content} />
       </div>
     );
   } else {

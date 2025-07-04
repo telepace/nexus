@@ -17,9 +17,14 @@ import {
   AlertCircle,
   Sparkles,
   Brain,
+  Clock,
+  TrendingUp,
+  Star,
+  Hash,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getCookie } from "@/lib/utils";
+import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 
 export interface AIAnalysisCardProps {
   /** 分析标题 */
@@ -287,7 +292,9 @@ export function AIAnalysisCard({
   };
 
   return (
-    <Card className={cn("w-full", className)} data-exclude-selection>
+    <Card 
+      className={cn("w-full", className)}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

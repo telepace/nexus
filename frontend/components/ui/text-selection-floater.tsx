@@ -80,7 +80,7 @@ const DEFAULT_ACTIONS: TextAction[] = [
 export const TextSelectionFloater: React.FC<TextSelectionFloaterProps> = ({
   enabled = true,
   containerSelector = ".content-area",
-  excludeSelector = ".card, .sidebar, .panel, .analysis-card, .llm-analysis-card, .ai-analysis-card, .content-analysis-sidebar, [data-exclude-selection]",
+  excludeSelector = ".card, .sidebar, .panel, .analysis-card, .llm-analysis-card, .ai-analysis-card, .content-analysis-sidebar, .content-analysis-panel, .ai-analysis-panel, .insight-pane, .floating-menu, .dropdown-menu, .tooltip, .popover, .modal, .dialog, [data-exclude-selection], [data-dropdown-trigger], [data-tooltip], [data-popover], [data-modal], [data-dialog], .shadcn-ui-card, .ui-card, .enhanced-card, button, .button, input, textarea, select, .form-control, .toolbar, .header, .footer, .navigation, .nav, .menu",
   actions = DEFAULT_ACTIONS,
   onAction,
   minSelectionLength = 2,
@@ -115,10 +115,60 @@ export const TextSelectionFloater: React.FC<TextSelectionFloaterProps> = ({
         if (!targetContainer) return false;
       }
 
-      // 检查是否在排除区域内
+      // 增强的排除区域检查
       if (excludeSelector) {
         const excludedElement = element.closest(excludeSelector);
         if (excludedElement) return false;
+      }
+
+      // 额外检查：确保不在右侧面板、侧边栏、或任何UI组件中
+      const additionalExclusions = [
+        '[data-exclude-selection]',
+        '.sidebar',
+        '.panel',
+        '.analysis-card',
+        '.ai-analysis-card',
+        '.content-analysis-sidebar',
+        '.shadcn-ui-card',
+        '.enhanced-card',
+        'button',
+        'input',
+        'textarea',
+        'select',
+        '.dropdown-menu',
+        '.tooltip',
+        '.popover',
+        '.modal',
+        '.dialog',
+        '.menu',
+        '.toolbar',
+        '.header',
+        '.footer',
+        '.navigation'
+      ];
+
+      for (const selector of additionalExclusions) {
+        if (element.closest(selector)) {
+          return false;
+        }
+      }
+
+      // 检查父元素链，确保没有任何祖先元素标记为排除
+      let currentElement = element;
+      while (currentElement && currentElement !== document.body) {
+        if (currentElement.hasAttribute('data-exclude-selection')) {
+          return false;
+        }
+        
+        // 检查是否在右侧面板中（通过ResizablePanel检查）
+        if (currentElement.getAttribute('data-panel-id') || 
+            currentElement.className?.includes('resizable-panel') ||
+            currentElement.className?.includes('analysis') ||
+            currentElement.className?.includes('sidebar')) {
+          return false;
+        }
+        
+        currentElement = currentElement.parentElement;
       }
 
       return true;

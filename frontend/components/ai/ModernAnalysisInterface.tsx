@@ -381,7 +381,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       return (
         <div
           className={`
-            p-4 rounded-lg cursor-pointer transition-all duration-200 select-none
+            p-4 rounded-lg cursor-pointer transition-all duration-200
             ${
               selectedBlock === `${card.id}-main`
                 ? "bg-gray-50 dark:bg-gray-900"
@@ -417,11 +417,12 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         onMouseEnter={() => setHoveredCard(card.id)}
         onMouseLeave={() => setHoveredCard(null)}
         onClick={() => setSelectedCard(isSelected ? null : card.id)}
+        data-exclude-selection
       >
         {/* 极简卡片主体 */}
         <Card
           className={`
-          transition-all duration-200 overflow-hidden relative border-0
+          transition-all duration-200 overflow-hidden relative border-0 analysis-card
           ${
             isSelected
               ? "shadow-lg bg-white dark:bg-gray-950"
@@ -430,8 +431,9 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                 : "shadow-sm bg-gray-50/50 dark:bg-gray-900/50"
           }
         `}
+        data-exclude-selection
         >
-          <CardContent className="p-4">
+          <CardContent className="p-4" data-exclude-selection>
             {/* 极简卡片头部 */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -490,7 +492,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   }
 
   return (
-    <div className={`flex flex-col h-full ${className}`}>
+    <div className={`flex flex-col h-full ${className}`} data-exclude-selection>
       <style jsx global>{`
         .scrollbar-hide {
           -ms-overflow-style: none;
@@ -504,7 +506,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       {/* 可滚动的主内容区域 */}
       <div className="flex-1 overflow-y-auto custom-scrollbar" data-exclude-selection>
         {/* 页面标题 */}
-        <div className="px-6 py-4">
+        <div className="px-6 py-4" data-exclude-selection>
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
             <Brain className="h-4 w-4" />
             智能内容分析
@@ -515,7 +517,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         </div>
 
         {/* 卡片列表 */}
-        <div className="px-6 space-y-4 pb-6">
+        <div className="px-6 space-y-4 pb-6" data-exclude-selection>
           {cards.length > 0 ? (
             cards.map((card, index) => (
               <CardComponent key={card.id} card={card} index={index} />

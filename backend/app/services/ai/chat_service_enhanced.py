@@ -23,9 +23,9 @@ logger = logging.getLogger(__name__)
 
 # 模板到模型的映射
 TEMPLATE_MODEL_MAPPING = {
-    "summary.j2": "claude-3-5-sonnet-20241022",
-    "key_points.j2": "claude-3-5-sonnet-20241022",
-    "labels.j2": "claude-3-5-sonnet-20241022",
+    "summary.j2": "or-deepseek-r1",  # Summary生成使用推理能力更强的R1模型
+    "key_points.j2": "or-deepseek-r1",  # KeyPoint提取使用推理能力更强的R1模型
+    "labels.j2": "deepseek-v3-ensemble",  # Labels生成使用更经济高效的V3集成模型
     "jsonl_output_rules.j2": "claude-3-5-sonnet-20241022",
     "segment_aware_chat.j2": "claude-3-5-sonnet-20241022",
 }

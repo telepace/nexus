@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SimpleContentRenderer } from "@/components/ui/SimpleContentRenderer";
 import { TextSelectionFloater } from "@/components/ui/text-selection-floater";
 import { Badge } from "@/components/ui/badge";
-import { Brain, BookOpen, Target, Settings } from "lucide-react";
+import { Brain, BookOpen, Target, Settings, Sparkles } from "lucide-react";
 
 export default function TextSelectionTestPage() {
   const [selectedText, setSelectedText] = useState<string>("");
@@ -165,56 +165,92 @@ function createTextSelectionFloater(options) {
               </CardContent>
             </Card>
 
-            {/* 分析卡片1 */}
-            <Card data-exclude-selection>
+            {/* 模拟AI分析卡片1 - 增强版 */}
+            <Card data-exclude-selection className="analysis-card ai-analysis-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Brain className="h-5 w-5" />
                   AI分析卡片（浮层无效）
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  这是一个分析卡片区域。在此区域选择文本不会触发浮层，因为添加了 data-exclude-selection 属性。
-                  这确保了右侧面板的独立性，不会被文本选择功能干扰。
-                </p>
-                <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded">
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
-                    测试文本：人工智能正在改变世界。请尝试选择这段文本，
-                    观察是否会出现浮层。如果功能正常，此处不应该有浮层出现。
+              <CardContent data-exclude-selection>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    这是一个分析卡片区域。在此区域选择文本不会触发浮层，因为添加了 data-exclude-selection 属性和 analysis-card 类名。
                   </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* 分析卡片2 */}
-            <Card data-exclude-selection>
-              <CardHeader>
-                <CardTitle>关键要点</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">文本选择功能只在正文区域生效</span>
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded" data-exclude-selection>
+                    <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">测试文本内容：</h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      人工智能正在改变世界，深度学习算法能够处理复杂的数据模式，自然语言处理技术让机器理解人类语言，计算机视觉让机器能够"看见"世界。
+                      请尝试选择这段文本，观察是否会出现浮层。如果功能正常，此处不应该有浮层出现。
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-sm">右侧卡片完全排除文本选择</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                    <span className="text-sm">支持多种智能操作</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <span className="text-sm">响应式设计适配移动端</span>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" className="text-xs">
+                      分析按钮1
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-xs">
+                      分析按钮2
+                    </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* 测试说明 */}
+            {/* 模拟洞察面板 */}
+            <div className="insight-pane ai-analysis-panel" data-exclude-selection>
+              <Card className="analysis-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5" />
+                    洞察面板测试
+                  </CardTitle>
+                </CardHeader>
+                <CardContent data-exclude-selection>
+                  <div className="space-y-2" data-exclude-selection>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">文本选择功能只在正文区域生效</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-sm">右侧面板完全排除文本选择：这段文字应该不会触发浮层</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <span className="text-sm">支持多种智能操作：解释、改善、翻译、搜索</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <span className="text-sm">响应式设计适配移动端：这些文字都不应该触发浮层</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Enhanced Card 测试 */}
+            <div className="enhanced-card" data-exclude-selection>
+              <Card className="analysis-card">
+                <CardHeader>
+                  <CardTitle>Enhanced Card 测试</CardTitle>
+                </CardHeader>
+                <CardContent data-exclude-selection>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                    这个区域使用了 enhanced-card 类名，选择文本不应该触发浮层。
+                  </p>
+                  <div className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded" data-exclude-selection>
+                    <p className="text-sm text-purple-700 dark:text-purple-300">
+                      机器学习是人工智能的一个重要分支，它使计算机能够在没有明确编程的情况下从数据中学习。
+                      深度学习作为机器学习的子集，通过多层神经网络模拟人脑的工作方式。
+                      这段文字在 enhanced-card 区域内，不应该触发文本选择浮层。
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* 测试说明更新 */}
             <Card>
               <CardHeader>
                 <CardTitle>测试说明</CardTitle>
@@ -234,8 +270,21 @@ function createTextSelectionFloater(options) {
                       ❌ 不应出现
                     </h4>
                     <p className="text-red-700 dark:text-red-300">
-                      在右侧卡片区域选择文本时，不应该出现浮层
+                      在右侧任何卡片、面板、按钮区域选择文本时，都不应该出现浮层
                     </p>
+                  </div>
+                  <div className="p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded">
+                    <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-1">
+                      🔧 排除机制
+                    </h4>
+                    <div className="text-yellow-700 dark:text-yellow-300 space-y-1">
+                      <p>• <code>data-exclude-selection</code> 属性</p>
+                      <p>• <code>.analysis-card</code> 类名</p>
+                      <p>• <code>.enhanced-card</code> 类名</p>
+                      <p>• <code>.insight-pane</code> 类名</p>
+                      <p>• <code>button</code> 元素</p>
+                      <p>• 各种UI组件选择器</p>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -249,7 +298,7 @@ function createTextSelectionFloater(options) {
         <TextSelectionFloater
           enabled={true}
           containerSelector=".content-area"
-          excludeSelector=".sidebar, .panel, .analysis-card, [data-exclude-selection]"
+          excludeSelector=".card, .sidebar, .panel, .analysis-card, .llm-analysis-card, .ai-analysis-card, .content-analysis-sidebar, .content-analysis-panel, .ai-analysis-panel, .insight-pane, .floating-menu, .dropdown-menu, .tooltip, .popover, .modal, .dialog, [data-exclude-selection], [data-dropdown-trigger], [data-tooltip], [data-popover], [data-modal], [data-dialog], .shadcn-ui-card, .ui-card, .enhanced-card, button, .button, input, textarea, select, .form-control, .toolbar, .header, .footer, .navigation, .nav, .menu"
           onAction={handleTextAction}
           zIndex={1050}
         />

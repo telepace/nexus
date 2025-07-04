@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, ReactNode } from "react";
+import React, { useState, useRef, ReactNode, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -40,10 +40,12 @@ import {
   Edit,
   Trash2,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import styles from "./enhanced-card.module.css";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AnalysisContentRenderer } from "./AnalysisContentRenderer";
 
 // 卡片基础类型定义
 export interface CardAction {
@@ -281,10 +283,10 @@ export const JsonContentRenderer: React.FC<{
   );
 };
 
-// 更新 ContentBlock 类型以支持 JSON 内容
+// 更新 ContentBlock 类型以支持 analysis 内容
 export interface ContentBlock {
   id: string;
-  type: "text" | "title" | "summary" | "list" | "code" | "json"; // 添加 json 类型
+  type: "text" | "title" | "summary" | "list" | "code" | "json" | "analysis"; // 添加 analysis 类型
   content: string | ReactNode;
   tooltip?: string;
   expandable?: boolean;
@@ -342,6 +344,14 @@ const smartTruncate = (text: string, maxLength: number): { truncated: string; ne
   }
   
   return { truncated, needsTruncation: true };
+};
+
+// 卡片变体样式映射
+const cardVariants = {
+  default: "",
+  compact: "space-y-2",
+  detailed: "space-y-4",
+  featured: "border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent",
 };
 
 // 内容块组件
@@ -415,7 +425,8 @@ const InteractiveContentBlock: React.FC<{
                 block.type === "summary" && "text-gray-600 dark:text-gray-400 italic",
                 block.type === "code" && "font-mono bg-gray-50 dark:bg-gray-800 p-3 rounded-lg",
                 block.type === "json" && "", // JSON 类型使用 JsonContentRenderer 自己的样式
-                block.type !== "json" && "text-sm leading-relaxed text-gray-700 dark:text-gray-300",
+                block.type === "analysis" && "", // Analysis 类型使用 AnalysisContentRenderer 自己的样式
+                block.type !== "json" && block.type !== "analysis" && "text-sm leading-relaxed text-gray-700 dark:text-gray-300",
               )}
               layout
               initial={false}
@@ -425,6 +436,10 @@ const InteractiveContentBlock: React.FC<{
                 <JsonContentRenderer
                   content={displayContent}
                   onReferenceClick={handleJsonReferenceClick}
+                />
+              ) : block.type === "analysis" && typeof displayContent === "string" ? (
+                <AnalysisContentRenderer
+                  content={displayContent}
                 />
               ) : typeof displayContent === "string" ? (
                 <AnimatePresence mode="wait">
@@ -959,18 +974,27 @@ export const EnhancedCard: React.FC<EnhancedCardProps> = ({
   className,
   children,
 }) => {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [copiedBlocks, setCopiedBlocks] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
+  // 处理卡片点击
+  const handleCardClick = useCallback(() => {
+    onCardClick?.();
+  }, [onCardClick]);
+
+  // 处理复制所有内容
   const handleCopyAll = async () => {
     try {
       const allContent = contentBlocks
-        .map(block => 
-          typeof block.content === "string" 
-            ? block.content 
-            : block.content?.toString() || ""
-        )
+        .map((block) => {
+          if (typeof block.content === "string") {
+            return block.content;
+          }
+          return block.content?.toString() || "";
+        })
         .join("\n\n");
-      
+
       await navigator.clipboard.writeText(allContent);
       toast({
         title: "已复制",
@@ -985,162 +1009,188 @@ export const EnhancedCard: React.FC<EnhancedCardProps> = ({
     }
   };
 
+  // 处理复制卡片核心内容
   const handleCopyContent = async () => {
-    if (onCopyContent) {
-      await onCopyContent();
-    } else {
-      // 默认复制行为：复制主要内容
-      const mainContent = contentBlocks
-        .filter(block => block.type === "text" || block.type === "summary")
-        .map(block => 
-          typeof block.content === "string" 
-            ? block.content 
-            : block.content?.toString() || ""
-        )
-        .join("\n\n");
-      
-      if (mainContent) {
+    try {
+      if (onCopyContent) {
+        await onCopyContent();
+      } else {
+        // 默认复制逻辑：只复制主要内容块
+        const mainContent = contentBlocks
+          .filter(block => block.type !== "title") // 排除标题
+          .map(block => typeof block.content === "string" ? block.content : block.content?.toString() || "")
+          .join("\n\n");
+
         await navigator.clipboard.writeText(mainContent);
+        toast({
+          title: "已复制",
+          description: "卡片内容已复制到剪贴板",
+        });
       }
+    } catch (error) {
+      toast({
+        title: "复制失败",
+        description: "无法复制卡片内容",
+        variant: "destructive",
+      });
     }
   };
 
-  const cardVariants = {
-    default: "p-6",
-    compact: "p-4",
-    detailed: "p-8",
-    featured: "p-6",
-  };
-
-  return (
-    <motion.div
-      className={cn(
-        "relative group",
-        "bg-white dark:bg-gray-950 rounded-xl border border-gray-200 dark:border-gray-800",
-        "shadow-sm hover:shadow-md transition-all duration-200",
-        selected && "ring-2 ring-blue-500 shadow-lg",
-        error && "border-red-200 dark:border-red-800",
-        "overflow-hidden", // 确保圆角效果
-        styles.enhancedCard,
-        className
-      )}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      onClick={onCardClick}
-      data-exclude-selection
-    >
-      {/* 背景光晕效果 */}
-      <div className={cn(styles.backgroundGlow, variant === "featured" && styles.featuredGlow)} />
-
-      <Card className={cn(
-        "relative transition-all duration-300 ease-out overflow-hidden",
-        styles.card,
-        styles[variant],
-        selected && styles.selected,
-        error && styles.error,
-      )}>
-        {/* 加载状态 */}
-        <AnimatePresence>
-          {loading && (
-            <motion.div 
-              className={styles.loadingOverlay}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <CardHeader className={cn("pb-4", cardVariants[variant])}>
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-3 flex-1 min-w-0">
-              {/* 图标或emoji */}
-              {(emoji || icon) && (
-                <motion.div 
-                  className={styles.iconContainer}
-                  whileHover={{ scale: 1.05, rotate: 5 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {emoji ? (
-                    <span className="text-xl">{emoji}</span>
-                  ) : (
-                    icon
-                  )}
-                </motion.div>
-              )}
-
-              {/* 标题和副标题 */}
-              <div className="flex-1 min-w-0">
-                {title && (
-                  <motion.h3 
-                    className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 leading-tight"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    {title}
-                  </motion.h3>
-                )}
-                {subtitle && (
-                  <motion.p 
-                    className="text-sm text-gray-500 dark:text-gray-400 mt-1"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    {subtitle}
-                  </motion.p>
-                )}
-                {error && (
-                  <motion.p 
-                    className="text-sm text-red-600 dark:text-red-400 mt-1"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    {error}
-                  </motion.p>
-                )}
-              </div>
-            </div>
-
-            {/* 操作菜单 */}
-            <CardActionsMenu
-              actions={actions}
-              defaultActions={defaultActions}
-              onCopyAll={handleCopyAll}
-              onCopyContent={handleCopyContent}
-              onDelete={onDelete}
-              contentTitle={title}
-            />
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-2">
-          <AnimatePresence>
-            {contentBlocks.map((block, index) => (
-              <motion.div
-                key={block.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <InteractiveContentBlock
-                  block={block}
-                  onBlockClick={onBlockClick}
-                  onReferenceClick={onReferenceClick}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          
-          {children}
+  if (loading) {
+    return (
+      <Card className={cn("h-32", className)} data-exclude-selection>
+        <CardContent className="flex items-center justify-center h-full">
+          <motion.div
+            className="flex flex-col items-center gap-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">加载中...</span>
+          </motion.div>
         </CardContent>
       </Card>
-    </motion.div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className={cn("border-destructive", className)} data-exclude-selection>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <span className="text-sm">{error}</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <>
+      <Card 
+        className={cn(
+          styles.cardWrapper,
+          "group cursor-pointer transition-all duration-300 ease-out hover:shadow-lg enhanced-card analysis-card",
+          selected && "ring-2 ring-primary ring-offset-2",
+          className
+        )}
+        onClick={handleCardClick}
+        data-exclude-selection
+      >
+        {/* 背景光晕效果 */}
+        <div className={cn(styles.backgroundGlow, variant === "featured" && styles.featuredGlow)} />
+
+        <Card className={cn(
+          "relative transition-all duration-300 ease-out overflow-hidden",
+          styles.card,
+          styles[variant],
+          selected && styles.selected,
+          error && styles.error,
+        )}>
+          {/* 加载状态 */}
+          <AnimatePresence>
+            {loading && (
+              <motion.div 
+                className={styles.loadingOverlay}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <CardHeader className={cn("pb-4", cardVariants[variant])}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                {/* 图标或emoji */}
+                {(emoji || icon) && (
+                  <motion.div 
+                    className={styles.iconContainer}
+                    whileHover={{ scale: 1.05, rotate: 5 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {emoji ? (
+                      <span className="text-xl">{emoji}</span>
+                    ) : (
+                      icon
+                    )}
+                  </motion.div>
+                )}
+
+                {/* 标题和副标题 */}
+                <div className="flex-1 min-w-0">
+                  {title && (
+                    <motion.h3 
+                      className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 leading-tight"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 }}
+                    >
+                      {title}
+                    </motion.h3>
+                  )}
+                  {subtitle && (
+                    <motion.p 
+                      className="text-sm text-gray-500 dark:text-gray-400 mt-1"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      {subtitle}
+                    </motion.p>
+                  )}
+                  {error && (
+                    <motion.p 
+                      className="text-sm text-red-600 dark:text-red-400 mt-1"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      {error}
+                    </motion.p>
+                  )}
+                </div>
+              </div>
+
+              {/* 操作菜单 */}
+              <CardActionsMenu
+                actions={actions}
+                defaultActions={defaultActions}
+                onCopyAll={handleCopyAll}
+                onCopyContent={handleCopyContent}
+                onDelete={onDelete}
+                contentTitle={title}
+              />
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-2">
+            <AnimatePresence>
+              {contentBlocks.map((block, index) => (
+                <motion.div
+                  key={block.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <InteractiveContentBlock
+                    block={block}
+                    onBlockClick={onBlockClick}
+                    onReferenceClick={onReferenceClick}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            
+            {children}
+          </CardContent>
+        </Card>
+      </Card>
+    </>
   );
 };
 
