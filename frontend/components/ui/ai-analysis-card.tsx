@@ -287,7 +287,7 @@ export function AIAnalysisCard({
   };
 
   return (
-    <Card className={cn("w-full", className)}>
+    <Card className={cn("w-full", className)} data-exclude-selection>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

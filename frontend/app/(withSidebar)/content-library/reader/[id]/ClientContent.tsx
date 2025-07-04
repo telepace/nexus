@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, memo, useRef } from "react";
+import { useEffect, useState, memo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -70,11 +70,13 @@ const ProcessedContentRenderer = memo(
     markdownContent,
     contentId,
     scrollContainerRef,
+    onTextAction,
   }: {
     content: ContentDetail;
     markdownContent?: string | null;
     contentId: string;
     scrollContainerRef: React.RefObject<HTMLDivElement>;
+    onTextAction?: (action: { id: string; label: string; prompt: string }, selectedText: string) => void;
   }) => {
     const router = useRouter();
 
@@ -98,6 +100,8 @@ const ProcessedContentRenderer = memo(
               contentId={contentId}
               className="w-full h-full px-4 sm:px-6 lg:px-10 xl:px-14 py-6"
               initialChunkSize={15}
+              enableTextSelection={true}
+              onTextAction={onTextAction}
             />
           </div>
         </div>
@@ -113,6 +117,8 @@ const ProcessedContentRenderer = memo(
               content={contentText}
               title={content.title || undefined}
               className="w-full h-full px-4 sm:px-6 lg:px-10 xl:px-14 py-6 scrollbar-thin scrollbar-thumb-muted/20 scrollbar-track-transparent hover:scrollbar-thumb-muted/40 transition-colors"
+              enableTextSelection={true}
+              onTextAction={onTextAction}
             />
           </div>
         </div>
@@ -332,6 +338,31 @@ export const ClientContent = ({
   // 添加滚动容器引用用于进度条
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // 处理文本选择操作
+  const handleTextAction = useCallback(
+    (action: { id: string; label: string; prompt: string }, selectedText: string) => {
+      console.log(`文本操作: ${action.label}`, { action, selectedText });
+      
+      // 这里可以将选择的文本和操作发送给右侧的AI分析系统
+      // 通过事件总线或上下文传递给 ReaderLayout
+      const event = new CustomEvent('textSelectionAction', {
+        detail: {
+          action,
+          selectedText,
+          contentId,
+        }
+      });
+      window.dispatchEvent(event);
+      
+      // 可以考虑添加 toast 提示
+      // toast({
+      //   title: `${action.label}操作`,
+      //   description: `已选择文本: "${selectedText.substring(0, 50)}${selectedText.length > 50 ? '...' : ''}"`,
+      // });
+    },
+    [contentId]
+  );
+
   // 记录访问
   useEffect(() => {
     navigationState.saveReaderVisit(contentId);
@@ -537,15 +568,19 @@ export const ClientContent = ({
       </div>
 
       {/* Main Content - 专注显示AI处理后的内容 */}
-      <div className="flex-1 min-h-0">
-        <div className="h-full" ref={scrollContainerRef}>
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-auto bg-background"
+      >
+        {content && (
           <ProcessedContentRenderer
             content={content}
             markdownContent={markdownContent}
             contentId={contentId}
             scrollContainerRef={scrollContainerRef}
+            onTextAction={handleTextAction}
           />
-        </div>
+        )}
       </div>
     </div>
   );

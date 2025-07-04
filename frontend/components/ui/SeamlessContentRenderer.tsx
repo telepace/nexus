@@ -10,6 +10,7 @@ import type {
 } from "@/lib/api/content";
 import { ChunkItem } from "./ChunkItem";
 import { Loading } from "@/components/ui/loading";
+import { TextSelectionFloater } from "@/components/ui/text-selection-floater";
 
 interface SeamlessContentRendererProps {
   contentId: string;
@@ -17,6 +18,10 @@ interface SeamlessContentRendererProps {
   initialChunkSize?: number; // Size for first screen load
   itemHeight?: number; // Default height for virtual scrolling
   virtualScrollThreshold?: number; // Threshold for using virtual scrolling
+  /** 是否启用文本选择浮层 */
+  enableTextSelection?: boolean;
+  /** 文本选择回调 */
+  onTextAction?: (action: { id: string; label: string; prompt: string }, selectedText: string) => void;
 }
 
 /**
@@ -32,6 +37,8 @@ export const SeamlessContentRenderer: React.FC<SeamlessContentRendererProps> = (
   initialChunkSize = 15,
   itemHeight = 400, // Default height for virtual scrolling
   virtualScrollThreshold = 50, // Use virtual scrolling for documents with > 50 chunks
+  enableTextSelection = false,
+  onTextAction,
 }) => {
   const [chunks, setChunks] = useState<ContentChunk[]>([]);
   const [totalChunks, setTotalChunks] = useState(0);
@@ -249,7 +256,7 @@ export const SeamlessContentRenderer: React.FC<SeamlessContentRendererProps> = (
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-full ${className}`}
+      className={`relative w-full h-full content-area ${className}`}
     >
       {/* Subtle progress indicator - only show during background loading */}
       {!isFullContentLoaded && loadingProgress > 0 && loadingProgress < 100 && (
@@ -296,6 +303,17 @@ export const SeamlessContentRenderer: React.FC<SeamlessContentRendererProps> = (
             </div>
           )}
         </>
+      )}
+      
+      {/* 文本选择浮层 */}
+      {enableTextSelection && (
+        <TextSelectionFloater
+          enabled={true}
+          containerSelector=".content-area"
+          excludeSelector=".sidebar, .panel, .analysis-card, .llm-analysis-card, .ai-analysis-card, .content-analysis-sidebar, [data-exclude-selection]"
+          onAction={onTextAction}
+          zIndex={1050}
+        />
       )}
     </div>
   );

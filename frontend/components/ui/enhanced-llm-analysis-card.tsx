@@ -212,7 +212,7 @@ export function EnhancedLLMAnalysisCard({
   }
 
   return (
-    <Card className={cn("w-full transition-all duration-200", className)}>
+    <Card className={cn("w-full transition-all duration-200", className)} data-exclude-selection>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

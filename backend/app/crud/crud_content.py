@@ -172,7 +172,12 @@ def create_content_item_sync(
 ) -> ContentItem:
     session.add(content_item_in)
     session.commit()
-    session.refresh(content_item_in)
+    
+    # 重新获取content_item_in以确保session绑定，避免refresh错误
+    refreshed_content_item = session.get(ContentItem, content_item_in.id)
+    if refreshed_content_item:
+        content_item_in = refreshed_content_item
+    
     return content_item_in
 
 
@@ -410,7 +415,12 @@ def update_content_item_sync(
 
     session.add(db_content_item)
     session.commit()
-    session.refresh(db_content_item)
+    
+    # 重新获取db_content_item以确保session绑定，避免refresh错误
+    refreshed_content_item = session.get(ContentItem, db_content_item.id)
+    if refreshed_content_item:
+        return refreshed_content_item
+    
     return db_content_item
 
 

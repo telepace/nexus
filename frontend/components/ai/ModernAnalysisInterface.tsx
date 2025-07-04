@@ -24,7 +24,7 @@ import {
   ConversationPublic,
 } from "@/lib/api/content";
 import { adaptAnalysisData } from "./AnalysisCards";
-import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 import { client } from "@/lib/api/client";
 import { getCookie } from "cookies-next";
 import { fetchPrompts, PromptData } from "@/components/actions/prompts-action";
@@ -79,36 +79,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   const [loadingPrompts, setLoadingPrompts] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(true);
 
-  // 浮层操作按钮
-  const textActions = [
-    {
-      id: "explain",
-      label: "解释",
-      icon: "💡",
-      color: "hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/30",
-    },
-    {
-      id: "improve",
-      label: "改善",
-      icon: "✨",
-      color:
-        "hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950/30",
-    },
-    {
-      id: "search",
-      label: "搜索",
-      icon: "🔍",
-      color:
-        "hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-950/30",
-    },
-    {
-      id: "translate",
-      label: "翻译",
-      icon: "🌐",
-      color:
-        "hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950/30",
-    },
-  ];
+  // 移除原有的文本操作按钮 - 现在由独立组件处理
+  // const textActions = [...]
 
   // 获取真实的prompts作为AI指令标签
   useEffect(() => {
@@ -194,87 +166,51 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     }
   }, [content.id]);
 
-  // 处理文本选择
-  const handleTextSelection = useCallback(() => {
-    const selection = window.getSelection();
-    const text = selection?.toString().trim();
+  // 监听来自正文区域的文本选择事件
+  useEffect(() => {
+    const handleTextSelectionAction = (event: CustomEvent) => {
+      const { action, selectedText } = event.detail;
+      
+      // 自动填充输入框并执行分析
+      const prompt = `${action.prompt}\n\n${selectedText}`;
+      setInputValue(prompt);
+      
+      // 可选：自动开始分析
+      // setTimeout(() => {
+      //   if (prompt.trim()) {
+      //     handleAnalysis();
+      //   }
+      // }, 500);
+    };
 
-    if (text && text.length > 0) {
-      const range = selection!.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-
-      setSelectedText(text);
-      setFloatingMenu({
-        show: true,
-        x: rect.left + rect.width / 2,
-        y: rect.top - 10,
-      });
-    } else {
-      setFloatingMenu({ show: false, x: 0, y: 0 });
-      setSelectedText("");
-    }
+    window.addEventListener('textSelectionAction' as any, handleTextSelectionAction);
+    
+    return () => {
+      window.removeEventListener('textSelectionAction' as any, handleTextSelectionAction);
+    };
   }, []);
 
-  // 处理块选择
+  // 处理块选择 - 保留用于卡片交互
   const handleBlockClick = useCallback(
     (blockId: string, event: React.MouseEvent) => {
       event.stopPropagation();
       setSelectedBlock(selectedBlock === blockId ? null : blockId);
-
-      // 清除文本选择
-      if (window.getSelection) {
-        window.getSelection()?.removeAllRanges();
-      }
-      setFloatingMenu({ show: false, x: 0, y: 0 });
     },
     [selectedBlock],
   );
 
-  // 处理浮层操作
-  const handleTextAction = useCallback(
-    (action: any) => {
-      const actionPrompts: Record<string, string> = {
-        explain: `请解释以下内容：${selectedText}`,
-        improve: `请改善以下内容：${selectedText}`,
-        search: `请搜索并分析与以下内容相关的信息：${selectedText}`,
-        translate: `请翻译以下内容：${selectedText}`,
-      };
-
-      const prompt =
-        actionPrompts[action.id] || `请分析以下内容：${selectedText}`;
-      setInputValue(prompt);
-
-      setFloatingMenu({ show: false, x: 0, y: 0 });
-      setSelectedText("");
-
-      // 清除选择
-      if (window.getSelection) {
-        window.getSelection()?.removeAllRanges();
-      }
-    },
-    [selectedText],
-  );
-
-  // 监听点击外部
+  // 监听点击外部 - 简化逻辑
   useEffect(() => {
     const handleClickOutside = () => {
       setSelectedBlock(null);
-      setFloatingMenu({ show: false, x: 0, y: 0 });
-      setSelectedText("");
-    };
-
-    const handleMouseUp = () => {
-      setTimeout(handleTextSelection, 10);
     };
 
     document.addEventListener("click", handleClickOutside);
-    document.addEventListener("mouseup", handleMouseUp);
 
     return () => {
       document.removeEventListener("click", handleClickOutside);
-      document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [handleTextSelection]);
+  }, []);
 
   // 处理prompt标签点击
   const handlePromptClick = useCallback(
@@ -455,7 +391,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           onClick={(e) => handleBlockClick(`${card.id}-main`, e)}
         >
           <div className="select-text prose prose-sm max-w-none dark:prose-invert">
-            <MarkdownRenderer content={textContent} />
+            <UniversalContentRenderer content={textContent} />
           </div>
         </div>
       );
@@ -565,43 +501,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         }
       `}</style>
 
-      {/* 文本选择浮层 */}
-      {floatingMenu.show && (
-        <div
-          className="fixed z-50 animate-in fade-in-50 slide-in-from-bottom-2 duration-200"
-          style={{
-            left: `${floatingMenu.x}px`,
-            top: `${floatingMenu.y}px`,
-            transform: "translateX(-50%)",
-          }}
-        >
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-2 backdrop-blur-sm">
-            <div className="flex items-center gap-1">
-              {textActions.map((action) => (
-                <button
-                  key={action.id}
-                  onClick={() => handleTextAction(action)}
-                  className={`
-                    flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                    text-gray-700 dark:text-gray-300 hover:scale-105 ${action.color}
-                  `}
-                >
-                  <span className="text-base">{action.icon}</span>
-                  <span>{action.label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* 浮层箭头 */}
-            <div className="absolute top-full left-1/2 transform -translate-x-1/2">
-              <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white dark:border-t-gray-900"></div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* 可滚动的主内容区域 */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 overflow-y-auto custom-scrollbar" data-exclude-selection>
         {/* 页面标题 */}
         <div className="px-6 py-4">
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
@@ -633,7 +534,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       </div>
 
       {/* 固定底部AI助手 */}
-      <div className="flex-shrink-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-800">
+      <div className="flex-shrink-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-800" data-exclude-selection>
         <div className="px-6 py-4">
           {/* 历史记录微提示 */}
           {historyRecords.length > 0 && !showHistory && (

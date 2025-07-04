@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { LLMAnalysis } from "@/lib/stores/llm-analysis-store";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { JsonlRenderer } from "@/components/ui/JsonlRenderer";
 import { FavoriteButton } from "@/components/actions/FavoriteButton";
 
 interface LLMAnalysisCardProps {
@@ -74,6 +75,18 @@ const RatingStars: FC<{ score: number }> = ({ score }) => {
       {stars.join("")}
     </span>
   );
+};
+
+// Helper to detect JSONL (very naive)
+const isJsonl = (str: string): boolean => {
+  try {
+    const firstLine = str.trim().split("\n").find(Boolean);
+    if (!firstLine) return false;
+    JSON.parse(firstLine);
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
@@ -140,6 +153,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
             "py-2 rounded-sm transition-all duration-200 shadow-sm hover:shadow-lg ",
             getAnalysisColor(analysis.type),
           )}
+          data-exclude-selection
         >
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -184,6 +198,7 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
         getAnalysisColor(analysis.type),
         analysis.isExpanded ? "shadow-md" : "",
       )}
+      data-exclude-selection
     >
       <CardHeader>
         <div className="flex items-center justify-between">
@@ -284,7 +299,11 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
                 <div className="relative">
                   {/* 流式内容区域 */}
                   <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <MarkdownRenderer content={formattedContent} />
+                    {isJsonl(formattedContent) ? (
+                      <JsonlRenderer content={formattedContent} />
+                    ) : (
+                      <MarkdownRenderer content={formattedContent} />
+                    )}
                   </div>
                   {/* 打字机光标效果 - 放在独立的行 */}
                   <div className="flex items-center justify-start mt-2">
@@ -319,7 +338,11 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
               {/* 分析内容 */}
               <div className="prose prose-sm max-w-none dark:prose-invert">
                 {formattedContent ? (
-                  <MarkdownRenderer content={formattedContent} />
+                  isJsonl(formattedContent) ? (
+                    <JsonlRenderer content={formattedContent} />
+                  ) : (
+                    <MarkdownRenderer content={formattedContent} />
+                  )
                 ) : (
                   <div className="text-sm text-muted-foreground">暂无内容</div>
                 )}

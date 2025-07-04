@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState, useRef } from "react";
-import { AlertCircle, Loader2, CheckCircle } from "lucide-react";
+import { ChevronDown, CheckCircle, Loader2 } from "lucide-react";
 import { contentApi } from "@/lib/api/content";
 import type {
   ContentChunk,
@@ -9,11 +9,17 @@ import type {
 } from "@/lib/api/content";
 import { ChunkItem } from "./ChunkItem";
 import { Loading } from "@/components/ui/loading";
+import { TextSelectionFloater } from "@/components/ui/text-selection-floater";
 
 interface OptimizedContentRendererProps {
   contentId: string;
   className?: string;
   initialChunkSize?: number;
+  showProgressIndicator?: boolean;
+  /** 是否启用文本选择浮层 */
+  enableTextSelection?: boolean;
+  /** 文本选择回调 */
+  onTextAction?: (action: { id: string; label: string; prompt: string }, selectedText: string) => void;
 }
 
 /**
@@ -27,7 +33,10 @@ interface OptimizedContentRendererProps {
 export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> = ({
   contentId,
   className = "",
-  initialChunkSize = 15,
+  initialChunkSize = 5,
+  showProgressIndicator = false,
+  enableTextSelection = true,
+  onTextAction,
 }) => {
   const [chunks, setChunks] = useState<ContentChunk[]>([]);
   const [totalChunks, setTotalChunks] = useState(0);
@@ -146,7 +155,7 @@ export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> =
       )}
 
       {/* 内容区域 */}
-      <div className="space-y-0">
+      <div className="space-y-0 content-area" data-testid="optimized-content-renderer">
         {chunks.map((chunk, index) => (
           <ChunkItem key={`${chunk.id}-${index}`} chunk={chunk} />
         ))}
@@ -166,6 +175,17 @@ export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> =
           </div>
         ) : null}
       </div>
+      
+      {/* 文本选择浮层 */}
+      {enableTextSelection && (
+        <TextSelectionFloater
+          enabled={true}
+          containerSelector=".content-area"
+          excludeSelector=".sidebar, .panel, .analysis-card, .llm-analysis-card, .ai-analysis-card, .content-analysis-sidebar, [data-exclude-selection]"
+          onAction={onTextAction}
+          zIndex={1050}
+        />
+      )}
     </div>
   );
 }; 

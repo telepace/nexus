@@ -301,7 +301,11 @@ class DeepResearchService:
 
         session.add(content_item)
         session.commit()
-        session.refresh(content_item)
+        
+        # 重新获取content_item以确保session绑定，避免refresh错误
+        refreshed_content_item = session.get(ContentItem, content_item.id)
+        if refreshed_content_item:
+            content_item = refreshed_content_item
 
         return content_item
 

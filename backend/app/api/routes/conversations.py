@@ -175,7 +175,11 @@ def create_conversation(
 
     session.add(conversation)
     session.commit()
-    session.refresh(conversation)
+    
+    # 重新获取conversation以确保session绑定，避免refresh错误
+    refreshed_conversation = session.get(AIConversation, conversation.id)
+    if refreshed_conversation:
+        conversation = refreshed_conversation
 
     return convert_conversation_to_public(conversation)
 
@@ -284,7 +288,11 @@ async def add_message_to_conversation(
 
         session.add(conversation)
         session.commit()
-        session.refresh(conversation)
+        
+        # 重新获取conversation以确保session绑定，避免refresh错误
+        refreshed_conversation = session.get(AIConversation, conversation.id)
+        if refreshed_conversation:
+            conversation = refreshed_conversation
 
         return convert_conversation_to_public(conversation)
 
@@ -369,7 +377,11 @@ async def trigger_analysis(
 
         session.add(conversation)
         session.commit()
-        session.refresh(conversation)
+        
+        # 重新获取conversation以确保session绑定，避免refresh错误
+        refreshed_conversation = session.get(AIConversation, conversation.id)
+        if refreshed_conversation:
+            conversation = refreshed_conversation
 
         # 构建分析消息
         system_message = {
@@ -432,7 +444,11 @@ async def trigger_analysis(
 
         session.add(conversation)
         session.commit()
-        session.refresh(conversation)
+        
+        # 重新获取conversation以确保session绑定，避免refresh错误
+        final_conversation = session.get(AIConversation, conversation.id)
+        if final_conversation:
+            conversation = final_conversation
 
         return convert_conversation_to_public(conversation)
 

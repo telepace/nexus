@@ -180,6 +180,40 @@ export const ContentCard = ({
     }
   };
 
+  // 处理复制内容
+  const handleCopyContent = async () => {
+    try {
+      let content = "";
+      
+      // 构建内容文本
+      if (item.title) {
+        content += `# ${item.title}\n\n`;
+      }
+      
+      if (briefDescription) {
+        content += `## 摘要\n${briefDescription}\n\n`;
+      }
+      
+      if (item.content_text) {
+        content += `## 内容\n${item.content_text}\n\n`;
+      }
+      
+      if (hasLabels && aiResult.labels) {
+        content += `## 标签\n${aiResult.labels.join(", ")}\n\n`;
+      }
+      
+      if (item.source_uri) {
+        content += `## 来源\n${item.source_uri}`;
+      }
+      
+      await navigator.clipboard.writeText(content.trim());
+      toast.success("内容已复制到剪贴板");
+    } catch (error) {
+      console.error("复制内容失败:", error);
+      toast.error("复制内容失败");
+    }
+  };
+
   // 处理删除
   const handleDelete = async (event?: React.MouseEvent) => {
     if (event) {
@@ -342,6 +376,14 @@ export const ContentCard = ({
                   >
                     <Copy className="h-4 w-4 mr-3" />
                     复制链接
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={handleCopyContent}
+                    className="focus:bg-neutral-50 text-neutral-700"
+                  >
+                    <Copy className="h-4 w-4 mr-3" />
+                    复制内容
                   </DropdownMenuItem>
 
                   <DropdownMenuSeparator className="bg-black/[0.06]" />

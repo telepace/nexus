@@ -1765,7 +1765,11 @@ class ProcessingPipeline:
             content_item.last_processed_at = datetime.utcnow()
             session.add(content_item)
             session.commit()
-            session.refresh(content_item)
+            
+            # 重新获取content_item以确保session绑定，避免refresh错误
+            refreshed_content_item = session.get(ContentItem, content_item.id)
+            if refreshed_content_item:
+                content_item = refreshed_content_item
 
             logger.info(f"Content processing completed for {content_item.id}")
 
@@ -1844,7 +1848,11 @@ class ProcessingPipeline:
 
             session.add(conversation)
             session.commit()
-            session.refresh(conversation)
+            
+            # 重新获取conversation以确保session绑定，避免refresh错误
+            refreshed_conversation = session.get(AIConversation, conversation.id)
+            if refreshed_conversation:
+                conversation = refreshed_conversation
 
             logger.info(
                 f"Created auto analysis conversation {conversation.id} for content {content_item.id}"

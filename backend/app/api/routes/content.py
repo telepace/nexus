@@ -20,6 +20,7 @@ from sqlmodel import Session, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
+from app.core.db_factory import engine  # 修复导入路径：从db_factory导入engine
 from app.core.security import verify_password
 from app.crud.crud_content import (
     create_content_item_sync,
@@ -54,6 +55,7 @@ from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is
 from app.utils.background_tasks import background_task_manager
 from app.utils.content_processors import ProcessingPipeline
 from app.utils.events import content_event_manager, create_sse_generator
+from app.utils.streaming_jsonl_extractor import create_streaming_jsonl_extractor
 
 # from app.utils.cache import warm_article_cache  # 暂时注释掉避免redis依赖
 
@@ -146,7 +148,11 @@ def create_ai_conversation(
     # 保存到数据库
     session.add(ai_conversation)
     session.commit()
-    session.refresh(ai_conversation)
+    
+    # 重新获取ai_conversation以确保session绑定，避免refresh错误
+    refreshed_ai_conversation = session.get(AIConversation, ai_conversation.id)
+    if refreshed_ai_conversation:
+        ai_conversation = refreshed_ai_conversation
 
     return ai_conversation
 
@@ -360,7 +366,11 @@ async def process_content_item_endpoint(
     item.processing_status = "processing"
     session.add(item)
     session.commit()
-    session.refresh(item)
+    
+    # 重新获取item以确保session绑定，避免refresh错误
+    refreshed_item = session.get(ContentItem, item.id)
+    if refreshed_item:
+        item = refreshed_item
 
     # Convert ContentItem to ContentItemPublic
     public_item = ContentItemPublic(
@@ -1098,6 +1108,9 @@ async def _stream_content_analysis_ai_sdk(
     import aiohttp
 
     try:
+        # 创建JSONL提取器
+        jsonl_extractor = create_streaming_jsonl_extractor()
+
         # Prepare messages with updated structure
         messages = [
             {"role": "system", "content": content_item.content_text},
@@ -1123,6 +1136,8 @@ async def _stream_content_analysis_ai_sdk(
                     )
 
                 full_response = ""
+                pure_jsonl_response = ""  # 存储提取的纯净JSONL内容
+                
                 async for chunk in response.content.iter_chunked(1024):
                     chunk_str = chunk.decode("utf-8")
                     lines = chunk_str.strip().split("\n")
@@ -1131,27 +1146,31 @@ async def _stream_content_analysis_ai_sdk(
                         if line.startswith("data: "):
                             data_part = line[6:].strip()
                             if data_part == "[DONE]":
+                                # 使用纯净的JSONL内容或原始内容
+                                final_content = pure_jsonl_response if jsonl_extractor.has_jsonl_content() else full_response
+                                
                                 # Send final response
                                 final_response = {
                                     "type": "analysis",
-                                    "content": full_response,
+                                    "content": final_content,
                                     "finished": True,
                                 }
                                 yield f"data: {json.dumps(final_response)}\n\n"
 
-                                # Update AI conversation with response
-                                from app.core.db import get_db_session
-
-                                with get_db_session() as db_session:
-                                    ai_conversation = db_session.get(
-                                        AIConversation, ai_conversation_id
-                                    )
-                                    if ai_conversation:
-                                        update_ai_conversation_response(
-                                            db_session,
-                                            ai_conversation,
-                                            full_response,
+                                # Update AI conversation with response using new session
+                                try:
+                                    with Session(engine) as db_session:
+                                        ai_conversation = db_session.get(
+                                            AIConversation, ai_conversation_id
                                         )
+                                        if ai_conversation:
+                                            update_ai_conversation_response(
+                                                db_session,
+                                                ai_conversation,
+                                                final_content,
+                                            )
+                                except Exception as e:
+                                    logger.error(f"Failed to save AI response: {e}")
                                 return
 
                             try:
@@ -1162,12 +1181,25 @@ async def _stream_content_analysis_ai_sdk(
                                         content = delta["content"]
                                         full_response += content
 
-                                        # Send streaming response
-                                        stream_response = {
-                                            "type": "analysis",
-                                            "content": content,
-                                            "finished": False,
-                                        }
+                                        # 尝试提取JSONL内容
+                                        jsonl_increment, has_new_jsonl = jsonl_extractor.process_chunk(content)
+                                        
+                                        if has_new_jsonl:
+                                            # 有新的JSONL内容，发送纯净的内容
+                                            pure_jsonl_response = jsonl_extractor.get_current_jsonl()
+                                            stream_response = {
+                                                "type": "analysis",
+                                                "content": jsonl_increment,
+                                                "finished": False,
+                                            }
+                                        else:
+                                            # 没有JSONL内容或者还在等待，发送原始内容
+                                            stream_response = {
+                                                "type": "analysis", 
+                                                "content": content,
+                                                "finished": False,
+                                            }
+                                        
                                         yield f"data: {json.dumps(stream_response)}\n\n"
                             except json.JSONDecodeError:
                                 continue
@@ -1266,6 +1298,9 @@ async def _stream_content_completion_updated(
     import aiohttp
 
     try:
+        # 创建JSONL提取器
+        jsonl_extractor = create_streaming_jsonl_extractor()
+
         # Prepare messages with updated structure
         messages = [
             {"role": "system", "content": content_item.content_text},
@@ -1291,6 +1326,8 @@ async def _stream_content_completion_updated(
                     )
 
                 full_response = ""
+                pure_jsonl_response = ""  # 存储提取的纯净JSONL内容
+                
                 async for chunk in response.content.iter_chunked(1024):
                     chunk_str = chunk.decode("utf-8")
                     lines = chunk_str.strip().split("\n")
@@ -1299,27 +1336,31 @@ async def _stream_content_completion_updated(
                         if line.startswith("data: "):
                             data_part = line[6:].strip()
                             if data_part == "[DONE]":
+                                # 使用纯净的JSONL内容或原始内容
+                                final_content = pure_jsonl_response if jsonl_extractor.has_jsonl_content() else full_response
+                                
                                 # Send final response
                                 final_response = {
                                     "type": "completion",
-                                    "content": full_response,
+                                    "content": final_content,
                                     "finished": True,
                                 }
                                 yield f"data: {json.dumps(final_response)}\n\n"
 
-                                # Update AI conversation with response
-                                from app.core.db import get_db_session
-
-                                with get_db_session() as db_session:
-                                    ai_conversation = db_session.get(
-                                        AIConversation, ai_conversation_id
-                                    )
-                                    if ai_conversation:
-                                        update_ai_conversation_response(
-                                            db_session,
-                                            ai_conversation,
-                                            full_response,
+                                # Update AI conversation with response using new session
+                                try:
+                                    with Session(engine) as db_session:
+                                        ai_conversation = db_session.get(
+                                            AIConversation, ai_conversation_id
                                         )
+                                        if ai_conversation:
+                                            update_ai_conversation_response(
+                                                db_session,
+                                                ai_conversation,
+                                                final_content,
+                                            )
+                                except Exception as e:
+                                    logger.error(f"Failed to save AI completion response: {e}")
                                 return
 
                             try:
@@ -1330,12 +1371,25 @@ async def _stream_content_completion_updated(
                                         content = delta["content"]
                                         full_response += content
 
-                                        # Send streaming response
-                                        stream_response = {
-                                            "type": "completion",
-                                            "content": content,
-                                            "finished": False,
-                                        }
+                                        # 尝试提取JSONL内容
+                                        jsonl_increment, has_new_jsonl = jsonl_extractor.process_chunk(content)
+                                        
+                                        if has_new_jsonl:
+                                            # 有新的JSONL内容，发送纯净的内容
+                                            pure_jsonl_response = jsonl_extractor.get_current_jsonl()
+                                            stream_response = {
+                                                "type": "completion",
+                                                "content": jsonl_increment,
+                                                "finished": False,
+                                            }
+                                        else:
+                                            # 没有JSONL内容或者还在等待，发送原始内容
+                                            stream_response = {
+                                                "type": "completion",
+                                                "content": content,
+                                                "finished": False,
+                                            }
+                                        
                                         yield f"data: {json.dumps(stream_response)}\n\n"
                             except json.JSONDecodeError:
                                 continue
@@ -1541,7 +1595,11 @@ def create_conversation(
 
     session.add(conversation)
     session.commit()
-    session.refresh(conversation)
+    
+    # 重新获取conversation以确保session绑定，避免refresh错误
+    refreshed_conversation = session.get(AIConversation, conversation.id)
+    if refreshed_conversation:
+        conversation = refreshed_conversation
 
     return convert_conversation_to_public(conversation)
 
@@ -1593,16 +1651,21 @@ async def analyze_content_stream_with_template_endpoint(
     # 统一使用内置默认模型
     DEFAULT_MODEL = "or-deepseek-r1"
 
-    # 返回流式响应 - 使用新的处理器
+    # 提取ContentItem的必要属性，避免传递ORM对象到异步函数
+    content_title = content_item.title
+    content_text = content_item.content_text
+    source_uri = content_item.source_uri
+
+    # 返回流式响应 - 传递简单的数据类型而不是ORM对象
     return StreamingResponse(
         _stream_template_analysis(
-            content_item_id=content_item.id,
-            content_text=content_item.content_text,
-            content_item=content_item,
+            content_item_id=id,
+            content_text=content_text,
+            content_title=content_title,
+            source_uri=source_uri,
             analysis_type=analysis_type,
             user_id=current_user.id,
             model=DEFAULT_MODEL,
-            session=session,  # 传递数据库session
         ),
         media_type="text/event-stream",
         headers={
@@ -1617,11 +1680,11 @@ async def analyze_content_stream_with_template_endpoint(
 async def _stream_template_analysis(
     content_item_id: uuid.UUID,
     content_text: str,
-    content_item: ContentItem,
+    content_title: str | None,
+    source_uri: str | None,
     analysis_type: str,
     user_id: uuid.UUID,
     model: str,
-    session: Session,
 ) -> AsyncGenerator[str, None]:
     """
     使用模板进行流式分析，返回SSE格式数据
@@ -1644,10 +1707,10 @@ async def _stream_template_analysis(
 
         # 准备模板变量
         document_metadata = {
-            "title": content_item.title,
-            "author": getattr(content_item, "author", None),
-            "source_url": content_item.source_uri,
-            "domain": getattr(content_item, "domain", None),
+            "title": content_title,
+            "author": None,  # 暂时没有author字段
+            "source_url": source_uri,
+            "domain": None,  # 暂时没有domain字段
         }
 
         # 渲染用户指令
@@ -1663,18 +1726,27 @@ async def _stream_template_analysis(
             {"role": "user", "content": analysis_instruction},
         ]
 
-        # 创建AIConversation记录
-        ai_conversation = create_ai_conversation(
-            session=session,
-            user_id=user_id,
-            content_item_id=content_item_id,
-            content_item_title=content_item.title or "Untitled",
-            analysis_instruction=analysis_instruction,
-            content_to_analyze=content_text,
-            model=model,
-            temperature=0.3,
-            max_tokens=2000,
-        )
+        # 在新的session中创建AIConversation记录，避免session绑定问题
+        from app.core.database import engine
+        from sqlmodel import Session
+
+        ai_conversation = None
+        try:
+            with Session(engine) as db_session:
+                ai_conversation = create_ai_conversation(
+                    session=db_session,
+                    user_id=user_id,
+                    content_item_id=content_item_id,
+                    content_item_title=content_title or "Untitled",
+                    analysis_instruction=analysis_instruction,
+                    content_to_analyze=content_text,
+                    model=model,
+                    temperature=0.3,
+                    max_tokens=2000,
+                )
+        except Exception as e:
+            logger.error(f"Failed to create AI conversation: {e}")
+            # 如果创建对话失败，继续处理，但记录错误
 
         # LiteLLM 代理配置
         litellm_url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
@@ -1724,10 +1796,22 @@ async def _stream_template_analysis(
 
                             if data == "[DONE]":
                                 # 保存完整的AI响应
-                                if accumulated_content:
+                                if accumulated_content and ai_conversation:
                                     try:
-                                        session.add(ai_conversation)
-                                        session.commit()
+                                        with Session(engine) as db_session:
+                                            # 重新查询conversation以确保正确的session绑定
+                                            conversation = db_session.get(AIConversation, ai_conversation.id)
+                                            if conversation:
+                                                # 更新对话内容
+                                                messages_list = json.loads(conversation.messages or "[]")
+                                                messages_list.append({
+                                                    "role": "assistant",
+                                                    "content": accumulated_content,
+                                                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                                                })
+                                                conversation.messages = json.dumps(messages_list)
+                                                db_session.add(conversation)
+                                                db_session.commit()
                                     except Exception as e:
                                         logger.error(f"Failed to save AI response: {e}")
 
@@ -1743,11 +1827,16 @@ async def _stream_template_analysis(
                                     error_msg = parsed.get("message", "Unknown error")
 
                                     # 保存错误
-                                    try:
-                                        session.add(ai_conversation)
-                                        session.commit()
-                                    except Exception as e:
-                                        logger.error(f"Failed to save error: {e}")
+                                    if ai_conversation:
+                                        try:
+                                            with Session(engine) as db_session:
+                                                conversation = db_session.get(AIConversation, ai_conversation.id)
+                                                if conversation:
+                                                    conversation.summary = f"分析失败: {error_msg}"
+                                                    db_session.add(conversation)
+                                                    db_session.commit()
+                                        except Exception as e:
+                                            logger.error(f"Failed to save error: {e}")
 
                                     yield f"data: {json.dumps({'type': 'error', 'content': error_msg, 'finished': True})}\n\n"
                                     return

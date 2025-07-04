@@ -1,12 +1,17 @@
 "use client";
 
 import React from "react";
-import { ShareMarkdownRenderer } from "./ShareMarkdownRenderer";
+import { ShareMarkdownRenderer } from "@/components/ui/ShareMarkdownRenderer";
+import { TextSelectionFloater } from "@/components/ui/text-selection-floater";
 
 interface SimpleContentRendererProps {
   content: string;
   title?: string;
   className?: string;
+  /** 是否启用文本选择浮层 */
+  enableTextSelection?: boolean;
+  /** 文本选择回调 */
+  onTextAction?: (action: { id: string; label: string; prompt: string }, selectedText: string) => void;
 }
 
 /**
@@ -18,10 +23,12 @@ export const SimpleContentRenderer: React.FC<SimpleContentRendererProps> = ({
   content,
   title,
   className = "",
+  enableTextSelection = true,
+  onTextAction,
 }) => {
   return (
     <div className={`h-full overflow-y-auto ${className}`}>
-      <div className="max-w-none">
+      <div className="max-w-none content-area" data-testid="content-renderer">
         {/* Title section - if provided */}
         {title && (
           <div className="mb-8">
@@ -44,6 +51,17 @@ export const SimpleContentRenderer: React.FC<SimpleContentRendererProps> = ({
           "
         />
       </div>
+      
+      {/* 文本选择浮层 */}
+      {enableTextSelection && (
+        <TextSelectionFloater
+          enabled={true}
+          containerSelector=".content-area"
+          excludeSelector=".sidebar, .panel, .analysis-card, .llm-analysis-card, .ai-analysis-card, .content-analysis-sidebar, [data-exclude-selection]"
+          onAction={onTextAction}
+          zIndex={1050}
+        />
+      )}
     </div>
   );
 };

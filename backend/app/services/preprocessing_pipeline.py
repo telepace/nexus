@@ -620,7 +620,18 @@ class PreprocessingPipeline:
             response = await self.chat_service.generate_with_template(
                 template_name="summary.j2", context=context
             )
-            return response.get("summary", {})
+            
+            # 检查是否为 JSONL 格式响应
+            if response.get("format") == "jsonl":
+                return {
+                    "format": "jsonl",
+                    "blocks": response.get("blocks", []),
+                    "raw_content": response.get("raw_content", ""),
+                    "text": response.get("text", "")
+                }
+            else:
+                # 原有逻辑：期望有 summary 键
+                return response.get("summary", {})
         except Exception as e:
             logger.error(f"生成摘要失败: {str(e)}")
             return {}
@@ -631,7 +642,18 @@ class PreprocessingPipeline:
             response = await self.chat_service.generate_with_template(
                 template_name="key_points.j2", context=context
             )
-            return response.get("key_points", {})
+            
+            # 检查是否为 JSONL 格式响应
+            if response.get("format") == "jsonl":
+                return {
+                    "format": "jsonl",
+                    "blocks": response.get("blocks", []),
+                    "raw_content": response.get("raw_content", ""),
+                    "text": response.get("text", "")
+                }
+            else:
+                # 原有逻辑：期望有 key_points 键
+                return response.get("key_points", {})
         except Exception as e:
             logger.error(f"生成要点失败: {str(e)}")
             return {}
