@@ -56,6 +56,8 @@ from app.utils.background_tasks import background_task_manager
 from app.utils.content_processors import ProcessingPipeline
 from app.utils.events import content_event_manager, create_sse_generator
 from app.utils.streaming_jsonl_extractor import create_streaming_jsonl_extractor
+from app.utils.prompt_helpers import render_user_analysis_prompt
+from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
 
 # from app.utils.cache import warm_article_cache  # 暂时注释掉避免redis依赖
 
@@ -119,10 +121,15 @@ def create_ai_conversation(
     Returns:
         AIConversation: 创建的对话记录
     """
+    from app.utils.prompt_helpers import render_user_analysis_prompt
+    
+    # 使用用户分析模板渲染prompt
+    user_prompt = render_user_analysis_prompt(analysis_instruction)
+    
     # 准备对话消息
     conversation_messages = [
         {"role": "system", "content": content_to_analyze},
-        {"role": "user", "content": analysis_instruction},
+        {"role": "user", "content": user_prompt},  # 使用渲染后的prompt
     ]
 
     # 创建AIConversation记录
@@ -1114,15 +1121,20 @@ async def _stream_content_analysis_ai_sdk(
 ) -> AsyncGenerator[str, None]:
     """Stream AI SDK analysis with updated prompt structure."""
     import aiohttp
+    from app.utils.prompt_helpers import render_user_analysis_prompt
+    from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
 
     try:
-        # 创建JSONL提取器
-        jsonl_extractor = create_streaming_jsonl_extractor()
+        # 创建实时JSONL处理器
+        jsonl_processor = create_realtime_jsonl_processor()
+
+        # 使用新的用户分析模板渲染prompt
+        user_prompt = render_user_analysis_prompt(request.analysis_instruction)
 
         # Prepare messages with updated structure
         messages = [
             {"role": "system", "content": content_text},  # 使用传递的内容文本
-            {"role": "user", "content": request.analysis_instruction},
+            {"role": "user", "content": user_prompt},  # 使用渲染后的用户prompt
         ]
 
         payload = {
@@ -1149,7 +1161,6 @@ async def _stream_content_analysis_ai_sdk(
                     )
 
                 full_response = ""
-                pure_jsonl_response = ""  # 存储提取的纯净JSONL内容
 
                 async for chunk in response.content.iter_chunked(1024):
                     chunk_str = chunk.decode("utf-8")
@@ -1159,16 +1170,18 @@ async def _stream_content_analysis_ai_sdk(
                         if line.startswith("data: "):
                             data_part = line[6:].strip()
                             if data_part == "[DONE]":
-                                # 使用纯净的JSONL内容或原始内容
-                                final_content = pure_jsonl_response if jsonl_extractor.has_jsonl_content() else full_response
+                                # 处理剩余内容
+                                final_increment = jsonl_processor.finalize()
+                                if final_increment:
+                                    # 直接传输JSONL对象，不进行额外转义
+                                    final_lines = final_increment.strip().split('\n')
+                                    for jsonl_line in final_lines:
+                                        if jsonl_line.strip():
+                                            # 直接传输JSONL对象 (类型0)
+                                            yield f"0:{jsonl_line}\n"
 
-                                # Send final response
-                                final_response = {
-                                    "type": "analysis",
-                                    "content": final_content,
-                                    "finished": True,
-                                }
-                                yield f"data: {json.dumps(final_response)}\n\n"
+                                # 发送完成信号 (类型8)
+                                yield f'8:[{{"finishReason":"stop"}}]\n'
 
                                 # Update AI conversation with response using new session
                                 try:
@@ -1177,6 +1190,7 @@ async def _stream_content_analysis_ai_sdk(
                                             AIConversation, ai_conversation_id
                                         )
                                         if ai_conversation:
+                                            final_content = jsonl_processor.get_current_jsonl()
                                             update_ai_conversation_response(
                                                 db_session,
                                                 ai_conversation,
@@ -1194,41 +1208,24 @@ async def _stream_content_analysis_ai_sdk(
                                         content = delta["content"]
                                         full_response += content
 
-                                        # 尝试提取JSONL内容
-                                        jsonl_increment, has_new_jsonl = jsonl_extractor.process_chunk(content)
+                                        # 使用实时JSONL处理器检测完整的JSONL行
+                                        jsonl_increment, has_new_jsonl = jsonl_processor.process_chunk(content)
 
-                                        if has_new_jsonl:
-                                            # 有新的JSONL内容，发送纯净的增量内容
-                                            pure_jsonl_response = jsonl_extractor.get_current_jsonl()
-                                            stream_response = {
-                                                "type": "analysis",
-                                                "content": jsonl_increment,
-                                                "finished": False,
-                                            }
-                                        else:
-                                            # 没有JSONL内容或者还在等待，检查是否已经开始提取
-                                            if jsonl_extractor.has_jsonl_content():
-                                                # 已经在提取JSONL，跳过非JSONL内容
-                                                continue
-                                            else:
-                                                # 还没开始提取，发送原始内容
-                                                stream_response = {
-                                                    "type": "analysis",
-                                                    "content": content,
-                                                    "finished": False,
-                                                }
-
-                                        yield f"data: {json.dumps(stream_response)}\n\n"
+                                        if has_new_jsonl and jsonl_increment:
+                                            # 直接传输JSONL对象，不进行额外转义
+                                            jsonl_lines = jsonl_increment.strip().split('\n')
+                                            for jsonl_line in jsonl_lines:
+                                                if jsonl_line.strip():
+                                                    # 直接传输JSONL对象 (类型0)
+                                                    yield f"0:{jsonl_line}\n"
+                                        
                             except json.JSONDecodeError:
                                 continue
 
     except Exception as e:
-        error_response = {
-            "type": "error",
-            "content": f"Analysis failed: {str(e)}",
-            "finished": True,
-        }
-        yield f"data: {json.dumps(error_response)}\n\n"
+        # 发送错误信息 (类型9)
+        error_msg = str(e).replace('"', '\\"')
+        yield f'9:[{{"error":"Analysis failed: {error_msg}"}}]\n'
 
 
 @router.post(
@@ -1321,15 +1318,20 @@ async def _stream_content_completion_updated(
 ) -> AsyncGenerator[str, None]:
     """Stream content completion with updated prompt structure."""
     import aiohttp
+    from app.utils.prompt_helpers import render_user_analysis_prompt
+    from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
 
     try:
-        # 创建JSONL提取器
-        jsonl_extractor = create_streaming_jsonl_extractor()
+        # 创建实时JSONL处理器
+        jsonl_processor = create_realtime_jsonl_processor()
+
+        # 使用新的用户分析模板渲染prompt
+        user_prompt = render_user_analysis_prompt(request.analysis_instruction)
 
         # Prepare messages with updated structure
         messages = [
             {"role": "system", "content": content_text},  # 使用传递的内容文本
-            {"role": "user", "content": request.analysis_instruction},
+            {"role": "user", "content": user_prompt},  # 使用渲染后的用户prompt
         ]
 
         payload = {
@@ -1356,7 +1358,6 @@ async def _stream_content_completion_updated(
                     )
 
                 full_response = ""
-                pure_jsonl_response = ""  # 存储提取的纯净JSONL内容
 
                 async for chunk in response.content.iter_chunked(1024):
                     chunk_str = chunk.decode("utf-8")
@@ -1366,16 +1367,18 @@ async def _stream_content_completion_updated(
                         if line.startswith("data: "):
                             data_part = line[6:].strip()
                             if data_part == "[DONE]":
-                                # 使用纯净的JSONL内容或原始内容
-                                final_content = pure_jsonl_response if jsonl_extractor.has_jsonl_content() else full_response
+                                # 处理剩余内容
+                                final_increment = jsonl_processor.finalize()
+                                if final_increment:
+                                    # 直接传输JSONL对象，不进行额外转义
+                                    final_lines = final_increment.strip().split('\n')
+                                    for jsonl_line in final_lines:
+                                        if jsonl_line.strip():
+                                            # 直接传输JSONL对象 (类型0)
+                                            yield f"0:{jsonl_line}\n"
 
-                                # Send final response
-                                final_response = {
-                                    "type": "completion",
-                                    "content": final_content,
-                                    "finished": True,
-                                }
-                                yield f"data: {json.dumps(final_response)}\n\n"
+                                # 发送完成信号 (类型8)
+                                yield f'8:[{{"finishReason":"stop"}}]\n'
 
                                 # Update AI conversation with response using new session
                                 try:
@@ -1384,6 +1387,7 @@ async def _stream_content_completion_updated(
                                             AIConversation, ai_conversation_id
                                         )
                                         if ai_conversation:
+                                            final_content = jsonl_processor.get_current_jsonl()
                                             update_ai_conversation_response(
                                                 db_session,
                                                 ai_conversation,
@@ -1401,41 +1405,24 @@ async def _stream_content_completion_updated(
                                         content = delta["content"]
                                         full_response += content
 
-                                        # 尝试提取JSONL内容
-                                        jsonl_increment, has_new_jsonl = jsonl_extractor.process_chunk(content)
+                                        # 使用实时JSONL处理器检测完整的JSONL行
+                                        jsonl_increment, has_new_jsonl = jsonl_processor.process_chunk(content)
 
-                                        if has_new_jsonl:
-                                            # 有新的JSONL内容，发送纯净的增量内容
-                                            pure_jsonl_response = jsonl_extractor.get_current_jsonl()
-                                            stream_response = {
-                                                "type": "completion",
-                                                "content": jsonl_increment,
-                                                "finished": False,
-                                            }
-                                        else:
-                                            # 没有JSONL内容或者还在等待，检查是否已经开始提取
-                                            if jsonl_extractor.has_jsonl_content():
-                                                # 已经在提取JSONL，跳过非JSONL内容
-                                                continue
-                                            else:
-                                                # 还没开始提取，发送原始内容
-                                                stream_response = {
-                                                    "type": "completion",
-                                                    "content": content,
-                                                    "finished": False,
-                                                }
+                                        if has_new_jsonl and jsonl_increment:
+                                            # 直接传输JSONL对象，不进行额外转义
+                                            jsonl_lines = jsonl_increment.strip().split('\n')
+                                            for jsonl_line in jsonl_lines:
+                                                if jsonl_line.strip():
+                                                    # 直接传输JSONL对象 (类型0)
+                                                    yield f"0:{jsonl_line}\n"
 
-                                        yield f"data: {json.dumps(stream_response)}\n\n"
                             except json.JSONDecodeError:
                                 continue
 
     except Exception as e:
-        error_response = {
-            "type": "error",
-            "content": f"Completion failed: {str(e)}",
-            "finished": True,
-        }
-        yield f"data: {json.dumps(error_response)}\n\n"
+        # 发送错误信息 (类型9)
+        error_msg = str(e).replace('"', '\\"')
+        yield f'9:[{{"error":"Completion failed: {error_msg}"}}]\n'
 
 
 @router.get(

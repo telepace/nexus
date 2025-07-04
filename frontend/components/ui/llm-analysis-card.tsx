@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useMemo } from "react";
+import React, { FC, useMemo } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { LLMAnalysis } from "@/lib/stores/llm-analysis-store";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { JsonlRenderer } from "@/components/ui/JsonlRenderer";
+import { StreamingJsonlRenderer } from "@/components/ui/StreamingJsonlRenderer";
 import { FavoriteButton } from "@/components/actions/FavoriteButton";
 
 interface LLMAnalysisCardProps {
@@ -299,17 +300,14 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
                   {/* 流式内容区域 */}
                   <div className="prose prose-sm max-w-none dark:prose-invert">
                     {isJsonl(formattedContent) ? (
-                      <JsonlRenderer content={formattedContent} />
+                      <StreamingJsonlRenderer 
+                        content={formattedContent} 
+                        isLoading={true}
+                        showStreamingIndicator={true}
+                      />
                     ) : (
                       <MarkdownRenderer content={formattedContent} />
                     )}
-                  </div>
-                  {/* 打字机光标效果 - 放在独立的行 */}
-                  <div className="flex items-center justify-start mt-2">
-                    <span className="inline-block w-2 h-4 bg-primary animate-shimmer opacity-75 rounded-sm" />
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      正在生成...
-                    </span>
                   </div>
                 </div>
               )}

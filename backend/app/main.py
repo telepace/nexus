@@ -32,6 +32,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.api.main import api_router
 from app.api.middlewares.posthog import PostHogMiddleware
 from app.api.middlewares.response import ApiResponseMiddleware
+from app.api.middlewares.streaming import StreamingResponseHeaderMiddleware
 from app.core.config import settings
 from app.core.redis_client import redis_client
 from app.utils.error import AppError, create_error_response
@@ -128,6 +129,9 @@ if POSTHOG_AVAILABLE and settings.posthog_enabled:
 
 # 添加API响应格式中间件
 app.add_middleware(ApiResponseMiddleware)
+
+# 添加 StreamingResponseHeaderMiddleware
+app.add_middleware(StreamingResponseHeaderMiddleware)
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 

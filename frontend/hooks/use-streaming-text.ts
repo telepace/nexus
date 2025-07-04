@@ -169,9 +169,11 @@ export function useStreamingText(
             // 检查是否是 Data Stream Protocol 格式
             if (line.startsWith("0:")) {
               // Vercel AI SDK Data Stream Protocol 文本内容
-              const content = line.slice(3, -1); // 移除 0:" 和末尾的 "
+              const content = line.slice(2); // 移除 "0:"
               if (content) {
-                accumulatedContent += content;
+                // 对于JSONL格式，每行是一个完整的JSON对象
+                // 将每个JSONL对象添加到累积内容中
+                accumulatedContent += content + "\n";
                 debouncedUpdateContent(accumulatedContent);
               }
             } else if (line.startsWith("8:")) {
@@ -191,7 +193,7 @@ export function useStreamingText(
                 throw new Error("Stream error");
               }
             } else if (line.startsWith("data: ")) {
-              // OpenAI SSE 格式s
+              // OpenAI SSE 格式
               const data = line.slice(6).trim();
 
               if (data === "[DONE]") {

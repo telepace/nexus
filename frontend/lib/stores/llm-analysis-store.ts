@@ -275,16 +275,51 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
             throw new Error("无法找到目标分析");
           }
 
-          // 防抖更新函数，避免过于频繁的渲染
-          const debouncedUpdate = (content: string) => {
+          // 智能更新函数，对 JSONL 支持块级实时更新
+          const smartUpdate = (content: string) => {
             if (updateTimer) {
               clearTimeout(updateTimer);
             }
-            updateTimer = setTimeout(() => {
-              updateAnalysis(targetAnalysis.id, {
-                content,
-              });
-            }, 50); // 50ms 防抖
+            
+            // 检查是否是 JSONL 格式
+            const isJsonlContent = content.trim().split('\n').some(line => {
+              const trimmed = line.trim();
+              if (!trimmed) return false;
+              try {
+                const parsed = JSON.parse(trimmed);
+                return (parsed.t || parsed.type) && (parsed.c || parsed.content);
+              } catch {
+                return false;
+              }
+            });
+
+            if (isJsonlContent) {
+              // 对于 JSONL 内容，检查是否有完整的新行
+              const lines = content.trim().split('\n');
+              const lastLine = lines[lines.length - 1]?.trim();
+              
+              try {
+                // 如果最后一行是完整的 JSON，立即更新
+                if (lastLine && lastLine.endsWith('}')) {
+                  JSON.parse(lastLine);
+                  // 立即更新，无防抖
+                  updateAnalysis(targetAnalysis.id, { content });
+                  return;
+                }
+              } catch {
+                // 最后一行不是完整的 JSON，使用短防抖
+              }
+              
+              // 使用短防抖（10ms）用于 JSONL
+              updateTimer = setTimeout(() => {
+                updateAnalysis(targetAnalysis.id, { content });
+              }, 10);
+            } else {
+              // 普通内容使用标准防抖（50ms）
+              updateTimer = setTimeout(() => {
+                updateAnalysis(targetAnalysis.id, { content });
+              }, 50);
+            }
           };
 
           try {
@@ -317,9 +352,9 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                   }
 
                   if (content) {
-                    accumulatedContent += content;
+                    accumulatedContent += content + "\n";
                     // 使用防抖更新
-                    debouncedUpdate(accumulatedContent);
+                    smartUpdate(accumulatedContent);
                   }
                 } else if (line.startsWith("8:")) {
                   // Vercel AI SDK Data Stream Protocol 完成信号
@@ -367,18 +402,31 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                       throw new Error(parsed.message || "LLM 服务错误");
                     }
 
-                    // 提取内容
+                    // 提取内容（兼容 OpenAI SSE 和自定义 JSON 格式）
                     if (
                       parsed.choices &&
                       parsed.choices[0] &&
                       parsed.choices[0].delta
                     ) {
+                      // OpenAI SSE 格式
                       const delta = parsed.choices[0].delta;
                       if (delta.content) {
-                        accumulatedContent += delta.content;
-
-                        // 使用防抖更新
-                        debouncedUpdate(accumulatedContent);
+                        accumulatedContent += delta.content + "\n";
+                        smartUpdate(accumulatedContent);
+                      }
+                    } else if (typeof parsed.content === "string") {
+                      // 自定义 SSE 格式 {type, content, finished}
+                      if (!parsed.finished) {
+                        accumulatedContent += parsed.content + "\n";
+                        smartUpdate(accumulatedContent);
+                      } else {
+                        // 流结束
+                        if (updateTimer) clearTimeout(updateTimer);
+                        updateAnalysis(targetAnalysis.id, {
+                          content: accumulatedContent,
+                          isLoading: false,
+                        });
+                        return;
                       }
                     }
                   } catch (parseError) {
@@ -575,16 +623,51 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
             throw new Error("无法找到目标分析");
           }
 
-          // 防抖更新函数，避免过于频繁的渲染
-          const debouncedUpdate = (content: string) => {
+          // 智能更新函数，对 JSONL 支持块级实时更新
+          const smartUpdate = (content: string) => {
             if (updateTimer) {
               clearTimeout(updateTimer);
             }
-            updateTimer = setTimeout(() => {
-              updateAnalysis(targetAnalysis.id, {
-                content,
-              });
-            }, 50); // 50ms 防抖
+            
+            // 检查是否是 JSONL 格式
+            const isJsonlContent = content.trim().split('\n').some(line => {
+              const trimmed = line.trim();
+              if (!trimmed) return false;
+              try {
+                const parsed = JSON.parse(trimmed);
+                return (parsed.t || parsed.type) && (parsed.c || parsed.content);
+              } catch {
+                return false;
+              }
+            });
+
+            if (isJsonlContent) {
+              // 对于 JSONL 内容，检查是否有完整的新行
+              const lines = content.trim().split('\n');
+              const lastLine = lines[lines.length - 1]?.trim();
+              
+              try {
+                // 如果最后一行是完整的 JSON，立即更新
+                if (lastLine && lastLine.endsWith('}')) {
+                  JSON.parse(lastLine);
+                  // 立即更新，无防抖
+                  updateAnalysis(targetAnalysis.id, { content });
+                  return;
+                }
+              } catch {
+                // 最后一行不是完整的 JSON，使用短防抖
+              }
+              
+              // 使用短防抖（10ms）用于 JSONL
+              updateTimer = setTimeout(() => {
+                updateAnalysis(targetAnalysis.id, { content });
+              }, 10);
+            } else {
+              // 普通内容使用标准防抖（50ms）
+              updateTimer = setTimeout(() => {
+                updateAnalysis(targetAnalysis.id, { content });
+              }, 50);
+            }
           };
 
           try {
@@ -617,9 +700,9 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                   }
 
                   if (content) {
-                    accumulatedContent += content;
+                    accumulatedContent += content + "\n";
                     // 使用防抖更新
-                    debouncedUpdate(accumulatedContent);
+                    smartUpdate(accumulatedContent);
                   }
                 } else if (line.startsWith("8:")) {
                   // Vercel AI SDK Data Stream Protocol 完成信号
@@ -667,18 +750,30 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                       throw new Error(parsed.message || "LLM 服务错误");
                     }
 
-                    // 提取内容
+                    // 提取内容（兼容 OpenAI SSE 和自定义 JSON 格式）
                     if (
                       parsed.choices &&
                       parsed.choices[0] &&
                       parsed.choices[0].delta
                     ) {
+                      // OpenAI SSE 格式
                       const delta = parsed.choices[0].delta;
                       if (delta.content) {
-                        accumulatedContent += delta.content;
-
-                        // 使用防抖更新
-                        debouncedUpdate(accumulatedContent);
+                        accumulatedContent += delta.content + "\n";
+                        smartUpdate(accumulatedContent);
+                      }
+                    } else if (typeof parsed.content === "string") {
+                      // 自定义 SSE 格式 {type, content, finished}
+                      if (!parsed.finished) {
+                        accumulatedContent += parsed.content + "\n";
+                        smartUpdate(accumulatedContent);
+                      } else {
+                        if (updateTimer) clearTimeout(updateTimer);
+                        updateAnalysis(targetAnalysis.id, {
+                          content: accumulatedContent,
+                          isLoading: false,
+                        });
+                        return;
                       }
                     }
                   } catch (parseError) {
