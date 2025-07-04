@@ -4,7 +4,6 @@ Firecrawl 连接诊断脚本
 用于测试 Firecrawl API 连接、代理配置和网络问题
 """
 
-import asyncio
 import os
 import sys
 from pathlib import Path
@@ -13,6 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import requests
+
 from app.core.config import settings
 
 
@@ -20,17 +20,17 @@ def check_environment():
     """检查环境配置"""
     print("🔍 检查环境配置...")
     print("=" * 50)
-    
+
     # 检查 Firecrawl API Key
     api_key = getattr(settings, "FIRECRAWL_API_KEY", None)
     print(f"📝 FIRECRAWL_API_KEY: {'已配置' if api_key else '❌ 未配置'}")
-    
+
     # 检查代理配置
     proxy_vars = [
-        "http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY", 
+        "http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY",
         "all_proxy", "ALL_PROXY"
     ]
-    
+
     print("\n🌐 代理环境变量:")
     proxy_found = False
     for var in proxy_vars:
@@ -40,10 +40,10 @@ def check_environment():
             proxy_found = True
         else:
             print(f"   ❌ {var}: 未设置")
-    
+
     if not proxy_found:
         print("   ⚠️  没有检测到代理配置")
-    
+
     return bool(api_key)
 
 
@@ -51,20 +51,20 @@ def test_basic_connectivity():
     """测试基础网络连接"""
     print("\n🌐 测试基础网络连接...")
     print("=" * 50)
-    
+
     test_urls = [
         "https://api.firecrawl.dev",
         "https://httpbin.org/get",  # 备用测试URL
         "https://www.google.com"
     ]
-    
+
     for url in test_urls:
         try:
             print(f"📡 测试连接: {url}")
             response = requests.get(url, timeout=10)
             print(f"   ✅ 状态码: {response.status_code}")
             if response.status_code == 200:
-                print(f"   ✅ 连接成功")
+                print("   ✅ 连接成功")
                 return True
         except requests.exceptions.ConnectionError as e:
             print(f"   ❌ 连接错误: {e}")
@@ -72,7 +72,7 @@ def test_basic_connectivity():
             print(f"   ❌ 超时: {e}")
         except Exception as e:
             print(f"   ❌ 其他错误: {e}")
-    
+
     print("❌ 所有网络连接测试都失败了")
     return False
 
@@ -81,26 +81,26 @@ def test_firecrawl_with_proxies():
     """使用不同代理配置测试 Firecrawl"""
     print("\n🔥 测试 Firecrawl API 连接...")
     print("=" * 50)
-    
+
     api_key = getattr(settings, "FIRECRAWL_API_KEY", None)
     if not api_key:
         print("❌ FIRECRAWL_API_KEY 未配置，跳过测试")
         return False
-    
+
     # 测试URL
     test_url = "https://example.com"
-    
+
     # 不同的代理配置测试
     proxy_configs = [
         {"name": "无代理", "proxies": {}},
         {"name": "系统代理", "proxies": None},  # 使用环境变量
     ]
-    
+
     # 如果有代理环境变量，添加特定代理测试
     http_proxy = os.getenv("http_proxy") or os.getenv("HTTP_PROXY")
     https_proxy = os.getenv("https_proxy") or os.getenv("HTTPS_PROXY")
     all_proxy = os.getenv("all_proxy") or os.getenv("ALL_PROXY")
-    
+
     if http_proxy or https_proxy:
         proxy_configs.append({
             "name": "环境变量代理",
@@ -109,7 +109,7 @@ def test_firecrawl_with_proxies():
                 "https": https_proxy
             }
         })
-    
+
     if all_proxy and "socks" not in all_proxy.lower():
         proxy_configs.append({
             "name": "全局代理",
@@ -118,13 +118,13 @@ def test_firecrawl_with_proxies():
                 "https": all_proxy
             }
         })
-    
+
     for config in proxy_configs:
         print(f"\n🧪 测试配置: {config['name']}")
         try:
             # 使用 firecrawl-py 库测试
             from firecrawl import FirecrawlApp
-            
+
             # 临时设置代理环境变量
             original_env = {}
             if config['proxies'] and config['proxies'] != {}:
@@ -133,39 +133,39 @@ def test_firecrawl_with_proxies():
                         var_name = f"{key}_proxy"
                         original_env[var_name] = os.environ.get(var_name)
                         os.environ[var_name] = value
-            
+
             app = FirecrawlApp(api_key=api_key)
-            
+
             # 配置参数
             params = {
                 "formats": ["markdown"],
                 "onlyMainContent": True,
                 "waitFor": 0,
             }
-            
+
             print(f"   📡 尝试抓取: {test_url}")
             response = app.scrape_url(url=test_url, params=params)
-            
+
             if response and isinstance(response, dict):
                 print("   ✅ Firecrawl API 调用成功!")
-                
+
                 # 检查返回内容
                 if "markdown" in response:
                     content_length = len(response["markdown"])
                     print(f"   📄 返回内容长度: {content_length} 字符")
                 else:
                     print("   ⚠️  响应中没有 markdown 内容")
-                
+
                 return True
             else:
                 print("   ❌ Firecrawl API 返回无效响应")
-            
+
         except ImportError:
             print("   ❌ firecrawl-py 库未安装，请运行: pip install firecrawl-py")
         except Exception as e:
             error_str = str(e)
             print(f"   ❌ 错误: {error_str}")
-            
+
             # 分析错误类型
             if "connection reset" in error_str.lower():
                 print("   💡 这是连接重置错误，通常由以下原因引起:")
@@ -190,7 +190,7 @@ def test_firecrawl_with_proxies():
                     os.environ[var_name] = original_value
                 elif var_name in os.environ:
                     del os.environ[var_name]
-    
+
     return False
 
 
@@ -198,7 +198,7 @@ def provide_solutions():
     """提供解决方案建议"""
     print("\n💡 解决方案建议:")
     print("=" * 50)
-    
+
     solutions = [
         "1. 检查网络代理配置:",
         "   export http_proxy=http://127.0.0.1:7890",
@@ -222,7 +222,7 @@ def provide_solutions():
         "6. 重启服务:",
         "   docker compose restart backend"
     ]
-    
+
     for solution in solutions:
         print(solution)
 
@@ -231,38 +231,38 @@ def main():
     """主函数"""
     print("🚀 Firecrawl 连接诊断工具")
     print("=" * 50)
-    
+
     # 1. 检查环境配置
     config_ok = check_environment()
-    
+
     # 2. 测试基础网络连接
     network_ok = test_basic_connectivity()
-    
+
     # 3. 测试 Firecrawl API
     if config_ok:
         firecrawl_ok = test_firecrawl_with_proxies()
     else:
         firecrawl_ok = False
         print("\n⚠️  跳过 Firecrawl 测试，因为 API Key 未配置")
-    
+
     # 4. 提供解决方案
     if not network_ok or not firecrawl_ok:
         provide_solutions()
-    
+
     # 5. 总结
     print("\n📊 诊断结果总结:")
     print("=" * 50)
     print(f"✅ 环境配置: {'正常' if config_ok else '❌ 需要配置'}")
     print(f"🌐 网络连接: {'正常' if network_ok else '❌ 有问题'}")
     print(f"🔥 Firecrawl API: {'正常' if firecrawl_ok else '❌ 有问题'}")
-    
+
     if config_ok and network_ok and firecrawl_ok:
         print("\n🎉 所有检查都通过! Firecrawl 应该可以正常工作了。")
     else:
         print("\n⚠️  发现问题，请根据上面的建议进行修复。")
-    
+
     return 0 if (config_ok and network_ok and firecrawl_ok) else 1
 
 
 if __name__ == "__main__":
-    sys.exit(main()) 
+    sys.exit(main())

@@ -18,8 +18,8 @@ from sqlmodel import Session
 from app.models.content import AIResult, ContentItem, Segment
 from app.services.ai.chat_service import ChatService
 from app.services.ai_tag_processor import ai_tag_processor
-from app.utils.segment_formatter import segment_formatter
 from app.utils.content_chunker import ContentChunker
+from app.utils.segment_formatter import segment_formatter
 
 logger = logging.getLogger(__name__)
 
@@ -317,10 +317,10 @@ class PreprocessingPipeline:
             # 假设我们可以从数据库或当前处理中获取segments
             # 这里需要从当前处理的分段结果中获取segments
             chunker = ContentChunker()
-            
+
             # 生成段落信息
             chunk_infos = chunker.chunk_markdown_content(content)
-            
+
             # 创建临时segment对象用于格式化
             temp_segments = []
             for i, chunk_info in enumerate(chunk_infos):
@@ -330,9 +330,9 @@ class PreprocessingPipeline:
                         self.content = content
                         self.segment_index = segment_index
                         self.display_number = segment_index + 1  # 1-based display number
-                
+
                 temp_segments.append(TempSegment(chunk_info.content, i))
-            
+
             # 生成带标号的格式化内容
             if temp_segments:
                 formatted_content_with_numbers = segment_formatter.format_segments_for_ai_prompt(temp_segments)
@@ -343,7 +343,7 @@ class PreprocessingPipeline:
                 template_context["content_with_segment_numbers"] = content
                 template_context["segments"] = []
                 logger.warning("⚠️ 未能生成段落，使用原始内容")
-                
+
         except Exception as e:
             logger.warning(f"⚠️ 段落格式化失败，使用原始内容: {e}")
             template_context["content_with_segment_numbers"] = content
@@ -620,7 +620,7 @@ class PreprocessingPipeline:
             response = await self.chat_service.generate_with_template(
                 template_name="summary.j2", context=context
             )
-            
+
             # 检查是否为 JSONL 格式响应
             if response.get("format") == "jsonl":
                 return {
@@ -642,7 +642,7 @@ class PreprocessingPipeline:
             response = await self.chat_service.generate_with_template(
                 template_name="key_points.j2", context=context
             )
-            
+
             # 检查是否为 JSONL 格式响应
             if response.get("format") == "jsonl":
                 return {

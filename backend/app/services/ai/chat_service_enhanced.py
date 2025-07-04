@@ -11,13 +11,14 @@
 
 import json
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
+
 from jinja2 import Environment, FileSystemLoader
 
 from app.core.config import settings
-from app.utils.tag_manager import tag_manager
-from app.utils.jsonl_service import JsonlService, ServiceConfig, create_service
 from app.utils.jsonl_parser import ParseOptions, PreprocessorConfig
+from app.utils.jsonl_service import JsonlService, ServiceConfig
+from app.utils.tag_manager import tag_manager
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ class EnhancedChatService:
             trim_blocks=True,
             lstrip_blocks=True,
         )
-        
+
         # 配置 JSONL 服务
         service_config = ServiceConfig(
             enable_caching=True,
@@ -51,7 +52,7 @@ class EnhancedChatService:
             timeout_seconds=30.0
         )
         self.jsonl_service = JsonlService(service_config)
-        
+
         # 注册自定义处理器
         self._setup_custom_processors()
 
@@ -64,23 +65,23 @@ class EnhancedChatService:
                 if block.type == "insight":
                     if not block.get_attribute("priority"):
                         block.attributes["priority"] = "high"
-                
+
                 # 为行动建议添加紧急程度
                 elif block.type == "action":
                     if not block.get_attribute("urgency"):
                         block.attributes["urgency"] = "medium"
-            
+
             return blocks
-        
+
         self.jsonl_service.register_custom_processor(content_enhancer)
 
     async def generate_with_template(
-        self, 
-        template_name: str, 
-        context: Dict[str, Any], 
-        model: Optional[str] = None,
+        self,
+        template_name: str,
+        context: dict[str, Any],
+        model: str | None = None,
         output_format: str = "auto"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         使用模板生成AI响应（增强版）
 
@@ -155,11 +156,11 @@ class EnhancedChatService:
             return self._create_error_response(str(e), template_name)
 
     async def _process_ai_output(
-        self, 
-        ai_content: str, 
-        template_name: str, 
+        self,
+        ai_content: str,
+        template_name: str,
         output_format: str = "auto"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         处理 AI 输出内容
 
@@ -194,7 +195,7 @@ class EnhancedChatService:
                 )
 
                 result = await self.jsonl_service.process_content(
-                    ai_content, 
+                    ai_content,
                     parse_options=parse_options,
                     format_type=output_format
                 )
@@ -206,7 +207,7 @@ class EnhancedChatService:
                         f"{len(result['blocks'])} 个块, "
                         f"{result['stats']['error_count']} 个错误"
                     )
-                    
+
                     return {
                         "format": "jsonl",
                         "success": True,
@@ -226,7 +227,7 @@ class EnhancedChatService:
                         f"⚠️ JSONL 处理部分失败 {template_name}: "
                         f"{len(result['errors'])} 个错误"
                     )
-                    
+
                     # 即使有错误，也返回部分结果
                     return {
                         "format": "jsonl",
@@ -246,13 +247,13 @@ class EnhancedChatService:
             return self._create_error_response(f"输出处理失败: {str(e)}", template_name)
 
     async def _process_other_formats(
-        self, 
-        ai_content: str, 
-        template_name: str, 
+        self,
+        ai_content: str,
+        template_name: str,
         output_format: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """处理其他格式的输出"""
-        
+
         if template_name in ["labels.j2", "segment_aware_chat.j2"]:
             # 这些模板要求 JSON 输出
             try:
@@ -271,7 +272,7 @@ class EnhancedChatService:
                     "text": ai_content,
                     "error": f"JSON 解析失败: {str(e)}"
                 }
-        
+
         # 默认返回文本格式
         return {
             "format": "text",
@@ -288,7 +289,7 @@ class EnhancedChatService:
         }
         return template_name in jsonl_templates
 
-    def _create_error_response(self, error_message: str, template_name: str) -> Dict[str, Any]:
+    def _create_error_response(self, error_message: str, template_name: str) -> dict[str, Any]:
         """创建错误响应"""
         return {
             "format": "error",
@@ -309,11 +310,11 @@ class EnhancedChatService:
 {"t": "insight", "c": "重要发现：用户的需求很明确", "expandable": "详细分析用户意图"}
 {"t": "action", "c": "建议采取相应的处理措施"}'''
 
-    async def get_processing_stats(self) -> Dict[str, Any]:
+    async def get_processing_stats(self) -> dict[str, Any]:
         """获取处理统计信息"""
         return self.jsonl_service.get_processing_stats()
 
-    async def validate_jsonl_output(self, content: str) -> Dict[str, Any]:
+    async def validate_jsonl_output(self, content: str) -> dict[str, Any]:
         """验证 JSONL 输出的有效性"""
         return await self.jsonl_service.validate_jsonl(content)
 
@@ -329,4 +330,4 @@ class EnhancedChatService:
 # 导出的公共接口
 __all__ = [
     'EnhancedChatService'
-] 
+]

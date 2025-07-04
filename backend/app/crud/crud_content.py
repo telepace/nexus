@@ -24,9 +24,12 @@ from app.models import (
     ContentAsset,
     ContentItem,
     ContentShare,
-    Segment,  # Use Segment instead of ContentChunk
     MessageSegmentReference,
+    Segment,  # Use Segment instead of ContentChunk
 )
+
+# Import aliases for backward compatibility
+from app.models.content import ContentChunk
 
 # Schema imports - assuming these exist
 from app.schemas.content import ContentItemCreate, ContentItemUpdate, ContentShareCreate
@@ -34,9 +37,6 @@ from app.schemas.image import ImageCreate
 
 # Image processing imports
 from app.utils.image_processor import process_base64_image, process_web_image
-
-# Import aliases for backward compatibility
-from app.models.content import ContentChunk
 
 logger = logging.getLogger(__name__)
 
@@ -172,12 +172,12 @@ def create_content_item_sync(
 ) -> ContentItem:
     session.add(content_item_in)
     session.commit()
-    
+
     # 重新获取content_item_in以确保session绑定，避免refresh错误
     refreshed_content_item = session.get(ContentItem, content_item_in.id)
     if refreshed_content_item:
         content_item_in = refreshed_content_item
-    
+
     return content_item_in
 
 
@@ -415,12 +415,12 @@ def update_content_item_sync(
 
     session.add(db_content_item)
     session.commit()
-    
+
     # 重新获取db_content_item以确保session绑定，避免refresh错误
     refreshed_content_item = session.get(ContentItem, db_content_item.id)
     if refreshed_content_item:
         return refreshed_content_item
-    
+
     return db_content_item
 
 
@@ -606,11 +606,11 @@ def get_all_content_chunks(
     """
     Get all content chunks for a content item without pagination.
     Optimized for scenarios where user wants complete content at once.
-    
+
     Args:
         session: Database session
         content_item_id: ID of the content item
-        
+
     Returns:
         Tuple of (all_chunks_list, total_count)
     """
@@ -622,8 +622,8 @@ def get_all_content_chunks(
     )
     chunks_result = session.exec(chunks_statement)
     chunks = chunks_result.all()
-    
+
     # Count is simply the length of the result
     total_count = len(chunks)
-    
+
     return list(chunks), total_count

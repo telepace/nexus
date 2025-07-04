@@ -168,7 +168,7 @@ class SegmentAwareChatService:
             # Support both old segment_ids format and new segment_numbers format
             segment_numbers = ref.get("segment_numbers", [])
             segment_ids = ref.get("segment_ids", [])
-            
+
             # Convert segment_ids to segment_numbers if needed (backward compatibility)
             if segment_ids and not segment_numbers:
                 segment_numbers = []

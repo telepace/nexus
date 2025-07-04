@@ -632,7 +632,7 @@ class BackgroundTaskManager:
                     content_item.updated_at = now_utc()
                     session.add(content_item)
                     session.commit()
-                    
+
                     # 重新获取content_item以确保session绑定，避免refresh错误
                     refreshed_content_item = session.get(ContentItem, content_item.id)
                     if refreshed_content_item:

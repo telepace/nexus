@@ -4,7 +4,7 @@ Following TDD approach to define expected behavior before implementation.
 """
 
 import uuid
-import pytest
+
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
@@ -19,12 +19,12 @@ class TestContentChunksOptimization:
         self, client: TestClient, session: Session, normal_user_token_headers: dict
     ):
         """
-        Test case: When all=true parameter is provided, 
+        Test case: When all=true parameter is provided,
         should return all chunks in a single request ignoring pagination.
-        
+
         Expected behavior:
         - Single API call returns complete content
-        - Response time < 2 seconds for content with 100+ chunks  
+        - Response time < 2 seconds for content with 100+ chunks
         - Chunks are ordered by segment_index
         - pagination.has_next = false
         """
@@ -41,13 +41,13 @@ class TestContentChunksOptimization:
         # Assert
         assert response.status_code == 200
         data = response.json()
-        
+
         # Should return all 75 chunks
         assert len(data["chunks"]) == 75
         assert data["pagination"]["total_chunks"] == 75
         assert data["pagination"]["has_next"] is False
         assert data["pagination"]["has_prev"] is False
-        
+
         # Chunks should be properly ordered
         for i, chunk in enumerate(data["chunks"]):
             assert chunk["index"] == i
@@ -62,7 +62,7 @@ class TestContentChunksOptimization:
         Should handle large content efficiently.
         """
         import time
-        
+
         # Arrange: Create content with realistic large chunk count
         content_item = create_test_content_with_chunks(session, chunk_count=200)
         content_id = content_item.id
@@ -132,10 +132,10 @@ class TestContentChunksOptimization:
         # Assert: Both approaches return consistent data
         assert first_screen_response.status_code == 200
         assert all_content_response.status_code == 200
-        
+
         first_screen_chunks = first_screen_response.json()["chunks"]
         all_chunks = all_content_response.json()["chunks"]
-        
+
         # First 15 chunks should be identical
         for i in range(15):
             assert first_screen_chunks[i]["id"] == all_chunks[i]["id"]
@@ -150,7 +150,7 @@ class TestContentChunksOptimization:
         """
         # Arrange: Create content with known chunk sequence
         content_item = create_test_content_with_chunks(
-            session, 
+            session,
             chunk_count=25,
             content_pattern="Chunk content {index}"
         )
@@ -165,13 +165,13 @@ class TestContentChunksOptimization:
         # Assert: Data integrity
         assert response.status_code == 200
         chunks = response.json()["chunks"]
-        
+
         # Verify all chunks present and ordered
         assert len(chunks) == 25
         for i, chunk in enumerate(chunks):
             assert chunk["index"] == i
             assert f"Chunk content {i}" in chunk["content"]
-        
+
         # Verify summary data
         summary = response.json()["summary"]
         assert summary["total_chunks"] == 25
@@ -179,8 +179,8 @@ class TestContentChunksOptimization:
 
 
 def create_test_content_with_chunks(
-    session: Session, 
-    chunk_count: int, 
+    session: Session,
+    chunk_count: int,
     content_pattern: str = "Test chunk content {index}"
 ) -> ContentItem:
     """
@@ -198,7 +198,7 @@ def create_test_content_with_chunks(
     )
     session.add(content_item)
     session.commit()
-    
+
     # 重新获取content_item以确保session绑定
     refreshed_content_item = session.get(ContentItem, content_item.id)
     if refreshed_content_item:
@@ -215,6 +215,6 @@ def create_test_content_with_chunks(
             char_count=50 + (i % 100)  # Vary char count
         )
         session.add(segment)
-    
+
     session.commit()
-    return content_item 
+    return content_item

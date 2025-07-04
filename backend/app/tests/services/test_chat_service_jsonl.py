@@ -3,8 +3,9 @@ Tests for ChatService JSONL functionality
 """
 
 import json
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 from app.services.ai.chat_service import ChatService
 
@@ -74,7 +75,7 @@ class TestJsonlParsing:
         """Test parsing a single JSONL block"""
         content = '{"type": "h1", "content": "Title", "mapping": "h1-1"}'
         blocks = chat_service._parse_jsonl_content(content)
-        
+
         assert len(blocks) == 1
         assert blocks[0]["type"] == "h1"
         assert blocks[0]["content"] == "Title"
@@ -85,9 +86,9 @@ class TestJsonlParsing:
         content = '''{"type": "h1", "content": "Title", "mapping": "h1-1"}
 {"type": "p", "content": "Paragraph", "mapping": "p1"}
 {"type": "list", "content": ["Item 1", "Item 2"], "mapping": "l1"}'''
-        
+
         blocks = chat_service._parse_jsonl_content(content)
-        
+
         assert len(blocks) == 3
         assert blocks[0]["type"] == "h1"
         assert blocks[1]["type"] == "p"
@@ -98,7 +99,7 @@ class TestJsonlParsing:
         """Test parsing with short field names"""
         content = '{"t": "h2", "c": "Section", "mapping": "h2-1"}'
         blocks = chat_service._parse_jsonl_content(content)
-        
+
         assert len(blocks) == 1
         assert blocks[0]["t"] == "h2"
         assert blocks[0]["c"] == "Section"
@@ -113,9 +114,9 @@ class TestJsonlParsing:
         content = '''{"type": "h1", "content": "Title"}
 
 {"type": "p", "content": "Paragraph"}
-   
+
 {"type": "action", "content": "Take action"}'''
-        
+
         blocks = chat_service._parse_jsonl_content(content)
         assert len(blocks) == 3
 
@@ -124,9 +125,9 @@ class TestJsonlParsing:
         content = '''{"type": "h1", "content": "Title"}
 invalid json line
 {"type": "p", "content": "Valid paragraph"}'''
-        
+
         blocks = chat_service._parse_jsonl_content(content)
-        
+
         assert len(blocks) == 3
         assert blocks[0]["type"] == "h1"
         assert blocks[1]["type"] == "p"
@@ -139,7 +140,7 @@ invalid json line
         """Test parsing with missing type field"""
         content = '{"content": "Content without type", "mapping": "test"}'
         blocks = chat_service._parse_jsonl_content(content)
-        
+
         assert len(blocks) == 1
         assert blocks[0]["type"] == "p"  # Should default to paragraph
         assert blocks[0]["content"] == "Content without type"
@@ -148,7 +149,7 @@ invalid json line
         """Test parsing with missing content field"""
         content = '{"type": "h1", "mapping": "test"}'
         blocks = chat_service._parse_jsonl_content(content)
-        
+
         assert len(blocks) == 1
         assert blocks[0]["type"] == "h1"
         assert blocks[0]["content"] == ""  # Should default to empty string
@@ -157,7 +158,7 @@ invalid json line
         """Test parsing with missing mapping field"""
         content = '{"type": "p", "content": "Test content"}'
         blocks = chat_service._parse_jsonl_content(content)
-        
+
         assert len(blocks) == 1
         assert blocks[0]["type"] == "p"
         assert blocks[0]["content"] == "Test content"
@@ -167,7 +168,7 @@ invalid json line
         """Test parsing with non-dictionary JSON"""
         content = '"this is a string"'
         blocks = chat_service._parse_jsonl_content(content)
-        
+
         assert len(blocks) == 1
         assert blocks[0]["type"] == "p"
         assert blocks[0]["content"] == "this is a string"
@@ -181,7 +182,7 @@ class TestJsonlFormatting:
         """Test formatting a single block to JSONL"""
         blocks = [{"type": "h1", "content": "Title", "mapping": "h1-1"}]
         result = chat_service._format_jsonl_output(blocks)
-        
+
         expected = '{"type":"h1","content":"Title","mapping":"h1-1"}'
         assert result == expected
 
@@ -193,14 +194,14 @@ class TestJsonlFormatting:
             {"type": "list", "content": ["Item 1", "Item 2"], "mapping": "l1"}
         ]
         result = chat_service._format_jsonl_output(blocks)
-        
+
         lines = result.split('\n')
         assert len(lines) == 3
-        
+
         # Verify each line is valid JSON
         for line in lines:
             assert json.loads(line)  # Should not raise exception
-            
+
         # Verify content
         first_block = json.loads(lines[0])
         assert first_block["type"] == "h1"
@@ -215,7 +216,7 @@ class TestJsonlFormatting:
         """Test formatting with unicode content"""
         blocks = [{"type": "p", "content": "中文内容测试", "mapping": "p1"}]
         result = chat_service._format_jsonl_output(blocks)
-        
+
         parsed = json.loads(result)
         assert parsed["content"] == "中文内容测试"
 
@@ -224,10 +225,10 @@ class TestJsonlFormatting:
         # Create a block with unserializable content
         class UnserializableClass:
             pass
-            
+
         blocks = [{"type": "p", "content": UnserializableClass(), "mapping": "p1"}]
         result = chat_service._format_jsonl_output(blocks)
-        
+
         # Should fallback to string representation
         parsed = json.loads(result)
         assert parsed["type"] == "p"
@@ -246,12 +247,15 @@ class TestJsonlIntegration:
         mock_jsonl_content = '''{"type": "h1", "content": "分析结果", "mapping": "h1-1"}
 {"type": "insight", "content": "这是一个重要洞察", "priority": "high", "mapping": "i1"}
 {"type": "p", "content": "这是详细说明", "mapping": "p1"}'''
-        
+
         mock_llm_call.return_value = mock_jsonl_content
-        
-        context = {"content": "Test content for analysis"}
+
+        context = {
+            "content": "Test content for analysis",
+            "document_metadata": {"title": "Test Document"}
+        }
         result = await chat_service.generate_with_template("summary.j2", context)
-        
+
         # Should detect and parse JSONL
         assert result["format"] == "jsonl"
         assert len(result["blocks"]) == 3
@@ -267,10 +271,13 @@ class TestJsonlIntegration:
         # Mock LLM to return markdown content
         mock_markdown_content = "# Analysis Result\n\nThis is markdown content."
         mock_llm_call.return_value = mock_markdown_content
-        
-        context = {"content": "Test content for analysis"}
+
+        context = {
+            "content": "Test content for analysis",
+            "document_metadata": {"title": "Test Document"}
+        }
         result = await chat_service.generate_with_template("summary.j2", context)
-        
+
         # Should not detect as JSONL, fall back to original logic
         assert "format" not in result or result.get("format") != "jsonl"
         assert result["summary"]["text"] == mock_markdown_content
@@ -282,12 +289,15 @@ class TestJsonlIntegration:
         # Mock LLM to return malformed JSONL
         mock_malformed_jsonl = '{"type": "h1", "content": "Title"'  # Missing closing brace
         mock_llm_call.return_value = mock_malformed_jsonl
-        
-        context = {"content": "Test content"}
+
+        context = {
+            "content": "Test content",
+            "document_metadata": {"title": "Test Document"}
+        }
         result = await chat_service.generate_with_template("summary.j2", context)
-        
+
         # Should fall back to original processing logic
-        assert result["summary"]["text"] == mock_malformed_jsonl 
+        assert result["summary"]["text"] == mock_malformed_jsonl
 
     @pytest.mark.asyncio
     @patch('app.services.ai.chat_service.ChatService._call_litellm_proxy')
@@ -300,12 +310,15 @@ class TestJsonlIntegration:
 {"t": "h2", "c": "主要内容"}
 {"t": "p", "c": "详细内容描述", "ref": "2"}
 ```'''
-        
+
         mock_llm_call.return_value = mock_jsonl_content
-        
-        context = {"content": "Test content for summary analysis"}
+
+        context = {
+            "content": "Test content for summary analysis",
+            "document_metadata": {"title": "Test Document"}
+        }
         result = await chat_service.generate_with_template("summary.j2", context)
-        
+
         # Should detect and parse JSONL from code block
         assert result["format"] == "jsonl"
         assert len(result["blocks"]) == 4
@@ -327,12 +340,15 @@ class TestJsonlIntegration:
 {"t": "p", "c": "要点1：重要信息", "ref": "1"}
 {"t": "p", "c": "要点2：关键数据", "ref": "3"}
 ```'''
-        
+
         mock_llm_call.return_value = mock_jsonl_content
-        
-        context = {"content": "Test content for key points analysis"}
+
+        context = {
+            "content": "Test content for key points analysis",
+            "document_metadata": {"title": "Test Document"}
+        }
         result = await chat_service.generate_with_template("key_points.j2", context)
-        
+
         # Should detect and parse JSONL from code block
         assert result["format"] == "jsonl"
         assert len(result["blocks"]) == 3
@@ -350,12 +366,15 @@ class TestJsonlIntegration:
         # Mock LLM to return plain text content
         mock_text_content = '''这是一个普通的文本摘要，不是JSONL格式。
 包含多行内容和一些要点。'''
-        
+
         mock_llm_call.return_value = mock_text_content
-        
-        context = {"content": "Test content for summary analysis"}
+
+        context = {
+            "content": "Test content for summary analysis",
+            "document_metadata": {"title": "Test Document"}
+        }
         result = await chat_service.generate_with_template("summary.j2", context)
-        
+
         # Should fallback to text format
         assert "format" not in result or result.get("format") != "jsonl"
-        assert result["summary"]["text"] == mock_text_content 
+        assert result["summary"]["text"] == mock_text_content

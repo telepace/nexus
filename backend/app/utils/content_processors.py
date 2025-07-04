@@ -982,16 +982,16 @@ class FirecrawlProcessor(ProcessingStep):
     def _setup_proxy_environment(self):
         """设置代理环境变量供 firecrawl-py 使用"""
         import os
-        
+
         # 保存原始环境变量
         self._original_env = {}
-        
+
         # 检查并设置代理环境变量
         proxy_vars = ["http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"]
         for var in proxy_vars:
             if var in os.environ:
                 self._original_env[var] = os.environ[var]
-        
+
         # 如果没有设置代理，但系统有代理配置，则设置
         if not any(var in os.environ for var in proxy_vars):
             # 检查系统代理配置
@@ -1004,7 +1004,7 @@ class FirecrawlProcessor(ProcessingStep):
     def _restore_environment(self):
         """恢复原始环境变量"""
         import os
-        
+
         if hasattr(self, '_original_env'):
             # 恢复原始环境变量
             for var, value in self._original_env.items():
@@ -1044,15 +1044,15 @@ class FirecrawlProcessor(ProcessingStep):
                         time.sleep(delay)
 
                     response = app.scrape_url(url=content_item.source_uri, params=params)
-                    
+
                     # 如果成功，跳出重试循环
                     if response and isinstance(response, dict):
                         break
-                        
+
                 except Exception as e:
                     last_error = e
                     error_str = str(e)
-                    
+
                     # 检查是否是网络连接问题
                     if any(keyword in error_str.lower() for keyword in [
                         "connection reset", "connection aborted", "connection refused",
@@ -1153,7 +1153,7 @@ class FirecrawlProcessor(ProcessingStep):
         except Exception as e:
             error_str = str(e)
             result.success = False
-            
+
             # 分析错误类型并提供具体建议
             if "connection reset" in error_str.lower() or "connection aborted" in error_str.lower():
                 result.error_message = f"Firecrawl 网络连接被重置，可能是代理或网络配置问题: {error_str}"
@@ -1192,7 +1192,7 @@ class FirecrawlProcessor(ProcessingStep):
                     "should_retry": False,
                     "fallback_recommended": True,
                 }
-            
+
             logger.error(f"❌ Firecrawl 错误: {error_str}")
         finally:
             # 恢复环境变量
@@ -1896,7 +1896,7 @@ class ProcessingPipeline:
             content_item.last_processed_at = datetime.utcnow()
             session.add(content_item)
             session.commit()
-            
+
             # 重新获取content_item以确保session绑定，避免refresh错误
             refreshed_content_item = session.get(ContentItem, content_item.id)
             if refreshed_content_item:
@@ -1979,7 +1979,7 @@ class ProcessingPipeline:
 
             session.add(conversation)
             session.commit()
-            
+
             # 重新获取conversation以确保session绑定，避免refresh错误
             refreshed_conversation = session.get(AIConversation, conversation.id)
             if refreshed_conversation:

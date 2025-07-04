@@ -9,16 +9,19 @@ JSONL 服务测试套件
 - 自定义处理器
 """
 
-import pytest
 import asyncio
 import time
-from unittest.mock import Mock, patch
+from unittest.mock import patch
+
+import pytest
 
 from app.utils.jsonl_service import (
-    JsonlService, ServiceConfig, ProcessingStats,
-    create_service, process_jsonl_content, process_jsonl_content_sync
+    JsonlService,
+    ServiceConfig,
+    create_service,
+    process_jsonl_content,
+    process_jsonl_content_sync,
 )
-from app.utils.jsonl_parser import ParseOptions, ParsedBlock
 
 
 class TestJsonlService:
@@ -45,7 +48,7 @@ class TestJsonlService:
     async def test_basic_processing(self, service, sample_jsonl):
         """测试基础处理功能"""
         result = await service.process_content(sample_jsonl)
-        
+
         assert result["success"] is True
         assert result["input_format"] == "jsonl"
         assert result["output_format"] == "compact"
@@ -59,7 +62,7 @@ class TestJsonlService:
         # 测试不同输出格式
         compact_result = await service.process_content(sample_jsonl, format_type="compact")
         pretty_result = await service.process_content(sample_jsonl, format_type="pretty")
-        
+
         assert compact_result["success"] is True
         assert pretty_result["success"] is True
         assert compact_result["content"] != pretty_result["content"]  # 格式应该不同
@@ -68,13 +71,13 @@ class TestJsonlService:
         """测试验证功能"""
         valid_content = '{"t": "h1", "c": "标题"}'
         invalid_content = '{invalid json}'
-        
+
         valid_result = await service.validate_jsonl(valid_content)
         invalid_result = await service.validate_jsonl(invalid_content)
-        
+
         assert valid_result["is_valid"] is True
         assert valid_result["error_count"] == 0
-        
+
         assert invalid_result["is_valid"] is False
         assert invalid_result["error_count"] > 0
 
@@ -82,13 +85,13 @@ class TestJsonlService:
         """测试缓存机制"""
         # 第一次处理
         result1 = await service.process_content(sample_jsonl)
-        
+
         # 第二次处理相同内容（应该从缓存获取）
         result2 = await service.process_content(sample_jsonl)
-        
+
         assert result1["success"] is True
         assert result2["success"] is True
-        
+
         # 检查统计信息
         stats = service.get_processing_stats()
         assert stats["cache_hits"] > 0
@@ -98,9 +101,9 @@ class TestJsonlService:
         # 包含常见错误的内容
         malformed_content = '''{t: "h1", c: "缺少引号"}
 {"t": "p", "c": "正常内容"}'''
-        
+
         result = await service.process_content(malformed_content)
-        
+
         # 应该能恢复部分内容
         assert len(result["blocks"]) > 0
         assert "auto_recovery" in str(result.get("metadata", {})) or len(result["blocks"]) >= 1
@@ -113,11 +116,11 @@ class TestJsonlService:
                 if isinstance(block.content, str):
                     block.content = f"[处理过的] {block.content}"
             return blocks
-        
+
         service.register_custom_processor(add_prefix_processor)
-        
+
         result = await service.process_content(sample_jsonl)
-        
+
         assert result["success"] is True
         # 检查内容是否被处理过
         for block in result["blocks"]:
@@ -128,9 +131,9 @@ class TestJsonlService:
         """测试性能监控"""
         # 处理一些内容
         await service.process_content(sample_jsonl)
-        
+
         stats = service.get_processing_stats()
-        
+
         assert "processing_time" in stats
         assert "success_rate" in stats
         assert "error_rate" in stats
@@ -139,7 +142,7 @@ class TestJsonlService:
     def test_sync_processing(self, service, sample_jsonl):
         """测试同步处理接口"""
         result = service.process_content_sync(sample_jsonl)
-        
+
         assert result["success"] is True
         assert len(result["blocks"]) == 3
 
@@ -147,11 +150,11 @@ class TestJsonlService:
         """测试超时处理"""
         config = ServiceConfig(timeout_seconds=0.001)  # 极短超时
         service = JsonlService(config)
-        
+
         large_content = '\n'.join([f'{{"t": "p", "c": "内容{i}"}}' for i in range(10000)])
-        
+
         result = await service.process_content(large_content)
-        
+
         # 应该能处理超时情况
         assert "timeout" in result.get("error", "").lower() or result["success"]
 
@@ -161,7 +164,7 @@ class TestJsonlService:
         for i in range(150):  # 超过默认缓存大小100
             content = f'{{"t": "p", "c": "内容{i}"}}'
             await service.process_content(content)
-        
+
         stats = service.get_processing_stats()
         # 缓存应该被限制
         assert stats["cache_hits"] + stats["cache_misses"] == 150
@@ -169,12 +172,12 @@ class TestJsonlService:
     async def test_stats_reset(self, service, sample_jsonl):
         """测试统计重置"""
         await service.process_content(sample_jsonl)
-        
+
         stats_before = service.get_processing_stats()
         assert stats_before["total_lines"] > 0
-        
+
         service.reset_stats()
-        
+
         stats_after = service.get_processing_stats()
         assert stats_after["total_lines"] == 0
 
@@ -182,15 +185,15 @@ class TestJsonlService:
         """测试缓存清理"""
         # 添加一些缓存项
         await service.process_content(sample_jsonl)
-        
+
         stats_before = service.get_processing_stats()
-        cache_hits_before = stats_before["cache_hits"]
-        
+        stats_before["cache_hits"]
+
         service.clear_cache()
-        
+
         # 再次处理相同内容，应该没有缓存命中
         await service.process_content(sample_jsonl)
-        
+
         stats_after = service.get_processing_stats()
         assert stats_after["cache_misses"] > stats_before["cache_misses"]
 
@@ -202,13 +205,13 @@ class TestServiceConfig:
         """测试禁用缓存"""
         config = ServiceConfig(enable_caching=False)
         service = JsonlService(config)
-        
+
         content = '{"t": "h1", "c": "测试"}'
-        
+
         # 处理两次
         await service.process_content(content)
         await service.process_content(content)
-        
+
         stats = service.get_processing_stats()
         assert stats["cache_hits"] == 0
 
@@ -216,10 +219,10 @@ class TestServiceConfig:
         """测试禁用统计"""
         config = ServiceConfig(enable_stats=False)
         service = JsonlService(config)
-        
+
         content = '{"t": "h1", "c": "测试"}'
         await service.process_content(content)
-        
+
         stats = service.get_processing_stats()
         assert stats["total_lines"] == 0  # 统计应该为空
 
@@ -227,10 +230,10 @@ class TestServiceConfig:
         """测试禁用自动恢复"""
         config = ServiceConfig(auto_recovery=False)
         service = JsonlService(config)
-        
+
         malformed_content = '{invalid json}'
         result = await service.process_content(malformed_content)
-        
+
         # 没有自动恢复，应该有更多错误
         assert len(result["errors"]) > 0
 
@@ -238,11 +241,11 @@ class TestServiceConfig:
         """测试重试次数配置"""
         config = ServiceConfig(max_retry_attempts=1)
         service = JsonlService(config)
-        
+
         # 模拟总是失败的解析
         with patch.object(service.parser, 'parse', side_effect=Exception("模拟错误")):
             result = await service.process_content('{"t": "h1", "c": "测试"}')
-            
+
             assert result["success"] is False
             assert "error" in result
 
@@ -253,25 +256,25 @@ class TestConvenienceFunctions:
     async def test_process_jsonl_content_function(self):
         """测试便捷处理函数"""
         content = '{"t": "h1", "c": "标题"}'
-        
+
         result = await process_jsonl_content(content)
-        
+
         assert result["success"] is True
         assert len(result["blocks"]) == 1
 
     def test_process_jsonl_content_sync_function(self):
         """测试同步便捷处理函数"""
         content = '{"t": "h1", "c": "标题"}'
-        
+
         result = process_jsonl_content_sync(content)
-        
+
         assert result["success"] is True
         assert len(result["blocks"]) == 1
 
     def test_create_service_function(self):
         """测试服务创建函数"""
         service = create_service()
-        
+
         assert isinstance(service, JsonlService)
         assert service.config.enable_caching is True
 
@@ -286,14 +289,14 @@ class TestErrorScenarios:
     async def test_completely_invalid_input(self, service):
         """测试完全无效的输入"""
         result = await service.process_content("这不是JSON")
-        
+
         # 应该优雅地处理错误
         assert "error" in result or len(result["blocks"]) == 0
 
     async def test_empty_input(self, service):
         """测试空输入"""
         result = await service.process_content("")
-        
+
         assert result["success"] is True
         assert len(result["blocks"]) == 0
 
@@ -303,11 +306,11 @@ class TestErrorScenarios:
         lines = []
         for i in range(50000):
             lines.append(f'{{"t": "p", "c": "内容{i}"}}')
-        
+
         large_content = '\n'.join(lines)
-        
+
         result = await service.process_content(large_content)
-        
+
         # 应该能处理大量数据
         assert result["success"] is True or "timeout" in result.get("error", "")
 
@@ -316,9 +319,9 @@ class TestErrorScenarios:
         # 包含潜在危险字符的输入
         malicious_content = '''{"t": "p", "c": "正常内容"}
 {"t": "script", "c": "<script>alert('xss')</script>"}'''
-        
+
         result = await service.process_content(malicious_content)
-        
+
         # 应该安全地处理
         assert result["success"] is True or len(result["errors"]) > 0
 
@@ -336,13 +339,13 @@ class TestPerformanceBenchmarks:
         lines = []
         for i in range(1000):
             lines.append(f'{{"t": "p", "c": "这是第{i}个段落的内容"}}')
-        
+
         content = '\n'.join(lines)
-        
+
         start_time = time.time()
         result = await service.process_content(content)
         processing_time = time.time() - start_time
-        
+
         assert result["success"] is True
         assert processing_time < 2.0  # 应该在2秒内完成1000行
         assert len(result["blocks"]) == 1000
@@ -354,20 +357,20 @@ class TestPerformanceBenchmarks:
             content = f'{{"t": "p", "c": "内容{i}"}}'
             result = await service.process_content(content)
             assert result["success"] is True
-        
+
         # 如果能完成所有处理而不崩溃，说明内存管理良好
 
     async def test_concurrent_processing(self, service):
         """测试并发处理"""
         contents = [
-            f'{{"t": "h{i % 3 + 1}", "c": "标题{i}"}}' 
+            f'{{"t": "h{i % 3 + 1}", "c": "标题{i}"}}'
             for i in range(50)
         ]
-        
+
         # 并发处理
         tasks = [service.process_content(content) for content in contents]
         results = await asyncio.gather(*tasks)
-        
+
         # 所有结果都应该成功
         assert all(result["success"] for result in results)
         assert len(results) == 50
@@ -388,12 +391,12 @@ class TestIntegrationScenarios:
 {"t": "list", "c": ["机器学习", "深度学习", "自然语言处理", "计算机视觉"], "ref": "3"}
 {"t": "quote", "c": "AI将是下一个技术革命的核心", "ref": "4"}
 {"t": "action", "c": "建议投资相关技术研发", "ref": "5"}'''
-        
+
         result = await service.process_content(real_world_content)
-        
+
         assert result["success"] is True
         assert len(result["blocks"]) == 6
-        
+
         # 验证不同类型的块
         block_types = [block["type"] for block in result["blocks"]]
         expected_types = ["h1", "p", "insight", "list", "quote", "action"]
@@ -406,9 +409,9 @@ class TestIntegrationScenarios:
 {"t": "p", "c": "段落"}
 # Markdown 标题
 {"t": "insight", "c": "洞察"}'''
-        
+
         result = await service.process_content(mixed_content)
-        
+
         # 应该能处理混合格式，即使有错误
         assert len(result["blocks"]) >= 2  # 至少应该解析出有效的JSON行
 
@@ -416,16 +419,16 @@ class TestIntegrationScenarios:
         """测试格式转换往返"""
         original_content = '''{"t": "h1", "c": "标题"}
 {"t": "p", "c": "段落"}'''
-        
+
         # 处理并格式化为 pretty
         pretty_result = await service.process_content(original_content, format_type="pretty")
-        
+
         # 再次解析 pretty 格式的输出
         roundtrip_result = await service.process_content(pretty_result["content"], format_type="compact")
-        
+
         assert roundtrip_result["success"] is True
         assert len(roundtrip_result["blocks"]) == 2
 
 
 if __name__ == "__main__":
-    pytest.main([__file__]) 
+    pytest.main([__file__])

@@ -175,7 +175,7 @@ def create_conversation(
 
     session.add(conversation)
     session.commit()
-    
+
     # 重新获取conversation以确保session绑定，避免refresh错误
     refreshed_conversation = session.get(AIConversation, conversation.id)
     if refreshed_conversation:
@@ -288,7 +288,7 @@ async def add_message_to_conversation(
 
         session.add(conversation)
         session.commit()
-        
+
         # 重新获取conversation以确保session绑定，避免refresh错误
         refreshed_conversation = session.get(AIConversation, conversation.id)
         if refreshed_conversation:
@@ -377,7 +377,7 @@ async def trigger_analysis(
 
         session.add(conversation)
         session.commit()
-        
+
         # 重新获取conversation以确保session绑定，避免refresh错误
         refreshed_conversation = session.get(AIConversation, conversation.id)
         if refreshed_conversation:
@@ -444,7 +444,7 @@ async def trigger_analysis(
 
         session.add(conversation)
         session.commit()
-        
+
         # 重新获取conversation以确保session绑定，避免refresh错误
         final_conversation = session.get(AIConversation, conversation.id)
         if final_conversation:

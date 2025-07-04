@@ -12,7 +12,7 @@ import logging
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -30,10 +30,10 @@ logger = logging.getLogger(__name__)
 
 class DeepSeekLabelsTestSuite:
     """DeepSeek V3 Ensemble 标签测试套件"""
-    
+
     def __init__(self):
         self.chat_service = ChatService()
-        
+
         # 测试用例：不同类型和复杂度的内容
         self.test_cases = [
             {
@@ -92,10 +92,10 @@ class DeepSeekLabelsTestSuite:
             }
         ]
 
-    async def test_model_performance(self) -> Dict[str, Any]:
+    async def test_model_performance(self) -> dict[str, Any]:
         """测试模型性能"""
         logger.info("🚀 开始 DeepSeek V3 Ensemble 标签处理性能测试")
-        
+
         results = {
             "model_name": "deepseek-v3-ensemble",
             "test_timestamp": time.time(),
@@ -108,45 +108,45 @@ class DeepSeekLabelsTestSuite:
                 "tag_accuracy": 0.0
             }
         }
-        
+
         total_response_time = 0.0
         total_score = 0.0
         successful_tests = 0
-        
+
         for i, test_case in enumerate(self.test_cases, 1):
             logger.info(f"📝 测试用例 {i}/{len(self.test_cases)}: {test_case['name']}")
-            
+
             start_time = time.time()
-            
+
             try:
                 # 构建测试上下文
                 context = {
                     "content": test_case["content"],
                     "content_type": test_case["content_type"]
                 }
-                
+
                 # 调用 labels.j2 模板生成标签
                 result = await self.chat_service.generate_with_template(
-                    "labels.j2", 
+                    "labels.j2",
                     context
                 )
-                
+
                 response_time = time.time() - start_time
                 total_response_time += response_time
-                
+
                 if result and isinstance(result, dict):
                     successful_tests += 1
-                    
+
                     # 提取评分
                     score = result.get("score", 0.0)
-                    if isinstance(score, (int, float)) and score > 0:
+                    if isinstance(score, int | float) and score > 0:
                         total_score += score
-                    
+
                     # 计算标签匹配度
                     generated_tags = result.get("tags", [])
                     expected_tags = test_case["expected_tags"]
                     tag_match_rate = self._calculate_tag_similarity(generated_tags, expected_tags)
-                    
+
                     test_result = {
                         "test_name": test_case["name"],
                         "success": True,
@@ -157,13 +157,13 @@ class DeepSeekLabelsTestSuite:
                         "expected_tags": expected_tags,
                         "generated_tags": generated_tags
                     }
-                    
+
                     logger.info(f"✅ {test_case['name']} 测试成功")
                     logger.info(f"   响应时间: {response_time:.2f}s")
                     logger.info(f"   质量评分: {score}")
                     logger.info(f"   标签匹配率: {tag_match_rate:.2%}")
                     logger.info(f"   生成标签: {generated_tags}")
-                
+
                 else:
                     test_result = {
                         "test_name": test_case["name"],
@@ -173,7 +173,7 @@ class DeepSeekLabelsTestSuite:
                         "result": result
                     }
                     logger.error(f"❌ {test_case['name']} 测试失败: 无效响应格式")
-                
+
             except Exception as e:
                 response_time = time.time() - start_time
                 test_result = {
@@ -183,34 +183,34 @@ class DeepSeekLabelsTestSuite:
                     "error": str(e)
                 }
                 logger.error(f"❌ {test_case['name']} 测试失败: {e}")
-            
+
             results["test_cases"].append(test_result)
-        
+
         # 计算汇总统计
         if successful_tests > 0:
             results["summary"]["successful_tests"] = successful_tests
             results["summary"]["average_response_time"] = total_response_time / len(self.test_cases)
             results["summary"]["average_score"] = total_score / successful_tests
-            
+
             # 计算平均标签匹配率
             total_tag_accuracy = sum(
-                tc.get("tag_match_rate", 0) for tc in results["test_cases"] 
+                tc.get("tag_match_rate", 0) for tc in results["test_cases"]
                 if tc.get("success", False)
             )
             results["summary"]["tag_accuracy"] = total_tag_accuracy / successful_tests
-        
+
         return results
 
     def _calculate_tag_similarity(self, generated_tags: list, expected_tags: list) -> float:
         """计算标签相似度"""
         if not generated_tags or not expected_tags:
             return 0.0
-        
+
         # 计算交集
         generated_set = set(generated_tags)
         expected_set = set(expected_tags)
         intersection = generated_set.intersection(expected_set)
-        
+
         # 计算相似度 (交集 / 并集)
         union = generated_set.union(expected_set)
         return len(intersection) / len(union) if union else 0.0
@@ -218,39 +218,39 @@ class DeepSeekLabelsTestSuite:
     async def run_comprehensive_test(self) -> None:
         """运行综合测试"""
         logger.info("🔍 开始 DeepSeek V3 Ensemble 综合测试")
-        
+
         # 检查基础配置
-        logger.info(f"📊 测试配置:")
+        logger.info("📊 测试配置:")
         logger.info(f"   LiteLLM代理: {settings.LITELLM_PROXY_URL}")
         logger.info(f"   默认模型: {settings.DEFAULT_LLM_MODEL}")
         logger.info(f"   测试用例数: {len(self.test_cases)}")
-        
+
         # 运行性能测试
         performance_results = await self.test_model_performance()
-        
+
         # 输出测试报告
         self._generate_test_report(performance_results)
 
-    def _generate_test_report(self, results: Dict[str, Any]) -> None:
+    def _generate_test_report(self, results: dict[str, Any]) -> None:
         """生成测试报告"""
         logger.info("\n" + "="*60)
         logger.info("📊 DeepSeek V3 Ensemble 标签处理测试报告")
         logger.info("="*60)
-        
+
         summary = results["summary"]
-        
-        logger.info(f"🎯 测试概览:")
+
+        logger.info("🎯 测试概览:")
         logger.info(f"   总测试数: {summary['total_tests']}")
         logger.info(f"   成功测试: {summary['successful_tests']}")
         logger.info(f"   成功率: {summary['successful_tests']/summary['total_tests']:.1%}")
-        
+
         if summary["successful_tests"] > 0:
-            logger.info(f"\n⚡ 性能指标:")
+            logger.info("\n⚡ 性能指标:")
             logger.info(f"   平均响应时间: {summary['average_response_time']:.2f}秒")
             logger.info(f"   平均质量评分: {summary['average_score']:.1f}/5.0")
             logger.info(f"   标签准确率: {summary['tag_accuracy']:.1%}")
-            
-            logger.info(f"\n📝 详细结果:")
+
+            logger.info("\n📝 详细结果:")
             for test_case in results["test_cases"]:
                 if test_case["success"]:
                     result = test_case["result"]
@@ -263,14 +263,14 @@ class DeepSeekLabelsTestSuite:
                     logger.info(f"      响应时间: {test_case['response_time']:.2f}秒")
                 else:
                     logger.info(f"   ❌ {test_case['test_name']}: {test_case.get('error', 'Unknown error')}")
-        
+
         # 保存详细结果到文件
         output_file = Path(__file__).parent.parent / "_output" / "tmp" / "deepseek_labels_test_results.json"
         output_file.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
-        
+
         logger.info(f"\n💾 详细结果已保存到: {output_file}")
         logger.info("="*60)
 
@@ -280,14 +280,14 @@ async def main():
     try:
         test_suite = DeepSeekLabelsTestSuite()
         await test_suite.run_comprehensive_test()
-        
+
     except Exception as e:
         logger.error(f"测试执行失败: {e}")
         return 1
-    
+
     return 0
 
 
 if __name__ == "__main__":
     exit_code = asyncio.run(main())
-    sys.exit(exit_code) 
+    sys.exit(exit_code)

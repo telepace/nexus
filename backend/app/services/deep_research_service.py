@@ -161,7 +161,7 @@ class DeepResearchService:
             # -------- ChatAnywhere 直连模式 ----------
             # 始终绕过 LiteLLM proxy，直接调用 ChatAnywhere 的 OpenAI 兼容端点
             # 1. 清理可能存在的 LITELLM_PROXY_URL
-            original_proxy_url = os.environ.pop("LITELLM_PROXY_URL", None)
+            os.environ.pop("LITELLM_PROXY_URL", None)
 
             # 2. 强制设置 ChatAnywhere API Key & Base URL
             os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
@@ -301,7 +301,7 @@ class DeepResearchService:
 
         session.add(content_item)
         session.commit()
-        
+
         # 重新获取content_item以确保session绑定，避免refresh错误
         refreshed_content_item = session.get(ContentItem, content_item.id)
         if refreshed_content_item:

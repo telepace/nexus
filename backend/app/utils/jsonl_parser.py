@@ -9,19 +9,19 @@
 - 性能优化的流式处理
 """
 
+import asyncio
 import json
-import re
 import logging
-from abc import ABC, abstractmethod
+import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import (
-    Any, Dict, List, Optional, Callable, Union, TypeVar, Generic,
-    Protocol, runtime_checkable, Set, Tuple
+    Any,
+    Protocol,
+    TypeVar,
+    runtime_checkable,
 )
-from concurrent.futures import ThreadPoolExecutor
-import asyncio
-from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 
@@ -58,30 +58,30 @@ class ParseError:
     type: ErrorType
     message: str
     line_number: int
-    suggestions: List[str] = field(default_factory=list)
-    raw_content: Optional[str] = None
+    suggestions: list[str] = field(default_factory=list)
+    raw_content: str | None = None
 
 @dataclass
 class ParseWarning:
     """解析警告信息"""
     message: str
     line_number: int
-    context: Optional[str] = None
+    context: str | None = None
 
 @dataclass
 class ParsedBlock:
     """解析后的块对象"""
     type: str
     content: str
-    attributes: Dict[str, Any]
+    attributes: dict[str, Any]
     line_number: int
     raw_json: str
-    
+
     @property
     def is_valid(self) -> bool:
         """检查块是否有效"""
         return bool(self.type and self.content is not None)
-    
+
     def get_attribute(self, key: str, default: Any = None) -> Any:
         """安全获取属性值"""
         return self.attributes.get(key, default)
@@ -90,28 +90,28 @@ class ParsedBlock:
 class ParseResult:
     """解析结果"""
     success: bool
-    blocks: List[ParsedBlock]
-    errors: List[ParseError]
-    warnings: List[ParseWarning]
+    blocks: list[ParsedBlock]
+    errors: list[ParseError]
+    warnings: list[ParseWarning]
     total_lines: int
     processed_lines: int
-    
+
     @property
     def has_errors(self) -> bool:
         return len(self.errors) > 0
-    
+
     @property
     def has_warnings(self) -> bool:
         return len(self.warnings) > 0
-    
+
     @property
     def error_rate(self) -> float:
         """错误率"""
         if self.total_lines == 0:
             return 0.0
         return len(self.errors) / self.total_lines
-    
-    def get_errors_by_type(self, error_type: ErrorType) -> List[ParseError]:
+
+    def get_errors_by_type(self, error_type: ErrorType) -> list[ParseError]:
         """按类型获取错误"""
         return [e for e in self.errors if e.type == error_type]
 
@@ -130,7 +130,7 @@ class ParseOptions:
     """解析选项"""
     strict_mode: bool = False
     max_errors: int = 100
-    custom_validators: Dict[str, Callable] = field(default_factory=dict)
+    custom_validators: dict[str, Callable] = field(default_factory=dict)
     preprocessor: PreprocessorConfig = field(default_factory=PreprocessorConfig)
     allow_empty_content: bool = False
     auto_generate_mapping: bool = True
@@ -139,11 +139,11 @@ class ParseOptions:
 @runtime_checkable
 class AttributeValidator(Protocol):
     """属性验证器协议"""
-    
-    def validate(self, value: Any, context: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
+
+    def validate(self, value: Any, context: dict[str, Any]) -> tuple[bool, str | None]:
         """
         验证属性值
-        
+
         Returns:
             (is_valid, error_message)
         """
@@ -152,26 +152,26 @@ class AttributeValidator(Protocol):
 @runtime_checkable
 class BlockTypeDefinition(Protocol):
     """块类型定义协议"""
-    
+
     @property
     def type_name(self) -> str:
         """块类型名称"""
         ...
-    
+
     @property
-    def required_attributes(self) -> Set[str]:
+    def required_attributes(self) -> set[str]:
         """必需属性集合"""
         ...
-    
+
     @property
-    def optional_attributes(self) -> Set[str]:
+    def optional_attributes(self) -> set[str]:
         """可选属性集合"""
         ...
-    
-    def validate_block(self, block: Dict[str, Any]) -> Tuple[bool, List[str]]:
+
+    def validate_block(self, block: dict[str, Any]) -> tuple[bool, list[str]]:
         """
         验证块内容
-        
+
         Returns:
             (is_valid, error_messages)
         """
@@ -179,42 +179,42 @@ class BlockTypeDefinition(Protocol):
 
 class DefaultBlockTypeDefinition:
     """默认块类型定义实现"""
-    
-    def __init__(self, type_name: str, 
-                 required_attrs: Optional[Set[str]] = None,
-                 optional_attrs: Optional[Set[str]] = None):
+
+    def __init__(self, type_name: str,
+                 required_attrs: set[str] | None = None,
+                 optional_attrs: set[str] | None = None):
         self._type_name = type_name
         self._required_attributes = required_attrs or {"t", "c"}
         self._optional_attributes = optional_attrs or {"ref", "expandable", "priority"}
-    
+
     @property
     def type_name(self) -> str:
         return self._type_name
-    
+
     @property
-    def required_attributes(self) -> Set[str]:
+    def required_attributes(self) -> set[str]:
         return self._required_attributes
-    
+
     @property
-    def optional_attributes(self) -> Set[str]:
+    def optional_attributes(self) -> set[str]:
         return self._optional_attributes
-    
-    def validate_block(self, block: Dict[str, Any]) -> Tuple[bool, List[str]]:
+
+    def validate_block(self, block: dict[str, Any]) -> tuple[bool, list[str]]:
         """验证块内容"""
         errors = []
-        
+
         # 检查必需字段
         for attr in self.required_attributes:
             if attr not in block and self._get_long_form(attr) not in block:
                 errors.append(f"Missing required attribute: {attr}")
-        
+
         # 检查内容是否为空
         content_field = "c" if "c" in block else "content"
         if content_field in block and not block[content_field]:
             errors.append("Content cannot be empty")
-        
+
         return len(errors) == 0, errors
-    
+
     def _get_long_form(self, short_attr: str) -> str:
         """获取属性的长格式名称"""
         mapping = {
@@ -225,73 +225,73 @@ class DefaultBlockTypeDefinition:
 
 class RegexValidator:
     """正则表达式验证器"""
-    
+
     def __init__(self, pattern: str, error_message: str):
         self.pattern = re.compile(pattern)
         self.error_message = error_message
-    
-    def validate(self, value: Any, context: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
+
+    def validate(self, value: Any, context: dict[str, Any]) -> tuple[bool, str | None]:
         if not isinstance(value, str):
             return False, f"Expected string, got {type(value).__name__}"
-        
+
         if not self.pattern.match(value):
             return False, self.error_message
-        
+
         return True, None
 
 class LengthValidator:
     """长度验证器"""
-    
+
     def __init__(self, min_length: int = 0, max_length: int = 1000):
         self.min_length = min_length
         self.max_length = max_length
-    
-    def validate(self, value: Any, context: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
+
+    def validate(self, value: Any, context: dict[str, Any]) -> tuple[bool, str | None]:
         if not isinstance(value, str):
             return False, f"Expected string, got {type(value).__name__}"
-        
+
         length = len(value)
         if length < self.min_length:
             return False, f"Content too short (min: {self.min_length}, got: {length})"
-        
+
         if length > self.max_length:
             return False, f"Content too long (max: {self.max_length}, got: {length})"
-        
+
         return True, None
 
 class JsonlPreprocessor:
     """JSONL 预处理器"""
-    
+
     def __init__(self, config: PreprocessorConfig):
         self.config = config
-    
+
     def preprocess(self, content: str) -> str:
         """预处理 JSONL 内容"""
         if not content:
             return content
-        
+
         # 编码验证
         if self.config.validate_encoding:
             content = self._validate_encoding(content)
-        
+
         # 移除代码块标记
         if self.config.remove_code_blocks:
             content = self._remove_code_blocks(content)
-        
+
         # 修复常见错误
         if self.config.fix_common_errors:
             content = self._fix_common_errors(content)
-        
+
         # 规范化引号
         if self.config.normalize_quotes:
             content = self._normalize_quotes(content)
-        
+
         # 清理空白字符
         if self.config.trim_whitespace:
             content = self._trim_whitespace(content)
-        
+
         return content
-    
+
     def _validate_encoding(self, content: str) -> str:
         """验证和修复编码问题"""
         try:
@@ -302,7 +302,7 @@ class JsonlPreprocessor:
             logger.warning("Detected encoding issues, attempting to fix")
             # 使用 errors='replace' 替换有问题的字符
             return content.encode('utf-8', errors='replace').decode('utf-8')
-    
+
     def _remove_code_blocks(self, content: str) -> str:
         """移除 markdown 代码块标记"""
         # 移除 ```jsonl、```json 和 ``` 标记
@@ -310,27 +310,27 @@ class JsonlPreprocessor:
         content = re.sub(r'^```(?:jsonl|json)\s*\n?', '', content, flags=re.MULTILINE | re.IGNORECASE)
         content = re.sub(r'^```\s*$', '', content, flags=re.MULTILINE)
         return content
-    
+
     def _fix_common_errors(self, content: str) -> str:
         """修复常见的 JSON 格式错误"""
         lines = content.split('\n')
         fixed_lines = []
-        
+
         for line in lines:
             line = line.strip()
             if not line:
                 continue
-            
+
             # 修复缺少引号的情况
             line = self._fix_missing_quotes(line)
-            
+
             # 修复多余逗号
             line = self._fix_trailing_commas(line)
-            
+
             fixed_lines.append(line)
-        
+
         return '\n'.join(fixed_lines)
-    
+
     def _fix_missing_quotes(self, line: str) -> str:
         """修复缺少引号的 JSON 字段"""
         # 简单的启发式修复：如果看起来是 key: value 格式，尝试添加引号
@@ -338,25 +338,25 @@ class JsonlPreprocessor:
             (r'\b(\w+):\s*([^",}\]]+)(?=\s*[,}])', r'"\1": "\2"'),  # key: value -> "key": "value"
             (r'\b(\w+):\s*"([^"]*)"', r'"\1": "\2"'),  # key: "value" -> "key": "value"
         ]
-        
+
         for pattern, replacement in patterns:
             line = re.sub(pattern, replacement, line)
-        
+
         return line
-    
+
     def _fix_trailing_commas(self, line: str) -> str:
         """移除多余的逗号"""
         # 移除 } 或 ] 前的逗号
         line = re.sub(r',\s*([}\]])', r'\1', line)
         return line
-    
+
     def _normalize_quotes(self, content: str) -> str:
         """规范化引号（将中文引号等转换为标准双引号）"""
         # 中文引号转换
         content = content.replace('"', '"').replace('"', '"')
         content = content.replace(''', "'").replace(''', "'")
         return content
-    
+
     def _trim_whitespace(self, content: str) -> str:
         """清理多余的空白字符"""
         lines = [line.strip() for line in content.split('\n') if line.strip()]
@@ -364,14 +364,14 @@ class JsonlPreprocessor:
 
 class JsonlParser:
     """高性能 JSONL 解析器"""
-    
+
     def __init__(self):
-        self._block_types: Dict[str, BlockTypeDefinition] = {}
-        self._attribute_validators: Dict[str, AttributeValidator] = {}
+        self._block_types: dict[str, BlockTypeDefinition] = {}
+        self._attribute_validators: dict[str, AttributeValidator] = {}
         self._preprocessor = JsonlPreprocessor(PreprocessorConfig())
         self._setup_default_types()
         self._setup_default_validators()
-    
+
     def _setup_default_types(self):
         """设置默认的块类型"""
         for block_type in BasicBlockType:
@@ -379,7 +379,7 @@ class JsonlParser:
                 block_type.value,
                 DefaultBlockTypeDefinition(block_type.value)
             )
-    
+
     def _setup_default_validators(self):
         """设置默认的属性验证器"""
         self.register_attribute_validator(
@@ -390,39 +390,39 @@ class JsonlParser:
             "c",
             LengthValidator(min_length=0, max_length=10000)
         )
-    
+
     def register_block_type(self, type_name: str, definition: BlockTypeDefinition):
         """注册新的块类型"""
         self._block_types[type_name] = definition
         logger.debug(f"Registered block type: {type_name}")
-    
+
     def register_attribute_validator(self, attribute: str, validator: AttributeValidator):
         """注册属性验证器"""
         self._attribute_validators[attribute] = validator
         logger.debug(f"Registered attribute validator: {attribute}")
-    
-    def get_supported_block_types(self) -> List[str]:
+
+    def get_supported_block_types(self) -> list[str]:
         """获取支持的块类型列表"""
         return list(self._block_types.keys())
-    
-    async def parse(self, content: str, options: Optional[ParseOptions] = None) -> ParseResult:
+
+    async def parse(self, content: str, options: ParseOptions | None = None) -> ParseResult:
         """
         异步解析 JSONL 内容
-        
+
         Args:
             content: JSONL 格式的内容字符串
             options: 解析选项
-            
+
         Returns:
             ParseResult: 解析结果
         """
         if options is None:
             options = ParseOptions()
-        
+
         # 更新预处理器配置
         if options.preprocessor:
             self._preprocessor = JsonlPreprocessor(options.preprocessor)
-        
+
         # 预处理
         try:
             preprocessed_content = self._preprocessor.preprocess(content)
@@ -439,28 +439,28 @@ class JsonlParser:
                 total_lines=0,
                 processed_lines=0
             )
-        
+
         # 分行处理
         lines = preprocessed_content.split('\n')
         total_lines = len(lines)
-        
+
         # 批量处理
         blocks = []
         errors = []
         warnings = []
         processed_lines = 0
-        
+
         for i in range(0, len(lines), options.batch_size):
             batch_lines = lines[i:i + options.batch_size]
             batch_result = await self._parse_batch(
                 batch_lines, i + 1, options
             )
-            
+
             blocks.extend(batch_result.blocks)
             errors.extend(batch_result.errors)
             warnings.extend(batch_result.warnings)
             processed_lines += batch_result.processed_lines
-            
+
             # 检查错误限制
             if len(errors) >= options.max_errors:
                 if options.strict_mode:
@@ -470,12 +470,12 @@ class JsonlParser:
                     line_number=i + len(batch_lines)
                 ))
                 break
-        
+
         # 后处理：建立引用关系
         self._establish_references(blocks, warnings)
-        
+
         success = len(errors) == 0 or not options.strict_mode
-        
+
         return ParseResult(
             success=success,
             blocks=blocks,
@@ -484,22 +484,22 @@ class JsonlParser:
             total_lines=total_lines,
             processed_lines=processed_lines
         )
-    
-    async def _parse_batch(self, lines: List[str], start_line: int, 
+
+    async def _parse_batch(self, lines: list[str], start_line: int,
                           options: ParseOptions) -> ParseResult:
         """批量解析行"""
         blocks = []
         errors = []
         warnings = []
         processed = 0
-        
+
         for i, line in enumerate(lines):
             line_number = start_line + i
             line = line.strip()
-            
+
             if not line:
                 continue
-            
+
             try:
                 # 检查行长度
                 if len(line) > options.preprocessor.max_line_length:
@@ -510,7 +510,7 @@ class JsonlParser:
                         raw_content=line[:100] + "..." if len(line) > 100 else line
                     ))
                     continue
-                
+
                 # 解析 JSON
                 try:
                     block_data = json.loads(line)
@@ -523,7 +523,7 @@ class JsonlParser:
                         raw_content=line
                     ))
                     continue
-                
+
                 # 验证是否为字典
                 if not isinstance(block_data, dict):
                     # 尝试包装为段落块
@@ -537,26 +537,26 @@ class JsonlParser:
                         line_number=line_number,
                         context=line
                     ))
-                
+
                 # 标准化字段名
                 block_data = self._normalize_field_names(block_data)
-                
+
                 # 自动生成映射
                 if options.auto_generate_mapping and "mapping" not in block_data:
                     block_data["mapping"] = f"auto_{line_number}"
-                
+
                 # 验证块
                 block_errors = self._validate_block(block_data, line_number, options)
                 if block_errors:
                     errors.extend(block_errors)
                     if options.strict_mode:
                         continue
-                
+
                 # 创建解析后的块
                 parsed_block = self._create_parsed_block(block_data, line_number, line)
                 blocks.append(parsed_block)
                 processed += 1
-                
+
             except Exception as e:
                 errors.append(ParseError(
                     type=ErrorType.INVALID_JSON,
@@ -564,7 +564,7 @@ class JsonlParser:
                     line_number=line_number,
                     raw_content=line
                 ))
-        
+
         return ParseResult(
             success=len(errors) == 0,
             blocks=blocks,
@@ -573,33 +573,33 @@ class JsonlParser:
             total_lines=len(lines),
             processed_lines=processed
         )
-    
-    def _normalize_field_names(self, block_data: Dict[str, Any]) -> Dict[str, Any]:
+
+    def _normalize_field_names(self, block_data: dict[str, Any]) -> dict[str, Any]:
         """标准化字段名称"""
         # 处理短字段名
         if "t" in block_data and "type" not in block_data:
             block_data["type"] = block_data["t"]
-        
+
         if "c" in block_data and "content" not in block_data:
             block_data["content"] = block_data["c"]
-        
+
         # 设置默认值
         if "type" not in block_data and "t" not in block_data:
             block_data["type"] = "p"
-        
+
         if "content" not in block_data and "c" not in block_data:
             block_data["content"] = ""
-        
+
         return block_data
-    
-    def _validate_block(self, block_data: Dict[str, Any], line_number: int,
-                       options: ParseOptions) -> List[ParseError]:
+
+    def _validate_block(self, block_data: dict[str, Any], line_number: int,
+                       options: ParseOptions) -> list[ParseError]:
         """验证块数据"""
         errors = []
-        
+
         # 获取块类型
         block_type = block_data.get("type") or block_data.get("t", "p")
-        
+
         # 检查块类型是否支持
         if block_type not in self._block_types:
             # 如果是未知类型，将其注册为默认类型
@@ -607,11 +607,11 @@ class JsonlParser:
                 block_type,
                 DefaultBlockTypeDefinition(block_type)
             )
-        
+
         # 使用块类型定义验证
         type_def = self._block_types[block_type]
         is_valid, error_messages = type_def.validate_block(block_data)
-        
+
         if not is_valid:
             for msg in error_messages:
                 errors.append(ParseError(
@@ -619,7 +619,7 @@ class JsonlParser:
                     message=msg,
                     line_number=line_number
                 ))
-        
+
         # 验证属性
         for attr, value in block_data.items():
             if attr in self._attribute_validators:
@@ -631,7 +631,7 @@ class JsonlParser:
                         message=f"Invalid attribute '{attr}': {error_msg}",
                         line_number=line_number
                     ))
-        
+
         # 自定义验证器
         for attr, validator in options.custom_validators.items():
             if attr in block_data:
@@ -648,20 +648,20 @@ class JsonlParser:
                         message=f"Custom validator error for '{attr}': {str(e)}",
                         line_number=line_number
                     ))
-        
+
         return errors
-    
-    def _create_parsed_block(self, block_data: Dict[str, Any], 
+
+    def _create_parsed_block(self, block_data: dict[str, Any],
                            line_number: int, raw_json: str) -> ParsedBlock:
         """创建解析后的块对象"""
         # 提取核心字段
         block_type = block_data.get("type") or block_data.get("t", "p")
         content = block_data.get("content") or block_data.get("c", "")
-        
+
         # 提取其他属性
-        attributes = {k: v for k, v in block_data.items() 
+        attributes = {k: v for k, v in block_data.items()
                      if k not in ["type", "t", "content", "c"]}
-        
+
         return ParsedBlock(
             type=block_type,
             content=content,
@@ -669,9 +669,9 @@ class JsonlParser:
             line_number=line_number,
             raw_json=raw_json
         )
-    
-    def _establish_references(self, blocks: List[ParsedBlock], 
-                            warnings: List[ParseWarning]):
+
+    def _establish_references(self, blocks: list[ParsedBlock],
+                            warnings: list[ParseWarning]):
         """建立块之间的引用关系"""
         # 创建段落编号到块的映射
         paragraph_map = {}
@@ -679,7 +679,7 @@ class JsonlParser:
             ref = block.get_attribute("ref")
             if ref:
                 paragraph_map[ref] = block
-        
+
         # 验证引用
         for block in blocks:
             ref = block.get_attribute("ref")
@@ -689,8 +689,8 @@ class JsonlParser:
                     line_number=block.line_number,
                     context=f"Block type: {block.type}"
                 ))
-    
-    def parse_sync(self, content: str, options: Optional[ParseOptions] = None) -> ParseResult:
+
+    def parse_sync(self, content: str, options: ParseOptions | None = None) -> ParseResult:
         """同步解析接口"""
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -704,14 +704,14 @@ def create_parser() -> JsonlParser:
     """创建默认配置的解析器"""
     return JsonlParser()
 
-async def parse_jsonl(content: str, 
-                     options: Optional[ParseOptions] = None) -> ParseResult:
+async def parse_jsonl(content: str,
+                     options: ParseOptions | None = None) -> ParseResult:
     """便捷的异步解析函数"""
     parser = create_parser()
     return await parser.parse(content, options)
 
-def parse_jsonl_sync(content: str, 
-                    options: Optional[ParseOptions] = None) -> ParseResult:
+def parse_jsonl_sync(content: str,
+                    options: ParseOptions | None = None) -> ParseResult:
     """便捷的同步解析函数"""
     parser = create_parser()
     return parser.parse_sync(content, options)
@@ -735,4 +735,4 @@ __all__ = [
     'create_parser',
     'parse_jsonl',
     'parse_jsonl_sync'
-] 
+]
