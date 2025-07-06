@@ -171,7 +171,7 @@ export default function ContentLibraryPage() {
 
   return (
     /* 页面主体：响应式布局 */
-    <div className="flex h-screen overflow-visible bg-neutral-50">
+    <div className="flex h-screen overflow-visible bg-gradient-to-br from-background via-background to-muted/20">
       {/* 左栏：内容列表 */}
       <section
         className={`flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-300 ${
@@ -180,29 +180,13 @@ export default function ContentLibraryPage() {
               ? "hidden"
               : "w-full"
             : showPreview
-              ? "w-library flex-none 2xl:w-library-lg"
+              ? "w-library flex-none 2xl:w-library-lg 3xl:w-library-xl"
               : "w-full"
         }`}
       >
         {/* Header */}
-        <header className="flex items-center justify-between h-header px-6 border-b border-black/[0.06] shrink-0 bg-white/80 backdrop-blur-sm">
+        <header className="flex items-center justify-between h-header px-6 border-b  shrink-0 bg-transparent">
           <h1 className="text-lg font-semibold text-neutral-900">Library</h1>
-
-          {/* 预览切换按钮 */}
-          {!isMobile && (
-            <Button
-              onClick={togglePreview}
-              size="sm"
-              variant="ghost"
-              className="ml-auto text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
-            >
-              {showPreview ? (
-                <PanelRightClose className="h-4 w-4" />
-              ) : (
-                <PanelRightOpen className="h-4 w-4" />
-              )}
-            </Button>
-          )}
         </header>
 
         {/* 工具栏 */}
@@ -243,24 +227,19 @@ export default function ContentLibraryPage() {
 
       {/* 右栏：内容预览 */}
       {showPreview && (
-        <section
-          className={`flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-300 border-l border-black/[0.06] ${
-            isMobile ? "w-full" : "flex-1 min-w-0"
-          }`}
-        >
-          {isMobile && (
-            <header className="flex items-center justify-between h-header px-6 border-b border-black/[0.06] bg-white/80 backdrop-blur-sm">
-              <h2 className="text-lg font-semibold text-neutral-900">预览</h2>
+        isMobile ? (
+          // —— 移动端：保留折叠逻辑 + Header ——
+          <section
+            className="flex flex-col h-full w-full overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-300 pl-0 pr-2 py-2"
+          >
+            <header className="flex items-center justify-between h-header px-6 border-b border-border/30 bg-background/80 backdrop-blur-sm">
+              <h2 className="text-lg font-semibold">预览</h2>
               <div className="flex items-center gap-3">
-                {/* 打开阅读器按钮 */}
                 {previewItem && (
                   <Button
-                    onClick={() =>
-                      router.push(`/content-library/reader/${previewItem.id}`)
-                    }
+                    onClick={() => router.push(`/content-library/reader/${previewItem.id}`)}
                     size="sm"
                     variant="outline"
-                    className="border-neutral-200 text-neutral-700 hover:bg-neutral-50"
                   >
                     打开
                   </Button>
@@ -269,27 +248,24 @@ export default function ContentLibraryPage() {
                   onClick={togglePreview}
                   size="sm"
                   variant="ghost"
-                  className="text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
                 >
                   <PanelRightClose className="h-4 w-4" />
                 </Button>
               </div>
             </header>
-          )}
 
-          <div className="flex-1 overflow-auto bg-white">
-            {previewItem ? (
+            <div className="flex-1 overflow-auto">
               <ContentPreview item={previewItem} />
-            ) : (
-              <div className="flex items-center justify-center h-full text-neutral-500">
-                <div className="text-center space-y-3">
-                  <p className="font-medium">选择一个内容项来预览</p>
-                  <p className="text-sm">点击左侧列表中的任意项目</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
+            </div>
+          </section>
+        ) : (
+          // —— 桌面端：恢复旧版 aside 结构 ——
+          <aside className="flex-1 pl-0 pr-2 py-2 flex h-full">
+            <div className="flex-1 min-w-0">
+              <ContentPreview item={previewItem} />
+            </div>
+          </aside>
+        )
       )}
 
       {/* 移动端预览切换按钮 */}

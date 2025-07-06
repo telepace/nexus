@@ -88,7 +88,7 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
   ];
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm border-b border-black/[0.06]">
+    <div className="bg-transparent backdrop-blur-sm">
       <div className="px-6 py-4">
         {/* 单行布局：筛选 + 搜索 + 控制按钮 */}
         <div className="flex items-center gap-4">
@@ -102,10 +102,9 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-9 px-3 flex items-center gap-2 border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+                  className="h-9 px-3 flex items-center gap-2 border-neutral-200 text-neutral-700 bg-transparent hover:bg-transparent"
                 >
                   <Filter className="h-4 w-4" />
-                  <span className="text-sm">筛选</span>
                   {selectedTags.length > 0 && (
                     <Badge
                       variant="secondary"
@@ -236,7 +235,7 @@ export const Toolbar = ({ items, onFiltersChange }: Props) => {
               placeholder="搜索内容..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-9 border-neutral-200 bg-white focus:border-neutral-300 focus:ring-1 focus:ring-neutral-200"
+              className="pl-10 h-9 border-neutral-200 bg-transparent focus:border-neutral-300 focus:ring-1 focus:ring-neutral-200"
             />
           </div>
 

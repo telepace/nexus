@@ -24,6 +24,7 @@ module.exports = {
       width: {
         library: "35.25rem", // 564px - content-library左栏宽度
         "library-lg": "37.5rem", // 600px - 2xl屏幕下的左栏宽度
+        "library-xl": "39.75rem", // 636px - 3xl屏幕下的左栏宽度
         cardTitle: "18rem", // 卡片标题最大宽度
         // 响应式容器宽度
         "container-xs": "min(100%, 475px)",
