@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { EnhancedCard, AnalysisCard, ContentBlock, CardAction, ReferenceInfo } from "@/components/ui/enhanced-card";
+import { AnalysisCard, SimpleAnalysisCard, ContentBlock, CardAction, ReferenceInfo } from "@/components/ui/analysis-card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -18,7 +18,7 @@ import {
   Info
 } from "lucide-react";
 
-export default function TestEnhancedCardPage() {
+export default function TestAnalysisCardPage() {
   const { toast } = useToast();
 
   // 示例引用数据
@@ -191,7 +191,7 @@ export default function TestEnhancedCardPage() {
 
             <div className="grid gap-8 md:grid-cols-2">
               {/* 主要功能演示卡片 */}
-              <EnhancedCard
+              <AnalysisCard
                 title="AI技术发展概述"
                 subtitle="现代人工智能的核心概念与应用"
                 emoji="🤖"
@@ -205,7 +205,7 @@ export default function TestEnhancedCardPage() {
               />
 
               {/* 简化版卡片 */}
-              <EnhancedCard
+              <AnalysisCard
                 title="简化卡片示例"
                 subtitle="仅包含基础菜单功能"
                 emoji="📝"
@@ -226,7 +226,7 @@ export default function TestEnhancedCardPage() {
               />
 
               {/* 无删除功能的卡片 */}
-              <EnhancedCard
+              <AnalysisCard
                 title="只读内容卡片"
                 subtitle="仅支持复制，不支持删除"
                 emoji="👁️"

@@ -43,7 +43,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import styles from "./enhanced-card.module.css";
+import styles from "./analysis-card.module.css";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { AnalysisContentRenderer } from "./AnalysisContentRenderer";
 
@@ -403,7 +403,7 @@ const InteractiveContentBlock: React.FC<{
   return (
     <motion.div
       className={cn(
-        "group relative p-4 rounded-xl transition-all duration-300",
+        "group relative p-3 rounded-xl transition-all duration-300",
         styles.contentBlock,
       )}
       onClick={() => onBlockClick?.(block.id)}
@@ -411,7 +411,6 @@ const InteractiveContentBlock: React.FC<{
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      layout
     >
       {/* 内容主体 */}
       <div className="flex items-start justify-between gap-3">
@@ -428,7 +427,6 @@ const InteractiveContentBlock: React.FC<{
                 block.type === "analysis" && "", // Analysis 类型使用 AnalysisContentRenderer 自己的样式
                 block.type !== "json" && block.type !== "analysis" && "text-sm leading-relaxed text-gray-700 dark:text-gray-300",
               )}
-              layout
               initial={false}
             >
               {/* 根据内容类型选择渲染方式 */}
@@ -443,20 +441,61 @@ const InteractiveContentBlock: React.FC<{
                 />
               ) : typeof displayContent === "string" ? (
                 <AnimatePresence mode="wait">
-                  <motion.span 
+                  <motion.div 
                     key={isExpanded ? "expanded" : "collapsed"}
-                    className="whitespace-pre-wrap inline-block"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ 
-                      duration: 0.3,
-                      ease: "easeInOut",
-                      height: { duration: 0.4 }
-                    }}
+                    className="whitespace-pre-wrap"
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                                         variants={{
+                       hidden: {},
+                       visible: {
+                         transition: {
+                           staggerChildren: 0.015,
+                           delayChildren: 0.05
+                         }
+                       },
+                       exit: {
+                         transition: {
+                           staggerChildren: 0.015,
+                           staggerDirection: -1
+                         }
+                       }
+                     }}
                   >
-                    {displayContent}
-                  </motion.span>
+                    {displayContent.split('\n').map((line, index) => (
+                      <motion.div
+                        key={index}
+                                                 variants={{
+                           hidden: { 
+                             opacity: 0, 
+                             y: 8,
+                             filter: "blur(3px)"
+                           },
+                           visible: { 
+                             opacity: 1, 
+                             y: 0,
+                             filter: "blur(0px)",
+                             transition: {
+                               duration: 0.25,
+                               ease: "easeOut"
+                             }
+                           },
+                           exit: { 
+                             opacity: 0, 
+                             y: -8,
+                             filter: "blur(3px)",
+                             transition: {
+                               duration: 0.25,
+                               ease: "easeIn"
+                             }
+                           }
+                         }}
+                      >
+                        {line || '\u00A0'} {/* 空行用不间断空格占位 */}
+                      </motion.div>
+                    ))}
+                  </motion.div>
                 </AnimatePresence>
               ) : (
                 displayContent
@@ -486,7 +525,6 @@ const InteractiveContentBlock: React.FC<{
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              layout
             >
               <motion.div
                 whileHover={{ scale: 1.02 }}
@@ -497,13 +535,10 @@ const InteractiveContentBlock: React.FC<{
                   size="sm"
                   className={cn(
                     "h-8 px-4 text-xs font-medium rounded-full",
-                    "bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100",
-                    "border border-blue-200/50 hover:border-blue-300/70",
-                    "text-blue-700 hover:text-blue-800",
-                    "dark:from-blue-950/30 dark:to-indigo-950/30 dark:hover:from-blue-900/40 dark:hover:to-indigo-900/40",
-                    "dark:border-blue-800/30 dark:hover:border-blue-700/50",
-                    "dark:text-blue-400 dark:hover:text-blue-300",
-                    "transition-all duration-200 shadow-sm hover:shadow-md",
+                    "bg-transparent hover:bg-transparent",
+                    "border border-transparent hover:border-transparent",
+                    "text-muted-foreground hover:text-foreground",
+                    "transition-all duration-200",
                     styles.expandButton
                   )}
                   onClick={(e) => {
@@ -511,29 +546,27 @@ const InteractiveContentBlock: React.FC<{
                     setIsExpanded(!isExpanded);
                   }}
                 >
-                  <motion.div
-                    className="flex items-center gap-2"
-                    initial={false}
-                    animate={{ 
-                      rotate: isExpanded ? 180 : 0,
-                    }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                  >
+                  <div className="flex items-center gap-2">
+                    <motion.div
+                      initial={false}
+                      animate={{ 
+                        rotate: isExpanded ? 180 : 0,
+                      }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                    >
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </motion.div>
                     {isExpanded ? (
-                      <>
-                        <ChevronUp className="h-3.5 w-3.5" />
-                        <span>收起内容</span>
-                      </>
+                      <span>收起内容</span>
                     ) : (
                       <>
-                        <ChevronDown className="h-3.5 w-3.5" />
                         <span>展开更多</span>
                         <span className="text-xs opacity-70">
                           (+{block.content.toString().length - truncated.length}字)
                         </span>
                       </>
                     )}
-                  </motion.div>
+                  </div>
                 </Button>
               </motion.div>
             </motion.div>
@@ -546,7 +579,6 @@ const InteractiveContentBlock: React.FC<{
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              layout
             >
               <div className="flex items-center gap-1">
                 <Quote className="h-3 w-3 text-gray-400" />
@@ -1072,8 +1104,12 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
       <Card 
         className={cn(
           styles.cardWrapper,
-          "group cursor-pointer transition-all duration-300 ease-out hover:shadow-lg enhanced-card analysis-card",
-          selected && "ring-2 ring-primary ring-offset-2",
+          "group cursor-pointer transition-all duration-200 ease-out analysis-card relative overflow-hidden",
+          "bg-transparent border-muted-foreground/20 shadow-sm hover:-translate-y-0.5 rounded-lg",
+          styles.card,
+          styles[variant],
+          selected && styles.selected,
+          error && styles.error,
           className
         )}
         onClick={handleCardClick}
@@ -1082,113 +1118,105 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
         {/* 背景光晕效果 */}
         <div className={cn(styles.backgroundGlow, variant === "featured" && styles.featuredGlow)} />
 
-        <Card className={cn(
-          "relative transition-all duration-300 ease-out overflow-hidden",
-          styles.card,
-          styles[variant],
-          selected && styles.selected,
-          error && styles.error,
-        )}>
-          {/* 加载状态 */}
-          <AnimatePresence>
-            {loading && (
-              <motion.div 
-                className={styles.loadingOverlay}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent" />
-              </motion.div>
-            )}
-          </AnimatePresence>
+        {/* 加载状态 */}
+        <AnimatePresence>
+          {loading && (
+            <motion.div 
+              className={styles.loadingOverlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent" />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          <CardHeader className={cn("pb-4", cardVariants[variant])}>
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3 flex-1 min-w-0">
-                {/* 图标或emoji */}
-                {(emoji || icon) && (
-                  <motion.div 
-                    className={styles.iconContainer}
-                    whileHover={{ scale: 1.05, rotate: 5 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {emoji ? (
-                      <span className="text-xl">{emoji}</span>
-                    ) : (
-                      icon
-                    )}
-                  </motion.div>
-                )}
-
-                {/* 标题和副标题 */}
-                <div className="flex-1 min-w-0">
-                  {title && (
-                    <motion.h3 
-                      className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 leading-tight"
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1 }}
-                    >
-                      {title}
-                    </motion.h3>
-                  )}
-                  {subtitle && (
-                    <motion.p 
-                      className="text-sm text-gray-500 dark:text-gray-400 mt-1"
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 }}
-                    >
-                      {subtitle}
-                    </motion.p>
-                  )}
-                  {error && (
-                    <motion.p 
-                      className="text-sm text-red-600 dark:text-red-400 mt-1"
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 }}
-                    >
-                      {error}
-                    </motion.p>
-                  )}
-                </div>
-              </div>
-
-              {/* 操作菜单 */}
-              <CardActionsMenu
-                actions={actions}
-                defaultActions={defaultActions}
-                onCopyAll={handleCopyAll}
-                onCopyContent={handleCopyContent}
-                onDelete={onDelete}
-                contentTitle={title}
-              />
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-2">
-            <AnimatePresence>
-              {contentBlocks.map((block, index) => (
-                <motion.div
-                  key={block.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
+        <CardHeader className={cn("pb-4 pt-6 px-6", cardVariants[variant])}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              {/* 图标或emoji */}
+              {(emoji || icon) && (
+                <motion.div 
+                  className={cn(styles.iconContainer, "flex items-center justify-center")}
+                  whileHover={{ scale: 1.05, rotate: 5 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  <InteractiveContentBlock
-                    block={block}
-                    onBlockClick={onBlockClick}
-                    onReferenceClick={onReferenceClick}
-                  />
+                  {emoji ? (
+                    <span className="text-xl leading-none">{emoji}</span>
+                  ) : (
+                    icon
+                  )}
                 </motion.div>
-              ))}
-            </AnimatePresence>
-            
-            {children}
-          </CardContent>
-        </Card>
+              )}
+
+              {/* 标题和副标题 */}
+              <div className="flex-1 min-w-0">
+                {title && (
+                  <motion.h3 
+                    className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 leading-tight"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    {title}
+                  </motion.h3>
+                )}
+                {subtitle && (
+                  <motion.p 
+                    className="text-sm text-gray-500 dark:text-gray-400 mt-1"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    {subtitle}
+                  </motion.p>
+                )}
+                {error && (
+                  <motion.p 
+                    className="text-sm text-red-600 dark:text-red-400 mt-1"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    {error}
+                  </motion.p>
+                )}
+              </div>
+            </div>
+
+            {/* 操作菜单 */}
+            <CardActionsMenu
+              actions={actions}
+              defaultActions={defaultActions}
+              onCopyAll={handleCopyAll}
+              onCopyContent={handleCopyContent}
+              onDelete={onDelete}
+              contentTitle={title}
+            />
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-2 px-6 pb-6">
+          <AnimatePresence>
+            {contentBlocks.map((block, index) => (
+              <motion.div
+                key={block.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <InteractiveContentBlock
+                  block={block}
+                  onBlockClick={onBlockClick}
+                  onReferenceClick={onReferenceClick}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+          
+          {children}
+        </CardContent>
       </Card>
     </>
   );

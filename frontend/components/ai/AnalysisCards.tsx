@@ -12,7 +12,7 @@ import { BookOpen, BarChart3, Star } from "lucide-react";
 import { AIResult } from "@/lib/api/content";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 // 引入 AnalysisCard
-import { AnalysisCard, ContentBlock } from "@/components/ui/enhanced-card";
+import { AnalysisCard, ContentBlock } from "@/components/ui/analysis-card";
 
 // 统一的分析数据接口
 interface UnifiedAnalysisData {

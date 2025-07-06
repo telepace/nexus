@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { EnhancedCard, ContentBlock } from "@/components/ui/enhanced-card";
+import { AnalysisCard, ContentBlock } from "@/components/ui/analysis-card";
 import { AnalysisContentRenderer, ReferenceInfo } from "@/components/ui/AnalysisContentRenderer";
 import { useToast } from "@/hooks/use-toast";
 import { Brain, BookOpen, Lightbulb, Sparkles, FileText, Target } from "lucide-react";
@@ -203,7 +203,7 @@ export default function TestAnalysisRendererPage() {
 
             <div className="grid gap-6">
               {/* 主要分析卡片 */}
-              <EnhancedCard
+              <AnalysisCard
                 title="NotebookLM 技术深度分析"
                 subtitle="基于 JSONL 格式的结构化分析内容"
                 emoji="📊"
@@ -221,7 +221,7 @@ export default function TestAnalysisRendererPage() {
 
               {/* 对比示例 */}
               <div className="grid gap-6 lg:grid-cols-2">
-                <EnhancedCard
+                <AnalysisCard
                   title="传统文本渲染"
                   subtitle="普通文本显示方式"
                   emoji="📝"
@@ -235,7 +235,7 @@ export default function TestAnalysisRendererPage() {
                   variant="compact"
                 />
 
-                <EnhancedCard
+                <AnalysisCard
                   title="结构化分析渲染"
                   subtitle="使用新的分析渲染器"
                   emoji="✨"

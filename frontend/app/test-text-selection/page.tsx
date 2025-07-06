@@ -230,20 +230,20 @@ function createTextSelectionFloater(options) {
             </div>
 
             {/* Enhanced Card 测试 */}
-            <div className="enhanced-card" data-exclude-selection>
+                          <div className="analysis-card" data-exclude-selection>
               <Card className="analysis-card">
                 <CardHeader>
                   <CardTitle>Enhanced Card 测试</CardTitle>
                 </CardHeader>
                 <CardContent data-exclude-selection>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    这个区域使用了 enhanced-card 类名，选择文本不应该触发浮层。
+                    这个区域使用了 analysis-card 类名，选择文本不应该触发浮层。
                   </p>
                   <div className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded" data-exclude-selection>
                     <p className="text-sm text-purple-700 dark:text-purple-300">
                       机器学习是人工智能的一个重要分支，它使计算机能够在没有明确编程的情况下从数据中学习。
                       深度学习作为机器学习的子集，通过多层神经网络模拟人脑的工作方式。
-                      这段文字在 enhanced-card 区域内，不应该触发文本选择浮层。
+                      这段文字在 analysis-card 区域内，不应该触发文本选择浮层。
                     </p>
                   </div>
                 </CardContent>
@@ -280,7 +280,7 @@ function createTextSelectionFloater(options) {
                     <div className="text-yellow-700 dark:text-yellow-300 space-y-1">
                       <p>• <code>data-exclude-selection</code> 属性</p>
                       <p>• <code>.analysis-card</code> 类名</p>
-                      <p>• <code>.enhanced-card</code> 类名</p>
+                      <p>• <code>.analysis-card</code> 类名</p>
                       <p>• <code>.insight-pane</code> 类名</p>
                       <p>• <code>button</code> 元素</p>
                       <p>• 各种UI组件选择器</p>
@@ -298,7 +298,7 @@ function createTextSelectionFloater(options) {
         <TextSelectionFloater
           enabled={true}
           containerSelector=".content-area"
-          excludeSelector=".card, .sidebar, .panel, .analysis-card, .llm-analysis-card, .ai-analysis-card, .content-analysis-sidebar, .content-analysis-panel, .ai-analysis-panel, .insight-pane, .floating-menu, .dropdown-menu, .tooltip, .popover, .modal, .dialog, [data-exclude-selection], [data-dropdown-trigger], [data-tooltip], [data-popover], [data-modal], [data-dialog], .shadcn-ui-card, .ui-card, .enhanced-card, button, .button, input, textarea, select, .form-control, .toolbar, .header, .footer, .navigation, .nav, .menu"
+          excludeSelector=".card, .sidebar, .panel, .analysis-card, .llm-analysis-card, .ai-analysis-card, .content-analysis-sidebar, .content-analysis-panel, .ai-analysis-panel, .insight-pane, .floating-menu, .dropdown-menu, .tooltip, .popover, .modal, .dialog, [data-exclude-selection], [data-dropdown-trigger], [data-tooltip], [data-popover], [data-modal], [data-dialog], .shadcn-ui-card, .ui-card, .analysis-card, button, .button, input, textarea, select, .form-control, .toolbar, .header, .footer, .navigation, .nav, .menu"
           onAction={handleTextAction}
           zIndex={1050}
         />
