@@ -243,7 +243,6 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
               },
               body: JSON.stringify({
                 analysis_instruction: analysisInstruction, // 用户的分析指令
-                model: "gemini-2.5-flash-preview-05-20",
               }),
             },
           );
@@ -337,22 +336,10 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                   // Vercel AI SDK Data Stream Protocol 文本内容
                   // 解析 JSON 转义的内容
                   const jsonContent = line.slice(2); // 移除 "0:"
-                  let content = "";
-
-                  try {
-                    // 使用 JSON.parse 正确解析转义字符
-                    content = JSON.parse(jsonContent);
-                  } catch (_parseError) {
-                    void _parseError; // 明确标记参数已被处理
-                    // 如果解析失败，尝试简单的字符串处理（向后兼容）
-                    content =
-                      jsonContent.startsWith('"') && jsonContent.endsWith('"')
-                        ? jsonContent.slice(1, -1)
-                        : jsonContent;
-                  }
-
-                  if (content) {
-                    accumulatedContent += content + "\n";
+                  // 直接累加原始 JSON 行，保持合法 JSONL
+                  const rawLine = jsonContent.trim();
+                  if (rawLine) {
+                    accumulatedContent += rawLine + "\n";
                     // 使用防抖更新
                     smartUpdate(accumulatedContent);
                   }
@@ -420,7 +407,6 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                         accumulatedContent += parsed.content + "\n";
                         smartUpdate(accumulatedContent);
                       } else {
-                        // 流结束
                         if (updateTimer) clearTimeout(updateTimer);
                         updateAnalysis(targetAnalysis.id, {
                           content: accumulatedContent,
@@ -685,22 +671,10 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                   // Vercel AI SDK Data Stream Protocol 文本内容
                   // 解析 JSON 转义的内容
                   const jsonContent = line.slice(2); // 移除 "0:"
-                  let content = "";
-
-                  try {
-                    // 使用 JSON.parse 正确解析转义字符
-                    content = JSON.parse(jsonContent);
-                  } catch (_parseError) {
-                    void _parseError; // 明确标记参数已被处理
-                    // 如果解析失败，尝试简单的字符串处理（向后兼容）
-                    content =
-                      jsonContent.startsWith('"') && jsonContent.endsWith('"')
-                        ? jsonContent.slice(1, -1)
-                        : jsonContent;
-                  }
-
-                  if (content) {
-                    accumulatedContent += content + "\n";
+                  // 直接累加原始 JSON 行，保持合法 JSONL
+                  const rawLine = jsonContent.trim();
+                  if (rawLine) {
+                    accumulatedContent += rawLine + "\n";
                     // 使用防抖更新
                     smartUpdate(accumulatedContent);
                   }

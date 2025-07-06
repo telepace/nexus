@@ -161,11 +161,19 @@ export function JsonlRenderer({
             </h3>
           );
         case "quote":
-          return (
-            <blockquote className="italic border-l-2 pl-4 my-2 select-text">
-              {c as React.ReactNode}
-            </blockquote>
-          );
+          {
+            const ref = block["ref"] as string | undefined;
+            return (
+              <blockquote className="italic border-l-2 pl-4 my-2 select-text">
+                <div className="mb-1">{c as React.ReactNode}</div>
+                {ref && (
+                  <cite className="text-xs text-gray-500 dark:text-gray-400 not-italic">
+                    — {ref}
+                  </cite>
+                )}
+              </blockquote>
+            );
+          }
         case "list": {
           // Content can be array or string (comma separated)
           const items: string[] = Array.isArray(c)

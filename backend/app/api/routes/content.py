@@ -918,7 +918,7 @@ async def _stream_content_analysis(
                         error_msg += f" - {error_text}"
                     except Exception:
                         pass
-                    yield f'9:[{{"error":"{error_msg}"}}]\n'
+                    yield f'{{"t":"error","c":"{error_msg}"}}]\n'
                     return
 
                 # 处理流式响应
@@ -978,7 +978,7 @@ async def _stream_content_analysis(
                                     except Exception as e:
                                         logger.error(f"Failed to save error: {e}")
 
-                                    yield f'9:[{{"error":"{error_msg}"}}]\n'
+                                    yield f'{{"t":"error","c":"{error_msg}"}}]\n'
                                     return
 
                                 # 提取内容
@@ -995,7 +995,7 @@ async def _stream_content_analysis(
                                         # 发送文本块 (类型 0)
                                         # 需要正确转义JSON内容
                                         escaped_content = json.dumps(content)
-                                        yield f"0:{escaped_content}\n"
+                                        yield f"{escaped_content}\n"
 
                             except json.JSONDecodeError:
                                 # 忽略非JSON数据
@@ -1028,7 +1028,7 @@ async def _stream_content_analysis(
 
         # 发送错误信息
         error_msg = str(e).replace('"', '\\"')
-        yield f'9:[{{"error":"Stream error: {error_msg}"}}]\n'
+        yield f'{{"t":"error","c":"Stream error: {error_msg}"}}]\n'
 
 
 @router.post(
@@ -1079,7 +1079,7 @@ async def analyze_ai_sdk_updated_endpoint(
         content_item_title=content_title,
         analysis_instruction=request.analysis_instruction,
         content_to_analyze=content_text,
-        model=request.model or "or-deepseek-r1",
+        model="or-gemini-2.5-flash-preview-05-20",
         temperature=request.temperature,
         max_tokens=request.max_tokens,
     )
@@ -1138,7 +1138,7 @@ async def _stream_content_analysis_ai_sdk(
         ]
 
         payload = {
-            "model": request.model or "or-deepseek-r1",
+            "model": "or-gemini-2.5-flash-preview-05-20",
             "messages": messages,
             "temperature": request.temperature,
             "max_tokens": request.max_tokens,
@@ -1181,7 +1181,7 @@ async def _stream_content_analysis_ai_sdk(
                                             yield f"0:{jsonl_line}\n"
 
                                 # 发送完成信号 (类型8)
-                                yield f'8:[{{"finishReason":"stop"}}]\n'
+                                # yield f'8:[{{"finishReason":"stop"}}]\n'
 
                                 # Update AI conversation with response using new session
                                 try:
@@ -1225,7 +1225,7 @@ async def _stream_content_analysis_ai_sdk(
     except Exception as e:
         # 发送错误信息 (类型9)
         error_msg = str(e).replace('"', '\\"')
-        yield f'9:[{{"error":"Analysis failed: {error_msg}"}}]\n'
+        yield f'{{"t":"error","c":"Analysis failed: {error_msg}"}}]\n'
 
 
 @router.post(
@@ -1276,7 +1276,7 @@ async def completion_updated_endpoint(
         content_item_title=content_title,
         analysis_instruction=request.analysis_instruction,
         content_to_analyze=content_text,
-        model=request.model or "or-deepseek-r1",
+        model="or-gemini-2.5-flash-preview-05-20",
         temperature=request.temperature,
         max_tokens=request.max_tokens,
     )
@@ -1301,11 +1301,12 @@ async def completion_updated_endpoint(
 
     return StreamingResponse(
         stream_completion(),
-        media_type="text/event-stream",
+        media_type="text/plain",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "Access-Control-Allow-Origin": "*",
+            "X-Vercel-AI-Data-Stream": "v1",  # Vercel AI SDK Data Stream Protocol 标识
         },
     )
 
@@ -1335,7 +1336,7 @@ async def _stream_content_completion_updated(
         ]
 
         payload = {
-            "model": request.model or "or-deepseek-r1",
+            "model": "or-gemini-2.5-flash-preview-05-20",
             "messages": messages,
             "temperature": request.temperature,
             "max_tokens": request.max_tokens,
@@ -1378,7 +1379,7 @@ async def _stream_content_completion_updated(
                                             yield f"0:{jsonl_line}\n"
 
                                 # 发送完成信号 (类型8)
-                                yield f'8:[{{"finishReason":"stop"}}]\n'
+                                # yield f'8:[{{"finishReason":"stop"}}]\n'
 
                                 # Update AI conversation with response using new session
                                 try:
@@ -1422,7 +1423,7 @@ async def _stream_content_completion_updated(
     except Exception as e:
         # 发送错误信息 (类型9)
         error_msg = str(e).replace('"', '\\"')
-        yield f'9:[{{"error":"Completion failed: {error_msg}"}}]\n'
+        yield f'{{"t":"error","c":"Completion failed: {error_msg}"}}]\n'
 
 
 @router.get(

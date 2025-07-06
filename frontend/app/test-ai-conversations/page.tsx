@@ -25,7 +25,7 @@ export default function TestAIConversationsPage() {
   const [newConversationData, setNewConversationData] =
     useState<CreateConversationRequest>({
       title: "",
-      ai_model_name: "gemini-2.5-flash-preview-05-20",
+      // 移除ai_model_name参数，由后端自动选择最适合的模型
       messages: [],
       summary: "",
     });
@@ -73,7 +73,7 @@ export default function TestAIConversationsPage() {
     if (result) {
       setNewConversationData({
         title: "",
-        ai_model_name: "gemini-2.5-flash-preview-05-20",
+        // 移除ai_model_name参数，由后端自动选择最适合的模型
         messages: [],
         summary: "",
       });

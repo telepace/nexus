@@ -282,31 +282,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
-
-        for (const line of lines) {
-          // 处理Vercel AI SDK数据流协议
-          if (line.startsWith("0:")) {
-            // 文本内容 - 提取JSONL行
-            const jsonlLine = line.slice(2); // 移除 "0:" 前缀
-            if (jsonlLine.trim()) {
-              accumulatedContent += jsonlLine + "\n";
-              setStreamingResponse(accumulatedContent);
-            }
-          } else if (line.startsWith("8:")) {
-            // 完成信号 - 最终更新
-            setStreamingResponse(accumulatedContent);
-            break;
-          } else if (line.startsWith("9:")) {
-            // 错误信号
-            try {
-              const errorData = JSON.parse(line.slice(2));
-              throw new Error(errorData.error || "Stream error");
-            } catch {
-              throw new Error("Stream error");
-            }
-          }
-        }
+        accumulatedContent += chunk;
+        setStreamingResponse(accumulatedContent);
       }
 
       setInputValue("");
