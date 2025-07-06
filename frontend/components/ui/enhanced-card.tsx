@@ -294,7 +294,7 @@ export interface ContentBlock {
   metadata?: Record<string, any>;
 }
 
-export interface EnhancedCardProps {
+export interface AnalysisCardProps {
   // 基础属性
   title?: string;
   subtitle?: string;
@@ -954,7 +954,7 @@ const CardActionsMenu: React.FC<{
 };
 
 // 主要的增强卡片组件
-export const EnhancedCard: React.FC<EnhancedCardProps> = ({
+export const AnalysisCard: React.FC<AnalysisCardProps> = ({
   title,
   subtitle,
   emoji,
@@ -1195,7 +1195,7 @@ export const EnhancedCard: React.FC<EnhancedCardProps> = ({
 };
 
 // 便捷的预设卡片组件
-export const AnalysisCard: React.FC<{
+export const SimpleAnalysisCard: React.FC<{
   title: string;
   summary?: string;
   keyPoints?: string[];
@@ -1245,7 +1245,7 @@ export const AnalysisCard: React.FC<{
   ];
 
   return (
-    <EnhancedCard
+    <AnalysisCard
       title={title}
       emoji="🧠"
       contentBlocks={contentBlocks}
@@ -1255,4 +1255,4 @@ export const AnalysisCard: React.FC<{
   );
 };
 
-export default EnhancedCard; 
+export default AnalysisCard; 

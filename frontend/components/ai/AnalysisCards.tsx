@@ -11,8 +11,8 @@ import {
 import { BookOpen, BarChart3, Star } from "lucide-react";
 import { AIResult } from "@/lib/api/content";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
-// 引入 EnhancedCard
-import { EnhancedCard, ContentBlock } from "@/components/ui/enhanced-card";
+// 引入 AnalysisCard
+import { AnalysisCard, ContentBlock } from "@/components/ui/enhanced-card";
 
 // 统一的分析数据接口
 interface UnifiedAnalysisData {
@@ -154,7 +154,7 @@ export const SummaryCard = ({
 
   if (!summaryText) return null;
 
-  // 使用 EnhancedCard
+  // 使用 AnalysisCard
   const contentBlocks: ContentBlock[] = [
     {
       id: "summary",
@@ -165,7 +165,7 @@ export const SummaryCard = ({
   ];
 
   return (
-    <EnhancedCard
+    <AnalysisCard
       title="内容摘要"
       emoji="📝"
       contentBlocks={contentBlocks}
@@ -258,7 +258,7 @@ export const KeyPointsCard = ({
   }
 
   return (
-    <EnhancedCard
+    <AnalysisCard
       title="关键要点"
       emoji="🎯"
       contentBlocks={contentBlocks}
