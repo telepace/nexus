@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Filter, FilterX, Search, X, Check } from "lucide-react";
+import { Filter, FilterX, Search, XCircle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -68,13 +68,12 @@ export const LibraryHeader = ({
   };
 
   return (
-    <div ref={searchContainerRef} className="flex items-center justify-end gap-2">
+    <div ref={searchContainerRef} className="flex items-center justify-end gap-1">
       {/* Filter Button */}
       <motion.div
         animate={{
           width: isSearching ? 0 : "auto",
           opacity: isSearching ? 0 : 1,
-          marginRight: isSearching ? 0 : "0.5rem",
         }}
         transition={{ duration: 0.2, ease: "linear" }}
         className="overflow-hidden"
@@ -85,7 +84,7 @@ export const LibraryHeader = ({
               aria-label="filter"
               variant="ghost"
               size="icon"
-              className="h-9 w-9 text-neutral-700 hover:bg-neutral-200/50"
+              className="h-7 w-7 text-neutral-700 hover:bg-neutral-200/50"
             >
               {isFiltered ? <FilterX className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
             </Button>
@@ -130,7 +129,7 @@ export const LibraryHeader = ({
           aria-label="search"
           variant="ghost"
           size="icon"
-          className="h-9 w-9 text-neutral-700 hover:bg-neutral-200/50"
+          className="h-7 w-7 text-neutral-700 hover:bg-neutral-200/50"
           onClick={handleSearchClick}
         >
           <Search className="h-4 w-4" />
@@ -138,7 +137,7 @@ export const LibraryHeader = ({
 
         {/* Search Input - always in DOM, animated with motion */}
         <motion.div
-          className="absolute right-0 top-0"
+          className="absolute right-0 top-1/2 -translate-y-1/2"
           initial={false}
           animate={{
             width: isSearching ? 360 : 40,
@@ -158,11 +157,11 @@ export const LibraryHeader = ({
             />
             <Button
                 aria-label="close-search"
-                variant="ghost"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0 rounded-md"
+                variant="link"
+                className="absolute right-0 top-1/2 -translate-y-1/2 h-auto w-auto p-1 hidden"
                 onClick={() => setIsSearching(false)}
               >
-                <X className="h-3 w-3" />
+                <XCircle className="h-4 w-4 text-neutral-400 hover:text-neutral-600" />
               </Button>
           </div>
         </motion.div>

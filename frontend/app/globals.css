@@ -1547,3 +1547,24 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* =============================================================================
+ * Shadcn/ui Component Animation Overrides
+ * ============================================================================= */
+
+@layer components {
+  [data-radix-popper-content-wrapper] {
+    transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), opacity 150ms cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: var(--radix-popper-transform-origin);
+  }
+
+  [data-radix-popper-content-wrapper][data-state="open"] {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  [data-radix-popper-content-wrapper][data-state="closed"] {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
