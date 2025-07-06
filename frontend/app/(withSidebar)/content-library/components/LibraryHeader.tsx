@@ -1,12 +1,172 @@
 "use client";
 
-import { FC } from "react";
+import { useState, useRef } from "react";
+import { motion } from "framer-motion";
+import { Filter, FilterX, Search, X, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useClickOutside } from "@/hooks/use-click-outside";
+import type { ContentItemPublic } from "../types";
 
-export const LibraryHeader: FC = () => {
+export type SortOption = "time" | "rating" | "title" | "views";
+
+interface LibraryHeaderProps {
+  items: ContentItemPublic[];
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  selectedTags: string[];
+  onTagToggle: (tag: string) => void;
+  sortBy: SortOption;
+  onSortChange: (sort: SortOption) => void;
+  onClearFilters: () => void;
+}
+
+export const LibraryHeader = ({
+  items,
+  searchQuery,
+  onSearchChange,
+  selectedTags,
+  onTagToggle,
+  sortBy,
+  onSortChange,
+  onClearFilters,
+}: LibraryHeaderProps) => {
+  const [isSearching, setIsSearching] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useClickOutside(searchContainerRef, () => {
+    if (isSearching) {
+      setIsSearching(false);
+    }
+  });
+
+  const allTags = Array.from(
+    new Set(
+      items.flatMap((item) => item.ai_result?.labels || []).filter(Boolean),
+    ),
+  ).sort();
+
+  const sortOptions = [
+    { value: "time" as const, label: "最新" },
+    { value: "rating" as const, label: "评分" },
+    { value: "title" as const, label: "标题" },
+    { value: "views" as const, label: "热度" },
+  ];
+
+  const isFiltered = selectedTags.length > 0 || sortBy !== "time";
+
+  const handleSearchClick = () => {
+    setIsSearching(true);
+  };
+
   return (
-    <header className="flex shrink-0 items-center gap-2  bg-background px-4 md:px-6">
-      {/* Title */}
-      <h1 className="text-lg font-semibold">内容库</h1>
-    </header>
+    <div ref={searchContainerRef} className="flex items-center justify-end gap-2">
+      {/* Filter Button */}
+      <motion.div
+        animate={{
+          width: isSearching ? 0 : "auto",
+          opacity: isSearching ? 0 : 1,
+          marginRight: isSearching ? 0 : "0.5rem",
+        }}
+        transition={{ duration: 0.2, ease: "linear" }}
+        className="overflow-hidden"
+      >
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              aria-label="filter"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 text-neutral-700 hover:bg-neutral-200/50"
+            >
+              {isFiltered ? <FilterX className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuLabel>排序方式</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {sortOptions.map((option) => (
+              <DropdownMenuItem
+                key={option.value}
+                onClick={() => onSortChange(option.value)}
+              >
+                {option.label}
+                {sortBy === option.value && <Check className="ml-auto h-4 w-4" />}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>按标签筛选</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {allTags.map((tag) => (
+              <DropdownMenuItem key={tag} onClick={() => onTagToggle(tag)}>
+                {tag}
+                {selectedTags.includes(tag) && <Check className="ml-auto h-4 w-4" />}
+              </DropdownMenuItem>
+            ))}
+            {isFiltered && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onClearFilters}>
+                  清除筛选
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </motion.div>
+
+      {/* Search Component - Stable DOM */}
+      <div className="relative flex items-center">
+        {/* Search Icon Button - always in DOM */}
+        <Button
+          aria-label="search"
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 text-neutral-700 hover:bg-neutral-200/50"
+          onClick={handleSearchClick}
+        >
+          <Search className="h-4 w-4" />
+        </Button>
+
+        {/* Search Input - always in DOM, animated with motion */}
+        <motion.div
+          className="absolute right-0 top-0"
+          initial={false}
+          animate={{
+            width: isSearching ? 360 : 40,
+            opacity: isSearching ? 1 : 0,
+            transition: { duration: 0.2, ease: "linear", delay: isSearching ? 0.12 : 0 },
+          }}
+          style={{ pointerEvents: isSearching ? "auto" : "none" }}
+        >
+          <div className="relative h-full w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+            <Input
+              placeholder="搜索..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="pl-10 pr-8 h-9 w-full bg-white rounded-md border border-neutral-200 focus:shadow-macos-window focus:border-macos-container focus:ring-0"
+              autoFocus={isSearching}
+            />
+            <Button
+                aria-label="close-search"
+                variant="ghost"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0 rounded-md"
+                onClick={() => setIsSearching(false)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+          </div>
+        </motion.div>
+      </div>
+    </div>
   );
 };

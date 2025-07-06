@@ -5,7 +5,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { ContentList } from "./components/ContentList";
 import { ContentPreview } from "./components/ContentPreview";
-import { Toolbar } from "./components/Toolbar";
 import { useContentItems } from "./hooks/useContentItems";
 import type { ContentItemPublic } from "./types";
 import { useRouter } from "next/navigation";
@@ -15,11 +14,12 @@ import { useAuth } from "@/lib/client-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { PanelRightOpen, PanelRightClose } from "lucide-react";
+import { LibraryHeader, type SortOption } from "./components/LibraryHeader";
 
 interface FilterOptions {
   search: string;
   selectedTags: string[];
-  sortBy: "time" | "rating" | "title" | "views";
+  sortBy: SortOption;
   viewMode: "grid" | "list";
 }
 
@@ -65,18 +65,45 @@ export default function ContentLibraryPage() {
     return filterAndSortItems(items, filters);
   }, [items, filters]);
 
-  // 处理筛选条件变化
-  const handleFiltersChange = useCallback((newFilters: FilterOptions) => {
-    setFilters(newFilters);
-    // 清除选中项，避免筛选后显示不匹配的预览
+  // 清除选中项的通用函数
+  const clearSelection = () => {
     setSelectedItem(null);
     setHoveredItem(null);
-  }, []);
+  };
+
+  // 处理筛选和排序的回调函数
+  const handleSearchChange = (query: string) => {
+    setFilters((prev) => ({ ...prev, search: query }));
+    clearSelection();
+  };
+
+  const handleTagToggle = (tag: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      selectedTags: prev.selectedTags.includes(tag)
+        ? prev.selectedTags.filter((t) => t !== tag)
+        : [...prev.selectedTags, tag],
+    }));
+    clearSelection();
+  };
+
+  const handleSortChange = (sortBy: SortOption) => {
+    setFilters((prev) => ({ ...prev, sortBy }));
+    clearSelection();
+  };
+
+  const handleClearFilters = () => {
+    setFilters((prev) => ({
+      ...prev,
+      selectedTags: [],
+      sortBy: "time",
+    }));
+    clearSelection();
+  };
 
   // 处理卡片点击 - 立即跳转到阅读器
   const handleCardClick = useCallback(
     (item: ContentItemPublic, event?: React.MouseEvent) => {
-      // 阻止事件冒泡，避免与其他交互元素冲突
       if (
         event?.target instanceof HTMLElement &&
         (event.target.closest("button") ||
@@ -87,20 +114,14 @@ export default function ContentLibraryPage() {
         return;
       }
 
-      // 在移动端，先设置选中项并显示预览
       if (isMobile) {
         setSelectedItem(item);
         setShowPreview(true);
         return;
       }
 
-      // 桌面端立即跳转
       router.push(`/content-library/reader/${item.id}`);
-
-      // 异步预取内容，提升用户体验
-      Promise.resolve().then(() => {
-        prefetchContent(item);
-      });
+      Promise.resolve().then(() => prefetchContent(item));
     },
     [router, prefetchContent, isMobile],
   );
@@ -108,14 +129,10 @@ export default function ContentLibraryPage() {
   // 处理悬浮事件
   const handleCardHover = useCallback(
     (item: ContentItemPublic | null) => {
-      // 移动端不使用悬浮效果
       if (isMobile) return;
-
       setHoveredItem(item);
       if (item) {
-        // 将悬浮的项目设为选中项，提供更直观的体验
         setSelectedItem(item);
-        // 预取内容
         prefetchContent(item);
       }
     },
@@ -125,10 +142,8 @@ export default function ContentLibraryPage() {
   // 处理内容项删除
   const handleItemDeleted = useCallback(
     (itemId: string) => {
-      // 如果删除的是当前选中或悬浮的项目，清除选择
       setSelectedItem((prev) => (prev?.id === itemId ? null : prev));
       setHoveredItem((prev) => (prev?.id === itemId ? null : prev));
-      // 刷新列表
       refreshItems();
     },
     [refreshItems],
@@ -137,28 +152,23 @@ export default function ContentLibraryPage() {
   // 处理内容项更新
   const handleItemUpdated = useCallback(
     (updatedItem: ContentItemPublic) => {
-      // 如果更新的是当前选中的项目，更新选中项
       setSelectedItem((prev) =>
         prev?.id === updatedItem.id ? updatedItem : prev,
       );
       setHoveredItem((prev) =>
         prev?.id === updatedItem.id ? updatedItem : prev,
       );
-      // 刷新列表
       refreshItems();
     },
     [refreshItems],
   );
 
-  // 获取要在预览中显示的项目（优先显示悬浮的，其次显示选中的）
   const previewItem = hoveredItem || selectedItem;
 
-  // Loading states
   if (authLoading || loading) {
     return <Loading />;
   }
 
-  // Error state
   if (error) {
     return (
       <Alert variant="destructive" className="m-4">
@@ -170,7 +180,6 @@ export default function ContentLibraryPage() {
   }
 
   return (
-    /* 页面主体：响应式布局 */
     <div className="flex h-screen overflow-visible bg-gradient-to-br from-background via-background to-muted/20">
       {/* 左栏：内容列表 */}
       <section
@@ -185,12 +194,19 @@ export default function ContentLibraryPage() {
         }`}
       >
         {/* Header */}
-        <header className="flex items-center justify-between h-header px-6 border-b  shrink-0 bg-transparent">
+        <header className="relative flex items-center justify-between h-header px-6 border-b shrink-0 bg-transparent sticky top-0 z-10 backdrop-blur-sm">
           <h1 className="text-lg font-semibold text-neutral-900">Library</h1>
+          <LibraryHeader
+            items={items}
+            searchQuery={filters.search}
+            onSearchChange={handleSearchChange}
+            selectedTags={filters.selectedTags}
+            onTagToggle={handleTagToggle}
+            sortBy={filters.sortBy}
+            onSortChange={handleSortChange}
+            onClearFilters={handleClearFilters}
+          />
         </header>
-
-        {/* 工具栏 */}
-        <Toolbar items={items} onFiltersChange={handleFiltersChange} />
 
         {/* 列表 */}
         <div className="flex-1 px-6 pb-8 pt-8">
@@ -228,7 +244,6 @@ export default function ContentLibraryPage() {
       {/* 右栏：内容预览 */}
       {showPreview && (
         isMobile ? (
-          // —— 移动端：保留折叠逻辑 + Header ——
           <section
             className="flex flex-col h-full w-full overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-300 pl-0 pr-2 py-2"
           >
@@ -253,13 +268,11 @@ export default function ContentLibraryPage() {
                 </Button>
               </div>
             </header>
-
             <div className="flex-1 overflow-auto">
               <ContentPreview item={previewItem} />
             </div>
           </section>
         ) : (
-          // —— 桌面端：恢复旧版 aside 结构 ——
           <aside className="flex-1 pl-0 pr-2 py-2 flex h-full">
             <div className="flex-1 min-w-0">
               <ContentPreview item={previewItem} />
