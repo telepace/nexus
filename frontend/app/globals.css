@@ -1554,8 +1554,8 @@
 
 @layer components {
   [data-radix-popper-content-wrapper] {
-    transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), opacity 150ms cubic-bezier(0.16, 1, 0.3, 1);
     transform-origin: var(--radix-popper-transform-origin);
+    transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), opacity 150ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   [data-radix-popper-content-wrapper][data-state="open"] {
