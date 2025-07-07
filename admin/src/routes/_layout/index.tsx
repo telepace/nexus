@@ -154,7 +154,7 @@ function Dashboard() {
                   bg={cardBg}
                   boxShadow="sm"
                   transition="all 0.2s"
-                  _hover={{ transform: "translateY(-2px)", boxShadow: "md" }}
+                  _hover={{ boxShadow: "md" }}
                 >
                   <Heading size="sm" mb={2}>
                     {tool.name}

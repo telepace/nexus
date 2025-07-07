@@ -246,7 +246,7 @@ export function AppSidebar({
                               "text-gray-500 hover:bg-gray-50/60 hover:text-gray-700",
                               "hover:border hover:border-gray-100/60",
                               "hover:shadow-sm hover:shadow-gray-50/40",
-                              "hover:transform hover:translate-x-1",
+                              "",
                               "group-data-[collapsible=icon]:hover:transform-none group-data-[collapsible=icon]:hover:scale-105 group-data-[collapsible=icon]:hover:shadow-md group-data-[collapsible=icon]:hover:bg-gray-50/80",
                             ],
                       )}

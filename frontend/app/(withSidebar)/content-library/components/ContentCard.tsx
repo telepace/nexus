@@ -266,10 +266,10 @@ export const ContentCard = ({
         rounded-lg overflow-hidden
         ${
           selected
-            ? "bg-[var(--color-linear-bg-2)] border-[var(--mac-gray-5)] shadow-md hover:-translate-y-0.5"
+            ? "bg-[var(--color-linear-bg-2)] border-[var(--mac-gray-5)] shadow-md"
             : hovered
-              ? "bg-muted/50 border-muted-foreground/20 shadow-sm hover:-translate-y-0.5"
-              : "bg-transparent border border-transparent shadow-none hover:bg-transparent hover:border-transparent hover:-translate-y-0.5"
+              ? "bg-muted/50 border-muted-foreground/20 shadow-sm"
+              : "bg-transparent border border-transparent shadow-none hover:bg-transparent hover:border-transparent"
         }
       `}
       onClick={handleClick}

@@ -1105,7 +1105,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
         className={cn(
           styles.cardWrapper,
           "group cursor-pointer transition-all duration-200 ease-out analysis-card relative overflow-hidden",
-          "bg-transparent border-muted-foreground/20 shadow-sm hover:-translate-y-0.5 rounded-lg",
+          "bg-transparent border-muted-foreground/20 shadow-sm rounded-lg",
           styles.card,
           styles[variant],
           selected && styles.selected,

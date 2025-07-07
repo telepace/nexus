@@ -162,7 +162,7 @@ export const FavoriteCard = ({
 
   return (
     <Card
-      className={`group relative bg-white dark:bg-gray-950 border-black/6 dark:border-white/10 rounded-md transition-all duration-200 ease-out cursor-pointer hover:border-black/12 dark:hover:border-white/20 hover:shadow-lg hover:shadow-black/8 dark:hover:shadow-white/5 hover:-translate-y-0.5 ${
+      className={`group relative bg-white dark:bg-gray-950 border-black/6 dark:border-white/10 rounded-md transition-all duration-200 ease-out cursor-pointer hover:border-black/12 dark:hover:border-white/20 hover:shadow-lg hover:shadow-black/8 dark:hover:shadow-white/5 ${
         selected || hovered ? "ring-2 ring-primary/20" : ""
       }`}
       onClick={handleClick}

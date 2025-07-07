@@ -435,7 +435,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       <div
         className={`
           group relative cursor-pointer transition-all duration-200
-          ${isHovered && !isSelected ? "transform -translate-y-0.5" : ""}
         `}
         onMouseEnter={() => setHoveredCard(card.id)}
         onMouseLeave={() => setHoveredCard(null)}
