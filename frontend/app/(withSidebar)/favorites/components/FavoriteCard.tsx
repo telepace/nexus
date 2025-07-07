@@ -15,7 +15,6 @@ import {
   MoreHorizontal,
   ExternalLink,
   Heart,
-  Calendar,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -25,9 +24,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { ProcessingStatusBadge } from "@/components/ui/ProcessingStatusBadge";
+import { ProcessingStatusBadge, ProcessingStatus } from "@/components/ui/ProcessingStatusBadge";
 import { FavoriteButton } from "@/components/actions/FavoriteButton";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useRelativeTime } from "@/hooks/useRelativeTime";
@@ -122,7 +120,6 @@ export const FavoriteCard = ({
 
   // 相对时间标签
   const relativeLabel = useRelativeTime(item.created_at);
-  const contentRelativeLabel = useRelativeTime(item.content_item.created_at);
 
   // 处理点击事件 - 跳转到内容阅读器
   const handleClick = (event: React.MouseEvent) => {
@@ -156,18 +153,12 @@ export const FavoriteCard = ({
     }
   };
 
-  // 处理收藏被删除的回调
-  const handleFavoriteRemoved = () => {
-    onItemDeleted?.(item.id);
-  };
-
   const { content_item } = item;
   const aiResult = content_item.ai_result;
   const hasQualityScore = aiResult?.content_quality_score != null;
   const hasLabels = aiResult?.labels && aiResult.labels.length > 0;
   const hasReadingTime = aiResult?.reading_time_minutes != null;
   const briefDescription = aiResult?.brief_description || content_item.summary;
-  const isCompleted = content_item.processing_status === "completed";
 
   return (
     <Card

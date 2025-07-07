@@ -1,20 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
 import {
-  FileText,
-  XCircle,
-  Upload,
   Activity,
-  Plus,
-  Sparkles,
-  TrendingUp,
-  ExternalLink,
-  Clock,
   ArrowRight,
   Settings,
   Search,
@@ -22,18 +10,11 @@ import {
   Info,
   Send,
   BookOpen,
-  Target,
-  Lightbulb,
-  Calendar,
-  Hash,
-  Users,
   BarChart3,
   Flame,
   Inbox,
-  Star,
   Brain,
   Zap,
-  Archive,
 } from "lucide-react";
 import { useAuth } from "@/lib/client-auth";
 import Link from "next/link";
@@ -196,9 +177,7 @@ const getGreeting = () => {
 export default function HomePage() {
   const { user, isLoading: isLoadingAuth } = useAuth();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-  const [activities, setActivities] = useState<Activity[]>([]);
   const [items, setItems] = useState<ContentItemPublic[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [inputText, setInputText] = useState("");
   const [activeTab, setActiveTab] = useState<"Ask" | "Research" | "Build">(

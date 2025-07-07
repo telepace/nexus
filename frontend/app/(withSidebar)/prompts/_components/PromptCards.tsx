@@ -1,17 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Clock,
-  Tag as TagIcon,
   Eye,
   Heart,
   Zap,
   MoreHorizontal,
-  User,
 } from "lucide-react";
 import {
   DropdownMenu,

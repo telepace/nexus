@@ -18,13 +18,9 @@ interface ContentItemPublic {
   updated_at?: string;
   // 其他必要的属性
 } // Adjust as per your project
-import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer"; // Adjust as per your project
 import { ShareMarkdownRenderer } from "@/components/ui/ShareMarkdownRenderer"; // 新的分享页面专用渲染器
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   AlertCircle,
   LockIcon,
@@ -67,15 +63,13 @@ const SharedContentPage = () => {
         setContentItem(response);
       } catch (error: unknown) {
         console.error("Failed to fetch shared content:", error);
-        const handleError = (error: Error | unknown) => {
-          const status = (error as { status?: number }).status;
-          const responseObj = (error as { response?: { status?: number } })
-            .response;
-          const data = (error as { data?: { detail?: string } }).data;
-          const message = (error as { message?: string }).message;
-          return { status, responseObj, data, message };
+        const handleError = (e: unknown) => {
+          const status = (e as { status?: number }).status;
+          const data = (e as { data?: { detail?: string } }).data;
+          const message = (e as { message?: string }).message;
+          return { status, data, message };
         };
-        const { status, responseObj: _, data, message } = handleError(error);
+        const { status, data, message } = handleError(error);
         const errorDetail =
           data?.detail || message || "无法加载分享内容";
 
@@ -119,7 +113,7 @@ const SharedContentPage = () => {
       setError(null);
     } catch (err: unknown) {
       console.error("Failed to fetch shared content with password:", err);
-      const errObj = err as any;
+      const errObj = err as { status?: number; response?: { status?: number }; data?: { detail?: string }; message?: string };
       const status = errObj.status || errObj.response?.status;
       const errorDetail =
         errObj.data?.detail ||

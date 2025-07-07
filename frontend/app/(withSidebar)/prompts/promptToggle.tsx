@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
 import { togglePromptEnabled } from "@/components/actions/prompts-action";
 

@@ -27,7 +27,7 @@ export default function ContentLibraryPage() {
   const router = useRouter();
   const { authLoading, loading, error, items, prefetchContent, refreshItems } =
     useContentItems();
-  const { user } = useAuth();
+  useAuth();
   const isMobile = useIsMobile();
 
   const [selectedItem, setSelectedItem] = useState<ContentItemPublic | null>(

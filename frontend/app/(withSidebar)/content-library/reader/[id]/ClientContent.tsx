@@ -9,10 +9,8 @@ import {
   Loader2,
   AlertCircle,
   ExternalLink,
-  FileText,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/client-auth";
-import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { SeamlessContentRenderer } from "@/components/ui/SeamlessContentRenderer";
 import { SimpleContentRenderer } from "@/components/ui/SimpleContentRenderer";
 import { contentCache } from "@/lib/services/content-cache";

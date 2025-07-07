@@ -32,7 +32,7 @@ interface FavoriteItemData {
       summary?: string;
       key_points?: string[];
     };
-    ai_analysis?: any;
+    ai_analysis?: Record<string, unknown>;
   };
   created_at: string;
 }

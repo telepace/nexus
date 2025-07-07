@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFavoritesList } from "@/lib/hooks/useFavorites";
-import { FavoriteCard } from "./components/FavoriteCard";
 import { FavoritePreview } from "./components/FavoritePreview";
 import { FavoriteToolbar } from "./components/FavoriteToolbar";
 import { FavoriteList } from "./components/FavoriteList";

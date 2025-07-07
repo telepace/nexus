@@ -1,9 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { AnalysisCard, ContentBlock } from "@/components/ui/analysis-card";
 import { AnalysisContentRenderer, ReferenceInfo } from "@/components/ui/AnalysisContentRenderer";
 import { useToast } from "@/hooks/use-toast";

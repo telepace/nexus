@@ -1,18 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
-import { AnalysisCard, SimpleAnalysisCard, ContentBlock, CardAction, ReferenceInfo } from "@/components/ui/analysis-card";
-import { Button } from "@/components/ui/button";
+import React from "react";
+import { AnalysisCard, ContentBlock, CardAction, ReferenceInfo } from "@/components/ui/analysis-card";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  Brain, 
-  FileText, 
   Star, 
   Download, 
   Edit, 
-  Trash2,
-  BookOpen,
-  Lightbulb,
   Target,
   Eye,
   Info

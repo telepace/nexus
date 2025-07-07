@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AIAnalysisCard } from "@/components/ui/ai-analysis-card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Brain, TestTube, Bug, CheckCircle } from "lucide-react";
 
@@ -28,15 +27,6 @@ export default function TestDataStreamFixPage() {
     error: null,
     hasJsonl: false,
   });
-
-  const handleAnalysisStart = () => {
-    setTestResults({
-      started: true,
-      completed: false,
-      error: null,
-      hasJsonl: false,
-    });
-  };
 
   const handleAnalysisComplete = (result: string) => {
     console.log("�� 分析完成，结果:", result);

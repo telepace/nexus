@@ -2,15 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Search, X, Filter, Tag, Grid3X3, List } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Search, X, Tag, Grid3X3, List } from "lucide-react";
 import { type TagData } from "@/components/actions/prompts-action";
 
 export function SearchForm({ tags }: { tags: TagData[] }) {

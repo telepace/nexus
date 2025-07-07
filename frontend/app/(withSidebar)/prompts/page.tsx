@@ -4,7 +4,6 @@ import {
   type PromptData,
 } from "@/components/actions/prompts-action";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Plus, Tag as TagIcon } from "lucide-react";

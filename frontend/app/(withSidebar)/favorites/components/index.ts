@@ -21,7 +21,7 @@ export interface FavoriteItemData {
       brief_description?: string;
       reading_time_minutes?: number;
     };
-    ai_analysis?: any;
+    ai_analysis?: Record<string, unknown>;
   };
   created_at: string;
 }
