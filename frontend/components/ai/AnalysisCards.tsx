@@ -154,12 +154,12 @@ export const SummaryCard = ({
 
   if (!summaryText) return null;
 
-  // 使用 AnalysisCard
+  // 使用 UniversalContentRenderer 来自动检测并渲染 JSONL 格式
   const contentBlocks: ContentBlock[] = [
     {
       id: "summary",
       type: "summary",
-      content: summaryText,
+      content: <UniversalContentRenderer content={summaryText} />,
       expandable: summaryText.length > 200,
     },
   ];
@@ -237,7 +237,7 @@ export const KeyPointsCard = ({
     contentBlocks.push({
       id: "keypoints-raw",
       type: "text",
-      content: keyPointsContent,
+      content: <UniversalContentRenderer content={keyPointsContent} />,
       expandable: keyPointsContent.length > 200,
     });
   } else {

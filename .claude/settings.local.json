@@ -3,7 +3,17 @@
     "allow": [
       "WebFetch(domain:docs.anthropic.com)",
       "Bash(grep:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run build:*)",
+      "Bash(claude mcp:*)",
+      "Bash(claude auth:*)",
+      "Bash(claude config --help)",
+      "Bash(claude config list)",
+      "Bash(claude config set:*)",
+      "Bash(claude config list:*)",
+      "Bash(env)",
+      "Bash(source:*)"
     ]
   },
   "enableAllProjectMcpServers": false
