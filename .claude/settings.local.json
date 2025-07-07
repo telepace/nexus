@@ -1,8 +1,10 @@
 {
-  "enableAllProjectMcpServers": false,
   "permissions": {
     "allow": [
-      "WebFetch(domain:docs.anthropic.com)"
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(grep:*)",
+      "Bash(curl:*)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": false
 }
