@@ -24,8 +24,8 @@ import { ContentItemPublic } from "@/app/openapi-client/types.gen";
 const ReaderSkeleton = () => {
   return (
     <div className="flex flex-col h-full">
-      {/* Header Skeleton - 统一高度 h-14 */}
-      <div className="flex items-center justify-between px-6 h-14 border-b border-muted/40 bg-muted/10 backdrop-blur supports-[backdrop-filter]:bg-muted/40 shadow-sm shrink-0">
+      {/* Header Skeleton - 统一高度 h-header */}
+      <div className="flex items-center justify-between px-4 h-header border-b border-muted/40 bg-muted/10 backdrop-blur supports-[backdrop-filter]:bg-muted/40 shadow-sm shrink-0">
         <div className="flex items-center gap-4">
           <div className="w-8 h-8 bg-muted/30 dark:bg-muted/20 rounded animate-pulse"></div>
           <div className="w-48 h-5 bg-muted/30 dark:bg-muted/20 rounded animate-pulse"></div>
@@ -93,17 +93,14 @@ const ProcessedContentRenderer = memo(
     // 完整内容可用且需要虚拟滚动时，使用 SeamlessContentRenderer
     if (contentId && content.processing_status === "completed" && shouldUseVirtualScroll) {
       return (
-        <div className="relative h-full">
-          {/* 大文档：使用虚拟滚动渲染器 */}
-          <div className="absolute inset-0 animate-in fade-in duration-300 delay-100">
-            <SeamlessContentRenderer
-              contentId={contentId}
-              className="w-full h-full px-4 sm:px-6 lg:px-10 xl:px-14 py-6"
-              initialChunkSize={15}
-              enableTextSelection={true}
-              onTextAction={onTextAction}
-            />
-          </div>
+        <div className="flex justify-center w-full py-4">
+          <SeamlessContentRenderer
+            contentId={contentId}
+            className="w-full max-w-[35rem]"
+            initialChunkSize={15}
+            enableTextSelection={true}
+            onTextAction={onTextAction}
+          />
         </div>
       );
     }
@@ -111,16 +108,14 @@ const ProcessedContentRenderer = memo(
     // 小文档或中等文档：使用简单渲染器
     if (contentText) {
       return (
-        <div className="relative h-full">
-          <div className="absolute inset-0 animate-in fade-in duration-300 delay-100">
-            <SimpleContentRenderer
-              content={contentText}
-              title={content.title || undefined}
-              className="w-full h-full px-4 sm:px-6 lg:px-10 xl:px-14 py-6 scrollbar-thin scrollbar-thumb-muted/20 scrollbar-track-transparent hover:scrollbar-thumb-muted/40 transition-colors"
-              enableTextSelection={true}
-              onTextAction={onTextAction}
-            />
-          </div>
+        <div className="flex justify-center w-full py-4">
+          <SimpleContentRenderer
+            content={contentText}
+            title={content.title || undefined}
+            className="w-full max-w-[35rem] prose prose-sm dark:prose-invert"
+            enableTextSelection={true}
+            onTextAction={onTextAction}
+          />
         </div>
       );
     }
@@ -128,7 +123,7 @@ const ProcessedContentRenderer = memo(
     // 内容不可用的处理
     if (!contentText) {
       return (
-        <div className="flex justify-center items-center h-96 max-w-none lg:max-w-4xl xl:max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 xl:px-16">
+        <div className="flex justify-center items-center h-96 max-w-none lg:max-w-4xl xl:max-w-5xl mx-auto px-8">
           <div className="text-center p-8">
             <AlertCircle className="h-12 w-12 text-muted-foreground/60 mx-auto mb-6" />
             <h3 className="text-lg font-semibold mb-3 text-foreground">

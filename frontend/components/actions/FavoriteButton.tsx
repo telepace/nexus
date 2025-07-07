@@ -132,7 +132,7 @@ export function FavoriteButton({
   };
 
   const sizeClasses = {
-    sm: "h-8 w-8",
+    sm: "h-7 w-7",
     md: "h-10 w-10",
     lg: "h-12 w-12",
   };

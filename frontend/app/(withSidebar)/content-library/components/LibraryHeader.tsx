@@ -89,10 +89,7 @@ export const LibraryHeader = ({
               {isFiltered ? <FilterX className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-80 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
-          >
+          <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuLabel>排序方式</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {sortOptions.map((option) => (

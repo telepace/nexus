@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { cn } from "@/lib/utils";
-import { Copy, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
 interface JsonlRendererProps {
@@ -30,7 +29,6 @@ export function JsonlRenderer({
   className, 
   enableHoverEffects = true 
 }: JsonlRendererProps) {
-  const [hoveredBlock, setHoveredBlock] = useState<number | null>(null);
 
   if (!content) {
     return (
@@ -55,15 +53,6 @@ export function JsonlRenderer({
       }
     });
 
-  const handleCopyBlock = async (blockContent: string, blockType: string) => {
-    try {
-      await navigator.clipboard.writeText(blockContent);
-      toast.success(`已复制${getBlockTypeLabel(blockType)}内容`);
-    } catch (error) {
-      toast.error("复制失败");
-    }
-  };
-
   const getBlockTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
       h1: "标题",
@@ -80,6 +69,7 @@ export function JsonlRenderer({
     return labels[type] || "内容";
   };
 
+
   const BlockWrapper: React.FC<{
     children: React.ReactNode;
     blockIndex: number;
@@ -90,46 +80,17 @@ export function JsonlRenderer({
       return <>{children}</>;
     }
 
-    const isHovered = hoveredBlock === blockIndex;
-
     return (
       <div
         className={cn(
           "group relative rounded-lg transition-all duration-200 ease-out",
-          "hover:bg-slate-50/60 dark:hover:bg-slate-800/40",
-          "hover:shadow-sm hover:border-slate-200/60 dark:hover:border-slate-700/60",
           "px-3 py-2 -mx-3 -my-2",
           "border border-transparent",
-          isHovered && "bg-slate-50/60 dark:bg-slate-800/40 shadow-sm border-slate-200/60 dark:border-slate-700/60"
         )}
-        onMouseEnter={() => setHoveredBlock(blockIndex)}
-        onMouseLeave={() => setHoveredBlock(null)}
       >
         {/* 主要内容 */}
         <div className="relative">
           {children}
-        </div>
-
-        {/* 悬停时显示的操作按钮 */}
-        <div className={cn(
-          "absolute top-2 right-2 flex items-center gap-1",
-          "opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-        )}>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCopyBlock(blockContent, blockType);
-            }}
-            className={cn(
-              "p-1.5 rounded-md text-slate-500 hover:text-slate-700",
-              "hover:bg-white dark:hover:bg-slate-700 transition-colors duration-150",
-              "shadow-sm border border-slate-200/60 dark:border-slate-600/60",
-              "backdrop-blur-sm bg-white/80 dark:bg-slate-800/80"
-            )}
-            title={`复制${getBlockTypeLabel(blockType)}`}
-          >
-            <Copy className="h-3 w-3" />
-          </button>
         </div>
       </div>
     );

@@ -301,12 +301,12 @@ export const ContentCard = ({
                 )}
               </div>
 
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center shrink-0">
                 <FavoriteButton
                   itemId={item.id}
                   size="sm"
                   variant="ghost"
-                  className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-accent/50 focus-visible:ring-0 focus-visible:border-transparent"
+                  className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-accent/50 focus-visible:ring-0 focus-visible:border-transparent"
                 />
                 
                 <DropdownMenu>
@@ -314,7 +314,7 @@ export const ContentCard = ({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0 hover:bg-accent/50 focus-visible:ring-0 focus-visible:border-transparent"
+                      className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0 hover:bg-accent/50 focus-visible:ring-0 focus-visible:border-transparent"
                       data-dropdown-trigger
                       onClick={(e) => e.stopPropagation()}
                     >
