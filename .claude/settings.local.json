@@ -13,7 +13,12 @@
       "Bash(claude config set:*)",
       "Bash(claude config list:*)",
       "Bash(env)",
-      "Bash(source:*)"
+      "Bash(source:*)",
+      "mcp__github__get_issue",
+      "mcp__github__get_me",
+      "mcp__github__search_repositories",
+      "mcp__github__add_issue_comment",
+      "mcp__sequential-thinking__sequentialthinking"
     ]
   },
   "enableAllProjectMcpServers": false
