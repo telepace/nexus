@@ -18,7 +18,11 @@
       "mcp__github__get_me",
       "mcp__github__search_repositories",
       "mcp__github__add_issue_comment",
-      "mcp__sequential-thinking__sequentialthinking"
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(npx tsc:*)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "mcp__github__create_issue"
     ]
   },
   "enableAllProjectMcpServers": false
