@@ -15,6 +15,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { PanelRightOpen, PanelRightClose } from "lucide-react";
 import { LibraryHeader, type SortOption } from "./components/LibraryHeader";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 interface FilterOptions {
   search: string;
@@ -195,7 +196,7 @@ export default function ContentLibraryPage() {
       >
         {/* Header */}
         <header className="relative flex items-center justify-between h-header px-6 border-b shrink-0 bg-transparent sticky top-0 z-10 backdrop-blur-sm">
-          <h1 className="text-lg font-semibold text-neutral-900">Library</h1>
+          <PageHeader breadcrumbs={[{ label: 'Library' }]} />
           <LibraryHeader
             items={items}
             searchQuery={filters.search}

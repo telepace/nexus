@@ -23,6 +23,7 @@ import { ContentItemPublic } from "@/app/openapi-client/index";
 import { getCookie } from "@/lib/client-auth";
 import { Loading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 // 类型定义
 interface DashboardMetrics {
@@ -299,9 +300,7 @@ export default function HomePage() {
           <div className="w-9 h-9 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center text-xl">
             {greeting.icon}
           </div>
-          <h1 className="text-2xl font-medium text-gray-900 tracking-tight">
-            {greeting.text}
-          </h1>
+          <PageHeader breadcrumbs={[{ label: greeting.text }]} />
         </div>
 
         {/* 大型输入区域 */}

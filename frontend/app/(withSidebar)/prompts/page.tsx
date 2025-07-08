@@ -10,6 +10,7 @@ import { AlertCircle, Plus, Tag as TagIcon } from "lucide-react";
 import { getAuthState } from "@/lib/server-auth-bridge";
 import { Suspense } from "react";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 // 导入组件
 import { SearchForm } from "./searchForm";
@@ -154,9 +155,7 @@ async function PromptsContent({
           <div className="max-w-full mx-auto px-6 lg:px-8 xl:px-12 py-8">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h1 className="text-3xl font-light text-slate-900 tracking-tight">
-                  Prompt Library
-                </h1>
+                <PageHeader breadcrumbs={[{ label: 'Prompt Library' }]} />
                 <p className="text-slate-500 text-sm font-light mt-2">
                   创建、管理和分享你的AI提示词，提升工作效率
                 </p>
@@ -220,9 +219,7 @@ async function PromptsContent({
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
         <div className="max-w-full mx-auto px-6 lg:px-8 xl:px-12 py-10">
-          <h1 className="text-3xl font-light text-slate-900 tracking-tight mb-6">
-            Prompt Library
-          </h1>
+          <PageHeader breadcrumbs={[{ label: 'Prompt Library' }]} className="mb-6" />
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>加载失败</AlertTitle>

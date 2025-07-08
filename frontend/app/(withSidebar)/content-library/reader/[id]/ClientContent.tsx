@@ -17,6 +17,7 @@ import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
 import { useReaderContext } from "@/components/layout/ReaderLayout";
 import { ContentItemPublic } from "@/app/openapi-client/types.gen";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 // 骨架屏组件 - 优化对比度和动画
 const ReaderSkeleton = () => {
@@ -538,9 +539,13 @@ export const ClientContent = ({
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-base lg:text-lg font-medium truncate leading-none">
-            {content.title || "Untitled"}
-          </h1>
+          <PageHeader 
+            breadcrumbs={[
+              { label: 'Library', href: '/content-library' },
+              { label: content.title || 'Untitled' }
+            ]}
+            className="flex-1 min-w-0"
+          />
         </div>
         <div className="flex items-center gap-2">
           {content.source_uri && (
