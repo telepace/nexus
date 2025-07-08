@@ -93,6 +93,7 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const aiResult = item.ai_result;
   const aiAnalysis = item.ai_analysis;
+  const isFetchingCompleteData = item._fetchingCompleteData === true;
 
   useEffect(() => {
     containerRef.current?.scrollTo({ top: 0 });
@@ -112,6 +113,12 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
         <div className="flex items-center gap-2 text-base font-medium">
           <Library className="h-5 w-5" />
           Preview
+          {isFetchingCompleteData && (
+            <div className="flex items-center gap-1 ml-2">
+              <div className="w-2 h-2 bg-primary/60 rounded-full animate-pulse"></div>
+              <span className="text-xs text-muted-foreground">更新中</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -136,6 +143,21 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
                 keyPoints={unifiedData.keyPoints}
                 variant="preview"
               />
+            )}
+
+            {/* 当处理完成但AI分析数据缺失时显示提示 */}
+            {item.processing_status === "completed" && 
+             !isFetchingCompleteData && 
+             !unifiedData.summary && 
+             !unifiedData.keyPoints && (
+              <div className="text-center py-8">
+                <div className="text-muted-foreground text-sm">
+                  AI 分析结果暂不可用
+                </div>
+                <div className="text-xs text-muted-foreground/70 mt-1">
+                  内容处理完成，但分析数据可能仍在生成中
+                </div>
+              </div>
             )}
           </div>
 

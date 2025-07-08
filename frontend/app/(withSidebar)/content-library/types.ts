@@ -38,6 +38,8 @@ export interface ContentItemPublic {
     };
     [key: string]: unknown;
   } | null;
+  // 内部状态标记，用于跟踪完整数据获取状态
+  _fetchingCompleteData?: boolean;
 }
 
 // 辅助类型定义

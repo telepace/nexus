@@ -197,7 +197,7 @@ export const ContentCard = ({
         content += `## 摘要\n${briefDescription}\n\n`;
       }
       
-      const fullText = item.content_text as string | undefined;
+      const fullText = (item as any).content_text as string | undefined;
       if (fullText) {
         content += `## 内容\n${fullText}\n\n`;
       }
@@ -254,6 +254,7 @@ export const ContentCard = ({
   const hasReadingTime = aiResult?.reading_time_minutes != null;
   const briefDescription = aiResult?.brief_description;
   const isProcessingFailed = item.processing_status === "failed";
+  const isFetchingCompleteData = item._fetchingCompleteData === true;
 
   return (
     <Card
@@ -429,6 +430,12 @@ export const ContentCard = ({
                   size="sm"
                   className="text-neutral-500"
                 />
+                {isFetchingCompleteData && (
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-primary/60 rounded-full animate-pulse"></div>
+                    <span className="text-xs text-muted-foreground">获取中</span>
+                  </div>
+                )}
                 <span className="w-5 text-right">
                   {relativeLabel}
                 </span>
