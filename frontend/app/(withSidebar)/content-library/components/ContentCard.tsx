@@ -18,6 +18,7 @@ import {
   Brain,
   ExternalLink,
   Copy,
+  RefreshCw,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -117,6 +118,7 @@ export const ContentCard = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isRegeneratingAI, setIsRegeneratingAI] = useState(false);
 
   // 相对时间标签
   const relativeLabel = useRelativeTime(item.created_at);
@@ -168,6 +170,22 @@ export const ContentCard = ({
     } catch (error) {
       console.error("AI 分析失败:", error);
       toast.error("AI 分析失败，请稍后重试");
+    }
+  };
+
+  // 处理重新生成AI分析
+  const handleRegenerateAI = async () => {
+    setIsRegeneratingAI(true);
+    try {
+      await contentApi.regenerateAIAnalysis(item.id);
+      toast.success("AI 分析重新生成已开始，请稍后查看结果");
+      // 可选：触发数据刷新
+      onItemUpdated?.(item);
+    } catch (error) {
+      console.error("重新生成 AI 分析失败:", error);
+      toast.error("重新生成 AI 分析失败，请稍后重试");
+    } finally {
+      setIsRegeneratingAI(false);
     }
   };
 
@@ -354,6 +372,23 @@ export const ContentCard = ({
                       <Brain className="h-4 w-4 mr-2" />
                       AI 分析
                     </DropdownMenuItem>
+
+                    {item.ai_result && item.processing_status === "completed" && (
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleRegenerateAI();
+                        }}
+                        disabled={isRegeneratingAI}
+                        className="focus:bg-accent/50"
+                      >
+                        <RefreshCw
+                          className={`h-4 w-4 mr-2 ${isRegeneratingAI ? "animate-spin" : ""}`}
+                        />
+                        {isRegeneratingAI ? "重新生成中..." : "重新生成 AI 分析"}
+                      </DropdownMenuItem>
+                    )}
 
                     <DropdownMenuItem
                       onClick={handleCopyLink}

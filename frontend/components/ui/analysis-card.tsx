@@ -140,7 +140,7 @@ const JsonContentItemRenderer: React.FC<{
       case 'insight':
         return 'text-sm leading-relaxed text-gray-700 dark:text-gray-300 bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border-l-4 border-blue-400 dark:border-blue-500';
       case 'summary':
-        return 'text-sm leading-relaxed text-gray-600 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg';
+        return 'text-sm leading-relaxed text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg';
       case 'list':
         return 'text-sm leading-relaxed text-gray-700 dark:text-gray-300';
       case 'code':

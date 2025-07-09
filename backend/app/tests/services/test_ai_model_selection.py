@@ -27,7 +27,7 @@ class TestAIModelSelection:
         assert "labels.j2" in TEMPLATE_MODEL_MAPPING
 
         # 验证映射的模型名称
-        assert TEMPLATE_MODEL_MAPPING["summary.j2"] == "or-deepseek-r1"
+        assert TEMPLATE_MODEL_MAPPING["summary.j2"] == "gemini-2.5-flash-preview-05-20"
         assert TEMPLATE_MODEL_MAPPING["key_points.j2"] == "or-deepseek-r1"
         assert TEMPLATE_MODEL_MAPPING["labels.j2"] == "deepseek-v3-ensemble"
 
@@ -53,12 +53,12 @@ class TestAIModelSelection:
                     mock_tag_manager.get_preset_tag_names.return_value = []
                     mock_tag_manager.filter_and_match_preset_tags.return_value = []
 
-                    # 测试1: summary模板应该使用or-deepseek-r1
+                    # 测试1: summary模板应该使用gemini-2.5-flash-preview-05-20
                     await chat_service.generate_with_template(
                         "summary.j2", {"content": "test"}
                     )
                     mock_call.assert_called_with(
-                        "test", "mocked prompt", "or-deepseek-r1"
+                        "test", "mocked prompt", "gemini-2.5-flash-preview-05-20"
                     )
 
                     # 重置mock
@@ -106,7 +106,7 @@ class TestAIModelSelection:
             )
 
         # 测试各种情况的优先级
-        assert select_model("summary.j2") == "or-deepseek-r1"
+        assert select_model("summary.j2") == "gemini-2.5-flash-preview-05-20"
         assert select_model("labels.j2") == "deepseek-v3-ensemble"
         assert select_model("unknown.j2") == settings.DEFAULT_LLM_MODEL
         assert select_model("summary.j2", "custom-model") == "custom-model"
@@ -150,7 +150,7 @@ class TestAIModelSelection:
 
                     # 验证使用了正确的模型
                     assert len(calls_made) == 3
-                    assert calls_made[0] == "or-deepseek-r1"  # summary
+                    assert calls_made[0] == "gemini-2.5-flash-preview-05-20"  # summary
                     assert calls_made[1] == "or-deepseek-r1"  # key_points
                     assert calls_made[2] == "deepseek-v3-ensemble"  # labels
 

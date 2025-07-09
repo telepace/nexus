@@ -281,6 +281,16 @@ export const contentApi = {
   },
 
   /**
+   * Regenerate AI analysis for a content item
+   */
+  async regenerateAIAnalysis(id: string): Promise<{ message: string; content_id: string; status: string }> {
+    const response = await client.post<{ message: string; content_id: string; status: string }>(
+      `/api/v1/content/${id}/regenerate-ai`
+    );
+    return response;
+  },
+
+  /**
    * Get AI conversations for a content item
    */
   async getContentConversations(

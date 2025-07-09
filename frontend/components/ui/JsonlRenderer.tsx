@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { MarkdownRenderer } from "./MarkdownRenderer";
 
 interface JsonlRendererProps {
   /** raw JSONL string, each line is a JSON object */
@@ -81,26 +82,28 @@ export function JsonlRenderer({
         case "h1":
           return (
             <h1 className="scroll-m-16 text-2xl font-bold tracking-tight lg:text-3xl select-text">
-              {c}
+              <MarkdownRenderer content={String(c)} />
             </h1>
           );
         case "h2":
           return (
             <h2 className="scroll-m-16 border-b pb-1.5 text-xl font-semibold tracking-tight first:mt-0 select-text">
-              {c}
+              <MarkdownRenderer content={String(c)} />
             </h2>
           );
         case "h3":
           return (
             <h3 className="scroll-m-16 text-lg font-medium tracking-tight select-text">
-              {c}
+              <MarkdownRenderer content={String(c)} />
             </h3>
           );
         case "quote": {
           const ref = block["ref"] as string | undefined;
           return (
             <blockquote className="italic border-l-2 pl-4 my-2 select-text">
-              <div className="mb-1">{c}</div>
+              <div className="mb-1">
+                <MarkdownRenderer content={String(c)} />
+              </div>
               {ref && (
                 <cite className="text-xs text-gray-500 dark:text-gray-400 not-italic">
                   — {ref}
@@ -123,7 +126,7 @@ export function JsonlRenderer({
             <ul className="list-disc ml-4 space-y-1 my-2 select-text">
               {items.map((item, i) => (
                 <li key={i} className="select-text">
-                  {item}
+                  <MarkdownRenderer content={item} />
                 </li>
               ))}
             </ul>
@@ -140,7 +143,7 @@ export function JsonlRenderer({
                 color,
               )}
             >
-              {c}
+              <MarkdownRenderer content={String(c)} />
             </div>
           );
         }
@@ -148,7 +151,7 @@ export function JsonlRenderer({
           return (
             <div className="my-3 rounded-md border-l-4 border-purple-500 bg-purple-50 p-3 dark:bg-purple-900/20 select-text">
               <strong className="mr-2">概念:</strong>
-              {c}
+              <MarkdownRenderer content={String(c)} />
             </div>
           );
         }
@@ -159,23 +162,35 @@ export function JsonlRenderer({
             const a = (c as any)["a"] || (c as any)["answer"];
             return (
               <div className="my-3 space-y-1 select-text">
-                <p className="font-semibold select-text">Q: {q}</p>
-                <p className="select-text">A: {a}</p>
+                <p className="font-semibold select-text">
+                  Q: <MarkdownRenderer content={String(q)} />
+                </p>
+                <p className="select-text">
+                  A: <MarkdownRenderer content={String(a)} />
+                </p>
               </div>
             );
           }
-          return <p className="my-2 select-text">{c}</p>;
+          return (
+            <p className="my-2 select-text">
+              <MarkdownRenderer content={String(c)} />
+            </p>
+          );
         }
         case "action":
           return (
             <div className="my-3 rounded-md border-l-4 border-green-500 bg-green-50 p-3 dark:bg-green-900/20 select-text">
               <strong className="mr-2">行动:</strong>
-              {c}
+              <MarkdownRenderer content={String(c)} />
             </div>
           );
         default:
           // Default paragraph
-          return <p className="leading-6 my-2 select-text">{c}</p>;
+          return (
+            <div className="leading-6 my-2 select-text">
+              <MarkdownRenderer content={String(c)} />
+            </div>
+          );
       }
     })();
 
@@ -186,7 +201,7 @@ export function JsonlRenderer({
     <div
       data-testid="jsonl-renderer"
       className={cn(
-        "prose prose-slate dark:prose-invert max-w-none space-y-1",
+        "max-w-none space-y-1",
         // 确保整个容器支持文本选择
         "select-text",
         className,

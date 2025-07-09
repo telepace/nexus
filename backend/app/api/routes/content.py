@@ -2362,3 +2362,67 @@ def deactivate_share_link_endpoint(
     for share in content_shares:
         if share.is_active:
             deactivate_content_share(session, content_share=share)
+
+
+@router.post(
+    "/{id}/regenerate-ai",
+    response_model=dict[str, Any],
+    status_code=status.HTTP_200_OK,
+    summary="Regenerate AI Analysis",
+    description="Regenerate AI analysis results for a content item. This will re-run the AI preprocessing pipeline.",
+)
+def regenerate_ai_analysis_endpoint(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: uuid.UUID = Path(..., description="ID of the content item to regenerate AI analysis for"),
+) -> dict[str, Any]:
+    """
+    Regenerate AI analysis for a content item.
+    
+    This endpoint:
+    1. Validates user permissions
+    2. Triggers AI preprocessing pipeline
+    3. Returns immediately while processing in background
+    4. Sends real-time updates via SSE
+    """
+    # Verify content item exists and user owns it
+    content_item = crud_get_content_item(session, id)
+    if not content_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content item not found",
+        )
+
+    if content_item.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to regenerate AI analysis for this content",
+        )
+    
+    # Check if content has been processed (has content_text)
+    if not content_item.content_text or len(content_item.content_text.strip()) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Content must be processed before AI analysis can be regenerated",
+        )
+    
+    # Update status to indicate AI regeneration is starting
+    content_item.processing_status = "processing"
+    session.add(content_item)
+    session.commit()
+    
+    # Start AI regeneration task using the global instance
+    background_task_manager.start_ai_regeneration(
+        content_id=str(content_item.id),
+        user_id=str(current_user.id)
+    )
+    
+    logger.info(f"Started AI regeneration for content {content_item.id}")
+    
+    return {
+        "message": "AI analysis regeneration started",
+        "content_id": str(content_item.id),
+        "status": "processing",
+        "note": "Check SSE events for real-time progress updates"
+    }
