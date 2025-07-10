@@ -71,7 +71,7 @@ jobs:
       # We can try to use it or ensure Puppeteer's version is used.
       # This step ensures Chrome is available if system Chrome is preferred or Puppeteer's download fails.
       - name: Setup Chrome (if needed)
-        uses: browser-actions/setup-chrome@v1
+        uses: browser-actions/setup-chrome@v2
         # with:
         #   chrome-version: stable # Or a specific version Puppeteer supports
 
