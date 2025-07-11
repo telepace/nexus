@@ -39,13 +39,25 @@ export function JsonlRenderer({
   }
 
   // Split into lines & parse
+  // 修复常见的 JSON 语法错误
+  function sanitizeJsonLine(line: string): string {
+    // 修复单引号包围的字符串值（如：'文本"内容'）
+    return line.replace(/:\s*'([^']*?)'/g, (match, content) => {
+      // 转义内部的双引号
+      const escaped = content.replace(/"/g, '\\"');
+      return `: "${escaped}"`;
+    });
+  }
+
   const blocks = content
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
       try {
-        return JSON.parse(line) as Record<string, unknown>;
+        // 先尝试清理 JSON 语法错误，然后解析
+        const sanitizedLine = sanitizeJsonLine(line);
+        return JSON.parse(sanitizedLine) as Record<string, unknown>;
       } catch {
         // If parsing fails, wrap line as a paragraph block so we still show it
         return { type: "p", content: line } as Record<string, unknown>;
@@ -81,19 +93,19 @@ export function JsonlRenderer({
       switch (type) {
         case "h1":
           return (
-            <h1 className="scroll-m-16 text-2xl font-bold tracking-tight lg:text-3xl select-text">
+            <h1 className="scroll-m-16 text-xl font-bold tracking-tight lg:text-2xl select-text leading-[1.3]">
               <MarkdownRenderer content={String(c)} />
             </h1>
           );
         case "h2":
           return (
-            <h2 className="scroll-m-16 border-b pb-1.5 text-xl font-semibold tracking-tight first:mt-0 select-text">
+            <h2 className="scroll-m-16 border-b pb-1.5 text-lg font-semibold tracking-tight first:mt-0 select-text leading-[1.3]">
               <MarkdownRenderer content={String(c)} />
             </h2>
           );
         case "h3":
           return (
-            <h3 className="scroll-m-16 text-lg font-medium tracking-tight select-text">
+            <h3 className="scroll-m-16 text-base font-semibold tracking-tight select-text leading-[1.3]">
               <MarkdownRenderer content={String(c)} />
             </h3>
           );
@@ -184,13 +196,16 @@ export function JsonlRenderer({
               <MarkdownRenderer content={String(c)} />
             </div>
           );
-        default:
+        default: {
           // Default paragraph
+          const lead = block["lead"] as string | undefined;
+          const finalContent = lead ? `**${lead}:** ${String(c)}` : String(c);
           return (
             <div className="leading-6 my-2 select-text">
-              <MarkdownRenderer content={String(c)} />
+              <MarkdownRenderer content={finalContent} />
             </div>
           );
+        }
       }
     })();
 

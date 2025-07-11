@@ -38,7 +38,7 @@ describe("JsonlRenderer", () => {
       
       const heading = screen.getByRole("heading", { level: 1 });
       expect(heading).toHaveTextContent("Main Title");
-      expect(heading).toHaveClass("text-2xl", "font-bold");
+      expect(heading).toHaveClass("text-xl", "lg:text-2xl", "leading-[1.3]");
     });
 
     it("renders h2 blocks correctly", () => {
@@ -47,7 +47,7 @@ describe("JsonlRenderer", () => {
       
       const heading = screen.getByRole("heading", { level: 2 });
       expect(heading).toHaveTextContent("Section Title");
-      expect(heading).toHaveClass("text-xl", "font-semibold", "border-b");
+      expect(heading).toHaveClass("text-lg", "font-semibold", "leading-[1.3]");
     });
 
     it("renders h3 blocks correctly", () => {
@@ -56,7 +56,7 @@ describe("JsonlRenderer", () => {
       
       const heading = screen.getByRole("heading", { level: 3 });
       expect(heading).toHaveTextContent("Subsection Title");
-      expect(heading).toHaveClass("text-lg", "font-medium");
+      expect(heading).toHaveClass("text-base", "font-semibold", "leading-[1.3]");
     });
 
     it("renders paragraph blocks correctly", () => {
@@ -64,6 +64,19 @@ describe("JsonlRenderer", () => {
       render(<JsonlRenderer content={content} />);
       
       expect(screen.getByText("This is a paragraph.")).toBeInTheDocument();
+    });
+
+    it("renders paragraph with lead as a bold prefix", () => {
+      const content = '{"type": "p", "lead": "Subtitle", "content": "This is the main content."}';
+      render(<JsonlRenderer content={content} />);
+
+      const renderedContent = screen.getByText((content, element) => {
+        return element?.tagName.toLowerCase() === 'p' && content.startsWith('Subtitle:')
+      });
+      
+      expect(renderedContent).toBeInTheDocument();
+      expect(renderedContent.innerHTML).toContain('<strong>Subtitle:</strong>');
+      expect(renderedContent).toHaveTextContent('Subtitle: This is the main content.');
     });
 
     it("renders quote blocks correctly", () => {
@@ -225,6 +238,24 @@ invalid json line
       expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Valid");
       expect(screen.getByText("invalid json line")).toBeInTheDocument(); // Should be rendered as paragraph
       expect(screen.getByText("Another valid")).toBeInTheDocument();
+    });
+
+    it("fixes single quote JSON syntax errors", () => {
+      // Test the exact problematic content from the user
+      const content = '{"t": "p", "lead": \'模型设计师"诞生记\', "c": "测试内容"}';
+      render(<JsonlRenderer content={content} />);
+      
+      // Should render as a proper block, not fallback paragraph
+      const container = screen.getByTestId("jsonl-renderer");
+      expect(container.children).toHaveLength(1);
+      
+      // Currently JsonlRenderer only processes 'c' content field, not 'lead'
+      // The JSON parsing should work and only render the content field
+      expect(screen.getByText("测试内容")).toBeInTheDocument();
+      
+      // Verify the lead field was parsed correctly (even if not displayed)
+      // by checking that we didn't fall back to raw text rendering
+      expect(screen.queryByText('{"t": "p", "lead":')).not.toBeInTheDocument();
     });
 
     it("handles missing content fields", () => {

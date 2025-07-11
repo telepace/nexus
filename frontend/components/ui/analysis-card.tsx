@@ -421,7 +421,7 @@ const InteractiveContentBlock: React.FC<{
               className={cn(
                 "transition-colors duration-200",
                 block.type === "title" && "text-base font-semibold text-gray-900 dark:text-gray-100",
-                block.type === "summary" && "text-gray-600 dark:text-gray-400 italic",
+                block.type === "summary" && "text-gray-600 dark:text-gray-400",
                 block.type === "code" && "font-mono bg-gray-50 dark:bg-gray-800 p-3 rounded-lg",
                 block.type === "json" && "", // JSON 类型使用 JsonContentRenderer 自己的样式
                 block.type === "analysis" && "", // Analysis 类型使用 AnalysisContentRenderer 自己的样式
