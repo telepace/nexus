@@ -231,11 +231,12 @@ class AIProcessorBase(ProcessingStep):
             stripped_response = ai_response.strip()
 
             # 检查是否是 markdown 代码块格式
-            if stripped_response.startswith("```json") and stripped_response.endswith(
-                "```"
-            ):
+            if (stripped_response.startswith("```json") or stripped_response.startswith("```jsonl")) and stripped_response.endswith("```"):
                 # 提取代码块中的 JSON 内容
-                json_content = stripped_response[7:-3].strip()  # 去掉 ```json 和 ```
+                if stripped_response.startswith("```json"):
+                    json_content = stripped_response[7:-3].strip()  # 去掉 ```json 和 ```
+                else:
+                    json_content = stripped_response[8:-3].strip()  # 去掉 ```jsonl 和 ```
                 return json.loads(json_content)
 
             # 尝试直接解析 JSON 格式

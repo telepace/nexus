@@ -118,7 +118,7 @@ export function normalizeImageUrl(url: string): string {
 
 /**
  * 智能URL提取和规范化函数
- * 
+ *
  * 能够处理以下情况：
  * 1. 带协议的完整URL
  * 2. 不带协议的域名URL
@@ -132,41 +132,41 @@ export function extractAndNormalizeUrls(text: string, debug = false): string[] {
   }
 
   if (debug) {
-    console.log('[URL提取] 输入文本:', text);
+    console.log("[URL提取] 输入文本:", text);
   }
 
   const urls: string[] = [];
 
   // 预处理：修复常见的协议重复错误
-  let processedText = text
-    .replace(/https:\/\/https:\/\//g, 'https://')
-    .replace(/http:\/\/http:\/\//g, 'http://')
-    .replace(/https:\/\/http:\/\//g, 'https://')
-    .replace(/http:\/\/https:\/\//g, 'https://');
+  const processedText = text
+    .replace(/https:\/\/https:\/\//g, "https://")
+    .replace(/http:\/\/http:\/\//g, "http://")
+    .replace(/https:\/\/http:\/\//g, "https://")
+    .replace(/http:\/\/https:\/\//g, "https://");
 
   if (debug && processedText !== text) {
-    console.log('[URL提取] 预处理后:', processedText);
+    console.log("[URL提取] 预处理后:", processedText);
   }
 
   // 第一步：提取完整的URL（带协议）
   const fullUrlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
   const fullUrls = processedText.match(fullUrlRegex) || [];
-  
+
   if (debug) {
-    console.log('[URL提取] 找到的完整URLs:', fullUrls);
+    console.log("[URL提取] 找到的完整URLs:", fullUrls);
   }
-  
+
   // 清理完整URL并添加到结果中
-  fullUrls.forEach(url => {
-    const cleanedUrl = url.replace(/[.,;:!?]+$/, '');
-    
+  fullUrls.forEach((url) => {
+    const cleanedUrl = url.replace(/[.,;:!?]+$/, "");
+
     // 检查是否是重复拼接的URL（包含两个完整的URL）
-    const urlParts = cleanedUrl.split('https://');
+    const urlParts = cleanedUrl.split("https://");
     if (urlParts.length > 2) {
       // 如果有多个https://，只取第一个完整的URL
-      const firstValidUrl = 'https://' + urlParts[1];
+      const firstValidUrl = "https://" + urlParts[1];
       if (debug) {
-        console.log('[URL提取] 检测到重复URL，修复为:', firstValidUrl);
+        console.log("[URL提取] 检测到重复URL，修复为:", firstValidUrl);
       }
       if (isValidUrl(firstValidUrl)) {
         urls.push(firstValidUrl);
@@ -180,27 +180,31 @@ export function extractAndNormalizeUrls(text: string, debug = false): string[] {
   if (urls.length === 0) {
     // 移除已经找到的完整URL，避免重复处理
     let remainingText = processedText;
-    fullUrls.forEach(url => {
-      remainingText = remainingText.replace(url, '');
+    fullUrls.forEach((url) => {
+      remainingText = remainingText.replace(url, "");
     });
 
     if (debug) {
-      console.log('[URL提取] 剩余文本（用于域名匹配）:', remainingText);
+      console.log("[URL提取] 剩余文本（用于域名匹配）:", remainingText);
     }
 
     // 提取可能的域名URL（不带协议）
-    const domainRegex = /(?:^|\s)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(?:\/[^\s<>"{}|\\^`\[\]]*)?/g;
+    const domainRegex =
+      /(?:^|\s)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(?:\/[^\s<>"{}|\\^`\[\]]*)?/g;
     const domainMatches = remainingText.match(domainRegex) || [];
-    
+
     if (debug) {
-      console.log('[URL提取] 找到的域名:', domainMatches);
+      console.log("[URL提取] 找到的域名:", domainMatches);
     }
-    
-    domainMatches.forEach(match => {
-      const trimmedMatch = match.trim().replace(/[.,;:!?]+$/, '');
-      
+
+    domainMatches.forEach((match) => {
+      const trimmedMatch = match.trim().replace(/[.,;:!?]+$/, "");
+
       // 确保不是已经有协议的URL
-      if (!trimmedMatch.startsWith('http://') && !trimmedMatch.startsWith('https://')) {
+      if (
+        !trimmedMatch.startsWith("http://") &&
+        !trimmedMatch.startsWith("https://")
+      ) {
         const normalizedUrl = `https://${trimmedMatch}`;
         if (isValidUrl(normalizedUrl)) {
           urls.push(normalizedUrl);
@@ -211,9 +215,9 @@ export function extractAndNormalizeUrls(text: string, debug = false): string[] {
 
   // 去重并返回
   const result = [...new Set(urls)];
-  
+
   if (debug) {
-    console.log('[URL提取] 最终结果:', result);
+    console.log("[URL提取] 最终结果:", result);
   }
 
   return result;
@@ -225,7 +229,7 @@ export function extractAndNormalizeUrls(text: string, debug = false): string[] {
 function isValidUrl(urlString: string): boolean {
   try {
     const url = new URL(urlString);
-    return url.protocol === 'http:' || url.protocol === 'https:';
+    return url.protocol === "http:" || url.protocol === "https:";
   } catch {
     return false;
   }

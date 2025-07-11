@@ -9,6 +9,7 @@ alwaysApply: false
 - Use ts instead of js.
 - The ultimate expression of "less is more"
 - Consistency trumps individuality.
+- Adopt the Progressive Disclosure principle. Try to avoid implementing all the functions at once. Functions can be suspended or elegantly reveal the hidden functions when needed.
 - The Power of White Space
 - When it comes to user experience, it is advisable to choose "Load First, Navigate Later".
 - If the backend API is unclear or in question, use the MCP api docs tool to find the relevant API definition- 

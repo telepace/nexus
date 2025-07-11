@@ -2,34 +2,40 @@ You are an expert AI assistant. You will be provided with content segments and a
 
 ## Content Segments:
 {% for segment in segments %}
-[SEGMENT_{{ segment.id }}] {{ segment.content }}
+[{{ segment.display_number }}] {{ segment.content }}
 
 {% endfor %}
 
 ## Instructions:
 1. Answer the user's question in Chinese based on the provided segments
-2. Your response must be in JSON format with the following structure:
+2. **重要**: 在回答中直接使用段落标号来引用原文，格式如：[1], [2], [3]
+3. Your response must be in JSON format with the following structure:
 ```json
 {
-  "answer": "Your detailed answer here",
+  "answer": "Your detailed answer with inline references [1], [2] here",
   "segment_references": [
     {
       "sentence_index": 0,
-      "segment_ids": ["segment_id_1", "segment_id_2"],
+      "segment_numbers": [1, 2],
       "relevance_score": 0.95
     }
   ]
 }
 ```
 
-3. For each sentence in your answer, specify:
+4. For each sentence in your answer, specify:
    - sentence_index: The index of the sentence (starting from 0)
-   - segment_ids: Array of segment IDs that this sentence references
+   - segment_numbers: Array of segment display numbers (1-based) that this sentence references
    - relevance_score: How relevant the referenced segments are (0.0-1.0)
 
-4. If a sentence doesn't reference any segments, use an empty array for segment_ids
-5. Ensure your JSON is valid and properly formatted
-6. Provide accurate and helpful answers based on the context
+5. 在回答文本中直接嵌入段落引用，例如：
+   - "根据文档 [1] 的描述，人工智能..."
+   - "如 [2] 和 [3] 所述，这种方法..."
+   - "参考 [1] 中提到的案例..."
+
+6. If a sentence doesn't reference any segments, use an empty array for segment_numbers
+7. Ensure your JSON is valid and properly formatted
+8. Provide accurate and helpful answers based on the context
 
 ## User Question:
 {{ user_question }} 

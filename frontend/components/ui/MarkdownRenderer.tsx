@@ -81,7 +81,7 @@ export function MarkdownRenderer({
         "prose-h2:border-b prose-h2:pb-1.5 prose-h2:text-xl prose-h2:font-semibold prose-h2:tracking-tight prose-h2:first:mt-0",
         "prose-h3:text-lg prose-h3:font-semibold prose-h3:tracking-tight",
         "prose-h4:text-base prose-h4:font-semibold prose-h4:tracking-tight",
-        "prose-p:leading-6 prose-p:[&:not(:first-child)]:mb-3 prose-p:mb-3",
+        "prose-p:leading-[1.5] prose-p:[&:not(:first-child)]:mb-3 prose-p:mb-3",
         "prose-blockquote:mt-4 prose-blockquote:border-l-2 prose-blockquote:pl-4 prose-blockquote:italic",
         "prose-ul:my-4 prose-ul:ml-4 prose-ul:list-disc prose-ul:[&>li]:mt-1",
         "prose-ol:my-4 prose-ol:ml-4 prose-ol:list-decimal prose-ol:[&>li]:mt-1",

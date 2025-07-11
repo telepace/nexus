@@ -1,0 +1,485 @@
+/* Enhanced Card 高级样式模块 */
+
+/* 卡片包装器 */
+.cardWrapper {
+  position: relative;
+  isolation: isolate;
+}
+
+/* 背景光晕效果 */
+.backgroundGlow {
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(0, 0, 0, 0.02) 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.cardWrapper:hover .backgroundGlow {
+  opacity: 1;
+}
+
+/* 特色卡片的光晕效果 */
+.featuredGlow {
+  background: linear-gradient(135deg,
+    rgba(59, 130, 246, 0.1) 0%,
+    rgba(147, 51, 234, 0.08) 50%,
+    rgba(236, 72, 153, 0.06) 100%);
+}
+
+/* 主卡片样式 */
+.card {
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: rgba(226, 232, 240, 0.8);
+}
+
+/* 深色模式 */
+.card {
+  @apply dark:border-gray-700/60 dark:bg-gray-950/80;
+}
+
+.card:hover {
+  @apply dark:border-gray-600/80;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* 卡片变体 */
+.default {
+  /* 默认样式已在基础card中定义 */
+}
+
+.compact {
+  transform: scale(0.98);
+}
+
+.compact:hover {
+  transform: scale(1);
+}
+
+.detailed {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(248, 250, 252, 0.9) 100%);
+}
+
+.detailed:hover {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 1) 0%,
+    rgba(248, 250, 252, 0.95) 100%);
+}
+
+.featured {
+  background: linear-gradient(135deg,
+    rgba(59, 130, 246, 0.05) 0%,
+    rgba(147, 51, 234, 0.03) 50%,
+    rgba(236, 72, 153, 0.02) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.featured:hover {
+  background: linear-gradient(135deg,
+    rgba(59, 130, 246, 0.08) 0%,
+    rgba(147, 51, 234, 0.05) 50%,
+    rgba(236, 72, 153, 0.03) 100%);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+/* 选中状态 */
+.selected {
+  ring: 2px solid rgba(59, 130, 246, 0.3);
+  border-color: rgb(147, 197, 253);
+}
+
+.selected {
+  @apply dark:border-blue-600;
+}
+
+/* 错误状态 */
+.error {
+  border-color: rgb(252, 165, 165);
+}
+
+.error {
+  @apply dark:border-red-600;
+}
+
+/* 加载覆盖层 */
+.loadingOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  backdrop-filter: blur(2px);
+}
+
+.loadingOverlay {
+  @apply dark:bg-gray-950/80;
+}
+
+/* 图标容器 */
+.iconContainer {
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, 
+    rgba(249, 250, 251, 1) 0%,
+    rgba(243, 244, 246, 1) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(229, 231, 235, 0.4);
+  transition: all 0.2s ease;
+}
+
+.iconContainer {
+  @apply dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-700 dark:border-gray-700/40;
+}
+
+/* 内容块样式 */
+.contentBlock {
+  background: linear-gradient(135deg,
+    rgba(249, 250, 251, 0.3) 0%,
+    transparent 50%,
+    rgba(243, 244, 246, 0.2) 100%);
+  border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.contentBlock::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(59, 130, 246, 0.02) 0%,
+    transparent 50%,
+    rgba(147, 51, 234, 0.01) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.contentBlock:hover::before {
+  opacity: 1;
+}
+
+.contentBlock:hover {
+  border-color: rgba(229, 231, 235, 0.4);
+  background: linear-gradient(135deg,
+    rgba(249, 250, 251, 0.5) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(243, 244, 246, 0.4) 100%);
+}
+
+/* 深色模式的内容块 */
+.contentBlock {
+  @apply dark:hover:border-gray-700/40;
+}
+
+.contentBlock:hover {
+  @apply dark:bg-gradient-to-r dark:from-gray-800/30 dark:via-transparent dark:to-gray-700/20;
+}
+
+/* 渐变遮罩效果 */
+.fadeGradient {
+  z-index: 1;
+  transition: opacity 0.3s ease;
+}
+
+.fadeGradient {
+  @apply dark:from-gray-950 dark:via-gray-950/80 dark:to-transparent;
+}
+
+/* 展开按钮样式 */
+.expandButton {
+  position: relative;
+  overflow: hidden;
+}
+
+.expandButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.2), 
+    transparent);
+  transition: left 0.5s ease;
+}
+
+.expandButton:hover::before {
+  left: 100%;
+}
+
+/* 深色模式的展开按钮 */
+.expandButton::before {
+  @apply dark:bg-gradient-to-r dark:from-transparent dark:via-white/10 dark:to-transparent;
+}
+
+.expandButton {
+  backdrop-filter: blur(8px);
+}
+
+.expandButton:hover {
+  /* transform: translateY(-1px); */
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.expandButton:active {
+  transform: translateY(0);
+}
+
+/* 深色模式的展开按钮悬浮效果 */
+.expandButton:hover {
+  @apply dark:shadow-blue-500/20;
+}
+
+/* 悬浮操作按钮 */
+.hoverActions {
+  opacity: 0;
+  transform: translateX(0.5rem);
+  transition: all 0.2s ease;
+}
+
+.contentBlock:hover .hoverActions {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* 操作菜单 */
+.actionsMenu {
+  opacity: 0;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
+}
+
+.actionsMenu:hover {
+  background: rgba(243, 244, 246, 0.9);
+}
+
+.cardWrapper:hover .actionsMenu {
+  opacity: 1;
+}
+
+/* 深色模式的操作菜单 */
+.actionsMenu {
+  @apply dark:bg-gray-800/80 dark:hover:bg-gray-700/90;
+}
+
+/* 引用指示器 */
+.referenceIndicator {
+  background: linear-gradient(135deg,
+    rgba(59, 130, 246, 0.1) 0%,
+    rgba(99, 102, 241, 0.08) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: rgb(37, 99, 235);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.referenceIndicator::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(59, 130, 246, 0.1) 0%,
+    rgba(99, 102, 241, 0.1) 100%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.referenceIndicator:hover::before {
+  opacity: 1;
+}
+
+.referenceIndicator:hover {
+  background: linear-gradient(135deg,
+    rgba(59, 130, 246, 0.15) 0%,
+    rgba(99, 102, 241, 0.12) 100%);
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: scale(1.05);
+}
+
+/* 深色模式的引用指示器 */
+.referenceIndicator {
+  @apply dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-400;
+}
+
+.referenceIndicator:hover {
+  @apply dark:bg-blue-900/40 dark:border-blue-700;
+}
+
+/* 脉动动画 */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  }
+}
+
+.referenceIndicator {
+  animation: pulse-glow 2s infinite;
+}
+
+/* 展开按钮的光泽动画 */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+.expandButton:hover {
+  overflow: hidden;
+}
+
+.expandButton:hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 80%);
+  animation: shimmer 1.5s ease-out;
+  pointer-events: none;
+}
+
+/* 深色模式的光泽动画 */
+.expandButton:hover::after {
+  @apply dark:bg-gradient-to-r dark:from-transparent dark:via-white/20 dark:to-transparent;
+}
+
+/* 响应式设计 */
+@media (max-width: 640px) {
+  .contentBlock {
+    padding: 0.75rem;
+  }
+  
+  .iconContainer {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  
+  .hoverActions {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  
+  .actionsMenu {
+    opacity: 1;
+  }
+
+  .expandButton {
+    height: 2rem;
+    padding: 0 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .fadeGradient {
+    height: 1.5rem;
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .card {
+    border-width: 2px;
+    border-color: rgb(0, 0, 0);
+  }
+  
+  .contentBlock:hover {
+    border-color: rgb(59, 130, 246);
+  }
+  
+  .referenceIndicator {
+    border-width: 2px;
+  }
+
+  .expandButton {
+    border-width: 2px;
+    border-color: rgb(59, 130, 246);
+  }
+
+  .fadeGradient {
+    background: linear-gradient(to top, 
+      rgb(255, 255, 255) 0%, 
+      rgba(255, 255, 255, 0.8) 70%, 
+      transparent 100%);
+  }
+}
+
+/* 减少动画模式支持 */
+@media (prefers-reduced-motion: reduce) {
+  .backgroundGlow,
+  .card,
+  .contentBlock,
+  .hoverActions,
+  .actionsMenu,
+  .referenceIndicator,
+  .expandButton,
+  .fadeGradient {
+    transition: none;
+  }
+  
+  .referenceIndicator {
+    animation: none;
+  }
+
+  .expandButton:hover::before,
+  .expandButton:hover::after {
+    display: none;
+  }
+}
+
+/* 打印样式 */
+@media print {
+  .backgroundGlow,
+  .hoverActions,
+  .actionsMenu,
+  .expandButton,
+  .fadeGradient {
+    display: none;
+  }
+  
+  .card {
+    background: white;
+    border: 1px solid black;
+    box-shadow: none;
+  }
+
+  .contentBlock {
+    background: transparent;
+    border: none;
+  }
+} 

@@ -367,7 +367,7 @@ export const EnhancedLLMAnalysisSidebar: FC<
   }
 
   return (
-    <div className={`flex flex-col h-full bg-transparent ${className}`}>
+    <div className={`flex flex-col h-full bg-transparent ${className}`} data-exclude-selection>
       {/* Content Body */}
       <div className="flex-1 overflow-y-auto px-1">
         <Tabs value={activeTab} className="h-full">

@@ -229,7 +229,7 @@ export function DashboardView({ user }: DashboardViewProps) {
 
   const openDashboard = () => {
     const frontendUrl = process.env.PLASMO_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
-    chrome.tabs.create({ url: `${frontendUrl}/dashboard` });
+    chrome.tabs.create({ url: `${frontendUrl}/home` });
   };
 
   const openContentLibrary = () => {

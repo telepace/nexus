@@ -67,7 +67,7 @@ class SegmentAwareChatService:
             if not segments_with_scores:
                 # Fallback to regular chat if no segments found
                 response = await self.chat_service.generate_with_template(
-                    "simple_chat.j2", {"user_message": user_message}
+                    "simple_chat.j2", {"user_message": user_message}, model
                 )
                 return {
                     "response": response,
@@ -82,6 +82,7 @@ class SegmentAwareChatService:
             ai_response = await self.chat_service.generate_with_template(
                 "segment_aware_chat.j2",
                 {"user_question": user_message, "segments": segments},
+                model,
             )
 
             # 4. Parse response to extract segment references
@@ -119,7 +120,7 @@ class SegmentAwareChatService:
             logger.error(f"Error in segment-aware chat: {e}")
             # Fallback to regular chat
             response = await self.chat_service.generate_with_template(
-                "simple_chat.j2", {"user_message": user_message}
+                "simple_chat.j2", {"user_message": user_message}, model
             )
             return {
                 "response": response,
@@ -156,27 +157,39 @@ class SegmentAwareChatService:
         self, references: list[dict[str, Any]], available_segments: list[Segment]
     ) -> list[dict[str, Any]]:
         """Validate and clean segment references."""
-        available_segment_ids = {str(segment.id) for segment in available_segments}
+        available_segment_numbers = {segment.display_number for segment in available_segments}
+        segment_number_to_id = {segment.display_number: str(segment.id) for segment in available_segments}
         validated_references = []
 
         for ref in references:
             if not isinstance(ref, dict):
                 continue
 
-            # Clean segment IDs
+            # Support both old segment_ids format and new segment_numbers format
+            segment_numbers = ref.get("segment_numbers", [])
             segment_ids = ref.get("segment_ids", [])
-            if isinstance(segment_ids, list):
-                valid_segment_ids = [
-                    seg_id
-                    for seg_id in segment_ids
-                    if str(seg_id) in available_segment_ids
+
+            # Convert segment_ids to segment_numbers if needed (backward compatibility)
+            if segment_ids and not segment_numbers:
+                segment_numbers = []
+                for seg_id in segment_ids:
+                    for segment in available_segments:
+                        if str(segment.id) == str(seg_id):
+                            segment_numbers.append(segment.display_number)
+                            break
+
+            if isinstance(segment_numbers, list):
+                valid_segment_numbers = [
+                    num for num in segment_numbers
+                    if num in available_segment_numbers
                 ]
 
-                if valid_segment_ids:  # Only include if has valid segments
+                if valid_segment_numbers:  # Only include if has valid segments
                     validated_references.append(
                         {
                             "sentence_index": ref.get("sentence_index", 0),
-                            "segment_ids": valid_segment_ids,
+                            "segment_numbers": valid_segment_numbers,
+                            "segment_ids": [segment_number_to_id[num] for num in valid_segment_numbers],
                             "relevance_score": ref.get("relevance_score", 0.5),
                         }
                     )

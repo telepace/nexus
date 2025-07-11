@@ -17,12 +17,17 @@ import {
   File,
   Trash2,
   AlertCircle,
+  Settings,
+  Link,
+  Loader2,
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/auth";
 import { contentCache } from "@/lib/services/content-cache";
 import { eventBus } from "@/lib/event-bus";
 import { useGlobalNotificationStore } from "@/lib/stores/useGlobalNotificationStore";
 import { extractAndNormalizeUrls } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
 
 // 极简基础组件 - 基于参考设计，加入 Fade & Scale 动效
 const Dialog = ({ children, open, onOpenChange }) => {
@@ -334,6 +339,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   // Hooks
   const { user } = useAuth();
   const { createContentProcessingNotification } = useGlobalNotificationStore();
+  const isMobile = useIsMobile();
 
   // 内容分析
   const contentAnalysis = analyzeContent(content, selectedFiles);
@@ -397,22 +403,22 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   const handlePaste = useCallback((e: ClipboardEvent) => {
     // 防止默认粘贴行为，我们手动处理
     e.preventDefault();
-    
+
     const pastedText = e.clipboardData?.getData("text") || "";
-    console.log('[粘贴事件] 原始粘贴数据:', pastedText);
-    
+    console.log("[粘贴事件] 原始粘贴数据:", pastedText);
+
     if (pastedText.trim()) {
       const trimmedText = pastedText.trim();
-      console.log('[粘贴事件] 处理后的文本:', trimmedText);
-      
+      console.log("[粘贴事件] 处理后的文本:", trimmedText);
+
       // 直接设置到textarea
       if (textareaRef.current) {
         textareaRef.current.value = trimmedText;
         // 触发React的onChange事件
-        const event = new Event('input', { bubbles: true });
+        const event = new Event("input", { bubbles: true });
         textareaRef.current.dispatchEvent(event);
       }
-      
+
       setContent(trimmedText);
     }
   }, []);
@@ -682,10 +688,16 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      {/* 固定尺寸容器，避免跳动 */}
-      <div className="bg-card rounded-2xl shadow-xl border border-border w-[580px] max-w-[90vw] min-h-[380px] flex flex-col overflow-hidden">
+      {/* 响应式容器 - 根据屏幕尺寸调整 */}
+      <div
+        className={`bg-card rounded-2xl shadow-xl border border-border flex flex-col overflow-hidden transition-all duration-300 ${
+          isMobile
+            ? "w-full h-full max-w-none max-h-none m-0 rounded-none" // 移动端全屏
+            : "w-[580px] max-w-[90vw] min-h-[380px] max-h-[90vh]" // 桌面端固定尺寸
+        }`}
+      >
         {/* 固定头部 */}
-        <div className="flex items-center justify-between px-5 py-4 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 flex-shrink-0 border-b border-border">
           {/* 左侧：图标 + 标题 + 类型徽章 */}
           <div className="flex items-center gap-2.5">
             <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
@@ -711,234 +723,274 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
 
           {/* 右侧：配置按钮 + 关闭按钮 */}
           <div className="flex items-center gap-2">
+            {/* Deep Research 配置按钮 */}
             {isResearch && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowResearchConfig(!showResearchConfig)}
-                className="text-[oklch(var(--chart-1))] hover:text-[oklch(var(--chart-1))]/80 text-xs px-1.5 h-6"
-                disabled={false}
+                className="text-xs h-7 px-2"
               >
-                配置 {showResearchConfig ? "▼" : "▶"}
+                <Settings className="w-3 h-3 mr-1" />
+                配置
               </Button>
             )}
-            <button
+
+            {/* 关闭按钮 */}
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={onClose}
-              className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors focus-ring"
+              className="h-7 w-7 p-0 hover:bg-muted"
             >
               <X className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         </div>
 
-        {/* 研究配置面板 */}
+        {/* Deep Research 配置面板 */}
         {isResearch && showResearchConfig && (
-          <div className="p-2 bg-accent rounded border border-border text-xs">
-            <div className="font-medium text-foreground mb-1">研究配置</div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-[10px] text-muted-foreground block mb-1">
-                  深度 (1-5)
-                </label>
-                <select
-                  value={researchConfig.depth}
-                  onChange={(e) =>
-                    setResearchConfig((prev) => ({
-                      ...prev,
-                      depth: parseInt(e.target.value),
-                    }))
-                  }
-                  className="w-full p-1 text-xs border border-input rounded bg-background text-foreground focus-ring"
-                >
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
+          <div className="px-5 py-3 bg-muted/30 border-b flex-shrink-0">
+            <div className="text-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">研究深度</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">浅</span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={researchConfig.depth}
+                    onChange={(e) =>
+                      setResearchConfig((prev) => ({
+                        ...prev,
+                        depth: parseInt(e.target.value),
+                      }))
+                    }
+                    className="w-16 h-1 bg-muted rounded-lg appearance-none cursor-pointer"
+                  />
+                  <span className="text-xs text-muted-foreground">深</span>
+                  <span className="text-xs font-medium min-w-[1rem] text-center">
+                    {researchConfig.depth}
+                  </span>
+                </div>
               </div>
-              <div>
-                <label className="text-[10px] text-muted-foreground block mb-1">
-                  广度 (1-5)
-                </label>
-                <select
-                  value={researchConfig.breadth}
-                  onChange={(e) =>
-                    setResearchConfig((prev) => ({
-                      ...prev,
-                      breadth: parseInt(e.target.value),
-                    }))
-                  }
-                  className="w-full p-1 text-xs border border-input rounded bg-background text-foreground focus-ring"
-                >
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">研究广度</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">窄</span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={researchConfig.breadth}
+                    onChange={(e) =>
+                      setResearchConfig((prev) => ({
+                        ...prev,
+                        breadth: parseInt(e.target.value),
+                      }))
+                    }
+                    className="w-16 h-1 bg-muted rounded-lg appearance-none cursor-pointer"
+                  />
+                  <span className="text-xs text-muted-foreground">宽</span>
+                  <span className="text-xs font-medium min-w-[1rem] text-center">
+                    {researchConfig.breadth}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* 主体区域 - 固定布局 */}
-        <div className="flex-1 flex flex-col p-5">
-          {/* 上传内容输入区 */}
-          <div className="mb-2">
-            <span className="text-sm font-semibold text-card-foreground">
-              上传内容
-            </span>
-          </div>
-          <div className="mb-2">
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={(e) => {
-                console.log('[onChange事件] 新值:', e.target.value);
-                setContent(e.target.value);
-              }}
-              placeholder="输入研究主题、粘贴链接或文本内容..."
-              className="w-full h-full p-3 bg-gray-50 rounded-lg border-0 outline-none resize-none text-gray-900 placeholder:text-gray-400 text-sm leading-relaxed transition-all focus:bg-white focus:ring-2 focus:ring-blue-500/10"
-              style={{ minHeight: "120px" }}
-            />
-          </div>
+        {/* 主体区域 - 可滚动 */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-auto">
+          <div className="flex-1 flex flex-col p-5 space-y-4">
+            {/* 输入区域 */}
+            <div className="space-y-3">
+              <textarea
+                ref={textareaRef}
+                value={content}
+                onChange={(e) => {
+                  console.log("[onChange事件] 新值:", e.target.value);
+                  setContent(e.target.value);
+                }}
+                placeholder="输入研究主题、粘贴链接或文本内容..."
+                className={`w-full p-3 bg-muted/50 rounded-lg border-0 outline-none resize-none text-card-foreground placeholder:text-muted-foreground text-sm leading-relaxed transition-all focus:bg-background focus:ring-2 focus:ring-primary/20 ${
+                  isMobile
+                    ? "min-h-[120px] max-h-[200px]"
+                    : "min-h-[120px] max-h-[180px]"
+                }`}
+              />
 
-          {/* 上传文件标题 */}
-          <div className="mb-2">
-            <span className="text-sm font-semibold text-card-foreground">
-              上传文件
-            </span>
-          </div>
+              {/* 字符计数 */}
+              {content.length > 0 && (
+                <div className="text-xs text-muted-foreground text-right">
+                  {content.length} 个字符
+                  {content.length > 2000 && (
+                    <span className="text-destructive ml-2">
+                      内容较长，建议分段处理
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
 
-          {/* 文件上传区域（点击区域触发 file input） */}
-          <div
-            className={`
-              border-2 border-dashed rounded-lg p-4 transition-all duration-200 mb-4 h-[10rem]
-              ${isDragOver ? "border-[oklch(var(--chart-1))] bg-accent" : "border-border hover:border-ring"}
-            `}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDropFiles}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {selectedFiles.length > 0 ? (
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {selectedFiles.map((file, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between bg-background p-2 rounded border border-border"
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      {getFileType(file) === "image" && (
-                        <Image
-                          className="w-4 h-4 text-[oklch(var(--chart-4))] flex-shrink-0"
-                          aria-label="图片文件"
-                        />
-                      )}
-                      {getFileType(file) === "video" && (
-                        <Video className="w-4 h-4 text-[oklch(var(--chart-5))] flex-shrink-0" />
-                      )}
-                      {(getFileType(file) === "pdf" ||
-                        getFileType(file) === "document") && (
-                        <FileText className="w-4 h-4 text-[oklch(var(--chart-1))] flex-shrink-0" />
-                      )}
-                      {getFileType(file) === "file" && (
-                        <File className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm text-foreground truncate">
-                          {file.name}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {(file.size / 1024).toFixed(1)} KB
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeFile(index);
-                      }}
-                      className="ml-2"
-                      disabled={false}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
+            {/* 文件上传区域 */}
+            <div
+              className={`border-2 border-dashed rounded-lg p-4 text-center transition-all duration-200 ${
+                isDragOver
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/50 hover:bg-muted/30"
+              }`}
+              onDrop={handleDropFiles}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.txt,.md,.png,.jpg,.jpeg,.gif,.webp"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+
+              {selectedFiles.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-card-foreground">
+                    已选择 {selectedFiles.length} 个文件
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-4 pointer-events-none">
-                <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground mb-1">
-                  拖拽文件到此处，或点击选择文件
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  支持 PDF、Word、图片、视频等格式
-                </p>
+                  <div className="space-y-1 max-h-20 overflow-y-auto">
+                    {selectedFiles.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between text-xs bg-muted/50 rounded px-2 py-1"
+                      >
+                        <span className="truncate flex-1 text-left">
+                          {file.name}
+                        </span>
+                        <button
+                          onClick={() => removeFile(index)}
+                          className="ml-2 text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="mt-2"
+                  >
+                    添加更多文件
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="w-8 h-8 mx-auto rounded-full bg-muted flex items-center justify-center">
+                    <Upload className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    拖拽文件到此处或
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-primary hover:underline ml-1"
+                    >
+                      选择文件
+                    </button>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    支持 PDF、Word、图片等格式
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* URL 检测提示 */}
+            {detectedUrls.length > 0 && (
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-start gap-2">
+                  <Link className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm">
+                    <div className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+                      检测到链接
+                    </div>
+                    <div className="space-y-1">
+                      {detectedUrls.map((url, index) => (
+                        <div
+                          key={index}
+                          className="text-blue-700 dark:text-blue-300 text-xs font-mono break-all"
+                        >
+                          {url}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              className="hidden"
-              onChange={handleFileSelect}
-              title="上传内容"
-            />
+
+            {/* 错误信息 */}
+            {error && (
+              <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+                <div className="flex items-center gap-2 text-sm text-destructive">
+                  <AlertCircle className="w-4 h-4" />
+                  {error}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* 错误信息 */}
-          {error && (
-            <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0" />
-              <p className="text-sm text-destructive">{error}</p>
-            </div>
-          )}
+          {/* 固定底部操作栏 */}
+          <div className="flex-shrink-0 px-5 py-4 border-t border-border bg-card">
+            <div className="flex flex-col gap-3">
+              {/* 快捷键提示 */}
+              <div className="text-xs text-muted-foreground text-center">
+                {isMobile
+                  ? "点击添加按钮提交"
+                  : "⌘ + Enter 快速添加 • ⌘ + Shift + Enter 深度研究"}
+              </div>
 
-          {/* 固定底部操作区 */}
-          <div className="flex items-center justify-between pt-3 flex-shrink-0">
-            <span className="text-xs text-muted-foreground">
-              {isResearch ? "🔍 将启动AI深度研究" : "⌘+Enter 快速添加"}
-            </span>
-
-            <div className="flex gap-2">
-              <Button variant="ghost" onClick={onClose} disabled={isLoading}>
-                取消
-              </Button>
-
-              <Button
-                onClick={handleSubmit}
-                disabled={
-                  (!content.trim() && selectedFiles.length === 0) || isLoading
-                }
-                className="gap-1"
-                variant={isResearch ? "research" : "default"}
+              {/* 操作按钮 */}
+              <div
+                className={`flex gap-2 ${isMobile ? "flex-col" : "flex-row-reverse"}`}
               >
-                {isLoading ? (
-                  <>
-                    <div className="w-2.5 h-2.5 border border-primary-foreground/40 border-t-primary-foreground rounded-full animate-spin" />
-                    {isResearch ? "启动研究..." : "处理中"}
-                  </>
-                ) : (
-                  <>
-                    {isResearch ? (
-                      <>
-                        <Search className="w-3 h-3" />
-                        开始研究
-                      </>
-                    ) : (
-                      <>
-                        添加
-                        <ArrowRight className="w-2.5 h-2.5" />
-                      </>
-                    )}
-                  </>
-                )}
-              </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={
+                    isLoading || (!content.trim() && selectedFiles.length === 0)
+                  }
+                  className={`${isMobile ? "w-full" : "flex-shrink-0"}`}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      处理中...
+                    </>
+                  ) : isResearch ? (
+                    <>
+                      <Zap className="w-4 h-4 mr-2" />
+                      开始深度研究
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      添加内容
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={onClose}
+                  disabled={isLoading}
+                  className={isMobile ? "w-full" : ""}
+                >
+                  取消
+                </Button>
+              </div>
             </div>
           </div>
         </div>

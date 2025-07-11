@@ -112,7 +112,7 @@ export function FinalCTA() {
             </button>
             <span className="hidden sm:block">•</span>
             <Link
-              href="/dashboard"
+              href="/home"
               className="flex items-center space-x-2 hover:text-foreground transition-colors"
             >
               <span>已有账户？直接登录</span>

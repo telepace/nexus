@@ -1,25 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import { useCompletion } from "ai/react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
-import {
-  Play,
-  Square,
-  RotateCcw,
-  Copy,
-  Trash2,
-  Loader2,
-  AlertCircle,
-  Sparkles,
-  Brain,
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { getCookie } from "@/lib/utils";
+import React, { useMemo } from "react";
+import { UnifiedAIAnalysisCard } from "@/components/ai/UnifiedAIAnalysisCard";
+import { AIAnalysisConfig } from "@/hooks/use-ai-analysis";
 
 export interface AIAnalysisCardProps {
   /** 分析标题 */
@@ -46,6 +29,10 @@ export interface AIAnalysisCardProps {
   onError?: (error: Error) => void;
 }
 
+/**
+ * @deprecated 推荐使用 UnifiedAIAnalysisCard 组件
+ * 保留此组件用于向后兼容，内部基于新的统一架构实现
+ */
 export function AIAnalysisCard({
   title,
   userContent,
@@ -59,333 +46,45 @@ export function AIAnalysisCard({
   onComplete,
   onError,
 }: AIAnalysisCardProps) {
-  const { toast } = useToast();
-  const [hasStarted, setHasStarted] = useState(false);
-
-  // 动态构建 API 端点
-  const getApiEndpoint = () => {
+  
+  // 根据参数构建配置
+  const config: AIAnalysisConfig = useMemo(() => {
     if (contentId) {
-      // 使用更新版本的内容完成端点，有更好的消息结构
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      return `${apiUrl}/api/v1/content/${contentId}/completion-updated`;
+      // 内容分析模式
+      return {
+        mode: "content",
+        contentId,
+        model,
+        apiEndpoint: api,
+        enableRetry: true,
+        maxRetries: 3,
+      };
     } else {
-      // 使用通用聊天端点
-      return api || "/api/v1/chat/completions";
+      // 通用聊天模式
+      return {
+        mode: "chat",
+        systemPrompt,
+        model,
+        apiEndpoint: api,
+        enableRetry: true,
+        maxRetries: 3,
+      };
     }
-  };
+  }, [contentId, systemPrompt, model, api]);
 
-  const {
-    completion,
-    setInput,
-    isLoading,
-    error,
-    stop,
-    complete,
-    setCompletion,
-  } = useCompletion({
-    api: getApiEndpoint(),
-    body: {
-      model,
-      // 不要在这里预设 prompt，让 complete 方法来处理
-    },
-    headers: {
-      Authorization: `Bearer ${getCookie("accessToken")}`,
-    },
-    onResponse: (response) => {
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-    },
-    onFinish: (prompt, completion) => {
-      setHasStarted(false);
-      onComplete?.(completion);
-      toast({
-        title: "分析完成",
-        description: "AI 分析已成功完成",
-      });
-    },
-    onError: (error) => {
-      setHasStarted(false);
-      onError?.(error);
-      toast({
-        title: "分析失败",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // 开始分析
-  const handleStartAnalysis = async () => {
-    setHasStarted(true);
-
-    if (contentId) {
-      // 对于内容分析，使用自定义的请求体格式
-      try {
-        // 直接使用 fetch 发送请求，更新版本的端点期望 { analysis_instruction: string } 格式
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-        const response = await fetch(
-          `${apiUrl}/api/v1/content/${contentId}/completion-updated`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${getCookie("accessToken")}`,
-            },
-            body: JSON.stringify({
-              analysis_instruction: userContent,
-              model: model,
-            }),
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        // 处理流式响应
-        const reader = response.body?.getReader();
-        if (!reader) {
-          throw new Error("无法获取响应流");
-        }
-
-        const decoder = new TextDecoder();
-        let accumulatedContent = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          accumulatedContent += chunk;
-
-          // 实时更新显示的内容
-          setCompletion(accumulatedContent);
-        }
-
-        setHasStarted(false);
-        onComplete?.(accumulatedContent);
-        toast({
-          title: "分析完成",
-          description: "AI 分析已成功完成",
-        });
-      } catch (error) {
-        setHasStarted(false);
-        const errorMessage =
-          error instanceof Error ? error.message : "分析失败";
-        onError?.(error instanceof Error ? error : new Error(errorMessage));
-        toast({
-          title: "分析失败",
-          description: errorMessage,
-          variant: "destructive",
-        });
-        console.error("Content analysis failed:", error);
-      }
-    } else {
-      // 使用通用完成端点（需要 systemPrompt）
-      if (!systemPrompt) {
-        toast({
-          title: "参数错误",
-          description: "需要提供要分析的内容",
-          variant: "destructive",
-        });
-        setHasStarted(false);
-        return;
-      }
-
-      const fullPrompt = `${userContent}\n\n以下是要分析的内容：\n${systemPrompt}`;
-
-      try {
-        await complete(fullPrompt);
-      } catch (error) {
-        setHasStarted(false);
-        console.error("Analysis failed:", error);
-      }
-    }
-  };
-
-  // 停止分析
-  const handleStopAnalysis = () => {
-    stop();
-    setHasStarted(false);
-  };
-
-  // 重新开始分析
-  const handleRetryAnalysis = () => {
-    setCompletion("");
-    handleStartAnalysis();
-  };
-
-  // 复制结果
-  const handleCopyResult = async () => {
-    try {
-      await navigator.clipboard.writeText(completion);
-      toast({
-        title: "已复制",
-        description: "分析结果已复制到剪贴板",
-      });
-    } catch {
-      toast({
-        title: "复制失败",
-        description: "无法复制内容到剪贴板",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // 清空结果
-  const handleClearResult = () => {
-    setCompletion("");
-    setInput("");
-    setHasStarted(false);
-  };
+  // 确定渲染类型
+  const renderType = enableMarkdown ? "auto" : "universal";
 
   return (
-    <Card className={cn("w-full", className)}>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" />
-            <CardTitle className="text-base">{title}</CardTitle>
-            {isLoading && (
-              <Badge variant="outline" className="text-xs">
-                <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                分析中
-              </Badge>
-            )}
-            {completion && !isLoading && (
-              <Badge variant="outline" className="text-xs text-green-600">
-                <Sparkles className="h-3 w-3 mr-1" />
-                已完成
-              </Badge>
-            )}
-          </div>
-
-          {showControls && (
-            <div className="flex items-center gap-1">
-              {!hasStarted && !completion && (
-                <Button
-                  size="sm"
-                  onClick={handleStartAnalysis}
-                  disabled={isLoading}
-                >
-                  <Play className="h-3 w-3 mr-1" />
-                  开始分析
-                </Button>
-              )}
-
-              {isLoading && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleStopAnalysis}
-                >
-                  <Square className="h-3 w-3 mr-1" />
-                  停止
-                </Button>
-              )}
-
-              {completion && !isLoading && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleCopyResult}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleRetryAnalysis}
-                  >
-                    <RotateCcw className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleClearResult}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </CardHeader>
-
-      <CardContent className="px-6 pb-6">
-        {error && (
-          <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-            <div className="flex items-center gap-2 text-destructive">
-              <AlertCircle className="h-4 w-4" />
-              <span className="text-sm font-medium">分析失败</span>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              {error.message}
-            </p>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleRetryAnalysis}
-              className="mt-2"
-            >
-              <RotateCcw className="h-3 w-3 mr-2" />
-              重试
-            </Button>
-          </div>
-        )}
-
-        {!hasStarted && !completion && !error && (
-          <div className="flex items-center justify-center h-32 text-muted-foreground">
-            <div className="text-center">
-              <Brain className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">
-                点击&ldquo;开始分析&rdquo;来生成 AI 分析
-              </p>
-            </div>
-          </div>
-        )}
-
-        {isLoading && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-primary">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm font-medium">AI 正在分析中...</span>
-            </div>
-
-            {completion && (
-              <div className="min-h-[100px]">
-                {enableMarkdown ? (
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <MarkdownRenderer content={completion} />
-                  </div>
-                ) : (
-                  <div className="whitespace-pre-wrap text-sm relative font-mono">
-                    <span className="streaming-text">{completion}</span>
-                    <span className="inline-block w-2 h-4 bg-primary animate-shimmer ml-1 align-bottom opacity-75" />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {completion && !isLoading && (
-          <div className="min-h-[100px]">
-            {enableMarkdown ? (
-              <div className="prose prose-sm max-w-none dark:prose-invert">
-                <MarkdownRenderer content={completion} />
-              </div>
-            ) : (
-              <div className="whitespace-pre-wrap text-sm">{completion}</div>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <UnifiedAIAnalysisCard
+      title={title}
+      instruction={userContent}
+      config={config}
+      className={className}
+      showControls={showControls}
+      renderType={renderType}
+      onComplete={onComplete}
+      onError={onError}
+    />
   );
 }

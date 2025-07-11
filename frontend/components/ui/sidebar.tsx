@@ -69,9 +69,30 @@ function SidebarProvider({
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
 
+  // 修复 hydration 不匹配问题：先使用 defaultOpen，在客户端 hydration 后立即同步读取 cookie
+  const [_open, _setOpen] = React.useState(defaultOpen);
+  const [isHydrated, setIsHydrated] = React.useState(false);
+
+  // 客户端 hydration 后立即读取 cookie，减少闪烁
+  React.useEffect(() => {
+    setIsHydrated(true);
+
+    // 立即读取 cookie 状态
+    const cookies = document.cookie.split(";");
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split("=");
+      if (name === SIDEBAR_COOKIE_NAME) {
+        const cookieValue = value === "true";
+        if (cookieValue !== defaultOpen) {
+          _setOpen(cookieValue);
+        }
+        break;
+      }
+    }
+  }, [defaultOpen]);
+
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
-  const [_open, _setOpen] = React.useState(defaultOpen);
   const open = openProp ?? _open;
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
@@ -83,7 +104,9 @@ function SidebarProvider({
       }
 
       // This sets the cookie to keep the sidebar state.
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+      if (typeof window !== "undefined") {
+        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+      }
     },
     [setOpenProp, open],
   );
@@ -140,6 +163,9 @@ function SidebarProvider({
           }
           className={cn(
             "group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full",
+            // 添加平滑过渡以减少 hydration 期间的视觉跳动
+            !isHydrated && "transition-none",
+            isHydrated && "transition-all duration-200 ease-linear",
             className,
           )}
           {...props}

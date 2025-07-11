@@ -159,17 +159,34 @@ export const contentApi = {
   },
 
   /**
-   * Get content chunks with pagination
+   * Get content chunks with pagination or all at once
    */
   async getContentChunks(
     id: string,
     page: number = 1,
     size: number = 10,
+    all: boolean = false,
   ): Promise<ContentChunksResponse> {
+    const params = new URLSearchParams();
+    
+    if (all) {
+      params.append('all', 'true');
+    } else {
+      params.append('page', page.toString());
+      params.append('size', size.toString());
+    }
+    
     const response = await client.get<ContentChunksResponse>(
-      `/api/v1/content/${id}/chunks?page=${page}&size=${size}`,
+      `/api/v1/content/${id}/chunks?${params.toString()}`,
     );
     return response;
+  },
+
+  /**
+   * Get all content chunks at once (convenience method)
+   */
+  async getAllContentChunks(id: string): Promise<ContentChunksResponse> {
+    return this.getContentChunks(id, 1, 10, true);
   },
 
   /**
@@ -264,6 +281,16 @@ export const contentApi = {
   },
 
   /**
+   * Regenerate AI analysis for a content item
+   */
+  async regenerateAIAnalysis(id: string): Promise<{ message: string; content_id: string; status: string }> {
+    const response = await client.post<{ message: string; content_id: string; status: string }>(
+      `/api/v1/content/${id}/regenerate-ai`
+    );
+    return response;
+  },
+
+  /**
    * Get AI conversations for a content item
    */
   async getContentConversations(
@@ -292,5 +319,19 @@ export const contentApi = {
       console.error("Failed to get AI analysis result:", error);
       return null;
     }
+  },
+
+  /**
+   * Get shared content by token
+   */
+  async getSharedContent(token: string, password?: string): Promise<ContentItemPublic> {
+    const params = new URLSearchParams();
+    if (password) {
+      params.append('password', password);
+    }
+    
+    const url = `/api/v1/content/share/${token}${params.toString() ? `?${params.toString()}` : ''}`;
+    const response = await client.get<ContentItemPublic>(url);
+    return response;
   },
 };

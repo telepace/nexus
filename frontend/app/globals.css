@@ -177,6 +177,15 @@
   --library-text-subtle: #999999;
   --library-tag-bg: rgba(0, 0, 0, 0.04);
   --library-tag-bg-hover: rgba(0, 0, 0, 0.08);
+
+  /* Content Library Semantic Colors - Light Mode */
+  --content-card-bg: #ffffff;
+  --content-card-border: rgba(0, 0, 0, 0.06);
+  --content-card-border-hover: rgba(0, 0, 0, 0.12);
+  --content-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px
+    rgba(0, 0, 0, 0.08);
+  --content-card-shadow-hover: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px
+    rgba(0, 0, 0, 0.08);
 }
 
 .dark {
@@ -307,6 +316,25 @@
   /* Dia icon palette - 深色模式适配 */
   --color-dia-icon-bg: oklch(0.22 0 0); /* icon容器背景 */
   --color-dia-icon: oklch(0.08 0 0); /* icon本身/前景 */
+
+  /* Content Library Colors - 暗色模式适配 */
+  --library-bg: oklch(0.2 0 0);
+  --library-border: rgba(255, 255, 255, 0.08);
+  --library-border-hover: rgba(255, 255, 255, 0.16);
+  --library-text: #ffffff;
+  --library-text-muted: #a3a3a3;
+  --library-text-subtle: #737373;
+  --library-tag-bg: rgba(255, 255, 255, 0.08);
+  --library-tag-bg-hover: rgba(255, 255, 255, 0.12);
+
+  /* Content Library Semantic Colors - Dark Mode */
+  --content-card-bg: oklch(0.2 0 0);
+  --content-card-border: rgba(255, 255, 255, 0.08);
+  --content-card-border-hover: rgba(255, 255, 255, 0.16);
+  --content-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px
+    rgba(0, 0, 0, 0.3);
+  --content-card-shadow-hover: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px
+    rgba(0, 0, 0, 0.3);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -943,30 +971,62 @@
   }
 }
 
-/* Ripple effect animation */
+/* Ripple effect animation - 更精致的触碰反馈 */
 @keyframes ripple {
   0% {
     transform: scale(0);
     opacity: 1;
   }
   100% {
-    transform: scale(4);
+    transform: scale(2.5);
     opacity: 0;
   }
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
+/* Silent loading animations for smooth user experience */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
   }
-  body {
-    @apply bg-background text-foreground;
+  100% {
+    background-position: 200% 0;
   }
 }
 
-/* =============================================================================
- * 自定义滚动条样式 - 更透明、更美观
- * ============================================================================= */
+@keyframes gentle-pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Utility classes for silent loading */
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
+}
+
+.animate-gentle-pulse {
+  animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out;
+}
+
+/* 自定义滚动条样式 - 更透明、更美观 */
 
 /* Webkit 浏览器滚动条样式 (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
@@ -1045,3 +1105,450 @@
   -webkit-box-orient: horizontal;
   -webkit-line-clamp: none;
 }
+
+/* =============================================================================
+ * 性能优化样式 - 减少重绘和回流
+ * ============================================================================= */
+
+/* 优化滚动性能 */
+.prompt-cards-container {
+  contain: layout style paint;
+  will-change: scroll-position;
+}
+
+/* 优化卡片渲染性能 */
+.prompt-card {
+  contain: layout style;
+  transform: translateZ(0); /* 开启硬件加速 */
+}
+
+/* 减少动画期间的重绘 */
+.prompt-card:hover {
+  will-change: transform, box-shadow;
+}
+
+.prompt-card:not(:hover) {
+  will-change: auto;
+}
+
+/* 优化 toggle 开关性能 */
+.prompt-toggle {
+  contain: layout style;
+  transform: translateZ(0);
+}
+
+/* 优化文本渲染 */
+.text-optimized {
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Modern Analysis Interface Styles */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom animations for modern interface */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.analysis-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.analysis-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Enhanced focus styles */
+.modern-focus:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  border-color: rgb(59, 130, 246);
+}
+
+/* Gradient text for special elements */
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Custom scrollbar for content areas */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(75, 85, 99, 0.3);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(75, 85, 99, 0.5);
+  }
+}
+
+/* 自定义滚动条样式 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(107, 114, 128, 0.3);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.5);
+}
+
+/* Firefox 滚动条样式 */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+}
+
+.dark .custom-scrollbar {
+  scrollbar-color: rgba(107, 114, 128, 0.3) transparent;
+}
+
+/* 响应式设计增强 */
+@media (max-width: 768px) {
+  /* 移动端优化 */
+  .mobile-full {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* 移动端对话框 */
+  .dialog-mobile {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  /* 移动端安全区域 */
+  .mobile-safe {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* 移动端文本优化 */
+  .text-mobile {
+    font-size: clamp(14px, 4vw, 16px);
+    line-height: 1.5;
+  }
+
+  /* 移动端触摸优化 */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  /* 小屏幕优化 */
+  .small-screen-stack {
+    flex-direction: column !important;
+  }
+
+  .small-screen-full {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .small-screen-hide {
+    display: none !important;
+  }
+}
+
+/* 容器查询支持 */
+@container (max-width: 480px) {
+  .container-mobile {
+    padding: 0.5rem;
+  }
+
+  .container-mobile .text-lg {
+    font-size: 1rem;
+  }
+
+  .container-mobile .space-y-4 > * + * {
+    margin-top: 0.75rem;
+  }
+}
+
+@container (max-width: 320px) {
+  .container-xs {
+    padding: 0.25rem;
+  }
+
+  .container-xs .text-base {
+    font-size: 0.875rem;
+  }
+}
+
+/* 动态视口单位支持 */
+.h-screen-safe {
+  height: 100vh;
+  height: 100dvh; /* 动态视口高度 */
+}
+
+.min-h-screen-safe {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* 改进的滚动行为 */
+.scroll-smooth {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* iOS 惯性滚动 */
+}
+
+.scroll-container {
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 响应式网格系统 */
+.grid-responsive {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .grid-responsive {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-responsive {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .grid-responsive {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* 面板布局响应式 */
+.panel-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .panel-layout {
+    flex-direction: column;
+  }
+
+  .panel-layout .panel {
+    height: auto;
+    min-height: 50vh;
+  }
+}
+
+/* 动画性能优化 */
+.animate-optimized {
+  will-change: transform, opacity;
+  transform: translateZ(0); /* 启用硬件加速 */
+}
+
+/* 减少动画（用户偏好） */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-in,
+  .animate-slide-up,
+  .animate-scale-in {
+    animation: none;
+  }
+
+  .transition-all,
+  .transition-transform,
+  .transition-opacity {
+    transition: none;
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .border-muted {
+    border-color: currentColor;
+  }
+
+  .text-muted-foreground {
+    color: currentColor;
+    opacity: 0.8;
+  }
+}
+
+/* 深色模式优化 */
+@media (prefers-color-scheme: dark) {
+  .shadow-dialog-desktop {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px
+      rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  .hover\:scale-105:hover {
+    transform: none;
+  }
+
+  .touch-device .hover-trigger {
+    display: none;
+  }
+
+  /* 增大触摸目标 */
+  .touch-device button,
+  .touch-device a,
+  .touch-device [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* 键盘导航优化 */
+.focus-visible\:ring-offset-background:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* 可访问性增强 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 响应式字体 */
+.text-fluid-sm {
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+}
+
+.text-fluid-base {
+  font-size: clamp(0.875rem, 2.5vw, 1rem);
+}
+
+.text-fluid-lg {
+  font-size: clamp(1rem, 3vw, 1.125rem);
+}
+
+.text-fluid-xl {
+  font-size: clamp(1.125rem, 3.5vw, 1.25rem);
+}
+
+.text-fluid-2xl {
+  font-size: clamp(1.25rem, 4vw, 1.5rem);
+}
+
+/* 响应式间距 */
+.space-fluid-y > * + * {
+  margin-top: clamp(0.5rem, 2vw, 1rem);
+}
+
+.space-fluid-x > * + * {
+  margin-left: clamp(0.5rem, 2vw, 1rem);
+}
+
+/* 自适应容器 */
+.container-fluid {
+  width: 100%;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1rem, 4vw, 2rem);
+  padding-right: clamp(1rem, 4vw, 2rem);
+}
+
+/* 文本截断增强 */
+.text-truncate-lines-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.text-truncate-lines-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* =============================================================================
+ * Shadcn/ui Component Animation Overrides
+ * ============================================================================= */
+

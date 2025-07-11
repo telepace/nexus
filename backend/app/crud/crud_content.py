@@ -18,16 +18,18 @@ from sqlmodel import select as sqlmodel_select
 from app.core import security  # For password hashing
 from app.core.storage import StorageInterface
 from app.crud import crud_image  # crud_image module itself
-from app.models.content import (
+from app.models import (
     AIConversation,
     AIResult,
     ContentAsset,
-    ContentChunk,
     ContentItem,
     ContentShare,
     MessageSegmentReference,
-    Segment,
+    Segment,  # Use Segment instead of ContentChunk
 )
+
+# Import aliases for backward compatibility
+from app.models.content import ContentChunk
 
 # Schema imports - assuming these exist
 from app.schemas.content import ContentItemCreate, ContentItemUpdate, ContentShareCreate
@@ -167,10 +169,19 @@ def create_content_item_sync(
     session: Session,
     *,
     content_item_in: ContentItem,  # Accept ContentItem model directly
+    user_id: uuid.UUID,
 ) -> ContentItem:
+    # Forcefully assign the user_id to ensure data integrity
+    content_item_in.user_id = user_id
+    
     session.add(content_item_in)
     session.commit()
-    session.refresh(content_item_in)
+
+    # 重新获取content_item_in以确保session绑定，避免refresh错误
+    refreshed_content_item = session.get(ContentItem, content_item_in.id)
+    if refreshed_content_item:
+        content_item_in = refreshed_content_item
+
     return content_item_in
 
 
@@ -408,7 +419,12 @@ def update_content_item_sync(
 
     session.add(db_content_item)
     session.commit()
-    session.refresh(db_content_item)
+
+    # 重新获取db_content_item以确保session绑定，避免refresh错误
+    refreshed_content_item = session.get(ContentItem, db_content_item.id)
+    if refreshed_content_item:
+        return refreshed_content_item
+
     return db_content_item
 
 
@@ -586,3 +602,32 @@ def delete_content_share(db: Session, *, id: uuid.UUID) -> ContentShare | None:
         db.delete(content_share)
         db.commit()
     return content_share
+
+
+def get_all_content_chunks(
+    session: Session, content_item_id: uuid.UUID
+) -> tuple[list[ContentChunk], int]:
+    """
+    Get all content chunks for a content item without pagination.
+    Optimized for scenarios where user wants complete content at once.
+
+    Args:
+        session: Database session
+        content_item_id: ID of the content item
+
+    Returns:
+        Tuple of (all_chunks_list, total_count)
+    """
+    # Get all chunks ordered by segment_index - single optimized query
+    chunks_statement = (
+        sqlmodel_select(ContentChunk)
+        .where(ContentChunk.content_item_id == content_item_id)
+        .order_by(ContentChunk.segment_index)
+    )
+    chunks_result = session.exec(chunks_statement)
+    chunks = chunks_result.all()
+
+    # Count is simply the length of the result
+    total_count = len(chunks)
+
+    return list(chunks), total_count

@@ -8,9 +8,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { BookOpen, Lightbulb, BarChart3, Star } from "lucide-react";
+import { BookOpen, BarChart3, Star } from "lucide-react";
 import { AIResult } from "@/lib/api/content";
-import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
+// 引入 AnalysisCard
+import { AnalysisCard, ContentBlock } from "@/components/ui/analysis-card";
 
 // 统一的分析数据接口
 interface UnifiedAnalysisData {
@@ -135,8 +137,6 @@ export const SummaryCard = ({
 }) => {
   if (!summary) return null;
 
-  const styles = getVariantStyles(variant);
-
   let summaryText = "";
 
   if (typeof summary === "string") {
@@ -154,23 +154,24 @@ export const SummaryCard = ({
 
   if (!summaryText) return null;
 
+  // 使用 UniversalContentRenderer 来自动检测并渲染 JSONL 格式
+  const contentBlocks: ContentBlock[] = [
+    {
+      id: "summary",
+      type: "summary",
+      content: <UniversalContentRenderer content={summaryText} />,
+      expandable: summaryText.length > 200,
+    },
+  ];
+
   return (
-    <Card className={styles.card}>
-      <CardHeader className={styles.header}>
-        <CardTitle className={styles.title}>
-          <BookOpen className={styles.icon} />
-          内容摘要
-        </CardTitle>
-      </CardHeader>
-      <CardContent className={styles.content}>
-        <div className={styles.text}>
-          <MarkdownRenderer
-            content={summaryText}
-            className={styles.markdownBase}
-          />
-        </div>
-      </CardContent>
-    </Card>
+    <AnalysisCard
+      title="内容摘要"
+      emoji="📝"
+      contentBlocks={contentBlocks}
+      variant="compact"
+      defaultActions={true}
+    />
   );
 };
 
@@ -183,8 +184,6 @@ export const KeyPointsCard = ({
   variant?: CardProps["variant"];
 }) => {
   if (!keyPoints) return null;
-
-  const styles = getVariantStyles(variant);
 
   let points: string[] = [];
   let keyPointsContent = "";
@@ -231,71 +230,41 @@ export const KeyPointsCard = ({
 
   if (!keyPointsContent && points.length === 0) return null;
 
-  const maxPoints = variant === "preview" ? 5 : points.length;
-  const showMoreIndicator = variant === "preview" && points.length > 5;
+  // 构建内容块
+  const contentBlocks: ContentBlock[] = [];
+
+  if (keyPointsContent) {
+    contentBlocks.push({
+      id: "keypoints-raw",
+      type: "text",
+      content: <UniversalContentRenderer content={keyPointsContent} />,
+      expandable: keyPointsContent.length > 200,
+    });
+  } else {
+    contentBlocks.push({
+      id: "keypoints-list",
+      type: "list",
+      content: (
+        <ul className="space-y-2">
+          {points.map((p, idx) => (
+            <li key={idx} className="flex items-start gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0" />
+              <span>{p}</span>
+            </li>
+          ))}
+        </ul>
+      ),
+    });
+  }
 
   return (
-    <Card className={styles.card}>
-      <CardHeader className={styles.header}>
-        <CardTitle className={styles.title}>
-          <Lightbulb className={styles.icon} />
-          关键要点
-        </CardTitle>
-      </CardHeader>
-      <CardContent className={styles.content}>
-        {/* 如果有markdown内容，直接渲染 */}
-        {keyPointsContent ? (
-          <div className={styles.text}>
-            <MarkdownRenderer
-              content={keyPointsContent}
-              className={`${styles.markdownBase} prose-ul:mb-2 prose-ol:mb-2 prose-ul:mt-0 prose-ol:mt-0`}
-            />
-          </div>
-        ) : (
-          /* 如果是要点数组，使用自定义样式 */
-          <div className={variant === "sidebar" ? "space-y-3" : "space-y-2"}>
-            {points.length > 0 ? (
-              points.slice(0, maxPoints).map((point, index) => (
-                <div
-                  key={index}
-                  className={`flex gap-${variant === "sidebar" ? "3" : "2"} items-start`}
-                >
-                  <div
-                    className={`flex-shrink-0 ${
-                      variant === "sidebar" ? "w-5 h-5" : "w-4 h-4"
-                    } rounded-full ${
-                      variant === "preview"
-                        ? "bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300"
-                        : "bg-neutral-100 dark:bg-neutral-950 text-neutral-700 dark:text-neutral-300"
-                    } flex items-center justify-center text-xs font-medium mt-0.5`}
-                  >
-                    {index + 1}
-                  </div>
-                  <div className={styles.text}>
-                    <MarkdownRenderer
-                      content={point}
-                      className={`${styles.markdownBase.replace("prose-p:mb-2", "prose-p:mb-1")}`}
-                    />
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className={styles.text}>
-                <MarkdownRenderer
-                  content={JSON.stringify(keyPoints)}
-                  className={styles.markdownBase}
-                />
-              </div>
-            )}
-            {showMoreIndicator && (
-              <div className="text-xs text-muted-foreground ml-6">
-                +{points.length - 5} 个更多要点
-              </div>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <AnalysisCard
+      title="关键要点"
+      emoji="🎯"
+      contentBlocks={contentBlocks}
+      variant="compact"
+      defaultActions={true}
+    />
   );
 };
 
