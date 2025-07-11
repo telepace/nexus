@@ -319,6 +319,23 @@ class BackgroundTaskManager:
                                 # 批量插入新分段
                                 session.add_all(chunks)
 
+                                # 基础内容处理完成，先设置状态为completed
+                                # 这样即使AI处理失败，用户也能看到和使用基础内容
+                                content_item.processing_status = "completed"
+                                session.add(content_item)
+                                session.commit()  # 立即提交，确保用户可以看到内容
+                                
+                                logger.info(f"✅ 基础内容处理完成 {content_id}, 状态已设置为completed")
+                                
+                                # 通知基础处理完成 - 进度65%
+                                await content_event_manager.notify_content_status(
+                                    user_id=user_id,
+                                    content_id=content_id,
+                                    status="completed",  # 基础处理已完成
+                                    progress=65,
+                                    title=content_item.title or "新内容",
+                                )
+
                                 # ---------------- 统一AI处理：只使用PreprocessingPipeline ----------------
                                 try:
                                     from app.core.dependencies import (
@@ -534,9 +551,9 @@ class BackgroundTaskManager:
                                         title=content_item.title or "新内容",
                                     )
 
-                                    # AI处理完成，现在可以设置状态为完成
-                                    content_item.processing_status = "completed"
-                                    logger.info(f"✅ All processing completed for content {content_id}")
+                                    # AI处理也完成了，内容状态已经是completed，无需再次设置
+                                    logger.info(f"✅ AI processing completed for content {content_id}")
+                                    # 注意：content_item.processing_status 已经在基础处理完成时设置为 "completed"
 
                                 except Exception as preprocessing_err:
                                     logger.error(
@@ -544,21 +561,22 @@ class BackgroundTaskManager:
                                         exc_info=True,  # 添加详细的异常堆栈信息
                                     )
 
-                                    # 记录AI处理失败状态到内容项
+                                    # 记录AI处理失败状态到内容项，但保持processing_status为completed
+                                    # 因为基础内容处理已经成功，用户应该能够使用内容
                                     content_item.error_message = (
                                         f"AI分析失败: {str(preprocessing_err)}"
                                     )
                                     session.add(content_item)
 
-                                    # 通知前端AI处理失败
+                                    # 通知前端AI处理失败，但状态保持completed
                                     try:
                                         await content_event_manager.notify_content_status(
                                             user_id=user_id,
                                             content_id=content_id,
-                                            status="processing",
+                                            status="completed",  # 保持completed状态，因为基础处理成功
                                             progress=75,
                                             title=content_item.title or "新内容",
-                                            error=f"AI分析失败: {str(preprocessing_err)}",
+                                            error=f"AI分析失败，但基础内容可正常使用: {str(preprocessing_err)}",
                                         )
                                     except Exception as notify_err:
                                         logger.error(
@@ -613,9 +631,8 @@ class BackgroundTaskManager:
                                         )
 
                                     # 不让AI分析失败影响整体处理状态，但要记录错误
-                                    # 即使AI处理失败，基本内容处理已完成，设置状态为完成
-                                    content_item.processing_status = "completed"
-                                    logger.info(f"✅ Basic processing completed for content {content_id} (AI processing failed but marked as completed)")
+                                    # 注意：processing_status 已经在基础处理完成时设置为 "completed"，无需再次设置
+                                    logger.info(f"✅ Basic content processing was already completed for {content_id} (AI processing failed but content remains usable)")
 
                                 logger.info(
                                     f"Replaced segments for {content_id} (total {len(chunks)})"
@@ -625,14 +642,18 @@ class BackgroundTaskManager:
                                 logger.error(
                                     f"Failed to create chunks for {content_id}: {chunk_error}"
                                 )
-                                # 不让分段失败影响整体处理状态
-                                # 即使分段失败，基本内容处理已完成，设置状态为完成
+                                # 分段失败，设置基础状态为完成（因为内容本身处理成功了）
                                 content_item.processing_status = "completed"
-                                logger.info(f"✅ Basic processing completed for content {content_id} (chunking failed but marked as completed)")
+                                content_item.error_message = f"内容分段失败: {str(chunk_error)}"
+                                session.add(content_item)
+                                session.commit()
+                                logger.info(f"✅ Basic processing completed for content {content_id} (chunking failed but content marked as completed)")
 
                         else:
                             # 没有内容可分段，但基本处理已完成
                             content_item.processing_status = "completed"
+                            session.add(content_item)
+                            session.commit()
                             logger.info(f"✅ Basic processing completed for content {content_id} (no content to chunk)")
 
                         logger.info(f"Successfully processed content {content_id}")

@@ -1755,6 +1755,19 @@ class ProcessingPipeline:
             except Exception as e:
                 logger.warning(f"⚠️  首选处理器 {preferred_processor} 初始化失败: {e}")
 
+        # 无论如何，都要确保有MarkItDown处理器来处理通用内容
+        markitdown_exists = any(isinstance(step, MarkItDownProcessor) for step in self.steps)
+        if not markitdown_exists:
+            try:
+                logger.info("📝 添加 MarkItDownProcessor 作为通用处理器")
+                markitdown_instance = MarkItDownProcessor()
+                self.add_step(markitdown_instance)
+                logger.info("✅ 成功添加 MarkItDownProcessor")
+                if not registered:
+                    registered = True
+            except Exception as e:
+                logger.error(f"❌ 添加 MarkItDownProcessor 失败: {e}")
+
         # 如果首选处理器不可用，按顺序尝试备用处理器
         if not registered:
             # 调整fallback顺序，markitdown应该优先作为通用处理器
@@ -1770,19 +1783,6 @@ class ProcessingPipeline:
                             break
                     except Exception as e:
                         logger.warning(f"⚠️  备用处理器 {fallback} 初始化失败: {e}")
-
-        # 如果还是没有注册成功，强制注册markitdown作为最后的备用方案
-        if not registered:
-            try:
-                logger.warning(
-                    "⚠️  所有常规处理器都不可用，强制使用 markitdown 作为最后备用方案"
-                )
-                markitdown_instance = MarkItDownProcessor()
-                self.add_step(markitdown_instance)
-                logger.info("✅ 强制注册 markitdown 处理器成功")
-                registered = True
-            except Exception as e:
-                logger.error(f"❌ 连 markitdown 处理器都无法注册: {e}")
 
         if not registered:
             logger.error("❌ 没有可用的处理器！")

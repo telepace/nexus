@@ -37,7 +37,16 @@
       "Bash(ls:*)",
       "Bash(.venv/bin/python -m pytest app/tests/test_ai_regeneration.py::TestAIRegeneration::test_regenerate_ai_analysis_success -v)",
       "Bash(python test:*)",
-      "Bash(ruff check:*)"
+      "Bash(ruff check:*)",
+      "Bash(python -m pytest backend/app/tests/test_ai_processing_status_bug.py::TestAIProcessingStatusBug::test_status_not_completed_before_ai_processing -v)",
+      "Bash(.venv/bin/python -m pytest:*)",
+      "Bash(.venv/bin/python:*)",
+      "Bash(timeout 30 uv run:*)",
+      "mcp__postgres__query",
+      "Bash(docker-compose:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker cp:*)"
     ]
   },
   "enableAllProjectMcpServers": false
