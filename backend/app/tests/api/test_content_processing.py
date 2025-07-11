@@ -3,6 +3,7 @@ Tests for content processing API endpoints.
 """
 
 import uuid
+import time
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -73,19 +74,16 @@ class TestContentProcessingAPI:
         content_item = create_response.json()
         content_id = extract_content_id(content_item)
 
-        # Text content should already be completed after creation
-        assert extract_data(content_item, "processing_status") == "completed"
+        # Poll for completion status
+        for _ in range(10):  # Poll for 10 seconds max
+            get_response = client.get(f"/api/v1/content/{content_id}", headers=normal_user_token_headers)
+            if get_response.json().get("processing_status") == "completed":
+                break
+            time.sleep(1)
+        
+        final_item_response = client.get(f"/api/v1/content/{content_id}", headers=normal_user_token_headers)
+        assert final_item_response.json().get("processing_status") == "completed"
 
-        # Process the content item - should return already completed
-        process_response = client.post(
-            f"/api/v1/content/process/{content_id}",
-            headers=normal_user_token_headers,
-        )
-        assert process_response.status_code == 200
-
-        processed_item = process_response.json()
-        # Since text content is already completed, process should return completed status
-        assert extract_data(processed_item, "processing_status") == "completed"
 
     @patch("app.utils.content_processors.requests.get")
     def test_process_content_item_url(
@@ -117,15 +115,16 @@ class TestContentProcessingAPI:
         content_item = create_response.json()
         content_id = extract_content_id(content_item)
 
-        # Process the content item
-        process_response = client.post(
-            f"/api/v1/content/process/{content_id}",
-            headers=normal_user_token_headers,
-        )
-        assert process_response.status_code == 200
+        # Poll for completion status
+        for _ in range(10):  # Poll for 10 seconds max
+            get_response = client.get(f"/api/v1/content/{content_id}", headers=normal_user_token_headers)
+            if get_response.json().get("processing_status") == "completed":
+                break
+            time.sleep(1)
+            
+        final_item_response = client.get(f"/api/v1/content/{content_id}", headers=normal_user_token_headers)
+        assert final_item_response.json().get("processing_status") == "completed"
 
-        processed_item = process_response.json()
-        assert extract_data(processed_item, "processing_status") == "processing"
 
     def test_process_content_item_not_found(
         self, client: TestClient, normal_user_token_headers

@@ -269,7 +269,7 @@ def create_content_item_endpoint(
 
     # The CRUD function will handle adding to session, commit, refresh
     created_item = create_content_item_sync(
-        session=session, content_item_in=db_content_item
+        session=session, content_item_in=db_content_item, user_id=current_user.id
     )
 
     # 启动后台处理，包括文本内容的LLM分析

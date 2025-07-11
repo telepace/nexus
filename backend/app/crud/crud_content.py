@@ -169,7 +169,11 @@ def create_content_item_sync(
     session: Session,
     *,
     content_item_in: ContentItem,  # Accept ContentItem model directly
+    user_id: uuid.UUID,
 ) -> ContentItem:
+    # Forcefully assign the user_id to ensure data integrity
+    content_item_in.user_id = user_id
+    
     session.add(content_item_in)
     session.commit()
 
