@@ -141,7 +141,7 @@ class Settings(BaseSettings):
     # AI任务模型配置 - 支持为不同任务指定不同模型
     AI_TASK_MODELS: dict[str, str] = Field(
         default={
-            "summary": "or-deepseek-r1",  # Summary生成使用推理能力更强的R1模型
+            "summary": "or-gemini-2.5-pro",  # Summary生成使用Gemini 2.5 Pro模型
             "key_points": "or-deepseek-r1",  # KeyPoint提取使用推理能力更强的R1模型
             "labels": "deepseek-v3-ensemble",  # Labels生成使用更经济的V3模型
             "chat": "or-gemini-2.5-flash-preview-05-20",  # 对话聊天使用默认模型
