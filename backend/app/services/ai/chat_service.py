@@ -19,14 +19,6 @@ from app.utils.tag_manager import tag_manager
 logger = logging.getLogger(__name__)
 
 
-# 模板-模型映射配置
-TEMPLATE_MODEL_MAPPING = {
-    "summary.j2": "gemini-2.5-flash-preview-05-20",  # Summary生成使用Gemini 2.5 Flash模型
-    "key_points.j2": "or-deepseek-r1",  # KeyPoint提取使用推理能力更强的R1模型
-    "labels.j2": "deepseek-v3-ensemble",  # Labels生成使用V3集成模型：中文理解优秀，标签分类精准，性价比高
-}
-
-
 class ChatService:
     """AI聊天服务类"""
 
@@ -37,6 +29,40 @@ class ChatService:
         self.template_env = Environment(
             loader=FileSystemLoader(str(template_dir)), autoescape=False
         )
+    
+    def get_model_for_template(self, template_name: str) -> str:
+        """
+        根据模板名称获取对应的模型
+        
+        Args:
+            template_name: 模板文件名，如 "summary.j2"
+            
+        Returns:
+            str: 模型名称
+        """
+        # 从模板名称映射到任务名称
+        template_to_task = {
+            "summary.j2": "summary",
+            "key_points.j2": "key_points", 
+            "labels.j2": "labels",
+            "segment_aware_chat.j2": "chat",
+            "user_analysis.j2": "analysis",
+        }
+        
+        # 获取任务名称
+        task_name = template_to_task.get(template_name)
+        
+        # 从配置中获取模型
+        resolved_models = settings.resolved_ai_task_models
+        
+        if task_name and task_name in resolved_models:
+            model = resolved_models[task_name]
+            logger.info(f"Model for template '{template_name}' (task: {task_name}): {model}")
+            return model
+        else:
+            # 回退到全局默认
+            logger.info(f"Using default model for template '{template_name}': {settings.DEFAULT_LLM_MODEL}")
+            return settings.DEFAULT_LLM_MODEL
 
     def _is_jsonl_content(self, content: str) -> bool:
         """
@@ -240,13 +266,12 @@ class ChatService:
                 # 选择模型：优先级为 传入的model > 模板映射 > 全局默认
                 selected_model = (
                     model
-                    or TEMPLATE_MODEL_MAPPING.get(template_name)
-                    or settings.DEFAULT_LLM_MODEL
+                    or self.get_model_for_template(template_name)
                 )
 
                 logger.info(
                     f"Using model '{selected_model}' for template '{template_name}' "
-                    f"(source: {'explicit' if model else 'template_mapping' if template_name in TEMPLATE_MODEL_MAPPING else 'default'})"
+                    f"(source: {'explicit' if model else 'config_mapping' if selected_model != settings.DEFAULT_LLM_MODEL else 'default'})"
                 )
 
                 ai_content = await self._call_litellm_proxy(

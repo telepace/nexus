@@ -22,15 +22,6 @@ from app.utils.tag_manager import tag_manager
 
 logger = logging.getLogger(__name__)
 
-# 模板到模型的映射
-TEMPLATE_MODEL_MAPPING = {
-    "summary.j2": "gemini-2.5-flash-preview-05-20",  # Summary生成使用Gemini 2.5 Flash模型
-    "key_points.j2": "or-deepseek-r1",  # KeyPoint提取使用推理能力更强的R1模型
-    "labels.j2": "deepseek-v3-ensemble",  # Labels生成使用更经济高效的V3集成模型
-    "jsonl_output_rules.j2": "claude-3-5-sonnet-20241022",
-    "segment_aware_chat.j2": "claude-3-5-sonnet-20241022",
-}
-
 
 class EnhancedChatService:
     """增强版聊天服务"""
@@ -55,6 +46,41 @@ class EnhancedChatService:
 
         # 注册自定义处理器
         self._setup_custom_processors()
+    
+    def get_model_for_template(self, template_name: str) -> str:
+        """
+        根据模板名称获取对应的模型
+        
+        Args:
+            template_name: 模板文件名，如 "summary.j2"
+            
+        Returns:
+            str: 模型名称
+        """
+        # 从模板名称映射到任务名称
+        template_to_task = {
+            "summary.j2": "summary",
+            "key_points.j2": "key_points", 
+            "labels.j2": "labels",
+            "segment_aware_chat.j2": "chat",
+            "user_analysis.j2": "analysis",
+            "jsonl_output_rules.j2": "analysis",  # 使用通用分析模型
+        }
+        
+        # 获取任务名称
+        task_name = template_to_task.get(template_name)
+        
+        # 从配置中获取模型
+        resolved_models = settings.resolved_ai_task_models
+        
+        if task_name and task_name in resolved_models:
+            model = resolved_models[task_name]
+            logger.info(f"Enhanced model for template '{template_name}' (task: {task_name}): {model}")
+            return model
+        else:
+            # 回退到全局默认
+            logger.info(f"Using default model for template '{template_name}': {settings.DEFAULT_LLM_MODEL}")
+            return settings.DEFAULT_LLM_MODEL
 
     def _setup_custom_processors(self):
         """设置自定义处理器"""
@@ -124,8 +150,7 @@ class EnhancedChatService:
             # 选择模型
             selected_model = (
                 model
-                or TEMPLATE_MODEL_MAPPING.get(template_name)
-                or settings.DEFAULT_LLM_MODEL
+                or self.get_model_for_template(template_name)
             )
 
             logger.info(f"使用模型 '{selected_model}' 处理模板 '{template_name}'")
