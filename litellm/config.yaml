@@ -1,6 +1,6 @@
 # LiteLLM Configuration File
 general_settings:
-  completion_model: or-deepseek-r1
+  completion_model: deepseek-v3-ensemble
   database_url: "os.environ/DATABASE_URL"
   drop_params: false
   environment_variables:
@@ -48,23 +48,17 @@ model_list:
   #     api_key: "os.environ/OPENAI_API_KEY"
   #     base_url: "os.environ/OPENAI_BASE_URL"
 
-  # DeepSeek V3 Models
+  # DeepSeek V3 Models - 只使用OpenRouter，移除有问题的GitHub配置
   - model_name: deepseek-v3-ensemble
     litellm_params:
-      model: deepseek/deepseek-chat-v3-0324
+      model: openrouter/deepseek/deepseek-chat-v3-0324
       api_key: "os.environ/OR_API_KEY"
-      rpm: 100  # Assign an RPM value for weighting (e.g., 100 for 50% share)
+      rpm: 100
 
-  - model_name: deepseek-v3-ensemble
-    litellm_params:
-      model: deepseek/DeepSeek-V3-0324
-      api_key: "os.environ/GITHUB_API_KEY"
-      rpm: 100  # Assign an RPM value for weighting (e.g., 100 for 50% share)
-
-  # DeepSeek R1 Model - 推理能力更强的模型
+  # DeepSeek R1 Model - 推理能力更强的模型（统一使用一个定义）
   - model_name: or-deepseek-r1
     litellm_params:
-      model: openrouter/deepseek/deepseek-r1-0528-qwen3-8b
+      model: openrouter/deepseek/deepseek-r1-0528
       api_key: "os.environ/OR_API_KEY"
 
   # OpenRouter Models (使用正确的模型 ID)
@@ -134,11 +128,6 @@ model_list:
   - model_name: or-qwen3-235b-a22b
     litellm_params:
       model: openrouter/qwen/qwen3-235b-a22b
-      api_key: "os.environ/OR_API_KEY"
-
-  - model_name: or-deepseek-r1
-    litellm_params:
-      model: openrouter/deepseek/deepseek-r1-0528
       api_key: "os.environ/OR_API_KEY"
 
   # ChatAnywhere Embedding Model
