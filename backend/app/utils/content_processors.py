@@ -1940,6 +1940,7 @@ class ProcessingPipeline:
             from sqlmodel import select
 
             from app.models import AIConversation
+            from app.services.ai.chat_service import ChatService
 
             existing_conversation = session.exec(
                 select(AIConversation).where(
@@ -1965,13 +1966,20 @@ class ProcessingPipeline:
                 )
                 return
 
+            # 使用ChatService获取自动分析的正确模型
+            # 这里使用通用分析模型作为自动分析的默认模型
+            chat_service = ChatService()
+            analysis_model = chat_service.get_model_for_template("user_analysis.j2")
+            
+            logger.info(f"Using model '{analysis_model}' for auto analysis conversation")
+
             # 创建自动分析对话
             conversation = AIConversation(
                 user_id=content_item.user_id,
                 content_item_id=content_item.id,
                 title=f"自动分析: {content_item.title or '内容分析'}",
                 conversation_type="auto_analysis",
-                ai_model_name=settings.DEFAULT_LLM_MODEL,
+                ai_model_name=analysis_model,  # 使用正确的分析模型
                 messages="[]",
                 summary="内容已准备就绪，可以开始AI分析",
                 is_active=True,
@@ -1983,17 +1991,13 @@ class ProcessingPipeline:
             # 重新获取conversation以确保session绑定，避免refresh错误
             refreshed_conversation = session.get(AIConversation, conversation.id)
             if refreshed_conversation:
-                conversation = refreshed_conversation
-
-            logger.info(
-                f"Created auto analysis conversation {conversation.id} for content {content_item.id}"
-            )
+                logger.info(
+                    f"Created auto analysis conversation {refreshed_conversation.id} with model {analysis_model} for content {content_item.id}"
+                )
 
         except Exception as e:
-            logger.error(
-                f"Failed to create auto analysis conversation for content {content_item.id}: {e}"
-            )
-            # 不抛出异常，避免影响主处理流程
+            logger.error(f"Failed to create auto analysis conversation: {e}")
+            # 不抛出异常，避免影响主要的内容处理流程
 
     async def _process_ai_steps(
         self, context: ProcessingContext, result: ProcessingResult

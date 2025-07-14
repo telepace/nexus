@@ -9,7 +9,12 @@ interface ChunkItemProps {
 }
 
 export const ChunkItem = React.memo<ChunkItemProps>(({ chunk }) => (
-  <div className="chunk-item py-4 border-b border-muted/5 last:border-b-0 min-h-[200px]">
+  <div 
+    className="chunk-item py-4 border-b border-muted/5 last:border-b-0 min-h-[200px]"
+    data-chunk-id={chunk.id}
+    data-paragraph-index={chunk.index}
+    data-paragraph-content={chunk.content.substring(0, 100)} // 用于调试
+  >
     <div className="chunk-content max-w-none">
       <MarkdownRenderer
         content={chunk.content}

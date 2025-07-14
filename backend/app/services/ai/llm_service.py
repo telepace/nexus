@@ -24,25 +24,28 @@ class LLMService:
         max_tokens: int = 2000,
     ) -> str:
         """
-        调用LLM进行对话完成
+        执行聊天完成请求
 
         Args:
-            messages: 对话消息列表，每个消息包含role和content
-            model: 使用的模型名称，默认使用配置中的模型
-            temperature: 响应的随机性，0-1之间
-            max_tokens: 最大生成token数
+            messages: 消息列表
+            model: 模型名称（配置的模型名称）
+            temperature: 温度参数
+            max_tokens: 最大token数
 
         Returns:
-            str: LLM生成的回复内容
+            str: AI响应内容
 
-        Raises:
-            Exception: 当LLM调用失败时
+        Note:
+            该方法会记录配置模型名称和LiteLLM实际调用模型名称的映射关系
         """
+        import httpx
+
         try:
             async with httpx.AsyncClient(timeout=120.0) as client:
                 # 构建请求数据
+                configured_model = model or settings.DEFAULT_LLM_MODEL
                 request_data = {
-                    "model": model or settings.DEFAULT_LLM_MODEL,
+                    "model": configured_model,
                     "messages": messages,
                     "temperature": temperature,
                     "max_tokens": max_tokens,
@@ -57,7 +60,7 @@ class LLMService:
                 base_url = str(settings.LITELLM_PROXY_URL).rstrip("/")
                 url = f"{base_url}/v1/chat/completions"
 
-                logger.debug(f"Calling LLM: {url} with model: {request_data['model']}")
+                logger.debug(f"Calling LLM: {url} with configured model: {configured_model}")
 
                 response = await client.post(
                     url,
@@ -73,24 +76,19 @@ class LLMService:
                 if "choices" not in response_data or not response_data["choices"]:
                     raise ValueError("Invalid LLM response: missing choices")
 
+                # 记录模型映射信息
+                actual_model = response_data.get("model", "unknown")
+                if actual_model != configured_model:
+                    logger.info(f"🔄 Model routing: {configured_model} -> {actual_model}")
+                else:
+                    logger.debug(f"✅ Model direct: {configured_model}")
+
                 content = response_data["choices"][0]["message"]["content"]
                 logger.info(f"✅ LLM response received, content length: {len(content)}")
                 return content.strip()
 
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 401:
-                logger.error(
-                    "LLM API authentication failed. Check LITELLM_MASTER_KEY configuration."
-                )
-                raise Exception(f"LLM API authentication failed: {e}")
-            else:
-                logger.error(f"LLM API HTTP error {e.response.status_code}: {e}")
-                raise Exception(f"LLM API error: {e}")
-        except httpx.RequestError as e:
-            logger.error(f"LLM API request failed: {e}")
-            raise Exception(f"LLM API request failed: {e}")
         except Exception as e:
-            logger.error(f"LLM API call failed: {str(e)}")
+            logger.error(f"LLM request failed: {str(e)}")
             raise
 
     @staticmethod

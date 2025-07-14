@@ -251,7 +251,7 @@ export default function TestAnalysisCardPage() {
               />
 
               {/* 带快捷键的卡片 */}
-              <EnhancedCard
+              <AnalysisCard
                 title="快捷键演示卡片"
                 subtitle="展示菜单项的快捷键提示"
                 emoji="⌨️"
@@ -367,7 +367,7 @@ export default function TestAnalysisCardPage() {
             <h2 className="text-2xl font-semibold mb-6 text-center">不同状态示例</h2>
             <div className="grid md:grid-cols-3 gap-6">
               {/* 加载状态 */}
-              <EnhancedCard
+              <AnalysisCard
                 title="内容加载中"
                 subtitle="请稍候..."
                 emoji="⏳"
@@ -383,7 +383,7 @@ export default function TestAnalysisCardPage() {
               />
 
               {/* 错误状态 */}
-              <EnhancedCard
+              <AnalysisCard
                 title="加载失败"
                 subtitle="数据获取错误"
                 emoji="⚠️"
@@ -407,7 +407,7 @@ export default function TestAnalysisCardPage() {
               />
 
               {/* 选中状态 */}
-              <EnhancedCard
+              <AnalysisCard
                 title="已选中的卡片"
                 subtitle="当前选中状态"
                 emoji="✅"

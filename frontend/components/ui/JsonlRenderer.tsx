@@ -3,14 +3,13 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "./MarkdownRenderer";
+import { EnhancedReferenceIndicator, useReferenceManagerSafe } from "./ReferenceManager";
 
 interface JsonlRendererProps {
-  /** raw JSONL string, each line is a JSON object */
-  content: string | null | undefined;
-  /** additional class names for the outer container */
+  content: string;
   className?: string;
-  /** whether to enable hover effects for each block */
   enableHoverEffects?: boolean;
+  contentId?: string; // 用于引用管理器
 }
 
 /**
@@ -19,16 +18,19 @@ interface JsonlRendererProps {
  * The LLM returns one JSON object per line, each object contains at least:
  * - `type` | `t`: block type
  * - `content` | `c`: block content
- * - `mapping`: optional mapping id
+ * - `ref`: reference to source paragraphs (comma-separated numbers)
  *
- * Additional custom fields are preserved and passed to specialised renderers
- * (e.g. priority on `insight`).
+ * Enhanced with reference management for jumping to source paragraphs.
  */
 export function JsonlRenderer({
   content,
   className,
   enableHoverEffects = true,
+  contentId,
 }: JsonlRendererProps) {
+  // 使用安全的 ReferenceManager
+  const { actions } = useReferenceManagerSafe();
+
   if (!content) {
     return (
       <div
@@ -66,7 +68,8 @@ export function JsonlRenderer({
 
   const BlockWrapper: React.FC<{
     children: React.ReactNode;
-  }> = ({ children }) => {
+    hasReferences?: boolean;
+  }> = ({ children, hasReferences = false }) => {
     if (!enableHoverEffects) {
       return <>{children}</>;
     }
@@ -77,6 +80,7 @@ export function JsonlRenderer({
           "group relative rounded-lg transition-all duration-200 ease-out",
           "px-3 py-2 -mx-3 -my-2",
           "border border-transparent",
+          hasReferences && "hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/50 dark:hover:bg-blue-950/20"
         )}
       >
         {/* 主要内容 */}
@@ -88,82 +92,147 @@ export function JsonlRenderer({
   const renderBlock = (block: Record<string, unknown>, idx: number) => {
     const type = (block["type"] || block["t"]) as string | undefined;
     const c = (block["content"] ?? block["c"]) as React.ReactNode;
+    const ref = block["ref"] as string | undefined;
+    const lead = block["lead"] as string | undefined;
+
+    // 解析引用
+    const references = actions.parseReferences(ref);
+    const hasReferences = references.length > 0;
 
     const blockElement = (() => {
       switch (type) {
         case "h1":
           return (
-            <h1 className="scroll-m-16 text-xl font-bold tracking-tight lg:text-2xl select-text leading-[1.3]">
-              <MarkdownRenderer content={String(c)} />
-            </h1>
+            <div className="flex items-center justify-between">
+              <h1 className="scroll-m-16 text-xl font-bold tracking-tight lg:text-2xl select-text leading-[1.3] flex-1">
+                <MarkdownRenderer content={String(c)} />
+              </h1>
+              {hasReferences && (
+                <EnhancedReferenceIndicator
+                  references={references}
+                  className="ml-4"
+                />
+              )}
+            </div>
           );
         case "h2":
           return (
-            <h2 className="scroll-m-16 border-b pb-1.5 text-lg font-semibold tracking-tight first:mt-0 select-text leading-[1.3]">
-              <MarkdownRenderer content={String(c)} />
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="scroll-m-16 border-b pb-1.5 text-lg font-semibold tracking-tight first:mt-0 select-text leading-[1.3] flex-1">
+                <MarkdownRenderer content={String(c)} />
+              </h2>
+              {hasReferences && (
+                <EnhancedReferenceIndicator
+                  references={references}
+                  className="ml-4"
+                />
+              )}
+            </div>
           );
         case "h3":
           return (
-            <h3 className="scroll-m-16 text-base font-semibold tracking-tight select-text leading-[1.3]">
-              <MarkdownRenderer content={String(c)} />
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="scroll-m-16 text-base font-semibold tracking-tight select-text leading-[1.3] flex-1">
+                <MarkdownRenderer content={String(c)} />
+              </h3>
+              {hasReferences && (
+                <EnhancedReferenceIndicator
+                  references={references}
+                  className="ml-4"
+                />
+              )}
+            </div>
           );
         case "quote": {
-          const ref = block["ref"] as string | undefined;
           return (
             <blockquote className="italic border-l-2 pl-4 my-2 select-text">
               <div className="mb-1">
                 <MarkdownRenderer content={String(c)} />
               </div>
-              {ref && (
-                <cite className="text-xs text-gray-500 dark:text-gray-400 not-italic">
-                  — {ref}
-                </cite>
-              )}
+              <div className="flex items-center justify-between mt-2">
+                {ref && (
+                  <cite className="text-xs text-gray-500 dark:text-gray-400 not-italic">
+                    — {ref}
+                  </cite>
+                )}
+                {hasReferences && (
+                  <EnhancedReferenceIndicator
+                    references={references}
+                    className="ml-auto"
+                  />
+                )}
+              </div>
             </blockquote>
           );
         }
         case "list": {
-          // Content can be array or string (comma separated)
-          const items: string[] = Array.isArray(c)
-            ? (c as string[])
-            : typeof c === "string"
-            ? (c as string)
-                .split(/[\n,；;]/)
-                .map((s) => s.trim())
-                .filter(Boolean)
-            : [];
+          // Expect c to be string or array
+          let items: string[] = [];
+          if (Array.isArray(c)) {
+            items = c.map(String);
+          } else if (typeof c === "string") {
+            // Try splitting by common delimiters
+            items = c.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
+          }
           return (
-            <ul className="list-disc ml-4 space-y-1 my-2 select-text">
-              {items.map((item, i) => (
-                <li key={i} className="select-text">
-                  <MarkdownRenderer content={item} />
-                </li>
-              ))}
-            </ul>
+            <div>
+              <ul className="list-disc ml-4 space-y-1 my-2 select-text">
+                {items.map((item, i) => (
+                  <li key={i} className="select-text">
+                    <MarkdownRenderer content={item} />
+                  </li>
+                ))}
+              </ul>
+              {hasReferences && (
+                <div className="mt-2 flex justify-end">
+                  <EnhancedReferenceIndicator references={references} />
+                </div>
+              )}
+            </div>
           );
         }
         case "insight": {
-          const priority = (block["priority"] as string) || "normal";
-          const color =
-            priority === "high" ? "border-red-500" : "border-blue-500";
+          // Special insight styling
           return (
-            <div
-              className={cn(
-                "my-3 rounded-md border-l-4 bg-blue-50 p-3 dark:bg-blue-900/20 select-text",
-                color,
-              )}
-            >
-              <MarkdownRenderer content={String(c)} />
+            <div className="my-3 rounded-md border-l-4 border-blue-500 bg-blue-50 p-3 dark:bg-blue-900/20 select-text">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <strong className="text-blue-600 dark:text-blue-400 text-sm font-medium mr-2">
+                    💡 洞察:
+                  </strong>
+                  <span>
+                    <MarkdownRenderer content={String(c)} />
+                  </span>
+                </div>
+                {hasReferences && (
+                  <EnhancedReferenceIndicator
+                    references={references}
+                    className="shrink-0"
+                  />
+                )}
+              </div>
             </div>
           );
         }
         case "concept": {
           return (
             <div className="my-3 rounded-md border-l-4 border-purple-500 bg-purple-50 p-3 dark:bg-purple-900/20 select-text">
-              <strong className="mr-2">概念:</strong>
-              <MarkdownRenderer content={String(c)} />
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <strong className="text-purple-600 dark:text-purple-400 text-sm font-medium mr-2">
+                    🎯 概念:
+                  </strong>
+                  <span>
+                    <MarkdownRenderer content={String(c)} />
+                  </span>
+                </div>
+                {hasReferences && (
+                  <EnhancedReferenceIndicator
+                    references={references}
+                    className="shrink-0"
+                  />
+                )}
+              </div>
             </div>
           );
         }
@@ -180,36 +249,75 @@ export function JsonlRenderer({
                 <p className="select-text">
                   A: <MarkdownRenderer content={String(a)} />
                 </p>
+                {hasReferences && (
+                  <div className="mt-2 flex justify-end">
+                    <EnhancedReferenceIndicator references={references} />
+                  </div>
+                )}
               </div>
             );
           }
           return (
-            <p className="my-2 select-text">
-              <MarkdownRenderer content={String(c)} />
-            </p>
+            <div>
+              <p className="my-2 select-text">
+                <MarkdownRenderer content={String(c)} />
+              </p>
+              {hasReferences && (
+                <div className="mt-2 flex justify-end">
+                  <EnhancedReferenceIndicator references={references} />
+                </div>
+              )}
+            </div>
           );
         }
         case "action":
           return (
             <div className="my-3 rounded-md border-l-4 border-green-500 bg-green-50 p-3 dark:bg-green-900/20 select-text">
-              <strong className="mr-2">行动:</strong>
-              <MarkdownRenderer content={String(c)} />
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <strong className="text-green-600 dark:text-green-400 text-sm font-medium mr-2">
+                    ⚡ 行动:
+                  </strong>
+                  <span>
+                    <MarkdownRenderer content={String(c)} />
+                  </span>
+                </div>
+                {hasReferences && (
+                  <EnhancedReferenceIndicator
+                    references={references}
+                    className="shrink-0"
+                  />
+                )}
+              </div>
             </div>
           );
         default: {
-          // Default paragraph
-          const lead = block["lead"] as string | undefined;
+          // Default paragraph with lead support
           const finalContent = lead ? `**${lead}:** ${String(c)}` : String(c);
           return (
             <div className="leading-6 my-2 select-text">
-              <MarkdownRenderer content={finalContent} />
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <MarkdownRenderer content={finalContent} />
+                </div>
+                {hasReferences && (
+                  <EnhancedReferenceIndicator
+                    references={references}
+                    className="shrink-0"
+                  />
+                )}
+              </div>
             </div>
           );
         }
       }
     })();
 
-    return <BlockWrapper key={idx}>{blockElement}</BlockWrapper>;
+    return (
+      <BlockWrapper key={idx} hasReferences={hasReferences}>
+        {blockElement}
+      </BlockWrapper>
+    );
   };
 
   return (

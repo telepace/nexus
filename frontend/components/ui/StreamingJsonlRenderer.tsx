@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
 
+import { EnhancedReferenceIndicator, useReferenceManagerSafe } from "./ReferenceManager";
+
 interface StreamingJsonlRendererProps {
   /** 流式 JSONL 内容 */
   content: string;
@@ -16,11 +18,14 @@ interface StreamingJsonlRendererProps {
   enableHoverEffects?: boolean;
   /** 是否显示流式指示器 */
   showStreamingIndicator?: boolean;
+  contentId?: string; // 用于引用管理器
 }
 
 interface JsonlBlock {
   type: string;
   content: string;
+  lead?: string; // 添加 lead 字段支持
+  ref?: string; // 添加 ref 字段支持
   raw: string;
   index: number;
   isComplete: boolean;
@@ -41,8 +46,12 @@ export function StreamingJsonlRenderer({
   className,
   enableHoverEffects = true,
   showStreamingIndicator = true,
+  contentId,
 }: StreamingJsonlRendererProps) {
   const [hoveredBlock, setHoveredBlock] = useState<number | null>(null);
+  
+  // 使用安全的 ReferenceManager
+  const { actions } = useReferenceManagerSafe();
 
   // 解析 JSONL 内容为可渲染的块
   const blocks = useMemo(() => {
@@ -60,10 +69,14 @@ export function StreamingJsonlRenderer({
         const parsed = JSON.parse(trimmedLine);
         const type = parsed.type || parsed.t || 'p';
         const blockContent = parsed.content || parsed.c || '';
+        const lead = parsed.lead; // 提取 lead 字段
+        const ref = parsed.ref; // 提取 ref 字段
 
         parsedBlocks.push({
           type,
           content: blockContent,
+          lead,
+          ref,
           raw: trimmedLine,
           index,
           isComplete: true,
@@ -171,7 +184,7 @@ export function StreamingJsonlRenderer({
   };
 
   const renderBlock = (block: JsonlBlock) => {
-    const { type, content, index, isComplete } = block;
+    const { type, content, lead, ref, index, isComplete } = block;
 
     const blockElement = (() => {
       switch (type) {
@@ -196,7 +209,12 @@ export function StreamingJsonlRenderer({
         case "quote":
           return (
             <blockquote className="italic border-l-2 pl-4 my-2 select-text">
-              {content}
+              <div className="mb-1">{content}</div>
+              {ref && (
+                <cite className="text-xs text-muted-foreground not-italic">
+                  — {ref}
+                </cite>
+              )}
             </blockquote>
           );
         case "list": {
@@ -221,6 +239,11 @@ export function StreamingJsonlRenderer({
                 <span className="text-blue-600 dark:text-blue-400 text-sm font-medium">💡 洞察</span>
                 <span className="flex-1">{content}</span>
               </div>
+              {ref && (
+                <div className="text-xs text-muted-foreground mt-2">
+                  参考: {ref}
+                </div>
+              )}
             </div>
           );
         }
@@ -267,11 +290,29 @@ export function StreamingJsonlRenderer({
             </div>
           );
         default:
-          // 默认段落
+          // 默认段落 - 处理 lead 字段和 ref 字段
+          const references = actions.parseReferences(ref);
+          const hasReferences = references.length > 0;
+          
           return (
-            <p className="leading-6 my-2 select-text text-gray-700 dark:text-gray-300">
-              {content}
-            </p>
+            <div className="leading-6 my-2 select-text text-foreground">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  {lead && (
+                    <span className="font-semibold text-foreground">
+                      {lead}:{" "}
+                    </span>
+                  )}
+                  <span>{content}</span>
+                </div>
+                {hasReferences && (
+                  <EnhancedReferenceIndicator
+                    references={references}
+                    className="shrink-0"
+                  />
+                )}
+              </div>
+            </div>
           );
       }
     })();

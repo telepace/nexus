@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -28,6 +28,39 @@ import { useGlobalNotificationStore } from "@/lib/stores/useGlobalNotificationSt
 import { extractAndNormalizeUrls } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+
+/**
+ * 添加内容模态框
+ * 
+ * 新功能：链接选择处理
+ * - 当粘贴包含链接的文本时，会自动检测并显示所有链接
+ * - 用户可以选择哪些链接需要单独处理为URL内容项
+ * - 未选中的链接将保留在文本内容中
+ * - 支持全选/取消全选操作
+ */
+
+// 简单的复选框组件
+const Checkbox = ({ 
+  checked, 
+  onChange, 
+  children, 
+  className = "" 
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <label className={`flex items-center gap-2 cursor-pointer ${className}`}>
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={(e) => onChange(e.target.checked)}
+      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+    />
+    <span className="text-sm">{children}</span>
+  </label>
+);
 
 // 极简基础组件 - 基于参考设计，加入 Fade & Scale 动效
 const Dialog = ({ children, open, onOpenChange }) => {
@@ -332,6 +365,8 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
     breadth: 2,
   });
   const [showResearchConfig, setShowResearchConfig] = useState(false);
+  // 新增：链接选择状态
+  const [selectedUrls, setSelectedUrls] = useState<string[]>([]);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -344,7 +379,26 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   // 内容分析
   const contentAnalysis = analyzeContent(content, selectedFiles);
   const isResearch = contentAnalysis?.type === "research";
-  const detectedUrls = extractUrls(content);
+  
+  // 使用 useMemo 优化 detectedUrls 计算，避免每次渲染都创建新数组
+  const detectedUrls = useMemo(() => extractUrls(content), [content]);
+
+  // 使用 useRef 来跟踪上一次检测到的URLs，避免不必要的状态更新
+  const lastDetectedUrlsRef = useRef<string[]>([]);
+
+  // 当检测到的链接变化时，更新选中的链接列表
+  useEffect(() => {
+    // 比较当前检测到的URLs和上次的URLs是否相同
+    const urlsChanged = 
+      detectedUrls.length !== lastDetectedUrlsRef.current.length ||
+      detectedUrls.some((url, index) => url !== lastDetectedUrlsRef.current[index]);
+    
+    // 只有当URLs实际发生变化时才更新状态
+    if (urlsChanged) {
+      lastDetectedUrlsRef.current = [...detectedUrls];
+      setSelectedUrls([...detectedUrls]);
+    }
+  }, [detectedUrls]);
 
   // 自适应高度 - 固定高度，避免跳动
   useEffect(() => {
@@ -486,7 +540,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
     // 捕获当前输入，避免后续状态变化
     const contentSnapshot = content;
     const filesSnapshot = [...selectedFiles];
-    const urlsSnapshot = [...detectedUrls];
+    const urlsSnapshot = [...selectedUrls]; // 修改：使用用户选中的链接
     const isResearchSnapshot = isResearch;
 
     // fire-and-forget：后台执行原本的上传逻辑，但不再操作本组件状态
@@ -534,7 +588,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
           }
         }
 
-        // 处理URLs
+        // 处理URLs - 只处理用户选中的链接
         if (urlsSnapshot.length > 0) {
           for (const url of urlsSnapshot) {
             const contentData = {
@@ -644,13 +698,33 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   }, [
     content,
     selectedFiles,
-    detectedUrls,
+    selectedUrls, // 添加selectedUrls依赖
     isResearch,
     user?.token,
     createContentProcessingNotification,
     createDeepResearchJob,
     onClose,
   ]);
+
+  // 链接选择处理函数
+  const handleUrlSelection = (url: string, checked: boolean) => {
+    setSelectedUrls((prev) => {
+      if (checked) {
+        return [...prev, url];
+      } else {
+        return prev.filter((u) => u !== url);
+      }
+    });
+  };
+
+  // 全选/取消全选链接
+  const handleSelectAllUrls = (checked: boolean) => {
+    if (checked) {
+      setSelectedUrls([...detectedUrls]);
+    } else {
+      setSelectedUrls([]);
+    }
+  };
 
   // 快捷键处理 - 基于参考代码的快捷键逻辑
   const handleKeyDown = useCallback(
@@ -683,6 +757,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
       setError("");
       setIsLoading(false);
       setShowResearchConfig(false);
+      setSelectedUrls([]); // 重置链接选择状态
     }
   }, [open]);
 
@@ -730,6 +805,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                 size="sm"
                 onClick={() => setShowResearchConfig(!showResearchConfig)}
                 className="text-xs h-7 px-2"
+                disabled={false}
               >
                 <Settings className="w-3 h-3 mr-1" />
                 配置
@@ -742,6 +818,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
               size="sm"
               onClick={onClose}
               className="h-7 w-7 p-0 hover:bg-muted"
+              disabled={false}
             >
               <X className="w-4 h-4" />
             </Button>
@@ -883,6 +960,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                     size="sm"
                     onClick={() => fileInputRef.current?.click()}
                     className="mt-2"
+                    disabled={false}
                   >
                     添加更多文件
                   </Button>
@@ -908,27 +986,54 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
               )}
             </div>
 
-            {/* URL 检测提示 */}
+            {/* 检测到的链接选择 */}
             {detectedUrls.length > 0 && (
               <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="flex items-start gap-2">
+                <div className="flex items-start gap-2 mb-3">
                   <Link className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm">
-                    <div className="font-medium text-blue-900 dark:text-blue-100 mb-1">
-                      检测到链接
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <div className="font-medium text-blue-900 dark:text-blue-100">
+                        检测到 {detectedUrls.length} 个链接
+                      </div>
+                      <Checkbox
+                        checked={selectedUrls.length === detectedUrls.length}
+                        onChange={handleSelectAllUrls}
+                        className="text-xs"
+                      >
+                        全选
+                      </Checkbox>
                     </div>
-                    <div className="space-y-1">
-                      {detectedUrls.map((url, index) => (
-                        <div
-                          key={index}
-                          className="text-blue-700 dark:text-blue-300 text-xs font-mono break-all"
-                        >
-                          {url}
-                        </div>
-                      ))}
+                    <div className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                      选择要单独处理的链接（未选中的链接将保留在文本中）
                     </div>
                   </div>
                 </div>
+                
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {detectedUrls.map((url, index) => (
+                    <div
+                      key={index}
+                      className="p-2 bg-white dark:bg-gray-800 rounded border border-blue-100 dark:border-blue-800"
+                    >
+                      <Checkbox
+                        checked={selectedUrls.includes(url)}
+                        onChange={(checked) => handleUrlSelection(url, checked)}
+                        className="w-full"
+                      >
+                        <span className="text-blue-700 dark:text-blue-300 text-xs font-mono break-all">
+                          {url}
+                        </span>
+                      </Checkbox>
+                    </div>
+                  ))}
+                </div>
+                
+                {selectedUrls.length > 0 && (
+                  <div className="mt-2 text-xs text-green-700 dark:text-green-300">
+                    ✓ 已选择 {selectedUrls.length} 个链接进行处理
+                  </div>
+                )}
               </div>
             )}
 

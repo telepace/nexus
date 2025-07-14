@@ -58,6 +58,7 @@ from app.utils.events import content_event_manager, create_sse_generator
 from app.utils.streaming_jsonl_extractor import create_streaming_jsonl_extractor
 from app.utils.prompt_helpers import render_user_analysis_prompt
 from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
+from app.services.ai.chat_service import ChatService
 
 # from app.utils.cache import warm_article_cache  # 暂时注释掉避免redis依赖
 
@@ -114,7 +115,7 @@ def create_ai_conversation(
         content_item_title: 内容项标题
         analysis_instruction: 分析指令
         content_to_analyze: 要分析的内容
-        model: AI模型名称
+        model: AI模型名称（使用配置的模型名称，不是LiteLLM返回的实际模型名称）
         temperature: 温度参数
         max_tokens: 最大token数
 
@@ -132,12 +133,12 @@ def create_ai_conversation(
         {"role": "user", "content": user_prompt},  # 使用渲染后的prompt
     ]
 
-    # 创建AIConversation记录
+    # 创建AIConversation记录 - 使用配置的模型名称而不是LiteLLM响应的实际模型
     ai_conversation = AIConversation(
         user_id=user_id,
         content_item_id=content_item_id,
         title=f"AI分析: {content_item_title or '内容分析'}",
-        ai_model_name=model,
+        ai_model_name=model,  # 保持使用传入的配置模型名称
         messages=json.dumps(conversation_messages),
         summary=analysis_instruction[:200] + "..."
         if len(analysis_instruction) > 200
@@ -148,6 +149,8 @@ def create_ai_conversation(
                 "max_tokens": max_tokens,
                 "analysis_type": "content_analysis",
                 "content_length": len(content_to_analyze),
+                "configured_model": model,  # 记录配置的模型名称
+                "note": "模型名称为配置值，实际调用可能通过LiteLLM路由到不同后端"
             }
         ),
     )
@@ -828,9 +831,9 @@ async def analyze_content_stream_endpoint(
             detail="Content item has no text content to analyze",
         )
 
-    # 统一使用内置默认模型，忽略前端传入的 model
-    DEFAULT_MODEL = "or-deepseek-r1"
-    resolved_model = DEFAULT_MODEL
+    # 使用配置的模型，支持任务特定的模型选择
+    # 对于内容分析，使用 analysis 任务对应的模型
+    resolved_model = settings.resolved_ai_task_models.get("analysis", settings.DEFAULT_LLM_MODEL)
 
     # 创建AIConversation记录
     ai_conversation = create_ai_conversation(
@@ -1671,8 +1674,15 @@ async def analyze_content_stream_with_template_endpoint(
             detail="Content item has no text content to analyze",
         )
 
-    # 统一使用内置默认模型
-    DEFAULT_MODEL = "or-deepseek-r1"
+    # 使用配置的模型，支持任务特定的模型选择
+    # 根据 analysis_type 参数选择对应的模型
+    if analysis_type == "summary":
+        resolved_model = settings.resolved_ai_task_models.get("summary", settings.DEFAULT_LLM_MODEL)
+    elif analysis_type == "key_points":
+        resolved_model = settings.resolved_ai_task_models.get("key_points", settings.DEFAULT_LLM_MODEL)
+    else:
+        # 对于其他分析类型，使用通用分析模型
+        resolved_model = settings.resolved_ai_task_models.get("analysis", settings.DEFAULT_LLM_MODEL)
 
     # 提取ContentItem的必要属性，避免传递ORM对象到异步函数
     content_title = content_item.title
@@ -1688,7 +1698,7 @@ async def analyze_content_stream_with_template_endpoint(
             source_uri=source_uri,
             analysis_type=analysis_type,
             user_id=current_user.id,
-            model=DEFAULT_MODEL,
+            model=resolved_model,
         ),
         media_type="text/event-stream",
         headers={
@@ -1710,90 +1720,84 @@ async def _stream_template_analysis(
     model: str,
 ) -> AsyncGenerator[str, None]:
     """
-    使用模板进行流式分析，返回SSE格式数据
+    Stream analysis using template-based AI processing
     """
-    import json
-    import os
-
     import aiohttp
-    from jinja2 import Environment, FileSystemLoader
-
+    import json
+    from datetime import datetime, timezone
+    from app.core.db_factory import engine
+    from app.services.ai.chat_service import ChatService
     from app.utils.streaming_jsonl_extractor import create_streaming_jsonl_extractor
 
+    # 使用 ChatService 来获取正确的模型名称
+    chat_service = ChatService()
+    
+    # 根据分析类型确定模板名称
+    template_name = f"{analysis_type}.j2"
+    
+    # 获取该模板对应的正确模型
+    resolved_model = chat_service.get_model_for_template(template_name)
+    
+    logger.info(f"Using resolved model '{resolved_model}' for analysis type '{analysis_type}' (template: {template_name})")
+
+    # 创建JSONL提取器（用于summary和key_points类型）
+    jsonl_extractor = None
+    if analysis_type in ["summary", "key_points"]:
+        jsonl_extractor = create_streaming_jsonl_extractor()
+
+    # 分析类型到指令的映射
+    analysis_instructions = {
+        "summary": "请对这篇内容进行总结，提取其主要观点和关键信息。",
+        "key_points": "请提取这篇内容的关键要点，以清晰、结构化的方式呈现。",
+        "labels": "请为这篇内容生成合适的标签，帮助分类和检索。",
+        "insights": "请分析这篇内容并提供深入的洞察和见解。",
+    }
+
+    analysis_instruction = analysis_instructions.get(
+        analysis_type, "请分析这篇内容并提供相关信息。"
+    )
+
+    # 准备消息
+    messages = [
+        {"role": "system", "content": content_text},
+        {"role": "user", "content": analysis_instruction},
+    ]
+
+    # 为当前分析创建对话记录
+    ai_conversation = None
     try:
-        # 创建JSONL提取器（用于summary和key_points类型）
-        jsonl_extractor = None
-        if analysis_type in ["summary", "key_points"]:
-            jsonl_extractor = create_streaming_jsonl_extractor()
+        with Session(engine) as db_session:
+            ai_conversation = create_ai_conversation(
+                session=db_session,
+                user_id=user_id,
+                content_item_id=content_item_id,
+                content_item_title=content_title or "Untitled",
+                analysis_instruction=analysis_instruction,
+                content_to_analyze=content_text,
+                model=resolved_model,  # 使用解析后的正确模型
+                temperature=0.3,
+                max_tokens=2000,
+            )
+    except Exception as e:
+        logger.error(f"Failed to create AI conversation: {e}")
+        # 如果创建对话失败，继续处理，但记录错误
 
-        # 加载Jinja2模板
-        template_dir = os.path.join(
-            os.path.dirname(__file__), "..", "..", "prompt_templates"
-        )
-        env = Environment(loader=FileSystemLoader(template_dir))
+    # LiteLLM 代理配置
+    litellm_url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
+    headers = {"Content-Type": "application/json"}
 
-        template_file = f"{analysis_type}.j2"
-        template = env.get_template(template_file)
+    if settings.LITELLM_MASTER_KEY:
+        headers["Authorization"] = f"Bearer {settings.LITELLM_MASTER_KEY}"
 
-        # 准备模板变量
-        document_metadata = {
-            "title": content_title,
-            "author": None,  # 暂时没有author字段
-            "source_url": source_uri,
-            "domain": None,  # 暂时没有domain字段
-        }
+    payload = {
+        "model": resolved_model,  # 使用解析后的正确模型
+        "messages": messages,
+        "stream": True,
+        "temperature": 0.3,
+        "max_tokens": 2000,
+    }
 
-        # 渲染用户指令
-        analysis_instruction = template.render(
-            document_metadata=document_metadata,
-            context_history=[],  # 暂时为空，后续可以加入历史分析
-            extraction_criteria=[],  # 暂时为空
-        )
-
-        # 准备系统消息和用户消息
-        messages = [
-            {"role": "system", "content": content_text},
-            {"role": "user", "content": analysis_instruction},
-        ]
-
-        # 在新的session中创建AIConversation记录，避免session绑定问题
-        from sqlmodel import Session
-
-        from app.core.database import engine
-
-        ai_conversation = None
-        try:
-            with Session(engine) as db_session:
-                ai_conversation = create_ai_conversation(
-                    session=db_session,
-                    user_id=user_id,
-                    content_item_id=content_item_id,
-                    content_item_title=content_title or "Untitled",
-                    analysis_instruction=analysis_instruction,
-                    content_to_analyze=content_text,
-                    model=model,
-                    temperature=0.3,
-                    max_tokens=2000,
-                )
-        except Exception as e:
-            logger.error(f"Failed to create AI conversation: {e}")
-            # 如果创建对话失败，继续处理，但记录错误
-
-        # LiteLLM 代理配置
-        litellm_url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
-        headers = {"Content-Type": "application/json"}
-
-        if settings.LITELLM_MASTER_KEY:
-            headers["Authorization"] = f"Bearer {settings.LITELLM_MASTER_KEY}"
-
-        payload = {
-            "model": model,
-            "messages": messages,
-            "stream": True,
-            "temperature": 0.3,
-            "max_tokens": 2000,
-        }
-
+    try:
         timeout = aiohttp.ClientTimeout(total=120.0)
         accumulated_content = ""
         pure_jsonl_response = ""  # 存储提取的纯净JSONL内容
@@ -1910,21 +1914,8 @@ async def _stream_template_analysis(
                                 continue
 
     except Exception as e:
-        error_msg = str(e)
-        logger.error(f"Stream analysis failed for content {content_item_id}: {error_msg}")
-
-        # 检查是否是Session绑定错误
-        if "not bound to a Session" in error_msg:
-            error_msg = "内容处理过程中出现数据库连接问题，请重试或刷新页面后再试"
-        elif "timeout" in error_msg.lower():
-            error_msg = "AI分析超时，请稍后重试"
-        elif "connection" in error_msg.lower():
-            error_msg = "网络连接问题，请检查网络后重试"
-        else:
-            error_msg = f"AI分析失败: {error_msg}"
-
-        # 发送友好的错误消息
-        yield f"data: {json.dumps({'type': 'error', 'content': error_msg, 'finished': True})}\n\n"
+        logger.error(f"Template analysis error: {e}")
+        yield f"data: {json.dumps({'type': 'error', 'content': f'分析过程中发生错误: {str(e)}', 'finished': True})}\n\n"
 
 
 @router.delete(

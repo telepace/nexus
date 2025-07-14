@@ -1,8 +1,12 @@
 # LiteLLM Configuration File
 general_settings:
-  completion_model: deepseek-v3-ensemble
+  # 移除会导致全局fallback的completion_model设置
+  # completion_model: deepseek-v3-ensemble  # 注释掉这行避免全局fallback
   database_url: "os.environ/DATABASE_URL"
   drop_params: false
+  # 添加调试设置
+  set_verbose: true
+  debug: true
   environment_variables:
     OPENAI_API_KEY: "os.environ/OPENAI_API_KEY"
     OPENAI_BASE_URL: "os.environ/OPENAI_BASE_URL"
