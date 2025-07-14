@@ -136,16 +136,16 @@ class Settings(BaseSettings):
     LITELLM_MASTER_KEY: str | None = None
 
     # LLM 配置
-    DEFAULT_LLM_MODEL: str = "or-gemini-2.5-pro"
+    DEFAULT_LLM_MODEL: str = "or-kimi-k2"
 
     # AI任务模型配置 - 支持为不同任务指定不同模型，可通过环境变量覆盖
     AI_TASK_MODELS: dict[str, str] = Field(
         default={
-            "summary": "deepseek-v3-ensemble",  # Summary生成模型
+            "summary": "or-kimi-k2",  # Summary生成模型
             "key_points": "deepseek-v3-ensemble",  # KeyPoint提取模型
             "labels": "deepseek-v3-ensemble",  # Labels生成模型
-            "chat": "deepseek-v3-ensemble",  # 对话聊天模型
-            "analysis": "deepseek-v3-ensemble",  # 通用分析模型
+            "chat": "or-kimi-k2",  # 对话聊天模型
+            "analysis": "or-kimi-k2",  # 通用分析模型
         },
         description="AI任务模型映射配置，可通过环境变量覆盖，如：AI_MODEL_SUMMARY=gpt-4",
     )
