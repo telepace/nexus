@@ -11,6 +11,8 @@ interface UniversalContentRendererProps {
   content: string | null | undefined;
   /** Additional class names for the container */
   className?: string;
+  /** Callback when expand button is clicked on a JSON line */
+  onExpandLine?: (jsonContent: Record<string, unknown>) => void;
 }
 
 /**
@@ -19,7 +21,8 @@ interface UniversalContentRendererProps {
  */
 export function UniversalContentRenderer({ 
   content, 
-  className 
+  className,
+  onExpandLine
 }: UniversalContentRendererProps) {
   // Helper to detect JSONL format (same logic as in llm-analysis-card)
   const isJsonl = (str: string): boolean => {
@@ -69,7 +72,7 @@ export function UniversalContentRenderer({
   if (isJsonl(content)) {
     return (
       <div data-testid="universal-content-renderer" className={className}>
-        <JsonlRenderer content={content} />
+        <JsonlRenderer content={content} onExpandLine={onExpandLine} />
       </div>
     );
   } else if (isJsonObject(content)) {

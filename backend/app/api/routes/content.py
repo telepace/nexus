@@ -1289,6 +1289,7 @@ async def completion_updated_endpoint(
             async for chunk in _stream_content_completion_updated(
                 content_item_id=content_item_id,  # 使用提前提取的ID
                 content_text=content_text,  # 使用提前提取的内容文本
+                content_title=content_title,  # 使用提前提取的内容标题
                 request=request,
                 ai_conversation_id=ai_conversation.id,
             ):
@@ -1317,20 +1318,37 @@ async def completion_updated_endpoint(
 async def _stream_content_completion_updated(
     content_item_id: uuid.UUID,  # 使用ID而不是对象
     content_text: str,  # 直接传递内容文本
+    content_title: str,  # 内容标题
     request: ContentAnalysisRequest,
     ai_conversation_id: uuid.UUID,
 ) -> AsyncGenerator[str, None]:
     """Stream content completion with updated prompt structure."""
     import aiohttp
-    from app.utils.prompt_helpers import render_user_analysis_prompt
+    from app.utils.prompt_helpers import render_user_analysis_prompt, render_template_prompt
     from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
 
     try:
         # 创建实时JSONL处理器
         jsonl_processor = create_realtime_jsonl_processor()
 
-        # 使用新的用户分析模板渲染prompt
-        user_prompt = render_user_analysis_prompt(request.analysis_instruction)
+        # 根据请求的模板选择渲染方式
+        template_name = request.template_name or "user_analysis.j2"
+        
+        if template_name == "expand_discussion.j2":
+            # 为expand_discussion模板准备特殊的上下文
+            user_prompt = render_template_prompt(
+                template_name,
+                selected_point=request.selected_point or request.analysis_instruction,
+                content=content_text,
+                document_metadata={
+                    "title": content_title,
+                    "author": "Unknown",
+                    "source_url": None
+                }
+            )
+        else:
+            # 使用原有的用户分析模板渲染
+            user_prompt = render_user_analysis_prompt(request.analysis_instruction)
 
         # Prepare messages with updated structure
         messages = [
