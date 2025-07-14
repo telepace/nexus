@@ -65,6 +65,12 @@ model_list:
       model: openrouter/deepseek/deepseek-r1-0528
       api_key: "os.environ/OR_API_KEY"
 
+  # Kimi K2 Model - 高性能智能模型
+  - model_name: or-kimi-k2
+    litellm_params:
+      model: openrouter/moonshotai/kimi-k2
+      api_key: "os.environ/OR_API_KEY"
+
   # OpenRouter Models (使用正确的模型 ID)
   - model_name: or-llama-3-1-8b-instruct
     litellm_params:
