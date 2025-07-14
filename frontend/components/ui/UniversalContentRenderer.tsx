@@ -13,6 +13,8 @@ interface UniversalContentRendererProps {
   className?: string;
   /** Original content ID used for reference resolution */
   contentId?: string;
+  /** Callback when expand button is clicked on a JSON line */
+  onExpandLine?: (jsonContent: Record<string, unknown>) => void;
 }
 
 /**
@@ -23,6 +25,7 @@ export function UniversalContentRenderer({
   content, 
   className,
   contentId,
+  onExpandLine
 }: UniversalContentRendererProps) {
   // Helper to detect JSONL format (same logic as in llm-analysis-card)
   const isJsonl = (str: string): boolean => {
@@ -72,7 +75,7 @@ export function UniversalContentRenderer({
   if (isJsonl(content)) {
     return (
       <div data-testid="universal-content-renderer" className={className}>
-        <JsonlRenderer content={content} contentId={contentId} />
+        <JsonlRenderer content={content} contentId={contentId} onExpandLine={onExpandLine} />
       </div>
     );
   } else if (isJsonObject(content)) {

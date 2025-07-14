@@ -47,6 +47,7 @@ class ChatService:
             "labels.j2": "labels",
             "segment_aware_chat.j2": "chat",
             "user_analysis.j2": "analysis",
+            "expand_discussion.j2": "analysis",  # 使用analysis任务的模型配置
         }
         
         # 获取任务名称

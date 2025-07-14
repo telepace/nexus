@@ -3,6 +3,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "./MarkdownRenderer";
+import { JsonLineWithExpandButton } from "./JsonLineWithExpandButton";
 import { EnhancedReferenceIndicator, useReferenceManagerSafe } from "./ReferenceManager";
 import { Badge } from "@/components/ui/badge";
 
@@ -10,6 +11,8 @@ interface JsonlRendererProps {
   content: string;
   className?: string;
   enableHoverEffects?: boolean;
+  /** callback when expand button is clicked on a JSON line */
+  onExpandLine?: (jsonContent: Record<string, unknown>) => void;
   contentId?: string; // 用于引用管理器
 }
 
@@ -27,6 +30,7 @@ export function JsonlRenderer({
   content,
   className,
   enableHoverEffects = true,
+  onExpandLine,
   contentId,
 }: JsonlRendererProps) {
   // 使用安全的 ReferenceManager
@@ -524,9 +528,16 @@ export function JsonlRenderer({
       }
     }
 
+    // 统一封装：先用 BlockWrapper 提供引用高亮，再在内部使用 JsonLineWithExpandButton
     return (
-      <BlockWrapper key={idx} hasReferences={hasReferences} isError={block.type === "error"} isRecovered={block._isRecovered}>
-        {blockElement}
+      <BlockWrapper key={idx} hasReferences={hasReferences} isError={block.type === "error" || block._isError} isRecovered={block._isRecovered}>
+        <JsonLineWithExpandButton
+          jsonLine={block}
+          onExpand={onExpandLine}
+          enableHoverEffects={false}
+        >
+          {blockElement}
+        </JsonLineWithExpandButton>
       </BlockWrapper>
     );
   };

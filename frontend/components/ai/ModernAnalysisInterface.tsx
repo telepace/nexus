@@ -326,6 +326,101 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     }
   }, [inputValue, content.id, isAnalyzing, toast]);
 
+  // 处理JSON行展开请求
+  const handleJsonLineExpand = useCallback(async (jsonContent: Record<string, unknown>) => {
+    console.log('[ModernAnalysisInterface] JSON line expand requested:', jsonContent);
+    
+    // 构造展开讨论的prompt
+    const selectedPoint = jsonContent.c || jsonContent.content || JSON.stringify(jsonContent);
+    const instruction = `请对以下要点进行深度展开讨论：${selectedPoint}`;
+    
+    // 设置输入值并触发分析
+    setInputValue(instruction);
+    
+    // 延迟触发分析，让用户看到输入框的变化
+    setTimeout(async () => {
+      if (instruction.trim()) {
+        setIsAnalyzing(true);
+        setStreamingResponse("");
+
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+          const response = await fetch(
+            `${apiUrl}/api/v1/content/${content.id}/completion-updated`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${getCookie("accessToken")}`,
+              },
+              body: JSON.stringify({
+                analysis_instruction: instruction,
+                template_name: "expand_discussion.j2",
+                selected_point: jsonContent.c || jsonContent.content || JSON.stringify(jsonContent),
+              }),
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          // 处理流式响应
+          const reader = response.body?.getReader();
+          if (!reader) {
+            throw new Error("无法获取响应流");
+          }
+
+          const decoder = new TextDecoder();
+          let accumulatedContent = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split("\n");
+
+            for (const line of lines) {
+              if (line.startsWith("0:")) {
+                const jsonlLine = line.slice(2);
+                if (jsonlLine.trim()) {
+                  accumulatedContent += jsonlLine + "\n";
+                  setStreamingResponse(accumulatedContent);
+                }
+              } else if (line.startsWith("8:")) {
+                setStreamingResponse(accumulatedContent);
+                break;
+              } else if (line.startsWith("9:")) {
+                try {
+                  const errorData = JSON.parse(line.slice(2));
+                  throw new Error(errorData.error || "Stream error");
+                } catch {
+                  throw new Error("Stream error");
+                }
+              }
+            }
+          }
+
+          setInputValue("");
+          toast({
+            title: "展开分析完成",
+            description: "AI 已完成深度展开讨论",
+          });
+        } catch (error) {
+          console.error("Expand analysis failed:", error);
+          toast({
+            title: "展开分析失败",
+            description: "请稍后重试",
+            variant: "destructive",
+          });
+        } finally {
+          setIsAnalyzing(false);
+        }
+      }
+    }, 100);
+  }, [content.id, toast]);
+
   // 构建分析卡片数据
   const buildAnalysisCards = useCallback((): AnalysisCard[] => {
     if (!analysisResult && !streamingResponse) return [];
@@ -414,7 +509,11 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           onClick={(e) => handleBlockClick(`${card.id}-main`, e)}
         >
           <div className="select-text prose prose-sm max-w-none dark:prose-invert">
-            <UniversalContentRenderer content={textContent} contentId={content.id} />
+            <UniversalContentRenderer 
+              content={textContent} 
+              contentId={content.id}
+              onExpandLine={handleJsonLineExpand}
+            />
           </div>
         </div>
       );
