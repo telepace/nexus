@@ -50,10 +50,11 @@ interface ReferenceManagerState {
 interface ReferenceManagerActions {
   loadSourceParagraphs: (contentId: string) => Promise<void>;
   jumpToParagraph: (refId: number) => void;
-  highlightParagraphs: (refIds: number[]) => void;
+  highlightParagraphs: (refIds: number[], isHover?: boolean) => void;
   clearHighlights: () => void;
   parseReferences: (refString?: string) => number[];
   getReferenceInfo: (refId: number) => ReferenceInfo | undefined;
+  setTestSourceParagraphs?: (paragraphs: SourceParagraph[]) => void; // 用于测试
 }
 
 // Context类型
@@ -277,7 +278,7 @@ export const ReferenceManagerProvider: React.FC<ReferenceManagerProviderProps> =
   }, [state.sourceParagraphs]);
 
   // 高亮多个段落
-  const highlightParagraphs = useCallback((refIds: number[]) => {
+  const highlightParagraphs = useCallback((refIds: number[], isHover = false) => {
     // 验证引用ID - 支持多种索引匹配方式
     const validRefs = refIds.filter(refId => {
       // 直接匹配index
@@ -298,6 +299,7 @@ export const ReferenceManagerProvider: React.FC<ReferenceManagerProviderProps> =
     console.log('🎨 ReferenceManager: highlightParagraphs', { 
       requestedRefs: refIds, 
       validRefs,
+      isHover,
       availableIndexes: state.sourceParagraphs.map(p => p.display_number).slice(0, 10)
     });
 
@@ -308,7 +310,7 @@ export const ReferenceManagerProvider: React.FC<ReferenceManagerProviderProps> =
 
     // 发送高亮事件
     const event = new CustomEvent('highlightParagraphs', {
-      detail: { refIds: validRefs }
+      detail: { refIds: validRefs, isHover }
     });
     window.dispatchEvent(event);
   }, [state.sourceParagraphs]);
@@ -339,6 +341,28 @@ export const ReferenceManagerProvider: React.FC<ReferenceManagerProviderProps> =
     };
   }, [state.sourceParagraphs]);
 
+  // 设置测试数据（仅用于测试）
+  const setTestSourceParagraphs = useCallback((paragraphs: SourceParagraph[]) => {
+    console.log('🧪 ReferenceManager: setTestSourceParagraphs called', { 
+      count: paragraphs.length,
+      currentContentId: contentId,
+      currentSourceParagraphsCount: state.sourceParagraphs.length,
+      paragraphSample: paragraphs.slice(0, 2)
+    });
+    setState(prev => {
+      const newState = {
+        ...prev,
+        sourceParagraphs: paragraphs,
+        currentContentId: contentId,
+      };
+      console.log('🧪 ReferenceManager: setState called with new data', {
+        newSourceParagraphsCount: newState.sourceParagraphs.length,
+        newCurrentContentId: newState.currentContentId
+      });
+      return newState;
+    });
+  }, [contentId, state.sourceParagraphs.length]);
+
   // 自动加载内容段落
   useEffect(() => {
     if (contentId && contentId !== state.currentContentId) {
@@ -353,6 +377,7 @@ export const ReferenceManagerProvider: React.FC<ReferenceManagerProviderProps> =
     clearHighlights,
     parseReferences,
     getReferenceInfo,
+    setTestSourceParagraphs,
   };
 
   return (
@@ -415,12 +440,26 @@ const ModernReferenceIndicator: React.FC<EnhancedReferenceIndicatorProps> = ({
     }
   }, [contentId, refString, segments.length]);
 
-  // 处理悬浮时加载内容
+  // 处理悬浮时加载内容和高亮段落
   const handleMouseEnter = useCallback(() => {
     if (!disabled) {
       loadSegments();
+      
+      // 高亮对应的段落
+      const { actions } = useReferenceManagerSafe();
+      if (referenceNumbers.length > 0) {
+        actions.highlightParagraphs(referenceNumbers, true); // 传递 isHover=true
+      }
     }
-  }, [disabled, loadSegments]);
+  }, [disabled, loadSegments, referenceNumbers]);
+
+  // 处理悬浮离开时清除高亮
+  const handleMouseLeave = useCallback(() => {
+    if (!disabled) {
+      const { actions } = useReferenceManagerSafe();
+      actions.clearHighlights();
+    }
+  }, [disabled]);
 
   // 处理点击跳转
   const handleClick = useCallback(() => {
@@ -541,6 +580,7 @@ const ModernReferenceIndicator: React.FC<EnhancedReferenceIndicatorProps> = ({
           <Badge
             variant="secondary"
             onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
             onClick={handleClick}
             className={cn(
               "cursor-pointer transition-all duration-200 hover:scale-105 select-none",
@@ -736,12 +776,34 @@ export const NewEnhancedReferenceIndicator: React.FC<NewEnhancedReferenceIndicat
     }
   }, [contentId, validReferences, segments.length, loading]);
 
-  // 处理悬浮打开
+  // 处理悬浮打开和高亮
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
+    const { actions } = useReferenceManagerSafe();
+    
     if (open && contentId) {
       loadSegments();
+      // 高亮对应的段落
+      if (validReferences.length > 0) {
+        actions.highlightParagraphs(validReferences, true); // 传递 isHover=true
+      }
+    } else {
+      // 关闭时清除高亮
+      actions.clearHighlights();
     }
+  };
+
+  // 处理按钮悬浮高亮（用于简化版本）
+  const handleButtonMouseEnter = () => {
+    const { actions } = useReferenceManagerSafe();
+    if (validReferences.length > 0) {
+      actions.highlightParagraphs(validReferences, true); // 传递 isHover=true
+    }
+  };
+
+  const handleButtonMouseLeave = () => {
+    const { actions } = useReferenceManagerSafe();
+    actions.clearHighlights();
   };
 
   // 处理点击跳转
@@ -771,6 +833,8 @@ export const NewEnhancedReferenceIndicator: React.FC<NewEnhancedReferenceIndicat
               className
             )}
             onClick={() => validReferences.length === 1 && handleClick(validReferences[0])}
+            onMouseEnter={handleButtonMouseEnter}
+            onMouseLeave={handleButtonMouseLeave}
           >
             [{displayLabel}]
           </button>
@@ -901,27 +965,50 @@ export const createParagraphHighlightStyles = () => {
   return `
     .paragraph-highlight {
       background: linear-gradient(90deg, 
-        rgba(59, 130, 246, 0.1) 0%, 
-        rgba(59, 130, 246, 0.05) 100%);
+        rgba(59, 130, 246, 0.12) 0%, 
+        rgba(59, 130, 246, 0.06) 100%);
       border-left: 3px solid rgb(59, 130, 246);
       padding-left: 12px;
       margin-left: -15px;
-      border-radius: 0 4px 4px 0;
+      border-radius: 0 6px 6px 0;
       transition: all 0.3s ease;
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1);
     }
     
     .paragraph-highlight.selected {
       background: linear-gradient(90deg, 
-        rgba(59, 130, 246, 0.2) 0%, 
-        rgba(59, 130, 246, 0.1) 100%);
+        rgba(59, 130, 246, 0.25) 0%, 
+        rgba(59, 130, 246, 0.12) 100%);
       border-left-color: rgb(37, 99, 235);
-      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+      border-left-width: 4px;
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3);
+      transform: translateX(2px);
     }
     
     .paragraph-highlight:hover {
       background: linear-gradient(90deg, 
-        rgba(59, 130, 246, 0.15) 0%, 
-        rgba(59, 130, 246, 0.08) 100%);
+        rgba(59, 130, 246, 0.18) 0%, 
+        rgba(59, 130, 246, 0.09) 100%);
+      transform: translateX(1px);
+    }
+    
+    /* 悬浮高亮的特殊样式 */
+    .paragraph-highlight.hover-highlight {
+      background: linear-gradient(90deg, 
+        rgba(34, 197, 94, 0.12) 0%, 
+        rgba(34, 197, 94, 0.06) 100%);
+      border-left-color: rgb(34, 197, 94);
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.1);
+      animation: gentle-pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes gentle-pulse {
+      0%, 100% {
+        box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.1);
+      }
+      50% {
+        box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15);
+      }
     }
   `;
 }; 
