@@ -991,7 +991,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
   subtitle,
   emoji,
   icon,
-  contentBlocks,
+  contentBlocks = [], // 添加默认值
   actions,
   defaultActions = true,
   onCopyContent,

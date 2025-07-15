@@ -20,6 +20,7 @@ from app.schemas.conversation import (
     ConversationListResponse,
 )
 from app.services.ai.llm_service import LLMService
+from app.services.ai.chat_service import ChatService
 from app.utils.timezone import now_utc
 
 router = APIRouter()
@@ -268,8 +269,9 @@ async def add_message_to_conversation(
             "content": ai_response_content,
             "timestamp": now_utc().isoformat(),
             "message_metadata": {
-                "model": conversation.ai_model_name,
+                "configured_model": conversation.ai_model_name,  # 记录配置的模型名称
                 "tokens_used": response.usage.total_tokens if response.usage else 0,
+                "note": "configured_model为配置值，实际调用可能路由到不同后端"
             },
         }
         messages.append(ai_message)
@@ -364,12 +366,13 @@ async def trigger_analysis(
             return convert_conversation_to_public(existing_conversation)
 
         # 创建新的分析对话
+        chat_service = ChatService()
         conversation = AIConversation(
             user_id=current_user.id,
             content_item_id=content_id,
             title=prompt_config["title"],
             conversation_type="prompt_analysis",
-            ai_model_name=settings.DEFAULT_LLM_MODEL,
+            ai_model_name=chat_service.get_model_for_template("user_analysis.j2"),  # 使用正确的分析模型
             messages="[]",
             summary=f"对《{content_item.title or '内容'}》进行{prompt_config['title']}",
             is_active=True,
@@ -430,9 +433,10 @@ async def trigger_analysis(
             "content": ai_response_content,
             "timestamp": now_utc().isoformat(),
             "message_metadata": {
-                "model": settings.DEFAULT_LLM_MODEL,
+                "configured_model": settings.DEFAULT_LLM_MODEL,  # 记录配置的模型名称
                 "prompt_type": analysis_request.prompt_type,
                 "tokens_used": response.usage.total_tokens if response.usage else 0,
+                "note": "configured_model为配置值，实际调用可能路由到不同后端"
             },
         }
 

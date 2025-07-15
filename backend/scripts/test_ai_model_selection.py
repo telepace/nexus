@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.core.config import settings
-from app.services.ai.chat_service import TEMPLATE_MODEL_MAPPING, ChatService
+from app.services.ai.chat_service import ChatService
 
 # 设置日志
 logging.basicConfig(level=logging.INFO)
@@ -39,14 +39,13 @@ async def test_model_selection():
 
     # 1. 测试模板映射配置
     logger.info("📋 验证模板-模型映射配置...")
-    logger.info(f"Summary模板 -> {TEMPLATE_MODEL_MAPPING.get('summary.j2', '未配置')}")
-    logger.info(
-        f"KeyPoints模板 -> {TEMPLATE_MODEL_MAPPING.get('key_points.j2', '未配置')}"
-    )
-    logger.info(f"Labels模板 -> {TEMPLATE_MODEL_MAPPING.get('labels.j2', '未配置')}")
+    resolved_models = settings.resolved_ai_task_models
+    logger.info(f"Summary模板 -> {resolved_models.get('summary', '未配置')}")
+    logger.info(f"KeyPoints模板 -> {resolved_models.get('key_points', '未配置')}")
+    logger.info(f"Labels模板 -> {resolved_models.get('labels', '未配置')}")
     logger.info(f"默认模型: {settings.DEFAULT_LLM_MODEL}")
 
-    # 2. 测试Summary生成（应使用or-deepseek-r1）
+    # 2. 测试Summary生成（应使用or-gemini-2.5-flash-preview-05-20）
     logger.info("\n📝 测试Summary生成...")
     try:
         summary_result = await chat_service.generate_with_template(
@@ -94,7 +93,7 @@ async def test_model_selection():
     except Exception as e:
         logger.error(f"❌ 显式模型调用失败: {e}")
 
-    logger.info("\n🎉 AI模型选择功能测试完成!")
+    logger.info("\n�� AI模型选择功能测试完成!")
 
 
 async def test_preprocessing_pipeline_integration():
