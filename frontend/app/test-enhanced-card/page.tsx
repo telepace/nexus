@@ -2,6 +2,9 @@
 
 import React from "react";
 import { AnalysisCard, ContentBlock, CardAction, ReferenceInfo } from "@/components/ui/analysis-card";
+
+// 临时别名，避免构建错误
+const EnhancedCard = AnalysisCard;
 import { useToast } from "@/hooks/use-toast";
 import { 
   Star, 

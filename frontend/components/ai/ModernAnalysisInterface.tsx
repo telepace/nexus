@@ -39,6 +39,13 @@ interface ModernAnalysisInterfaceProps {
   analysisResult?: AIResult | null;
   isLoading?: boolean;
   className?: string;
+  // 新增变体配置支持
+  variant?: "preview" | "sidebar" | "fullscreen";
+  showPreprocessedContent?: boolean;
+  height?: "fixed" | "full";
+  hideHeader?: boolean;
+  onHistoryCountChange?: (count: number) => void;
+  showHistory?: boolean;
 }
 
 interface AnalysisCard {
@@ -58,6 +65,13 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   analysisResult = null,
   isLoading = false,
   className = "",
+  // 新增变体配置，默认为fullscreen（保持现有行为）
+  variant = "fullscreen",
+  showPreprocessedContent = true,
+  height = "full",
+  hideHeader = false,
+  onHistoryCountChange,
+  showHistory: showHistoryProp,
 }) => {
   const { toast } = useToast();
 
@@ -66,7 +80,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [inputFocused, setInputFocused] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const showHistory = showHistoryProp;
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [selectedText, setSelectedText] = useState("");
   const [floatingMenu, setFloatingMenu] = useState({ show: false, x: 0, y: 0 });
@@ -153,9 +167,12 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         const historyResponse = await contentApi.getContentConversations(
           content.id,
         );
-        setHistoryRecords(historyResponse.conversations.slice(0, 10)); // 最多显示10条
+        const records = historyResponse.conversations.slice(0, 10);
+        setHistoryRecords(records);
+        onHistoryCountChange?.(records.length);
       } catch (error) {
         console.error("获取历史记录失败:", error);
+        onHistoryCountChange?.(0);
       } finally {
         setLoadingHistory(false);
       }
@@ -164,7 +181,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     if (content.id) {
       loadHistory();
     }
-  }, [content.id]);
+  }, [content.id, onHistoryCountChange]);
 
   // 监听来自正文区域的文本选择事件
   useEffect(() => {
@@ -430,32 +447,35 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     const metaInfo = content.meta_info ? JSON.parse(content.meta_info) : null;
     const adaptedData = adaptAnalysisData(analysisResult, metaInfo);
 
-    // 内容摘要卡片
-    if (adaptedData.summary) {
-      cards.push({
-        id: "summary",
-        title: "内容摘要",
-        subtitle: "核心内容提炼",
-        emoji: "📝",
-        content: {
-          type: "summary",
-          data: adaptedData.summary,
-        },
-      });
-    }
+    // 只有在显示预处理内容时才添加这些卡片
+    if (showPreprocessedContent) {
+      // 内容摘要卡片
+      if (adaptedData.summary) {
+        cards.push({
+          id: "summary",
+          title: "内容摘要",
+          subtitle: "核心内容提炼",
+          emoji: "📝",
+          content: {
+            type: "summary",
+            data: adaptedData.summary,
+          },
+        });
+      }
 
-    // 关键要点卡片
-    if (adaptedData.keyPoints) {
-      cards.push({
-        id: "keyPoints",
-        title: "关键要点",
-        subtitle: "重点内容梳理",
-        emoji: "🎯",
-        content: {
-          type: "keyPoints",
-          data: adaptedData.keyPoints,
-        },
-      });
+      // 关键要点卡片
+      if (adaptedData.keyPoints) {
+        cards.push({
+          id: "keyPoints",
+          title: "关键要点",
+          subtitle: "重点内容梳理",
+          emoji: "🎯",
+          content: {
+            type: "keyPoints",
+            data: adaptedData.keyPoints,
+          },
+        });
+      }
     }
 
     // 实时分析结果卡片
@@ -473,7 +493,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     }
 
     return cards;
-  }, [analysisResult, content.meta_info, streamingResponse, isAnalyzing]);
+  }, [analysisResult, content.meta_info, streamingResponse, isAnalyzing, showPreprocessedContent]);
 
   const cards = buildAnalysisCards();
 
@@ -532,9 +552,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
 
     return (
       <div
-        className={`
-          group relative cursor-pointer transition-all duration-200
-        `}
+        className="group relative cursor-pointer"
         onMouseEnter={() => setHoveredCard(card.id)}
         onMouseLeave={() => setHoveredCard(null)}
         onClick={() => setSelectedCard(isSelected ? null : card.id)}
@@ -543,14 +561,14 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         {/* 极简卡片主体 */}
         <Card
           className={`
-          transition-all duration-200 overflow-hidden relative border-0 analysis-card
+          transition-shadow duration-300 ease-in-out 
+          overflow-hidden relative border-0 analysis-card
           ${
             isSelected
               ? "shadow-lg bg-white dark:bg-gray-950"
-              : isHovered
-                ? "shadow-md bg-white dark:bg-gray-950"
-                : "shadow-sm bg-gray-50/50 dark:bg-gray-900/50"
+              : "shadow-sm bg-gray-50/50 dark:bg-gray-900/50"
           }
+          group-hover:shadow-lg
         `}
         data-exclude-selection
         >
@@ -612,8 +630,14 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     );
   }
 
+  // 根据变体计算样式
+  const containerHeight = height === "fixed" ? "h-80" : "h-full";
+  const containerClasses = variant === "preview" 
+    ? `flex flex-col ${containerHeight} ${className}` 
+    : `flex flex-col h-full ${className}`;
+
   return (
-    <div className={`flex flex-col h-full ${className}`} data-exclude-selection>
+    <div className={containerClasses} data-exclude-selection>
       <style jsx global>{`
         .scrollbar-hide {
           -ms-overflow-style: none;
@@ -626,62 +650,47 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
 
       {/* 可滚动的主内容区域 */}
       <div className="flex-1 overflow-y-auto custom-scrollbar" data-exclude-selection>
-        {/* 页面标题 */}
-        <div className="px-6 py-4" data-exclude-selection>
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
-            <Brain className="h-4 w-4" />
-            智能内容分析
+        {/* 页面标题 - 根据配置条件渲染 */}
+        {!hideHeader && (
+          <div className="px-6 py-4" data-exclude-selection>
+            <h1 className="text-xl font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+              {content.title || "内容分析"}
+            </h1>
           </div>
-          <h1 className="text-xl font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
-            {content.title || "内容分析"}
-          </h1>
-        </div>
+        )}
 
         {/* 卡片列表 */}
-        <div className="px-6 space-y-4 pb-6" data-exclude-selection>
-          {cards.length > 0 ? (
-            cards.map((card, index) => (
-              <CardComponent key={card.id} card={card} index={index} />
-            ))
-          ) : (
-            <div className="flex items-center justify-center p-8 border border-dashed border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/30 dark:bg-gray-900/30">
-              <div className="text-center space-y-2">
-                <Brain className="h-8 w-8 text-gray-400 mx-auto" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  暂无分析结果，使用下方AI助手开始分析
-                </p>
+        <div className="px-6 pb-6" data-exclude-selection>
+          <div className={`space-y-4 ${
+            variant === "preview" 
+              ? "max-w-[var(--size-body)] 2xl:max-w-[var(--size-body-lg)] mx-auto" 
+              : ""
+          }`}>
+            {cards.length > 0 ? (
+              cards.map((card, index) => (
+                <CardComponent key={card.id} card={card} index={index} />
+              ))
+            ) : (
+              <div className="flex items-center justify-center p-8 border border-dashed border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/30 dark:bg-gray-900/30">
+                <div className="text-center space-y-2">
+                  <Brain className="h-8 w-8 text-gray-400 mx-auto" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    暂无分析结果，使用下方AI助手开始分析
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
       {/* 固定底部AI助手 */}
-      <div className="flex-shrink-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-800" data-exclude-selection>
+      <div className={`flex-shrink-0 backdrop-blur-md border-t ${
+        variant === "preview" 
+          ? "bg-background/95 border-border" 
+          : "bg-white/95 dark:bg-gray-950/95 border-gray-200 dark:border-gray-800"
+      }`} data-exclude-selection>
         <div className="px-6 py-4">
-          {/* 历史记录微提示 */}
-          {historyRecords.length > 0 && !showHistory && (
-            <div
-              className="flex items-center justify-center mb-3 cursor-pointer group"
-              onClick={() => setShowHistory(true)}
-            >
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100/80 dark:bg-gray-800/80 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">
-                <div className="flex -space-x-1">
-                  {historyRecords.slice(0, 3).map((_, index) => (
-                    <div
-                      key={index}
-                      className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full"
-                    />
-                  ))}
-                </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">
-                  {historyRecords.length} 条历史对话
-                </span>
-                <ChevronDown className="h-3 w-3 text-gray-400" />
-              </div>
-            </div>
-          )}
-
           {/* 历史记录展开面板 */}
           {showHistory && (
             <div className="mb-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
@@ -691,14 +700,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                     <MessageSquare className="h-4 w-4" />
                     历史对话
                   </h4>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700"
-                    onClick={() => setShowHistory(false)}
-                  >
-                    <ChevronUp className="h-3 w-3" />
-                  </Button>
+                  {/* This button is now controlled by the parent */}
                 </div>
 
                 <div className="space-y-2 max-h-32 overflow-y-auto scrollbar-hide">

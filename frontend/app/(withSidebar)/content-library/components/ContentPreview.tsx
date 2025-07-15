@@ -5,12 +5,8 @@ import type { ContentItemPublic } from "../types";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-import {
-  adaptAnalysisData,
-  SummaryCard,
-  KeyPointsCard,
-} from "@/components/ai/AnalysisCards";
-import { AIAssistantPanel } from "@/components/ai/AIAssistantPanel";
+// 不再需要分析卡片导入，统一使用ModernAnalysisInterface
+import { ModernAnalysisInterface } from "@/components/ai/ModernAnalysisInterface";
 
 interface Panel {
   id: number;
@@ -93,15 +89,11 @@ export const ContentPreview = ({ item }: Props) => {
 const PanelContent = ({ item }: { item: ContentItemPublic }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const aiResult = item.ai_result;
-  const aiAnalysis = item.ai_analysis;
   const isFetchingCompleteData = item._fetchingCompleteData === true;
 
   useEffect(() => {
     containerRef.current?.scrollTo({ top: 0 });
   }, []);
-
-  // 使用适配器函数统一数据格式
-  const unifiedData = adaptAnalysisData(aiResult, aiAnalysis);
 
   return (
     <div
@@ -123,73 +115,17 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
         </div>
       </div>
 
-      {/* Body - 调整为flex布局支持固定底部 */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* 内容区域 */}
-        <div className="flex-1 overflow-auto pb-4 px-6">
-          <div className="space-y-6 max-w-[var(--size-body)] 2xl:max-w-[var(--size-body-lg)] mx-auto">
-            {/* 标题 */}
-            <div className="mt-12">
-              <h3 className="font-semibold text-lg">{item.title || "无标题"}</h3>
-            </div>
-
-            {/* AI 摘要和关键要点 - 使用统一组件 */}
-            <div className="space-y-4">
-              {/* 内容摘要 */}
-              {unifiedData.summary && (
-                <SummaryCard summary={unifiedData.summary} variant="preview" />
-              )}
-
-              {/* 关键要点 */}
-              {unifiedData.keyPoints && (
-                <KeyPointsCard
-                  keyPoints={unifiedData.keyPoints}
-                  variant="preview"
-                />
-              )}
-
-              {/* 当处理完成但AI分析数据缺失时显示提示 */}
-              {item.processing_status === "completed" && 
-               !isFetchingCompleteData && 
-               !unifiedData.summary && 
-               !unifiedData.keyPoints && (
-                <div className="text-center py-8">
-                  <div className="text-muted-foreground text-sm">
-                    AI 分析结果暂不可用
-                  </div>
-                  <div className="text-xs text-muted-foreground/70 mt-1">
-                    内容处理完成，但分析数据可能仍在生成中
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 标签 */}
-            {aiResult?.labels && aiResult.labels.length > 0 && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground block mb-3">
-                  标签
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {aiResult.labels.map((label, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-base bg-muted text-muted-foreground"
-                    >
-                      {label}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 底部间距，避免内容被AI助手面板遮挡 */}
-            <div className="pb-4"></div>
-          </div>
-        </div>
-
-        {/* AI助手面板 - 固定在底部 */}
-        <AIAssistantPanel content={item} />
+      {/* 使用统一的ModernAnalysisInterface */}
+      <div className="flex-1 overflow-hidden">
+        <ModernAnalysisInterface
+          content={item}
+          analysisResult={aiResult}
+          isLoading={isFetchingCompleteData}
+          variant="preview"
+          showPreprocessedContent={true}
+          height="full"
+          hideHeader={true}
+        />
       </div>
     </div>
   );
