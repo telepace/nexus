@@ -39,6 +39,9 @@ from .content import (
     Segment,
 )
 
+# Import segment models
+from .segments import ContentSegment, ContentSegmentBase
+
 # Import favorite model
 from .favorite import Favorite
 

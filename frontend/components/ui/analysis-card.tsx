@@ -438,6 +438,7 @@ const InteractiveContentBlock: React.FC<{
               ) : block.type === "analysis" && typeof displayContent === "string" ? (
                 <AnalysisContentRenderer
                   content={displayContent}
+                  contentId={block.metadata?.contentId as string | undefined}
                 />
               ) : typeof displayContent === "string" ? (
                 <AnimatePresence mode="wait">

@@ -28,6 +28,7 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [highlightedParagraphs, setHighlightedParagraphs] = useState<Set<number>>(new Set());
   const [selectedParagraph, setSelectedParagraph] = useState<number | null>(null);
+  const [isHoverHighlight, setIsHoverHighlight] = useState(false);
 
   // 处理跳转到段落的事件
   const handleJumpToParagraph = useCallback((event: CustomEvent) => {
@@ -152,23 +153,45 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
 
   // 处理高亮段落的事件
   const handleHighlightParagraphs = useCallback((event: CustomEvent) => {
-    const { refIds } = event.detail;
+    const { refIds, isHover } = event.detail;
+    
+    console.log('🎨 EnhancedContentReader: 收到高亮事件', { 
+      refIds, 
+      isHover,
+      eventType: event.type,
+      eventDetail: event.detail 
+    });
+    
     setHighlightedParagraphs(new Set(refIds));
+    setIsHoverHighlight(isHover || false);
+    
+    // 如果是悬浮高亮，不设置选中段落
+    if (!isHover) {
+      // 只有非悬浮时才设置选中段落
+      if (refIds.length === 1) {
+        setSelectedParagraph(refIds[0]);
+      }
+    }
   }, []);
 
   // 处理清除高亮的事件
   const handleClearHighlights = useCallback(() => {
+    console.log('🧹 EnhancedContentReader: 收到清除高亮事件');
     setHighlightedParagraphs(new Set());
     setSelectedParagraph(null);
+    setIsHoverHighlight(false);
   }, []);
 
   // 注册事件监听器
   useEffect(() => {
+    console.log('🔗 EnhancedContentReader: 注册事件监听器');
+    
     window.addEventListener('jumpToParagraph', handleJumpToParagraph as EventListener);
     window.addEventListener('highlightParagraphs', handleHighlightParagraphs as EventListener);
     window.addEventListener('clearHighlights', handleClearHighlights as EventListener);
 
     return () => {
+      console.log('🔗 EnhancedContentReader: 移除事件监听器');
       window.removeEventListener('jumpToParagraph', handleJumpToParagraph as EventListener);
       window.removeEventListener('highlightParagraphs', handleHighlightParagraphs as EventListener);
       window.removeEventListener('clearHighlights', handleClearHighlights as EventListener);
@@ -202,18 +225,21 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
       const paragraphIndex = index + 1; // 1-based indexing
       
       // 移除之前的样式
-      paragraph.classList.remove('paragraph-highlight', 'selected');
+      paragraph.classList.remove('paragraph-highlight', 'selected', 'hover-highlight');
       
       // 应用新的样式
       if (highlightedParagraphs.has(paragraphIndex)) {
         paragraph.classList.add('paragraph-highlight');
         
-        if (selectedParagraph === paragraphIndex) {
+        // 区分悬浮高亮和选中高亮
+        if (isHoverHighlight) {
+          paragraph.classList.add('hover-highlight');
+        } else if (selectedParagraph === paragraphIndex) {
           paragraph.classList.add('selected');
         }
       }
     });
-  }, [highlightedParagraphs, selectedParagraph]);
+  }, [highlightedParagraphs, selectedParagraph, isHoverHighlight]);
 
   // 渲染分块内容
   const renderChunks = () => {

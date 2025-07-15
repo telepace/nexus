@@ -20,8 +20,8 @@ import json
 from unittest.mock import Mock, patch, AsyncMock
 from sqlmodel import Session
 
-from app.models import Content, ContentStatus
-from app.utils.background_tasks import process_content_task
+from app.models.content import ContentItem
+from app.utils.background_tasks import background_task_manager
 from app.services.preprocessing_pipeline import PreprocessingPipeline
 
 
@@ -37,9 +37,9 @@ class TestAIProcessingStatusBug:
         After fixing the bug, it should PASS.
         """
         # Arrange: Create a content item
-        content_item = Content(
-            id="test-content-id",
-            user_id="test-user-id", 
+        content_item = ContentItem(
+            id=uuid.uuid4(),
+            user_id=uuid.uuid4(), 
             type="text",
             content_text="This is test content for AI processing",
             processing_status="processing"
@@ -74,9 +74,9 @@ class TestAIProcessingStatusBug:
              patch('app.utils.background_tasks.content_event_manager') as mock_event_manager:
             
             # Simulate the background task processing
-            await process_content_task(
-                content_id="test-content-id",
-                user_id="test-user-id",
+            await background_task_manager.start_content_processing(
+                content_id=uuid.uuid4(),
+                user_id=uuid.uuid4(),
                 session=db_session
             )
         
@@ -111,9 +111,9 @@ class TestAIProcessingStatusBug:
             status_changes.append(content_item.processing_status)
         
         # Arrange
-        content_item = Content(
+        content_item = ContentItem(
             id="test-content-order",
-            user_id="test-user-id",
+            user_id=uuid.uuid4(),
             type="text", 
             content_text="Test content for processing order",
             processing_status="processing"
@@ -141,9 +141,9 @@ class TestAIProcessingStatusBug:
                    side_effect=mock_ai_processing), \
              patch('app.utils.background_tasks.content_event_manager'):
             
-            await process_content_task(
+            await background_task_manager.start_content_processing(
                 content_id="test-content-order",
-                user_id="test-user-id", 
+                user_id=uuid.uuid4(), 
                 session=db_session
             )
         
@@ -171,9 +171,9 @@ class TestAIProcessingStatusBug:
         processing_order = []
         
         # Arrange
-        content_item = Content(
+        content_item = ContentItem(
             id="test-processing-order",
-            user_id="test-user-id",
+            user_id=uuid.uuid4(),
             type="text",
             content_text="Test content",
             processing_status="processing"
@@ -203,9 +203,9 @@ class TestAIProcessingStatusBug:
             
             mock_processor.return_value.process_content.side_effect = mock_basic_processing
             
-            await process_content_task(
+            await background_task_manager.start_content_processing(
                 content_id="test-processing-order",
-                user_id="test-user-id",
+                user_id=uuid.uuid4(),
                 session=db_session
             )
         

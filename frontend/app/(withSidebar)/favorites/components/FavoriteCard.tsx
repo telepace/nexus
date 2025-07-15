@@ -81,30 +81,23 @@ const StarRating = ({ score }: { score: number }) => {
   const ratingScore = (score * 5).toFixed(1); // 转换为5分制
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="inline-flex items-center gap-0.5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
-              className={`h-3 w-3 ${
-                i < fullStars
-                  ? "fill-amber-400 text-amber-400"
-                  : i === fullStars && hasHalfStar
-                    ? "fill-amber-200 text-amber-400"
-                    : "text-neutral-300"
-              }`}
-            />
-          ))}
-          <span className="text-xs text-neutral-500 ml-1">
-            {ratingScore}/5.0
-          </span>
-        </div>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>内容质量评分</p>
-      </TooltipContent>
-    </Tooltip>
+    <div className="inline-flex items-center gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          className={`h-2.5 w-2.5 ${
+            i < fullStars
+              ? "fill-amber-400 text-amber-400"
+              : i === fullStars && hasHalfStar
+                ? "fill-amber-200 text-amber-400"
+                : "text-neutral-300"
+          }`}
+        />
+      ))}
+      <span className="text-xs text-neutral-500 ml-1">
+        {ratingScore}
+      </span>
+    </div>
   );
 };
 
@@ -186,9 +179,7 @@ export const FavoriteCard = ({
                 <h3 className="font-medium text-base line-clamp-2 text-neutral-800 dark:text-neutral-100 max-w-cardTitle break-words">
                   {content_item.title || "无标题"}
                 </h3>
-                {hasQualityScore && (
-                  <StarRating score={aiResult.content_quality_score!} />
-                )}
+                {/* 移除这里的评分显示 */}
               </div>
 
               {/* 操作菜单 */}
@@ -278,6 +269,13 @@ export const FavoriteCard = ({
             {/* 底部信息行 */}
             <div className="flex items-center justify-between text-xs text-neutral-500 mt-auto pt-2">
               <div className="flex items-center gap-3">
+                {/* 评分信息 */}
+                {hasQualityScore && (
+                  <div className="flex items-center gap-1">
+                    <StarRating score={aiResult.content_quality_score!} />
+                  </div>
+                )}
+                
                 {/* 处理状态 */}
                 <ProcessingStatusBadge
                   status={content_item.processing_status as any}

@@ -26,7 +26,7 @@ export function PageHeader({ breadcrumbs, className }: PageHeaderProps) {
   if (breadcrumbs.length === 1) {
     return (
       <div className={className}>
-        <h1 className="text-sm font-medium text-neutral-900">
+        <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
           {breadcrumbs[0].label}
         </h1>
       </div>
@@ -46,7 +46,7 @@ export function PageHeader({ breadcrumbs, className }: PageHeaderProps) {
                     <Link href={item.href}>{item.label}</Link>
                   </BreadcrumbLink>
                 ) : (
-                  <BreadcrumbPage className="truncate text-neutral-900">{item.label}</BreadcrumbPage>
+                  <BreadcrumbPage className="truncate text-neutral-900 dark:text-neutral-100">{item.label}</BreadcrumbPage>
                 )}
               </BreadcrumbItem>
               {index < breadcrumbs.length - 1 && <BreadcrumbSeparator className="text-neutral-400" />}

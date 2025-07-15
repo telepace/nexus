@@ -1,9 +1,12 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlmodel import JSON, Column, Field, Relationship, SQLModel
+from sqlalchemy import CheckConstraint, UniqueConstraint, Column, String, Text, DateTime, Enum, Boolean, Integer, ForeignKey, Index
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlmodel import JSON, Field, Relationship, SQLModel
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+import enum
 
 from app.utils.timezone import now_utc
 

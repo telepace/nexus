@@ -77,30 +77,23 @@ const StarRating = ({ score }: { score: number }) => {
   const ratingScore = stars.toFixed(1);
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="inline-flex items-center gap-1">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
-              className={`h-3 w-3 ${
-                i < fullStars
-                  ? "fill-amber-400 text-amber-400"
-                  : i === fullStars && hasHalfStar
-                    ? "fill-amber-200 text-amber-400"
-                    : "text-neutral-300"
-              }`}
-            />
-          ))}
-          <span className="text-xs text-neutral-500 ml-1">
-            {ratingScore}/5.0
-          </span>
-        </div>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>内容质量评分</p>
-      </TooltipContent>
-    </Tooltip>
+    <div className="inline-flex items-center gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          className={`h-2.5 w-2.5 ${
+            i < fullStars
+              ? "fill-amber-400 text-amber-400"
+              : i === fullStars && hasHalfStar
+                ? "fill-amber-200 text-amber-400"
+                : "text-neutral-300"
+          }`}
+        />
+      ))}
+      <span className="text-xs text-neutral-500 ml-1">
+        {ratingScore}
+      </span>
+    </div>
   );
 };
 
@@ -315,9 +308,7 @@ export const ContentCard = ({
                   {item.title || "无标题"}
                 </h3>
 
-                {hasQualityScore && (
-                  <StarRating score={aiResult.content_quality_score!} />
-                )}
+                {/* 移除这里的评分显示 */}
               </div>
 
               <div className="flex items-center shrink-0">
@@ -449,6 +440,11 @@ export const ContentCard = ({
 
             <div className="flex items-center justify-between text-xs text-neutral-400">
               <div className="flex items-center gap-2">
+                {hasQualityScore && (
+                  <div className="flex items-center gap-1 text-neutral-400">
+                    <StarRating score={aiResult.content_quality_score!} />
+                  </div>
+                )}
                 {hasReadingTime && (
                   <div className="flex items-center gap-1 text-neutral-400">
                     <Clock className="h-3 w-3" />

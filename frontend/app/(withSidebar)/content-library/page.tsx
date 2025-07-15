@@ -196,17 +196,21 @@ export default function ContentLibraryPage() {
       >
         {/* Header */}
         <header className="relative flex items-center justify-between h-header px-6 border-b shrink-0 bg-transparent sticky top-0 z-10 backdrop-blur-sm">
-          <PageHeader breadcrumbs={[{ label: 'Library' }]} />
-          <LibraryHeader
-            items={items}
-            searchQuery={filters.search}
-            onSearchChange={handleSearchChange}
-            selectedTags={filters.selectedTags}
-            onTagToggle={handleTagToggle}
-            sortBy={filters.sortBy}
-            onSortChange={handleSortChange}
-            onClearFilters={handleClearFilters}
-          />
+          <div className="flex items-center gap-2 min-w-0">
+            <PageHeader breadcrumbs={[{ label: 'Library' }]} />
+          </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <LibraryHeader
+              items={items}
+              searchQuery={filters.search}
+              onSearchChange={handleSearchChange}
+              selectedTags={filters.selectedTags}
+              onTagToggle={handleTagToggle}
+              sortBy={filters.sortBy}
+              onSortChange={handleSortChange}
+              onClearFilters={handleClearFilters}
+            />
+          </div>
         </header>
 
         {/* 列表 */}
