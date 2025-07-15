@@ -467,8 +467,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       if (adaptedData.keyPoints) {
         cards.push({
           id: "keyPoints",
-          title: "关键要点",
-          subtitle: "重点内容梳理",
+          title: "提问灵感",
+          subtitle: "好奇心的清单",
           emoji: "🎯",
           content: {
             type: "keyPoints",
