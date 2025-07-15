@@ -26,7 +26,6 @@ import {
   Copy,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useReferenceManagerSafe } from "./ReferenceManager";
 import { OptimizedReferenceIndicator } from "@/components/ui/OptimizedReferenceIndicator";
 
 // 分析块数据类型定义
@@ -92,36 +91,14 @@ const ReferenceIndicator: React.FC<{
   onReferenceClick?: (refId: number) => void;
   contentId?: string;
 }> = ({ references, referenceData, onReferenceClick, contentId }) => {
-  // 如果提供 contentId，则使用新版 OptimizedReferenceIndicator
-  if (contentId) {
-    return (
-      <OptimizedReferenceIndicator
-        references={references}
-        contentId={contentId}
-        variant="tooltip"
-        onReferenceClick={onReferenceClick}
-        maxPreviewItems={3}
-      />
-    );
-  }
-
-  /* 旧版回退逻辑保持不变（省略为简洁） */
-  const { actions } = useReferenceManagerSafe();
-  if (references.length === 0) return null;
-  const handleMouseEnter = () => actions.highlightParagraphs(references, true);
-  const handleMouseLeave = () => actions.clearHighlights();
-
   return (
-    <div className="inline-flex items-center gap-1 ml-2" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-      {references.slice(0, 3).map((refId) => (
-        <span key={refId} className="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200 cursor-pointer" onClick={() => onReferenceClick?.(refId)}>
-          {refId}
-        </span>
-      ))}
-      {references.length > 3 && (
-        <Badge variant="outline" className="h-5 px-1.5 text-xs">+{references.length - 3}</Badge>
-      )}
-    </div>
+    <OptimizedReferenceIndicator
+      references={references}
+      contentId={contentId}
+      variant="tooltip"
+      onReferenceClick={onReferenceClick}
+      maxPreviewItems={3}
+    />
   );
 };
 

@@ -125,7 +125,7 @@ export function OptimizedReferenceIndicator({
 
   // 加载段落内容
   const loadSegments = useCallback(async () => {
-    if (!contentId || loadingRef.current || state.segments.length > 0) {
+    if (loadingRef.current || state.segments.length > 0) {
       return;
     }
 
@@ -134,67 +134,67 @@ export function OptimizedReferenceIndicator({
 
     try {
       const refString = references.join(',');
-      
-      // 尝试使用真实API
-      try {
-        const response = await getCachedSegmentsByRef(contentId, refString);
-        
-        setState(prev => ({
-          ...prev,
-          segments: response.segments,
-          loading: false,
-          error: null,
-        }));
 
-        if (response.missing_numbers.length > 0) {
-          console.warn('Missing segments:', response.missing_numbers);
-        }
-        return;
-      } catch (apiError) {
-        console.log('🔄 API调用失败，使用模拟数据:', apiError);
-        
-        // 回退到模拟数据
-        const mockSegments = references.map(refId => {
-          // 从 ReferenceManager 中获取对应段落
-          const paragraph = refManagerState.sourceParagraphs.find(p => p.display_number === refId);
-          
-          if (paragraph) {
-            return {
-              id: paragraph.id,
-              content_id: contentId,
-              content_item_id: contentId, // 添加缺失的字段
-              display_number: paragraph.display_number,
-              content: paragraph.content,
-              start_offset: paragraph.start_offset,
-              end_offset: paragraph.end_offset,
-              created_at: paragraph.created_at,
-              updated_at: paragraph.updated_at,
-            };
-          } else {
-            // 如果找不到对应段落，创建一个模拟段落
-            return {
-              id: `mock-segment-${refId}`,
-              content_id: contentId,
-              content_item_id: contentId, // 添加缺失的字段
-              display_number: refId,
-              content: `这是第${refId}段的模拟内容。这里包含了重要的信息和观点，展示了详细的分析结果。当您悬浮在引用指示器上时，可以预览这部分原文内容，帮助您更好地理解分析的依据和背景。`,
-              start_offset: (refId - 1) * 100,
-              end_offset: refId * 100,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            };
+      // 如果提供了 contentId，则优先尝试调用 API / 缓存
+      if (contentId) {
+        try {
+          const response = await getCachedSegmentsByRef(contentId, refString);
+         
+          setState(prev => ({
+            ...prev,
+            segments: response.segments,
+            loading: false,
+            error: null,
+          }));
+
+          if (response.missing_numbers.length > 0) {
+            console.warn('Missing segments:', response.missing_numbers);
           }
-        }).filter(Boolean);
-
-        setState(prev => ({
-          ...prev,
-          segments: mockSegments,
-          loading: false,
-          error: null,
-        }));
-        
-        console.log('✅ 成功加载模拟数据:', mockSegments);
+          return; // 成功后结束
+        } catch (apiError) {
+          console.log('🔄 API调用失败，准备回退到本地段落或模拟数据:', apiError);
+        }
       }
+
+      // -------- 尝试从 ReferenceManagerProvider 的 sourceParagraphs 获取 --------
+      if (refManagerState.sourceParagraphs.length > 0) {
+        const localSegments = references.map(refId => {
+          const p = refManagerState.sourceParagraphs.find(sp => sp.display_number === refId);
+          if (!p) return null;
+          return {
+            id: p.id,
+            content_id: p.content_item_id,
+            content_item_id: p.content_item_id,
+            display_number: p.display_number,
+            content: p.content,
+            start_offset: p.start_offset,
+            end_offset: p.end_offset,
+            created_at: p.created_at,
+            updated_at: p.updated_at,
+          } as ContentSegment;
+        }).filter(Boolean) as ContentSegment[];
+
+        if (localSegments.length > 0) {
+          setState(prev => ({ ...prev, segments: localSegments, loading: false, error: null }));
+          return;
+        }
+      }
+
+      // -------- 最终回退到简单模拟段落 --------
+      const mockSegments = references.map(refId => ({
+        id: `mock-${refId}`,
+        content_id: contentId ?? 'unknown',
+        content_item_id: contentId ?? 'unknown',
+        display_number: refId,
+        content: `这是第 ${refId} 段的示例内容。`,
+        start_offset: 0,
+        end_offset: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })) as ContentSegment[];
+
+      setState(prev => ({ ...prev, segments: mockSegments, loading: false, error: null }));
+      return;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '加载失败';
       console.error('Failed to load segments:', err);
@@ -211,7 +211,7 @@ export function OptimizedReferenceIndicator({
 
   // 自动加载
   useEffect(() => {
-    if (autoLoad && contentId && references.length > 0) {
+    if (autoLoad && references.length > 0) {
       loadSegments();
     }
   }, [autoLoad, loadSegments]);
@@ -219,7 +219,7 @@ export function OptimizedReferenceIndicator({
   // Tooltip 打开/关闭时的处理
   const handleTooltipOpenChange = useCallback((open: boolean) => {
     if (open) {
-      if (!disabled && contentId) {
+      if (!disabled) {
         loadSegments();
         if (references.length > 0) {
           actions.highlightParagraphs(references, true);
@@ -363,17 +363,16 @@ export function OptimizedReferenceIndicator({
   }) => (
     <span
       className={cn(
-        "inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium",
-        "bg-blue-50 text-blue-700 border border-blue-200 ml-0.5",
-        "cursor-pointer hover:bg-blue-100 transition-all duration-200 hover:scale-105",
+        "inline-flex items-center text-xs font-medium text-primary ml-0.5",
+        "cursor-pointer hover:underline transition-all duration-150",
         "group relative",
-        disabled && "opacity-50 cursor-not-allowed",
+        disabled && "opacity-50 cursor-not-allowed hover:no-underline",
         className
       )}
       onClick={onClick}
       style={{ pointerEvents: disabled ? 'none' : 'auto' }}
     >
-      [{displayLabel}]
+      {displayLabel}
     </span>
   );
 
@@ -383,7 +382,7 @@ export function OptimizedReferenceIndicator({
       <Tooltip onOpenChange={handleTooltipOpenChange}>
         <TooltipTrigger asChild>
           <ReferenceButton
-            onClick={() => references.length === 1 && handleClick(references[0])}
+            onClick={() => references.length > 0 && handleClick(references[0])}
           />
         </TooltipTrigger>
         <TooltipContent>
@@ -404,7 +403,7 @@ export function OptimizedReferenceIndicator({
       <Tooltip onOpenChange={handleTooltipOpenChange}>
         <TooltipTrigger asChild>
           <ReferenceButton
-            onClick={() => references.length === 1 && handleClick(references[0])}
+            onClick={() => references.length > 0 && handleClick(references[0])}
           />
         </TooltipTrigger>
         <TooltipContent 
