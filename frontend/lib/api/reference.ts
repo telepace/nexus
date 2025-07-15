@@ -2,13 +2,13 @@ import { client } from "./client";
 
 export interface SourceParagraph {
   id: string;
-  index: number;
+  content_item_id: string;
+  display_number: number;
   content: string;
-  title?: string;
-  startOffset?: number;
-  endOffset?: number;
-  chunkId?: string;
-  metadata?: Record<string, any>;
+  start_offset?: number;
+  end_offset?: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ReferenceMapping {
@@ -19,10 +19,9 @@ export interface ReferenceMapping {
 }
 
 export interface ContentReferenceInfo {
-  contentId: string;
-  paragraphs: SourceParagraph[];
-  mappings: ReferenceMapping[];
-  totalParagraphs: number;
+  segments: SourceParagraph[];
+  total: number;
+  missing_numbers: number[];
 }
 
 export const referenceApi = {
@@ -31,7 +30,7 @@ export const referenceApi = {
    */
   async getContentParagraphs(contentId: string): Promise<ContentReferenceInfo> {
     try {
-      const response = await client.get<ContentReferenceInfo>(`/api/v1/content/${contentId}/paragraphs`);
+      const response = await client.get<ContentReferenceInfo>(`/api/v1/content/${contentId}/segments`);
       return response;
     } catch (error) {
       console.error("Failed to fetch content paragraphs:", error);
@@ -44,7 +43,7 @@ export const referenceApi = {
    */
   async getParagraphByRef(contentId: string, refId: number): Promise<SourceParagraph | null> {
     try {
-      const response = await client.get<SourceParagraph>(`/api/v1/content/${contentId}/paragraphs/${refId}`);
+      const response = await client.get<SourceParagraph>(`/api/v1/content/${contentId}/segments/${refId}`);
       return response;
     } catch (error) {
       console.error(`Failed to fetch paragraph ${refId}:`, error);
@@ -57,10 +56,10 @@ export const referenceApi = {
    */
   async getParagraphsByRefs(contentId: string, refIds: number[]): Promise<SourceParagraph[]> {
     try {
-      const response = await client.post<SourceParagraph[]>(`/api/v1/content/${contentId}/paragraphs/batch`, {
-        refIds,
-      });
-      return response;
+      // 使用查询参数传递段落号列表
+      const numbers = refIds.join(',');
+      const response = await client.get<ContentReferenceInfo>(`/api/v1/content/${contentId}/segments?numbers=${numbers}`);
+      return response.segments;
     } catch (error) {
       console.error("Failed to fetch paragraphs by refs:", error);
       return [];
@@ -72,10 +71,9 @@ export const referenceApi = {
    */
   async searchParagraphs(contentId: string, query: string): Promise<SourceParagraph[]> {
     try {
-      const response = await client.get<SourceParagraph[]>(`/api/v1/content/${contentId}/paragraphs/search`, {
-        q: query,
-      });
-      return response;
+      // 注意：后端可能没有实现搜索功能，这里先返回空数组
+      console.warn("搜索功能暂未实现");
+      return [];
     } catch (error) {
       console.error("Failed to search paragraphs:", error);
       return [];
@@ -90,13 +88,21 @@ export const referenceApi = {
     context: SourceParagraph[];
   } | null> {
     try {
-      const response = await client.get<{
-        target: SourceParagraph;
-        context: SourceParagraph[];
-      }>(`/api/v1/content/${contentId}/paragraphs/${refId}/context`, {
-        size: contextSize,
-      });
-      return response;
+      // 计算上下文范围
+      const fromNumber = Math.max(1, refId - contextSize);
+      const toNumber = refId + contextSize;
+      
+      const response = await client.get<ContentReferenceInfo>(`/api/v1/content/${contentId}/segments?from_number=${fromNumber}&to_number=${toNumber}`);
+      
+      const target = response.segments.find(s => s.display_number === refId);
+      if (!target) {
+        return null;
+      }
+      
+      return {
+        target,
+        context: response.segments,
+      };
     } catch (error) {
       console.error(`Failed to fetch paragraph context for ${refId}:`, error);
       return null;

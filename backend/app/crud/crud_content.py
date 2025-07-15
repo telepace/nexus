@@ -464,28 +464,32 @@ def delete_content_item_sync(
                 )
             )
 
-        # 3. Delete segments (child table)
+        # 3. Delete content_segments (新的段落引用表) 
+        from app.models.segments import ContentSegment
+        session.execute(sa_delete(ContentSegment).where(ContentSegment.content_item_id == id))
+
+        # 4. Delete segments (child table)
         session.execute(sa_delete(Segment).where(Segment.content_item_id == id))
 
-        # 4. Delete content assets (child table)
+        # 5. Delete content assets (child table)
         session.execute(
             sa_delete(ContentAsset).where(ContentAsset.content_item_id == id)
         )
 
-        # 5. Delete content shares (child table)
+        # 6. Delete content shares (child table)
         session.execute(
             sa_delete(ContentShare).where(ContentShare.content_item_id == id)
         )
 
-        # 6. Delete AI results (child table)
+        # 7. Delete AI results (child table)
         session.execute(sa_delete(AIResult).where(AIResult.content_item_id == id))
 
-        # 7. Delete AI conversations (child table)
+        # 8. Delete AI conversations (child table)
         session.execute(
             sa_delete(AIConversation).where(AIConversation.content_item_id == id)
         )
 
-        # 8. Finally delete the content item itself
+        # 9. Finally delete the content item itself
         session.execute(sa_delete(ContentItem).where(ContentItem.id == id))
 
         session.commit()

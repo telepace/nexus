@@ -5,6 +5,7 @@ import uuid
 from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
 from typing import Any  # Added Optional and Literal
+from typing import Annotated
 
 from fastapi import (
     APIRouter,
@@ -14,9 +15,13 @@ from fastapi import (
     Path,  # Added Path
     Query,
     status,
+    Depends,
 )
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, and_, or_, desc, func
+from typing import List, Optional
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
@@ -43,6 +48,11 @@ from app.models import (
     AIResult,  # Added for AIResult storage
     ContentItem,  # For converting ContentItemCreate to ContentItem model for CRUD
     Segment,  # Added for chunks summary endpoint
+    ContentSegment,  # 新增
+)
+from app.models.segments import ContentSegment  # 新增
+from app.models.content import (
+    ContentItem,
 )
 from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is just base + id and audit fields
     AIResultPublic,
@@ -51,6 +61,9 @@ from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is
     ContentItemPublic,
     ContentShareCreate,
     ContentSharePublic,
+    ContentItemUpdate, 
+    ContentSegmentOut,
+    ContentSegmentBulkResponse,  # 新增
 )
 from app.utils.background_tasks import background_task_manager
 from app.utils.content_processors import ProcessingPipeline
@@ -59,11 +72,15 @@ from app.utils.streaming_jsonl_extractor import create_streaming_jsonl_extractor
 from app.utils.prompt_helpers import render_user_analysis_prompt
 from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
 from app.services.ai.chat_service import ChatService
+from app.api.deps import get_current_user, get_db, get_async_db
 
 # from app.utils.cache import warm_article_cache  # 暂时注释掉避免redis依赖
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+# 添加异步数据库依赖类型
+AsyncSessionDep = Annotated[AsyncSession, Depends(get_async_db)]
 
 
 def _extract_title_from_content(content_text: str | None) -> str:
@@ -1476,6 +1493,26 @@ def get_content_markdown_endpoint(
 def convert_conversation_to_public(conversation: AIConversation) -> dict:
     """Convert AIConversation model to public schema."""
     try:
+        # 防御性检查 - 确保对象有 messages 属性
+        if not hasattr(conversation, 'messages'):
+            logger.error(f"Conversation object {getattr(conversation, 'id', 'unknown')} missing messages attribute")
+            logger.error(f"Object type: {type(conversation)}")
+            logger.error(f"Available attributes: {[attr for attr in dir(conversation) if not attr.startswith('_')]}")
+            # 返回一个基本的对话结构
+            return {
+                "id": str(getattr(conversation, 'id', 'unknown')),
+                "user_id": str(getattr(conversation, 'user_id', 'unknown')),
+                "content_item_id": str(getattr(conversation, 'content_item_id', None)) if getattr(conversation, 'content_item_id', None) else None,
+                "title": getattr(conversation, 'title', 'Unknown Title'),
+                "conversation_type": getattr(conversation, 'conversation_type', 'unknown'),
+                "ai_model_name": getattr(conversation, 'ai_model_name', 'unknown'),
+                "messages": [],
+                "summary": getattr(conversation, 'summary', None),
+                "is_active": getattr(conversation, 'is_active', True),
+                "created_at": getattr(conversation, 'created_at', '').isoformat() if hasattr(getattr(conversation, 'created_at', ''), 'isoformat') else str(getattr(conversation, 'created_at', '')),
+                "updated_at": getattr(conversation, 'updated_at', '').isoformat() if hasattr(getattr(conversation, 'updated_at', ''), 'isoformat') else str(getattr(conversation, 'updated_at', '')),
+            }
+        
         messages_data = (
             json.loads(conversation.messages) if conversation.messages else []
         )
@@ -1493,6 +1530,26 @@ def convert_conversation_to_public(conversation: AIConversation) -> dict:
             f"Failed to parse messages for conversation {conversation.id}: {e}"
         )
         messages = []
+    except AttributeError as e:
+        logger.error(
+            f"AttributeError when accessing conversation attributes: {e}"
+        )
+        logger.error(f"Conversation object type: {type(conversation)}")
+        logger.error(f"Available attributes: {[attr for attr in dir(conversation) if not attr.startswith('_')]}")
+        # 返回一个基本的对话结构
+        return {
+            "id": str(getattr(conversation, 'id', 'unknown')),
+            "user_id": str(getattr(conversation, 'user_id', 'unknown')),
+            "content_item_id": str(getattr(conversation, 'content_item_id', None)) if getattr(conversation, 'content_item_id', None) else None,
+            "title": getattr(conversation, 'title', 'Unknown Title'),
+            "conversation_type": getattr(conversation, 'conversation_type', 'unknown'),
+            "ai_model_name": getattr(conversation, 'ai_model_name', 'unknown'),
+            "messages": [],
+            "summary": getattr(conversation, 'summary', None),
+            "is_active": getattr(conversation, 'is_active', True),
+            "created_at": getattr(conversation, 'created_at', '').isoformat() if hasattr(getattr(conversation, 'created_at', ''), 'isoformat') else str(getattr(conversation, 'created_at', '')),
+            "updated_at": getattr(conversation, 'updated_at', '').isoformat() if hasattr(getattr(conversation, 'updated_at', ''), 'isoformat') else str(getattr(conversation, 'updated_at', '')),
+        }
 
     return {
         "id": str(conversation.id),
@@ -1537,32 +1594,55 @@ def get_content_conversations(
             status_code=status.HTTP_404_NOT_FOUND, detail="Content item not found"
         )
 
-    # 查询对话
-    query = select(AIConversation).where(
-        AIConversation.content_item_id == content_id,
-        AIConversation.user_id == current_user.id,
-    )
+    try:
+        # 查询对话 - 确保返回完整的模型对象
+        query = select(AIConversation).where(
+            AIConversation.content_item_id == content_id,
+            AIConversation.user_id == current_user.id,
+        )
 
-    if not include_inactive:
-        query = query.where(AIConversation.is_active)
+        if not include_inactive:
+            query = query.where(AIConversation.is_active == True)
 
-    conversations = session.exec(query.order_by(AIConversation.created_at)).all()
+        conversations = session.exec(query.order_by(AIConversation.created_at)).all()
+        
+        logger.info(f"Found {len(conversations)} conversations for content {content_id}")
 
-    # 转换为public schema
-    public_conversations = [
-        convert_conversation_to_public(conv) for conv in conversations
-    ]
+        # 转换为public schema - 添加额外的错误处理
+        public_conversations = []
+        for i, conv in enumerate(conversations):
+            try:
+                logger.debug(f"Processing conversation {i+1}/{len(conversations)}: {conv.id}")
+                public_conv = convert_conversation_to_public(conv)
+                public_conversations.append(public_conv)
+            except Exception as e:
+                logger.error(f"Failed to convert conversation {getattr(conv, 'id', 'unknown')} to public: {e}")
+                logger.error(f"Conversation type: {type(conv)}")
+                # 继续处理其他对话，而不是完全失败
+                continue
 
-    # 检查是否有自动分析对话
-    has_auto_analysis = any(
-        conv.conversation_type == "auto_analysis" for conv in conversations
-    )
+        # 检查是否有自动分析对话
+        has_auto_analysis = False
+        try:
+            has_auto_analysis = any(
+                getattr(conv, 'conversation_type', None) == "auto_analysis" for conv in conversations
+            )
+        except Exception as e:
+            logger.error(f"Failed to check auto_analysis conversations: {e}")
 
-    return {
-        "conversations": public_conversations,
-        "total": len(public_conversations),
-        "has_auto_analysis": has_auto_analysis,
-    }
+        return {
+            "conversations": public_conversations,
+            "total": len(public_conversations),
+            "has_auto_analysis": has_auto_analysis,
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in get_content_conversations: {e}")
+        logger.error(f"Content ID: {content_id}, User ID: {current_user.id}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve conversations"
+        )
 
 
 @router.post(
@@ -2417,3 +2497,114 @@ def regenerate_ai_analysis_endpoint(
         "status": "processing",
         "note": "Check SSE events for real-time progress updates"
     }
+
+@router.get("/{content_id}/segments/{segment_number}", response_model=ContentSegmentOut)
+async def get_content_segment(
+    content_id: uuid.UUID,
+    segment_number: int,
+    current_user: CurrentUser,
+    db: AsyncSessionDep
+):
+    """获取指定内容的特定段落"""
+    
+    # 验证内容项存在且用户有权限访问
+    content_item = await db.scalar(
+        select(ContentItem).where(
+            and_(
+                ContentItem.id == content_id,
+                ContentItem.user_id == current_user.id
+            )
+        )
+    )
+    
+    if not content_item:
+        raise HTTPException(status_code=404, detail="Content not found")
+    
+    # 获取指定段落
+    segment = await db.scalar(
+        select(ContentSegment).where(
+            and_(
+                ContentSegment.content_item_id == content_id,
+                ContentSegment.display_number == segment_number
+            )
+        )
+    )
+    
+    if not segment:
+        raise HTTPException(status_code=404, detail=f"Segment {segment_number} not found")
+    
+    return segment
+
+@router.get("/{content_id}/segments", response_model=ContentSegmentBulkResponse)
+async def get_content_segments(
+    content_id: uuid.UUID,
+    current_user: CurrentUser,
+    db: AsyncSessionDep,
+    numbers: Optional[str] = Query(None, description="逗号分隔的段落号列表，如 '1,3,5'"),
+    from_number: Optional[int] = Query(None, description="起始段落号（包含）"),
+    to_number: Optional[int] = Query(None, description="结束段落号（包含）")
+):
+    """批量获取内容段落
+    
+    支持三种查询模式：
+    1. 指定段落号列表：?numbers=1,3,5
+    2. 段落区间：?from_number=6&to_number=24
+    3. 全部段落：不传任何参数
+    """
+    
+    # 验证内容项存在且用户有权限访问
+    content_item = await db.scalar(
+        select(ContentItem).where(
+            and_(
+                ContentItem.id == content_id,
+                ContentItem.user_id == current_user.id
+            )
+        )
+    )
+    
+    if not content_item:
+        raise HTTPException(status_code=404, detail="Content not found")
+    
+    # 构建查询条件
+    query = select(ContentSegment).where(ContentSegment.content_item_id == content_id)
+    requested_numbers = []
+    
+    if numbers:
+        # 指定段落号列表模式
+        try:
+            requested_numbers = [int(n.strip()) for n in numbers.split(',') if n.strip()]
+            query = query.where(ContentSegment.display_number.in_(requested_numbers))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid numbers format")
+    
+    elif from_number is not None and to_number is not None:
+        # 区间模式
+        if from_number > to_number:
+            from_number, to_number = to_number, from_number
+        query = query.where(
+            and_(
+                ContentSegment.display_number >= from_number,
+                ContentSegment.display_number <= to_number
+            )
+        )
+        requested_numbers = list(range(from_number, to_number + 1))
+    
+    elif from_number is not None or to_number is not None:
+        raise HTTPException(status_code=400, detail="Both from_number and to_number are required for range query")
+    
+    # 执行查询
+    query = query.order_by(ContentSegment.display_number)
+    result = await db.execute(query)
+    segments = result.scalars().all()
+    
+    # 计算缺失的段落号
+    missing_numbers = []
+    if requested_numbers:
+        found_numbers = {seg.display_number for seg in segments}
+        missing_numbers = [num for num in requested_numbers if num not in found_numbers]
+    
+    return ContentSegmentBulkResponse(
+        segments=segments,
+        total=len(segments),
+        missing_numbers=missing_numbers
+    )

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/client-auth";
 import { SeamlessContentRenderer } from "@/components/ui/SeamlessContentRenderer";
-import { SimpleContentRenderer } from "@/components/ui/SimpleContentRenderer";
+import { EnhancedContentReaderWithProvider } from "@/components/ui/EnhancedContentReader";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
 import { useReaderContext } from "@/components/layout/ReaderLayout";
@@ -104,16 +104,14 @@ const ProcessedContentRenderer = memo(
       );
     }
 
-    // 小文档或中等文档：使用简单渲染器
+    // 小文档或中等文档：使用增强阅读器，支持引用跳转
     if (contentText) {
       return (
         <div className="flex justify-center w-full py-4">
-          <SimpleContentRenderer
+          <EnhancedContentReaderWithProvider
             content={contentText}
-            title={content.title || undefined}
+            contentId={contentId}
             className="w-full max-w-[35rem] prose prose-sm dark:prose-invert"
-            enableTextSelection={true}
-            onTextAction={onTextAction}
           />
         </div>
       );
