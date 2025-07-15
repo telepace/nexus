@@ -1176,8 +1176,9 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Hover style: keep position, only enhance shadow */
 .analysis-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(0);
 }
 
 /* Enhanced focus styles */
