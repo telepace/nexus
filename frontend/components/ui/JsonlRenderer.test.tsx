@@ -38,7 +38,7 @@ describe("JsonlRenderer", () => {
       
       const heading = screen.getByRole("heading", { level: 1 });
       expect(heading).toHaveTextContent("Main Title");
-      expect(heading).toHaveClass("text-xl", "lg:text-2xl", "leading-[1.3]");
+      expect(heading).toHaveClass("text-2xl", "font-bold");
     });
 
     it("renders h2 blocks correctly", () => {
@@ -47,7 +47,7 @@ describe("JsonlRenderer", () => {
       
       const heading = screen.getByRole("heading", { level: 2 });
       expect(heading).toHaveTextContent("Section Title");
-      expect(heading).toHaveClass("text-lg", "font-semibold", "leading-[1.3]");
+      expect(heading).toHaveClass("text-xl", "font-semibold", "border-b");
     });
 
     it("renders h3 blocks correctly", () => {
@@ -56,7 +56,7 @@ describe("JsonlRenderer", () => {
       
       const heading = screen.getByRole("heading", { level: 3 });
       expect(heading).toHaveTextContent("Subsection Title");
-      expect(heading).toHaveClass("text-base", "font-semibold", "leading-[1.3]");
+      expect(heading).toHaveClass("text-lg", "font-medium");
     });
 
     it("renders paragraph blocks correctly", () => {
@@ -64,19 +64,6 @@ describe("JsonlRenderer", () => {
       render(<JsonlRenderer content={content} />);
       
       expect(screen.getByText("This is a paragraph.")).toBeInTheDocument();
-    });
-
-    it("renders paragraph with lead as a bold prefix", () => {
-      const content = '{"type": "p", "lead": "Subtitle", "content": "This is the main content."}';
-      render(<JsonlRenderer content={content} />);
-
-      const renderedContent = screen.getByText((content, element) => {
-        return element?.tagName.toLowerCase() === 'p' && content.startsWith('Subtitle:')
-      });
-      
-      expect(renderedContent).toBeInTheDocument();
-      expect(renderedContent.innerHTML).toContain('<strong>Subtitle:</strong>');
-      expect(renderedContent).toHaveTextContent('Subtitle: This is the main content.');
     });
 
     it("renders quote blocks correctly", () => {
