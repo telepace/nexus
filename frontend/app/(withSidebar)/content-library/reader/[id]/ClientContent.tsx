@@ -528,7 +528,7 @@ export const ClientContent = ({
   return (
     <div className="h-full flex flex-col animate-in fade-in duration-300">
       {/* Header - 优化高度、背景和间距 */}
-      <div className="flex items-center justify-between px-6 border-b border-muted/40 bg-muted/10 backdrop-blur supports-[backdrop-filter]:bg-muted/40 shadow-sm h-14 relative">
+      <div className="flex items-center justify-between px-6 border-b border-border backdrop-blur supports-[backdrop-filter]:bg-muted/40 shadow-sm h-header relative">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <Button
             variant="ghost"

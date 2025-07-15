@@ -1,9 +1,11 @@
 "use client";
 
-import { FC } from "react";
+import { FC, useState, useCallback } from "react";
 import { ContentItemPublic } from "@/lib/api/content";
 import { AIResult, ConversationListResponse } from "@/lib/api/content";
 import { ModernAnalysisInterface } from "./ModernAnalysisInterface";
+import { Button } from "@/components/ui/button";
+import { MessageSquare } from "lucide-react";
 
 interface ContentAnalysisSidebarProps {
   content: ContentItemPublic;
@@ -22,6 +24,17 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
   className = "",
   hideHeader = false,
 }) => {
+  const [historyCount, setHistoryCount] = useState(0);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+
+  const handleHistoryCountChange = useCallback((count: number) => {
+    setHistoryCount(count);
+  }, []);
+
+  const toggleHistoryPanel = () => {
+    setShowHistoryPanel((prev) => !prev);
+  };
+
   return (
     <div className={`flex flex-col h-full bg-background ${className}`} data-exclude-selection>
       {/* Header - 可选显示 */}
@@ -29,6 +42,24 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
         <div className="flex items-center justify-between px-4 border-b h-header" data-exclude-selection>
           <div className="flex items-center space-x-4 flex-1 min-w-0">
             <h2 className="text-sm font-medium truncate">AI分析</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            {historyCount > 0 && (
+              <div className="relative">
+                <Button
+                  aria-label="history"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-neutral-700 hover:bg-neutral-200/50"
+                  onClick={toggleHistoryPanel}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  <div className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-muted text-muted-foreground text-[10px] font-bold">
+                    {historyCount}
+                  </div>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -41,6 +72,9 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
           analysisResult={analysisResult}
           isLoading={isLoading}
           className="h-full"
+          onHistoryCountChange={handleHistoryCountChange}
+          showHistory={showHistoryPanel}
+          hideHeader={true}
         />
       </div>
     </div>
