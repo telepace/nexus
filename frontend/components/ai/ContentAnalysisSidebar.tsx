@@ -39,7 +39,7 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
     <div className={`flex flex-col h-full bg-background ${className}`} data-exclude-selection>
       {/* Header - 可选显示 */}
       {!hideHeader && (
-        <div className="flex items-center justify-between px-4 border-b h-header" data-exclude-selection>
+        <div className="flex items-center justify-between pl-4 pr-6 border-b h-header" data-exclude-selection>
           <div className="flex items-center space-x-4 flex-1 min-w-0">
             <h2 className="text-sm font-medium truncate">AI分析</h2>
           </div>

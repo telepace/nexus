@@ -660,7 +660,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         )}
 
         {/* 卡片列表 */}
-        <div className="px-6 pb-6" data-exclude-selection>
+        <div className="px-6 pt-4 pb-6" data-exclude-selection>
           <div className={`space-y-4 ${
             variant === "preview" 
               ? "max-w-[var(--size-body)] 2xl:max-w-[var(--size-body-lg)] mx-auto" 
