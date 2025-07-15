@@ -553,3 +553,14 @@ jest.mock("medium-zoom", () => {
 
 // Mock copy-to-clipboard
 jest.mock("copy-to-clipboard", () => jest.fn());
+
+// 全局 mock @/lib/auth：保留原始實現，僅覆蓋 getCookie 與 useAuth 以避免真實 cookie 依賴
+jest.mock("@/lib/auth", () => {
+  const original = jest.requireActual("@/lib/auth");
+  return {
+    __esModule: true,
+    ...original,
+    getCookie: (name: string) => undefined,
+    useAuth: () => ({ user: undefined, token: undefined }),
+  };
+});

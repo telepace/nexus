@@ -2,8 +2,10 @@ export interface ContentItemPublic {
   id: string;
   type: string;
   source_uri?: string | null;
-  title?: string | null;
+  title: string | null;
   summary?: string | null;
+  /** 文章全文或純文本，用於 AI 分析 */
+  content_text?: string | null;
   user_id: string;
   processing_status: string;
   created_at: string;

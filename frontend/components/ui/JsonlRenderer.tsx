@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { JsonLineWithExpandButton } from "./JsonLineWithExpandButton";
 import { EnhancedReferenceIndicator, useReferenceManagerSafe } from "./ReferenceManager";
+import { jsonlStyles } from "./jsonlStyles";
 
 interface JsonlRendererProps {
   content: string;
@@ -13,6 +14,10 @@ interface JsonlRendererProps {
   /** callback when expand button is clicked on a JSON line */
   onExpandLine?: (jsonContent: Record<string, unknown>) => void;
   contentId?: string; // 用于引用管理器
+  /** 指定渲染風格，對應 jsonlStyles 註冊表 key */
+  styleName?: string;
+  /** 是否显示引用指示器，默认隐藏 */
+  showReferenceIndicators?: boolean;
 }
 
 /**
@@ -31,15 +36,25 @@ export function JsonlRenderer({
   enableHoverEffects = true,
   onExpandLine,
   contentId,
+  styleName = "neumorphism",
+  showReferenceIndicators = false,
 }: JsonlRendererProps) {
   // 使用安全的 ReferenceManager
   const { actions } = useReferenceManagerSafe();
+
+  // 根据是否显示引用指示器，决定传递哪个组件
+  const ReferenceIndicatorComponent: typeof EnhancedReferenceIndicator = showReferenceIndicators
+    ? EnhancedReferenceIndicator
+    : (() => null) as unknown as typeof EnhancedReferenceIndicator;
+
+  // 根據 styleName 取得區塊渲染器
+  const styleRenderer = jsonlStyles[styleName] || jsonlStyles["default"];
 
   if (!content) {
     return (
       <div
         data-testid="jsonl-renderer"
-        className={cn("space-y-2", className)}
+        className={cn("space-y-1", className)}
       />
     );
   }
@@ -82,9 +97,11 @@ export function JsonlRenderer({
       <div
         className={cn(
           "group relative rounded-lg transition-all duration-200 ease-out",
-          "px-3 py-2 -mx-3 -my-2",
+          "px-2 py-1 -mx-2 my-0.5",
           "border border-transparent",
-          hasReferences && "hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/50 dark:hover:bg-blue-950/20"
+          "overflow-visible",
+          // 移除 hover 高亮效果（藍色背景 / 邊框）
+          // 如需保留 hover 樣式，可在此添加其他類名
         )}
       >
         {/* 主要内容 */}
@@ -94,228 +111,19 @@ export function JsonlRenderer({
   };
 
   const renderBlock = (block: Record<string, unknown>, idx: number) => {
-    const type = (block["type"] || block["t"]) as string | undefined;
-    const c = (block["content"] ?? block["c"]) as React.ReactNode;
     const ref = block["ref"] as string | undefined;
-    const lead = block["lead"] as string | undefined;
 
     // 解析引用
     const references = actions.parseReferences(ref);
     const hasReferences = references.length > 0;
 
-    const blockElement = (() => {
-      switch (type) {
-        case "h1":
-          return (
-            <div className="flex items-center justify-between">
-              <h1 className="scroll-m-16 text-xl font-bold tracking-tight lg:text-2xl select-text leading-[1.3] flex-1">
-                <MarkdownRenderer content={String(c)} />
-              </h1>
-              {hasReferences && (
-                <EnhancedReferenceIndicator
-                  references={references}
-                  className="ml-4"
-                />
-              )}
-            </div>
-          );
-        case "h2":
-          return (
-            <div className="flex items-center justify-between">
-              <h2 className="scroll-m-16 border-b pb-1.5 text-lg font-semibold tracking-tight first:mt-0 select-text leading-[1.3] flex-1">
-                <MarkdownRenderer content={String(c)} />
-              </h2>
-              {hasReferences && (
-                <EnhancedReferenceIndicator
-                  references={references}
-                  className="ml-4"
-                />
-              )}
-            </div>
-          );
-        case "h3":
-          return (
-            <div className="flex items-center justify-between">
-              <h3 className="scroll-m-16 text-base font-semibold tracking-tight select-text leading-[1.3] flex-1">
-                <MarkdownRenderer content={String(c)} />
-              </h3>
-              {hasReferences && (
-                <EnhancedReferenceIndicator
-                  references={references}
-                  className="ml-4"
-                />
-              )}
-            </div>
-          );
-        case "quote": {
-          return (
-            <blockquote className="italic border-l-2 pl-4 my-2 select-text">
-              <div className="mb-1">
-                <MarkdownRenderer content={String(c)} />
-              </div>
-              <div className="flex items-center justify-between mt-2">
-                {ref && (
-                  <cite className="text-xs text-gray-500 dark:text-gray-400 not-italic">
-                    — {ref}
-                  </cite>
-                )}
-                {hasReferences && (
-                  <EnhancedReferenceIndicator
-                    references={references}
-                    className="ml-auto"
-                  />
-                )}
-              </div>
-            </blockquote>
-          );
-        }
-        case "list": {
-          // Expect c to be string or array
-          let items: string[] = [];
-          if (Array.isArray(c)) {
-            items = c.map(String);
-          } else if (typeof c === "string") {
-            // Try splitting by common delimiters
-            items = c.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
-          }
-          return (
-            <div>
-              <ul className="list-disc ml-4 space-y-1 my-2 select-text">
-                {items.map((item, i) => (
-                  <li key={i} className="select-text">
-                    <MarkdownRenderer content={item} />
-                  </li>
-                ))}
-              </ul>
-              {hasReferences && (
-                <div className="mt-2 flex justify-end">
-                  <EnhancedReferenceIndicator references={references} />
-                </div>
-              )}
-            </div>
-          );
-        }
-        case "insight": {
-          // Special insight styling
-          return (
-            <div className="my-3 rounded-md border-l-4 border-blue-500 bg-blue-50 p-3 dark:bg-blue-900/20 select-text">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <strong className="text-blue-600 dark:text-blue-400 text-sm font-medium mr-2">
-                    💡 洞察:
-                  </strong>
-                  <span>
-                    <MarkdownRenderer content={String(c)} />
-                  </span>
-                </div>
-                {hasReferences && (
-                  <EnhancedReferenceIndicator
-                    references={references}
-                    className="shrink-0"
-                  />
-                )}
-              </div>
-            </div>
-          );
-        }
-        case "concept": {
-          return (
-            <div className="my-3 rounded-md border-l-4 border-purple-500 bg-purple-50 p-3 dark:bg-purple-900/20 select-text">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <strong className="text-purple-600 dark:text-purple-400 text-sm font-medium mr-2">
-                    🎯 概念:
-                  </strong>
-                  <span>
-                    <MarkdownRenderer content={String(c)} />
-                  </span>
-                </div>
-                {hasReferences && (
-                  <EnhancedReferenceIndicator
-                    references={references}
-                    className="shrink-0"
-                  />
-                )}
-              </div>
-            </div>
-          );
-        }
-        case "qa": {
-          // Expect c to be {q: string, a: string}
-          if (typeof c === "object" && c !== null) {
-            const q = (c as any)["q"] || (c as any)["question"];
-            const a = (c as any)["a"] || (c as any)["answer"];
-            return (
-              <div className="my-3 space-y-1 select-text">
-                <p className="font-semibold select-text">
-                  Q: <MarkdownRenderer content={String(q)} />
-                </p>
-                <p className="select-text">
-                  A: <MarkdownRenderer content={String(a)} />
-                </p>
-                {hasReferences && (
-                  <div className="mt-2 flex justify-end">
-                    <EnhancedReferenceIndicator references={references} />
-                  </div>
-                )}
-              </div>
-            );
-          }
-          return (
-            <div>
-              <p className="my-2 select-text">
-                <MarkdownRenderer content={String(c)} />
-              </p>
-              {hasReferences && (
-                <div className="mt-2 flex justify-end">
-                  <EnhancedReferenceIndicator references={references} />
-                </div>
-              )}
-            </div>
-          );
-        }
-        case "action":
-          return (
-            <div className="my-3 rounded-md border-l-4 border-green-500 bg-green-50 p-3 dark:bg-green-900/20 select-text">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <strong className="text-green-600 dark:text-green-400 text-sm font-medium mr-2">
-                    ⚡ 行动:
-                  </strong>
-                  <span>
-                    <MarkdownRenderer content={String(c)} />
-                  </span>
-                </div>
-                {hasReferences && (
-                  <EnhancedReferenceIndicator
-                    references={references}
-                    className="shrink-0"
-                  />
-                )}
-              </div>
-            </div>
-          );
-        default: {
-          // Default paragraph with lead support
-          const finalContent = lead ? `**${lead}:** ${String(c)}` : String(c);
-          return (
-            <div className="leading-6 my-2 select-text">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <MarkdownRenderer content={finalContent} />
-                </div>
-                {hasReferences && (
-                  <EnhancedReferenceIndicator
-                    references={references}
-                    className="shrink-0"
-                  />
-                )}
-              </div>
-            </div>
-          );
-        }
-      }
-    })();
+    const blockElement = styleRenderer({
+      block,
+      references,
+      hasReferences,
+      MarkdownRenderer,
+      EnhancedReferenceIndicator: ReferenceIndicatorComponent,
+    });
 
     // 统一封装：先用 BlockWrapper 提供引用高亮，再在内部使用 JsonLineWithExpandButton
     return (
@@ -335,7 +143,7 @@ export function JsonlRenderer({
     <div
       data-testid="jsonl-renderer"
       className={cn(
-        "max-w-none space-y-1",
+        "max-w-none space-y-0.5 overflow-visible",
         // 确保整个容器支持文本选择
         "select-text",
         className,

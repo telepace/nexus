@@ -337,7 +337,7 @@ export const EnhancedReferenceIndicator: React.FC<EnhancedReferenceIndicatorProp
         return (
           <div key={refId} className="relative group">
             <button
-              className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200 hover:bg-blue-200 hover:border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700 dark:hover:bg-blue-800/50 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer hover:scale-110 active:scale-95"
+              className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-medium bg-muted text-muted-foreground hover:bg-muted/70 transition-all duration-200 cursor-pointer hover:scale-110 active:scale-95"
               onClick={() => handleClick(refId)}
               title={`跳转到第${refId}段`}
             >

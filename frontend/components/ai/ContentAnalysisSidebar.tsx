@@ -36,10 +36,10 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
   };
 
   return (
-    <div className={`flex flex-col h-full bg-background ${className}`} data-exclude-selection>
+    <div className={`flex flex-col h-full linear-bg-1 ${className}`} data-exclude-selection>
       {/* Header - 可选显示 */}
       {!hideHeader && (
-        <div className="flex items-center justify-between pl-4 pr-6 border-b h-header" data-exclude-selection>
+        <div className="flex items-center justify-between pl-4 pr-6 border-b h-header linear-bg-1" data-exclude-selection>
           <div className="flex items-center space-x-4 flex-1 min-w-0">
             <h2 className="text-sm font-medium truncate">AI分析</h2>
           </div>
@@ -50,10 +50,10 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
                   aria-label="history"
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-neutral-700 hover:bg-neutral-200/50"
+                  className="h-9 w-9 text-neutral-700 hover:bg-neutral-200/50"
                   onClick={toggleHistoryPanel}
                 >
-                  <MessageSquare className="h-4 w-4" />
+                  <MessageSquare className="h-7 w-7" />
                   <div className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-muted text-muted-foreground text-[10px] font-bold">
                     {historyCount}
                   </div>

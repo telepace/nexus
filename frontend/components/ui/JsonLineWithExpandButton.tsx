@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { 
@@ -59,7 +58,7 @@ export function JsonLineWithExpandButton({
       <div
         className={cn(
           "group relative rounded-lg transition-all duration-200 ease-out",
-          "px-3 py-2 -mx-3 -my-2",
+          "px-3 py-2 -mx-3 my-1",
           "border border-transparent",
         )}
       >
@@ -73,16 +72,19 @@ export function JsonLineWithExpandButton({
     <div
       className={cn(
         "group relative rounded-lg transition-all duration-200 ease-out",
-        "px-3 py-2 -mx-3 -my-2",
+        // 預留 40px 空槽給展開按鈕 (pl-10 => 2.5rem)
+        "py-2 pr-3 pl-10 -mx-3 my-1",
         "border border-transparent",
         enableHoverEffects && "hover:border-gray-200 dark:hover:border-gray-700",
+        "overflow-visible", // 確保子元素不被裁切
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Expand button - positioned absolutely */}
       {isHovered && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 z-10">
+        // icon 放置在預留區域內，left-3 (0.75rem) 與 pl-10 搭配，保持約 28px 間隔
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 z-50">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -96,11 +98,12 @@ export function JsonLineWithExpandButton({
                     "shadow-sm hover:shadow-md",
                     "text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400",
                     "transition-all duration-200",
-                    "animate-in fade-in-50 slide-in-from-left-2 duration-200"
+                    // 移除 slide-in-from-left，改為淡入
+                    "animate-in fade-in-50 duration-200"
                   )}
                   onClick={handleExpandClick}
                 >
-                  <Wand2 className="h-3 w-3" />
+                  <span className="text-[12px]">💭</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="left" className="text-xs">

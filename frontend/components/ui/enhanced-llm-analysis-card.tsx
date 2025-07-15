@@ -284,10 +284,12 @@ export function EnhancedLLMAnalysisCard({
               </>
             )}
 
+            {/* 展開/收起始終放在最右 */}
             <Button
               size="sm"
               variant="ghost"
               onClick={() => onToggleExpanded?.(analysis.id)}
+              className="order-last flex-shrink-0"
             >
               {isExpanded ? (
                 <ChevronUp className="h-3 w-3" />
