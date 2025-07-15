@@ -217,9 +217,15 @@ export const ReferenceManagerProvider: React.FC<ReferenceManagerProviderProps> =
   }, []);
 
   // 跳转到指定段落
-  const jumpToParagraph = useCallback((refId: number) => {
+  const jumpToParagraph = useCallback(async (refId: number) => {
     console.log('🚀 ReferenceManager: jumpToParagraph called', { refId, sourceParagraphs: state.sourceParagraphs.length });
     
+    // 若段落尚未加载，尝试先加载
+    if (state.sourceParagraphs.length === 0 && contentId) {
+      console.log('⌛ 段落数据为空，尝试自动加载后再跳转');
+      await loadSourceParagraphs(contentId);
+    }
+
     // 查找段落 - 支持多种索引匹配方式
     let paragraph = state.sourceParagraphs.find(p => p.display_number === refId);
     
@@ -275,7 +281,7 @@ export const ReferenceManagerProvider: React.FC<ReferenceManagerProviderProps> =
       title: "已跳转",
       description: `跳转到第${refId}段：${paragraph.content.substring(0, 100)}...`,
     });
-  }, [state.sourceParagraphs]);
+  }, [state.sourceParagraphs, contentId, loadSourceParagraphs]);
 
   // 高亮多个段落
   const highlightParagraphs = useCallback((refIds: number[], isHover = false) => {
@@ -589,7 +595,7 @@ const ModernReferenceIndicator: React.FC<EnhancedReferenceIndicatorProps> = ({
               className
             )}
           >
-            <span className="text-xs font-medium">[{displayLabel}]</span>
+            <span className="text-xs font-medium">{displayLabel}</span>
             {!disabled && <ExternalLink className="ml-1 h-3 w-3" />}
           </Badge>
         </TooltipTrigger>
@@ -676,8 +682,8 @@ export function LegacyReferenceIndicator(props: LegacyEnhancedReferenceIndicator
     const displayText = getDisplayText();
     
     return (
-      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20 ml-1 cursor-pointer hover:bg-primary/20 hover:scale-105 transition-all duration-200">
-        [{displayText}]
+      <span className="inline-flex items-center text-xs font-medium text-primary ml-1 cursor-pointer hover:underline transition-all duration-150">
+        {displayText}
       </span>
     );
   }
@@ -827,16 +833,15 @@ export const NewEnhancedReferenceIndicator: React.FC<NewEnhancedReferenceIndicat
         <TooltipTrigger asChild>
           <button
             className={cn(
-              "inline-flex items-center px-2 py-1 rounded-md text-xs font-medium",
-              "bg-primary/10 text-primary border border-primary/20 ml-1",
-              "cursor-pointer hover:bg-primary/20 hover:scale-105 transition-all duration-200",
+              "inline-flex items-center text-xs font-medium text-primary ml-1",
+              "cursor-pointer hover:underline transition-all duration-150",
               className
             )}
             onClick={() => validReferences.length === 1 && handleClick(validReferences[0])}
             onMouseEnter={handleButtonMouseEnter}
             onMouseLeave={handleButtonMouseLeave}
           >
-            [{displayLabel}]
+            {displayLabel}
           </button>
         </TooltipTrigger>
         <TooltipContent>
@@ -853,15 +858,13 @@ export const NewEnhancedReferenceIndicator: React.FC<NewEnhancedReferenceIndicat
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "inline-flex items-center px-2 py-1 rounded-md text-xs font-medium",
-            "bg-primary/10 text-primary border border-primary/20 ml-1",
-            "cursor-pointer hover:bg-primary/20 hover:scale-105 transition-all duration-200",
-            "group",
+            "inline-flex items-center text-xs font-medium text-primary ml-1",
+            "cursor-pointer hover:underline transition-all duration-150 group",
             className
           )}
         >
           <Quote className="h-3 w-3 mr-1 opacity-70" />
-          [{displayLabel}]
+          {displayLabel}
           <ExternalLink className="h-3 w-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
         </button>
       </PopoverTrigger>

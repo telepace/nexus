@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { ChunkItem } from "./ChunkItem";
 import { MarkdownRenderer } from "./MarkdownRenderer";
-import { useReferenceManagerSafe, createParagraphHighlightStyles } from "./ReferenceManager";
+import { useReferenceManager, useReferenceManagerSafe, createParagraphHighlightStyles } from "./ReferenceManager";
 
 interface EnhancedContentReaderProps {
   content?: string;
@@ -308,12 +308,13 @@ export const EnhancedContentReaderWithProvider: React.FC<EnhancedContentReaderWi
     return <EnhancedContentReader {...props} />;
   }
 
-  // 如果已经在Provider内，直接使用
+  // 如果已经在 Provider 内，直接使用
   try {
-    useReferenceManagerSafe();
+    // 如果已经在 ReferenceManagerProvider 内，useReferenceManager 不会抛错
+    useReferenceManager();
     return <EnhancedContentReader {...props} />;
   } catch {
-    // 如果不在Provider内，需要包装
+    // 若抛错说明当前没有 Provider，需要包裹
     const { ReferenceManagerProvider } = require('./ReferenceManager');
     return (
       <ReferenceManagerProvider contentId={props.contentId}>

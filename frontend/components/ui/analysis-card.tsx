@@ -46,6 +46,7 @@ import { useToast } from "@/hooks/use-toast";
 import styles from "./analysis-card.module.css";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { AnalysisContentRenderer } from "./AnalysisContentRenderer";
+import { ReferenceManagerProvider } from "./ReferenceManager";
 
 // 卡片基础类型定义
 export interface CardAction {
@@ -436,10 +437,20 @@ const InteractiveContentBlock: React.FC<{
                   onReferenceClick={handleJsonReferenceClick}
                 />
               ) : block.type === "analysis" && typeof displayContent === "string" ? (
-                <AnalysisContentRenderer
-                  content={displayContent}
-                  contentId={block.metadata?.contentId as string | undefined}
-                />
+                (() => {
+                  const cid = block.metadata?.contentId as string | undefined;
+                  const renderer = (
+                    <AnalysisContentRenderer
+                      content={displayContent}
+                      contentId={cid}
+                    />
+                  );
+                  return cid ? (
+                    <ReferenceManagerProvider contentId={cid}>
+                      {renderer}
+                    </ReferenceManagerProvider>
+                  ) : renderer;
+                })()
               ) : typeof displayContent === "string" ? (
                 <AnimatePresence mode="wait">
                   <motion.div 
