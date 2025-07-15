@@ -16,7 +16,7 @@ export const metadata = {
   // Favicon icons (shared with Telepace)
   icons: [
     { rel: "icon", url: "/favicon.ico" },
-    { rel: "icon", url: "/img/favicon.svg", type: "image/svg+xml" },
+    { rel: "icon", url: "/img/favicon.png", type: "image/png", sizes: "64x64" },
   ],
 };
 

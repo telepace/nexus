@@ -6,6 +6,7 @@ import { MarkdownRenderer } from "./MarkdownRenderer";
 import { JsonLineWithExpandButton } from "./JsonLineWithExpandButton";
 import { EnhancedReferenceIndicator, useReferenceManagerSafe } from "./ReferenceManager";
 import { Badge } from "@/components/ui/badge";
+import { jsonlStyles } from "./jsonlStyles";
 
 interface JsonlRendererProps {
   content: string;
@@ -14,6 +15,10 @@ interface JsonlRendererProps {
   /** callback when expand button is clicked on a JSON line */
   onExpandLine?: (jsonContent: Record<string, unknown>) => void;
   contentId?: string; // 用于引用管理器
+  /** 指定渲染風格，對應 jsonlStyles 註冊表 key */
+  styleName?: string;
+  /** 是否显示引用指示器，默认隐藏 */
+  showReferenceIndicators?: boolean;
 }
 
 /**
@@ -32,15 +37,25 @@ export function JsonlRenderer({
   enableHoverEffects = true,
   onExpandLine,
   contentId,
+  styleName = "neumorphism",
+  showReferenceIndicators = false,
 }: JsonlRendererProps) {
   // 使用安全的 ReferenceManager
   const { actions } = useReferenceManagerSafe();
+
+  // 根据是否显示引用指示器，决定传递哪个组件
+  const ReferenceIndicatorComponent: typeof EnhancedReferenceIndicator = showReferenceIndicators
+    ? EnhancedReferenceIndicator
+    : (() => null) as unknown as typeof EnhancedReferenceIndicator;
+
+  // 根據 styleName 取得區塊渲染器
+  const styleRenderer = jsonlStyles[styleName] || jsonlStyles["default"];
 
   if (!content) {
     return (
       <div
         data-testid="jsonl-renderer"
-        className={cn("space-y-2", className)}
+        className={cn("space-y-1", className)}
       />
     );
   }
@@ -209,8 +224,9 @@ export function JsonlRenderer({
       <div
         className={cn(
           "group relative rounded-lg transition-all duration-200 ease-out",
-          "px-3 py-2 -mx-3 -my-2",
+          "px-2 py-1 -mx-2 my-0.5",
           "border border-transparent",
+          "overflow-visible",
           !isError && !isRecovered && hasReferences && "hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/50 dark:hover:bg-blue-950/20",
           isRecovered && "border-l-2 border-amber-400 bg-amber-50/30 dark:bg-amber-950/10",
           isError && "border-l-2 border-red-400 bg-red-50/30 dark:bg-red-950/10"
@@ -546,7 +562,7 @@ export function JsonlRenderer({
     <div
       data-testid="jsonl-renderer"
       className={cn(
-        "max-w-none space-y-1",
+        "max-w-none space-y-0.5 overflow-visible",
         // 确保整个容器支持文本选择
         "select-text",
         className,

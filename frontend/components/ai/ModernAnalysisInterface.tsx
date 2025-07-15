@@ -12,7 +12,10 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
+  Minus,
+  Plus,
 } from "lucide-react";
+import { useCardHeight } from "@/hooks/use-card-height";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -92,6 +95,10 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   );
   const [loadingPrompts, setLoadingPrompts] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [collapsedCards, setCollapsedCards] = useState<Set<string>>(new Set());
+  
+  // 动态高度管理
+  const { registerElement, getCardHeight } = useCardHeight();
 
   // 移除原有的文本操作按钮 - 现在由独立组件处理
   // const textActions = [...]
@@ -467,7 +474,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       if (adaptedData.keyPoints) {
         cards.push({
           id: "keyPoints",
-          title: "提问灵感",
+          title: "提问清单",
           subtitle: "好奇心的清单",
           emoji: "🎯",
           content: {
@@ -542,6 +549,19 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     return null;
   };
 
+  // 处理卡片折叠状态
+  const toggleCardCollapse = useCallback((cardId: string) => {
+    setCollapsedCards(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(cardId)) {
+        newSet.delete(cardId);
+      } else {
+        newSet.add(cardId);
+      }
+      return newSet;
+    });
+  }, []);
+
   // 主卡片组件 - 极简化设计
   const CardComponent = ({
     card,
@@ -549,6 +569,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   }: { card: AnalysisCard; index: number }) => {
     const isSelected = selectedCard === card.id;
     const isHovered = hoveredCard === card.id;
+    const isCollapsed = collapsedCards.has(card.id);
 
     return (
       <div
@@ -561,7 +582,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         {/* 极简卡片主体 */}
         <Card
           className={`
-          transition-shadow duration-300 ease-in-out 
+          transition-all duration-300 ease-in-out 
           overflow-hidden relative border-0 analysis-card
           ${
             isSelected
@@ -587,32 +608,67 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                 </div>
               </div>
 
-              {/* 简化的操作按钮 */}
-              {isHovered && (
-                <div className="flex items-center gap-1 animate-in fade-in-50 slide-in-from-right-2 duration-200">
-                  <FavoriteButton
-                    itemId={content.id}
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 text-gray-400 hover:text-gray-600"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-gray-400 hover:text-gray-600"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      console.log("分享");
-                    }}
-                  >
-                    <Share className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              )}
+              {/* 操作按钮：使用 flex-row-reverse 保证折叠/展开按钮始终最右 */}
+              <div className="flex items-center gap-1 flex-row-reverse">
+                {/* 折叠/展开按钮 - 始终显示 */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-gray-400 hover:text-gray-600"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleCardCollapse(card.id);
+                  }}
+                >
+                  {isCollapsed ? (
+                    <Plus className="h-3.5 w-3.5" />
+                  ) : (
+                    <Minus className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+                
+                {/* 其他操作按钮 - 仅在悬停时显示 */}
+                {isHovered && (
+                  <div className="flex items-center gap-1 mr-1 animate-in fade-in-50 slide-in-from-right-2 duration-200">
+                    <FavoriteButton
+                      itemId={content.id}
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 text-gray-400 hover:text-gray-600"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-gray-400 hover:text-gray-600"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log("分享");
+                      }}
+                    >
+                      <Share className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* 卡片内容 */}
-            {renderCardContent(card)}
+            {/* 卡片内容 - 支持折叠状态 */}
+            <div
+              className={`
+              transition-all duration-300 ease-in-out overflow-hidden
+              ${isCollapsed ? "opacity-0" : "opacity-100"}
+            `}
+              style={{
+                maxHeight: isCollapsed ? 0 : `${getCardHeight(card.id, isCollapsed)}px`,
+              }}
+            >
+              <div
+                ref={(el) => registerElement(card.id, el)}
+                className="card-content-inner"
+              >
+                {renderCardContent(card)}
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -633,7 +689,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   // 根据变体计算样式
   const containerHeight = height === "fixed" ? "h-80" : "h-full";
   const containerClasses = variant === "preview" 
-    ? `flex flex-col ${containerHeight} ${className}` 
+    ? `flex flex-col ${containerHeight} ${className} linear-bg-1` 
     : `flex flex-col h-full ${className}`;
 
   return (
@@ -649,10 +705,16 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       `}</style>
 
       {/* 可滚动的主内容区域 */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar" data-exclude-selection>
+      <div 
+        className={`flex-1 overflow-y-auto custom-scrollbar ${variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""}`} 
+        data-exclude-selection
+      >
         {/* 页面标题 - 根据配置条件渲染 */}
         {!hideHeader && (
-          <div className="px-6 py-4" data-exclude-selection>
+          <div 
+            className={`px-6 py-4 ${variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""}`} 
+            data-exclude-selection
+          >
             <h1 className="text-xl font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
               {content.title || "内容分析"}
             </h1>
@@ -660,8 +722,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         )}
 
         {/* 卡片列表 */}
-        <div className="px-6 pt-4 pb-6" data-exclude-selection>
-          <div className={`space-y-4 ${
+        <div className="px-8 pt-4 pb-6" data-exclude-selection>
+          <div className={`space-y-6 ${
             variant === "preview" 
               ? "max-w-[var(--size-body)] 2xl:max-w-[var(--size-body-lg)] mx-auto" 
               : ""
@@ -687,7 +749,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       {/* 固定底部AI助手 */}
       <div className={`flex-shrink-0 backdrop-blur-md border-t ${
         variant === "preview" 
-          ? "bg-background/95 border-border" 
+          ? "linear-bg-1/95 border-border" 
           : "bg-white/95 dark:bg-gray-950/95 border-gray-200 dark:border-gray-800"
       }`} data-exclude-selection>
         <div className="px-6 py-4">

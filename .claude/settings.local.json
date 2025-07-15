@@ -53,7 +53,8 @@
       "Bash(--body \"## 📋 任务描述\n\n在Preview预览容器的最底部添加AI聊天框和对应的AI按钮，使其功能与reader page的AI分析panel底部的聊天功能保持一致。\n\n## 🎯 目标\n\n目前Preview容器和AI分析panel的内容基本一致（都显示内容摘要、关键要点等），但Preview缺少底部的AI交互功能。需要让两者的组件基本统一。\n\n## 🔍 当前状态分析\n\n### Preview容器 (ContentPreview.tsx)\n- 位置: \\`/frontend/app/(withSidebar)/content-library/components/ContentPreview.tsx\\`\n- 包含: 标题、摘要卡片、关键要点卡片、标签\n- 缺失: AI聊天框和AI按钮\n\n### AI分析Panel (ModernAnalysisInterface.tsx)\n- 位置: \\`/frontend/components/ai/ModernAnalysisInterface.tsx\\`\n- 底部聊天功能 (560-716行):\n  - AI指令按钮行 (动态加载的prompt按钮)\n  - 聊天输入框 (支持回车发送)\n  - 发送按钮 (动画加载状态)\n  - 历史记录面板 (可展开的对话历史)\n\n## 🛠 实施方案\n\n采用**组件提取 + 集成**方案:\n\n### 步骤1: 创建可复用AI聊天组件\n- 创建新组件 \\`AIAssistantPanel.tsx\\`\n- 提取ModernAnalysisInterface中的聊天功能 (560-716行)\n- 保持完整的状态管理和API调用逻辑\n- 支持props传入content数据\n\n### 步骤2: 修改ContentPreview.tsx\n- 在Body底部添加固定的AI聊天面板\n- 调整布局为flex结构，支持固定底部容器\n- 保持现有的动画系统和预览体验\n\n### 步骤3: 样式和功能适配\n- 保持Preview容器的视觉风格一致性\n- 复用现有的API调用和错误处理逻辑\n- 确保响应式设计在移动端正常工作\n\n## ✅ 验收标准\n\n- [ ] Preview容器底部显示AI聊天输入框\n- [ ] 动态加载AI指令按钮，点击可快速输入prompt\n- [ ] 支持发送消息并获得AI流式响应\n- [ ] 显示对话历史记录（可展开/收起）\n- [ ] 保持与AI分析panel一致的交互体验\n- [ ] 不影响现有的预览功能和动画效果\n- [ ] 在移动端和桌面端都能正常工作\n\n## 🔗 相关文件\n\n- \\`/frontend/app/(withSidebar)/content-library/components/ContentPreview.tsx\\`\n- \\`/frontend/components/ai/ModernAnalysisInterface.tsx\\`\n- \\`/frontend/components/ai/AnalysisCards.tsx\\` (数据适配器)\n\n## 📝 备注\n\n这个功能将让Preview容器具备完整的AI交互能力，提升用户在内容库页面的使用体验，无需切换到reader页面即可进行AI对话。\" )",
       "Bash(--label \"enhancement\" )",
       "Bash(--label \"frontend\" )",
-      "Bash(--label \"ai\")"
+      "Bash(--label \"ai\")",
+      "Bash(git rebase:*)"
     ]
   },
   "enableAllProjectMcpServers": false
