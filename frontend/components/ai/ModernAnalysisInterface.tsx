@@ -522,9 +522,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           }
           group-hover:shadow-lg
         `}
-        data-exclude-selection
         >
-          <CardContent className="px-12 py-4" data-exclude-selection>
+          <CardContent className="px-12 py-4">
             {/* 极简卡片头部 */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
