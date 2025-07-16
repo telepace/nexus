@@ -136,7 +136,7 @@ class Settings(BaseSettings):
     LITELLM_MASTER_KEY: str | None = None
 
     # LLM 配置
-    DEFAULT_LLM_MODEL: str = "or-deepseek-r1"
+    DEFAULT_LLM_MODEL: str = "or-gemini-2.5-pro"
 
     # AI任务模型配置 - 支持为不同任务指定不同模型，可通过环境变量覆盖
     AI_TASK_MODELS: dict[str, str] = Field(

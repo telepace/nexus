@@ -414,7 +414,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           onClick={(e) => handleBlockClick(`${card.id}-main`, e)}
         >
           <div className="select-text prose prose-sm max-w-none dark:prose-invert">
-            <UniversalContentRenderer content={textContent} />
+            <UniversalContentRenderer content={textContent} contentId={content.id} />
           </div>
         </div>
       );

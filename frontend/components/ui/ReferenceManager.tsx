@@ -428,19 +428,104 @@ const ModernReferenceIndicator: React.FC<EnhancedReferenceIndicatorProps> = ({
   const loadSegments = useCallback(async () => {
     if (!contentId || !refString || segments.length > 0) return;
     
+    console.log('🔄 ModernReferenceIndicator: Starting loadSegments', { 
+      contentId, 
+      refString, 
+      referenceNumbers,
+      currentSegmentsLength: segments.length 
+    });
+    
     setLoading(true);
     setError(null);
     
     try {
       const response = await getCachedSegmentsByRef(contentId, refString);
+      console.log('✅ ModernReferenceIndicator: API success', { 
+        segments: response.segments.length, 
+        missing: response.missing_numbers 
+      });
       setSegments(response.segments);
-      
+
       if (response.missing_numbers.length > 0) {
         console.warn('Missing segments:', response.missing_numbers);
       }
     } catch (err) {
+      console.log('❌ ModernReferenceIndicator: API failed, starting fallback chain', { 
+        error: err instanceof Error ? err.message : String(err),
+        referenceNumbers 
+      });
       console.error('Failed to load segments:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load content');
+
+      // 检查是否是认证错误
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      const isAuthError = errorMessage.includes('401') || errorMessage.includes('Not authenticated');
+      
+      if (isAuthError) {
+        console.warn('Authentication required for segments API, using fallback...');
+        // 不显示错误信息给用户，直接进入回退逻辑
+      } else {
+        console.error('Segments API error:', errorMessage);
+      }
+
+      // 第一步：尝试从 ReferenceManagerProvider 的 sourceParagraphs 获取
+      try {
+        const { state: refState } = useReferenceManagerSafe();
+        console.log('🔍 ModernReferenceIndicator: Checking local paragraphs', { 
+          localParagraphsCount: refState.sourceParagraphs.length,
+          requestedNumbers: referenceNumbers 
+        });
+        if (refState.sourceParagraphs.length > 0) {
+          const local = referenceNumbers
+            .map((n) => refState.sourceParagraphs.find((p) => p.display_number === n))
+            .filter(Boolean) as SourceParagraph[];
+
+          console.log('📄 ModernReferenceIndicator: Found local segments', { 
+            foundCount: local.length,
+            expected: referenceNumbers.length 
+          });
+
+          if (local.length > 0) {
+            setSegments(
+              local.map((p) => ({
+                id: p.id,
+                content_id: p.content_item_id,
+                content_item_id: p.content_item_id,
+                display_number: p.display_number,
+                content: p.content,
+                start_offset: p.start_offset,
+                end_offset: p.end_offset,
+                created_at: p.created_at,
+                updated_at: p.updated_at,
+              }))
+            );
+            setError(null);
+            console.log('✅ ModernReferenceIndicator: Using local paragraphs');
+            return;
+          }
+        }
+      } catch (localErr) {
+        console.warn('Local fallback failed', localErr);
+      }
+
+      // 最后回退到简单 mock
+      console.log('🎭 ModernReferenceIndicator: Generating mock data', { referenceNumbers });
+      const mock = referenceNumbers.map((n) => ({
+        id: `mock-${n}`,
+        content_id: contentId,
+        content_item_id: contentId,
+        display_number: n,
+        content: `这是第 ${n} 段的示例内容。在实际使用中，这里会显示文档的原文段落内容。您可以通过悬浮和点击来测试引用功能的交互效果。当用户登录并有权限访问时，这里将显示真实的段落内容。`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }));
+      // 使用本地 mock 后，不再向用户显示错误信息，只在控制台记录
+      console.info('Using mock segments due to API failure', { referenceNumbers, mock });
+      setSegments(mock as ContentSegment[]);
+      setError(null);
+      console.log('✅ ModernReferenceIndicator: Mock data generated', { 
+        mockCount: mock.length,
+        segments: segments.length 
+      });
     } finally {
       setLoading(false);
     }
@@ -537,6 +622,11 @@ const ModernReferenceIndicator: React.FC<EnhancedReferenceIndicatorProps> = ({
     
     return (
       <ScrollArea className={cn("max-h-80", isExpanded && "max-h-96")}>
+        {segments.some(s => s.id.startsWith('mock-')) && (
+          <div className="px-2 py-1 text-xs text-amber-600 bg-amber-50 border-b border-amber-200">
+            💡 演示模式：显示示例内容
+          </div>
+        )}
         <div className="space-y-2 p-2">
           {segmentsToShow.map((segment) => (
             <div key={segment.id} className="border-l-2 border-primary/20 pl-3">
@@ -578,6 +668,8 @@ const ModernReferenceIndicator: React.FC<EnhancedReferenceIndicatorProps> = ({
   };
 
   const displayLabel = getDisplayLabel();
+  // 检查是否使用的是 mock 数据
+  const isMockData = segments.some(s => s.id.startsWith('mock-'));
 
   return (
     <TooltipProvider>
@@ -623,9 +715,15 @@ const ModernReferenceIndicator: React.FC<EnhancedReferenceIndicatorProps> = ({
               </div>
               
               <div className="border-t bg-muted/30 px-3 py-2">
-                <div className="text-xs text-muted-foreground">
-                  💡 点击跳转到对应段落
-                </div>
+                {isMockData ? (
+                  <div className="text-xs text-muted-foreground">
+                    🔐 登录后可查看真实段落内容
+                  </div>
+                ) : (
+                  <div className="text-xs text-muted-foreground">
+                    💡 点击跳转到对应段落
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
