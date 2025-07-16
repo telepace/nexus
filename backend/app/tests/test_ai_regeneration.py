@@ -173,8 +173,8 @@ class TestBackgroundTaskManager:
         # 模拟所有需要的依赖
         with patch('app.utils.background_tasks.Session') as mock_session_class, \
              patch('app.utils.background_tasks.content_event_manager') as mock_event_manager, \
-             patch('app.utils.background_tasks.get_chat_service_instance') as mock_chat_service, \
-             patch('app.utils.background_tasks.PreprocessingPipeline') as mock_pipeline_class:
+             patch('app.core.dependencies.get_chat_service_instance') as mock_chat_service, \
+             patch('app.services.preprocessing_pipeline.PreprocessingPipeline') as mock_pipeline_class:
             
             # 设置模拟
             mock_session = Mock()
