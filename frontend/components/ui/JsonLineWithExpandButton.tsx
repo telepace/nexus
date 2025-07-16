@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { 
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -75,7 +75,8 @@ export function JsonLineWithExpandButton({
         // 預留 40px 空槽給展開按鈕 (pl-10 => 2.5rem)
         "py-2 pr-3 pl-10 -mx-3 my-1",
         "border border-transparent",
-        enableHoverEffects && "hover:border-gray-200 dark:hover:border-gray-700",
+        enableHoverEffects &&
+          "hover:border-gray-200 dark:hover:border-gray-700",
         "overflow-visible", // 確保子元素不被裁切
       )}
       onMouseEnter={() => setIsHovered(true)}
@@ -99,7 +100,7 @@ export function JsonLineWithExpandButton({
                     "text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400",
                     "transition-all duration-200",
                     // 移除 slide-in-from-left，改為淡入
-                    "animate-in fade-in-50 duration-200"
+                    "animate-in fade-in-50 duration-200",
                   )}
                   onClick={handleExpandClick}
                 >

@@ -45,8 +45,8 @@ export default function TestEnhancedCardsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <JsonlRenderer 
-                content={comparisonJsonl} 
+              <JsonlRenderer
+                content={comparisonJsonl}
                 enableHoverEffects={false}
               />
             </CardContent>
@@ -61,8 +61,8 @@ export default function TestEnhancedCardsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <JsonlRenderer 
-                content={comparisonJsonl} 
+              <JsonlRenderer
+                content={comparisonJsonl}
                 enableHoverEffects={true}
               />
             </CardContent>
@@ -95,11 +95,25 @@ export default function TestEnhancedCardsPage() {
           </CardHeader>
           <CardContent className="space-y-3 text-blue-700 dark:text-blue-300">
             <div className="space-y-2">
-              <p><strong>文本选择：</strong> 现在可以正常选择和复制任何内容块中的文字</p>
-              <p><strong>悬停效果：</strong> 鼠标悬停在内容块上时会显示淡色背景和边框</p>
-              <p><strong>复制功能：</strong> 悬停时右上角会出现复制按钮，点击即可复制整个块的内容</p>
-              <p><strong>块类型识别：</strong> 复制时会显示对应的块类型（如"已复制段落内容"）</p>
-              <p><strong>暗色模式：</strong> 完整支持深色主题下的悬停效果</p>
+              <p>
+                <strong>文本选择：</strong>{" "}
+                现在可以正常选择和复制任何内容块中的文字
+              </p>
+              <p>
+                <strong>悬停效果：</strong>{" "}
+                鼠标悬停在内容块上时会显示淡色背景和边框
+              </p>
+              <p>
+                <strong>复制功能：</strong>{" "}
+                悬停时右上角会出现复制按钮，点击即可复制整个块的内容
+              </p>
+              <p>
+                <strong>块类型识别：</strong>{" "}
+                复制时会显示对应的块类型（如"已复制段落内容"）
+              </p>
+              <p>
+                <strong>暗色模式：</strong> 完整支持深色主题下的悬停效果
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -127,4 +141,4 @@ export default function TestEnhancedCardsPage() {
       </div>
     </div>
   );
-} 
+}

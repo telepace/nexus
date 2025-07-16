@@ -46,7 +46,6 @@ export function AIAnalysisCard({
   onComplete,
   onError,
 }: AIAnalysisCardProps) {
-  
   // 根据参数构建配置
   const config: AIAnalysisConfig = useMemo(() => {
     if (contentId) {

@@ -50,12 +50,12 @@ export function MarkdownRenderer({
   }, [content]); // Re-apply zoom when content changes
 
   if (!content) {
-    const Wrapper = inline ? 'span' : 'div';
+    const Wrapper = inline ? "span" : "div";
     return (
       <Wrapper
         data-testid="markdown-renderer"
         className={cn(
-          inline ? '' : "prose prose-slate dark:prose-invert max-w-none",
+          inline ? "" : "prose prose-slate dark:prose-invert max-w-none",
           className,
         )}
       />
@@ -73,14 +73,14 @@ export function MarkdownRenderer({
       "&lt;/$1&gt;",
     );
 
-  const Root: any = inline ? 'span' : 'div';
+  const Root: any = inline ? "span" : "div";
 
   return (
     <Root
       ref={contentRef}
       data-testid="markdown-renderer"
       className={cn(
-        inline ? '' : "prose prose-slate dark:prose-invert max-w-none",
+        inline ? "" : "prose prose-slate dark:prose-invert max-w-none",
         // 自定义样式
         "prose-headings:scroll-m-16 prose-headings:tracking-tight",
         "prose-h1:text-2xl prose-h1:font-bold prose-h1:lg:text-4xl",
@@ -364,12 +364,10 @@ export function MarkdownRenderer({
             return <OptimizedImage {...optimizedImageProps} />;
           },
           hr: ({ ...props }) => <hr className="my-4 md:my-8" {...props} />,
-          
+
           // Inline mode overrides - must come last to override regular components
           ...(inline && {
-            p: ({ children, ...props }) => (
-              <span {...props}>{children}</span>
-            ),
+            p: ({ children, ...props }) => <span {...props}>{children}</span>,
             h1: ({ children, ...props }) => <span {...props}>{children}</span>,
             h2: ({ children, ...props }) => <span {...props}>{children}</span>,
             h3: ({ children, ...props }) => <span {...props}>{children}</span>,

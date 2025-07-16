@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useMemo,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -31,7 +37,7 @@ import { toast } from "sonner";
 
 /**
  * 添加内容模态框
- * 
+ *
  * 新功能：链接选择处理
  * - 当粘贴包含链接的文本时，会自动检测并显示所有链接
  * - 用户可以选择哪些链接需要单独处理为URL内容项
@@ -40,11 +46,11 @@ import { toast } from "sonner";
  */
 
 // 简单的复选框组件
-const Checkbox = ({ 
-  checked, 
-  onChange, 
-  children, 
-  className = "" 
+const Checkbox = ({
+  checked,
+  onChange,
+  children,
+  className = "",
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
@@ -379,7 +385,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   // 内容分析
   const contentAnalysis = analyzeContent(content, selectedFiles);
   const isResearch = contentAnalysis?.type === "research";
-  
+
   // 使用 useMemo 优化 detectedUrls 计算，避免每次渲染都创建新数组
   const detectedUrls = useMemo(() => extractUrls(content), [content]);
 
@@ -389,10 +395,12 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   // 当检测到的链接变化时，更新选中的链接列表
   useEffect(() => {
     // 比较当前检测到的URLs和上次的URLs是否相同
-    const urlsChanged = 
+    const urlsChanged =
       detectedUrls.length !== lastDetectedUrlsRef.current.length ||
-      detectedUrls.some((url, index) => url !== lastDetectedUrlsRef.current[index]);
-    
+      detectedUrls.some(
+        (url, index) => url !== lastDetectedUrlsRef.current[index],
+      );
+
     // 只有当URLs实际发生变化时才更新状态
     if (urlsChanged) {
       lastDetectedUrlsRef.current = [...detectedUrls];
@@ -1009,7 +1017,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2 max-h-32 overflow-y-auto">
                   {detectedUrls.map((url, index) => (
                     <div
@@ -1028,7 +1036,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                     </div>
                   ))}
                 </div>
-                
+
                 {selectedUrls.length > 0 && (
                   <div className="mt-2 text-xs text-green-700 dark:text-green-300">
                     ✓ 已选择 {selectedUrls.length} 个链接进行处理

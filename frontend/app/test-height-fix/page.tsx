@@ -43,7 +43,10 @@ const longJsonlContent = `{"type":"h1","content":"长内容高度适配测试","
 {"type":"p","content":"未来还可以考虑添加：渐进式加载长内容、虚拟滚动优化、智能高度预测等功能，进一步提升用户体验。","ref":"29,30"}`;
 
 // 创建不同长度的模拟数据
-const createMockContent = (jsonlContent: string, title: string): ContentItemPublic => ({
+const createMockContent = (
+  jsonlContent: string,
+  title: string,
+): ContentItemPublic => ({
   id: Math.random().toString(),
   title,
   summary: "动态高度测试内容",
@@ -66,24 +69,26 @@ const createMockAnalysisResult = (jsonlContent: string): AIResult => ({
 });
 
 export default function TestHeightFixPage() {
-  const [currentTest, setCurrentTest] = useState<'short' | 'medium' | 'long'>('short');
+  const [currentTest, setCurrentTest] = useState<"short" | "medium" | "long">(
+    "short",
+  );
 
   const testCases = {
     short: {
       content: createMockContent(shortJsonlContent, "短内容测试"),
       analysis: createMockAnalysisResult(shortJsonlContent),
-      description: "简单的短内容，应该能够正常显示在较小的高度内"
+      description: "简单的短内容，应该能够正常显示在较小的高度内",
     },
     medium: {
       content: createMockContent(mediumJsonlContent, "中等内容测试"),
       analysis: createMockAnalysisResult(mediumJsonlContent),
-      description: "中等长度内容，测试动态高度适配的基本功能"
+      description: "中等长度内容，测试动态高度适配的基本功能",
     },
     long: {
       content: createMockContent(longJsonlContent, "长内容测试"),
       analysis: createMockAnalysisResult(longJsonlContent),
-      description: "超长内容，这是修复前会被截断的典型场景"
-    }
+      description: "超长内容，这是修复前会被截断的典型场景",
+    },
   };
 
   const currentTestCase = testCases[currentTest];
@@ -96,36 +101,39 @@ export default function TestHeightFixPage() {
             动态高度修复测试
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            测试 JsonlRenderer 动态高度适配功能，解决固定 max-h-[1000px] 导致的内容截断问题
+            测试 JsonlRenderer 动态高度适配功能，解决固定 max-h-[1000px]
+            导致的内容截断问题
           </p>
-          
+
           <div className="flex gap-4 mb-6">
             <Button
-              variant={currentTest === 'short' ? 'default' : 'outline'}
-              onClick={() => setCurrentTest('short')}
+              variant={currentTest === "short" ? "default" : "outline"}
+              onClick={() => setCurrentTest("short")}
             >
               短内容测试
             </Button>
             <Button
-              variant={currentTest === 'medium' ? 'default' : 'outline'}
-              onClick={() => setCurrentTest('medium')}
+              variant={currentTest === "medium" ? "default" : "outline"}
+              onClick={() => setCurrentTest("medium")}
             >
               中等内容测试
             </Button>
             <Button
-              variant={currentTest === 'long' ? 'default' : 'outline'}
-              onClick={() => setCurrentTest('long')}
+              variant={currentTest === "long" ? "default" : "outline"}
+              onClick={() => setCurrentTest("long")}
             >
               长内容测试
             </Button>
           </div>
-          
+
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>当前测试: {currentTestCase.content.title}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 dark:text-gray-400">{currentTestCase.description}</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                {currentTestCase.description}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -206,4 +214,4 @@ export default function TestHeightFixPage() {
       </div>
     </div>
   );
-} 
+}

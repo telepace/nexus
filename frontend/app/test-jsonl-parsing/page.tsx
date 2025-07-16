@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function TestJsonlParsingPage() {
   const { toast } = useToast();
-  
+
   // 你提供的测试数据
   const originalJsonl = `{"t": "h1", "c": "全文最主要传达的重点是什么？"}
 {"t": "insight", "c": "这是一篇2024年度个人成长总结，作者熊鑫伟通过旅居生活、创业经历和跨文化思考，分享了自己从外企离职转型为数字游民的心路历程。核心观点是：人生需要不断突破舒适区，通过实践和反思实现自我蜕变（transformation）。", "ref": "3"}
@@ -30,24 +30,24 @@ export default function TestJsonlParsingPage() {
   const [testContent, setTestContent] = useState(originalJsonl);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
-  
+
   // 模拟流式传输
   const simulateStreaming = async () => {
     setIsStreaming(true);
     setStreamingContent("");
-    
-    const lines = testContent.split('\n').filter(line => line.trim());
+
+    const lines = testContent.split("\n").filter((line) => line.trim());
     let accumulated = "";
-    
+
     for (let i = 0; i < lines.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      accumulated += lines[i] + '\n';
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      accumulated += lines[i] + "\n";
       setStreamingContent(accumulated);
-      
+
       console.log(`📦 Stream chunk ${i + 1}:`, lines[i]);
       console.log(`📋 Accumulated:`, accumulated);
     }
-    
+
     setIsStreaming(false);
     toast({
       title: "流式传输完成",
@@ -74,35 +74,37 @@ export default function TestJsonlParsingPage() {
 
   // 解析JSONL行
   const parseJsonlLines = (content: string) => {
-    const lines = content.split('\n').filter(line => line.trim());
+    const lines = content.split("\n").filter((line) => line.trim());
     const results = [];
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       try {
         const parsed = JSON.parse(line);
         results.push({
           lineNumber: i + 1,
-          status: 'success',
+          status: "success",
           content: parsed,
-          raw: line
+          raw: line,
         });
       } catch (error) {
         results.push({
           lineNumber: i + 1,
-          status: 'error',
-          error: error instanceof Error ? error.message : 'Parse error',
-          raw: line
+          status: "error",
+          error: error instanceof Error ? error.message : "Parse error",
+          raw: line,
         });
       }
     }
-    
+
     return results;
   };
 
   const parseResults = parseJsonlLines(testContent);
-  const successCount = parseResults.filter(r => r.status === 'success').length;
-  const errorCount = parseResults.filter(r => r.status === 'error').length;
+  const successCount = parseResults.filter(
+    (r) => r.status === "success",
+  ).length;
+  const errorCount = parseResults.filter((r) => r.status === "error").length;
 
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
@@ -111,19 +113,15 @@ export default function TestJsonlParsingPage() {
         <p className="text-muted-foreground">
           测试和调试JSONL格式的解析与渲染问题
         </p>
-        
+
         {/* 统计信息 */}
         <div className="flex gap-2">
-          <Badge variant="outline">
-            总行数: {parseResults.length}
-          </Badge>
+          <Badge variant="outline">总行数: {parseResults.length}</Badge>
           <Badge variant="default" className="text-green-700 bg-green-100">
             成功: {successCount}
           </Badge>
           {errorCount > 0 && (
-            <Badge variant="destructive">
-              错误: {errorCount}
-            </Badge>
+            <Badge variant="destructive">错误: {errorCount}</Badge>
           )}
         </div>
       </div>
@@ -178,8 +176,8 @@ export default function TestJsonlParsingPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <StreamingJsonlRenderer 
-                  content={streamingContent} 
+                <StreamingJsonlRenderer
+                  content={streamingContent}
                   isLoading={isStreaming}
                   showStreamingIndicator={true}
                 />
@@ -197,40 +195,61 @@ export default function TestJsonlParsingPage() {
             <CardContent>
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {parseResults.map((result, index) => (
-                  <div 
+                  <div
                     key={index}
                     className={`p-3 rounded-lg border text-sm ${
-                      result.status === 'success' 
-                        ? 'bg-green-50 border-green-200' 
-                        : 'bg-red-50 border-red-200'
+                      result.status === "success"
+                        ? "bg-green-50 border-green-200"
+                        : "bg-red-50 border-red-200"
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge variant={result.status === 'success' ? 'default' : 'destructive'}>
+                      <Badge
+                        variant={
+                          result.status === "success"
+                            ? "default"
+                            : "destructive"
+                        }
+                      >
                         行 {result.lineNumber}
                       </Badge>
-                      {result.status === 'success' ? (
+                      {result.status === "success" ? (
                         <span className="text-green-700">✓ 解析成功</span>
                       ) : (
                         <span className="text-red-700">✗ {result.error}</span>
                       )}
                     </div>
-                    
-                    {result.status === 'success' && result.content && (
+
+                    {result.status === "success" && result.content && (
                       <div className="space-y-1">
-                        <div><strong>类型:</strong> {result.content.t || result.content.type || 'unknown'}</div>
-                        {(result.content.lead) && (
-                          <div><strong>标题:</strong> {result.content.lead}</div>
+                        <div>
+                          <strong>类型:</strong>{" "}
+                          {result.content.t || result.content.type || "unknown"}
+                        </div>
+                        {result.content.lead && (
+                          <div>
+                            <strong>标题:</strong> {result.content.lead}
+                          </div>
                         )}
-                        <div><strong>内容:</strong> {String(result.content.c || result.content.content || '').substring(0, 100)}...</div>
-                        {(result.content.ref) && (
-                          <div><strong>引用:</strong> {result.content.ref}</div>
+                        <div>
+                          <strong>内容:</strong>{" "}
+                          {String(
+                            result.content.c || result.content.content || "",
+                          ).substring(0, 100)}
+                          ...
+                        </div>
+                        {result.content.ref && (
+                          <div>
+                            <strong>引用:</strong> {result.content.ref}
+                          </div>
                         )}
                       </div>
                     )}
-                    
+
                     <details className="mt-2">
-                      <summary className="cursor-pointer text-muted-foreground">原始内容</summary>
+                      <summary className="cursor-pointer text-muted-foreground">
+                        原始内容
+                      </summary>
                       <pre className="mt-1 p-2 bg-muted rounded text-xs overflow-auto">
                         {result.raw}
                       </pre>
@@ -312,20 +331,21 @@ export default function TestJsonlParsingPage() {
             </CardHeader>
             <CardContent>
               <div className="border rounded-lg p-4 min-h-[400px]">
-                <StreamingJsonlRenderer 
-                  content={streamingContent} 
+                <StreamingJsonlRenderer
+                  content={streamingContent}
                   isLoading={isStreaming}
                   showStreamingIndicator={true}
                 />
               </div>
-              
+
               {/* 调试信息 */}
               <details className="mt-4">
                 <summary className="cursor-pointer text-sm text-muted-foreground">
-                  调试信息 ({streamingContent.split('\n').filter(Boolean).length} 行)
+                  调试信息 (
+                  {streamingContent.split("\n").filter(Boolean).length} 行)
                 </summary>
                 <pre className="mt-2 p-3 bg-muted rounded text-xs overflow-auto max-h-32">
-                  {streamingContent || '暂无内容'}
+                  {streamingContent || "暂无内容"}
                 </pre>
               </details>
             </CardContent>
@@ -334,4 +354,4 @@ export default function TestJsonlParsingPage() {
       </Tabs>
     </div>
   );
-} 
+}

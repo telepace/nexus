@@ -19,10 +19,10 @@ interface UniversalContentRendererProps {
  * Universal content renderer that automatically detects format and renders accordingly.
  * Supports JSONL, JSON objects, and Markdown content with automatic fallback.
  */
-export function UniversalContentRenderer({ 
-  content, 
+export function UniversalContentRenderer({
+  content,
   className,
-  onExpandLine
+  onExpandLine,
 }: UniversalContentRendererProps) {
   // Helper to detect JSONL format (same logic as in llm-analysis-card)
   const isJsonl = (str: string): boolean => {
@@ -47,8 +47,8 @@ export function UniversalContentRenderer({
       const trimmed = str.trim();
       // Check if it starts and ends with {} or []
       if (
-        (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
-        (trimmed.startsWith('[') && trimmed.endsWith(']'))
+        (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+        (trimmed.startsWith("[") && trimmed.endsWith("]"))
       ) {
         JSON.parse(trimmed);
         return true;
@@ -88,4 +88,4 @@ export function UniversalContentRenderer({
       </div>
     );
   }
-} 
+}

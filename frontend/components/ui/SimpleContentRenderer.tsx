@@ -11,7 +11,10 @@ interface SimpleContentRendererProps {
   /** 是否启用文本选择浮层 */
   enableTextSelection?: boolean;
   /** 文本选择回调 */
-  onTextAction?: (action: { id: string; label: string; prompt: string }, selectedText: string) => void;
+  onTextAction?: (
+    action: { id: string; label: string; prompt: string },
+    selectedText: string,
+  ) => void;
 }
 
 /**
@@ -37,9 +40,9 @@ export const SimpleContentRenderer: React.FC<SimpleContentRendererProps> = ({
             </h1>
           </div>
         )}
-        
+
         {/* Content Area - 使用与分享页面一致的渲染器 */}
-        <ShareMarkdownRenderer 
+        <ShareMarkdownRenderer
           content={content}
           className="
             leading-relaxed text-foreground
@@ -51,7 +54,7 @@ export const SimpleContentRenderer: React.FC<SimpleContentRendererProps> = ({
           "
         />
       </div>
-      
+
       {/* 文本选择浮层 */}
       {enableTextSelection && (
         <TextSelectionFloater
@@ -66,4 +69,4 @@ export const SimpleContentRenderer: React.FC<SimpleContentRendererProps> = ({
   );
 };
 
-export default SimpleContentRenderer; 
+export default SimpleContentRenderer;

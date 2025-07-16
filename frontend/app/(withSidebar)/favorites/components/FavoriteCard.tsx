@@ -24,7 +24,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { ProcessingStatusBadge, ProcessingStatus } from "@/components/ui/ProcessingStatusBadge";
+import {
+  ProcessingStatusBadge,
+  ProcessingStatus,
+} from "@/components/ui/ProcessingStatusBadge";
 import { FavoriteButton } from "@/components/actions/FavoriteButton";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";

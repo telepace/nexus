@@ -32,7 +32,7 @@ export default function TestStreamingJsonlPage() {
 
   const startStreaming = () => {
     if (isStreaming) return;
-    
+
     setIsStreaming(true);
     contentIndexRef.current = 0;
     setStreamingContent("");
@@ -45,7 +45,10 @@ export default function TestStreamingJsonlPage() {
       }
 
       // 模拟流式传输：每次添加几个字符
-      const nextIndex = Math.min(currentIndex + Math.random() * 10 + 1, sampleJsonlData.length);
+      const nextIndex = Math.min(
+        currentIndex + Math.random() * 10 + 1,
+        sampleJsonlData.length,
+      );
       const newContent = sampleJsonlData.slice(0, nextIndex);
       setStreamingContent(newContent);
       contentIndexRef.current = nextIndex;
@@ -94,9 +97,7 @@ export default function TestStreamingJsonlPage() {
       {/* 控制面板 */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            🎮 控制面板
-          </CardTitle>
+          <CardTitle className="flex items-center gap-2">🎮 控制面板</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
@@ -109,7 +110,7 @@ export default function TestStreamingJsonlPage() {
               <Play className="h-4 w-4 mr-2" />
               开始流式传输
             </Button>
-            
+
             <Button
               onClick={stopStreaming}
               disabled={!isStreaming}
@@ -120,20 +121,12 @@ export default function TestStreamingJsonlPage() {
               暂停
             </Button>
 
-            <Button
-              onClick={resetStream}
-              variant="outline"
-              size="sm"
-            >
+            <Button onClick={resetStream} variant="outline" size="sm">
               <RotateCcw className="h-4 w-4 mr-2" />
               重置
             </Button>
 
-            <Button
-              onClick={fastStream}
-              variant="secondary"
-              size="sm"
-            >
+            <Button onClick={fastStream} variant="secondary" size="sm">
               <Zap className="h-4 w-4 mr-2" />
               立即完成
             </Button>
@@ -235,4 +228,4 @@ export default function TestStreamingJsonlPage() {
       </Card>
     </div>
   );
-} 
+}

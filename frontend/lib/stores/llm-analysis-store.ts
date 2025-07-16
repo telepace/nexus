@@ -279,27 +279,32 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
             if (updateTimer) {
               clearTimeout(updateTimer);
             }
-            
+
             // 检查是否是 JSONL 格式
-            const isJsonlContent = content.trim().split('\n').some(line => {
-              const trimmed = line.trim();
-              if (!trimmed) return false;
-              try {
-                const parsed = JSON.parse(trimmed);
-                return (parsed.t || parsed.type) && (parsed.c || parsed.content);
-              } catch {
-                return false;
-              }
-            });
+            const isJsonlContent = content
+              .trim()
+              .split("\n")
+              .some((line) => {
+                const trimmed = line.trim();
+                if (!trimmed) return false;
+                try {
+                  const parsed = JSON.parse(trimmed);
+                  return (
+                    (parsed.t || parsed.type) && (parsed.c || parsed.content)
+                  );
+                } catch {
+                  return false;
+                }
+              });
 
             if (isJsonlContent) {
               // 对于 JSONL 内容，检查是否有完整的新行
-              const lines = content.trim().split('\n');
+              const lines = content.trim().split("\n");
               const lastLine = lines[lines.length - 1]?.trim();
-              
+
               try {
                 // 如果最后一行是完整的 JSON，立即更新
-                if (lastLine && lastLine.endsWith('}')) {
+                if (lastLine && lastLine.endsWith("}")) {
                   JSON.parse(lastLine);
                   // 立即更新，无防抖
                   updateAnalysis(targetAnalysis.id, { content });
@@ -308,7 +313,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
               } catch {
                 // 最后一行不是完整的 JSON，使用短防抖
               }
-              
+
               // 使用短防抖（10ms）用于 JSONL
               updateTimer = setTimeout(() => {
                 updateAnalysis(targetAnalysis.id, { content });
@@ -614,27 +619,32 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
             if (updateTimer) {
               clearTimeout(updateTimer);
             }
-            
+
             // 检查是否是 JSONL 格式
-            const isJsonlContent = content.trim().split('\n').some(line => {
-              const trimmed = line.trim();
-              if (!trimmed) return false;
-              try {
-                const parsed = JSON.parse(trimmed);
-                return (parsed.t || parsed.type) && (parsed.c || parsed.content);
-              } catch {
-                return false;
-              }
-            });
+            const isJsonlContent = content
+              .trim()
+              .split("\n")
+              .some((line) => {
+                const trimmed = line.trim();
+                if (!trimmed) return false;
+                try {
+                  const parsed = JSON.parse(trimmed);
+                  return (
+                    (parsed.t || parsed.type) && (parsed.c || parsed.content)
+                  );
+                } catch {
+                  return false;
+                }
+              });
 
             if (isJsonlContent) {
               // 对于 JSONL 内容，检查是否有完整的新行
-              const lines = content.trim().split('\n');
+              const lines = content.trim().split("\n");
               const lastLine = lines[lines.length - 1]?.trim();
-              
+
               try {
                 // 如果最后一行是完整的 JSON，立即更新
-                if (lastLine && lastLine.endsWith('}')) {
+                if (lastLine && lastLine.endsWith("}")) {
                   JSON.parse(lastLine);
                   // 立即更新，无防抖
                   updateAnalysis(targetAnalysis.id, { content });
@@ -643,7 +653,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
               } catch {
                 // 最后一行不是完整的 JSON，使用短防抖
               }
-              
+
               // 使用短防抖（10ms）用于 JSONL
               updateTimer = setTimeout(() => {
                 updateAnalysis(targetAnalysis.id, { content });

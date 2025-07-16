@@ -14,4 +14,4 @@ export const jsonlStyles: Record<string, StyleRenderer> = {
   default: defaultStyleRenderer,
   headspace: headspaceStyleRenderer,
   neumorphism: neumorphismStyleRenderer,
-}; 
+};

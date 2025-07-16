@@ -19,8 +19,8 @@ import { ChevronDown, ChevronUp, ExternalLink, FileText } from "lucide-react";
 
 interface SegmentReference {
   sentence_index: number;
-  segment_numbers?: number[];  // New format: 1-based display numbers
-  segment_ids: string[];      // Keep for backward compatibility
+  segment_numbers?: number[]; // New format: 1-based display numbers
+  segment_ids: string[]; // Keep for backward compatibility
   relevance_score: number;
 }
 
@@ -28,7 +28,7 @@ interface SegmentUsed {
   id: string;
   content: string;
   segment_index: number;
-  display_number?: number;  // Add display number
+  display_number?: number; // Add display number
 }
 
 interface SegmentReferencedMessageProps {
@@ -82,10 +82,12 @@ export function SegmentReferencedMessage({
       return ref.segment_numbers;
     }
     // Fallback to converting segment_ids to display numbers
-    return ref.segment_ids.map(segId => {
-      const segment = segmentsUsed.find(s => s.id === segId);
-      return segment?.display_number || segment?.segment_index + 1 || 0;
-    }).filter(num => num > 0);
+    return ref.segment_ids
+      .map((segId) => {
+        const segment = segmentsUsed.find((s) => s.id === segId);
+        return segment?.display_number || segment?.segment_index + 1 || 0;
+      })
+      .filter((num) => num > 0);
   };
 
   return (

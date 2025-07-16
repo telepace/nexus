@@ -45,15 +45,26 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
             <MarkdownRenderer content={String(c)} inline={true} />
           </blockquote>
           {ref && (
-            <cite className="block text-right mt-4 text-sm text-gray-500 not-italic">— {ref}</cite>
+            <cite className="block text-right mt-4 text-sm text-gray-500 not-italic">
+              — {ref}
+            </cite>
           )}
-          {hasReferences && <EnhancedReferenceIndicator references={references} className="mt-2" />}
+          {hasReferences && (
+            <EnhancedReferenceIndicator
+              references={references}
+              className="mt-2"
+            />
+          )}
         </div>
       );
     case "list": {
       let items: string[] = [];
       if (Array.isArray(c)) items = c.map(String);
-      else if (typeof c === "string") items = c.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
+      else if (typeof c === "string")
+        items = c
+          .split(/[,;\n]/)
+          .map((s) => s.trim())
+          .filter(Boolean);
       return (
         <div className={`${card} my-1`}>
           <ul className="space-y-3">
@@ -81,18 +92,30 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
       return (
         <div className={`${card} my-1 space-y-3`}>
           <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-gray-600 shadow-[3px_3px_6px_#e8e8e8,_-3px_-3px_6px_rgba(255,255,255,0.8)]" style={{background: 'inherit'}}>Q</div>
+            <div
+              className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-gray-600 shadow-[3px_3px_6px_#e8e8e8,_-3px_-3px_6px_rgba(255,255,255,0.8)]"
+              style={{ background: "inherit" }}
+            >
+              Q
+            </div>
             <p className={`${text} flex-1 text-sm font-semibold`}>
               <MarkdownRenderer content={String(q)} inline={true} />
             </p>
           </div>
           <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-gray-600 shadow-[inset_3px_3px_6px_#e8e8e8,_inset_-3px_-3px_6px_rgba(255,255,255,0.8)]" style={{background: 'inherit'}}>A</div>
+            <div
+              className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-gray-600 shadow-[inset_3px_3px_6px_#e8e8e8,_inset_-3px_-3px_6px_rgba(255,255,255,0.8)]"
+              style={{ background: "inherit" }}
+            >
+              A
+            </div>
             <p className={`${text} flex-1 text-sm`}>
               <MarkdownRenderer content={String(a)} inline={true} />
             </p>
           </div>
-          {hasReferences && <EnhancedReferenceIndicator references={references} />}
+          {hasReferences && (
+            <EnhancedReferenceIndicator references={references} />
+          )}
         </div>
       );
     }
@@ -102,7 +125,12 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
           <p className={`${text} text-sm`}>
             <MarkdownRenderer content={String(c)} inline={true} />
           </p>
-          {hasReferences && <EnhancedReferenceIndicator references={references} className="mt-2" />}
+          {hasReferences && (
+            <EnhancedReferenceIndicator
+              references={references}
+              className="mt-2"
+            />
+          )}
         </div>
       );
     }
@@ -112,7 +140,12 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
           <p className={`${text} text-sm`}>
             <MarkdownRenderer content={String(c)} inline={true} />
           </p>
-          {hasReferences && <EnhancedReferenceIndicator references={references} className="mt-2" />}
+          {hasReferences && (
+            <EnhancedReferenceIndicator
+              references={references}
+              className="mt-2"
+            />
+          )}
         </div>
       );
     case "action":
@@ -121,7 +154,12 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
           <p className={`${text} text-sm`}>
             <MarkdownRenderer content={String(c)} inline={true} />
           </p>
-          {hasReferences && <EnhancedReferenceIndicator references={references} className="mt-2" />}
+          {hasReferences && (
+            <EnhancedReferenceIndicator
+              references={references}
+              className="mt-2"
+            />
+          )}
         </div>
       );
     default: {
@@ -131,9 +169,14 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
           <p className={`${text} text-sm leading-relaxed`}>
             <MarkdownRenderer content={contentStr} inline={true} />
           </p>
-          {hasReferences && <EnhancedReferenceIndicator references={references} className="mt-2" />}
+          {hasReferences && (
+            <EnhancedReferenceIndicator
+              references={references}
+              className="mt-2"
+            />
+          )}
         </div>
       );
     }
   }
-}; 
+};

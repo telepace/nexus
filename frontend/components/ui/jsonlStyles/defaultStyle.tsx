@@ -19,7 +19,10 @@ export const defaultStyleRenderer: StyleRenderer = ({
         <h1 className="scroll-m-16 text-xl font-bold tracking-tight lg:text-2xl select-text leading-[1.3]">
           <MarkdownRenderer content={String(c)} inline={true} />
           {hasReferences && (
-            <EnhancedReferenceIndicator references={references} className="ml-2" />
+            <EnhancedReferenceIndicator
+              references={references}
+              className="ml-2"
+            />
           )}
         </h1>
       );
@@ -28,7 +31,10 @@ export const defaultStyleRenderer: StyleRenderer = ({
         <h2 className="scroll-m-16 border-b pb-1.5 text-lg font-semibold tracking-tight first:mt-0 select-text leading-[1.3]">
           <MarkdownRenderer content={String(c)} inline={true} />
           {hasReferences && (
-            <EnhancedReferenceIndicator references={references} className="ml-2" />
+            <EnhancedReferenceIndicator
+              references={references}
+              className="ml-2"
+            />
           )}
         </h2>
       );
@@ -37,7 +43,10 @@ export const defaultStyleRenderer: StyleRenderer = ({
         <h3 className="scroll-m-16 text-base font-semibold tracking-tight select-text leading-[1.3]">
           <MarkdownRenderer content={String(c)} inline={true} />
           {hasReferences && (
-            <EnhancedReferenceIndicator references={references} className="ml-2" />
+            <EnhancedReferenceIndicator
+              references={references}
+              className="ml-2"
+            />
           )}
         </h3>
       );
@@ -47,14 +56,21 @@ export const defaultStyleRenderer: StyleRenderer = ({
           <MarkdownRenderer content={String(c)} inline={true} />
           {ref && <cite className="text-xs text-gray-500 ml-2">— {ref}</cite>}
           {hasReferences && (
-            <EnhancedReferenceIndicator references={references} className="ml-2" />
+            <EnhancedReferenceIndicator
+              references={references}
+              className="ml-2"
+            />
           )}
         </blockquote>
       );
     case "list": {
       let items: string[] = [];
       if (Array.isArray(c)) items = c.map(String);
-      else if (typeof c === "string") items = c.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
+      else if (typeof c === "string")
+        items = c
+          .split(/[,;\n]/)
+          .map((s) => s.trim())
+          .filter(Boolean);
       return (
         <ul className="list-disc ml-4 space-y-1 my-2 select-text">
           {items.map((item, i) => (
@@ -73,20 +89,30 @@ export const defaultStyleRenderer: StyleRenderer = ({
     case "insight":
       return (
         <div className="my-3 rounded-md border-l-4 border-blue-500 bg-blue-50 p-3 select-text">
-          <strong className="text-blue-600 text-sm font-medium mr-2">💡 洞察:</strong>
+          <strong className="text-blue-600 text-sm font-medium mr-2">
+            💡 洞察:
+          </strong>
           <MarkdownRenderer content={String(c)} inline={true} />
           {hasReferences && (
-            <EnhancedReferenceIndicator references={references} className="ml-2" />
+            <EnhancedReferenceIndicator
+              references={references}
+              className="ml-2"
+            />
           )}
         </div>
       );
     case "concept":
       return (
         <div className="my-3 rounded-md border-l-4 border-purple-500 bg-purple-50 p-3 select-text">
-          <strong className="text-purple-600 text-sm font-medium mr-2">🎯 概念:</strong>
+          <strong className="text-purple-600 text-sm font-medium mr-2">
+            🎯 概念:
+          </strong>
           <MarkdownRenderer content={String(c)} inline={true} />
           {hasReferences && (
-            <EnhancedReferenceIndicator references={references} className="ml-2" />
+            <EnhancedReferenceIndicator
+              references={references}
+              className="ml-2"
+            />
           )}
         </div>
       );
@@ -115,10 +141,15 @@ export const defaultStyleRenderer: StyleRenderer = ({
     case "action":
       return (
         <div className="my-3 rounded-md border-l-4 border-green-500 bg-green-50 p-3 select-text">
-          <strong className="text-green-600 text-sm font-medium mr-2">⚡ 行动:</strong>
+          <strong className="text-green-600 text-sm font-medium mr-2">
+            ⚡ 行动:
+          </strong>
           <MarkdownRenderer content={String(c)} inline={true} />
           {hasReferences && (
-            <EnhancedReferenceIndicator references={references} className="ml-2" />
+            <EnhancedReferenceIndicator
+              references={references}
+              className="ml-2"
+            />
           )}
         </div>
       );
@@ -128,10 +159,13 @@ export const defaultStyleRenderer: StyleRenderer = ({
         <p className="my-2 select-text">
           <MarkdownRenderer content={finalContent} inline={true} />
           {hasReferences && (
-            <EnhancedReferenceIndicator references={references} className="ml-2" />
+            <EnhancedReferenceIndicator
+              references={references}
+              className="ml-2"
+            />
           )}
         </p>
       );
     }
   }
-}; 
+};

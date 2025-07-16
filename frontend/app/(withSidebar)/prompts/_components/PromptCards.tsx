@@ -1,13 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import {
-  Clock,
-  Eye,
-  Heart,
-  Zap,
-  MoreHorizontal,
-} from "lucide-react";
+import { Clock, Eye, Heart, Zap, MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,

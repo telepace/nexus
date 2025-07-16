@@ -21,7 +21,12 @@ import { toast } from "sonner";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 import { JsonlRenderer } from "@/components/ui/JsonlRenderer";
 import { StreamingJsonlRenderer } from "@/components/ui/StreamingJsonlRenderer";
-import { useAIAnalysis, isJsonlContent, extractJsonlFromDataStream, AIAnalysisConfig } from "@/hooks/use-ai-analysis";
+import {
+  useAIAnalysis,
+  isJsonlContent,
+  extractJsonlFromDataStream,
+  AIAnalysisConfig,
+} from "@/hooks/use-ai-analysis";
 
 export interface UnifiedAIAnalysisCardProps {
   /** 分析标题 */
@@ -73,7 +78,12 @@ export function UnifiedAIAnalysisCard({
 
   // 自动开始分析
   useEffect(() => {
-    if (autoStart && !hasAutoStarted && instruction && config.mode !== "display") {
+    if (
+      autoStart &&
+      !hasAutoStarted &&
+      instruction &&
+      config.mode !== "display"
+    ) {
       setHasAutoStarted(true);
       handleStartAnalysis();
     }
@@ -126,17 +136,17 @@ export function UnifiedAIAnalysisCard({
   const renderContent = (content: string, streaming: boolean = false) => {
     if (!content) return null;
 
-    console.log("🎨 渲染内容:", { 
-      content: content.substring(0, 100), 
-      streaming, 
+    console.log("🎨 渲染内容:", {
+      content: content.substring(0, 100),
+      streaming,
       isJsonl: isJsonlContent(content),
       contentLength: content.length,
-      lineCount: content.split('\n').filter(Boolean).length
+      lineCount: content.split("\n").filter(Boolean).length,
     });
 
     // 如果是 Data Stream Protocol 格式，先提取纯 JSONL
     let processedContent = content;
-    if (content.includes('0:') && isJsonlContent(content)) {
+    if (content.includes("0:") && isJsonlContent(content)) {
       processedContent = extractJsonlFromDataStream(content);
       console.log("📦 提取的 JSONL 内容:", processedContent.substring(0, 100));
     }
@@ -149,23 +159,29 @@ export function UnifiedAIAnalysisCard({
             <MarkdownRenderer content={processedContent} />
           </div>
         );
-      
+
       case "jsonl":
         return streaming ? (
-          <StreamingJsonlRenderer content={processedContent} isLoading={streaming} />
+          <StreamingJsonlRenderer
+            content={processedContent}
+            isLoading={streaming}
+          />
         ) : (
           <JsonlRenderer content={processedContent} />
         );
-      
+
       case "universal":
         return <UniversalContentRenderer content={processedContent} />;
-      
+
       case "auto":
       default:
         // 自动检测内容类型
         if (isJsonlContent(content)) {
           return streaming ? (
-            <StreamingJsonlRenderer content={processedContent} isLoading={streaming} />
+            <StreamingJsonlRenderer
+              content={processedContent}
+              isLoading={streaming}
+            />
           ) : (
             <JsonlRenderer content={processedContent} />
           );
@@ -194,7 +210,7 @@ export function UnifiedAIAnalysisCard({
           <div className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
             <CardTitle className="text-base">{title}</CardTitle>
-            
+
             {/* 状态指示器 */}
             {state.isLoading && (
               <Badge variant="outline" className="text-xs">
@@ -311,16 +327,19 @@ export function UnifiedAIAnalysisCard({
         )}
 
         {/* 空状态 */}
-        {!state.hasStarted && !state.content && !state.error && config.mode !== "display" && (
-          <div className="flex items-center justify-center h-32 text-muted-foreground">
-            <div className="text-center">
-              <Brain className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">
-                点击&ldquo;开始分析&rdquo;来生成 AI 分析
-              </p>
+        {!state.hasStarted &&
+          !state.content &&
+          !state.error &&
+          config.mode !== "display" && (
+            <div className="flex items-center justify-center h-32 text-muted-foreground">
+              <div className="text-center">
+                <Brain className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">
+                  点击&ldquo;开始分析&rdquo;来生成 AI 分析
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* 加载状态 */}
         {state.isLoading && (

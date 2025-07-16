@@ -4,12 +4,7 @@ import { useEffect, useState, memo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  ArrowLeft,
-  Loader2,
-  AlertCircle,
-  ExternalLink,
-} from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, ExternalLink } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/client-auth";
 import { SeamlessContentRenderer } from "@/components/ui/SeamlessContentRenderer";
 import { SimpleContentRenderer } from "@/components/ui/SimpleContentRenderer";
@@ -31,7 +26,7 @@ const ReaderSkeleton = () => {
         </div>
         <div className="w-8 h-8 bg-muted/30 dark:bg-muted/20 rounded animate-pulse"></div>
       </div>
-      
+
       {/* Main Content Skeleton - 简化为2-3组，使用8px网格间距 */}
       <div className="flex-1 px-4 sm:px-6 lg:px-10 xl:px-14 py-8 space-y-6 max-w-none lg:max-w-4xl xl:max-w-5xl mx-0 w-full">
         <div className="space-y-4">
@@ -75,22 +70,30 @@ const ProcessedContentRenderer = memo(
     markdownContent?: string | null;
     contentId: string;
     scrollContainerRef: React.RefObject<HTMLDivElement>;
-    onTextAction?: (action: { id: string; label: string; prompt: string }, selectedText: string) => void;
+    onTextAction?: (
+      action: { id: string; label: string; prompt: string },
+      selectedText: string,
+    ) => void;
   }) => {
     const router = useRouter();
 
     // 智能选择渲染器：根据内容大小决定使用简单渲染还是分块渲染
-    const contentText = markdownContent || content.processed_content || content.content_text;
-    
+    const contentText =
+      markdownContent || content.processed_content || content.content_text;
+
     // 设置阈值：内容超过 50KB 或预估超过 30 个chunks 时使用虚拟滚动
     const CONTENT_SIZE_THRESHOLD = 50 * 1024; // 50KB
-    const shouldUseVirtualScroll = contentText && (
-      contentText.length > CONTENT_SIZE_THRESHOLD ||
-      contentText.split('\n\n').length > 30 // 粗略估算段落数
-    );
+    const shouldUseVirtualScroll =
+      contentText &&
+      (contentText.length > CONTENT_SIZE_THRESHOLD ||
+        contentText.split("\n\n").length > 30); // 粗略估算段落数
 
     // 完整内容可用且需要虚拟滚动时，使用 SeamlessContentRenderer
-    if (contentId && content.processing_status === "completed" && shouldUseVirtualScroll) {
+    if (
+      contentId &&
+      content.processing_status === "completed" &&
+      shouldUseVirtualScroll
+    ) {
       return (
         <div className="flex justify-center w-full py-4">
           <SeamlessContentRenderer
@@ -173,47 +176,61 @@ const ProcessedContentRenderer = memo(
                       router.refresh();
                     } catch (err) {
                       console.error(err);
-                      
+
                       // 智能错误处理
                       let errorMessage = "重新处理请求失败";
                       let suggestion = "请稍后再试";
-                      
+
                       if (err instanceof Error) {
                         const errorStr = err.message.toLowerCase();
-                        
-                        if (errorStr.includes("not bound to a session") || 
-                            errorStr.includes("数据库连接问题")) {
+
+                        if (
+                          errorStr.includes("not bound to a session") ||
+                          errorStr.includes("数据库连接问题")
+                        ) {
                           errorMessage = "系统数据库连接异常";
-                          suggestion = "请刷新页面后重试，如果问题持续存在请联系技术支持";
-                        } else if (errorStr.includes("未找到登录凭据") || 
-                                 errorStr.includes("unauthorized")) {
+                          suggestion =
+                            "请刷新页面后重试，如果问题持续存在请联系技术支持";
+                        } else if (
+                          errorStr.includes("未找到登录凭据") ||
+                          errorStr.includes("unauthorized")
+                        ) {
                           errorMessage = "登录状态已过期";
                           suggestion = "请重新登录后重试";
                           // 可以选择自动跳转到登录页
                           setTimeout(() => router.push("/login"), 2000);
-                        } else if (errorStr.includes("403") || 
-                                 errorStr.includes("forbidden")) {
+                        } else if (
+                          errorStr.includes("403") ||
+                          errorStr.includes("forbidden")
+                        ) {
                           errorMessage = "权限不足";
                           suggestion = "您没有权限重新处理此内容";
-                        } else if (errorStr.includes("404") || 
-                                 errorStr.includes("not found")) {
+                        } else if (
+                          errorStr.includes("404") ||
+                          errorStr.includes("not found")
+                        ) {
                           errorMessage = "内容不存在";
                           suggestion = "此内容可能已被删除，请返回内容库查看";
-                        } else if (errorStr.includes("500") || 
-                                 errorStr.includes("internal")) {
+                        } else if (
+                          errorStr.includes("500") ||
+                          errorStr.includes("internal")
+                        ) {
                           errorMessage = "服务器内部错误";
-                          suggestion = "服务器正在处理问题，请稍后重试或联系技术支持";
-                        } else if (errorStr.includes("network") || 
-                                 errorStr.includes("fetch")) {
+                          suggestion =
+                            "服务器正在处理问题，请稍后重试或联系技术支持";
+                        } else if (
+                          errorStr.includes("network") ||
+                          errorStr.includes("fetch")
+                        ) {
                           errorMessage = "网络连接问题";
                           suggestion = "请检查网络连接后重试";
                         }
                       }
-                      
+
                       // 使用更友好的提示方式
-                      if (typeof window !== 'undefined' && window.confirm) {
+                      if (typeof window !== "undefined" && window.confirm) {
                         const retry = window.confirm(
-                          `${errorMessage}。${suggestion}\n\n点击"确定"返回内容库，点击"取消"稍后重试。`
+                          `${errorMessage}。${suggestion}\n\n点击"确定"返回内容库，点击"取消"稍后重试。`,
                         );
                         if (retry) {
                           router.push("/content-library");
@@ -275,21 +292,23 @@ interface ClientContentProps {
 }
 
 // 阅读进度条组件
-const ReadingProgress = ({ targetRef }: { targetRef: React.RefObject<HTMLDivElement> }) => {
+const ReadingProgress = ({
+  targetRef,
+}: { targetRef: React.RefObject<HTMLDivElement> }) => {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const updateProgress = () => {
       if (!targetRef.current) return;
-      
+
       const { scrollTop, scrollHeight, clientHeight } = targetRef.current;
       const totalScrollable = scrollHeight - clientHeight;
-      
+
       if (totalScrollable <= 0) {
         setProgress(0);
         return;
       }
-      
+
       const currentProgress = (scrollTop / totalScrollable) * 100;
       setProgress(Math.min(100, Math.max(0, currentProgress)));
     };
@@ -297,14 +316,14 @@ const ReadingProgress = ({ targetRef }: { targetRef: React.RefObject<HTMLDivElem
     const target = targetRef.current;
     if (!target) return;
 
-    target.addEventListener('scroll', updateProgress);
+    target.addEventListener("scroll", updateProgress);
     updateProgress(); // 初始计算
 
-    return () => target.removeEventListener('scroll', updateProgress);
+    return () => target.removeEventListener("scroll", updateProgress);
   }, [targetRef]);
 
   return (
-    <div 
+    <div
       className="absolute bottom-0 left-0 h-0.5 bg-primary/60 transition-[width] duration-200 ease-out"
       style={{ width: `${progress}%` }}
     />
@@ -328,33 +347,36 @@ export const ClientContent = ({
   );
   const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
-  
+
   // 添加滚动容器引用用于进度条
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // 处理文本选择操作
   const handleTextAction = useCallback(
-    (action: { id: string; label: string; prompt: string }, selectedText: string) => {
+    (
+      action: { id: string; label: string; prompt: string },
+      selectedText: string,
+    ) => {
       console.log(`文本操作: ${action.label}`, { action, selectedText });
-      
+
       // 这里可以将选择的文本和操作发送给右侧的AI分析系统
       // 通过事件总线或上下文传递给 ReaderLayout
-      const event = new CustomEvent('textSelectionAction', {
+      const event = new CustomEvent("textSelectionAction", {
         detail: {
           action,
           selectedText,
           contentId,
-        }
+        },
       });
       window.dispatchEvent(event);
-      
+
       // 可以考虑添加 toast 提示
       // toast({
       //   title: `${action.label}操作`,
       //   description: `已选择文本: "${selectedText.substring(0, 50)}${selectedText.length > 50 ? '...' : ''}"`,
       // });
     },
-    [contentId]
+    [contentId],
   );
 
   // 记录访问
@@ -539,10 +561,10 @@ export const ClientContent = ({
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <PageHeader 
+          <PageHeader
             breadcrumbs={[
-              { label: 'Library', href: '/content-library' },
-              { label: content.title || 'Untitled' }
+              { label: "Library", href: "/content-library" },
+              { label: content.title || "Untitled" },
             ]}
             className="flex-1 min-w-0"
           />
@@ -560,13 +582,13 @@ export const ClientContent = ({
             </Button>
           )}
         </div>
-        
+
         {/* 阅读进度条 */}
         <ReadingProgress targetRef={scrollContainerRef} />
       </div>
 
       {/* Main Content - 专注显示AI处理后的内容 */}
-      <div 
+      <div
         ref={scrollContainerRef}
         className="flex-1 overflow-auto bg-background"
       >

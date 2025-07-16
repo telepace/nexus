@@ -96,7 +96,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   const [loadingPrompts, setLoadingPrompts] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [collapsedCards, setCollapsedCards] = useState<Set<string>>(new Set());
-  
+
   // 动态高度管理
   const { registerElement, getCardHeight } = useCardHeight();
 
@@ -194,11 +194,11 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   useEffect(() => {
     const handleTextSelectionAction = (event: CustomEvent) => {
       const { action, selectedText } = event.detail;
-      
+
       // 自动填充输入框并执行分析
       const prompt = `${action.prompt}\n\n${selectedText}`;
       setInputValue(prompt);
-      
+
       // 可选：自动开始分析
       // setTimeout(() => {
       //   if (prompt.trim()) {
@@ -207,10 +207,16 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       // }, 500);
     };
 
-    window.addEventListener('textSelectionAction' as any, handleTextSelectionAction);
-    
+    window.addEventListener(
+      "textSelectionAction" as any,
+      handleTextSelectionAction,
+    );
+
     return () => {
-      window.removeEventListener('textSelectionAction' as any, handleTextSelectionAction);
+      window.removeEventListener(
+        "textSelectionAction" as any,
+        handleTextSelectionAction,
+      );
     };
   }, []);
 
@@ -265,117 +271,134 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   }, []);
 
   // 处理AI分析
-  const performCompletion = useCallback(async (body: Record<string, any>, title: string) => {
-    if (isAnalyzing) return;
+  const performCompletion = useCallback(
+    async (body: Record<string, any>, title: string) => {
+      if (isAnalyzing) return;
 
-    setIsAnalyzing(true);
-    setStreamingResponse("");
+      setIsAnalyzing(true);
+      setStreamingResponse("");
 
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      const response = await fetch(
-        `${apiUrl}/api/v1/content/${content.id}/completion-updated`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getCookie("accessToken")}`,
+      try {
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const response = await fetch(
+          `${apiUrl}/api/v1/content/${content.id}/completion-updated`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${getCookie("accessToken")}`,
+            },
+            body: JSON.stringify(body),
           },
-          body: JSON.stringify(body),
-        },
-      );
+        );
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
 
-      // 处理流式响应
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error("无法获取响应流");
-      }
+        // 处理流式响应
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error("无法获取响应流");
+        }
 
-      const decoder = new TextDecoder();
-      let accumulatedContent = "";
+        const decoder = new TextDecoder();
+        let accumulatedContent = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split("\n");
 
-        for (const line of lines) {
-          // 处理Vercel AI SDK数据流协议
-          if (line.startsWith("0:")) {
-            // 文本内容 - 提取JSONL行
-            const jsonlLine = line.slice(2); // 移除 "0:" 前缀
-            if (jsonlLine.trim()) {
-              accumulatedContent += jsonlLine + "\n";
+          for (const line of lines) {
+            // 处理Vercel AI SDK数据流协议
+            if (line.startsWith("0:")) {
+              // 文本内容 - 提取JSONL行
+              const jsonlLine = line.slice(2); // 移除 "0:" 前缀
+              if (jsonlLine.trim()) {
+                accumulatedContent += jsonlLine + "\n";
+                setStreamingResponse(accumulatedContent);
+              }
+            } else if (line.startsWith("8:")) {
+              // 完成信号 - 最终更新
               setStreamingResponse(accumulatedContent);
-            }
-          } else if (line.startsWith("8:")) {
-            // 完成信号 - 最终更新
-            setStreamingResponse(accumulatedContent);
-            break;
-          } else if (line.startsWith("9:")) {
-            // 错误信号
-            try {
-              const errorData = JSON.parse(line.slice(2));
-              throw new Error(errorData.error || "Stream error");
-            } catch {
-              throw new Error("Stream error");
+              break;
+            } else if (line.startsWith("9:")) {
+              // 错误信号
+              try {
+                const errorData = JSON.parse(line.slice(2));
+                throw new Error(errorData.error || "Stream error");
+              } catch {
+                throw new Error("Stream error");
+              }
             }
           }
         }
-      }
 
-      setInputValue("");
-      toast({
-        title: title,
-        description: "AI 分析已成功完成",
-      });
-    } catch (error) {
-      console.error("Analysis failed:", error);
-      toast({
-        title: "分析失败",
-        description: "请稍后重试",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAnalyzing(false);
-    }
-  }, [content.id, isAnalyzing, toast]);
+        setInputValue("");
+        toast({
+          title: title,
+          description: "AI 分析已成功完成",
+        });
+      } catch (error) {
+        console.error("Analysis failed:", error);
+        toast({
+          title: "分析失败",
+          description: "请稍后重试",
+          variant: "destructive",
+        });
+      } finally {
+        setIsAnalyzing(false);
+      }
+    },
+    [content.id, isAnalyzing, toast],
+  );
 
   const handleAnalysis = useCallback(async () => {
     if (!inputValue.trim()) return;
-    await performCompletion({
-      analysis_instruction: inputValue,
-    }, "分析完成");
+    await performCompletion(
+      {
+        analysis_instruction: inputValue,
+      },
+      "分析完成",
+    );
   }, [inputValue, performCompletion]);
 
   // 处理JSON行展开请求
-  const handleJsonLineExpand = useCallback(async (jsonContent: Record<string, unknown>) => {
-    console.log('[ModernAnalysisInterface] JSON line expand requested:', jsonContent);
-    
-    // 构造展开讨论的prompt
-    const selectedPoint = jsonContent.c || jsonContent.content || JSON.stringify(jsonContent);
-    const instruction = `请对以下要点进行深度展开讨论：${selectedPoint}`;
-    
-    // 设置输入值
-    setInputValue(instruction);
-    
-    // 延迟触发分析，让用户看到输入框的变化
-    setTimeout(() => {
-      if (instruction.trim()) {
-        performCompletion({
-          analysis_instruction: instruction,
-          template_name: "expand_discussion.j2",
-          selected_point: selectedPoint,
-        }, "展开分析完成");
-      }
-    }, 100);
-  }, [performCompletion, setInputValue]);
+  const handleJsonLineExpand = useCallback(
+    async (jsonContent: Record<string, unknown>) => {
+      console.log(
+        "[ModernAnalysisInterface] JSON line expand requested:",
+        jsonContent,
+      );
+
+      // 构造展开讨论的prompt
+      const selectedPoint =
+        jsonContent.c || jsonContent.content || JSON.stringify(jsonContent);
+      const instruction = `请对以下要点进行深度展开讨论：${selectedPoint}`;
+
+      // 设置输入值
+      setInputValue(instruction);
+
+      // 延迟触发分析，让用户看到输入框的变化
+      setTimeout(() => {
+        if (instruction.trim()) {
+          performCompletion(
+            {
+              analysis_instruction: instruction,
+              template_name: "expand_discussion.j2",
+              selected_point: selectedPoint,
+            },
+            "展开分析完成",
+          );
+        }
+      }, 100);
+    },
+    [performCompletion, setInputValue],
+  );
 
   // 构建分析卡片数据
   const buildAnalysisCards = useCallback((): AnalysisCard[] => {
@@ -432,7 +455,13 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     }
 
     return cards;
-  }, [analysisResult, content.meta_info, streamingResponse, isAnalyzing, showPreprocessedContent]);
+  }, [
+    analysisResult,
+    content.meta_info,
+    streamingResponse,
+    isAnalyzing,
+    showPreprocessedContent,
+  ]);
 
   const cards = buildAnalysisCards();
 
@@ -467,8 +496,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           `}
         >
           <div className="select-text prose prose-sm max-w-none dark:prose-invert">
-            <UniversalContentRenderer 
-              content={textContent} 
+            <UniversalContentRenderer
+              content={textContent}
               onExpandLine={handleJsonLineExpand}
             />
           </div>
@@ -481,7 +510,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
 
   // 处理卡片折叠状态
   const toggleCardCollapse = useCallback((cardId: string) => {
-    setCollapsedCards(prev => {
+    setCollapsedCards((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(cardId)) {
         newSet.delete(cardId);
@@ -514,11 +543,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           className={`
           transition-all duration-300 ease-in-out 
           relative border-0 analysis-card
-          ${
-            isSelected
-              ? "shadow-lg linear-bg-1"
-              : "shadow-sm linear-bg-1"
-          }
+          ${isSelected ? "shadow-lg linear-bg-1" : "shadow-sm linear-bg-1"}
           group-hover:shadow-lg
         `}
         >
@@ -556,7 +581,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                     <Minus className="h-3.5 w-3.5" />
                   )}
                 </Button>
-                
+
                 {/* 其他操作按钮 - 仅在悬停时显示 */}
                 {isHovered && (
                   <div className="flex items-center gap-1 mr-1 transition-all duration-200 relative z-10">
@@ -590,7 +615,9 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
               ${isCollapsed ? "opacity-0" : "opacity-100"}
             `}
               style={{
-                maxHeight: isCollapsed ? 0 : `${getCardHeight(card.id, isCollapsed)}px`,
+                maxHeight: isCollapsed
+                  ? 0
+                  : `${getCardHeight(card.id, isCollapsed)}px`,
               }}
             >
               <div
@@ -619,9 +646,10 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
 
   // 根据变体计算样式
   const containerHeight = height === "fixed" ? "h-80" : "h-full";
-  const containerClasses = variant === "preview" 
-    ? `flex flex-col ${containerHeight} ${className} linear-bg-1` 
-    : `flex flex-col h-full ${className}`;
+  const containerClasses =
+    variant === "preview"
+      ? `flex flex-col ${containerHeight} ${className} linear-bg-1`
+      : `flex flex-col h-full ${className}`;
 
   return (
     <div className={containerClasses} data-exclude-selection>
@@ -636,14 +664,14 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       `}</style>
 
       {/* 可滚动的主内容区域 */}
-      <div 
-        className={`flex-1 overflow-y-auto custom-scrollbar ${variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""}`} 
+      <div
+        className={`flex-1 overflow-y-auto custom-scrollbar ${variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""}`}
         data-exclude-selection
       >
         {/* 页面标题 - 根据配置条件渲染 */}
         {!hideHeader && (
-          <div 
-            className={`px-6 py-4 ${variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""}`} 
+          <div
+            className={`px-6 py-4 ${variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""}`}
             data-exclude-selection
           >
             <h1 className="text-xl font-medium text-neutral-900 dark:text-neutral-100 line-clamp-2">
@@ -654,11 +682,11 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
 
         {/* 卡片列表 */}
         <div className="px-8 pt-4 pb-6" data-exclude-selection>
-          <div className={`space-y-6 ${
-            variant === "preview" 
-              ? "max-w-2xl mx-auto" 
-              : ""
-          }`}>
+          <div
+            className={`space-y-6 ${
+              variant === "preview" ? "max-w-2xl mx-auto" : ""
+            }`}
+          >
             {cards.length > 0 ? (
               cards.map((card, index) => (
                 <CardComponent key={card.id} card={card} index={index} />
@@ -678,11 +706,14 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       </div>
 
       {/* 固定底部AI助手 */}
-      <div className={`flex-shrink-0 backdrop-blur-md border-t ${
-        variant === "preview" 
-          ? "linear-bg-1 border-border" 
-          : "linear-bg-1 border-border dark:border-neutral-800"
-      }`} data-exclude-selection>
+      <div
+        className={`flex-shrink-0 backdrop-blur-md border-t ${
+          variant === "preview"
+            ? "linear-bg-1 border-border"
+            : "linear-bg-1 border-border dark:border-neutral-800"
+        }`}
+        data-exclude-selection
+      >
         <div className="px-6 py-4">
           {/* 历史记录展开面板 */}
           {showHistory && (

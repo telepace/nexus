@@ -32,7 +32,7 @@ GitHub仓库：https://github.com/example/project
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">链接选择功能测试</h1>
-        
+
         <div className="space-y-6">
           <div className="bg-card p-6 rounded-lg border">
             <h2 className="text-xl font-semibold mb-4">功能说明</h2>
@@ -62,9 +62,7 @@ GitHub仓库：https://github.com/example/project
               {testContent}
             </pre>
             <div className="mt-4 space-x-4">
-              <Button onClick={copyToClipboard}>
-                复制测试内容
-              </Button>
+              <Button onClick={copyToClipboard}>复制测试内容</Button>
               <Button onClick={() => setModalOpen(true)}>
                 打开添加内容模态框
               </Button>
@@ -74,16 +72,14 @@ GitHub仓库：https://github.com/example/project
           <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
             <h3 className="font-semibold text-amber-800 mb-2">注意事项</h3>
             <p className="text-amber-700 text-sm">
-              这是一个测试页面，用于验证链接选择功能。在生产环境中，请确保已正确配置认证和API endpoints。
+              这是一个测试页面，用于验证链接选择功能。在生产环境中，请确保已正确配置认证和API
+              endpoints。
             </p>
           </div>
         </div>
       </div>
 
-      <AddContentModal 
-        open={modalOpen} 
-        onClose={() => setModalOpen(false)} 
-      />
+      <AddContentModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
-} 
+}
