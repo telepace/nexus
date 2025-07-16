@@ -1874,7 +1874,7 @@ async def _stream_template_analysis(
                 content_to_analyze=content_text,
                 model=resolved_model,  # 使用解析后的正确模型
                 temperature=0.3,
-                max_tokens=2000,
+                max_tokens=8000,
             )
     except Exception as e:
         logger.error(f"Failed to create AI conversation: {e}")
@@ -1892,7 +1892,7 @@ async def _stream_template_analysis(
         "messages": messages,
         "stream": True,
         "temperature": 0.3,
-        "max_tokens": 2000,
+        "max_tokens": 8000,
     }
 
     try:

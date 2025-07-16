@@ -116,7 +116,7 @@ class ContentAnalysisRequest(BaseModel):
         description="选中的要点内容（用于expand_discussion模板）",
     )
     temperature: float = Field(default=0.7, description="温度参数")
-    max_tokens: int = Field(default=2000, description="最大token数")
+    max_tokens: int = Field(default=8000, description="最大token数")
 
 
 class ContentSegmentBase(BaseModel):

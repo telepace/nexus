@@ -530,8 +530,8 @@ class ChatService:
                     {"role": "system", "content": system_content},
                     {"role": "user", "content": user_prompt},
                 ],
-                "temperature": 0.3,
-                "max_tokens": 2000,
+                                    "temperature": 0.3,
+                    "max_tokens": 8000,
             }
 
             # 准备请求头，包含认证信息

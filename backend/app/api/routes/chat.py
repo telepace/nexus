@@ -26,7 +26,7 @@ async def create_chat_completion(
     ),
     stream: bool = Body(default=True, description="Whether to stream the response"),
     temperature: float = Body(default=0.7, description="Sampling temperature"),
-    max_tokens: int = Body(default=2000, description="Maximum tokens to generate"),
+    max_tokens: int = Body(default=8000, description="Maximum tokens to generate"),
     _current_user: User = Depends(get_current_user),
     _db: Session = Depends(get_db),
 ):
