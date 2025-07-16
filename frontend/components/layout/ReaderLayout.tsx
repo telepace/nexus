@@ -244,6 +244,18 @@ export default function ReaderLayout({
                   className="flex flex-col bg-muted/30 insight-pane ai-analysis-panel"
                   data-exclude-selection
                 >
+                  <div className="flex items-center justify-between px-6 border-b border-muted/40 linear-bg-1/95 backdrop-blur supports-[backdrop-filter]:linear-bg-1/80 shadow-sm h-header" data-exclude-selection>
+                    <h2 className="font-semibold text-base">AI分析</h2>
+                    <Button
+                      onClick={toggleRightPanel}
+                      size="sm"
+                      variant="ghost"
+                      className="hover:bg-muted/60 dark:hover:bg-muted/40 transition-all duration-200 ease-out"
+                    >
+                      <PanelRightClose className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex-1 overflow-auto" data-exclude-selection>
                   {contentItem ? (
                     <ContentAnalysisSidebar
                       content={contentItem}

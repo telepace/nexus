@@ -42,8 +42,8 @@ export const ContentPreview = ({ item }: Props) => {
 
   if (!panels.length && !item) {
     return (
-      <div className="relative z-10 h-full shadow-macos-window linear-bg-2 rounded-sm flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between h-header px-4">
+      <div className="relative z-10 h-full shadow-macos-window  rounded-sm flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between h-header px-4 linear-bg-1">
           <div className="flex items-center gap-2 text-base font-medium">
             <Library className="h-5 w-5" />
             Preview
@@ -99,7 +99,7 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
     <div
       ref={containerRef}
       tabIndex={-1}
-      className="relative z-10 h-full shadow-macos-window linear-bg-2 rounded-sm flex flex-col overflow-hidden"
+      className="relative z-10 h-full shadow-macos-window linear-bg-1 rounded-sm flex flex-col overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center h-header px-4">
