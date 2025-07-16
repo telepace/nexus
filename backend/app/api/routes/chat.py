@@ -17,12 +17,11 @@ from app.schemas.llm_service import CompletionRequest, LLMMessage
 
 router = APIRouter()
 
-
 @router.post("/completions")
 async def create_chat_completion(
     messages: list[dict] = Body(..., description="Chat messages in OpenAI format"),
     model: str = Body(
-        default="or-gemini-2.5-flash-preview-05-20", description="Model to use"
+        default=None, description="Model to use"
     ),
     stream: bool = Body(default=True, description="Whether to stream the response"),
     temperature: float = Body(default=0.7, description="Sampling temperature"),
@@ -69,7 +68,6 @@ async def create_chat_completion(
             "X-Vercel-AI-Data-Stream": "v1",  # Vercel AI SDK 要求的头部
         },
     )
-
 
 async def _stream_chat_completion(
     request: CompletionRequest,
@@ -154,7 +152,6 @@ async def _stream_chat_completion(
         error_msg = str(e).replace('"', '\\"')
         yield f'9:[{{"error":"Stream error: {error_msg}"}}]\n'
 
-
 async def _handle_non_streaming_completion(request: CompletionRequest):
     """
     处理非流式请求
@@ -191,7 +188,6 @@ async def _handle_non_streaming_completion(request: CompletionRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
 
 @router.get("/models")
 async def list_available_models(
