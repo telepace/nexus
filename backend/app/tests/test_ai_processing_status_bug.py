@@ -78,7 +78,7 @@ class TestAIProcessingStatusBug:
             await background_task_manager.start_content_processing(
                 content_id=uuid.uuid4(),
                 user_id=uuid.UUID("e8ccbeed-f588-4b9a-95ca-000000000000"),
-                session=db_session
+                
             )
         
         # Refresh content item from database
@@ -145,7 +145,7 @@ class TestAIProcessingStatusBug:
             await background_task_manager.start_content_processing(
                 content_id=uuid.uuid4(),
                 user_id=uuid.UUID("e8ccbeed-f588-4b9a-95ca-000000000000"), 
-                session=db_session
+                
             )
         
         # Refresh from DB
@@ -207,7 +207,7 @@ class TestAIProcessingStatusBug:
             await background_task_manager.start_content_processing(
                 content_id=uuid.uuid4(),
                 user_id=uuid.UUID("e8ccbeed-f588-4b9a-95ca-000000000000"),
-                session=db_session
+                
             )
         
         # Assert: Processing order should be correct
