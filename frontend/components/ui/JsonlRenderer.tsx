@@ -313,6 +313,7 @@ export function JsonlRenderer({
               {hasReferences && (
                 <EnhancedReferenceIndicator
                   references={references}
+                  contentId={contentId}
                   className="ml-4"
                 />
               )}
@@ -327,6 +328,7 @@ export function JsonlRenderer({
               {hasReferences && (
                 <EnhancedReferenceIndicator
                   references={references}
+                  contentId={contentId}
                   className="ml-4"
                 />
               )}
@@ -341,6 +343,7 @@ export function JsonlRenderer({
               {hasReferences && (
                 <EnhancedReferenceIndicator
                   references={references}
+                  contentId={contentId}
                   className="ml-4"
                 />
               )}
@@ -361,6 +364,7 @@ export function JsonlRenderer({
                 {hasReferences && (
                   <EnhancedReferenceIndicator
                     references={references}
+                    contentId={contentId}
                     className="ml-auto"
                   />
                 )}
@@ -388,7 +392,7 @@ export function JsonlRenderer({
               </ul>
               {hasReferences && (
                 <div className="mt-2 flex justify-end">
-                  <EnhancedReferenceIndicator references={references} />
+                  <EnhancedReferenceIndicator references={references} contentId={contentId} />
                 </div>
               )}
             </div>
@@ -410,6 +414,7 @@ export function JsonlRenderer({
                 {hasReferences && (
                   <EnhancedReferenceIndicator
                     references={references}
+                    contentId={contentId}
                     className="shrink-0"
                   />
                 )}
@@ -432,6 +437,7 @@ export function JsonlRenderer({
                 {hasReferences && (
                   <EnhancedReferenceIndicator
                     references={references}
+                    contentId={contentId}
                     className="shrink-0"
                   />
                 )}
@@ -454,7 +460,7 @@ export function JsonlRenderer({
                 </p>
                 {hasReferences && (
                   <div className="mt-2 flex justify-end">
-                    <EnhancedReferenceIndicator references={references} />
+                    <EnhancedReferenceIndicator references={references} contentId={contentId} />
                   </div>
                 )}
               </div>
@@ -467,7 +473,7 @@ export function JsonlRenderer({
               </p>
               {hasReferences && (
                 <div className="mt-2 flex justify-end">
-                  <EnhancedReferenceIndicator references={references} />
+                  <EnhancedReferenceIndicator references={references} contentId={contentId} />
                 </div>
               )}
             </div>
@@ -488,6 +494,7 @@ export function JsonlRenderer({
                 {hasReferences && (
                   <EnhancedReferenceIndicator
                     references={references}
+                    contentId={contentId}
                     className="shrink-0"
                   />
                 )}
@@ -506,6 +513,7 @@ export function JsonlRenderer({
                 {hasReferences && (
                   <EnhancedReferenceIndicator
                     references={references}
+                    contentId={contentId}
                     className="shrink-0"
                   />
                 )}

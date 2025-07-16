@@ -308,6 +308,7 @@ export function StreamingJsonlRenderer({
                 {hasReferences && (
                   <EnhancedReferenceIndicator
                     references={references}
+                    contentId={contentId}
                     className="shrink-0"
                   />
                 )}
