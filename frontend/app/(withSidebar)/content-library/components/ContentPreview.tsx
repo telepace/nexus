@@ -1,7 +1,7 @@
 "use client";
 
 import { Library } from "lucide-react";
-import type { ContentItemPublic } from "../types";
+import type { ContentItemPublic } from "@/lib/api/content";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
