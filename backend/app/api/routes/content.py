@@ -65,14 +65,15 @@ from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is
     ContentSegmentOut,
     ContentSegmentBulkResponse,  # 新增
 )
+from app.services.ai.chat_service import ChatService
 from app.utils.background_tasks import background_task_manager
 from app.utils.content_processors import ProcessingPipeline
 from app.utils.events import content_event_manager, create_sse_generator
-from app.utils.streaming_jsonl_extractor import create_streaming_jsonl_extractor
 from app.utils.prompt_helpers import render_user_analysis_prompt
 from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
 from app.services.ai.chat_service import ChatService
 from app.api.deps import get_current_user, get_db, get_async_db
+from app.utils.streaming_jsonl_extractor import create_streaming_jsonl_extractor
 
 # from app.utils.cache import warm_article_cache  # 暂时注释掉避免redis依赖
 
@@ -110,7 +111,6 @@ def _extract_title_from_content(content_text: str | None) -> str:
 
     return "新内容"
 
-
 def create_ai_conversation(
     session: Session,
     user_id: uuid.UUID,
@@ -139,11 +139,10 @@ def create_ai_conversation(
     Returns:
         AIConversation: 创建的对话记录
     """
-    from app.utils.prompt_helpers import render_user_analysis_prompt
-    
+
     # 使用用户分析模板渲染prompt
     user_prompt = render_user_analysis_prompt(analysis_instruction)
-    
+
     # 准备对话消息
     conversation_messages = [
         {"role": "system", "content": content_to_analyze},
@@ -182,7 +181,6 @@ def create_ai_conversation(
         ai_conversation = refreshed_ai_conversation
 
     return ai_conversation
-
 
 def update_ai_conversation_response(
     session: Session,
@@ -230,7 +228,6 @@ def update_ai_conversation_response(
         logger.error(f"Failed to update AIConversation {ai_conversation.id}: {e}")
         session.rollback()
 
-
 @router.get(
     "/events",
     summary="Content Events Stream (SSE)",
@@ -252,7 +249,6 @@ async def content_events_endpoint(
             "Access-Control-Allow-Headers": "Cache-Control",
         },
     )
-
 
 @router.post(
     "/create",
@@ -336,7 +332,6 @@ def create_content_item_endpoint(
 
     return public_item
 
-
 @router.post(
     "/process/{id}",
     response_model=ContentItemPublic,
@@ -414,7 +409,6 @@ async def process_content_item_endpoint(
 
     return public_item
 
-
 async def process_content_background_async(
     pipeline, content_item_id: uuid.UUID, session_config
 ):
@@ -470,7 +464,6 @@ async def process_content_background_async(
         except Exception as update_err:
             logger.error(f"Failed to update error status: {update_err}")
 
-
 def process_content_background(processor, content_item: ContentItem, session):
     """Legacy background task to process content (kept for backward compatibility)."""
     try:
@@ -500,7 +493,6 @@ def process_content_background(processor, content_item: ContentItem, session):
         content_item.error_message = str(e)
         session.add(content_item)
         session.commit()
-
 
 @router.get(
     "/",
@@ -572,7 +564,6 @@ def list_content_items_endpoint(
 
     return public_items
 
-
 @router.get(
     "/{id}",
     response_model=ContentItemPublic,
@@ -639,7 +630,6 @@ def get_content_item_endpoint(
     )
 
     return public_item
-
 
 @router.get(
     "/{id}/chunks",
@@ -747,7 +737,6 @@ def get_content_chunks_endpoint(
             detail="Failed to retrieve content chunks",
         )
 
-
 @router.get(
     "/{id}/chunks/summary",
     summary="Get Content Chunks Summary",
@@ -809,7 +798,6 @@ def get_content_chunks_summary_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve content chunks summary",
         )
-
 
 @router.post(
     "/{id}/analyze-stream",
@@ -883,7 +871,6 @@ async def analyze_content_stream_endpoint(
             "X-Vercel-AI-Data-Stream": "v1",  # Vercel AI SDK 要求的头部
         },
     )
-
 
 async def _stream_content_analysis(
     _content_item_id: uuid.UUID,  # 使用 ID 而不是对象
@@ -1050,7 +1037,6 @@ async def _stream_content_analysis(
         error_msg = str(e).replace('"', '\\"')
         yield f'{{"t":"error","c":"Stream error: {error_msg}"}}]\n'
 
-
 @router.post(
     "/{id}/analyze-ai-sdk-updated",
     summary="Analyze Content with AI SDK (Updated Structure)",
@@ -1132,7 +1118,6 @@ async def analyze_ai_sdk_updated_endpoint(
         },
     )
 
-
 async def _stream_content_analysis_ai_sdk(
     content_item_id: uuid.UUID,  # 使用ID而不是对象
     content_text: str,  # 直接传递内容文本
@@ -1141,8 +1126,6 @@ async def _stream_content_analysis_ai_sdk(
 ) -> AsyncGenerator[str, None]:
     """Stream AI SDK analysis with updated prompt structure."""
     import aiohttp
-    from app.utils.prompt_helpers import render_user_analysis_prompt
-    from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
 
     try:
         # 创建实时JSONL处理器
@@ -1157,8 +1140,12 @@ async def _stream_content_analysis_ai_sdk(
             {"role": "user", "content": user_prompt},  # 使用渲染后的用户prompt
         ]
 
+        # 使用配置的模型，支持任务特定的模型选择
+        # 对于内容分析，使用 analysis 任务对应的模型
+        resolved_model = settings.resolved_ai_task_models.get("analysis", settings.DEFAULT_LLM_MODEL)
+
         payload = {
-            "model": "or-gemini-2.5-flash-preview-05-20",
+            "model": resolved_model,
             "messages": messages,
             "temperature": request.temperature,
             "max_tokens": request.max_tokens,
@@ -1166,7 +1153,7 @@ async def _stream_content_analysis_ai_sdk(
         }
 
         url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
-        
+
         # 添加认证头部设置
         headers = {"Content-Type": "application/json"}
         if settings.LITELLM_MASTER_KEY:
@@ -1238,7 +1225,7 @@ async def _stream_content_analysis_ai_sdk(
                                                 if jsonl_line.strip():
                                                     # 直接传输JSONL对象 (类型0)
                                                     yield f"0:{jsonl_line}\n"
-                                        
+
                             except json.JSONDecodeError:
                                 continue
 
@@ -1246,7 +1233,6 @@ async def _stream_content_analysis_ai_sdk(
         # 发送错误信息 (类型9)
         error_msg = str(e).replace('"', '\\"')
         yield f'{{"t":"error","c":"Analysis failed: {error_msg}"}}]\n'
-
 
 @router.post(
     "/{id}/completion-updated",
@@ -1288,6 +1274,10 @@ async def completion_updated_endpoint(
     content_text = content_item.content_text
     content_title = content_item.title or "Untitled Content"
 
+    # 使用配置的模型，支持任务特定的模型选择
+    # 对于内容分析，使用 analysis 任务对应的模型
+    resolved_model = settings.resolved_ai_task_models.get("analysis", settings.DEFAULT_LLM_MODEL)
+
     # Create AI conversation record
     ai_conversation = create_ai_conversation(
         session=session,
@@ -1296,7 +1286,7 @@ async def completion_updated_endpoint(
         content_item_title=content_title,
         analysis_instruction=request.analysis_instruction,
         content_to_analyze=content_text,
-        model="or-gemini-2.5-flash-preview-05-20",
+        model=resolved_model,
         temperature=request.temperature,
         max_tokens=request.max_tokens,
     )
@@ -1331,7 +1321,6 @@ async def completion_updated_endpoint(
         },
     )
 
-
 async def _stream_content_completion_updated(
     content_item_id: uuid.UUID,  # 使用ID而不是对象
     content_text: str,  # 直接传递内容文本
@@ -1341,8 +1330,8 @@ async def _stream_content_completion_updated(
 ) -> AsyncGenerator[str, None]:
     """Stream content completion with updated prompt structure."""
     import aiohttp
-    from app.utils.prompt_helpers import render_user_analysis_prompt, render_template_prompt
-    from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
+
+    from app.utils.prompt_helpers import render_template_prompt
 
     try:
         # 创建实时JSONL处理器
@@ -1350,7 +1339,7 @@ async def _stream_content_completion_updated(
 
         # 根据请求的模板选择渲染方式
         template_name = request.template_name or "user_analysis.j2"
-        
+
         if template_name == "expand_discussion.j2":
             # 为expand_discussion模板准备特殊的上下文
             user_prompt = render_template_prompt(
@@ -1373,8 +1362,12 @@ async def _stream_content_completion_updated(
             {"role": "user", "content": user_prompt},  # 使用渲染后的用户prompt
         ]
 
+        # 使用配置的模型，支持任务特定的模型选择
+        # 对于内容分析，使用 analysis 任务对应的模型
+        resolved_model = settings.resolved_ai_task_models.get("analysis", settings.DEFAULT_LLM_MODEL)
+
         payload = {
-            "model": "or-gemini-2.5-flash-preview-05-20",
+            "model": resolved_model,
             "messages": messages,
             "temperature": request.temperature,
             "max_tokens": request.max_tokens,
@@ -1382,7 +1375,7 @@ async def _stream_content_completion_updated(
         }
 
         url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
-        
+
         # 添加认证头部设置
         headers = {"Content-Type": "application/json"}
         if settings.LITELLM_MASTER_KEY:
@@ -1463,7 +1456,6 @@ async def _stream_content_completion_updated(
         error_msg = str(e).replace('"', '\\"')
         yield f'{{"t":"error","c":"Completion failed: {error_msg}"}}]\n'
 
-
 @router.get(
     "/{id}/markdown",
     summary="Get Content Markdown",
@@ -1502,11 +1494,9 @@ def get_content_markdown_endpoint(
         "updated_at": content_item.updated_at.isoformat(),
     }
 
-
 # ================================
 # Content Conversations Routes
 # ================================
-
 
 def convert_conversation_to_public(conversation: AIConversation) -> dict:
     """Convert AIConversation model to public schema."""
@@ -1585,7 +1575,6 @@ def convert_conversation_to_public(conversation: AIConversation) -> dict:
         "updated_at": conversation.updated_at.isoformat(),
     }
 
-
 @router.get(
     "/{content_id}/conversations",
     summary="Get All Conversations for Content",
@@ -1662,7 +1651,6 @@ def get_content_conversations(
             detail="Failed to retrieve conversations"
         )
 
-
 @router.post(
     "/{content_id}/conversations",
     status_code=status.HTTP_201_CREATED,
@@ -1726,7 +1714,6 @@ def create_conversation(
         conversation = refreshed_conversation
 
     return convert_conversation_to_public(conversation)
-
 
 @router.get(
     "/{id}/analyze/stream",
@@ -1807,7 +1794,6 @@ async def analyze_content_stream_with_template_endpoint(
         },
     )
 
-
 async def _stream_template_analysis(
     content_item_id: uuid.UUID,
     content_text: str,
@@ -1820,22 +1806,22 @@ async def _stream_template_analysis(
     """
     Stream analysis using template-based AI processing
     """
-    import aiohttp
     import json
     from datetime import datetime, timezone
+
+    import aiohttp
+
     from app.core.db_factory import engine
-    from app.services.ai.chat_service import ChatService
-    from app.utils.streaming_jsonl_extractor import create_streaming_jsonl_extractor
 
     # 使用 ChatService 来获取正确的模型名称
     chat_service = ChatService()
-    
+
     # 根据分析类型确定模板名称
     template_name = f"{analysis_type}.j2"
-    
+
     # 获取该模板对应的正确模型
     resolved_model = chat_service.get_model_for_template(template_name)
-    
+
     logger.info(f"Using resolved model '{resolved_model}' for analysis type '{analysis_type}' (template: {template_name})")
 
     # 创建JSONL提取器（用于summary和key_points类型）
@@ -2015,7 +2001,6 @@ async def _stream_template_analysis(
         logger.error(f"Template analysis error: {e}")
         yield f"data: {json.dumps({'type': 'error', 'content': f'分析过程中发生错误: {str(e)}', 'finished': True})}\n\n"
 
-
 @router.delete(
     "/{id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -2080,7 +2065,6 @@ def delete_content_item_endpoint(
             detail="An unexpected error occurred while deleting the content item",
         )
 
-
 @router.post(
     "/{id}/favorite",
     status_code=status.HTTP_201_CREATED,
@@ -2124,7 +2108,6 @@ def add_to_favorites_endpoint(
 
     return {"status": "ok"}
 
-
 @router.delete(
     "/{id}/favorite",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -2163,7 +2146,6 @@ def remove_from_favorites_endpoint(
             detail="Content item is not in favorites",
         )
 
-
 @router.get(
     "/{id}/favorite/status",
     summary="Check Favorite Status",
@@ -2197,7 +2179,6 @@ def check_favorite_status_endpoint(
     )
 
     return {"is_favorite": favorite is not None}
-
 
 @router.get(
     "/processors/supported",
@@ -2265,7 +2246,6 @@ def get_supported_processors_endpoint() -> dict[str, Any]:
         },
     }
 
-
 @router.post(
     "/{id}/share",
     response_model=ContentSharePublic,
@@ -2317,7 +2297,6 @@ def create_share_link_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create share link",
         )
-
 
 @router.get(
     "/share/{token}",
@@ -2414,7 +2393,6 @@ def get_shared_content_endpoint(
 
     return ContentItemPublic.model_validate(content_item)
 
-
 @router.delete(
     "/{id}/share",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -2452,7 +2430,6 @@ def deactivate_share_link_endpoint(
         if share.is_active:
             deactivate_content_share(session, content_share=share)
 
-
 @router.post(
     "/{id}/regenerate-ai",
     response_model=dict[str, Any],
@@ -2468,7 +2445,7 @@ def regenerate_ai_analysis_endpoint(
 ) -> dict[str, Any]:
     """
     Regenerate AI analysis for a content item.
-    
+
     This endpoint:
     1. Validates user permissions
     2. Triggers AI preprocessing pipeline
@@ -2488,27 +2465,27 @@ def regenerate_ai_analysis_endpoint(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have permission to regenerate AI analysis for this content",
         )
-    
+
     # Check if content has been processed (has content_text)
     if not content_item.content_text or len(content_item.content_text.strip()) == 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Content must be processed before AI analysis can be regenerated",
         )
-    
+
     # Update status to indicate AI regeneration is starting
     content_item.processing_status = "processing"
     session.add(content_item)
     session.commit()
-    
+
     # Start AI regeneration task using the global instance
     background_task_manager.start_ai_regeneration(
         content_id=str(content_item.id),
         user_id=str(current_user.id)
     )
-    
+
     logger.info(f"Started AI regeneration for content {content_item.id}")
-    
+
     return {
         "message": "AI analysis regeneration started",
         "content_id": str(content_item.id),
