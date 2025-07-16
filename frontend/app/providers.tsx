@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useState } from "react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
+import { PromptsProvider } from "@/contexts/PromptsContext";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -39,9 +40,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         disableTransitionOnChange
       >
         <NotificationProvider>
-          <ProgressBar />
-          {children}
-          <Toaster richColors position="top-right" />
+          <PromptsProvider>
+            <ProgressBar />
+            {children}
+            <Toaster richColors position="top-right" />
+          </PromptsProvider>
         </NotificationProvider>
       </ThemeProvider>
     </QueryClientProvider>
