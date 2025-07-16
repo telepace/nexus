@@ -119,16 +119,6 @@ export function MarkdownRenderer({
           [rehypeAutolinkHeadings, { behavior: "wrap" }],
         ]}
         components={{
-          ...(inline && {
-            p: ({ children, ...props }) => (
-              <span {...props}>{children}</span>
-            ),
-            h1: ({ children, ...props }) => <span {...props}>{children}</span>,
-            h2: ({ children, ...props }) => <span {...props}>{children}</span>,
-            h3: ({ children, ...props }) => <span {...props}>{children}</span>,
-            h4: ({ children, ...props }) => <span {...props}>{children}</span>,
-          }),
-
           // 自定义组件渲染（原有）
           h1: ({ children, ...props }) => (
             <h1
@@ -374,6 +364,19 @@ export function MarkdownRenderer({
             return <OptimizedImage {...optimizedImageProps} />;
           },
           hr: ({ ...props }) => <hr className="my-4 md:my-8" {...props} />,
+          
+          // Inline mode overrides - must come last to override regular components
+          ...(inline && {
+            p: ({ children, ...props }) => (
+              <span {...props}>{children}</span>
+            ),
+            h1: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h2: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h3: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h4: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h5: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h6: ({ children, ...props }) => <span {...props}>{children}</span>,
+          }),
         }}
       >
         {sanitizedContent}
