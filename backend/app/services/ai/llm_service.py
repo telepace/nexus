@@ -21,7 +21,7 @@ class LLMService:
         messages: list[dict[str, str]],
         model: str | None = None,
         temperature: float = 0.7,
-        max_tokens: int = 2000,
+        max_tokens: int = 8000,
     ) -> str:
         """
         执行聊天完成请求
