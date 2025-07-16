@@ -128,7 +128,9 @@ function getVariantStyles(
 }
 
 // 内容摘要卡片
-export const SummaryCard = ({ summary }: { summary: Record<string, unknown> | string | null }) => {
+export const SummaryCard = ({
+  summary,
+}: { summary: Record<string, unknown> | string | null }) => {
   if (!summary) return null;
 
   let summaryText = "";
@@ -170,7 +172,9 @@ export const SummaryCard = ({ summary }: { summary: Record<string, unknown> | st
 };
 
 // 关键要点卡片
-export const KeyPointsCard = ({ keyPoints }: { keyPoints: Record<string, unknown> | string | null }) => {
+export const KeyPointsCard = ({
+  keyPoints,
+}: { keyPoints: Record<string, unknown> | string | null }) => {
   if (!keyPoints) return null;
 
   let points: string[] = [];
@@ -429,21 +433,13 @@ export const AnalysisCards = ({
 
   // Summary 卡片
   if (unifiedData.summary) {
-    cards.push(
-      <SummaryCard
-        key="summary"
-        summary={unifiedData.summary}
-      />,
-    );
+    cards.push(<SummaryCard key="summary" summary={unifiedData.summary} />);
   }
 
   // Key Points 卡片
   if (unifiedData.keyPoints) {
     cards.push(
-      <KeyPointsCard
-        key="key-points"
-        keyPoints={unifiedData.keyPoints}
-      />,
+      <KeyPointsCard key="key-points" keyPoints={unifiedData.keyPoints} />,
     );
   }
 

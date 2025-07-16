@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import React from "react";
 
-import Page from "@/app/password-recovery/page";
+import Page from "@/app/(auth)/password-recovery/page";
 import { passwordReset } from "@/components/actions/password-reset-action";
 
 jest.mock("../components/actions/password-reset-action", () => ({

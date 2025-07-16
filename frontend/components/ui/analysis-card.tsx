@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, ReactNode, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -28,17 +28,11 @@ import {
   MoreHorizontal,
   Copy,
   Share2,
-  Star,
   ExternalLink,
   Eye,
   ChevronDown,
-  ChevronUp,
   Quote,
   Info,
-  Bookmark,
-  Download,
-  Edit,
-  Trash2,
   AlertTriangle,
   Loader2,
 } from "lucide-react";
@@ -238,7 +232,7 @@ const JsonContentItemRenderer: React.FC<{
               </span>
             </div>
             <div className="flex gap-1">
-              {references.slice(0, 5).map((refNum, idx) => (
+              {references.slice(0, 5).map((refNum) => (
                 <motion.button
                   key={refNum}
                   className={cn(
@@ -307,7 +301,7 @@ export const JsonContentRenderer: React.FC<{
 export interface ContentBlock {
   id: string;
   type: "text" | "title" | "summary" | "list" | "code" | "json" | "analysis"; // 添加 analysis 类型
-  content: string | ReactNode;
+  content: string | React.ReactNode;
   tooltip?: string;
   expandable?: boolean;
   references?: ReferenceInfo[];
@@ -319,7 +313,7 @@ export interface AnalysisCardProps {
   title?: string;
   subtitle?: string;
   emoji?: string;
-  icon?: ReactNode;
+  icon?: React.ReactNode;
 
   // 内容
   contentBlocks: ContentBlock[];
@@ -343,7 +337,7 @@ export interface AnalysisCardProps {
 
   // 自定义
   className?: string;
-  children?: ReactNode;
+  children?: React.ReactNode;
 }
 
 // 智能截断函数
@@ -398,7 +392,7 @@ const InteractiveContentBlock: React.FC<{
         title: "已复制",
         description: "内容已复制到剪贴板",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "复制失败",
         description: "无法复制内容",
@@ -813,7 +807,7 @@ const CardActionsMenu: React.FC<{
           title: "已复制",
           description: "内容已复制到剪贴板",
         });
-      } catch (error) {
+      } catch {
         toast({
           title: "复制失败",
           description: "无法复制内容",
@@ -873,7 +867,7 @@ const CardActionsMenu: React.FC<{
       defaultActionsArray.push({
         id: "delete",
         label: "删除",
-        icon: Trash2,
+        icon: AlertTriangle,
         onClick: handleDelete,
         variant: "destructive",
         group: "danger",
@@ -1004,7 +998,7 @@ const CardActionsMenu: React.FC<{
             <div className="py-4">
               <div className="bg-muted/50 rounded-lg p-4">
                 <div className="flex items-center gap-2 text-sm">
-                  <Trash2 className="h-4 w-4 text-muted-foreground" />
+                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">即将删除：</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
@@ -1019,7 +1013,7 @@ const CardActionsMenu: React.FC<{
                 onClick={confirmDelete}
                 className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <AlertTriangle className="h-4 w-4 mr-2" />
                 确认删除
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -1075,7 +1069,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
         title: "已复制",
         description: "所有内容已复制到剪贴板",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "复制失败",
         description: "无法复制内容",
@@ -1106,7 +1100,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
           description: "卡片内容已复制到剪贴板",
         });
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "复制失败",
         description: "无法复制卡片内容",

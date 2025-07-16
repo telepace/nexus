@@ -4,14 +4,11 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { ChunkItem } from "./ChunkItem";
 import { MarkdownRenderer } from "./MarkdownRenderer";
-<<<<<<< HEAD
-import { useReferenceManager, useReferenceManagerSafe, createParagraphHighlightStyles } from "./ReferenceManager";
-=======
 import {
+  ReferenceManagerProvider,
   useReferenceManagerSafe,
   createParagraphHighlightStyles,
 } from "./ReferenceManager";
->>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
 
 interface EnhancedContentReaderProps {
   content?: string;
@@ -29,22 +26,14 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
   content,
   chunks,
   className = "",
-  contentId,
 }) => {
-  const { state } = useReferenceManagerSafe();
   const containerRef = useRef<HTMLDivElement>(null);
-<<<<<<< HEAD
-  const [highlightedParagraphs, setHighlightedParagraphs] = useState<Set<number>>(new Set());
-  const [selectedParagraph, setSelectedParagraph] = useState<number | null>(null);
-  const [isHoverHighlight, setIsHoverHighlight] = useState(false);
-=======
   const [highlightedParagraphs, setHighlightedParagraphs] = useState<
     Set<number>
   >(new Set());
   const [selectedParagraph, setSelectedParagraph] = useState<number | null>(
     null,
   );
->>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
 
   // 处理跳转到段落的事件
   const handleJumpToParagraph = useCallback(
@@ -88,7 +77,7 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
                   ? "index-offset"
                   : "array-index"
               : "not-found",
-            availableIndexes: chunks.map((c) => c.index).slice(0, 5), // 只显示前5个避免日志过长
+            availableIndexes: chunks.map((c) => c.index).slice(0, 5), // 只显示前5个避免��志过长
           });
 
           if (targetChunk) {
@@ -205,50 +194,18 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
 
   // 处理高亮段落的事件
   const handleHighlightParagraphs = useCallback((event: CustomEvent) => {
-    const { refIds, isHover } = event.detail;
-    
-    console.log('🎨 EnhancedContentReader: 收到高亮事件', { 
-      refIds, 
-      isHover,
-      eventType: event.type,
-      eventDetail: event.detail 
-    });
-    
+    const { refIds } = event.detail;
     setHighlightedParagraphs(new Set(refIds));
-    setIsHoverHighlight(isHover || false);
-    
-    // 如果是悬浮高亮，不设置选中段落
-    if (!isHover) {
-      // 只有非悬浮时才设置选中段落
-      if (refIds.length === 1) {
-        setSelectedParagraph(refIds[0]);
-      }
-    }
   }, []);
 
   // 处理清除高亮的事件
   const handleClearHighlights = useCallback(() => {
-    console.log('🧹 EnhancedContentReader: 收到清除高亮事件');
     setHighlightedParagraphs(new Set());
     setSelectedParagraph(null);
-    setIsHoverHighlight(false);
   }, []);
 
   // 注册事件监听器
   useEffect(() => {
-<<<<<<< HEAD
-    console.log('🔗 EnhancedContentReader: 注册事件监听器');
-    
-    window.addEventListener('jumpToParagraph', handleJumpToParagraph as EventListener);
-    window.addEventListener('highlightParagraphs', handleHighlightParagraphs as EventListener);
-    window.addEventListener('clearHighlights', handleClearHighlights as EventListener);
-
-    return () => {
-      console.log('🔗 EnhancedContentReader: 移除事件监听器');
-      window.removeEventListener('jumpToParagraph', handleJumpToParagraph as EventListener);
-      window.removeEventListener('highlightParagraphs', handleHighlightParagraphs as EventListener);
-      window.removeEventListener('clearHighlights', handleClearHighlights as EventListener);
-=======
     window.addEventListener(
       "jumpToParagraph",
       handleJumpToParagraph as EventListener,
@@ -275,7 +232,6 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
         "clearHighlights",
         handleClearHighlights as EventListener,
       );
->>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
     };
   }, [handleJumpToParagraph, handleHighlightParagraphs, handleClearHighlights]);
 
@@ -308,19 +264,6 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
       const paragraphIndex = index + 1; // 1-based indexing
 
       // 移除之前的样式
-<<<<<<< HEAD
-      paragraph.classList.remove('paragraph-highlight', 'selected', 'hover-highlight');
-      
-      // 应用新的样式
-      if (highlightedParagraphs.has(paragraphIndex)) {
-        paragraph.classList.add('paragraph-highlight');
-        
-        // 区分悬浮高亮和选中高亮
-        if (isHoverHighlight) {
-          paragraph.classList.add('hover-highlight');
-        } else if (selectedParagraph === paragraphIndex) {
-          paragraph.classList.add('selected');
-=======
       paragraph.classList.remove("paragraph-highlight", "selected");
 
       // 应用新的样式
@@ -329,11 +272,10 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
 
         if (selectedParagraph === paragraphIndex) {
           paragraph.classList.add("selected");
->>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
         }
       }
     });
-  }, [highlightedParagraphs, selectedParagraph, isHoverHighlight]);
+  }, [highlightedParagraphs, selectedParagraph]);
 
   // 渲染分块内容
   const renderChunks = () => {
@@ -341,7 +283,7 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
 
     return (
       <div className="space-y-0">
-        {chunks.map((chunk, index) => (
+        {chunks.map((chunk) => (
           <div
             key={chunk.id}
             data-chunk-id={chunk.id}
@@ -395,6 +337,13 @@ interface EnhancedContentReaderWithProviderProps
   enableReferenceManager?: boolean;
 }
 
+const EnhancedContentReaderWithProviderInternal: React.FC<
+  EnhancedContentReaderWithProviderProps
+> = ({ ...props }) => {
+  useReferenceManagerSafe();
+  return <EnhancedContentReader {...props} />;
+};
+
 export const EnhancedContentReaderWithProvider: React.FC<
   EnhancedContentReaderWithProviderProps
 > = ({ enableReferenceManager = true, ...props }) => {
@@ -402,23 +351,9 @@ export const EnhancedContentReaderWithProvider: React.FC<
     return <EnhancedContentReader {...props} />;
   }
 
-  // 如果已经在 Provider 内，直接使用
-  try {
-    // 如果已经在 ReferenceManagerProvider 内，useReferenceManager 不会抛错
-    useReferenceManager();
-    return <EnhancedContentReader {...props} />;
-  } catch {
-<<<<<<< HEAD
-    // 若抛错说明当前没有 Provider，需要包裹
-    const { ReferenceManagerProvider } = require('./ReferenceManager');
-=======
-    // 如果不在Provider内，需要包装
-    const { ReferenceManagerProvider } = require("./ReferenceManager");
->>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
-    return (
-      <ReferenceManagerProvider contentId={props.contentId}>
-        <EnhancedContentReader {...props} />
-      </ReferenceManagerProvider>
-    );
-  }
+  return (
+    <ReferenceManagerProvider contentId={props.contentId}>
+      <EnhancedContentReaderWithProviderInternal {...props} />
+    </ReferenceManagerProvider>
+  );
 };

@@ -49,7 +49,6 @@ export function StreamingJsonlRenderer({
   className,
   enableHoverEffects = true,
   showStreamingIndicator = true,
-  contentId,
 }: StreamingJsonlRendererProps) {
   const [hoveredBlock, setHoveredBlock] = useState<number | null>(null);
 
@@ -84,7 +83,7 @@ export function StreamingJsonlRenderer({
           index,
           isComplete: true,
         });
-      } catch (error) {
+      } catch {
         // 如果解析失败，可能是不完整的行（流式传输中）
         // 只在非加载状态或者看起来是完整行时显示错误行
         if (!isLoading || trimmedLine.includes("}")) {
@@ -106,7 +105,7 @@ export function StreamingJsonlRenderer({
     try {
       await navigator.clipboard.writeText(blockContent);
       toast.success(`已复制${getBlockTypeLabel(blockType)}内容`);
-    } catch (error) {
+    } catch {
       toast.error("复制失败");
     }
   };

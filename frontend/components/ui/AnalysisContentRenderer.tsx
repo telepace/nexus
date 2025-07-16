@@ -13,20 +13,14 @@ import {
 } from "@/components/ui/tooltip";
 import {
   ChevronDown,
-  ChevronUp,
   Lightbulb,
   Quote,
-  List,
-  MessageSquare,
-  Zap,
   BookOpen,
   Target,
   Info,
-  ExternalLink,
   Copy,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { OptimizedReferenceIndicator } from "@/components/ui/OptimizedReferenceIndicator";
 
 // 分析块数据类型定义
 export interface AnalysisBlockData {
@@ -34,7 +28,7 @@ export interface AnalysisBlockData {
   c: string; // 内容
   ref?: string; // 引用（逗号分隔的数字）
   expandable?: string; // 可展开内容的标题
-  meta?: Record<string, any>; // 额外元数据
+  meta?: Record<string, unknown>; // 额外元数据
 }
 
 // 引用信息
@@ -51,7 +45,6 @@ export interface AnalysisContentRendererProps {
   references?: ReferenceInfo[]; // 引用数据
   onReferenceClick?: (refId: number) => void;
   className?: string;
-  contentId?: string; // 新增：原始内容ID，用于引用预览
 }
 
 // 解析 JSONL 内容
@@ -75,8 +68,8 @@ const parseAnalysisContent = (content: string): AnalysisBlockData[] => {
     }
 
     return blocks;
-  } catch (error) {
-    console.warn("分析内容解析失败:", error);
+  } catch {
+    console.warn("分析内容解析失败");
     return [];
   }
 };
@@ -95,18 +88,10 @@ const ReferenceIndicator: React.FC<{
   references: number[];
   referenceData?: ReferenceInfo[];
   onReferenceClick?: (refId: number) => void;
-  contentId?: string;
-}> = ({ references, referenceData, onReferenceClick, contentId }) => {
+}> = ({ references, referenceData, onReferenceClick }) => {
+  if (references.length === 0) return null;
+
   return (
-<<<<<<< HEAD
-    <OptimizedReferenceIndicator
-      references={references}
-      contentId={contentId}
-      variant="tooltip"
-      onReferenceClick={onReferenceClick}
-      maxPreviewItems={3}
-    />
-=======
     <div className="inline-flex items-center gap-1 ml-2">
       {references.slice(0, 3).map((refId) => {
         const refInfo = referenceData?.find((r) => r.id === refId);
@@ -157,7 +142,6 @@ const ReferenceIndicator: React.FC<{
         </Badge>
       )}
     </div>
->>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
   );
 };
 
@@ -167,8 +151,7 @@ const HeadingBlock: React.FC<{
   references: number[];
   referenceData?: ReferenceInfo[];
   onReferenceClick?: (refId: number) => void;
-  contentId?: string;
-}> = ({ block, references, referenceData, onReferenceClick, contentId }) => {
+}> = ({ block, references, referenceData, onReferenceClick }) => {
   const HeadingTag = block.t as keyof JSX.IntrinsicElements;
 
   const getHeadingStyles = (type: string) => {
@@ -204,7 +187,6 @@ const HeadingBlock: React.FC<{
             references={references}
             referenceData={referenceData}
             onReferenceClick={onReferenceClick}
-            contentId={contentId}
           />
         </div>
       </div>
@@ -218,15 +200,14 @@ const InsightBlock: React.FC<{
   references: number[];
   referenceData?: ReferenceInfo[];
   onReferenceClick?: (refId: number) => void;
-  contentId?: string;
-}> = ({ block, references, referenceData, onReferenceClick, contentId }) => {
+}> = ({ block, references, referenceData, onReferenceClick }) => {
   const { toast } = useToast();
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(block.c);
       toast({ title: "已复制", description: "洞察内容已复制到剪贴板" });
-    } catch (error) {
+    } catch {
       toast({
         title: "复制失败",
         description: "无法复制内容",
@@ -267,7 +248,6 @@ const InsightBlock: React.FC<{
                   references={references}
                   referenceData={referenceData}
                   onReferenceClick={onReferenceClick}
-                  contentId={contentId}
                 />
               </div>
             )}
@@ -295,8 +275,7 @@ const ConceptBlock: React.FC<{
   references: number[];
   referenceData?: ReferenceInfo[];
   onReferenceClick?: (refId: number) => void;
-  contentId?: string;
-}> = ({ block, references, referenceData, onReferenceClick, contentId }) => {
+}> = ({ block, references, referenceData, onReferenceClick }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -332,7 +311,6 @@ const ConceptBlock: React.FC<{
                 references={references}
                 referenceData={referenceData}
                 onReferenceClick={onReferenceClick}
-                contentId={contentId}
               />
               <motion.div
                 animate={{ rotate: isExpanded ? 180 : 0 }}
@@ -355,7 +333,8 @@ const ConceptBlock: React.FC<{
               <div className="px-4 pb-4 border-t border-blue-200/50 dark:border-blue-800/30 bg-blue-25 dark:bg-blue-950/10">
                 <div className="mt-3 text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
                   <p>
-                    这里可以显示关于 "{block.expandable}" 的详细解释和扩展内容。
+                    这里可以显示关于 &quot;{block.expandable}&quot;
+                    的详细解释和扩展内容。
                   </p>
                   <p className="mt-2 text-xs text-blue-600 dark:text-blue-400">
                     * 此功能可以连接到知识库或提供更详细的背景信息
@@ -376,8 +355,7 @@ const ParagraphBlock: React.FC<{
   references: number[];
   referenceData?: ReferenceInfo[];
   onReferenceClick?: (refId: number) => void;
-  contentId?: string;
-}> = ({ block, references, referenceData, onReferenceClick, contentId }) => {
+}> = ({ block, references, referenceData, onReferenceClick }) => {
   return (
     <motion.div
       className="group relative"
@@ -402,7 +380,6 @@ const ParagraphBlock: React.FC<{
                   references={references}
                   referenceData={referenceData}
                   onReferenceClick={onReferenceClick}
-                  contentId={contentId}
                 />
               </div>
             )}
@@ -414,19 +391,9 @@ const ParagraphBlock: React.FC<{
 };
 
 // 主渲染组件
-<<<<<<< HEAD
-export const AnalysisContentRenderer: React.FC<AnalysisContentRendererProps> = ({
-  content,
-  references = [],
-  onReferenceClick,
-  className,
-  contentId,
-}) => {
-=======
 export const AnalysisContentRenderer: React.FC<
   AnalysisContentRendererProps
-> = ({ content, references = [], onReferenceClick, className }) => {
->>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
+> = ({ content, onReferenceClick, className }) => {
   const blocks = parseAnalysisContent(content);
 
   if (blocks.length === 0) {
@@ -438,14 +405,11 @@ export const AnalysisContentRenderer: React.FC<
   }
 
   const renderBlock = (block: AnalysisBlockData, index: number) => {
-    const references = parseReferences(block.ref);
-
     const blockProps = {
       block,
-      references,
-      referenceData: references,
+      references: parseReferences(block.ref),
+      referenceData: [],
       onReferenceClick,
-      contentId,
     };
 
     switch (block.t) {

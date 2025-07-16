@@ -73,7 +73,7 @@ export function MarkdownRenderer({
       "&lt;/$1&gt;",
     );
 
-  const Root: any = inline ? "span" : "div";
+  const Root: React.ElementType = inline ? "span" : "div";
 
   return (
     <Root

@@ -63,13 +63,11 @@ const ProcessedContentRenderer = memo(
     content,
     markdownContent,
     contentId,
-    scrollContainerRef,
     onTextAction,
   }: {
     content: ContentDetail;
     markdownContent?: string | null;
     contentId: string;
-    scrollContainerRef: React.RefObject<HTMLDivElement>;
     onTextAction?: (
       action: { id: string; label: string; prompt: string },
       selectedText: string,

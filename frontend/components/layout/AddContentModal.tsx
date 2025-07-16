@@ -701,6 +701,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
     createContentProcessingNotification,
     createDeepResearchJob,
     onClose,
+    detectedUrls,
   ]);
 
   // 链接选择处理函数

@@ -28,7 +28,7 @@ describe("JsonlRenderer – 卡片與容器樣式", () => {
     const pText = screen.getByText("Hello world");
     const card = pText.closest("div");
     expect(card).toHaveClass(
-      "shadow-[7px_7px_15px_#bdbdbd,_-7px_-7px_15px_#ffffff]",
+      "shadow-[7px_7px_15px_#bdbdbd,_-7px_-7px_15px_rgba(255,255,255,0.8)]",
     );
   });
 });

@@ -38,6 +38,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { useAuth } from "@/lib/auth";
 import { logout } from "@/components/actions/logout-action";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 // 主要导航数据
 const data = {
@@ -136,7 +137,12 @@ export function AppSidebar({
               onClick={handleNavItemClick}
             >
               <div className="p-1.5 rounded-lg">
-                <img src="/img/favicon.png" alt="Logo" className="w-7 h-7" />
+                <Image
+                  src="/img/favicon.png"
+                  alt="Logo"
+                  width={28}
+                  height={28}
+                />
               </div>
               <span className="text-base font-semibold hover:text-primary transition-all duration-300 tracking-tight">
                 Telepace
@@ -147,10 +153,12 @@ export function AppSidebar({
 
           {/* 折叠状态：优化设计，更精致的视觉效果 */}
           <SidebarTrigger className="hidden group-data-[collapsible=icon]:flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-white/80 to-gray-50/60 shadow-lg hover:shadow-xl border border-gray-200/30 hover:border-primary/30 transition-all duration-300 hover:scale-105 backdrop-blur-sm">
-            <img
+            <Image
               src="/img/favicon.png"
               alt="Logo"
-              className="w-7 h-7 drop-shadow-sm"
+              width={28}
+              height={28}
+              className="drop-shadow-sm"
             />
           </SidebarTrigger>
         </div>

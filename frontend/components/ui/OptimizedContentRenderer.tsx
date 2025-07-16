@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useCallback, useEffect, useState, useRef } from "react";
-import { ChevronDown, CheckCircle, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2 } from "lucide-react";
 import { contentApi } from "@/lib/api/content";
 import type { ContentChunk, ContentChunksResponse } from "@/lib/api/content";
 import { ChunkItem } from "./ChunkItem";
 import { Loading } from "@/components/ui/loading";
 import { TextSelectionFloater } from "@/components/ui/text-selection-floater";
+import { AlertCircle } from "lucide-react";
 
 interface OptimizedContentRendererProps {
   contentId: string;

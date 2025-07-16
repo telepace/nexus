@@ -87,10 +87,16 @@ export function UnifiedAIAnalysisCard({
       setHasAutoStarted(true);
       handleStartAnalysis();
     }
-  }, [autoStart, hasAutoStarted, instruction, config.mode]);
+  }, [
+    autoStart,
+    hasAutoStarted,
+    instruction,
+    config.mode,
+    handleStartAnalysis,
+  ]);
 
   // 开始分析
-  const handleStartAnalysis = async () => {
+  const handleStartAnalysis = useCallback(async () => {
     try {
       onStart?.();
       await actions.startAnalysis(instruction);
@@ -99,7 +105,7 @@ export function UnifiedAIAnalysisCard({
       onError?.(err);
       toast.error(`分析失败: ${err.message}`);
     }
-  };
+  }, [actions, instruction, onError, onStart]);
 
   // 停止分析
   const handleStopAnalysis = () => {

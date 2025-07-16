@@ -7,6 +7,7 @@ import { useTimeZone } from "@/lib/time-zone-context";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TimeZoneSelector } from "@/components/ui/TimeZoneSelector";
 import { toast } from "@/components/ui/use-toast";
+import Image from "next/image";
 import {
   Loader2,
   User as UserIcon,
@@ -440,9 +441,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   <div className="relative group cursor-pointer">
                     <div className="w-24 h-24 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center shadow-lg shadow-blue-500/25 transition-all duration-500 group-hover:shadow-xl group-hover:shadow-blue-500/30 group-hover:scale-105">
                       {localAvatarUrl || user.avatar_url ? (
-                        <img
+                        <Image
                           src={localAvatarUrl || user.avatar_url}
                           alt="Avatar"
+                          width={96}
+                          height={96}
                           className="w-full h-full rounded-3xl object-cover"
                         />
                       ) : (

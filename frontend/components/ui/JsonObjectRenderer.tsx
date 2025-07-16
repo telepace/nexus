@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 interface JsonObjectRendererProps {
   /** JSON object or JSON string to render */
-  data: any;
+  data: unknown;
   /** Additional class names for the container */
   className?: string;
   /** Maximum depth to expand by default */
@@ -17,7 +17,7 @@ interface JsonObjectRendererProps {
 }
 
 interface JsonNodeProps {
-  data: any;
+  data: unknown;
   keyName?: string;
   level: number;
   maxExpandDepth: number;
@@ -33,7 +33,7 @@ const JsonNode: React.FC<JsonNodeProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(level < maxExpandDepth);
 
-  const getDataType = (value: any): string => {
+  const getDataType = (value: unknown): string => {
     if (value === null) return "null";
     if (Array.isArray(value)) return "array";
     return typeof value;
@@ -54,25 +54,24 @@ const JsonNode: React.FC<JsonNodeProps> = ({
     }
   };
 
-  const renderValue = (value: any) => {
+  const renderValue = (value: unknown) => {
     const type = getDataType(value);
-
     if (type === "string") {
-      return <span className={getValueColor(type)}>"{value}"</span>;
+      return (
+        <span className={getValueColor(type)}>&quot;{String(value)}&quot;</span>
+      );
     }
-
     if (type === "number" || type === "boolean") {
       return <span className={getValueColor(type)}>{String(value)}</span>;
     }
-
     if (type === "null") {
       return <span className={getValueColor(type)}>null</span>;
     }
-
+    // 其它类型直接安全字符串化
     return <span className={getValueColor(type)}>{String(value)}</span>;
   };
 
-  const isPrimitive = (value: any) => {
+  const isPrimitive = (value: unknown) => {
     const type = getDataType(value);
     return ["string", "number", "boolean", "null"].includes(type);
   };
@@ -89,7 +88,7 @@ const JsonNode: React.FC<JsonNodeProps> = ({
       >
         {keyName && (
           <span className="text-gray-700 dark:text-gray-300 mr-2">
-            "{keyName}":
+            &quot;{keyName}&quot;:
           </span>
         )}
         {renderValue(data)}
@@ -109,7 +108,7 @@ const JsonNode: React.FC<JsonNodeProps> = ({
       >
         {keyName && (
           <span className="text-gray-700 dark:text-gray-300 mr-2">
-            "{keyName}":
+            &quot;{keyName}&quot;:
           </span>
         )}
         {renderValue(data)}
@@ -118,10 +117,13 @@ const JsonNode: React.FC<JsonNodeProps> = ({
     );
   }
 
-  const entries = isArray
-    ? data.map((item: any, index: number) => [index, item])
-    : Object.entries(data);
-
+  // 修正entries赋值和后续操作，避免对unknown直接用length/map：
+  let entries: [string | number, unknown][] = [];
+  if (isArray) {
+    entries = (data as unknown[]).map((item, index) => [index, item]);
+  } else if (isObject) {
+    entries = Object.entries(data as Record<string, unknown>);
+  }
   const isEmpty = entries.length === 0;
   const openBracket = isArray ? "[" : "{";
   const closeBracket = isArray ? "]" : "}";
@@ -147,7 +149,7 @@ const JsonNode: React.FC<JsonNodeProps> = ({
 
         {keyName && (
           <span className="text-gray-700 dark:text-gray-300 mr-2">
-            "{keyName}":
+            &quot;{keyName}&quot;:
           </span>
         )}
 
@@ -221,7 +223,7 @@ export function JsonObjectRenderer({
         typeof data === "string" ? data : JSON.stringify(data, null, 2);
       await navigator.clipboard.writeText(jsonString);
       toast.success("已复制JSON内容");
-    } catch (error) {
+    } catch {
       toast.error("复制失败");
     }
   };
@@ -231,7 +233,7 @@ export function JsonObjectRenderer({
   if (typeof data === "string") {
     try {
       parsedData = JSON.parse(data);
-    } catch (error) {
+    } catch {
       // If parsing fails, treat as plain text
       return (
         <div

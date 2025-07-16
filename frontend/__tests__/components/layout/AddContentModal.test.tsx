@@ -15,8 +15,9 @@ describe("AddContentModal", () => {
   it("应该在打开状态下正确渲染", () => {
     render(<AddContentModal open={true} onClose={jest.fn()} />);
 
-    // 检查标题
-    expect(screen.getByText("添加内容")).toBeInTheDocument();
+    // 检查标题 - 使用getAllByText然后检查至少存在一个
+    const titleElements = screen.getAllByText("添加内容");
+    expect(titleElements.length).toBeGreaterThan(0);
 
     // 检查输入区域
     expect(
@@ -24,9 +25,8 @@ describe("AddContentModal", () => {
     ).toBeInTheDocument();
 
     // 检查文件上传区域
-    expect(
-      screen.getByText("拖拽文件到此处，或点击选择文件"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("拖拽文件到此处或")).toBeInTheDocument();
+    expect(screen.getByText("选择文件")).toBeInTheDocument();
 
     // 检查按钮
     expect(screen.getByRole("button", { name: /添加/i })).toBeInTheDocument();
@@ -78,11 +78,8 @@ describe("AddContentModal", () => {
     render(<AddContentModal open={true} onClose={jest.fn()} />);
 
     // 检查文件上传区域文本存在
-    expect(
-      screen.getByText("拖拽文件到此处，或点击选择文件"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("支持 PDF、Word、图片、视频等格式"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("拖拽文件到此处或")).toBeInTheDocument();
+    expect(screen.getByText("选择文件")).toBeInTheDocument();
+    expect(screen.getByText("支持 PDF、Word、图片等格式")).toBeInTheDocument();
   });
 });
