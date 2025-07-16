@@ -3,7 +3,7 @@ import "@testing-library/jest-dom";
 import { act } from "react";
 import React from "react";
 
-import Page from "@/app/register/page";
+import Page from "@/app/(auth)/register/page";
 import { register } from "@/components/actions/register-action";
 
 // 使用 jest.mock 模拟整个模块

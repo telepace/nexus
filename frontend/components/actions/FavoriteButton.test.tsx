@@ -59,9 +59,9 @@ describe("FavoriteButton", () => {
 
     renderWithProviders(<FavoriteButton itemId="test-item-1" />);
 
-    const button = screen.getByRole("button", { name: /favorite/i });
+    const button = screen.getByRole("button", { name: "添加收藏" });
     expect(button).toBeInTheDocument();
-    expect(button).toHaveAttribute("aria-label", "Favorite");
+    expect(button).toHaveAttribute("aria-label", "添加收藏");
   });
 
   it("renders favorited state correctly", () => {
@@ -69,9 +69,9 @@ describe("FavoriteButton", () => {
 
     renderWithProviders(<FavoriteButton itemId="test-item-1" />);
 
-    const button = screen.getByRole("button", { name: /unfavorite/i });
+    const button = screen.getByRole("button", { name: "取消收藏" });
     expect(button).toBeInTheDocument();
-    expect(button).toHaveAttribute("aria-label", "Unfavorite");
+    expect(button).toHaveAttribute("aria-label", "取消收藏");
   });
 
   it("calls add favorite API when clicking unfavorited item", async () => {
@@ -83,7 +83,7 @@ describe("FavoriteButton", () => {
 
     renderWithProviders(<FavoriteButton itemId="test-item-1" />);
 
-    const button = screen.getByRole("button", { name: /favorite/i });
+    const button = screen.getByRole("button", { name: "添加收藏" });
     await user.click(button);
 
     expect(fetch).toHaveBeenCalledWith(
@@ -106,7 +106,7 @@ describe("FavoriteButton", () => {
 
     renderWithProviders(<FavoriteButton itemId="test-item-1" />);
 
-    const button = screen.getByRole("button", { name: /unfavorite/i });
+    const button = screen.getByRole("button", { name: "取消收藏" });
     await user.click(button);
 
     expect(fetch).toHaveBeenCalledWith(
@@ -129,7 +129,7 @@ describe("FavoriteButton", () => {
 
     renderWithProviders(<FavoriteButton itemId="test-item-1" />);
 
-    const button = screen.getByRole("button", { name: /favorite/i });
+    const button = screen.getByRole("button", { name: "添加收藏" });
     await user.click(button);
 
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -159,7 +159,7 @@ describe("FavoriteButton", () => {
     );
 
     let button = screen.getByRole("button");
-    expect(button).toHaveClass("h-8", "w-8");
+    expect(button).toHaveClass("h-7", "w-7");
 
     rerender(
       <QueryClientProvider client={queryClient}>

@@ -198,29 +198,30 @@ export const ContentCard = ({
   const handleCopyContent = async () => {
     try {
       let content = "";
-      
+
       // 构建内容文本
       if (item.title) {
         content += `# ${item.title}\n\n`;
       }
-      
+
       if (briefDescription) {
         content += `## 摘要\n${briefDescription}\n\n`;
       }
-      
-      const fullText = (item as any).content_text as string | undefined;
+
+      const fullText = (item as ContentItemPublic & { content_text?: string })
+        .content_text;
       if (fullText) {
         content += `## 内容\n${fullText}\n\n`;
       }
-      
+
       if (hasLabels && aiResult.labels) {
         content += `## 标签\n${aiResult.labels.join(", ")}\n\n`;
       }
-      
+
       if (item.source_uri) {
         content += `## 来源\n${item.source_uri}`;
       }
-      
+
       await navigator.clipboard.writeText(content.trim());
       toast.success("内容已复制到剪贴板");
     } catch (error) {
@@ -318,7 +319,7 @@ export const ContentCard = ({
                   variant="ghost"
                   className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-accent/50 focus-visible:ring-0 focus-visible:border-transparent"
                 />
-                
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -332,9 +333,7 @@ export const ContentCard = ({
                       <span className="sr-only">更多操作</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    className="w-48"
-                  >
+                  <DropdownMenuContent className="w-48">
                     <DropdownMenuItem
                       onClick={handleViewDetails}
                       className="focus:bg-accent/50"
@@ -364,22 +363,25 @@ export const ContentCard = ({
                       AI 分析
                     </DropdownMenuItem>
 
-                    {item.ai_result && item.processing_status === "completed" && (
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleRegenerateAI();
-                        }}
-                        disabled={isRegeneratingAI}
-                        className="focus:bg-accent/50"
-                      >
-                        <RefreshCw
-                          className={`h-4 w-4 mr-2 ${isRegeneratingAI ? "animate-spin" : ""}`}
-                        />
-                        {isRegeneratingAI ? "重新生成中..." : "重新生成 AI 分析"}
-                      </DropdownMenuItem>
-                    )}
+                    {item.ai_result &&
+                      item.processing_status === "completed" && (
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleRegenerateAI();
+                          }}
+                          disabled={isRegeneratingAI}
+                          className="focus:bg-accent/50"
+                        >
+                          <RefreshCw
+                            className={`h-4 w-4 mr-2 ${isRegeneratingAI ? "animate-spin" : ""}`}
+                          />
+                          {isRegeneratingAI
+                            ? "重新生成中..."
+                            : "重新生成 AI 分析"}
+                        </DropdownMenuItem>
+                      )}
 
                     <DropdownMenuItem
                       onClick={handleCopyLink}
@@ -448,9 +450,7 @@ export const ContentCard = ({
                 {hasReadingTime && (
                   <div className="flex items-center gap-1 text-neutral-400">
                     <Clock className="h-3 w-3" />
-                    <span>
-                      {aiResult.reading_time_minutes} 分钟
-                    </span>
+                    <span>{aiResult.reading_time_minutes} 分钟</span>
                   </div>
                 )}
               </div>
@@ -464,12 +464,12 @@ export const ContentCard = ({
                 {isFetchingCompleteData && (
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 bg-primary/60 rounded-full animate-pulse"></div>
-                    <span className="text-xs text-muted-foreground">获取中</span>
+                    <span className="text-xs text-muted-foreground">
+                      获取中
+                    </span>
                   </div>
                 )}
-                <span className="w-5 text-right">
-                  {relativeLabel}
-                </span>
+                <span className="w-5 text-right">{relativeLabel}</span>
               </div>
             </div>
           </div>

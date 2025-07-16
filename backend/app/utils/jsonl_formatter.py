@@ -19,23 +19,29 @@ from .jsonl_parser import ParsedBlock, ParseResult
 
 logger = logging.getLogger(__name__)
 
+
 class OutputFormat(Enum):
     """输出格式枚举"""
-    COMPACT = "compact"      # 紧凑格式，无额外空格
-    PRETTY = "pretty"        # 美化格式，有缩进
-    MINIFIED = "minified"    # 最小化格式，去除所有可选空格
+
+    COMPACT = "compact"  # 紧凑格式，无额外空格
+    PRETTY = "pretty"  # 美化格式，有缩进
+    MINIFIED = "minified"  # 最小化格式，去除所有可选空格
+
 
 @dataclass
 class FieldMapping:
     """字段映射配置"""
+
     source_field: str
     target_field: str
     transformer: Callable[[Any], Any] | None = None
     required: bool = True
 
+
 @dataclass
 class FormatterConfig:
     """格式化器配置"""
+
     output_format: OutputFormat = OutputFormat.COMPACT
     field_mappings: list[FieldMapping] = field(default_factory=list)
     include_line_numbers: bool = False
@@ -46,6 +52,7 @@ class FormatterConfig:
     sort_keys: bool = False
     exclude_empty_fields: bool = True
     use_short_field_names: bool = True  # 使用 t, c 而不是 type, content
+
 
 class JsonlFormatter:
     """JSONL 格式化器"""
@@ -94,7 +101,7 @@ class JsonlFormatter:
                 if fallback_block:
                     lines.append(fallback_block)
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def format_parse_result(self, parse_result: ParseResult) -> str:
         """
@@ -118,7 +125,9 @@ class JsonlFormatter:
             source_value = self._get_source_value(block, mapping.source_field)
 
             if source_value is None and mapping.required:
-                logger.warning(f"Required field '{mapping.source_field}' is missing in block at line {block.line_number}")
+                logger.warning(
+                    f"Required field '{mapping.source_field}' is missing in block at line {block.line_number}"
+                )
                 continue
 
             if source_value is not None:
@@ -127,7 +136,9 @@ class JsonlFormatter:
                     try:
                         source_value = mapping.transformer(source_value)
                     except Exception as e:
-                        logger.error(f"Field transformer failed for '{mapping.source_field}': {e}")
+                        logger.error(
+                            f"Field transformer failed for '{mapping.source_field}': {e}"
+                        )
                         continue
 
                 output_dict[mapping.target_field] = source_value
@@ -139,15 +150,20 @@ class JsonlFormatter:
 
         # 排除空字段
         if self.config.exclude_empty_fields:
-            output_dict = {k: v for k, v in output_dict.items()
-                          if v is not None and v != "" and v != []}
+            output_dict = {
+                k: v
+                for k, v in output_dict.items()
+                if v is not None and v != "" and v != []
+            }
 
         # 添加元数据
         if self.config.include_metadata:
             output_dict["_metadata"] = {
                 "line_number": block.line_number,
                 "is_valid": block.is_valid,
-                "original_json": block.raw_json if self.config.include_line_numbers else None
+                "original_json": block.raw_json
+                if self.config.include_line_numbers
+                else None,
             }
 
         # 序列化为 JSON
@@ -164,23 +180,23 @@ class JsonlFormatter:
 
     def _serialize_to_json(self, data: dict[str, Any]) -> str:
         """序列化字典为 JSON 字符串"""
-        json_kwargs = {
+        json_kwargs: dict[str, Any] = {
             "ensure_ascii": self.config.ensure_ascii,
             "sort_keys": self.config.sort_keys,
         }
 
         if self.config.output_format == OutputFormat.COMPACT:
-            json_kwargs["separators"] = (',', ':')
+            json_kwargs["separators"] = (",", ":")
         elif self.config.output_format == OutputFormat.PRETTY:
             json_kwargs["indent"] = 2
         elif self.config.output_format == OutputFormat.MINIFIED:
-            json_kwargs["separators"] = (',', ':')
+            json_kwargs["separators"] = (",", ":")
 
         # 自定义分隔符
         if self.config.custom_separators:
             json_kwargs["separators"] = (
                 self.config.custom_separators.get("item_separator", ","),
-                self.config.custom_separators.get("key_separator", ":")
+                self.config.custom_separators.get("key_separator", ":"),
             )
 
         return json.dumps(data, **json_kwargs)
@@ -189,18 +205,26 @@ class JsonlFormatter:
         """创建错误恢复块"""
         fallback_dict = {
             "t" if self.config.use_short_field_names else "type": "error",
-            "c" if self.config.use_short_field_names else "content": f"格式化错误: {error_msg}",
-            "original_content": block.content[:100] if len(block.content) > 100 else block.content,
-            "line_number": block.line_number
+            "c"
+            if self.config.use_short_field_names
+            else "content": f"格式化错误: {error_msg}",
+            "original_content": block.content[:100]
+            if len(block.content) > 100
+            else block.content,
+            "line_number": block.line_number,
         }
 
         return self._serialize_to_json(fallback_dict)
 
+
 class ConditionalFormatter(JsonlFormatter):
     """条件格式化器，可根据条件选择不同的格式化策略"""
 
-    def __init__(self, formatters: dict[str, JsonlFormatter],
-                 condition_func: Callable[[ParsedBlock], str]):
+    def __init__(
+        self,
+        formatters: dict[str, JsonlFormatter],
+        condition_func: Callable[[ParsedBlock], str],
+    ):
         """
         Args:
             formatters: 格式化器映射 {condition_key: formatter}
@@ -223,11 +247,13 @@ class ConditionalFormatter(JsonlFormatter):
             else:
                 logger.warning(f"No formatter found for condition: {condition_key}")
 
-        return '\n'.join(all_lines)
+        return "\n".join(all_lines)
 
-    def _group_blocks_by_condition(self, blocks: list[ParsedBlock]) -> dict[str, list[ParsedBlock]]:
+    def _group_blocks_by_condition(
+        self, blocks: list[ParsedBlock]
+    ) -> dict[str, list[ParsedBlock]]:
         """按条件分组块"""
-        groups = {}
+        groups: dict[str, list[ParsedBlock]] = {}
         for block in blocks:
             condition_key = self.condition_func(block)
             if condition_key not in groups:
@@ -235,6 +261,7 @@ class ConditionalFormatter(JsonlFormatter):
             groups[condition_key].append(block)
 
         return groups
+
 
 class StreamingFormatter:
     """流式格式化器，适用于大量数据的实时处理"""
@@ -253,12 +280,13 @@ class StreamingFormatter:
         batches = []
 
         for i in range(0, len(blocks), self.batch_size):
-            batch_blocks = blocks[i:i + self.batch_size]
+            batch_blocks = blocks[i : i + self.batch_size]
             batch_output = self.formatter.format_blocks(batch_blocks)
             if batch_output:
                 batches.append(batch_output)
 
         return batches
+
 
 # 预定义格式化器
 def create_compact_formatter() -> JsonlFormatter:
@@ -266,9 +294,10 @@ def create_compact_formatter() -> JsonlFormatter:
     config = FormatterConfig(
         output_format=OutputFormat.COMPACT,
         use_short_field_names=True,
-        exclude_empty_fields=True
+        exclude_empty_fields=True,
     )
     return JsonlFormatter(config)
+
 
 def create_pretty_formatter() -> JsonlFormatter:
     """创建美化格式的格式化器"""
@@ -276,9 +305,10 @@ def create_pretty_formatter() -> JsonlFormatter:
         output_format=OutputFormat.PRETTY,
         use_short_field_names=False,
         include_metadata=True,
-        exclude_empty_fields=False
+        exclude_empty_fields=False,
     )
     return JsonlFormatter(config)
+
 
 def create_debug_formatter() -> JsonlFormatter:
     """创建调试格式的格式化器"""
@@ -287,9 +317,10 @@ def create_debug_formatter() -> JsonlFormatter:
         use_short_field_names=False,
         include_line_numbers=True,
         include_metadata=True,
-        exclude_empty_fields=False
+        exclude_empty_fields=False,
     )
     return JsonlFormatter(config)
+
 
 def create_type_based_formatter() -> ConditionalFormatter:
     """创建基于块类型的条件格式化器"""
@@ -298,7 +329,7 @@ def create_type_based_formatter() -> ConditionalFormatter:
 
     formatters = {
         "structure": pretty_formatter,  # 标题等结构性元素使用美化格式
-        "content": compact_formatter,   # 内容元素使用紧凑格式
+        "content": compact_formatter,  # 内容元素使用紧凑格式
     }
 
     def condition_func(block: ParsedBlock) -> str:
@@ -308,19 +339,21 @@ def create_type_based_formatter() -> ConditionalFormatter:
 
     return ConditionalFormatter(formatters, condition_func)
 
+
 # 便捷函数
 def format_blocks_compact(blocks: list[ParsedBlock]) -> str:
     """便捷函数：紧凑格式化块列表"""
     formatter = create_compact_formatter()
     return formatter.format_blocks(blocks)
 
+
 def format_blocks_pretty(blocks: list[ParsedBlock]) -> str:
     """便捷函数：美化格式化块列表"""
     formatter = create_pretty_formatter()
     return formatter.format_blocks(blocks)
 
-def format_parse_result(parse_result: ParseResult,
-                       format_type: str = "compact") -> str:
+
+def format_parse_result(parse_result: ParseResult, format_type: str = "compact") -> str:
     """
     便捷函数：格式化解析结果
 
@@ -337,19 +370,20 @@ def format_parse_result(parse_result: ParseResult,
     formatter = formatters.get(format_type, create_compact_formatter())
     return formatter.format_parse_result(parse_result)
 
+
 # 导出的公共接口
 __all__ = [
-    'JsonlFormatter',
-    'ConditionalFormatter',
-    'StreamingFormatter',
-    'FormatterConfig',
-    'FieldMapping',
-    'OutputFormat',
-    'create_compact_formatter',
-    'create_pretty_formatter',
-    'create_debug_formatter',
-    'create_type_based_formatter',
-    'format_blocks_compact',
-    'format_blocks_pretty',
-    'format_parse_result'
+    "JsonlFormatter",
+    "ConditionalFormatter",
+    "StreamingFormatter",
+    "FormatterConfig",
+    "FieldMapping",
+    "OutputFormat",
+    "create_compact_formatter",
+    "create_pretty_formatter",
+    "create_debug_formatter",
+    "create_type_based_formatter",
+    "format_blocks_compact",
+    "format_blocks_pretty",
+    "format_parse_result",
 ]

@@ -289,16 +289,11 @@ class TestContentParser:
         """Test paragraph optimization"""
         content = """
 
-
         First paragraph.
-
-
 
         Second paragraph.
 
-
         Third paragraph.
-
 
         """
 
@@ -322,14 +317,10 @@ class TestContentParser:
         markdown = """
         #  Title With Extra Spaces
 
-
-
         Content with multiple spaces.
-
 
         - List item
         -Another item without space
-
 
         """
 

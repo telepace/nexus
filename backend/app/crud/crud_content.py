@@ -173,7 +173,7 @@ def create_content_item_sync(
 ) -> ContentItem:
     # Forcefully assign the user_id to ensure data integrity
     content_item_in.user_id = user_id
-    
+
     session.add(content_item_in)
     session.commit()
 
@@ -502,7 +502,6 @@ def delete_content_item_sync(
 
 
 # print("CRUD functions for ContentItem and ContentAsset potentially modified for async and image processing.")
-
 
 # CRUD for ContentShare (Synchronous)
 

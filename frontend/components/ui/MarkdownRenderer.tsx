@@ -22,11 +22,14 @@ import "katex/dist/katex.min.css"; // KaTeX CSS
 interface MarkdownRendererProps {
   content: string | null;
   className?: string;
+  /** 当为 true 时，以行内方式渲染，根元素为 <span>，且 p/h 标签映射为 span */
+  inline?: boolean;
 }
 
 export function MarkdownRenderer({
   content,
   className,
+  inline = false,
 }: MarkdownRendererProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -47,11 +50,12 @@ export function MarkdownRenderer({
   }, [content]); // Re-apply zoom when content changes
 
   if (!content) {
+    const Wrapper = inline ? "span" : "div";
     return (
-      <div
+      <Wrapper
         data-testid="markdown-renderer"
         className={cn(
-          "prose prose-slate dark:prose-invert max-w-none",
+          inline ? "" : "prose prose-slate dark:prose-invert max-w-none",
           className,
         )}
       />
@@ -69,12 +73,14 @@ export function MarkdownRenderer({
       "&lt;/$1&gt;",
     );
 
+  const Root: React.ElementType = inline ? "span" : "div";
+
   return (
-    <div
+    <Root
       ref={contentRef}
       data-testid="markdown-renderer"
       className={cn(
-        "prose prose-slate dark:prose-invert max-w-none",
+        inline ? "" : "prose prose-slate dark:prose-invert max-w-none",
         // 自定义样式
         "prose-headings:scroll-m-16 prose-headings:tracking-tight",
         "prose-h1:text-2xl prose-h1:font-bold prose-h1:lg:text-4xl",
@@ -113,7 +119,7 @@ export function MarkdownRenderer({
           [rehypeAutolinkHeadings, { behavior: "wrap" }],
         ]}
         components={{
-          // 自定义组件渲染
+          // 自定义组件渲染（原有）
           h1: ({ children, ...props }) => (
             <h1
               className="scroll-m-16 text-xl font-bold tracking-tight lg:text-2xl"
@@ -358,10 +364,21 @@ export function MarkdownRenderer({
             return <OptimizedImage {...optimizedImageProps} />;
           },
           hr: ({ ...props }) => <hr className="my-4 md:my-8" {...props} />,
+
+          // Inline mode overrides - must come last to override regular components
+          ...(inline && {
+            p: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h1: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h2: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h3: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h4: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h5: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h6: ({ children, ...props }) => <span {...props}>{children}</span>,
+          }),
         }}
       >
         {sanitizedContent}
       </ReactMarkdown>
-    </div>
+    </Root>
   );
 }

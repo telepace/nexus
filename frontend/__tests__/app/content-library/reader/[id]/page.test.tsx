@@ -1,5 +1,5 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
-import ReaderPage from "@/app/content-library/reader/[id]/page";
+import ReaderPage from "@/app/(withSidebar)/content-library/reader/[id]/page";
 import { useAuth } from "@/lib/client-auth";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -42,23 +42,26 @@ jest.mock("@/components/layout/ReaderLayout", () => {
 });
 
 // Mock ClientContent
-jest.mock("@/app/content-library/reader/[id]/ClientContent", () => ({
-  ClientContent: ({
-    contentId,
-  }: { contentId: string; initialData?: any; initialMarkdown?: any }) => (
-    <div data-testid="client-content">
-      <div role="tablist">
-        <button role="tab" aria-label="Original">
-          Original
-        </button>
-        <button role="tab" aria-label="Processed">
-          Processed
-        </button>
+jest.mock(
+  "@/app/(withSidebar)/content-library/reader/[id]/ClientContent",
+  () => ({
+    ClientContent: ({
+      contentId,
+    }: { contentId: string; initialData?: any; initialMarkdown?: any }) => (
+      <div data-testid="client-content">
+        <div role="tablist">
+          <button role="tab" aria-label="Original">
+            Original
+          </button>
+          <button role="tab" aria-label="Processed">
+            Processed
+          </button>
+        </div>
+        <button aria-label="Back">Back to Library</button>
       </div>
-      <button aria-label="Back">Back to Library</button>
-    </div>
-  ),
-}));
+    ),
+  }),
+);
 
 const mockPush = jest.fn();
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;

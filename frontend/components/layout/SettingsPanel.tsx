@@ -4,14 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "next-themes";
 import { useTimeZone } from "@/lib/time-zone-context";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TimeZoneSelector } from "@/components/ui/TimeZoneSelector";
 import { toast } from "@/components/ui/use-toast";
+import Image from "next/image";
 import {
   Loader2,
   User as UserIcon,
@@ -28,16 +24,10 @@ import {
   Eye,
   Trash2,
   Upload,
-  RotateCcw,
   X,
   Edit2,
   ChevronRight,
 } from "lucide-react";
-import { UserAvatar } from "@/components/ui/user-avatar";
-import {
-  resetDeleteConfirmSetting,
-  shouldSkipDeleteConfirm,
-} from "@/app/(withSidebar)/content-library/components/DeleteConfirmDialog";
 import { getCookie } from "cookies-next";
 
 /**
@@ -91,9 +81,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     profileVisibility: "public" as "public" | "private" | "friends",
   });
 
-  // 删除确认设置状态
-  const [hasSkipDeleteConfirm, setHasSkipDeleteConfirm] = useState(false);
-
   // 头像上传相关状态
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null);
@@ -110,7 +97,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   // 避免 hydration 不匹配
   useEffect(() => {
     setMounted(true);
-    setHasSkipDeleteConfirm(shouldSkipDeleteConfirm());
     if (user) {
       setFormData({
         name: user.full_name || "",
@@ -259,15 +245,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const handleDeleteAccount = async () => {
     // 实现删除账户逻辑
     console.log("Delete account");
-  };
-
-  const handleResetDeleteConfirm = () => {
-    resetDeleteConfirmSetting();
-    setHasSkipDeleteConfirm(false);
-    toast({
-      title: "设置已重置",
-      description: "删除确认对话框已恢复显示。",
-    });
   };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -464,9 +441,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   <div className="relative group cursor-pointer">
                     <div className="w-24 h-24 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center shadow-lg shadow-blue-500/25 transition-all duration-500 group-hover:shadow-xl group-hover:shadow-blue-500/30 group-hover:scale-105">
                       {localAvatarUrl || user.avatar_url ? (
-                        <img
+                        <Image
                           src={localAvatarUrl || user.avatar_url}
                           alt="Avatar"
+                          width={96}
+                          height={96}
                           className="w-full h-full rounded-3xl object-cover"
                         />
                       ) : (

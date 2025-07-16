@@ -6,7 +6,9 @@ import EnhancedVirtualScrollRenderer from "@/components/ui/EnhancedVirtualScroll
 
 export default function TestScrollPage() {
   const [testContentId, setTestContentId] = useState<string>("");
-  const [selectedRenderer, setSelectedRenderer] = useState<'original' | 'enhanced'>('enhanced');
+  const [selectedRenderer, setSelectedRenderer] = useState<
+    "original" | "enhanced"
+  >("enhanced");
   const [debugMode, setDebugMode] = useState(false);
 
   return (
@@ -39,8 +41,10 @@ export default function TestScrollPage() {
                   <input
                     type="radio"
                     value="original"
-                    checked={selectedRenderer === 'original'}
-                    onChange={(e) => setSelectedRenderer(e.target.value as 'original')}
+                    checked={selectedRenderer === "original"}
+                    onChange={(e) =>
+                      setSelectedRenderer(e.target.value as "original")
+                    }
                     className="mr-2"
                   />
                   原版 (200px预加载)
@@ -49,8 +53,10 @@ export default function TestScrollPage() {
                   <input
                     type="radio"
                     value="enhanced"
-                    checked={selectedRenderer === 'enhanced'}
-                    onChange={(e) => setSelectedRenderer(e.target.value as 'enhanced')}
+                    checked={selectedRenderer === "enhanced"}
+                    onChange={(e) =>
+                      setSelectedRenderer(e.target.value as "enhanced")
+                    }
                     className="mr-2"
                   />
                   增强版 (智能预加载)
@@ -76,7 +82,9 @@ export default function TestScrollPage() {
             <h3 className="font-semibold mb-3">优化对比</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">原版问题</h4>
+                <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
+                  原版问题
+                </h4>
                 <ul className="space-y-1 text-red-600 dark:text-red-300">
                   <li>• 预加载距离固定200px</li>
                   <li>• 显眼的加载指示器</li>
@@ -85,9 +93,11 @@ export default function TestScrollPage() {
                   <li>• 用户能感知加载过程</li>
                 </ul>
               </div>
-              
+
               <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">增强版优化</h4>
+                <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">
+                  增强版优化
+                </h4>
                 <ul className="space-y-1 text-green-600 dark:text-green-300">
                   <li>• 智能预加载距离(300-1200px)</li>
                   <li>• 几乎不可见的加载提示</li>
@@ -104,13 +114,18 @@ export default function TestScrollPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
             <div className="p-4 border-b">
               <h2 className="text-lg font-semibold flex items-center gap-2">
-                {selectedRenderer === 'enhanced' ? '🚀 增强版' : '📄 原版'} VirtualScrollRenderer 测试
-                {debugMode && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">DEBUG</span>}
+                {selectedRenderer === "enhanced" ? "🚀 增强版" : "📄 原版"}{" "}
+                VirtualScrollRenderer 测试
+                {debugMode && (
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                    DEBUG
+                  </span>
+                )}
               </h2>
               <p className="text-sm text-gray-600 mt-1">
                 Content ID: {testContentId}
               </p>
-              {selectedRenderer === 'enhanced' && (
+              {selectedRenderer === "enhanced" && (
                 <p className="text-xs text-green-600 mt-1">
                   ✨ 启用智能预加载、网络自适应、滚动速度感知
                 </p>
@@ -119,7 +134,7 @@ export default function TestScrollPage() {
 
             {/* 固定高度的测试容器 */}
             <div className="h-[600px] p-4">
-              {selectedRenderer === 'enhanced' ? (
+              {selectedRenderer === "enhanced" ? (
                 <EnhancedVirtualScrollRenderer
                   contentId={testContentId}
                   className="w-full h-full"
@@ -159,11 +174,21 @@ export default function TestScrollPage() {
           <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
             <h3 className="font-semibold mb-2">期望效果:</h3>
             <ul className="text-sm space-y-1">
-              <li>• <strong>丝滑体验</strong>: 99%情况下不会看到加载状态</li>
-              <li>• <strong>智能预加载</strong>: 根据滚动速度动态调整</li>
-              <li>• <strong>网络自适应</strong>: 根据网络质量优化策略</li>
-              <li>• <strong>流畅滚动</strong>: 保持60fps滚动体验</li>
-              <li>• <strong>内存优化</strong>: 智能DOM管理</li>
+              <li>
+                • <strong>丝滑体验</strong>: 99%情况下不会看到加载状态
+              </li>
+              <li>
+                • <strong>智能预加载</strong>: 根据滚动速度动态调整
+              </li>
+              <li>
+                • <strong>网络自适应</strong>: 根据网络质量优化策略
+              </li>
+              <li>
+                • <strong>流畅滚动</strong>: 保持60fps滚动体验
+              </li>
+              <li>
+                • <strong>内存优化</strong>: 智能DOM管理
+              </li>
             </ul>
           </div>
         </div>

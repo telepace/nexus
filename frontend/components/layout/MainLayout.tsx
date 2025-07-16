@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { SettingsPanel } from "@/components/layout/SettingsPanel";
@@ -20,7 +19,6 @@ export default function MainLayout({
 }: MainLayoutProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addContentOpen, setAddContentOpen] = useState(false);
-  const pathname = usePathname();
 
   return (
     <SidebarProvider

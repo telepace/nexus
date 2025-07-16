@@ -15,7 +15,7 @@ export default function TextSelectionTestPage() {
 
   const handleTextAction = (
     action: { id: string; label: string; prompt: string },
-    text: string
+    text: string,
   ) => {
     setSelectedText(text);
     setSelectedAction(`${action.label}: ${action.prompt}`);
@@ -145,7 +145,7 @@ function createTextSelectionFloater(options) {
                         选中文本:
                       </h4>
                       <p className="text-sm bg-gray-50 dark:bg-gray-900 p-3 rounded border">
-                        "{selectedText}"
+                        &quot;{selectedText}&quot;
                       </p>
                     </div>
                     <div>
@@ -166,7 +166,10 @@ function createTextSelectionFloater(options) {
             </Card>
 
             {/* 模拟AI分析卡片1 - 增强版 */}
-            <Card data-exclude-selection className="analysis-card ai-analysis-card">
+            <Card
+              data-exclude-selection
+              className="analysis-card ai-analysis-card"
+            >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Brain className="h-5 w-5" />
@@ -176,12 +179,18 @@ function createTextSelectionFloater(options) {
               <CardContent data-exclude-selection>
                 <div className="space-y-3">
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    这是一个分析卡片区域。在此区域选择文本不会触发浮层，因为添加了 data-exclude-selection 属性和 analysis-card 类名。
+                    这是一个分析卡片区域。在此区域选择文本不会触发浮层，因为添加了
+                    data-exclude-selection 属性和 analysis-card 类名。
                   </p>
-                  <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded" data-exclude-selection>
-                    <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">测试文本内容：</h4>
+                  <div
+                    className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded"
+                    data-exclude-selection
+                  >
+                    <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+                      测试文本内容：
+                    </h4>
                     <p className="text-sm text-blue-700 dark:text-blue-300">
-                      人工智能正在改变世界，深度学习算法能够处理复杂的数据模式，自然语言处理技术让机器理解人类语言，计算机视觉让机器能够"看见"世界。
+                      人工智能正在改变世界，深度学习算法能够处理复杂的数据模式，自然语言处理技术让机器理解人类语言，计算机视觉让机器能够&quot;看见&quot;世界。
                       请尝试选择这段文本，观察是否会出现浮层。如果功能正常，此处不应该有浮层出现。
                     </p>
                   </div>
@@ -198,7 +207,10 @@ function createTextSelectionFloater(options) {
             </Card>
 
             {/* 模拟洞察面板 */}
-            <div className="insight-pane ai-analysis-panel" data-exclude-selection>
+            <div
+              className="insight-pane ai-analysis-panel"
+              data-exclude-selection
+            >
               <Card className="analysis-card">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -210,19 +222,27 @@ function createTextSelectionFloater(options) {
                   <div className="space-y-2" data-exclude-selection>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-sm">文本选择功能只在正文区域生效</span>
+                      <span className="text-sm">
+                        文本选择功能只在正文区域生效
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm">右侧面板完全排除文本选择：这段文字应该不会触发浮层</span>
+                      <span className="text-sm">
+                        右侧面板完全排除文本选择：这段文字应该不会触发浮层
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                      <span className="text-sm">支持多种智能操作：解释、改善、翻译、搜索</span>
+                      <span className="text-sm">
+                        支持多种智能操作：解释、改善、翻译、搜索
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span className="text-sm">响应式设计适配移动端：这些文字都不应该触发浮层</span>
+                      <span className="text-sm">
+                        响应式设计适配移动端：这些文字都不应该触发浮层
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -230,7 +250,7 @@ function createTextSelectionFloater(options) {
             </div>
 
             {/* Enhanced Card 测试 */}
-                          <div className="analysis-card" data-exclude-selection>
+            <div className="analysis-card" data-exclude-selection>
               <Card className="analysis-card">
                 <CardHeader>
                   <CardTitle>Enhanced Card 测试</CardTitle>
@@ -239,7 +259,10 @@ function createTextSelectionFloater(options) {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                     这个区域使用了 analysis-card 类名，选择文本不应该触发浮层。
                   </p>
-                  <div className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded" data-exclude-selection>
+                  <div
+                    className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded"
+                    data-exclude-selection
+                  >
                     <p className="text-sm text-purple-700 dark:text-purple-300">
                       机器学习是人工智能的一个重要分支，它使计算机能够在没有明确编程的情况下从数据中学习。
                       深度学习作为机器学习的子集，通过多层神经网络模拟人脑的工作方式。
@@ -278,11 +301,21 @@ function createTextSelectionFloater(options) {
                       🔧 排除机制
                     </h4>
                     <div className="text-yellow-700 dark:text-yellow-300 space-y-1">
-                      <p>• <code>data-exclude-selection</code> 属性</p>
-                      <p>• <code>.analysis-card</code> 类名</p>
-                      <p>• <code>.analysis-card</code> 类名</p>
-                      <p>• <code>.insight-pane</code> 类名</p>
-                      <p>• <code>button</code> 元素</p>
+                      <p>
+                        • <code>data-exclude-selection</code> 属性
+                      </p>
+                      <p>
+                        • <code>.analysis-card</code> 类名
+                      </p>
+                      <p>
+                        • <code>.analysis-card</code> 类名
+                      </p>
+                      <p>
+                        • <code>.insight-pane</code> 类名
+                      </p>
+                      <p>
+                        • <code>button</code> 元素
+                      </p>
                       <p>• 各种UI组件选择器</p>
                     </div>
                   </div>
@@ -305,4 +338,4 @@ function createTextSelectionFloater(options) {
       )}
     </div>
   );
-} 
+}

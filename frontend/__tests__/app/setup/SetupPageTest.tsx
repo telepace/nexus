@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { act } from "react";
 
-import Page from "@/app/setup/page";
+import Page from "@/app/(auth)/setup/page";
 
 // Mock server-auth - This should be at the top level
 jest.mock("@/lib/server-auth", () => ({

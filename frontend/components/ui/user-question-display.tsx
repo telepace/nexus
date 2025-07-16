@@ -5,8 +5,12 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, MessageSquare, Copy, User } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ChevronDown, Copy, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface UserQuestionDisplayProps {
@@ -49,21 +53,21 @@ export function UserQuestionDisplay({
   // 获取预览文本
   const previewText = useMemo(() => {
     if (!needsCollapse) return question;
-    
+
     // 智能截断：优先在句号、问号、感叹号处截断
     const truncated = question.substring(0, previewLength);
     const lastPunctuation = Math.max(
-      truncated.lastIndexOf('。'),
-      truncated.lastIndexOf('？'),
-      truncated.lastIndexOf('！'),
-      truncated.lastIndexOf('.')
+      truncated.lastIndexOf("。"),
+      truncated.lastIndexOf("？"),
+      truncated.lastIndexOf("！"),
+      truncated.lastIndexOf("."),
     );
-    
+
     if (lastPunctuation > previewLength * 0.6) {
       return truncated.substring(0, lastPunctuation + 1);
     }
-    
-    return truncated + '...';
+
+    return truncated + "...";
   }, [question, needsCollapse, previewLength]);
 
   // 复制功能
@@ -97,7 +101,7 @@ export function UserQuestionDisplay({
               )}
               <CardTitle className="text-sm font-medium">{title}</CardTitle>
             </div>
-            
+
             {showCopyButton && (
               <Button
                 variant="ghost"
@@ -110,7 +114,7 @@ export function UserQuestionDisplay({
             )}
           </div>
         </CardHeader>
-        
+
         <CardContent className="pt-0">
           <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
             {question}
@@ -136,7 +140,7 @@ export function UserQuestionDisplay({
               {question.length} 字符
             </Badge>
           </div>
-          
+
           {showCopyButton && (
             <Button
               variant="ghost"
@@ -149,31 +153,29 @@ export function UserQuestionDisplay({
           )}
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-0">
         <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
           {/* 预览内容 */}
           <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
             {isExpanded ? question : previewText}
           </div>
-          
+
           {/* 展开/收起按钮 */}
           <CollapsibleTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mt-3 h-8 px-3 text-xs"
-            >
-              <ChevronDown 
+            <Button variant="ghost" size="sm" className="mt-3 h-8 px-3 text-xs">
+              <ChevronDown
                 className={cn(
                   "h-3 w-3 mr-1 transition-transform duration-200",
-                  isExpanded && "rotate-180"
+                  isExpanded && "rotate-180",
                 )}
               />
-              {isExpanded ? "收起" : `展开全部 (+${question.length - previewText.length + 3}字)`}
+              {isExpanded
+                ? "收起"
+                : `展开全部 (+${question.length - previewText.length + 3}字)`}
             </Button>
           </CollapsibleTrigger>
-          
+
           {/* 隐藏的完整内容 */}
           <CollapsibleContent>
             {/* 这里不需要额外内容，因为完整文本已经在上面显示了 */}
@@ -182,4 +184,4 @@ export function UserQuestionDisplay({
       </CardContent>
     </Card>
   );
-} 
+}

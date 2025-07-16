@@ -18,10 +18,49 @@ import "highlight.js/styles/github-dark.css";
 import "highlight.js/styles/github.css";
 import "katex/dist/katex.min.css";
 
-interface ShareMarkdownRendererProps {
-  content: string | null;
-  className?: string;
-}
+const PreWithCopyButton = ({ node, ...props }) => {
+  // 提取代码内容用于复制功能
+  let rawCode = "";
+  try {
+    if (node?.children?.[0]?.children?.[0]?.value) {
+      rawCode = node.children[0].children[0].value;
+    }
+  } catch {
+    // 忽略提取错误
+  }
+
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopy = () => {
+    if (rawCode) {
+      copy(rawCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="relative group">
+      <pre
+        className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl p-6 my-8 shadow-sm overflow-x-auto text-sm leading-relaxed"
+        {...props}
+      />
+      {rawCode && (
+        <button
+          onClick={handleCopy}
+          className="absolute top-4 right-4 p-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-400 transition-all duration-200 opacity-0 group-hover:opacity-100 flex items-center gap-1"
+          title={copied ? "已复制" : "复制代码"}
+        >
+          {copied ? (
+            <Check className="w-4 h-4" />
+          ) : (
+            <Copy className="w-4 h-4" />
+          )}
+        </button>
+      )}
+    </div>
+  );
+};
 
 export function ShareMarkdownRenderer({
   content,
@@ -187,7 +226,10 @@ export function ShareMarkdownRenderer({
             </ol>
           ),
           li: ({ children, ...props }) => (
-            <li className="leading-relaxed text-neutral-700 dark:text-neutral-300" {...props}>
+            <li
+              className="leading-relaxed text-neutral-700 dark:text-neutral-300"
+              {...props}
+            >
               {children}
             </li>
           ),
@@ -209,51 +251,7 @@ export function ShareMarkdownRenderer({
               </code>
             );
           },
-          pre: ({ children, ...props }) => {
-            // 提取代码内容用于复制功能
-            let rawCode = "";
-            try {
-              if (props.node?.children?.[0]?.children?.[0]?.value) {
-                rawCode = props.node.children[0].children[0].value;
-              }
-            } catch (e) {
-              // 忽略提取错误
-            }
-
-            const [copied, setCopied] = React.useState(false);
-
-            const handleCopy = () => {
-              if (rawCode) {
-                copy(rawCode);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-              }
-            };
-
-            return (
-              <div className="relative group">
-                <pre
-                  className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl p-6 my-8 shadow-sm overflow-x-auto text-sm leading-relaxed"
-                  {...props}
-                >
-                  {children}
-                </pre>
-                {rawCode && (
-                  <button
-                    onClick={handleCopy}
-                    className="absolute top-4 right-4 p-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-400 transition-all duration-200 opacity-0 group-hover:opacity-100 flex items-center gap-1"
-                    title={copied ? "已复制" : "复制代码"}
-                  >
-                    {copied ? (
-                      <Check className="w-4 h-4" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </button>
-                )}
-              </div>
-            );
-          },
+          pre: PreWithCopyButton,
           a: ({ children, href, ...props }) => (
             <a
               href={href}
@@ -317,7 +315,10 @@ export function ShareMarkdownRenderer({
             </td>
           ),
           hr: ({ ...props }) => (
-            <hr className="border-neutral-200 dark:border-neutral-700 my-12" {...props} />
+            <hr
+              className="border-neutral-200 dark:border-neutral-700 my-12"
+              {...props}
+            />
           ),
         }}
       >
@@ -325,4 +326,4 @@ export function ShareMarkdownRenderer({
       </ReactMarkdown>
     </div>
   );
-} 
+}

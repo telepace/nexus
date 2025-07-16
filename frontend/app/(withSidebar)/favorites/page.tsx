@@ -170,7 +170,7 @@ export default function FavoritesPage() {
         <header className="flex items-center h-header px-4 md:px-6 border-b shrink-0 bg-background/80">
           <div className="flex items-center gap-2">
             <Heart className="h-5 w-5 text-amber-500" />
-            <PageHeader breadcrumbs={[{ label: '我的收藏' }]} />
+            <PageHeader breadcrumbs={[{ label: "我的收藏" }]} />
             {data && (
               <span className="text-sm text-muted-foreground ml-2">
                 共 {data.total} 项

@@ -104,11 +104,19 @@ class ContentAnalysisRequest(BaseModel):
 
     analysis_instruction: str = Field(..., description="用户的分析指令")
     model: str | None = Field(
-        default="or-gemini-2.5-flash-preview-05-20",
+        default=None,
         description="要使用的AI模型（可选，后端会自动选择默认模型）",
     )
+    template_name: str | None = Field(
+        default="user_analysis.j2",
+        description="要使用的分析模板（可选，默认为user_analysis.j2）",
+    )
+    selected_point: str | None = Field(
+        default=None,
+        description="选中的要点内容（用于expand_discussion模板）",
+    )
     temperature: float = Field(default=0.7, description="温度参数")
-    max_tokens: int = Field(default=2000, description="最大token数")
+    max_tokens: int = Field(default=8000, description="最大token数")
 
 
 class ContentSegmentBase(BaseModel):

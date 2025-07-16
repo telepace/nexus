@@ -228,7 +228,9 @@ class SegmentBase(SQLModel):
     """Base model for content segments, storing segmented content for efficient rendering."""
 
     content_item_id: uuid.UUID = Field(foreign_key="contentitem.id", index=True)
-    segment_index: int = Field(index=True)  # Order of the segment in the content (0-based)
+    segment_index: int = Field(
+        index=True
+    )  # Order of the segment in the content (0-based)
     display_number: int = Field(index=True)  # Human-friendly display number (1-based)
     content: str = Field()  # The actual content segment
     content_vector: list[float] | None = Field(

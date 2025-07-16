@@ -1,10 +1,10 @@
-"use client"; // Required for useParams and useEffect/useState
+"use contentApi"; // Required for useParams and useEffect/useState
 
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import SharedContentPage from "./page"; // Default export from page.tsx
-import { client } from "@/app/openapi-client/index";
+import { contentApi } from "@/lib/api/content";
 import { Toaster } from "@/components/ui/sonner";
 import { useParams } from "next/navigation";
 
@@ -26,16 +26,16 @@ jest.mock("next/navigation", () => ({
   useParams: jest.fn(),
 }));
 
-// Mock the API client
-jest.mock("@/app/openapi-client/index", () => ({
-  client: {
+// Mock the API contentApi
+jest.mock("@/lib/api/content", () => ({
+  contentApi: {
     getSharedContent: jest.fn(),
   },
 }));
 
-// Mock MarkdownRenderer as its internals are tested separately
-jest.mock("@/components/ui/MarkdownRenderer", () => ({
-  MarkdownRenderer: ({ content }: { content: string }) => (
+// Mock ShareMarkdownRenderer as its internals are tested separately
+jest.mock("@/components/ui/ShareMarkdownRenderer", () => ({
+  ShareMarkdownRenderer: ({ content }: { content: string }) => (
     <div data-testid="mock-markdown-renderer">{content}</div>
   ),
 }));
@@ -54,7 +54,7 @@ const mockSuccessData: ContentItemPublic = {
 describe("SharedContentPage", () => {
   beforeEach(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((client as any).getSharedContent as jest.Mock).mockReset();
+    ((contentApi as any).getSharedContent as jest.Mock).mockReset();
     (useParams as jest.Mock).mockReset();
   });
 
@@ -67,26 +67,26 @@ describe("SharedContentPage", () => {
   it("renders loading state initially", () => {
     mockUseParams("test-token");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((client as any).getSharedContent as jest.Mock).mockReturnValue(
+    ((contentApi as any).getSharedContent as jest.Mock).mockReturnValue(
       new Promise(() => {}),
     ); // Pending promise
     render(<SharedContentPage />);
-    expect(screen.getByText(/Loading shared content.../i)).toBeInTheDocument();
+    expect(screen.getByText("正在加载内容")).toBeInTheDocument();
   });
 
   it("fetches and renders content successfully", async () => {
     mockUseParams("test-token");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((client as any).getSharedContent as jest.Mock).mockResolvedValueOnce(
+    ((contentApi as any).getSharedContent as jest.Mock).mockResolvedValueOnce(
       mockSuccessData,
     );
     render(<SharedContentPage />);
 
     await waitFor(() => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((client as any).getSharedContent).toHaveBeenCalledWith(
+      expect((contentApi as any).getSharedContent).toHaveBeenCalledWith(
         "test-token",
-        { password: undefined },
+        undefined,
       );
     });
     await waitFor(() => {
@@ -101,7 +101,7 @@ describe("SharedContentPage", () => {
   it("displays password prompt if API returns 401 'Password required'", async () => {
     mockUseParams("test-token");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((client as any).getSharedContent as jest.Mock).mockRejectedValueOnce({
+    ((contentApi as any).getSharedContent as jest.Mock).mockRejectedValueOnce({
       status: 401,
       data: { detail: "Password required" }, // Structure based on component's error handling
     });
@@ -114,7 +114,7 @@ describe("SharedContentPage", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText(/Password Required/i)).toBeInTheDocument();
+        expect(screen.getByText("需要访问密码")).toBeInTheDocument();
         expect(document.getElementById("password")).toBeInTheDocument();
       },
       { timeout: 10000 },
@@ -127,11 +127,11 @@ describe("SharedContentPage", () => {
 
     // Clear previous mocks and set up new sequence
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((client as any).getSharedContent as jest.Mock).mockClear();
+    ((contentApi as any).getSharedContent as jest.Mock).mockClear();
 
     // First call: password required
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((client as any).getSharedContent as jest.Mock).mockRejectedValueOnce({
+    ((contentApi as any).getSharedContent as jest.Mock).mockRejectedValueOnce({
       status: 401,
       data: { detail: "Password required" },
     });
@@ -149,7 +149,7 @@ describe("SharedContentPage", () => {
 
     // Second and third calls: success
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((client as any).getSharedContent as jest.Mock)
+    ((contentApi as any).getSharedContent as jest.Mock)
       .mockResolvedValueOnce(mockSuccessData)
       .mockResolvedValueOnce(mockSuccessData);
 
@@ -157,11 +157,11 @@ describe("SharedContentPage", () => {
       "password",
     ) as HTMLInputElement;
     await user.type(passwordInput, "secret");
-    fireEvent.click(screen.getByRole("button", { name: /Unlock Content/i }));
+    fireEvent.click(screen.getByRole("button", { name: "解锁内容" }));
 
     await waitFor(() => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((client as any).getSharedContent).toHaveBeenCalledTimes(3); // Initial + password attempt + useEffect re-trigger
+      expect((contentApi as any).getSharedContent).toHaveBeenCalledTimes(3); // Initial + password attempt + useEffect re-trigger
     });
 
     await waitFor(
@@ -176,7 +176,7 @@ describe("SharedContentPage", () => {
     const user = userEvent.setup();
     mockUseParams("test-token-wrong-pw");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((client as any).getSharedContent as jest.Mock)
+    ((contentApi as any).getSharedContent as jest.Mock)
       .mockRejectedValueOnce({
         status: 401,
         data: { detail: "Password required" },
@@ -200,19 +200,17 @@ describe("SharedContentPage", () => {
       "password",
     ) as HTMLInputElement;
     await user.type(passwordInput, "wrongsecret");
-    fireEvent.click(screen.getByRole("button", { name: /Unlock Content/i }));
+    fireEvent.click(screen.getByRole("button", { name: "解锁内容" }));
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/Incorrect password. Please try again./i),
-      ).toBeInTheDocument();
+      expect(screen.getByText("密码错误，请重试")).toBeInTheDocument();
     });
   });
 
   it("displays error for invalid token (404)", async () => {
     mockUseParams("invalid-token");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((client as any).getSharedContent as jest.Mock).mockRejectedValueOnce({
+    ((contentApi as any).getSharedContent as jest.Mock).mockRejectedValueOnce({
       status: 404,
       data: {
         detail: "Share link not found, expired, or access limit reached.",
@@ -225,11 +223,9 @@ describe("SharedContentPage", () => {
       </>,
     );
     await waitFor(() => {
-      expect(screen.getByText(/Error Accessing Content/i)).toBeInTheDocument();
+      expect(screen.getByText("无法访问内容")).toBeInTheDocument();
       expect(
-        screen.getByText(
-          /Share link not found, expired, or access limit reached./i,
-        ),
+        screen.getByText("分享链接不存在、已过期或访问次数已达上限"),
       ).toBeInTheDocument();
     });
   });
@@ -237,7 +233,7 @@ describe("SharedContentPage", () => {
   it("displays generic error for other API failures", async () => {
     mockUseParams("error-token");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((client as any).getSharedContent as jest.Mock).mockRejectedValueOnce({
+    ((contentApi as any).getSharedContent as jest.Mock).mockRejectedValueOnce({
       status: 500,
       data: { detail: "Server error" },
     });
@@ -248,17 +244,15 @@ describe("SharedContentPage", () => {
       </>,
     );
     await waitFor(() => {
-      expect(screen.getByText(/Error Accessing Content/i)).toBeInTheDocument();
-      expect(screen.getByText(/Server error/i)).toBeInTheDocument();
+      expect(screen.getByText("无法访问内容")).toBeInTheDocument();
+      expect(screen.getByText("Server error")).toBeInTheDocument();
     });
   });
 
   it("handles missing token in URL", () => {
     mockUseParams(undefined); // No token
     render(<SharedContentPage />);
-    expect(screen.getByText(/Error Accessing Content/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/Share token is missing in URL./i),
-    ).toBeInTheDocument();
+    expect(screen.getByText("无法访问内容")).toBeInTheDocument();
+    expect(screen.getByText("分享链接缺失")).toBeInTheDocument();
   });
 });

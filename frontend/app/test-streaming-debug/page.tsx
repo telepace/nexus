@@ -24,24 +24,24 @@ export default function StreamingDebugPage() {
     '{"t":"h3","c":"2. AI工具集成策略"}',
     '{"t":"p","c":"现代AI工具可以显著提升TDD实践的效率和质量。"}',
     '{"t":"qa","c":"Q: 如何选择合适的AI编程助手？\\nA: 考虑代码补全准确性、测试生成能力、与现有工具链的兼容性，以及团队的技术栈匹配度。"}',
-    '{"t":"action","c":"立即评估当前项目中可以集成的AI工具，制定分阶段实施计划。"}'
+    '{"t":"action","c":"立即评估当前项目中可以集成的AI工具，制定分阶段实施计划。"}',
   ];
 
   // 模拟流式传输
   const simulateStreaming = async () => {
     setContent("");
     setIsStreaming(true);
-    
+
     let accumulated = "";
-    
+
     for (let i = 0; i < mockJsonlLines.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 500)); // 模拟延迟
+      await new Promise((resolve) => setTimeout(resolve, 500)); // 模拟延迟
       accumulated += mockJsonlLines[i] + "\n";
       setContent(accumulated);
       console.log(`📦 模拟流式块 ${i + 1}:`, mockJsonlLines[i]);
       console.log(`📋 累积内容:`, accumulated);
     }
-    
+
     setIsStreaming(false);
     console.log("✅ 流式传输完成");
   };
@@ -49,23 +49,24 @@ export default function StreamingDebugPage() {
   // JSONL检测函数
   const isJsonlContent = (content: string): boolean => {
     if (!content || !content.trim()) return false;
-    
-    const lines = content.trim().split('\n');
+
+    const lines = content.trim().split("\n");
     let validJsonlLines = 0;
     let totalNonEmptyLines = 0;
-    
+
     for (const line of lines) {
       const trimmed = line.trim();
       if (!trimmed) continue;
-      
+
       totalNonEmptyLines++;
-      
+
       try {
         const parsed = JSON.parse(trimmed);
         if (
-          typeof parsed === 'object' && 
-          parsed !== null && 
-          (('type' in parsed && 'content' in parsed) || ('t' in parsed && 'c' in parsed))
+          typeof parsed === "object" &&
+          parsed !== null &&
+          (("type" in parsed && "content" in parsed) ||
+            ("t" in parsed && "c" in parsed))
         ) {
           validJsonlLines++;
         }
@@ -73,8 +74,10 @@ export default function StreamingDebugPage() {
         // 忽略解析错误
       }
     }
-    
-    return totalNonEmptyLines > 0 && validJsonlLines / totalNonEmptyLines >= 0.5;
+
+    return (
+      totalNonEmptyLines > 0 && validJsonlLines / totalNonEmptyLines >= 0.5
+    );
   };
 
   const clearContent = () => {
@@ -83,7 +86,7 @@ export default function StreamingDebugPage() {
   };
 
   const setStaticJsonl = () => {
-    setContent(mockJsonlLines.join('\n'));
+    setContent(mockJsonlLines.join("\n"));
     setIsStreaming(false);
   };
 
@@ -104,7 +107,7 @@ export default function StreamingDebugPage() {
 - 配置持续集成（CI）管道
 - 建立代码覆盖率标准
 - 制定测试编写规范`;
-    
+
     setContent(markdown);
     setIsStreaming(false);
   };
@@ -130,19 +133,22 @@ export default function StreamingDebugPage() {
               清空内容
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <strong>内容长度:</strong> {content.length} 字符
             </div>
             <div>
-              <strong>行数:</strong> {content.split('\n').filter(Boolean).length}
+              <strong>行数:</strong>{" "}
+              {content.split("\n").filter(Boolean).length}
             </div>
             <div>
-              <strong>是否为JSONL:</strong> {isJsonlContent(content) ? "✅ 是" : "❌ 否"}
+              <strong>是否为JSONL:</strong>{" "}
+              {isJsonlContent(content) ? "✅ 是" : "❌ 否"}
             </div>
             <div>
-              <strong>流式状态:</strong> {isStreaming ? "🔄 进行中" : "⏹️ 已停止"}
+              <strong>流式状态:</strong>{" "}
+              {isStreaming ? "🔄 进行中" : "⏹️ 已停止"}
             </div>
           </div>
         </CardContent>
@@ -169,8 +175,8 @@ export default function StreamingDebugPage() {
           </CardHeader>
           <CardContent>
             {content ? (
-              <StreamingJsonlRenderer 
-                content={content} 
+              <StreamingJsonlRenderer
+                content={content}
                 isLoading={isStreaming}
                 showStreamingIndicator={true}
               />
@@ -220,4 +226,4 @@ export default function StreamingDebugPage() {
       </Card>
     </div>
   );
-} 
+}

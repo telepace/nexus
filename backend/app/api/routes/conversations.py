@@ -19,8 +19,8 @@ from app.schemas.conversation import (
     AnalysisPromptRequest,
     ConversationListResponse,
 )
-from app.services.ai.llm_service import LLMService
 from app.services.ai.chat_service import ChatService
+from app.services.ai.llm_service import LLMService
 from app.utils.timezone import now_utc
 
 router = APIRouter()
@@ -258,7 +258,7 @@ async def add_message_to_conversation(
             messages=context_messages,
             model=conversation.ai_model_name,
             temperature=0.7,
-            max_tokens=2000,
+            max_tokens=8000,
         )
 
         ai_response_content = response.choices[0].message.content
@@ -271,7 +271,7 @@ async def add_message_to_conversation(
             "message_metadata": {
                 "configured_model": conversation.ai_model_name,  # 记录配置的模型名称
                 "tokens_used": response.usage.total_tokens if response.usage else 0,
-                "note": "configured_model为配置值，实际调用可能路由到不同后端"
+                "note": "configured_model为配置值，实际调用可能路由到不同后端",
             },
         }
         messages.append(ai_message)
@@ -372,7 +372,9 @@ async def trigger_analysis(
             content_item_id=content_id,
             title=prompt_config["title"],
             conversation_type="prompt_analysis",
-            ai_model_name=chat_service.get_model_for_template("user_analysis.j2"),  # 使用正确的分析模型
+            ai_model_name=chat_service.get_model_for_template(
+                "user_analysis.j2"
+            ),  # 使用正确的分析模型
             messages="[]",
             summary=f"对《{content_item.title or '内容'}》进行{prompt_config['title']}",
             is_active=True,
@@ -422,7 +424,7 @@ async def trigger_analysis(
             ],
             model=settings.DEFAULT_LLM_MODEL,
             temperature=0.3,  # 分析类任务使用较低温度
-            max_tokens=2000,
+            max_tokens=8000,
         )
 
         ai_response_content = response.choices[0].message.content
@@ -436,7 +438,7 @@ async def trigger_analysis(
                 "configured_model": settings.DEFAULT_LLM_MODEL,  # 记录配置的模型名称
                 "prompt_type": analysis_request.prompt_type,
                 "tokens_used": response.usage.total_tokens if response.usage else 0,
-                "note": "configured_model为配置值，实际调用可能路由到不同后端"
+                "note": "configured_model为配置值，实际调用可能路由到不同后端",
             },
         }
 

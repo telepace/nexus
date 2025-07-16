@@ -11,18 +11,18 @@ interface UniversalContentRendererProps {
   content: string | null | undefined;
   /** Additional class names for the container */
   className?: string;
-  /** Original content ID used for reference resolution */
-  contentId?: string;
+  /** Callback when expand button is clicked on a JSON line */
+  onExpandLine?: (jsonContent: Record<string, unknown>) => void;
 }
 
 /**
  * Universal content renderer that automatically detects format and renders accordingly.
  * Supports JSONL, JSON objects, and Markdown content with automatic fallback.
  */
-export function UniversalContentRenderer({ 
-  content, 
+export function UniversalContentRenderer({
+  content,
   className,
-  contentId,
+  onExpandLine,
 }: UniversalContentRendererProps) {
   // Helper to detect JSONL format (same logic as in llm-analysis-card)
   const isJsonl = (str: string): boolean => {
@@ -47,8 +47,8 @@ export function UniversalContentRenderer({
       const trimmed = str.trim();
       // Check if it starts and ends with {} or []
       if (
-        (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
-        (trimmed.startsWith('[') && trimmed.endsWith(']'))
+        (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+        (trimmed.startsWith("[") && trimmed.endsWith("]"))
       ) {
         JSON.parse(trimmed);
         return true;
@@ -72,7 +72,7 @@ export function UniversalContentRenderer({
   if (isJsonl(content)) {
     return (
       <div data-testid="universal-content-renderer" className={className}>
-        <JsonlRenderer content={content} contentId={contentId} />
+        <JsonlRenderer content={content} onExpandLine={onExpandLine} />
       </div>
     );
   } else if (isJsonObject(content)) {
@@ -88,4 +88,4 @@ export function UniversalContentRenderer({
       </div>
     );
   }
-} 
+}

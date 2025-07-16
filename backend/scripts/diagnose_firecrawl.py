@@ -27,8 +27,12 @@ def check_environment():
 
     # 检查代理配置
     proxy_vars = [
-        "http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY",
-        "all_proxy", "ALL_PROXY"
+        "http_proxy",
+        "https_proxy",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "all_proxy",
+        "ALL_PROXY",
     ]
 
     print("\n🌐 代理环境变量:")
@@ -55,7 +59,7 @@ def test_basic_connectivity():
     test_urls = [
         "https://api.firecrawl.dev",
         "https://httpbin.org/get",  # 备用测试URL
-        "https://www.google.com"
+        "https://www.google.com",
     ]
 
     for url in test_urls:
@@ -102,22 +106,17 @@ def test_firecrawl_with_proxies():
     all_proxy = os.getenv("all_proxy") or os.getenv("ALL_PROXY")
 
     if http_proxy or https_proxy:
-        proxy_configs.append({
-            "name": "环境变量代理",
-            "proxies": {
-                "http": http_proxy,
-                "https": https_proxy
+        proxy_configs.append(
+            {
+                "name": "环境变量代理",
+                "proxies": {"http": http_proxy, "https": https_proxy},
             }
-        })
+        )
 
     if all_proxy and "socks" not in all_proxy.lower():
-        proxy_configs.append({
-            "name": "全局代理",
-            "proxies": {
-                "http": all_proxy,
-                "https": all_proxy
-            }
-        })
+        proxy_configs.append(
+            {"name": "全局代理", "proxies": {"http": all_proxy, "https": all_proxy}}
+        )
 
     for config in proxy_configs:
         print(f"\n🧪 测试配置: {config['name']}")
@@ -127,8 +126,8 @@ def test_firecrawl_with_proxies():
 
             # 临时设置代理环境变量
             original_env = {}
-            if config['proxies'] and config['proxies'] != {}:
-                for key, value in config['proxies'].items():
+            if config["proxies"] and config["proxies"] != {}:
+                for key, value in config["proxies"].items():
                     if value:
                         var_name = f"{key}_proxy"
                         original_env[var_name] = os.environ.get(var_name)
@@ -211,7 +210,7 @@ def provide_solutions():
         "   curl -X POST https://api.firecrawl.dev/v0/scrape \\",
         "     -H 'Content-Type: application/json' \\",
         "     -H 'Authorization: Bearer YOUR_API_KEY' \\",
-        "     -d '{\"url\": \"https://example.com\"}'",
+        '     -d \'{"url": "https://example.com"}\'',
         "",
         "4. 切换到备用处理器:",
         "   在 .env 文件中设置: CONTENT_PROCESSOR=readability",
@@ -220,7 +219,7 @@ def provide_solutions():
         "   CONTENT_PROCESSOR_FALLBACK_ON_ERROR=true",
         "",
         "6. 重启服务:",
-        "   docker compose restart backend"
+        "   docker compose restart backend",
     ]
 
     for solution in solutions:

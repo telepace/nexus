@@ -26,13 +26,17 @@ class SegmentFormatter:
         formatted_parts = []
         for segment in segments:
             # 使用display_number（从1开始）作为用户友好的标号
-            segment_number = getattr(segment, 'display_number', segment.segment_index + 1)
+            segment_number = getattr(
+                segment, "display_number", segment.segment_index + 1
+            )
             formatted_parts.append(f"[{segment_number}] {segment.content}")
 
         return "\n\n".join(formatted_parts)
 
     @staticmethod
-    def format_segments_for_ai_prompt(segments: list[Segment], include_metadata: bool = False) -> str:
+    def format_segments_for_ai_prompt(
+        segments: list[Segment], include_metadata: bool = False
+    ) -> str:
         """
         为AI提示专门格式化段落内容
 
@@ -49,11 +53,13 @@ class SegmentFormatter:
         formatted_parts = ["=== 文档内容（已分段标号） ==="]
 
         for segment in segments:
-            segment_number = getattr(segment, 'display_number', segment.segment_index + 1)
+            segment_number = getattr(
+                segment, "display_number", segment.segment_index + 1
+            )
             content = segment.content.strip()
 
             if include_metadata:
-                segment_type = getattr(segment, 'segment_type', 'paragraph')
+                segment_type = getattr(segment, "segment_type", "paragraph")
                 formatted_parts.append(f"[{segment_number}] ({segment_type}) {content}")
             else:
                 formatted_parts.append(f"[{segment_number}] {content}")
@@ -75,7 +81,7 @@ class SegmentFormatter:
         import re
 
         # 匹配 [数字] 格式的引用
-        pattern = r'\[(\d+)\]'
+        pattern = r"\[(\d+)\]"
         matches = re.findall(pattern, text)
 
         # 转换为整数并去重，保持顺序
@@ -90,7 +96,9 @@ class SegmentFormatter:
         return segment_numbers
 
     @staticmethod
-    def validate_segment_references(segment_numbers: list[int], available_segments: list[Segment]) -> list[int]:
+    def validate_segment_references(
+        segment_numbers: list[int], available_segments: list[Segment]
+    ) -> list[int]:
         """
         验证段落引用是否有效
 
@@ -102,7 +110,7 @@ class SegmentFormatter:
             list[int]: 有效的段落标号列表
         """
         available_numbers = {
-            getattr(segment, 'display_number', segment.segment_index + 1)
+            getattr(segment, "display_number", segment.segment_index + 1)
             for segment in available_segments
         }
 

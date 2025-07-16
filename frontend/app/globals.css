@@ -75,8 +75,8 @@
   --size-library-lg: 40rem;
   --size-library-card: 28.75rem; /* 460px - card width */
   --size-card-title: 25rem; /* 400px - card text width */
-  --size-body: 28rem; /* 448px - body content width */
-  --size-body-lg: 36rem; /* 512px - large body content width */
+  --size-body: 42rem; /* 672px - body content width */
+  --size-body-lg: 48rem; /* 768px - large body content width */
 
   /* === Custom Color Palettes (Tailwind v4 tokens) === */
   /* -------------------------------------------------
@@ -153,7 +153,7 @@
 
   /* Neutrals */
   --color-linear-bg-0: #f3f3f3; /* 侧边栏 / 主背景 */
-  --color-linear-bg-1: #f9f9f9; /* 主页面背景 */
+  --color-linear-bg-1: #f5f5f5; /* 主页面背景 */
   --color-linear-bg-2: #ffffff; /* 卡片 / 列 */
   --color-linear-border: #e5e6ea; /* Divider */
 
@@ -994,7 +994,8 @@
 }
 
 @keyframes gentle-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.4;
   }
   50% {
@@ -1176,8 +1177,9 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Hover style: keep position, only enhance shadow */
 .analysis-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(0);
 }
 
 /* Enhanced focus styles */
@@ -1551,4 +1553,3 @@
 /* =============================================================================
  * Shadcn/ui Component Animation Overrides
  * ============================================================================= */
-

@@ -47,7 +47,7 @@ export function ChatWithQuestionDisplay({
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
@@ -56,10 +56,10 @@ export function ChatWithQuestionDisplay({
       const aiResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `我收到了您的问题："${input.substring(0, 50)}${input.length > 50 ? '...' : ''}"。这是一个模拟的AI回复，展示了如何处理用户提问的展示。`,
+        content: `我收到了您的问题："${input.substring(0, 50)}${input.length > 50 ? "..." : ""}"。这是一个模拟的AI回复，展示了如何处理用户提问的展示。`,
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, aiResponse]);
+      setMessages((prev) => [...prev, aiResponse]);
       setIsLoading(false);
     }, 1000);
   };
@@ -164,11 +164,9 @@ export function ChatWithQuestionDisplay({
           ) : (
             <div className="py-4">
               {messages.map((message) => (
-                <div key={message.id}>
-                  {renderMessage(message)}
-                </div>
+                <div key={message.id}>{renderMessage(message)}</div>
               ))}
-              
+
               {/* 加载状态 */}
               {isLoading && (
                 <div className="flex items-start gap-3 mb-4">
@@ -225,19 +223,22 @@ export function ChatExamples() {
     {
       id: "2",
       role: "user",
-      content: "你好！我想了解一下这个用户提问展示组件的具体实现原理。它是如何智能地截断文本的？为什么要优先在句号、问号、感叹号处截断？这样的设计有什么好处？",
+      content:
+        "你好！我想了解一下这个用户提问展示组件的具体实现原理。它是如何智能地截断文本的？为什么要优先在句号、问号、感叹号处截断？这样的设计有什么好处？",
       timestamp: new Date(Date.now() - 240000),
     },
     {
       id: "3",
       role: "assistant",
-      content: "您好！很高兴为您解答关于用户提问展示组件的问题。\n\n关于智能截断的实现原理：\n1. 组件会先检查文本长度是否超过设定的阈值\n2. 如果需要截断，会在指定长度范围内寻找最佳的截断点\n3. 优先选择句号、问号、感叹号等标点符号作为截断点\n\n这样设计的好处是：\n- 保持语义完整性，避免在句子中间截断\n- 提供更好的阅读体验\n- 让用户能够快速理解问题的核心内容",
+      content:
+        "您好！很高兴为您解答关于用户提问展示组件的问题。\n\n关于智能截断的实现原理：\n1. 组件会先检查文本长度是否超过设定的阈值\n2. 如果需要截断，会在指定长度范围内寻找最佳的截断点\n3. 优先选择句号、问号、感叹号等标点符号作为截断点\n\n这样设计的好处是：\n- 保持语义完整性，避免在句子中间截断\n- 提供更好的阅读体验\n- 让用户能够快速理解问题的核心内容",
       timestamp: new Date(Date.now() - 180000),
     },
     {
       id: "4",
       role: "user",
-      content: "很棒的解释！那么在实际项目中，应该如何选择使用完整版还是紧凑版组件呢？",
+      content:
+        "很棒的解释！那么在实际项目中，应该如何选择使用完整版还是紧凑版组件呢？",
       timestamp: new Date(Date.now() - 120000),
     },
   ];
@@ -297,4 +298,4 @@ export function ChatExamples() {
       </div>
     </div>
   );
-} 
+}

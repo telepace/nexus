@@ -44,7 +44,6 @@ except ImportError:
 
     fitz = DummyFitz()
 
-
 from app.core.storage import StorageInterface
 from app.schemas.image import ImageCreate
 

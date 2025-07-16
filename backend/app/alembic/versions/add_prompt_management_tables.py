@@ -1,7 +1,7 @@
 """添加提示词管理相关表
 
 Revision ID: 0001
-Revises: 
+Revises:
 Create Date: 2023-01-01 00:00:00.000000
 
 """
@@ -14,7 +14,6 @@ revision = '0001'
 down_revision = None
 branch_labels = None
 depends_on = None
-
 
 def upgrade():
     # 创建tags表
@@ -83,7 +82,6 @@ def upgrade():
         sa.PrimaryKeyConstraint('prompt_id', 'tag_id')
     )
 
-
 def downgrade():
     # 按照创建的相反顺序删除表
     op.drop_table('prompt_tags')
@@ -95,4 +93,4 @@ def downgrade():
     op.drop_index(op.f('ix_prompts_created_by'), table_name='prompts')
     op.drop_table('prompts')
     op.drop_index(op.f('ix_tags_name'), table_name='tags')
-    op.drop_table('tags') 
+    op.drop_table('tags')

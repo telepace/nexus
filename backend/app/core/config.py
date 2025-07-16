@@ -136,23 +136,27 @@ class Settings(BaseSettings):
     LITELLM_MASTER_KEY: str | None = None
 
     # LLM 配置
-    DEFAULT_LLM_MODEL: str = "or-gemini-2.5-pro"
+    DEFAULT_LLM_MODEL: str = "or-kimi-k2"
 
     # AI任务模型配置 - 支持为不同任务指定不同模型，可通过环境变量覆盖
     AI_TASK_MODELS: dict[str, str] = Field(
         default={
-            "summary": "deepseek-v3-ensemble",  # Summary生成模型
+            "summary": "or-kimi-k2",  # Summary生成模型
             "key_points": "deepseek-v3-ensemble",  # KeyPoint提取模型
             "labels": "deepseek-v3-ensemble",  # Labels生成模型
-            "chat": "deepseek-v3-ensemble",  # 对话聊天模型
-            "analysis": "deepseek-v3-ensemble",  # 通用分析模型
+            "chat": "or-kimi-k2",  # 对话聊天模型
+            "analysis": "or-kimi-k2",  # 通用分析模型
         },
         description="AI任务模型映射配置，可通过环境变量覆盖，如：AI_MODEL_SUMMARY=gpt-4",
     )
-    
+
     # 单独的模板模型配置，方便精细控制
-    AI_MODEL_SUMMARY: str | None = Field(default=None, description="Summary模板专用模型")
-    AI_MODEL_KEY_POINTS: str | None = Field(default=None, description="KeyPoints模板专用模型")
+    AI_MODEL_SUMMARY: str | None = Field(
+        default=None, description="Summary模板专用模型"
+    )
+    AI_MODEL_KEY_POINTS: str | None = Field(
+        default=None, description="KeyPoints模板专用模型"
+    )
     AI_MODEL_LABELS: str | None = Field(default=None, description="Labels模板专用模型")
     AI_MODEL_CHAT: str | None = Field(default=None, description="Chat对话专用模型")
     AI_MODEL_ANALYSIS: str | None = Field(default=None, description="通用分析专用模型")
@@ -162,17 +166,17 @@ class Settings(BaseSettings):
     def resolved_ai_task_models(self) -> dict[str, str]:
         """
         解析最终的AI任务模型配置
-        
+
         优先级：
         1. 环境变量中的具体模型配置 (AI_MODEL_SUMMARY等)
         2. AI_TASK_MODELS 配置
         3. DEFAULT_LLM_MODEL 全局默认
-        
+
         Returns:
             dict: 最终的任务->模型映射
         """
         resolved = self.AI_TASK_MODELS.copy()
-        
+
         # 环境变量覆盖具体任务模型
         env_overrides = {
             "summary": self.AI_MODEL_SUMMARY,
@@ -181,16 +185,16 @@ class Settings(BaseSettings):
             "chat": self.AI_MODEL_CHAT,
             "analysis": self.AI_MODEL_ANALYSIS,
         }
-        
+
         for task, model in env_overrides.items():
             if model:  # 如果环境变量设置了具体模型
                 resolved[task] = model
-                
+
         # 确保所有值都有回退到默认模型
         for task in resolved:
             if not resolved[task]:
                 resolved[task] = self.DEFAULT_LLM_MODEL
-                
+
         return resolved
 
     # OpenAI / ChatAnywhere 配置

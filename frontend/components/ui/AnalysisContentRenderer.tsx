@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,20 +13,14 @@ import {
 } from "@/components/ui/tooltip";
 import {
   ChevronDown,
-  ChevronUp,
   Lightbulb,
   Quote,
-  List,
-  MessageSquare,
-  Zap,
   BookOpen,
   Target,
   Info,
-  ExternalLink,
   Copy,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { OptimizedReferenceIndicator } from "@/components/ui/OptimizedReferenceIndicator";
 
 // 分析块数据类型定义
 export interface AnalysisBlockData {
@@ -34,7 +28,7 @@ export interface AnalysisBlockData {
   c: string; // 内容
   ref?: string; // 引用（逗号分隔的数字）
   expandable?: string; // 可展开内容的标题
-  meta?: Record<string, any>; // 额外元数据
+  meta?: Record<string, unknown>; // 额外元数据
 }
 
 // 引用信息
@@ -51,15 +45,17 @@ export interface AnalysisContentRendererProps {
   references?: ReferenceInfo[]; // 引用数据
   onReferenceClick?: (refId: number) => void;
   className?: string;
-  contentId?: string; // 新增：原始内容ID，用于引用预览
 }
 
 // 解析 JSONL 内容
 const parseAnalysisContent = (content: string): AnalysisBlockData[] => {
   try {
-    const lines = content.trim().split('\n').filter(line => line.trim());
+    const lines = content
+      .trim()
+      .split("\n")
+      .filter((line) => line.trim());
     const blocks: AnalysisBlockData[] = [];
-    
+
     for (const line of lines) {
       try {
         const block = JSON.parse(line.trim()) as AnalysisBlockData;
@@ -67,13 +63,13 @@ const parseAnalysisContent = (content: string): AnalysisBlockData[] => {
           blocks.push(block);
         }
       } catch (lineError) {
-        console.warn('无法解析分析块:', line, lineError);
+        console.warn("无法解析分析块:", line, lineError);
       }
     }
-    
+
     return blocks;
-  } catch (error) {
-    console.warn('分析内容解析失败:', error);
+  } catch {
+    console.warn("分析内容解析失败");
     return [];
   }
 };
@@ -81,7 +77,10 @@ const parseAnalysisContent = (content: string): AnalysisBlockData[] => {
 // 解析引用字符串
 const parseReferences = (refString?: string): number[] => {
   if (!refString) return [];
-  return refString.split(',').map(ref => parseInt(ref.trim(), 10)).filter(num => !isNaN(num));
+  return refString
+    .split(",")
+    .map((ref) => parseInt(ref.trim(), 10))
+    .filter((num) => !isNaN(num));
 };
 
 // 引用指示器组件
@@ -89,16 +88,60 @@ const ReferenceIndicator: React.FC<{
   references: number[];
   referenceData?: ReferenceInfo[];
   onReferenceClick?: (refId: number) => void;
-  contentId?: string;
-}> = ({ references, referenceData, onReferenceClick, contentId }) => {
+}> = ({ references, referenceData, onReferenceClick }) => {
+  if (references.length === 0) return null;
+
   return (
-    <OptimizedReferenceIndicator
-      references={references}
-      contentId={contentId}
-      variant="tooltip"
-      onReferenceClick={onReferenceClick}
-      maxPreviewItems={3}
-    />
+    <div className="inline-flex items-center gap-1 ml-2">
+      {references.slice(0, 3).map((refId) => {
+        const refInfo = referenceData?.find((r) => r.id === refId);
+
+        return (
+          <TooltipProvider key={refId}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.button
+                  className={cn(
+                    "inline-flex items-center justify-center",
+                    "w-5 h-5 rounded-full text-xs font-medium",
+                    "bg-blue-100 text-blue-700 border border-blue-200",
+                    "hover:bg-blue-200 hover:border-blue-300",
+                    "dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700",
+                    "dark:hover:bg-blue-800/50 dark:hover:border-blue-600",
+                    "transition-all duration-200 cursor-pointer",
+                  )}
+                  onClick={() => onReferenceClick?.(refId)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {refId}
+                </motion.button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="max-w-xs">
+                  <p className="font-medium">引用 #{refId}</p>
+                  {refInfo?.title && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {refInfo.title}
+                    </p>
+                  )}
+                  {refInfo?.snippet && (
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      {refInfo.snippet}
+                    </p>
+                  )}
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      })}
+      {references.length > 3 && (
+        <Badge variant="outline" className="h-5 px-1.5 text-xs">
+          +{references.length - 3}
+        </Badge>
+      )}
+    </div>
   );
 };
 
@@ -108,17 +151,16 @@ const HeadingBlock: React.FC<{
   references: number[];
   referenceData?: ReferenceInfo[];
   onReferenceClick?: (refId: number) => void;
-  contentId?: string;
-}> = ({ block, references, referenceData, onReferenceClick, contentId }) => {
+}> = ({ block, references, referenceData, onReferenceClick }) => {
   const HeadingTag = block.t as keyof JSX.IntrinsicElements;
-  
+
   const getHeadingStyles = (type: string) => {
     switch (type) {
-      case 'h1':
+      case "h1":
         return "text-2xl font-bold text-gray-900 dark:text-gray-100 py-4 border-b-2 border-gradient-to-r from-blue-500 to-purple-500";
-      case 'h2':
+      case "h2":
         return "text-xl font-semibold text-gray-900 dark:text-gray-100 py-3";
-      case 'h3':
+      case "h3":
         return "text-lg font-medium text-gray-800 dark:text-gray-200 py-2";
       default:
         return "text-base font-medium text-gray-700 dark:text-gray-300 py-2";
@@ -134,7 +176,7 @@ const HeadingBlock: React.FC<{
     >
       {/* 装饰性左侧条 */}
       <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full" />
-      
+
       <div className="pl-6">
         <div className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-lg px-4 py-3 border border-blue-100 dark:border-blue-800/30">
           <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
@@ -145,7 +187,6 @@ const HeadingBlock: React.FC<{
             references={references}
             referenceData={referenceData}
             onReferenceClick={onReferenceClick}
-            contentId={contentId}
           />
         </div>
       </div>
@@ -159,16 +200,19 @@ const InsightBlock: React.FC<{
   references: number[];
   referenceData?: ReferenceInfo[];
   onReferenceClick?: (refId: number) => void;
-  contentId?: string;
-}> = ({ block, references, referenceData, onReferenceClick, contentId }) => {
+}> = ({ block, references, referenceData, onReferenceClick }) => {
   const { toast } = useToast();
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(block.c);
       toast({ title: "已复制", description: "洞察内容已复制到剪贴板" });
-    } catch (error) {
-      toast({ title: "复制失败", description: "无法复制内容", variant: "destructive" });
+    } catch {
+      toast({
+        title: "复制失败",
+        description: "无法复制内容",
+        variant: "destructive",
+      });
     }
   };
 
@@ -185,7 +229,7 @@ const InsightBlock: React.FC<{
           <div className="shrink-0 w-8 h-8 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
             <Lightbulb className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">
               核心洞察
@@ -193,7 +237,7 @@ const InsightBlock: React.FC<{
             <p className="text-sm leading-relaxed text-amber-800 dark:text-amber-200">
               {block.c}
             </p>
-            
+
             {references.length > 0 && (
               <div className="mt-3 flex items-center gap-2">
                 <Quote className="h-3 w-3 text-amber-600 dark:text-amber-400" />
@@ -204,7 +248,6 @@ const InsightBlock: React.FC<{
                   references={references}
                   referenceData={referenceData}
                   onReferenceClick={onReferenceClick}
-                  contentId={contentId}
                 />
               </div>
             )}
@@ -232,8 +275,7 @@ const ConceptBlock: React.FC<{
   references: number[];
   referenceData?: ReferenceInfo[];
   onReferenceClick?: (refId: number) => void;
-  contentId?: string;
-}> = ({ block, references, referenceData, onReferenceClick, contentId }) => {
+}> = ({ block, references, referenceData, onReferenceClick }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -252,7 +294,7 @@ const ConceptBlock: React.FC<{
             <div className="shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
               <Info className="h-3 w-3 text-blue-600 dark:text-blue-400" />
             </div>
-            
+
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
                 {block.c}
@@ -269,7 +311,6 @@ const ConceptBlock: React.FC<{
                 references={references}
                 referenceData={referenceData}
                 onReferenceClick={onReferenceClick}
-                contentId={contentId}
               />
               <motion.div
                 animate={{ rotate: isExpanded ? 180 : 0 }}
@@ -291,7 +332,10 @@ const ConceptBlock: React.FC<{
             >
               <div className="px-4 pb-4 border-t border-blue-200/50 dark:border-blue-800/30 bg-blue-25 dark:bg-blue-950/10">
                 <div className="mt-3 text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
-                  <p>这里可以显示关于 "{block.expandable}" 的详细解释和扩展内容。</p>
+                  <p>
+                    这里可以显示关于 &quot;{block.expandable}&quot;
+                    的详细解释和扩展内容。
+                  </p>
                   <p className="mt-2 text-xs text-blue-600 dark:text-blue-400">
                     * 此功能可以连接到知识库或提供更详细的背景信息
                   </p>
@@ -311,8 +355,7 @@ const ParagraphBlock: React.FC<{
   references: number[];
   referenceData?: ReferenceInfo[];
   onReferenceClick?: (refId: number) => void;
-  contentId?: string;
-}> = ({ block, references, referenceData, onReferenceClick, contentId }) => {
+}> = ({ block, references, referenceData, onReferenceClick }) => {
   return (
     <motion.div
       className="group relative"
@@ -325,19 +368,18 @@ const ParagraphBlock: React.FC<{
           <div className="shrink-0 w-6 h-6 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mt-0.5">
             <Target className="h-3 w-3 text-gray-600 dark:text-gray-400" />
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
               {block.c}
             </p>
-            
+
             {references.length > 0 && (
               <div className="mt-2 flex items-center gap-1">
                 <ReferenceIndicator
                   references={references}
                   referenceData={referenceData}
                   onReferenceClick={onReferenceClick}
-                  contentId={contentId}
                 />
               </div>
             )}
@@ -349,82 +391,73 @@ const ParagraphBlock: React.FC<{
 };
 
 // 主渲染组件
-export const AnalysisContentRenderer: React.FC<AnalysisContentRendererProps> = ({
-  content,
-  references = [],
-  onReferenceClick,
-  className,
-  contentId,
-}) => {
+export const AnalysisContentRenderer: React.FC<
+  AnalysisContentRendererProps
+> = ({ content, onReferenceClick, className }) => {
   const blocks = parseAnalysisContent(content);
-  
+
   if (blocks.length === 0) {
     return (
       <div className={cn("text-center py-8", className)}>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          暂无分析内容
-        </p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">暂无分析内容</p>
       </div>
     );
   }
 
   const renderBlock = (block: AnalysisBlockData, index: number) => {
-    const references = parseReferences(block.ref);
-    
     const blockProps = {
       block,
-      references,
-      referenceData: references,
+      references: parseReferences(block.ref),
+      referenceData: [],
       onReferenceClick,
-      contentId,
     };
 
     switch (block.t) {
-      case 'h1':
-      case 'h2':
-      case 'h3':
+      case "h1":
+      case "h2":
+      case "h3":
         return <HeadingBlock key={index} {...blockProps} />;
-      
-      case 'insight':
+
+      case "insight":
         return <InsightBlock key={index} {...blockProps} />;
-      
-      case 'concept':
+
+      case "concept":
         return <ConceptBlock key={index} {...blockProps} />;
-      
-      case 'p':
+
+      case "p":
       default:
         return <ParagraphBlock key={index} {...blockProps} />;
     }
   };
 
   // 计算智能间距
-  const getBlockSpacing = (currentBlock: AnalysisBlockData, nextBlock?: AnalysisBlockData) => {
+  const getBlockSpacing = (
+    currentBlock: AnalysisBlockData,
+    nextBlock?: AnalysisBlockData,
+  ) => {
     // 标题前后需要更大间距
-    if (currentBlock.t.startsWith('h') || nextBlock?.t.startsWith('h')) {
-      return 'mb-6';
+    if (currentBlock.t.startsWith("h") || nextBlock?.t.startsWith("h")) {
+      return "mb-6";
     }
-    
+
     // 洞察块后需要中等间距
-    if (currentBlock.t === 'insight') {
-      return 'mb-5';
+    if (currentBlock.t === "insight") {
+      return "mb-5";
     }
-    
+
     // 相同类型块使用较小间距
     if (nextBlock && currentBlock.t === nextBlock.t) {
-      return 'mb-3';
+      return "mb-3";
     }
-    
+
     // 默认间距
-    return 'mb-4';
+    return "mb-4";
   };
 
   return (
     <div className={cn("space-y-0", className)}>
       {blocks.map((block, index) => (
-        <div
-          key={index}
-          className={getBlockSpacing(block, blocks[index + 1])}
-        >
+        <div key={index} className={getBlockSpacing(block, blocks[index + 1])}>
           {renderBlock(block, index)}
         </div>
       ))}
@@ -432,4 +465,4 @@ export const AnalysisContentRenderer: React.FC<AnalysisContentRendererProps> = (
   );
 };
 
-export default AnalysisContentRenderer; 
+export default AnalysisContentRenderer;

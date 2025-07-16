@@ -14,14 +14,15 @@ interface Props {
  */
 export const AIAnalysisCard = ({ analysis, className }: Props) => {
   // 处理分析内容，确保传递正确的格式
-  const analysisContent = typeof analysis === 'string' 
-    ? analysis 
-    : analysis 
-      ? JSON.stringify(analysis, null, 2)
-      : '';
+  const analysisContent =
+    typeof analysis === "string"
+      ? analysis
+      : analysis
+        ? JSON.stringify(analysis, null, 2)
+        : "";
 
   return (
-    <AIAnalysisDisplay 
+    <AIAnalysisDisplay
       title="AI 分析结果"
       content={analysisContent}
       className={className}
