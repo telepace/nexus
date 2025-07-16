@@ -265,8 +265,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   }, []);
 
   // 处理AI分析
-  const handleAnalysis = useCallback(async () => {
-    if (!inputValue.trim() || isAnalyzing) return;
+  const performCompletion = useCallback(async (body: Record<string, any>, title: string) => {
+    if (isAnalyzing) return;
 
     setIsAnalyzing(true);
     setStreamingResponse("");
@@ -281,10 +281,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
             "Content-Type": "application/json",
             Authorization: `Bearer ${getCookie("accessToken")}`,
           },
-          body: JSON.stringify({
-            analysis_instruction: inputValue,
-            // 移除model参数，由后端自动选择最适合的模型
-          }),
+          body: JSON.stringify(body),
         },
       );
 
@@ -335,7 +332,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
 
       setInputValue("");
       toast({
-        title: "分析完成",
+        title: title,
         description: "AI 分析已成功完成",
       });
     } catch (error) {
@@ -348,7 +345,14 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     } finally {
       setIsAnalyzing(false);
     }
-  }, [inputValue, content.id, isAnalyzing, toast]);
+  }, [content.id, isAnalyzing, toast]);
+
+  const handleAnalysis = useCallback(async () => {
+    if (!inputValue.trim()) return;
+    await performCompletion({
+      analysis_instruction: inputValue,
+    }, "分析完成");
+  }, [inputValue, performCompletion]);
 
   // 处理JSON行展开请求
   const handleJsonLineExpand = useCallback(async (jsonContent: Record<string, unknown>) => {
@@ -358,92 +362,20 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     const selectedPoint = jsonContent.c || jsonContent.content || JSON.stringify(jsonContent);
     const instruction = `请对以下要点进行深度展开讨论：${selectedPoint}`;
     
-    // 设置输入值并触发分析
+    // 设置输入值
     setInputValue(instruction);
     
     // 延迟触发分析，让用户看到输入框的变化
-    setTimeout(async () => {
+    setTimeout(() => {
       if (instruction.trim()) {
-        setIsAnalyzing(true);
-        setStreamingResponse("");
-
-        try {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-          const response = await fetch(
-            `${apiUrl}/api/v1/content/${content.id}/completion-updated`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${getCookie("accessToken")}`,
-              },
-              body: JSON.stringify({
-                analysis_instruction: instruction,
-                template_name: "expand_discussion.j2",
-                selected_point: jsonContent.c || jsonContent.content || JSON.stringify(jsonContent),
-              }),
-            },
-          );
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-
-          // 处理流式响应
-          const reader = response.body?.getReader();
-          if (!reader) {
-            throw new Error("无法获取响应流");
-          }
-
-          const decoder = new TextDecoder();
-          let accumulatedContent = "";
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split("\n");
-
-            for (const line of lines) {
-              if (line.startsWith("0:")) {
-                const jsonlLine = line.slice(2);
-                if (jsonlLine.trim()) {
-                  accumulatedContent += jsonlLine + "\n";
-                  setStreamingResponse(accumulatedContent);
-                }
-              } else if (line.startsWith("8:")) {
-                setStreamingResponse(accumulatedContent);
-                break;
-              } else if (line.startsWith("9:")) {
-                try {
-                  const errorData = JSON.parse(line.slice(2));
-                  throw new Error(errorData.error || "Stream error");
-                } catch {
-                  throw new Error("Stream error");
-                }
-              }
-            }
-          }
-
-          setInputValue("");
-          toast({
-            title: "展开分析完成",
-            description: "AI 已完成深度展开讨论",
-          });
-        } catch (error) {
-          console.error("Expand analysis failed:", error);
-          toast({
-            title: "展开分析失败",
-            description: "请稍后重试",
-            variant: "destructive",
-          });
-        } finally {
-          setIsAnalyzing(false);
-        }
+        performCompletion({
+          analysis_instruction: instruction,
+          template_name: "expand_discussion.j2",
+          selected_point: selectedPoint,
+        }, "展开分析完成");
       }
     }, 100);
-  }, [content.id, toast]);
+  }, [performCompletion, setInputValue]);
 
   // 构建分析卡片数据
   const buildAnalysisCards = useCallback((): AnalysisCard[] => {
@@ -526,14 +458,13 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       return (
         <div
           className={`
-            px-6 py-4 rounded-lg cursor-pointer transition-all duration-200
+            px-6 py-4 rounded-lg transition-all duration-200
             ${
               selectedBlock === `${card.id}-main`
                 ? "linear-bg-1 opacity-90"
-                : "hover:linear-bg-1 hover:opacity-80"
+                : "hover:linear-bg-1"
             }
           `}
-          onClick={(e) => handleBlockClick(`${card.id}-main`, e)}
         >
           <div className="select-text prose prose-sm max-w-none dark:prose-invert">
             <UniversalContentRenderer 
@@ -608,14 +539,15 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
               </div>
 
               {/* 操作按钮：使用 flex-row-reverse 保证折叠/展开按钮始终最右 */}
-              <div className="flex items-center gap-1 flex-row-reverse">
+              <div className="flex items-center gap-1 flex-row-reverse relative z-10">
                 {/* 折叠/展开按钮 - 始终显示 */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-neutral-400 hover:text-neutral-600"
+                  className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
                   onClick={(e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     toggleCardCollapse(card.id);
                   }}
                 >
@@ -628,19 +560,20 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                 
                 {/* 其他操作按钮 - 仅在悬停时显示 */}
                 {isHovered && (
-                  <div className="flex items-center gap-1 mr-1 animate-in fade-in-50 slide-in-from-right-2 duration-200">
+                  <div className="flex items-center gap-1 mr-1 transition-all duration-200 relative z-10">
                     <FavoriteButton
                       itemId={content.id}
                       size="sm"
                       variant="ghost"
-                      className="h-7 w-7 text-neutral-400 hover:text-neutral-600"
+                      className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
                     />
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-neutral-400 hover:text-neutral-600"
+                      className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
                       onClick={(e) => {
                         e.stopPropagation();
+                        e.preventDefault();
                         console.log("分享");
                       }}
                     >
