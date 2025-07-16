@@ -128,13 +128,7 @@ function getVariantStyles(
 }
 
 // 内容摘要卡片
-export const SummaryCard = ({
-  summary,
-  variant = "default",
-}: {
-  summary: Record<string, unknown> | string | null;
-  variant?: CardProps["variant"];
-}) => {
+export const SummaryCard = ({ summary }: { summary: Record<string, unknown> | string | null }) => {
   if (!summary) return null;
 
   let summaryText = "";
@@ -176,13 +170,7 @@ export const SummaryCard = ({
 };
 
 // 关键要点卡片
-export const KeyPointsCard = ({
-  keyPoints,
-  variant = "default",
-}: {
-  keyPoints: Record<string, unknown> | string | null;
-  variant?: CardProps["variant"];
-}) => {
+export const KeyPointsCard = ({ keyPoints }: { keyPoints: Record<string, unknown> | string | null }) => {
   if (!keyPoints) return null;
 
   let points: string[] = [];
@@ -445,7 +433,6 @@ export const AnalysisCards = ({
       <SummaryCard
         key="summary"
         summary={unifiedData.summary}
-        variant={variant}
       />,
     );
   }
@@ -456,7 +443,6 @@ export const AnalysisCards = ({
       <KeyPointsCard
         key="key-points"
         keyPoints={unifiedData.keyPoints}
-        variant={variant}
       />,
     );
   }

@@ -8,7 +8,7 @@ export interface SourceParagraph {
   startOffset?: number;
   endOffset?: number;
   chunkId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ReferenceMapping {

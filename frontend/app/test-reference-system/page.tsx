@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReferenceManagerProvider } from "@/components/ui/ReferenceManager";
@@ -93,18 +93,18 @@ function TestReferenceSystemContent() {
   };
 
   // 使用模拟数据
-  const useMockData = () => {
+  const loadMockData = useCallback(() => {
     setChunks(mockChunks);
     setUseRealData(false);
     setError(null);
-  };
+  }, [mockChunks]);
 
   // 默认使用模拟数据
   useEffect(() => {
     if (chunks.length === 0) {
-      useMockData();
+      loadMockData();
     }
-  }, []);
+  }, [chunks.length, loadMockData]);
 
   const displayedChunks = chunks.length > 0 ? chunks : mockChunks;
 
@@ -241,7 +241,7 @@ function TestReferenceSystemContent() {
                     功能特性
                   </h4>
                   <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                    <li>• 自动解析 ref 参数（如："1,2"）</li>
+                    <li>• 自动解析 ref 参数（如：&quot;1,2&quot;）</li>
                     <li>• 点击引用数字跳转到原文段落</li>
                     <li>• 自动高亮相关段落</li>
                     <li>• 支持 Tooltip 预览引用内容</li>
@@ -300,7 +300,7 @@ function TestReferenceSystemContent() {
                     <div className="font-medium mb-1">测试步骤：</div>
                     <ol className="list-decimal list-inside space-y-1">
                       <li>确保后端API服务运行在 http://127.0.0.1:8000</li>
-                      <li>点击"加载真实数据"按钮</li>
+                      <li>点击&quot;加载真实数据&quot;按钮</li>
                       <li>观察数据状态面板中的索引信息</li>
                       <li>点击右侧AI分析结果中的引用数字（如 ①、②、③）</li>
                       <li>左侧原文应该自动跳转并高亮对应段落</li>
@@ -312,7 +312,7 @@ function TestReferenceSystemContent() {
                     <div className="font-medium mb-1">索引匹配逻辑：</div>
                     <ul className="list-disc list-inside space-y-1">
                       <li>API 数据：index 从 0 开始 → 自动转换为从 1 开始</li>
-                      <li>引用编号：始终从 1 开始（ref="1,2,3"）</li>
+                      <li>引用编号：始终从 1 开始（ref=&quot;1,2,3&quot;）</li>
                       <li>系统支持三种匹配方式确保兼容性</li>
                     </ul>
                   </div>

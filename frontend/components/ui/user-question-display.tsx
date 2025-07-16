@@ -10,7 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, MessageSquare, Copy, User } from "lucide-react";
+import { ChevronDown, Copy, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface UserQuestionDisplayProps {

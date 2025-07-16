@@ -47,8 +47,8 @@ GitHub仓库：https://github.com/example/project
           <div className="bg-card p-6 rounded-lg border">
             <h2 className="text-xl font-semibold mb-4">测试步骤</h2>
             <ol className="space-y-2 text-muted-foreground list-decimal list-inside">
-              <li>点击"复制测试内容"按钮复制包含链接的文本</li>
-              <li>点击"打开添加内容模态框"</li>
+              <li>点击&quot;复制测试内容&quot;按钮复制包含链接的文本</li>
+              <li>点击&quot;打开添加内容模态框&quot;</li>
               <li>在文本框中粘贴内容（Ctrl+V 或 ⌘+V）</li>
               <li>观察链接检测和选择界面</li>
               <li>尝试选择/取消选择不同的链接</li>

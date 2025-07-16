@@ -87,8 +87,9 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
     }
     case "qa": {
       if (typeof c !== "object" || c === null) break;
-      const q = (c as any)["q"] || (c as any)["question"];
-      const a = (c as any)["a"] || (c as any)["answer"];
+      const obj = c as Record<string, unknown>;
+      const q = obj["q"] || obj["question"];
+      const a = obj["a"] || obj["answer"];
       return (
         <div className={`${card} my-1 space-y-3`}>
           <div className="flex items-start gap-4">

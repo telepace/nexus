@@ -84,7 +84,7 @@ export interface JsonContentItem {
   t: string; // 类型：h1, h2, h3, insight, summary, list, code, etc.
   c: string; // 内容
   ref?: string; // 引用（逗号分隔的数字）
-  meta?: Record<string, any>; // 额外元数据
+  meta?: Record<string, unknown>; // 额外元数据
 }
 
 // JSON 内容解析函数
@@ -310,7 +310,7 @@ export interface ContentBlock {
   tooltip?: string;
   expandable?: boolean;
   references?: ReferenceInfo[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface AnalysisCardProps {
@@ -1032,8 +1032,6 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
   className,
   children,
 }) => {
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [copiedBlocks, setCopiedBlocks] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   // 处理卡片点击

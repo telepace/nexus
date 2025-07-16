@@ -305,7 +305,7 @@ class PreprocessingPipeline:
         start_time = datetime.now()
 
         # 准备基础模板参数
-        template_context = {
+        template_context: dict[str, Any] = {
             "content": content,
             "document_metadata": asdict(metadata),
             "user_preferences": user_preferences or {},
@@ -329,14 +329,20 @@ class PreprocessingPipeline:
                     def __init__(self, content: str, segment_index: int):
                         self.content = content
                         self.segment_index = segment_index
-                        self.display_number = segment_index + 1  # 1-based display number
+                        self.display_number = (
+                            segment_index + 1
+                        )  # 1-based display number
 
                 temp_segments.append(TempSegment(chunk_info.content, i))
 
             # 生成带标号的格式化内容
             if temp_segments:
-                formatted_content_with_numbers = segment_formatter.format_segments_for_ai_prompt(temp_segments)
-                template_context["content_with_segment_numbers"] = formatted_content_with_numbers
+                formatted_content_with_numbers = (
+                    segment_formatter.format_segments_for_ai_prompt(temp_segments)
+                )
+                template_context["content_with_segment_numbers"] = (
+                    formatted_content_with_numbers
+                )
                 template_context["segments"] = temp_segments
                 logger.info(f"✅ 生成了 {len(temp_segments)} 个段落的带标号内容")
             else:
@@ -627,7 +633,7 @@ class PreprocessingPipeline:
                     "format": "jsonl",
                     "blocks": response.get("blocks", []),
                     "raw_content": response.get("raw_content", ""),
-                    "text": response.get("text", "")
+                    "text": response.get("text", ""),
                 }
             else:
                 # 原有逻辑：期望有 summary 键
@@ -649,7 +655,7 @@ class PreprocessingPipeline:
                     "format": "jsonl",
                     "blocks": response.get("blocks", []),
                     "raw_content": response.get("raw_content", ""),
-                    "text": response.get("text", "")
+                    "text": response.get("text", ""),
                 }
             else:
                 # 原有逻辑：期望有 key_points 键

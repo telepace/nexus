@@ -7,7 +7,6 @@ import {
   Settings,
   ChevronUp,
   RefreshCw,
-  Star,
   Upload,
   Heart,
   MessageSquare,

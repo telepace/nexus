@@ -76,20 +76,6 @@ export function SegmentReferencedMessage({
     return "bg-red-100 text-red-800 border-red-200";
   };
 
-  // Helper function to get segment numbers for a reference
-  const getSegmentNumbers = (ref: SegmentReference): number[] => {
-    if (ref.segment_numbers) {
-      return ref.segment_numbers;
-    }
-    // Fallback to converting segment_ids to display numbers
-    return ref.segment_ids
-      .map((segId) => {
-        const segment = segmentsUsed.find((s) => s.id === segId);
-        return segment?.display_number || segment?.segment_index + 1 || 0;
-      })
-      .filter((num) => num > 0);
-  };
-
   return (
     <div className="space-y-3">
       {/* AI回答内容 */}

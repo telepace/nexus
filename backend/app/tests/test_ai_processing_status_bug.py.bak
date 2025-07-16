@@ -28,9 +28,7 @@ class TestAIProcessingStatusBug:
     """Tests for AI processing status management bug."""
 
     @pytest.mark.asyncio
-    async def test_status_not_completed_before_ai_processing(
-        self, db_session: Session, user
-    ):
+    async def test_status_not_completed_before_ai_processing(self, db_session: Session, user):
         """
         Test that processing_status is NOT set to 'completed' before AI processing.
 
@@ -78,13 +76,8 @@ class TestAIProcessingStatusBug:
                 "app.services.preprocessing_pipeline.PreprocessingPipeline._ai_initialization_layer",
                 side_effect=mock_ai_initialization_layer,
             ),
-            patch(
-                "app.utils.background_tasks.content_event_manager"
-            ) as mock_event_manager,
+            patch("app.utils.background_tasks.content_event_manager"),
         ):
-            # Configure the mock to be async
-            mock_event_manager.notify_content_status = AsyncMock()
-
             # Simulate the background task processing
             await background_task_manager._process_content_async(
                 content_id=str(content_item.id), user_id=str(user.id)
@@ -157,15 +150,11 @@ class TestAIProcessingStatusBug:
                 "app.services.preprocessing_pipeline.PreprocessingPipeline._ai_initialization_layer",
                 side_effect=mock_ai_processing,
             ),
-            patch(
-                "app.utils.background_tasks.content_event_manager"
-            ) as mock_event_manager,
+            patch("app.utils.background_tasks.content_event_manager") as mock_event_manager,
         ):
-            # Configure the mock to be async
-            mock_event_manager.notify_content_status = AsyncMock()
-
             await background_task_manager._process_content_async(
-                content_id=str(content_item.id), user_id=str(user.id)
+                content_id=str(content_item.id),
+                user_id=str(user.id)
             )
 
         # Refresh from DB
@@ -187,9 +176,7 @@ class TestAIProcessingStatusBug:
             )
 
     @pytest.mark.asyncio
-    async def test_ai_processing_after_basic_processing(
-        self, db_session: Session, user
-    ):
+    async def test_ai_processing_after_basic_processing(self, db_session: Session, user):
         """
         Test that AI processing happens AFTER basic processing, not concurrently.
 
@@ -209,30 +196,43 @@ class TestAIProcessingStatusBug:
         db_session.add(content_item)
         db_session.commit()
 
-        # Patch _process_content_async
-        async def mock_process_content_async(content_id):
-            processing_order.append(1)
-            # 模拟处理完成
-            item = db_session.get(ContentItem, uuid.UUID(content_id))
-            if item:
-                item.processing_status = "completed"
-                db_session.add(item)
-                db_session.commit()
+        # Mock basic processor
+        def mock_basic_processing(*_args, **_kwargs):
+            processing_order.append("basic_processing_complete")
+            result = Mock()
+            result.success = True
+            result.markdown_content = "Processed"
+            result.metadata = {}
+            return result
 
-        with patch(
-            "app.utils.background_tasks.BackgroundTaskManager._process_content_async",
-            side_effect=mock_process_content_async,
+        # Mock AI processor
+        async def mock_ai_processing(*_args, **_kwargs):
+            processing_order.append("ai_processing_started")
+            return {"summary": "AI done"}
+
+        # Act
+        with (
+            patch("app.utils.content_processors.ContentProcessorFactory.get_processor") as mock_processor,
+            patch(
+                "app.services.preprocessing_pipeline.PreprocessingPipeline._ai_initialization_layer",
+                side_effect=mock_ai_processing,
+            ),
+            patch("app.utils.background_tasks.content_event_manager"),
         ):
-            # Act
-            import app.utils.background_tasks as bgtasks
+            mock_processor.return_value.process_content.side_effect = (
+                mock_basic_processing
+            )
 
-            manager = bgtasks.BackgroundTaskManager()
-            await manager._process_content_async(str(content_item.id), str(user.id))
+            await background_task_manager._process_content_async(
+                content_id=str(content_item.id),
+                user_id=str(user.id)
+            )
 
-        # Assert
-        assert processing_order == [1], (
-            f"Expected processing order [1], got {processing_order}"
-        )
+        # Assert: Processing order should be correct
+        assert processing_order == [
+            "basic_processing_complete",
+            "ai_processing_started",
+        ], f"BUG: Wrong processing order: {processing_order}"
 
     def test_status_field_values(self):
         """Test that we're using the correct status values."""

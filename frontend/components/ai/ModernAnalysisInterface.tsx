@@ -1,24 +1,19 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Brain,
   MessageSquare,
   Send,
   Share,
-  MoreHorizontal,
   Sparkles,
-  Star,
   RefreshCw,
-  ChevronDown,
-  ChevronUp,
   Minus,
   Plus,
 } from "lucide-react";
 import { useCardHeight } from "@/hooks/use-card-height";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   ContentItemPublic,
@@ -28,7 +23,6 @@ import {
 } from "@/lib/api/content";
 import { adaptAnalysisData } from "./AnalysisCards";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
-import { client } from "@/lib/api/client";
 import { getCookie } from "cookies-next";
 import { fetchPrompts, PromptData } from "@/components/actions/prompts-action";
 import { contentApi } from "@/lib/api/content";
@@ -58,13 +52,12 @@ interface AnalysisCard {
   emoji?: string;
   content: {
     type: "summary" | "insights" | "keyPoints" | "metadata";
-    data: any;
+    data: string | object;
   };
 }
 
 const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   content,
-  conversations = [],
   analysisResult = null,
   isLoading = false,
   className = "",
@@ -85,8 +78,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   const [inputFocused, setInputFocused] = useState(false);
   const showHistory = showHistoryProp;
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
-  const [selectedText, setSelectedText] = useState("");
-  const [floatingMenu, setFloatingMenu] = useState({ show: false, x: 0, y: 0 });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [streamingResponse, setStreamingResponse] = useState("");
   const [prompts, setPrompts] = useState<PromptData[]>([]);
@@ -208,26 +199,17 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     };
 
     window.addEventListener(
-      "textSelectionAction" as any,
+      "textSelectionAction" as keyof WindowEventMap,
       handleTextSelectionAction,
     );
 
     return () => {
       window.removeEventListener(
-        "textSelectionAction" as any,
+        "textSelectionAction" as keyof WindowEventMap,
         handleTextSelectionAction,
       );
     };
   }, []);
-
-  // 处理块选择 - 保留用于卡片交互
-  const handleBlockClick = useCallback(
-    (blockId: string, event: React.MouseEvent) => {
-      event.stopPropagation();
-      setSelectedBlock(selectedBlock === blockId ? null : blockId);
-    },
-    [selectedBlock],
-  );
 
   // 监听点击外部 - 简化逻辑
   useEffect(() => {
@@ -272,7 +254,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
 
   // 处理AI分析
   const performCompletion = useCallback(
-    async (body: Record<string, any>, title: string) => {
+    async (body: Record<string, unknown>, title: string) => {
       if (isAnalyzing) return;
 
       setIsAnalyzing(true);
@@ -522,10 +504,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   }, []);
 
   // 主卡片组件 - 极简化设计
-  const CardComponent = ({
-    card,
-    index,
-  }: { card: AnalysisCard; index: number }) => {
+  const CardComponent = ({ card }: { card: AnalysisCard }) => {
     const isSelected = selectedCard === card.id;
     const isHovered = hoveredCard === card.id;
     const isCollapsed = collapsedCards.has(card.id);
@@ -688,9 +667,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
             }`}
           >
             {cards.length > 0 ? (
-              cards.map((card, index) => (
-                <CardComponent key={card.id} card={card} index={index} />
-              ))
+              cards.map((card) => <CardComponent key={card.id} card={card} />)
             ) : (
               <div className="flex items-center justify-center p-8 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50/30 dark:bg-neutral-900/30">
                 <div className="text-center space-y-2">

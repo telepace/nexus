@@ -290,4 +290,7 @@ def test_analyze_stream_template_loading(
         assert len(payload["messages"]) == 2
         assert payload["messages"][0]["role"] == "system"
         assert payload["messages"][1]["role"] == "user"
-        assert "Nexus 的 AI" in payload["messages"][1]["content"]  # summary.j2模板特征
+        assert (
+            payload["messages"][1]["content"]
+            == "请对这篇内容进行总结，提取其主要观点和关键信息。"
+        )  # summary分析实际prompt

@@ -40,10 +40,10 @@ class JsonlUsageExamples:
         parser = create_parser()
 
         # 样本 JSONL 数据
-        content = '''{"t": "h1", "c": "人工智能发展报告"}
+        content = """{"t": "h1", "c": "人工智能发展报告"}
 {"t": "p", "c": "人工智能技术在近年来取得了显著进展。"}
 {"t": "insight", "c": "深度学习是推动AI发展的关键技术", "expandable": "详细技术分析"}
-{"t": "action", "c": "建议加大AI研发投入"}'''
+{"t": "action", "c": "建议加大AI研发投入"}"""
 
         # 解析内容
         result = await parser.parse(content)
@@ -54,7 +54,7 @@ class JsonlUsageExamples:
 
         # 输出解析结果
         for i, block in enumerate(result.blocks):
-            print(f"块 {i+1}: {block.type} - {block.content[:50]}...")
+            print(f"块 {i + 1}: {block.type} - {block.content[:50]}...")
 
         return result
 
@@ -70,7 +70,7 @@ class JsonlUsageExamples:
             remove_code_blocks=True,
             fix_common_errors=True,
             normalize_quotes=True,
-            max_line_length=5000
+            max_line_length=5000,
         )
 
         # 配置解析选项
@@ -78,19 +78,21 @@ class JsonlUsageExamples:
             strict_mode=False,
             max_errors=10,
             auto_generate_mapping=True,
-            preprocessor=preprocessor_config
+            preprocessor=preprocessor_config,
         )
 
         # 包含错误的内容
-        malformed_content = '''```json
+        malformed_content = """```json
 {"t": "h1", "c": "标题"}
 {t: "p", c: "缺少引号的内容"}
 {"t": "insight", "c": "正常的洞察",}
-```'''
+```"""
 
         result = await parser.parse(malformed_content, parse_options)
 
-        print(f"处理结果: 成功={result.success}, 块={len(result.blocks)}, 错误={len(result.errors)}")
+        print(
+            f"处理结果: 成功={result.success}, 块={len(result.blocks)}, 错误={len(result.errors)}"
+        )
 
         for error in result.errors:
             print(f"错误: {error.message} (行 {error.line_number})")
@@ -108,13 +110,13 @@ class JsonlUsageExamples:
         task_definition = DefaultBlockTypeDefinition(
             "task",
             required_attrs={"t", "c", "priority", "assignee"},
-            optional_attrs={"due_date", "tags"}
+            optional_attrs={"due_date", "tags"},
         )
 
         meeting_definition = DefaultBlockTypeDefinition(
             "meeting",
             required_attrs={"t", "c", "participants"},
-            optional_attrs={"location", "agenda"}
+            optional_attrs={"location", "agenda"},
         )
 
         # 注册自定义类型
@@ -122,8 +124,8 @@ class JsonlUsageExamples:
         parser.register_block_type("meeting", meeting_definition)
 
         # 使用自定义类型的内容
-        content = '''{"t": "task", "c": "完成JSONL解析器", "priority": "high", "assignee": "开发团队", "tags": ["urgent", "api"]}
-{"t": "meeting", "c": "项目评审会议", "participants": ["PM", "开发", "测试"], "location": "会议室A"}'''
+        content = """{"t": "task", "c": "完成JSONL解析器", "priority": "high", "assignee": "开发团队", "tags": ["urgent", "api"]}
+{"t": "meeting", "c": "项目评审会议", "participants": ["PM", "开发", "测试"], "location": "会议室A"}"""
 
         result = await parser.parse(content)
 
@@ -143,22 +145,20 @@ class JsonlUsageExamples:
 
         # 邮箱验证器
         email_validator = RegexValidator(
-            r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-            "必须是有效的邮箱地址"
+            r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", "必须是有效的邮箱地址"
         )
 
         # 优先级验证器
         priority_validator = RegexValidator(
-            r'^(low|medium|high|urgent)$',
-            "优先级必须是: low, medium, high, urgent"
+            r"^(low|medium|high|urgent)$", "优先级必须是: low, medium, high, urgent"
         )
 
         parser.register_attribute_validator("email", email_validator)
         parser.register_attribute_validator("priority", priority_validator)
 
         # 测试验证
-        content = '''{"t": "task", "c": "发送通知", "email": "invalid-email", "priority": "超高"}
-{"t": "task", "c": "正常任务", "email": "user@example.com", "priority": "high"}'''
+        content = """{"t": "task", "c": "发送通知", "email": "invalid-email", "priority": "超高"}
+{"t": "task", "c": "正常任务", "email": "user@example.com", "priority": "high"}"""
 
         result = await parser.parse(content)
 
@@ -175,9 +175,9 @@ class JsonlUsageExamples:
 
         # 创建测试数据
         parser = create_parser()
-        content = '''{"t": "h1", "c": "格式化测试"}
+        content = """{"t": "h1", "c": "格式化测试"}
 {"t": "p", "c": "这是一个段落", "ref": "p1"}
-{"t": "insight", "c": "重要洞察", "priority": "high"}'''
+{"t": "insight", "c": "重要洞察", "priority": "high"}"""
 
         result = await parser.parse(content)
 
@@ -202,10 +202,7 @@ class JsonlUsageExamples:
 
         # 配置服务
         config = ServiceConfig(
-            enable_caching=True,
-            cache_size=100,
-            enable_stats=True,
-            auto_recovery=True
+            enable_caching=True, cache_size=100, enable_stats=True, auto_recovery=True
         )
 
         service = create_service(config)
@@ -223,9 +220,9 @@ class JsonlUsageExamples:
         service.register_custom_processor(quality_enhancer)
 
         # 处理内容
-        content = '''{"t": "h1", "c": "业务分析报告"}
+        content = """{"t": "h1", "c": "业务分析报告"}
 {"t": "insight", "c": "市场趋势向好"}
-{"t": "action", "c": "制定营销策略"}'''
+{"t": "action", "c": "制定营销策略"}"""
 
         result = await service.process_content(content, format_type="pretty")
 
@@ -263,9 +260,9 @@ class JsonlUsageExamples:
                 print(f"  块数量: {len(result['blocks'])}")
                 print(f"  错误数量: {len(result['errors'])}")
 
-                if result['errors']:
+                if result["errors"]:
                     print("  错误详情:")
-                    for error in result['errors'][:3]:  # 只显示前3个错误
+                    for error in result["errors"][:3]:  # 只显示前3个错误
                         print(f"    - {error['message']}")
 
             except Exception as e:
@@ -283,7 +280,7 @@ class JsonlUsageExamples:
         for i in range(1000):  # 减少数据量以便快速演示
             lines.append(f'{{"t": "p", "c": "段落内容 {i}", "id": {i}}}')
 
-        large_content = '\n'.join(lines)
+        large_content = "\n".join(lines)
         print(f"生成测试数据: {len(lines)} 行")
 
         # 配置高性能选项
@@ -292,7 +289,7 @@ class JsonlUsageExamples:
             cache_size=5000,
             enable_stats=True,
             auto_recovery=False,  # 对于已知格式良好的数据，禁用自动恢复
-            max_retry_attempts=1
+            max_retry_attempts=1,
         )
 
         service = create_service(high_perf_config)
@@ -303,8 +300,10 @@ class JsonlUsageExamples:
         processing_time = time.time() - start_time
 
         print(f"处理时间: {processing_time:.2f} 秒")
-        print(f"处理速度: {len(lines)/processing_time:.0f} 行/秒")
-        print(f"成功率: {result['stats']['successful_blocks']/result['stats']['total_lines']:.2%}")
+        print(f"处理速度: {len(lines) / processing_time:.0f} 行/秒")
+        print(
+            f"成功率: {result['stats']['successful_blocks'] / result['stats']['total_lines']:.2%}"
+        )
 
         return result
 
@@ -354,8 +353,8 @@ async def quick_service_example():
     """快速服务示例"""
     from .jsonl_service import process_jsonl_content
 
-    content = '''{"t": "h1", "c": "服务测试"}
-{"t": "p", "c": "使用便捷函数处理"}'''
+    content = """{"t": "h1", "c": "服务测试"}
+{"t": "p", "c": "使用便捷函数处理"}"""
 
     result = await process_jsonl_content(content, format_type="pretty")
 

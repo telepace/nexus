@@ -47,7 +47,6 @@ target_metadata = SQLModel.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-
 def get_url():
     # Check if we're in testing mode
     """Returns the appropriate database URL based on environment settings."""
@@ -65,7 +64,6 @@ def get_url():
             logger.warning("Could not import test database utilities, falling back to main database")
 
     return str(settings.SQLALCHEMY_DATABASE_URI)
-
 
 def print_db_info():
     """Print database connection information"""
@@ -107,7 +105,6 @@ def print_db_info():
 
     logger.info("-" * 50)
 
-
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
@@ -131,7 +128,6 @@ def run_migrations_offline():
 
     with context.begin_transaction():
         context.run_migrations()
-
 
 def run_migrations_online():
     """Run migrations in 'online' mode.
@@ -169,7 +165,6 @@ def run_migrations_online():
 
         with context.begin_transaction():
             context.run_migrations()
-
 
 if context.is_offline_mode():
     run_migrations_offline()

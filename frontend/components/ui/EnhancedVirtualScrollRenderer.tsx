@@ -145,7 +145,7 @@ export const EnhancedVirtualScrollRenderer: React.FC<
 
     let baseDistance = networkStrategy.preloadDistance;
     let velocityMultiplier = 1;
-    let maxDistance = networkStrategy.preloadDistance * 2;
+    const maxDistance = networkStrategy.preloadDistance * 2;
 
     if (enableSmartPreloading) {
       // Adjust based on scroll velocity

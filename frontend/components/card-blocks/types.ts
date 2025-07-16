@@ -192,7 +192,7 @@ export interface AIAction {
   /** 图标 */
   icon: LucideIcon;
   /** 执行函数 */
-  execute: (block: Block) => Promise<any>;
+  execute: (block: Block) => Promise<unknown>;
 }
 
 /**

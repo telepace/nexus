@@ -118,8 +118,9 @@ export const defaultStyleRenderer: StyleRenderer = ({
       );
     case "qa": {
       if (typeof c === "object" && c !== null) {
-        const q = (c as any)["q"] || (c as any)["question"];
-        const a = (c as any)["a"] || (c as any)["answer"];
+        const obj = c as Record<string, unknown>;
+        const q = obj["q"] || obj["question"];
+        const a = obj["a"] || obj["answer"];
         return (
           <div className="my-3 space-y-1 select-text">
             <p className="font-semibold select-text">

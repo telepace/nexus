@@ -31,19 +31,16 @@ class TestJsonlService:
     def service(self):
         """创建服务实例"""
         config = ServiceConfig(
-            enable_caching=True,
-            cache_size=100,
-            enable_stats=True,
-            auto_recovery=True
+            enable_caching=True, cache_size=100, enable_stats=True, auto_recovery=True
         )
         return JsonlService(config)
 
     @pytest.fixture
     def sample_jsonl(self):
         """样本 JSONL 数据"""
-        return '''{"t": "h1", "c": "测试标题"}
+        return """{"t": "h1", "c": "测试标题"}
 {"t": "p", "c": "这是一个测试段落"}
-{"t": "insight", "c": "重要洞察内容"}'''
+{"t": "insight", "c": "重要洞察内容"}"""
 
     async def test_basic_processing(self, service, sample_jsonl):
         """测试基础处理功能"""
@@ -60,8 +57,12 @@ class TestJsonlService:
     async def test_format_conversion(self, service, sample_jsonl):
         """测试格式转换"""
         # 测试不同输出格式
-        compact_result = await service.process_content(sample_jsonl, format_type="compact")
-        pretty_result = await service.process_content(sample_jsonl, format_type="pretty")
+        compact_result = await service.process_content(
+            sample_jsonl, format_type="compact"
+        )
+        pretty_result = await service.process_content(
+            sample_jsonl, format_type="pretty"
+        )
 
         assert compact_result["success"] is True
         assert pretty_result["success"] is True
@@ -70,7 +71,7 @@ class TestJsonlService:
     async def test_validation_functionality(self, service):
         """测试验证功能"""
         valid_content = '{"t": "h1", "c": "标题"}'
-        invalid_content = '{invalid json}'
+        invalid_content = "{invalid json}"
 
         valid_result = await service.validate_jsonl(valid_content)
         invalid_result = await service.validate_jsonl(invalid_content)
@@ -99,17 +100,21 @@ class TestJsonlService:
     async def test_error_recovery(self, service):
         """测试错误恢复功能"""
         # 包含常见错误的内容
-        malformed_content = '''{t: "h1", c: "缺少引号"}
-{"t": "p", "c": "正常内容"}'''
+        malformed_content = """{t: "h1", c: "缺少引号"}
+{"t": "p", "c": "正常内容"}"""
 
         result = await service.process_content(malformed_content)
 
         # 应该能恢复部分内容
         assert len(result["blocks"]) > 0
-        assert "auto_recovery" in str(result.get("metadata", {})) or len(result["blocks"]) >= 1
+        assert (
+            "auto_recovery" in str(result.get("metadata", {}))
+            or len(result["blocks"]) >= 1
+        )
 
     async def test_custom_processors(self, service, sample_jsonl):
         """测试自定义处理器"""
+
         def add_prefix_processor(blocks):
             """为所有块的内容添加前缀"""
             for block in blocks:
@@ -151,7 +156,9 @@ class TestJsonlService:
         config = ServiceConfig(timeout_seconds=0.001)  # 极短超时
         service = JsonlService(config)
 
-        large_content = '\n'.join([f'{{"t": "p", "c": "内容{i}"}}' for i in range(10000)])
+        large_content = "\n".join(
+            [f'{{"t": "p", "c": "内容{i}"}}' for i in range(10000)]
+        )
 
         result = await service.process_content(large_content)
 
@@ -231,7 +238,7 @@ class TestServiceConfig:
         config = ServiceConfig(auto_recovery=False)
         service = JsonlService(config)
 
-        malformed_content = '{invalid json}'
+        malformed_content = "{invalid json}"
         result = await service.process_content(malformed_content)
 
         # 没有自动恢复，应该有更多错误
@@ -243,7 +250,7 @@ class TestServiceConfig:
         service = JsonlService(config)
 
         # 模拟总是失败的解析
-        with patch.object(service.parser, 'parse', side_effect=Exception("模拟错误")):
+        with patch.object(service.parser, "parse", side_effect=Exception("模拟错误")):
             result = await service.process_content('{"t": "h1", "c": "测试"}')
 
             assert result["success"] is False
@@ -307,7 +314,7 @@ class TestErrorScenarios:
         for i in range(50000):
             lines.append(f'{{"t": "p", "c": "内容{i}"}}')
 
-        large_content = '\n'.join(lines)
+        large_content = "\n".join(lines)
 
         result = await service.process_content(large_content)
 
@@ -317,8 +324,8 @@ class TestErrorScenarios:
     async def test_malicious_input(self, service):
         """测试恶意输入"""
         # 包含潜在危险字符的输入
-        malicious_content = '''{"t": "p", "c": "正常内容"}
-{"t": "script", "c": "<script>alert('xss')</script>"}'''
+        malicious_content = """{"t": "p", "c": "正常内容"}
+{"t": "script", "c": "<script>alert('xss')</script>"}"""
 
         result = await service.process_content(malicious_content)
 
@@ -340,7 +347,7 @@ class TestPerformanceBenchmarks:
         for i in range(1000):
             lines.append(f'{{"t": "p", "c": "这是第{i}个段落的内容"}}')
 
-        content = '\n'.join(lines)
+        content = "\n".join(lines)
 
         start_time = time.time()
         result = await service.process_content(content)
@@ -362,10 +369,7 @@ class TestPerformanceBenchmarks:
 
     async def test_concurrent_processing(self, service):
         """测试并发处理"""
-        contents = [
-            f'{{"t": "h{i % 3 + 1}", "c": "标题{i}"}}'
-            for i in range(50)
-        ]
+        contents = [f'{{"t": "h{i % 3 + 1}", "c": "标题{i}"}}' for i in range(50)]
 
         # 并发处理
         tasks = [service.process_content(content) for content in contents]
@@ -385,12 +389,12 @@ class TestIntegrationScenarios:
 
     async def test_real_world_jsonl(self, service):
         """测试真实世界的 JSONL 数据"""
-        real_world_content = '''{"t": "h1", "c": "人工智能发展现状", "ref": "1"}
+        real_world_content = """{"t": "h1", "c": "人工智能发展现状", "ref": "1"}
 {"t": "p", "c": "人工智能技术在近年来取得了显著进展，特别是在深度学习和大语言模型方面。", "ref": "2"}
 {"t": "insight", "c": "AI技术的发展速度超出了大多数人的预期", "expandable": "详细分析AI发展趋势"}
 {"t": "list", "c": ["机器学习", "深度学习", "自然语言处理", "计算机视觉"], "ref": "3"}
 {"t": "quote", "c": "AI将是下一个技术革命的核心", "ref": "4"}
-{"t": "action", "c": "建议投资相关技术研发", "ref": "5"}'''
+{"t": "action", "c": "建议投资相关技术研发", "ref": "5"}"""
 
         result = await service.process_content(real_world_content)
 
@@ -404,11 +408,11 @@ class TestIntegrationScenarios:
 
     async def test_mixed_format_handling(self, service):
         """测试混合格式处理"""
-        mixed_content = '''{"t": "h1", "c": "标题"}
+        mixed_content = """{"t": "h1", "c": "标题"}
 一些普通文本
 {"t": "p", "c": "段落"}
 # Markdown 标题
-{"t": "insight", "c": "洞察"}'''
+{"t": "insight", "c": "洞察"}"""
 
         result = await service.process_content(mixed_content)
 
@@ -417,14 +421,18 @@ class TestIntegrationScenarios:
 
     async def test_format_conversion_roundtrip(self, service):
         """测试格式转换往返"""
-        original_content = '''{"t": "h1", "c": "标题"}
-{"t": "p", "c": "段落"}'''
+        original_content = """{"t": "h1", "c": "标题"}
+{"t": "p", "c": "段落"}"""
 
         # 处理并格式化为 pretty
-        pretty_result = await service.process_content(original_content, format_type="pretty")
+        pretty_result = await service.process_content(
+            original_content, format_type="pretty"
+        )
 
         # 再次解析 pretty 格式的输出
-        roundtrip_result = await service.process_content(pretty_result["content"], format_type="compact")
+        roundtrip_result = await service.process_content(
+            pretty_result["content"], format_type="compact"
+        )
 
         assert roundtrip_result["success"] is True
         assert len(roundtrip_result["blocks"]) == 2

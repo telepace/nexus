@@ -25,13 +25,11 @@ class TestMarkdownConverter:
 
 Some content here.
 
-
 ## Section 1
 Content for section 1.
 
 ### Subsection
 More content.
-
 
 ## Section 2
 Final content."""

@@ -8,7 +8,7 @@ export interface JsonContentItem {
   t: string; // 类型：h1, h2, h3, insight, summary, list, code, etc.
   c: string; // 内容
   ref?: string; // 引用（逗号分隔的数字）
-  meta?: Record<string, any>; // 额外元数据
+  meta?: Record<string, unknown>; // 额外元数据
 }
 
 /**
@@ -207,7 +207,9 @@ export const getTypeIcon = (type: string): string => {
  * @param item - 要验证的项
  * @returns 是否有效
  */
-export const validateJsonContentItem = (item: any): item is JsonContentItem => {
+export const validateJsonContentItem = (
+  item: unknown,
+): item is JsonContentItem => {
   return (
     typeof item === "object" &&
     item !== null &&

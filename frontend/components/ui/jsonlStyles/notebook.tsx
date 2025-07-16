@@ -63,7 +63,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
       return (
         <div className="relative my-0 select-text">
           <div className="absolute -left-1 top-0 text-6xl text-pink-300 opacity-50 leading-none">
-            "
+            &quot;
           </div>
           <blockquote
             className="bg-pink-50 border-l-4 border-pink-300 rounded-r-lg p-4 ml-4 shadow-sm"
@@ -125,7 +125,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
       );
     }
     case "insight": {
-      const priority = (block as any)["priority"] || "normal";
+      const blockObj = block as Record<string, unknown>;
+      const priority = blockObj["priority"] || "normal";
       const colors =
         priority === "high"
           ? {
@@ -188,8 +189,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
       );
     case "qa": {
       if (typeof c === "object" && c !== null) {
-        const q = (c as any)["q"] || (c as any)["question"];
-        const a = (c as any)["a"] || (c as any)["answer"];
+        const obj = c as Record<string, unknown>;
+        const q = obj["q"] || obj["question"];
+        const a = obj["a"] || obj["answer"];
         return (
           <div
             className="my-0 bg-emerald-50 rounded-lg p-4 shadow-sm border-2 border-emerald-200 select-text"

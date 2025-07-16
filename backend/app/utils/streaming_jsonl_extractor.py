@@ -14,9 +14,10 @@ logger = logging.getLogger(__name__)
 
 class ExtractionState(Enum):
     """提取状态枚举"""
+
     WAITING_FOR_JSON = "waiting_for_json"  # 等待第一个JSON对象
-    EXTRACTING_JSON = "extracting_json"    # 正在提取JSON内容
-    COMPLETED = "completed"                # 提取完成
+    EXTRACTING_JSON = "extracting_json"  # 正在提取JSON内容
+    COMPLETED = "completed"  # 提取完成
 
 
 class StreamingJSONLExtractor:
@@ -33,8 +34,8 @@ class StreamingJSONLExtractor:
         self.pure_jsonl_content = ""
         self.buffer = ""
         self.code_block_patterns = [
-            r'```(?:json|jsonl)?\s*\n?',  # 代码块开始标记
-            r'```\s*$',                   # 代码块结束标记
+            r"```(?:json|jsonl)?\s*\n?",  # 代码块开始标记
+            r"```\s*$",  # 代码块结束标记
         ]
 
     def process_chunk(self, chunk: str) -> tuple[str, bool]:
@@ -65,16 +66,16 @@ class StreamingJSONLExtractor:
         """尝试开始JSONL提取"""
         # 改进：先检查是否有代码块标记，如果有就提取代码块内容
         import re
-        
+
         # 查找任何位置的代码块，而不只是开头
-        code_block_pattern = r'```(?:jsonl|json)?\s*\n?(.*?)(?:\n?```|$)'
+        code_block_pattern = r"```(?:jsonl|json)?\s*\n?(.*?)(?:\n?```|$)"
         match = re.search(code_block_pattern, self.buffer, re.DOTALL)
-        
+
         if match:
             # 找到代码块，提取其中的内容
             jsonl_content = match.group(1).strip()
-            lines = jsonl_content.split('\n')
-            
+            lines = jsonl_content.split("\n")
+
             # 检查第一行是否是有效的JSON
             for line in lines:
                 line = line.strip()
@@ -85,7 +86,7 @@ class StreamingJSONLExtractor:
                     return self._extract_jsonl_content()
         else:
             # 没有代码块，查找第一个JSON对象的开始位置
-            lines = self.buffer.split('\n')
+            lines = self.buffer.split("\n")
             jsonl_start_idx = None
 
             for i, line in enumerate(lines):
@@ -105,7 +106,7 @@ class StreamingJSONLExtractor:
                 self.state = ExtractionState.EXTRACTING_JSON
 
                 # 从JSON开始位置重新构建buffer
-                self.buffer = '\n'.join(lines[jsonl_start_idx:])
+                self.buffer = "\n".join(lines[jsonl_start_idx:])
 
                 # 提取当前可用的JSONL内容
                 return self._extract_jsonl_content()
@@ -114,19 +115,21 @@ class StreamingJSONLExtractor:
 
     def _extract_jsonl_content(self) -> tuple[str, bool]:
         """提取JSONL内容"""
-        lines = self.buffer.split('\n')
+        lines = self.buffer.split("\n")
         new_jsonl_lines = []
 
         for line in lines:
             line = line.strip()
 
             # 检查是否是代码块结束标记
-            if re.match(r'```\s*$', line):
+            if re.match(r"```\s*$", line):
                 self.state = ExtractionState.COMPLETED
                 break
 
             # 跳过空行和代码块标记
-            if not line or any(re.match(pattern, line) for pattern in self.code_block_patterns):
+            if not line or any(
+                re.match(pattern, line) for pattern in self.code_block_patterns
+            ):
                 continue
 
             # 检查是否是有效的JSON行
@@ -136,10 +139,10 @@ class StreamingJSONLExtractor:
                     new_jsonl_lines.append(line)
 
         if new_jsonl_lines:
-            new_content = '\n'.join(new_jsonl_lines)
+            new_content = "\n".join(new_jsonl_lines)
             if self.pure_jsonl_content:
-                self.pure_jsonl_content += '\n' + new_content
-                return '\n' + new_content, True
+                self.pure_jsonl_content += "\n" + new_content
+                return "\n" + new_content, True
             else:
                 self.pure_jsonl_content = new_content
                 return new_content, True
@@ -152,29 +155,29 @@ class StreamingJSONLExtractor:
             return False
 
         # 简单检查是否以{开始
-        if line.startswith('{'):
+        if line.startswith("{"):
             try:
                 # 尝试部分解析，看是否包含JSONL的基本字段
                 if '"type"' in line or '"t"' in line:
                     return True
-            except:
+            except Exception:
                 pass
 
         return False
 
     def _is_valid_jsonl_line(self, line: str) -> bool:
         """检查是否是有效的JSONL行"""
-        if not line or not line.startswith('{'):
+        if not line or not line.startswith("{"):
             return False
 
         try:
             import json
+
             parsed = json.loads(line)
             # 检查是否包含JSONL块的基本字段
-            return (
-                isinstance(parsed, dict) and
-                (("type" in parsed or "t" in parsed) and
-                 ("content" in parsed or "c" in parsed))
+            return isinstance(parsed, dict) and (
+                ("type" in parsed or "t" in parsed)
+                and ("content" in parsed or "c" in parsed)
             )
         except json.JSONDecodeError:
             return False

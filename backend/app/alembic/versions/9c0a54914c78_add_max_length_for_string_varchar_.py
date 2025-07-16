@@ -9,13 +9,11 @@ from alembic import op
 import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
 
-
 # revision identifiers, used by Alembic.
 revision = '9c0a54914c78'
 down_revision = 'e2412789c190'
 branch_labels = None
 depends_on = None
-
 
 def upgrade():
     # Adjust the length of the email field in the User table
@@ -41,7 +39,6 @@ def upgrade():
                existing_type=sa.String(),
                type_=sa.String(length=255),
                existing_nullable=True)
-
 
 def downgrade():
     # Revert the length of the email field in the User table

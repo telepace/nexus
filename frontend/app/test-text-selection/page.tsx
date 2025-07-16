@@ -145,7 +145,7 @@ function createTextSelectionFloater(options) {
                         选中文本:
                       </h4>
                       <p className="text-sm bg-gray-50 dark:bg-gray-900 p-3 rounded border">
-                        "{selectedText}"
+                        &quot;{selectedText}&quot;
                       </p>
                     </div>
                     <div>
@@ -190,7 +190,7 @@ function createTextSelectionFloater(options) {
                       测试文本内容：
                     </h4>
                     <p className="text-sm text-blue-700 dark:text-blue-300">
-                      人工智能正在改变世界，深度学习算法能够处理复杂的数据模式，自然语言处理技术让机器理解人类语言，计算机视觉让机器能够"看见"世界。
+                      人工智能正在改变世界，深度学习算法能够处理复杂的数据模式，自然语言处理技术让机器理解人类语言，计算机视觉让机器能够&quot;看见&quot;世界。
                       请尝试选择这段文本，观察是否会出现浮层。如果功能正常，此处不应该有浮层出现。
                     </p>
                   </div>

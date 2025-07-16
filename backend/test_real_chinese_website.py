@@ -2,6 +2,7 @@
 """
 测试真实中文网站的解析和编码处理
 """
+
 import uuid
 
 from sqlmodel import Session
@@ -21,24 +22,24 @@ def test_real_chinese_websites():
         {
             "url": "https://www.baidu.com",
             "name": "百度首页",
-            "expected_chinese": ["百度", "搜索"]
+            "expected_chinese": ["百度", "搜索"],
         },
         {
             "url": "https://news.sina.com.cn",
             "name": "新浪新闻",
-            "expected_chinese": ["新闻", "中国", "新浪"]
+            "expected_chinese": ["新闻", "中国", "新浪"],
         },
         {
             "url": "https://www.zhihu.com",
             "name": "知乎",
-            "expected_chinese": ["知乎", "发现", "问题"]
-        }
+            "expected_chinese": ["知乎", "发现", "问题"],
+        },
     ]
 
     try:
         with Session(engine) as session:
             for i, website in enumerate(test_websites):
-                print(f"\n🧪 测试网站 {i+1}: {website['name']} ({website['url']})")
+                print(f"\n🧪 测试网站 {i + 1}: {website['name']} ({website['url']})")
 
                 try:
                     # 创建测试内容项
@@ -46,9 +47,9 @@ def test_real_chinese_websites():
                         id=uuid.uuid4(),
                         user_id=uuid.uuid4(),
                         type="url",
-                        source_uri=website['url'],
+                        source_uri=website["url"],
                         title=f"测试 - {website['name']}",
-                        processing_status="pending"
+                        processing_status="pending",
                     )
                     session.add(test_content_item)
                     session.commit()
@@ -64,33 +65,48 @@ def test_real_chinese_websites():
 
                         # 检查处理结果中的中文字符
                         markdown_content = result.markdown_content or ""
-                        chinese_chars = [char for char in markdown_content if '\u4e00' <= char <= '\u9fff']
+                        chinese_chars = [
+                            char
+                            for char in markdown_content
+                            if "\u4e00" <= char <= "\u9fff"
+                        ]
                         print(f"📝 Markdown内容长度: {len(markdown_content)}")
                         print(f"🔢 包含中文字符数: {len(chinese_chars)}")
 
                         # 检查是否包含预期的中文词汇
                         found_expected = []
-                        for expected_word in website['expected_chinese']:
+                        for expected_word in website["expected_chinese"]:
                             if expected_word in markdown_content:
                                 found_expected.append(expected_word)
 
                         if found_expected:
                             print(f"✅ 找到预期中文词汇: {', '.join(found_expected)}")
                         else:
-                            print(f"⚠️  未找到预期中文词汇: {', '.join(website['expected_chinese'])}")
+                            print(
+                                f"⚠️  未找到预期中文词汇: {', '.join(website['expected_chinese'])}"
+                            )
 
                         # 检查content_chunks
                         from app.crud.crud_content import get_content_chunks
-                        chunks, total = get_content_chunks(session, test_content_item.id, 1, 10)
+
+                        chunks, total = get_content_chunks(
+                            session, test_content_item.id, 1, 10
+                        )
 
                         print(f"📊 创建了 {len(chunks)} 个内容分块")
 
                         # 检查第一个chunk的中文内容
                         if chunks:
                             first_chunk = chunks[0]
-                            chunk_chinese = [char for char in first_chunk.chunk_content if '\u4e00' <= char <= '\u9fff']
+                            chunk_chinese = [
+                                char
+                                for char in first_chunk.chunk_content
+                                if "\u4e00" <= char <= "\u9fff"
+                            ]
                             print(f"第一个分块中文字符数: {len(chunk_chinese)}")
-                            print(f"第一个分块内容预览: {first_chunk.chunk_content[:100]}...")
+                            print(
+                                f"第一个分块内容预览: {first_chunk.chunk_content[:100]}..."
+                            )
 
                             if len(chunk_chinese) > 0:
                                 print("✅ 分块中包含中文字符，编码正常")
@@ -107,11 +123,13 @@ def test_real_chinese_websites():
                             "chunks": [
                                 {
                                     "id": str(chunk.id),
-                                    "content": chunk.chunk_content[:100],  # 只取前100字符测试
+                                    "content": chunk.chunk_content[
+                                        :100
+                                    ],  # 只取前100字符测试
                                     "index": chunk.chunk_index,
                                 }
                                 for chunk in chunks[:3]  # 只取前3个chunk测试
-                            ]
+                            ],
                         }
 
                         try:
@@ -121,8 +139,12 @@ def test_real_chinese_websites():
                             # 检查往返转换
                             if len(parsed_back["chunks"]) == len(api_data["chunks"]):
                                 # 检查第一个chunk的内容是否一致
-                                if (chunks and len(parsed_back["chunks"]) > 0 and
-                                    parsed_back["chunks"][0]["content"] in chunks[0].chunk_content):
+                                if (
+                                    chunks
+                                    and len(parsed_back["chunks"]) > 0
+                                    and parsed_back["chunks"][0]["content"]
+                                    in chunks[0].chunk_content
+                                ):
                                     print("✅ API JSON序列化正常")
                                 else:
                                     print("❌ API JSON序列化有问题")
@@ -140,14 +162,17 @@ def test_real_chinese_websites():
                 except Exception as e:
                     print(f"❌ 处理网站 {website['name']} 时出错: {e}")
                     import traceback
+
                     traceback.print_exc()
                     continue
 
     except Exception as e:
         print(f"❌ 测试过程中出现严重错误: {e}")
         import traceback
+
         traceback.print_exc()
         raise
+
 
 def test_encoding_edge_cases():
     """测试编码边界情况"""
@@ -159,18 +184,18 @@ def test_encoding_edge_cases():
         {
             "name": "GBK编码网站",
             "content": "<!DOCTYPE html><html><head><meta charset='gbk'><title>中文测试</title></head><body><h1>这是GBK编码的中文内容</h1><p>测试各种中文字符：你好世界</p></body></html>",
-            "encoding": "gbk"
+            "encoding": "gbk",
         },
         {
             "name": "无编码声明网站",
             "content": "<!DOCTYPE html><html><head><title>中文测试</title></head><body><h1>没有编码声明的中文内容</h1><p>测试：你好世界！</p></body></html>",
-            "encoding": None
+            "encoding": None,
         },
         {
             "name": "错误编码声明网站",
             "content": "<!DOCTYPE html><html><head><meta charset='iso-8859-1'><title>中文测试</title></head><body><h1>错误编码声明的中文内容</h1><p>测试：你好世界！</p></body></html>",
-            "encoding": "iso-8859-1"
-        }
+            "encoding": "iso-8859-1",
+        },
     ]
 
     for case in edge_cases:
@@ -183,37 +208,46 @@ def test_encoding_edge_cases():
             # 创建模拟响应
             mock_response = Mock()
             mock_response.status_code = 200
-            mock_response.encoding = case['encoding']
+            mock_response.encoding = case["encoding"]
 
             # 根据不同编码情况设置内容
-            if case['encoding'] == 'gbk':
-                mock_response._content = case['content'].encode('gbk')
+            if case["encoding"] == "gbk":
+                mock_response._content = case["content"].encode("gbk")
             else:
-                mock_response._content = case['content'].encode('utf-8')
+                mock_response._content = case["content"].encode("utf-8")
 
-            mock_response.headers = {'content-type': f'text/html; charset={case["encoding"] or ""}'}
+            mock_response.headers = {
+                "content-type": f"text/html; charset={case['encoding'] or ''}"
+            }
 
             # 模拟text属性的行为
-            if case['encoding'] == 'gbk':
-                mock_response.text = case['content']  # 假设能正确解码
-            elif case['encoding'] is None:
+            if case["encoding"] == "gbk":
+                mock_response.text = case["content"]  # 假设能正确解码
+            elif case["encoding"] is None:
                 # 模拟requests的默认行为（可能使用latin-1）
                 try:
-                    mock_response.text = case['content'].encode('utf-8').decode('latin-1')
+                    mock_response.text = (
+                        case["content"].encode("utf-8").decode("latin-1")
+                    )
                 except Exception:
-                    mock_response.text = case['content']
+                    mock_response.text = case["content"]
             else:
-                mock_response.text = case['content']
+                mock_response.text = case["content"]
 
             # 测试我们的编码修复逻辑
-            if mock_response.encoding is None or mock_response.encoding.lower() in ['iso-8859-1', 'latin-1']:
-                mock_response.encoding = 'utf-8'
+            if mock_response.encoding is None or mock_response.encoding.lower() in [
+                "iso-8859-1",
+                "latin-1",
+            ]:
+                mock_response.encoding = "utf-8"
                 # 重新设置text（模拟修复后的行为）
-                mock_response.text = case['content']
+                mock_response.text = case["content"]
 
             # 检查结果
             result_text = mock_response.text
-            chinese_chars = [char for char in result_text if '\u4e00' <= char <= '\u9fff']
+            chinese_chars = [
+                char for char in result_text if "\u4e00" <= char <= "\u9fff"
+            ]
 
             print(f"编码: {mock_response.encoding}")
             print(f"文本长度: {len(result_text)}")
@@ -227,6 +261,7 @@ def test_encoding_edge_cases():
 
         except Exception as e:
             print(f"❌ 测试 {case['name']} 失败: {e}")
+
 
 if __name__ == "__main__":
     print("🚀 开始真实中文网站解析测试...")

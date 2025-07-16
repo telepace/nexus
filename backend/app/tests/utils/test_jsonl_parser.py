@@ -37,16 +37,16 @@ class TestJsonlParser:
     @pytest.fixture
     def sample_jsonl(self):
         """样本 JSONL 数据"""
-        return '''{"t": "h1", "c": "标题", "ref": "1"}
+        return """{"t": "h1", "c": "标题", "ref": "1"}
 {"t": "p", "c": "这是一个段落", "ref": "2"}
-{"t": "insight", "c": "重要洞察", "expandable": "关于AI的思考"}'''
+{"t": "insight", "c": "重要洞察", "expandable": "关于AI的思考"}"""
 
     @pytest.fixture
     def malformed_jsonl(self):
         """格式错误的 JSONL 数据"""
-        return '''{"t": "h1", "c": "标题"}
+        return """{"t": "h1", "c": "标题"}
 {t: "p", "c": "缺少引号"}
-{"t": "insight", "c": "内容", "extra": value}'''
+{"t": "insight", "c": "内容", "extra": value}"""
 
     async def test_basic_parsing(self, parser, sample_jsonl):
         """测试基础解析功能"""
@@ -84,11 +84,11 @@ class TestJsonlParser:
 
     async def test_whitespace_handling(self, parser):
         """测试空白字符处理"""
-        content = '''{"t": "h1", "c": "标题"}
+        content = """{"t": "h1", "c": "标题"}
 
 {"t": "p", "c": "段落"}
 
-{"t": "action", "c": "行动"}'''
+{"t": "action", "c": "行动"}"""
 
         result = await parser.parse(content)
 
@@ -97,9 +97,9 @@ class TestJsonlParser:
 
     async def test_invalid_json_handling(self, parser):
         """测试无效 JSON 处理"""
-        content = '''{"t": "h1", "c": "正确的块"}
+        content = """{"t": "h1", "c": "正确的块"}
 {invalid json}
-{"t": "p", "c": "另一个正确的块"}'''
+{"t": "p", "c": "另一个正确的块"}"""
 
         result = await parser.parse(content)
 
@@ -125,7 +125,7 @@ class TestJsonlParser:
         custom_definition = DefaultBlockTypeDefinition(
             "custom_type",
             required_attrs={"t", "c", "priority"},
-            optional_attrs={"color"}
+            optional_attrs={"color"},
         )
         parser.register_block_type("custom_type", custom_definition)
 
@@ -156,7 +156,7 @@ class TestJsonlParser:
         for i in range(1000):
             lines.append(f'{{"t": "p", "c": "内容 {i}", "id": {i}}}')
 
-        content = '\n'.join(lines)
+        content = "\n".join(lines)
 
         options = ParseOptions(batch_size=100)
         result = await parser.parse(content, options)
@@ -166,14 +166,17 @@ class TestJsonlParser:
 
     async def test_reference_validation(self, parser):
         """测试引用验证"""
-        content = '''{"t": "p", "c": "段落1", "ref": "p1"}
-{"t": "insight", "c": "洞察", "ref": "p999"}'''
+        content = """{"t": "p", "c": "段落1", "ref": "p1"}
+{"t": "insight", "c": "洞察", "ref": "p999"}"""
 
         result = await parser.parse(content)
 
         # 应该有警告提示引用不存在
         assert len(result.warnings) > 0
-        assert any("Reference 'p999' not found" in warning.message for warning in result.warnings)
+        assert any(
+            "Reference 'p999' not found" in warning.message
+            for warning in result.warnings
+        )
 
     def test_sync_parsing(self, parser, sample_jsonl):
         """测试同步解析接口"""
@@ -184,14 +187,13 @@ class TestJsonlParser:
 
     async def test_preprocessor_config(self, parser):
         """测试预处理器配置"""
-        content = '''```json
+        content = """```json
 {"t": "h1", "c": "标题"}
 {"t": "p", "c": "段落"}
-```'''
+```"""
 
         preprocessor_config = PreprocessorConfig(
-            remove_code_blocks=True,
-            trim_whitespace=True
+            remove_code_blocks=True, trim_whitespace=True
         )
 
         options = ParseOptions(preprocessor=preprocessor_config)
@@ -205,9 +207,9 @@ class TestJsonlParser:
         # 创建包含多个错误的内容
         lines = []
         for _i in range(20):
-            lines.append('invalid json line')
+            lines.append("invalid json line")
 
-        content = '\n'.join(lines)
+        content = "\n".join(lines)
 
         options = ParseOptions(max_errors=5, strict_mode=False)
         result = await parser.parse(content, options)
@@ -217,9 +219,9 @@ class TestJsonlParser:
 
     async def test_strict_mode(self, parser):
         """测试严格模式"""
-        content = '''{"t": "h1", "c": "正确"}
+        content = """{"t": "h1", "c": "正确"}
 invalid json
-{"t": "p", "c": "另一个正确"}'''
+{"t": "p", "c": "另一个正确"}"""
 
         options = ParseOptions(strict_mode=True)
         result = await parser.parse(content, options)
@@ -237,10 +239,10 @@ class TestPreprocessor:
 
     async def test_code_block_removal(self, parser):
         """测试代码块移除"""
-        content = '''```json
+        content = """```json
 {"t": "h1", "c": "标题"}
 ```
-{"t": "p", "c": "段落"}'''
+{"t": "p", "c": "段落"}"""
 
         result = await parser.parse(content)
 
@@ -249,7 +251,7 @@ class TestPreprocessor:
 
     async def test_quote_normalization(self, parser):
         """测试引号标准化"""
-        content = '''{"t": "h1", "c": "测试"引号""}'''
+        content = """{"t": "h1", "c": "测试"引号""}"""
 
         result = await parser.parse(content)
 
@@ -258,8 +260,8 @@ class TestPreprocessor:
 
     async def test_common_error_fixing(self, parser):
         """测试常见错误修复"""
-        content = '''{t: "h1", c: "缺少引号"}
-{"t": "p", "c": "正常",}'''  # 多余逗号
+        content = """{t: "h1", c: "缺少引号"}
+{"t": "p", "c": "正常",}"""  # 多余逗号
 
         result = await parser.parse(content)
 
@@ -281,9 +283,10 @@ class TestPerformance:
         for i in range(10000):
             lines.append(f'{{"t": "p", "c": "内容 {i}", "id": {i}}}')
 
-        content = '\n'.join(lines)
+        content = "\n".join(lines)
 
         import time
+
         start_time = time.time()
 
         result = await parser.parse(content)
@@ -329,8 +332,8 @@ class TestEdgeCases:
 
     async def test_unicode_content(self, parser):
         """测试 Unicode 内容"""
-        content = '''{"t": "h1", "c": "🎉 Unicode 测试 🚀"}
-{"t": "p", "c": "包含各种字符：αβγ δε ζηθ"}'''
+        content = """{"t": "h1", "c": "🎉 Unicode 测试 🚀"}
+{"t": "p", "c": "包含各种字符：αβγ δε ζηθ"}"""
 
         result = await parser.parse(content)
 
@@ -339,8 +342,8 @@ class TestEdgeCases:
 
     async def test_nested_json_values(self, parser):
         """测试嵌套 JSON 值"""
-        content = '''{"t": "list", "c": ["项目1", "项目2", "项目3"]}
-{"t": "complex", "c": {"nested": {"key": "value"}}}'''
+        content = """{"t": "list", "c": ["项目1", "项目2", "项目3"]}
+{"t": "complex", "c": {"nested": {"key": "value"}}}"""
 
         result = await parser.parse(content)
 
@@ -351,7 +354,7 @@ class TestEdgeCases:
 
     async def test_special_characters(self, parser):
         """测试特殊字符"""
-        content = r'''{"t": "p", "c": "包含特殊字符: \n\t\"\'"}'''
+        content = r"""{"t": "p", "c": "包含特殊字符: \n\t\"\'"}"""
 
         result = await parser.parse(content)
 
@@ -360,8 +363,8 @@ class TestEdgeCases:
 
     async def test_empty_fields(self, parser):
         """测试空字段"""
-        content = '''{"t": "", "c": ""}
-{"t": "p", "c": null}'''
+        content = """{"t": "", "c": ""}
+{"t": "p", "c": null}"""
 
         options = ParseOptions(allow_empty_content=True)
         result = await parser.parse(content, options)
@@ -380,17 +383,20 @@ class TestCustomValidators:
     async def test_regex_validator(self, parser):
         """测试正则表达式验证器"""
         # 只允许数字内容
-        regex_validator = RegexValidator(r'^\d+$', "Content must be numeric")
+        regex_validator = RegexValidator(r"^\d+$", "Content must be numeric")
         parser.register_attribute_validator("priority", regex_validator)
 
         content = '{"t": "p", "c": "测试", "priority": "abc"}'
         result = await parser.parse(content)
 
         assert len(result.errors) > 0
-        assert any("Content must be numeric" in error.message for error in result.errors)
+        assert any(
+            "Content must be numeric" in error.message for error in result.errors
+        )
 
     async def test_custom_validator_function(self, parser):
         """测试自定义验证器函数"""
+
         def validate_even_number(value):
             """验证偶数"""
             try:
@@ -400,9 +406,7 @@ class TestCustomValidators:
 
         content = '{"t": "p", "c": "测试", "number": "5"}'
 
-        options = ParseOptions(
-            custom_validators={"number": validate_even_number}
-        )
+        options = ParseOptions(custom_validators={"number": validate_even_number})
 
         result = await parser.parse(content, options)
 

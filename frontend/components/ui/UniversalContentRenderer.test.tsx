@@ -29,7 +29,7 @@ jest.mock("./JsonObjectRenderer", () => ({
   JsonObjectRenderer: ({
     data,
     className,
-  }: { data: any; className?: string }) => (
+  }: { data: unknown; className?: string }) => (
     <div data-testid="json-object-renderer" className={className}>
       JSON Object: {typeof data === "string" ? data : JSON.stringify(data)}
     </div>

@@ -22,8 +22,7 @@ from app.services.ai.chat_service import ChatService
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,7 @@ class DeepSeekLabelsTestSuite:
                 语料库上进行预训练，学习到了丰富的语言表示。
                 """,
                 "content_type": "技术文档",
-                "expected_tags": ["深度学习", "机器学习", "人工智能", "技术文档"]
+                "expected_tags": ["深度学习", "机器学习", "人工智能", "技术文档"],
             },
             {
                 "name": "产品分析",
@@ -69,7 +68,7 @@ class DeepSeekLabelsTestSuite:
                 这种多元化的变现模式为平台的可持续发展提供了保障。
                 """,
                 "content_type": "产品分析",
-                "expected_tags": ["产品分析", "短视频", "移动互联网", "商业模式"]
+                "expected_tags": ["产品分析", "短视频", "移动互联网", "商业模式"],
             },
             {
                 "name": "学术论文",
@@ -88,8 +87,8 @@ class DeepSeekLabelsTestSuite:
                 努力实现量子优势(quantum advantage)。
                 """,
                 "content_type": "学术论文",
-                "expected_tags": ["量子计算", "量子力学", "算法", "学术研究"]
-            }
+                "expected_tags": ["量子计算", "量子力学", "算法", "学术研究"],
+            },
         ]
 
     async def test_model_performance(self) -> dict[str, Any]:
@@ -105,8 +104,8 @@ class DeepSeekLabelsTestSuite:
                 "successful_tests": 0,
                 "average_response_time": 0.0,
                 "average_score": 0.0,
-                "tag_accuracy": 0.0
-            }
+                "tag_accuracy": 0.0,
+            },
         }
 
         total_response_time = 0.0
@@ -122,13 +121,12 @@ class DeepSeekLabelsTestSuite:
                 # 构建测试上下文
                 context = {
                     "content": test_case["content"],
-                    "content_type": test_case["content_type"]
+                    "content_type": test_case["content_type"],
                 }
 
                 # 调用 labels.j2 模板生成标签
                 result = await self.chat_service.generate_with_template(
-                    "labels.j2",
-                    context
+                    "labels.j2", context
                 )
 
                 response_time = time.time() - start_time
@@ -145,7 +143,9 @@ class DeepSeekLabelsTestSuite:
                     # 计算标签匹配度
                     generated_tags = result.get("tags", [])
                     expected_tags = test_case["expected_tags"]
-                    tag_match_rate = self._calculate_tag_similarity(generated_tags, expected_tags)
+                    tag_match_rate = self._calculate_tag_similarity(
+                        generated_tags, expected_tags
+                    )
 
                     test_result = {
                         "test_name": test_case["name"],
@@ -155,7 +155,7 @@ class DeepSeekLabelsTestSuite:
                         "tag_match_rate": tag_match_rate,
                         "content_length": len(test_case["content"]),
                         "expected_tags": expected_tags,
-                        "generated_tags": generated_tags
+                        "generated_tags": generated_tags,
                     }
 
                     logger.info(f"✅ {test_case['name']} 测试成功")
@@ -170,7 +170,7 @@ class DeepSeekLabelsTestSuite:
                         "success": False,
                         "response_time": response_time,
                         "error": "Invalid response format",
-                        "result": result
+                        "result": result,
                     }
                     logger.error(f"❌ {test_case['name']} 测试失败: 无效响应格式")
 
@@ -180,7 +180,7 @@ class DeepSeekLabelsTestSuite:
                     "test_name": test_case["name"],
                     "success": False,
                     "response_time": response_time,
-                    "error": str(e)
+                    "error": str(e),
                 }
                 logger.error(f"❌ {test_case['name']} 测试失败: {e}")
 
@@ -189,19 +189,24 @@ class DeepSeekLabelsTestSuite:
         # 计算汇总统计
         if successful_tests > 0:
             results["summary"]["successful_tests"] = successful_tests
-            results["summary"]["average_response_time"] = total_response_time / len(self.test_cases)
+            results["summary"]["average_response_time"] = total_response_time / len(
+                self.test_cases
+            )
             results["summary"]["average_score"] = total_score / successful_tests
 
             # 计算平均标签匹配率
             total_tag_accuracy = sum(
-                tc.get("tag_match_rate", 0) for tc in results["test_cases"]
+                tc.get("tag_match_rate", 0)
+                for tc in results["test_cases"]
                 if tc.get("success", False)
             )
             results["summary"]["tag_accuracy"] = total_tag_accuracy / successful_tests
 
         return results
 
-    def _calculate_tag_similarity(self, generated_tags: list, expected_tags: list) -> float:
+    def _calculate_tag_similarity(
+        self, generated_tags: list, expected_tags: list
+    ) -> float:
         """计算标签相似度"""
         if not generated_tags or not expected_tags:
             return 0.0
@@ -233,16 +238,18 @@ class DeepSeekLabelsTestSuite:
 
     def _generate_test_report(self, results: dict[str, Any]) -> None:
         """生成测试报告"""
-        logger.info("\n" + "="*60)
+        logger.info("\n" + "=" * 60)
         logger.info("📊 DeepSeek V3 Ensemble 标签处理测试报告")
-        logger.info("="*60)
+        logger.info("=" * 60)
 
         summary = results["summary"]
 
         logger.info("🎯 测试概览:")
         logger.info(f"   总测试数: {summary['total_tests']}")
         logger.info(f"   成功测试: {summary['successful_tests']}")
-        logger.info(f"   成功率: {summary['successful_tests']/summary['total_tests']:.1%}")
+        logger.info(
+            f"   成功率: {summary['successful_tests'] / summary['total_tests']:.1%}"
+        )
 
         if summary["successful_tests"] > 0:
             logger.info("\n⚡ 性能指标:")
@@ -256,23 +263,34 @@ class DeepSeekLabelsTestSuite:
                     result = test_case["result"]
                     logger.info(f"   ✅ {test_case['test_name']}:")
                     logger.info(f"      标题: {result.get('optimized_title', 'N/A')}")
-                    logger.info(f"      描述: {result.get('brief_description', 'N/A')[:50]}...")
+                    logger.info(
+                        f"      描述: {result.get('brief_description', 'N/A')[:50]}..."
+                    )
                     logger.info(f"      标签: {result.get('tags', [])}")
                     logger.info(f"      评分: {result.get('score', 'N/A')}")
-                    logger.info(f"      阅读时间: {result.get('reading_time_minutes', 'N/A')}分钟")
+                    logger.info(
+                        f"      阅读时间: {result.get('reading_time_minutes', 'N/A')}分钟"
+                    )
                     logger.info(f"      响应时间: {test_case['response_time']:.2f}秒")
                 else:
-                    logger.info(f"   ❌ {test_case['test_name']}: {test_case.get('error', 'Unknown error')}")
+                    logger.info(
+                        f"   ❌ {test_case['test_name']}: {test_case.get('error', 'Unknown error')}"
+                    )
 
         # 保存详细结果到文件
-        output_file = Path(__file__).parent.parent / "_output" / "tmp" / "deepseek_labels_test_results.json"
+        output_file = (
+            Path(__file__).parent.parent
+            / "_output"
+            / "tmp"
+            / "deepseek_labels_test_results.json"
+        )
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
 
         logger.info(f"\n💾 详细结果已保存到: {output_file}")
-        logger.info("="*60)
+        logger.info("=" * 60)
 
 
 async def main():

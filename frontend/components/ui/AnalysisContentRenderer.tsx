@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -98,7 +98,7 @@ const ReferenceIndicator: React.FC<{
 
   return (
     <div className="inline-flex items-center gap-1 ml-2">
-      {references.slice(0, 3).map((refId, index) => {
+      {references.slice(0, 3).map((refId) => {
         const refInfo = referenceData?.find((r) => r.id === refId);
 
         return (

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { SimpleContentRenderer } from "@/components/ui/SimpleContentRenderer";
-import { SeamlessContentRenderer } from "@/components/ui/SeamlessContentRenderer";
+// import { SeamlessContentRenderer } from "@/components/ui/SeamlessContentRenderer"; // Commented out unused import
 import { Button } from "@/components/ui/button";
 
 const testContent = `# Argo CD GitOps 实践指南：从入门到生产部署与优化
