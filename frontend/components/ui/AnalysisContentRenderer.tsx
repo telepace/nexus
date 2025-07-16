@@ -13,16 +13,11 @@ import {
 } from "@/components/ui/tooltip";
 import {
   ChevronDown,
-  ChevronUp,
   Lightbulb,
   Quote,
-  List,
-  MessageSquare,
-  Zap,
   BookOpen,
   Target,
   Info,
-  ExternalLink,
   Copy,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -33,7 +28,7 @@ export interface AnalysisBlockData {
   c: string; // 内容
   ref?: string; // 引用（逗号分隔的数字）
   expandable?: string; // 可展开内容的标题
-  meta?: Record<string, any>; // 额外元数据
+  meta?: Record<string, unknown>; // 额外元数据
 }
 
 // 引用信息
@@ -73,8 +68,8 @@ const parseAnalysisContent = (content: string): AnalysisBlockData[] => {
     }
 
     return blocks;
-  } catch (error) {
-    console.warn("分析内容解析失败:", error);
+  } catch {
+    console.warn("分析内容解析失败");
     return [];
   }
 };
@@ -212,7 +207,7 @@ const InsightBlock: React.FC<{
     try {
       await navigator.clipboard.writeText(block.c);
       toast({ title: "已复制", description: "洞察内容已复制到剪贴板" });
-    } catch (error) {
+    } catch {
       toast({
         title: "复制失败",
         description: "无法复制内容",
@@ -338,7 +333,8 @@ const ConceptBlock: React.FC<{
               <div className="px-4 pb-4 border-t border-blue-200/50 dark:border-blue-800/30 bg-blue-25 dark:bg-blue-950/10">
                 <div className="mt-3 text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
                   <p>
-                    这里可以显示关于 "{block.expandable}" 的详细解释和扩展内容。
+                    这里可以显示关于 &quot;{block.expandable}&quot;
+                    的详细解释和扩展内容。
                   </p>
                   <p className="mt-2 text-xs text-blue-600 dark:text-blue-400">
                     * 此功能可以连接到知识库或提供更详细的背景信息
@@ -397,7 +393,7 @@ const ParagraphBlock: React.FC<{
 // 主渲染组件
 export const AnalysisContentRenderer: React.FC<
   AnalysisContentRendererProps
-> = ({ content, references = [], onReferenceClick, className }) => {
+> = ({ content, onReferenceClick, className }) => {
   const blocks = parseAnalysisContent(content);
 
   if (blocks.length === 0) {
@@ -409,12 +405,10 @@ export const AnalysisContentRenderer: React.FC<
   }
 
   const renderBlock = (block: AnalysisBlockData, index: number) => {
-    const references = parseReferences(block.ref);
-
     const blockProps = {
       block,
-      references,
-      referenceData: references,
+      references: parseReferences(block.ref),
+      referenceData: [],
       onReferenceClick,
     };
 

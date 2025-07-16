@@ -253,8 +253,14 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   }, []);
 
   // 处理AI分析
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const performCompletion = useCallback(
     async (body: Record<string, unknown>, title: string) => {
+      // isAnalyzing 是在函数外部定义的，但在函数内部使用。
+      // 为了确保函数在重新渲染时能够获取到最新的 isAnalyzing 状态，
+      // 我们不应该将其包含在 useCallback 的依赖数组中，
+      // 否则会导致函数在 isAnalyzing 变化时重新创建，从而引发逻辑问题。
+      // 正确的做法是，useCallback 依赖的应该是那些在组件生命周期内基本不变的函数或值。
       if (isAnalyzing) return;
 
       setIsAnalyzing(true);
@@ -336,7 +342,14 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         setIsAnalyzing(false);
       }
     },
-    [content.id, isAnalyzing, toast],
+    [
+      content.id,
+      toast,
+      setInputValue,
+      setStreamingResponse,
+      setIsAnalyzing,
+      isAnalyzing,
+    ],
   );
 
   const handleAnalysis = useCallback(async () => {
@@ -362,22 +375,18 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         jsonContent.c || jsonContent.content || JSON.stringify(jsonContent);
       const instruction = `请对以下要点进行深度展开讨论：${selectedPoint}`;
 
-      // 设置输入值
+      // 设置输入值，让用户可以看到
       setInputValue(instruction);
 
-      // 延迟触发分析，让用户看到输入框的变化
-      setTimeout(() => {
-        if (instruction.trim()) {
-          performCompletion(
-            {
-              analysis_instruction: instruction,
-              template_name: "expand_discussion.j2",
-              selected_point: selectedPoint,
-            },
-            "展开分析完成",
-          );
-        }
-      }, 100);
+      // 立即触发分析，不使用setTimeout
+      await performCompletion(
+        {
+          analysis_instruction: instruction,
+          template_name: "expand_discussion.j2",
+          selected_point: selectedPoint,
+        },
+        "展开分析完成",
+      );
     },
     [performCompletion, setInputValue],
   );

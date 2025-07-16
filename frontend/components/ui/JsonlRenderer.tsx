@@ -16,7 +16,6 @@ interface JsonlRendererProps {
   enableHoverEffects?: boolean;
   /** callback when expand button is clicked on a JSON line */
   onExpandLine?: (jsonContent: Record<string, unknown>) => void;
-  contentId?: string; // 用于引用管理器
   /** 指定渲染風格，對應 jsonlStyles 註冊表 key */
   styleName?: string;
   /** 是否显示引用指示器，默认隐藏 */
@@ -38,7 +37,6 @@ export function JsonlRenderer({
   className,
   enableHoverEffects = true,
   onExpandLine,
-  contentId,
   styleName = "notebook",
   showReferenceIndicators = false,
 }: JsonlRendererProps) {
@@ -91,8 +89,7 @@ export function JsonlRenderer({
 
   const BlockWrapper: React.FC<{
     children: React.ReactNode;
-    hasReferences?: boolean;
-  }> = ({ children, hasReferences = false }) => {
+  }> = ({ children }) => {
     if (!enableHoverEffects) {
       return <>{children}</>;
     }
@@ -119,19 +116,18 @@ export function JsonlRenderer({
 
     // 解析引用
     const references = actions.parseReferences(ref);
-    const hasReferences = references.length > 0;
 
     const blockElement = styleRenderer({
       block,
       references,
-      hasReferences,
+      hasReferences: references.length > 0,
       MarkdownRenderer,
       EnhancedReferenceIndicator: ReferenceIndicatorComponent,
     });
 
     // 统一封装：先用 BlockWrapper 提供引用高亮，再在内部使用 JsonLineWithExpandButton
     return (
-      <BlockWrapper key={idx} hasReferences={hasReferences}>
+      <BlockWrapper key={idx}>
         <JsonLineWithExpandButton
           jsonLine={block}
           onExpand={onExpandLine}

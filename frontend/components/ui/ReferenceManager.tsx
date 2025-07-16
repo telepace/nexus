@@ -18,7 +18,7 @@ export interface SourceParagraph {
   startOffset?: number; // 字符偏移量开始位置
   endOffset?: number; // 字符偏移量结束位置
   chunkId?: string; // 对应的chunk ID
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // 引用信息

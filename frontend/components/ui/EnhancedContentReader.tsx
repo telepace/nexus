@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { ChunkItem } from "./ChunkItem";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import {
+  ReferenceManagerProvider,
   useReferenceManagerSafe,
   createParagraphHighlightStyles,
 } from "./ReferenceManager";
@@ -25,9 +26,7 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
   content,
   chunks,
   className = "",
-  contentId,
 }) => {
-  const { state } = useReferenceManagerSafe();
   const containerRef = useRef<HTMLDivElement>(null);
   const [highlightedParagraphs, setHighlightedParagraphs] = useState<
     Set<number>
@@ -78,7 +77,7 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
                   ? "index-offset"
                   : "array-index"
               : "not-found",
-            availableIndexes: chunks.map((c) => c.index).slice(0, 5), // 只显示前5个避免日志过长
+            availableIndexes: chunks.map((c) => c.index).slice(0, 5), // 只显示前5个避免��志过长
           });
 
           if (targetChunk) {
@@ -284,7 +283,7 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
 
     return (
       <div className="space-y-0">
-        {chunks.map((chunk, index) => (
+        {chunks.map((chunk) => (
           <div
             key={chunk.id}
             data-chunk-id={chunk.id}
@@ -338,6 +337,13 @@ interface EnhancedContentReaderWithProviderProps
   enableReferenceManager?: boolean;
 }
 
+const EnhancedContentReaderWithProviderInternal: React.FC<
+  EnhancedContentReaderWithProviderProps
+> = ({ ...props }) => {
+  useReferenceManagerSafe();
+  return <EnhancedContentReader {...props} />;
+};
+
 export const EnhancedContentReaderWithProvider: React.FC<
   EnhancedContentReaderWithProviderProps
 > = ({ enableReferenceManager = true, ...props }) => {
@@ -345,17 +351,9 @@ export const EnhancedContentReaderWithProvider: React.FC<
     return <EnhancedContentReader {...props} />;
   }
 
-  // 如果已经在Provider内，直接使用
-  try {
-    useReferenceManagerSafe();
-    return <EnhancedContentReader {...props} />;
-  } catch {
-    // 如果不在Provider内，需要包装
-    const { ReferenceManagerProvider } = require("./ReferenceManager");
-    return (
-      <ReferenceManagerProvider contentId={props.contentId}>
-        <EnhancedContentReader {...props} />
-      </ReferenceManagerProvider>
-    );
-  }
+  return (
+    <ReferenceManagerProvider contentId={props.contentId}>
+      <EnhancedContentReaderWithProviderInternal {...props} />
+    </ReferenceManagerProvider>
+  );
 };

@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { act } from "react";
 
-import Page from "@/app/login/page";
+import Page from "@/app/(auth)/login/page";
 import { login } from "@/components/actions/login-action";
 
 // 模拟 login 函数
