@@ -54,7 +54,12 @@
       "Bash(--label \"enhancement\" )",
       "Bash(--label \"frontend\" )",
       "Bash(--label \"ai\")",
-      "Bash(git rebase:*)"
+      "Bash(git rebase:*)",
+      "Bash(make:*)",
+      "Bash(python:*)",
+      "Bash(npm run format:*)",
+      "Bash(npm test:*)",
+      "Bash(git checkout:*)"
     ]
   },
   "enableAllProjectMcpServers": false

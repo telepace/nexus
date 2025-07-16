@@ -12,7 +12,6 @@ import {
   X,
   Search,
   Sparkles,
-  ArrowRight,
   Zap,
   LinkIcon,
   FileText,
@@ -21,7 +20,6 @@ import {
   Image,
   Video,
   File,
-  Trash2,
   AlertCircle,
   Settings,
   Link,
@@ -334,15 +332,6 @@ const analyzeContent = (text: string, files: File[] = []) => {
 };
 
 // URL检测和提取 - 使用新的智能URL提取函数
-const isURL = (text: string) => {
-  try {
-    new URL(text);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 const extractUrls = (text: string) => {
   return extractAndNormalizeUrls(text);
 };

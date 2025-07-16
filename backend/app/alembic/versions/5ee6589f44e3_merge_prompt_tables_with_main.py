@@ -9,17 +9,14 @@ from alembic import op
 import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
 
-
 # revision identifiers, used by Alembic.
 revision = '5ee6589f44e3'
 down_revision = ('0001', '1e3b5c7f9d2a')
 branch_labels = None
 depends_on = None
 
-
 def upgrade():
     pass
-
 
 def downgrade():
     pass

@@ -20,17 +20,21 @@ class AIResultPublic(SQLModel):
     difficulty_level: str | None = None
     content_quality_score: float | None = None
 
+
 # Schemas for ContentItem
+
 
 class ContentItemBaseSchema(SQLModel):
     type: str
     source_uri: str | None = None
     title: str | None = None
 
+
 class ContentItemCreate(ContentItemBaseSchema):
     # Add any fields specific to creation that are not in base or are optional in base but required here
     content_text: str | None = None
     # user_id is set from authentication, not from client request
+
 
 class ContentItemUpdate(SQLModel):
     # All fields are optional for update
@@ -40,6 +44,7 @@ class ContentItemUpdate(SQLModel):
     content_text: str | None = None
     # user_id is typically not updatable, or handled via different auth/logic
     # processing_status is also typically not updated directly by user
+
 
 class ContentItemPublic(ContentItemBaseSchema):
     id: uuid.UUID
@@ -52,14 +57,17 @@ class ContentItemPublic(ContentItemBaseSchema):
     updated_at: datetime
     ai_result: AIResultPublic | None = None
 
+
 class ContentItemDetail(ContentItemPublic):
     """Extended schema for detailed content view with processed content."""
 
     processed_content: str | None = None
     meta_info: str | None = None
 
+
 # Schemas for ContentAsset (can be added later if needed for API endpoints)
 # For this task, only ContentItem schemas are explicitly required for the endpoints.
+
 
 # Schemas for ContentShare
 class ContentShareBase(SQLModel):
@@ -69,9 +77,11 @@ class ContentShareBase(SQLModel):
         default=None, sa_column_kwargs={"exclude": True}
     )  # Write-only
 
+
 class ContentShareCreate(ContentShareBase):
     # content_item_id will be provided via URL path parameter, not request body
     pass
+
 
 class ContentSharePublic(
     SQLModel
@@ -83,9 +93,11 @@ class ContentSharePublic(
     is_active: bool
     # content_item_id could be exposed if needed, but not in this version for simplicity
 
+
 print(
     "Schemas for ContentItem and ContentShare created in backend/app/schemas/content.py"
 )
+
 
 class ContentAnalysisRequest(BaseModel):
     """内容分析请求schema"""

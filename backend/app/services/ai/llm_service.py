@@ -38,7 +38,6 @@ class LLMService:
         Note:
             该方法会记录配置模型名称和LiteLLM实际调用模型名称的映射关系
         """
-        import httpx
 
         try:
             async with httpx.AsyncClient(timeout=120.0) as client:
@@ -60,7 +59,9 @@ class LLMService:
                 base_url = str(settings.LITELLM_PROXY_URL).rstrip("/")
                 url = f"{base_url}/v1/chat/completions"
 
-                logger.debug(f"Calling LLM: {url} with configured model: {configured_model}")
+                logger.debug(
+                    f"Calling LLM: {url} with configured model: {configured_model}"
+                )
 
                 response = await client.post(
                     url,
@@ -79,7 +80,9 @@ class LLMService:
                 # 记录模型映射信息
                 actual_model = response_data.get("model", "unknown")
                 if actual_model != configured_model:
-                    logger.info(f"🔄 Model routing: {configured_model} -> {actual_model}")
+                    logger.info(
+                        f"🔄 Model routing: {configured_model} -> {actual_model}"
+                    )
                 else:
                     logger.debug(f"✅ Model direct: {configured_model}")
 

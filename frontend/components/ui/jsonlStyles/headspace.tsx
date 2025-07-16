@@ -124,7 +124,8 @@ export const headspaceStyleRenderer: StyleRenderer = ({
       );
     }
     case "insight": {
-      const priority = (block as any)["priority"] || "normal";
+      const blockObj = block as Record<string, unknown>;
+      const priority = blockObj["priority"] || "normal";
       const icon = priority === "high" ? "⚡" : "💡";
 
       return gradientWrapper(
@@ -167,8 +168,9 @@ export const headspaceStyleRenderer: StyleRenderer = ({
       );
     case "qa": {
       if (typeof c === "object" && c !== null) {
-        const q = (c as any)["q"] || (c as any)["question"];
-        const a = (c as any)["a"] || (c as any)["answer"];
+        const obj = c as Record<string, unknown>;
+        const q = obj["q"] || obj["question"];
+        const a = obj["a"] || obj["answer"];
         return gradientWrapper(
           <div className="space-y-4 select-text text-gray-800">
             <p>

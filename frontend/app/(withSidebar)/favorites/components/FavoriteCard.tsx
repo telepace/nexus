@@ -24,10 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import {
-  ProcessingStatusBadge,
-  ProcessingStatus,
-} from "@/components/ui/ProcessingStatusBadge";
+import { ProcessingStatusBadge } from "@/components/ui/ProcessingStatusBadge";
 import { FavoriteButton } from "@/components/actions/FavoriteButton";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -60,7 +57,6 @@ interface Props {
   hovered: boolean;
   onCardClick: (item: FavoriteItemData, event?: React.MouseEvent) => void;
   onCardHover: (item: FavoriteItemData | null) => void;
-  onItemDeleted?: (itemId: string) => void;
 }
 
 const getContentIcon = (type: string) => {
@@ -110,7 +106,6 @@ export const FavoriteCard = ({
   hovered,
   onCardClick,
   onCardHover,
-  onItemDeleted,
 }: Props) => {
   const router = useRouter();
 
@@ -281,7 +276,13 @@ export const FavoriteCard = ({
                 
                 {/* 处理状态 */}
                 <ProcessingStatusBadge
-                  status={content_item.processing_status as any}
+                  status={
+                    content_item.processing_status as
+                      | "pending"
+                      | "processing"
+                      | "completed"
+                      | "failed"
+                  }
                   size="sm"
                 />
 

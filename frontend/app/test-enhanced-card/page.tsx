@@ -8,8 +8,7 @@ import {
   ReferenceInfo,
 } from "@/components/ui/analysis-card";
 
-// 临时别名，避免构建错误
-const EnhancedCard = AnalysisCard;
+// Note: EnhancedCard is an alias for AnalysisCard (commented out unused variable)
 import { useToast } from "@/hooks/use-toast";
 import { Star, Download, Edit, Target, Eye, Info } from "lucide-react";
 
@@ -364,7 +363,7 @@ export default function TestAnalysisCardPage() {
                 <strong>引用系统：</strong>
                 通过{" "}
                 <code className="bg-blue-100 dark:bg-blue-900/40 px-1 rounded">
-                  "ref":"3,6,8"
+                  &quot;ref&quot;:&quot;3,6,8&quot;
                 </code>{" "}
                 格式支持引用标记，点击数字可查看引用详情
               </div>
@@ -501,11 +500,11 @@ export default function TestAnalysisCardPage() {
               </div>
               <div>
                 • <strong>复制内容</strong>
-                ：菜单中的"复制内容"可以复制卡片的主要文本内容
+                ：菜单中的&quot;复制内容&quot;可以复制卡片的主要文本内容
               </div>
               <div>
                 • <strong>复制全部</strong>
-                ：菜单中的"复制全部"会复制卡片中的所有内容块
+                ：菜单中的&quot;复制全部&quot;会复制卡片中的所有内容块
               </div>
               <div>
                 • <strong>删除功能</strong>

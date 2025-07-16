@@ -208,7 +208,8 @@ export const ContentCard = ({
         content += `## 摘要\n${briefDescription}\n\n`;
       }
 
-      const fullText = (item as any).content_text as string | undefined;
+      const fullText = (item as ContentItemPublic & { content_text?: string })
+        .content_text;
       if (fullText) {
         content += `## 内容\n${fullText}\n\n`;
       }

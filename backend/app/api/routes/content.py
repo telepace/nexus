@@ -111,6 +111,7 @@ def _extract_title_from_content(content_text: str | None) -> str:
 
     return "新内容"
 
+
 def create_ai_conversation(
     session: Session,
     user_id: uuid.UUID,
@@ -166,7 +167,7 @@ def create_ai_conversation(
                 "analysis_type": "content_analysis",
                 "content_length": len(content_to_analyze),
                 "configured_model": model,  # 记录配置的模型名称
-                "note": "模型名称为配置值，实际调用可能通过LiteLLM路由到不同后端"
+                "note": "模型名称为配置值，实际调用可能通过LiteLLM路由到不同后端",
             }
         ),
     )
@@ -181,6 +182,7 @@ def create_ai_conversation(
         ai_conversation = refreshed_ai_conversation
 
     return ai_conversation
+
 
 def update_ai_conversation_response(
     session: Session,
@@ -228,6 +230,7 @@ def update_ai_conversation_response(
         logger.error(f"Failed to update AIConversation {ai_conversation.id}: {e}")
         session.rollback()
 
+
 @router.get(
     "/events",
     summary="Content Events Stream (SSE)",
@@ -249,6 +252,7 @@ async def content_events_endpoint(
             "Access-Control-Allow-Headers": "Cache-Control",
         },
     )
+
 
 @router.post(
     "/create",
@@ -332,6 +336,7 @@ def create_content_item_endpoint(
 
     return public_item
 
+
 @router.post(
     "/process/{id}",
     response_model=ContentItemPublic,
@@ -409,14 +414,15 @@ async def process_content_item_endpoint(
 
     return public_item
 
+
 async def process_content_background_async(
-    pipeline, content_item_id: uuid.UUID, session_config
+    pipeline, content_item_id: uuid.UUID, _session_config
 ):
     """异步后台任务处理内容，支持AI分析"""
     # 创建新的session以避免绑定问题
     from sqlmodel import Session
 
-    from app.core.database import engine
+    from app.core.db_factory import engine
 
     try:
         with Session(engine) as session:
@@ -464,6 +470,7 @@ async def process_content_background_async(
         except Exception as update_err:
             logger.error(f"Failed to update error status: {update_err}")
 
+
 def process_content_background(processor, content_item: ContentItem, session):
     """Legacy background task to process content (kept for backward compatibility)."""
     try:
@@ -493,6 +500,7 @@ def process_content_background(processor, content_item: ContentItem, session):
         content_item.error_message = str(e)
         session.add(content_item)
         session.commit()
+
 
 @router.get(
     "/",
@@ -564,6 +572,7 @@ def list_content_items_endpoint(
 
     return public_items
 
+
 @router.get(
     "/{id}",
     response_model=ContentItemPublic,
@@ -630,6 +639,7 @@ def get_content_item_endpoint(
     )
 
     return public_item
+
 
 @router.get(
     "/{id}/chunks",
@@ -737,6 +747,7 @@ def get_content_chunks_endpoint(
             detail="Failed to retrieve content chunks",
         )
 
+
 @router.get(
     "/{id}/chunks/summary",
     summary="Get Content Chunks Summary",
@@ -799,6 +810,7 @@ def get_content_chunks_summary_endpoint(
             detail="Failed to retrieve content chunks summary",
         )
 
+
 @router.post(
     "/{id}/analyze-stream",
     summary="Stream Content Analysis",
@@ -838,7 +850,9 @@ async def analyze_content_stream_endpoint(
 
     # 使用配置的模型，支持任务特定的模型选择
     # 对于内容分析，使用 analysis 任务对应的模型
-    resolved_model = settings.resolved_ai_task_models.get("analysis", settings.DEFAULT_LLM_MODEL)
+    resolved_model = settings.resolved_ai_task_models.get(
+        "analysis", settings.DEFAULT_LLM_MODEL
+    )
 
     # 创建AIConversation记录
     ai_conversation = create_ai_conversation(
@@ -871,6 +885,7 @@ async def analyze_content_stream_endpoint(
             "X-Vercel-AI-Data-Stream": "v1",  # Vercel AI SDK 要求的头部
         },
     )
+
 
 async def _stream_content_analysis(
     _content_item_id: uuid.UUID,  # 使用 ID 而不是对象
@@ -1037,6 +1052,7 @@ async def _stream_content_analysis(
         error_msg = str(e).replace('"', '\\"')
         yield f'{{"t":"error","c":"Stream error: {error_msg}"}}]\n'
 
+
 @router.post(
     "/{id}/analyze-ai-sdk-updated",
     summary="Analyze Content with AI SDK (Updated Structure)",
@@ -1118,8 +1134,9 @@ async def analyze_ai_sdk_updated_endpoint(
         },
     )
 
+
 async def _stream_content_analysis_ai_sdk(
-    content_item_id: uuid.UUID,  # 使用ID而不是对象
+    _content_item_id: uuid.UUID,  # 使用ID而不是对象
     content_text: str,  # 直接传递内容文本
     request: ContentAnalysisRequest,
     ai_conversation_id: uuid.UUID,
@@ -1142,7 +1159,9 @@ async def _stream_content_analysis_ai_sdk(
 
         # 使用配置的模型，支持任务特定的模型选择
         # 对于内容分析，使用 analysis 任务对应的模型
-        resolved_model = settings.resolved_ai_task_models.get("analysis", settings.DEFAULT_LLM_MODEL)
+        resolved_model = settings.resolved_ai_task_models.get(
+            "analysis", settings.DEFAULT_LLM_MODEL
+        )
 
         payload = {
             "model": resolved_model,
@@ -1181,7 +1200,7 @@ async def _stream_content_analysis_ai_sdk(
                                 final_increment = jsonl_processor.finalize()
                                 if final_increment:
                                     # 直接传输JSONL对象，不进行额外转义
-                                    final_lines = final_increment.strip().split('\n')
+                                    final_lines = final_increment.strip().split("\n")
                                     for jsonl_line in final_lines:
                                         if jsonl_line.strip():
                                             # 直接传输JSONL对象 (类型0)
@@ -1197,7 +1216,9 @@ async def _stream_content_analysis_ai_sdk(
                                             AIConversation, ai_conversation_id
                                         )
                                         if ai_conversation:
-                                            final_content = jsonl_processor.get_current_jsonl()
+                                            final_content = (
+                                                jsonl_processor.get_current_jsonl()
+                                            )
                                             update_ai_conversation_response(
                                                 db_session,
                                                 ai_conversation,
@@ -1216,11 +1237,15 @@ async def _stream_content_analysis_ai_sdk(
                                         full_response += content
 
                                         # 使用实时JSONL处理器检测完整的JSONL行
-                                        jsonl_increment, has_new_jsonl = jsonl_processor.process_chunk(content)
+                                        jsonl_increment, has_new_jsonl = (
+                                            jsonl_processor.process_chunk(content)
+                                        )
 
                                         if has_new_jsonl and jsonl_increment:
                                             # 直接传输JSONL对象，不进行额外转义
-                                            jsonl_lines = jsonl_increment.strip().split('\n')
+                                            jsonl_lines = jsonl_increment.strip().split(
+                                                "\n"
+                                            )
                                             for jsonl_line in jsonl_lines:
                                                 if jsonl_line.strip():
                                                     # 直接传输JSONL对象 (类型0)
@@ -1233,6 +1258,7 @@ async def _stream_content_analysis_ai_sdk(
         # 发送错误信息 (类型9)
         error_msg = str(e).replace('"', '\\"')
         yield f'{{"t":"error","c":"Analysis failed: {error_msg}"}}]\n'
+
 
 @router.post(
     "/{id}/completion-updated",
@@ -1276,7 +1302,9 @@ async def completion_updated_endpoint(
 
     # 使用配置的模型，支持任务特定的模型选择
     # 对于内容分析，使用 analysis 任务对应的模型
-    resolved_model = settings.resolved_ai_task_models.get("analysis", settings.DEFAULT_LLM_MODEL)
+    resolved_model = settings.resolved_ai_task_models.get(
+        "analysis", settings.DEFAULT_LLM_MODEL
+    )
 
     # Create AI conversation record
     ai_conversation = create_ai_conversation(
@@ -1321,8 +1349,9 @@ async def completion_updated_endpoint(
         },
     )
 
+
 async def _stream_content_completion_updated(
-    content_item_id: uuid.UUID,  # 使用ID而不是对象
+    _content_item_id: uuid.UUID,  # 使用ID而不是对象
     content_text: str,  # 直接传递内容文本
     content_title: str,  # 内容标题
     request: ContentAnalysisRequest,
@@ -1349,8 +1378,8 @@ async def _stream_content_completion_updated(
                 document_metadata={
                     "title": content_title,
                     "author": "Unknown",
-                    "source_url": None
-                }
+                    "source_url": None,
+                },
             )
         else:
             # 使用原有的用户分析模板渲染
@@ -1364,7 +1393,9 @@ async def _stream_content_completion_updated(
 
         # 使用配置的模型，支持任务特定的模型选择
         # 对于内容分析，使用 analysis 任务对应的模型
-        resolved_model = settings.resolved_ai_task_models.get("analysis", settings.DEFAULT_LLM_MODEL)
+        resolved_model = settings.resolved_ai_task_models.get(
+            "analysis", settings.DEFAULT_LLM_MODEL
+        )
 
         payload = {
             "model": resolved_model,
@@ -1403,7 +1434,7 @@ async def _stream_content_completion_updated(
                                 final_increment = jsonl_processor.finalize()
                                 if final_increment:
                                     # 直接传输JSONL对象，不进行额外转义
-                                    final_lines = final_increment.strip().split('\n')
+                                    final_lines = final_increment.strip().split("\n")
                                     for jsonl_line in final_lines:
                                         if jsonl_line.strip():
                                             # 直接传输JSONL对象 (类型0)
@@ -1419,14 +1450,18 @@ async def _stream_content_completion_updated(
                                             AIConversation, ai_conversation_id
                                         )
                                         if ai_conversation:
-                                            final_content = jsonl_processor.get_current_jsonl()
+                                            final_content = (
+                                                jsonl_processor.get_current_jsonl()
+                                            )
                                             update_ai_conversation_response(
                                                 db_session,
                                                 ai_conversation,
                                                 final_content,
                                             )
                                 except Exception as e:
-                                    logger.error(f"Failed to save AI completion response: {e}")
+                                    logger.error(
+                                        f"Failed to save AI completion response: {e}"
+                                    )
                                 return
 
                             try:
@@ -1438,11 +1473,15 @@ async def _stream_content_completion_updated(
                                         full_response += content
 
                                         # 使用实时JSONL处理器检测完整的JSONL行
-                                        jsonl_increment, has_new_jsonl = jsonl_processor.process_chunk(content)
+                                        jsonl_increment, has_new_jsonl = (
+                                            jsonl_processor.process_chunk(content)
+                                        )
 
                                         if has_new_jsonl and jsonl_increment:
                                             # 直接传输JSONL对象，不进行额外转义
-                                            jsonl_lines = jsonl_increment.strip().split('\n')
+                                            jsonl_lines = jsonl_increment.strip().split(
+                                                "\n"
+                                            )
                                             for jsonl_line in jsonl_lines:
                                                 if jsonl_line.strip():
                                                     # 直接传输JSONL对象 (类型0)
@@ -1455,6 +1494,7 @@ async def _stream_content_completion_updated(
         # 发送错误信息 (类型9)
         error_msg = str(e).replace('"', '\\"')
         yield f'{{"t":"error","c":"Completion failed: {error_msg}"}}]\n'
+
 
 @router.get(
     "/{id}/markdown",
@@ -1494,9 +1534,11 @@ def get_content_markdown_endpoint(
         "updated_at": content_item.updated_at.isoformat(),
     }
 
+
 # ================================
 # Content Conversations Routes
 # ================================
+
 
 def convert_conversation_to_public(conversation: AIConversation) -> dict:
     """Convert AIConversation model to public schema."""
@@ -1575,6 +1617,7 @@ def convert_conversation_to_public(conversation: AIConversation) -> dict:
         "updated_at": conversation.updated_at.isoformat(),
     }
 
+
 @router.get(
     "/{content_id}/conversations",
     summary="Get All Conversations for Content",
@@ -1651,6 +1694,7 @@ def get_content_conversations(
             detail="Failed to retrieve conversations"
         )
 
+
 @router.post(
     "/{content_id}/conversations",
     status_code=status.HTTP_201_CREATED,
@@ -1715,6 +1759,7 @@ def create_conversation(
 
     return convert_conversation_to_public(conversation)
 
+
 @router.get(
     "/{id}/analyze/stream",
     summary="Stream Content Analysis with Templates",
@@ -1762,12 +1807,18 @@ async def analyze_content_stream_with_template_endpoint(
     # 使用配置的模型，支持任务特定的模型选择
     # 根据 analysis_type 参数选择对应的模型
     if analysis_type == "summary":
-        resolved_model = settings.resolved_ai_task_models.get("summary", settings.DEFAULT_LLM_MODEL)
+        resolved_model = settings.resolved_ai_task_models.get(
+            "summary", settings.DEFAULT_LLM_MODEL
+        )
     elif analysis_type == "key_points":
-        resolved_model = settings.resolved_ai_task_models.get("key_points", settings.DEFAULT_LLM_MODEL)
+        resolved_model = settings.resolved_ai_task_models.get(
+            "key_points", settings.DEFAULT_LLM_MODEL
+        )
     else:
         # 对于其他分析类型，使用通用分析模型
-        resolved_model = settings.resolved_ai_task_models.get("analysis", settings.DEFAULT_LLM_MODEL)
+        resolved_model = settings.resolved_ai_task_models.get(
+            "analysis", settings.DEFAULT_LLM_MODEL
+        )
 
     # 提取ContentItem的必要属性，避免传递ORM对象到异步函数
     content_title = content_item.title
@@ -1780,10 +1831,10 @@ async def analyze_content_stream_with_template_endpoint(
             content_item_id=id,
             content_text=content_text,
             content_title=content_title,
-            source_uri=source_uri,
+            _source_uri=source_uri,
             analysis_type=analysis_type,
             user_id=current_user.id,
-            model=resolved_model,
+            _model=resolved_model,
         ),
         media_type="text/event-stream",
         headers={
@@ -1794,14 +1845,15 @@ async def analyze_content_stream_with_template_endpoint(
         },
     )
 
+
 async def _stream_template_analysis(
     content_item_id: uuid.UUID,
     content_text: str,
     content_title: str | None,
-    source_uri: str | None,
+    _source_uri: str | None,
     analysis_type: str,
     user_id: uuid.UUID,
-    model: str,
+    _model: str,
 ) -> AsyncGenerator[str, None]:
     """
     Stream analysis using template-based AI processing
@@ -1822,7 +1874,9 @@ async def _stream_template_analysis(
     # 获取该模板对应的正确模型
     resolved_model = chat_service.get_model_for_template(template_name)
 
-    logger.info(f"Using resolved model '{resolved_model}' for analysis type '{analysis_type}' (template: {template_name})")
+    logger.info(
+        f"Using resolved model '{resolved_model}' for analysis type '{analysis_type}' (template: {template_name})"
+    )
 
     # 创建JSONL提取器（用于summary和key_points类型）
     jsonl_extractor = None
@@ -1916,23 +1970,38 @@ async def _stream_template_analysis(
 
                             if data == "[DONE]":
                                 # 使用纯净的JSONL内容或原始内容
-                                final_content = pure_jsonl_response if jsonl_extractor and jsonl_extractor.has_jsonl_content() else accumulated_content
+                                final_content = (
+                                    pure_jsonl_response
+                                    if jsonl_extractor
+                                    and jsonl_extractor.has_jsonl_content()
+                                    else accumulated_content
+                                )
 
                                 # 保存完整的AI响应
                                 if final_content and ai_conversation:
                                     try:
                                         with Session(engine) as db_session:
                                             # 重新查询conversation以确保正确的session绑定
-                                            conversation = db_session.get(AIConversation, ai_conversation.id)
+                                            conversation = db_session.get(
+                                                AIConversation, ai_conversation.id
+                                            )
                                             if conversation:
                                                 # 更新对话内容
-                                                messages_list = json.loads(conversation.messages or "[]")
-                                                messages_list.append({
-                                                    "role": "assistant",
-                                                    "content": final_content,
-                                                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                                                })
-                                                conversation.messages = json.dumps(messages_list)
+                                                messages_list = json.loads(
+                                                    conversation.messages or "[]"
+                                                )
+                                                messages_list.append(
+                                                    {
+                                                        "role": "assistant",
+                                                        "content": final_content,
+                                                        "timestamp": datetime.now(
+                                                            timezone.utc
+                                                        ).isoformat(),
+                                                    }
+                                                )
+                                                conversation.messages = json.dumps(
+                                                    messages_list
+                                                )
                                                 db_session.add(conversation)
                                                 db_session.commit()
                                     except Exception as e:
@@ -1953,9 +2022,13 @@ async def _stream_template_analysis(
                                     if ai_conversation:
                                         try:
                                             with Session(engine) as db_session:
-                                                conversation = db_session.get(AIConversation, ai_conversation.id)
+                                                conversation = db_session.get(
+                                                    AIConversation, ai_conversation.id
+                                                )
                                                 if conversation:
-                                                    conversation.summary = f"分析失败: {error_msg}"
+                                                    conversation.summary = (
+                                                        f"分析失败: {error_msg}"
+                                                    )
                                                     db_session.add(conversation)
                                                     db_session.commit()
                                         except Exception as e:
@@ -1977,11 +2050,15 @@ async def _stream_template_analysis(
 
                                         # 如果是JSONL模板，尝试提取JSONL内容
                                         if jsonl_extractor:
-                                            jsonl_increment, has_new_jsonl = jsonl_extractor.process_chunk(content)
+                                            jsonl_increment, has_new_jsonl = (
+                                                jsonl_extractor.process_chunk(content)
+                                            )
 
                                             if has_new_jsonl:
                                                 # 有新的JSONL内容，发送纯净的增量内容
-                                                pure_jsonl_response = jsonl_extractor.get_current_jsonl()
+                                                pure_jsonl_response = (
+                                                    jsonl_extractor.get_current_jsonl()
+                                                )
                                                 yield f"data: {json.dumps({'type': analysis_type, 'content': jsonl_increment, 'finished': False})}\n\n"
                                             elif jsonl_extractor.has_jsonl_content():
                                                 # 已经在提取JSONL，跳过非JSONL内容
@@ -2000,6 +2077,7 @@ async def _stream_template_analysis(
     except Exception as e:
         logger.error(f"Template analysis error: {e}")
         yield f"data: {json.dumps({'type': 'error', 'content': f'分析过程中发生错误: {str(e)}', 'finished': True})}\n\n"
+
 
 @router.delete(
     "/{id}",
@@ -2065,6 +2143,7 @@ def delete_content_item_endpoint(
             detail="An unexpected error occurred while deleting the content item",
         )
 
+
 @router.post(
     "/{id}/favorite",
     status_code=status.HTTP_201_CREATED,
@@ -2108,6 +2187,7 @@ def add_to_favorites_endpoint(
 
     return {"status": "ok"}
 
+
 @router.delete(
     "/{id}/favorite",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -2146,6 +2226,7 @@ def remove_from_favorites_endpoint(
             detail="Content item is not in favorites",
         )
 
+
 @router.get(
     "/{id}/favorite/status",
     summary="Check Favorite Status",
@@ -2179,6 +2260,7 @@ def check_favorite_status_endpoint(
     )
 
     return {"is_favorite": favorite is not None}
+
 
 @router.get(
     "/processors/supported",
@@ -2246,6 +2328,7 @@ def get_supported_processors_endpoint() -> dict[str, Any]:
         },
     }
 
+
 @router.post(
     "/{id}/share",
     response_model=ContentSharePublic,
@@ -2297,6 +2380,7 @@ def create_share_link_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create share link",
         )
+
 
 @router.get(
     "/share/{token}",
@@ -2393,6 +2477,7 @@ def get_shared_content_endpoint(
 
     return ContentItemPublic.model_validate(content_item)
 
+
 @router.delete(
     "/{id}/share",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -2430,6 +2515,7 @@ def deactivate_share_link_endpoint(
         if share.is_active:
             deactivate_content_share(session, content_share=share)
 
+
 @router.post(
     "/{id}/regenerate-ai",
     response_model=dict[str, Any],
@@ -2441,7 +2527,9 @@ def regenerate_ai_analysis_endpoint(
     *,
     session: SessionDep,
     current_user: CurrentUser,
-    id: uuid.UUID = Path(..., description="ID of the content item to regenerate AI analysis for"),
+    id: uuid.UUID = Path(
+        ..., description="ID of the content item to regenerate AI analysis for"
+    ),
 ) -> dict[str, Any]:
     """
     Regenerate AI analysis for a content item.
@@ -2480,8 +2568,7 @@ def regenerate_ai_analysis_endpoint(
 
     # Start AI regeneration task using the global instance
     background_task_manager.start_ai_regeneration(
-        content_id=str(content_item.id),
-        user_id=str(current_user.id)
+        content_id=str(content_item.id), user_id=str(current_user.id)
     )
 
     logger.info(f"Started AI regeneration for content {content_item.id}")
@@ -2490,7 +2577,7 @@ def regenerate_ai_analysis_endpoint(
         "message": "AI analysis regeneration started",
         "content_id": str(content_item.id),
         "status": "processing",
-        "note": "Check SSE events for real-time progress updates"
+        "note": "Check SSE events for real-time progress updates",
     }
 
 @router.get("/{content_id}/segments/{segment_number}", response_model=ContentSegmentOut)

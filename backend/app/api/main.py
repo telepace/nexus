@@ -63,6 +63,5 @@ api_router.include_router(
     deep_research.router, prefix="/deep-research", tags=["deep-research"]
 )  # Include deep research router
 
-
 if settings.ENVIRONMENT == "local":
     api_router.include_router(private.router)

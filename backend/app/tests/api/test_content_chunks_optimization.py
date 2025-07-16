@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.models.content import ContentItem, Segment
+
 # from app.tests.utils.utils import create_test_content_with_chunks
 
 
@@ -16,7 +17,7 @@ class TestContentChunksOptimization:
     """Test suite for optimized content chunks retrieval."""
 
     def test_get_all_chunks_at_once(
-        self, client: TestClient, session: Session, normal_user_token_headers: dict
+        self, client: TestClient, db_session: Session, normal_user_token_headers: dict
     ):
         """
         Test case: When all=true parameter is provided,
@@ -56,13 +57,12 @@ class TestContentChunksOptimization:
         pass
 
     def test_all_chunks_performance(
-        self, client: TestClient, session: Session, normal_user_token_headers: dict
+        self, client: TestClient, db_session: Session, normal_user_token_headers: dict
     ):
         """
         Test case: Performance requirement for all=true parameter.
         Should handle large content efficiently.
         """
-        import time
 
         # Arrange: Create content with realistic large chunk count
         # content_item = create_test_content_with_chunks(session, chunk_count=200)
@@ -83,7 +83,7 @@ class TestContentChunksOptimization:
         pass
 
     def test_backward_compatibility_preserved(
-        self, client: TestClient, session: Session, normal_user_token_headers: dict
+        self, client: TestClient, db_session: Session, normal_user_token_headers: dict
     ):
         """
         Test case: Existing pagination behavior should remain unchanged
@@ -110,7 +110,7 @@ class TestContentChunksOptimization:
         pass
 
     def test_user_experience_seamless_loading(
-        self, client: TestClient, session: Session, normal_user_token_headers: dict
+        self, client: TestClient, db_session: Session, normal_user_token_headers: dict
     ):
         """
         Test case: Simulate user experience - first screen loads quickly,
@@ -146,7 +146,7 @@ class TestContentChunksOptimization:
         pass
 
     def test_content_integrity_with_all_parameter(
-        self, client: TestClient, session: Session, normal_user_token_headers: dict
+        self, client: TestClient, db_session: Session, normal_user_token_headers: dict
     ):
         """
         Test case: Content integrity when using all=true parameter.
@@ -186,7 +186,7 @@ class TestContentChunksOptimization:
 def create_test_content_with_chunks(
     session: Session,
     chunk_count: int,
-    content_pattern: str = "Test chunk content {index}"
+    content_pattern: str = "Test chunk content {index}",
 ) -> ContentItem:
     """
     Helper function to create test content with specified number of chunks.
@@ -199,7 +199,7 @@ def create_test_content_with_chunks(
         source_uri="https://example.com/test-article",
         title=f"Test Article with {chunk_count} chunks",
         content_text="Full article content here...",
-        processing_status="completed"
+        processing_status="completed",
     )
     session.add(content_item)
     session.commit()
@@ -217,7 +217,7 @@ def create_test_content_with_chunks(
             content=content_pattern.format(index=i),
             segment_type="paragraph",
             word_count=10 + (i % 20),  # Vary word count
-            char_count=50 + (i % 100)  # Vary char count
+            char_count=50 + (i % 100),  # Vary char count
         )
         session.add(segment)
 

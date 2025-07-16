@@ -25,7 +25,6 @@ except ImportError:
     # 使用模拟的异常
     ClientError = MockClientError
 
-
 from app.utils.storage.base import StorageService
 from app.utils.storage.local import LocalStorageService
 from app.utils.storage.r2 import BOTO3_AVAILABLE as R2_BOTO3_AVAILABLE

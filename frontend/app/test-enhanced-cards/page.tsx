@@ -109,7 +109,7 @@ export default function TestEnhancedCardsPage() {
               </p>
               <p>
                 <strong>块类型识别：</strong>{" "}
-                复制时会显示对应的块类型（如"已复制段落内容"）
+                复制时会显示对应的块类型（如&quot;已复制段落内容&quot;）
               </p>
               <p>
                 <strong>暗色模式：</strong> 完整支持深色主题下的悬停效果

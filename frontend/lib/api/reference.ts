@@ -2,13 +2,13 @@ import { client } from "./client";
 
 export interface SourceParagraph {
   id: string;
-  content_item_id: string;
-  display_number: number;
+  index: number;
   content: string;
-  start_offset?: number;
-  end_offset?: number;
-  created_at: string;
-  updated_at: string;
+  title?: string;
+  startOffset?: number;
+  endOffset?: number;
+  chunkId?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ReferenceMapping {
@@ -19,9 +19,10 @@ export interface ReferenceMapping {
 }
 
 export interface ContentReferenceInfo {
-  segments: SourceParagraph[];
-  total: number;
-  missing_numbers: number[];
+  contentId: string;
+  paragraphs: SourceParagraph[];
+  mappings: ReferenceMapping[];
+  totalParagraphs: number;
 }
 
 export const referenceApi = {
@@ -30,13 +31,9 @@ export const referenceApi = {
    */
   async getContentParagraphs(contentId: string): Promise<ContentReferenceInfo> {
     try {
-<<<<<<< HEAD
-      const response = await client.get<ContentReferenceInfo>(`/api/v1/content/${contentId}/segments`);
-=======
       const response = await client.get<ContentReferenceInfo>(
         `/api/v1/content/${contentId}/paragraphs`,
       );
->>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
       return response;
     } catch (error) {
       console.error("Failed to fetch content paragraphs:", error);
@@ -52,13 +49,9 @@ export const referenceApi = {
     refId: number,
   ): Promise<SourceParagraph | null> {
     try {
-<<<<<<< HEAD
-      const response = await client.get<SourceParagraph>(`/api/v1/content/${contentId}/segments/${refId}`);
-=======
       const response = await client.get<SourceParagraph>(
         `/api/v1/content/${contentId}/paragraphs/${refId}`,
       );
->>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
       return response;
     } catch (error) {
       console.error(`Failed to fetch paragraph ${refId}:`, error);
@@ -74,12 +67,6 @@ export const referenceApi = {
     refIds: number[],
   ): Promise<SourceParagraph[]> {
     try {
-<<<<<<< HEAD
-      // 使用查询参数传递段落号列表
-      const numbers = refIds.join(',');
-      const response = await client.get<ContentReferenceInfo>(`/api/v1/content/${contentId}/segments?numbers=${numbers}`);
-      return response.segments;
-=======
       const response = await client.post<SourceParagraph[]>(
         `/api/v1/content/${contentId}/paragraphs/batch`,
         {
@@ -87,7 +74,6 @@ export const referenceApi = {
         },
       );
       return response;
->>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
     } catch (error) {
       console.error("Failed to fetch paragraphs by refs:", error);
       return [];
@@ -102,11 +88,6 @@ export const referenceApi = {
     query: string,
   ): Promise<SourceParagraph[]> {
     try {
-<<<<<<< HEAD
-      // 注意：后端可能没有实现搜索功能，这里先返回空数组
-      console.warn("搜索功能暂未实现");
-      return [];
-=======
       const response = await client.get<SourceParagraph[]>(
         `/api/v1/content/${contentId}/paragraphs/search`,
         {
@@ -114,7 +95,6 @@ export const referenceApi = {
         },
       );
       return response;
->>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
     } catch (error) {
       console.error("Failed to search paragraphs:", error);
       return [];
@@ -133,21 +113,13 @@ export const referenceApi = {
     context: SourceParagraph[];
   } | null> {
     try {
-      // 计算上下文范围
-      const fromNumber = Math.max(1, refId - contextSize);
-      const toNumber = refId + contextSize;
-      
-      const response = await client.get<ContentReferenceInfo>(`/api/v1/content/${contentId}/segments?from_number=${fromNumber}&to_number=${toNumber}`);
-      
-      const target = response.segments.find(s => s.display_number === refId);
-      if (!target) {
-        return null;
-      }
-      
-      return {
-        target,
-        context: response.segments,
-      };
+      const response = await client.get<{
+        target: SourceParagraph;
+        context: SourceParagraph[];
+      }>(`/api/v1/content/${contentId}/paragraphs/${refId}/context`, {
+        size: contextSize,
+      });
+      return response;
     } catch (error) {
       console.error(`Failed to fetch paragraph context for ${refId}:`, error);
       return null;

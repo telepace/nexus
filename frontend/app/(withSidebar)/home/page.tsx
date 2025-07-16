@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import {
-  Activity,
   ArrowRight,
   Settings,
   Search,
@@ -41,15 +40,6 @@ interface DashboardMetrics {
     title: string;
     updated_at: string;
   }>;
-}
-
-interface Activity {
-  type: string;
-  title: string;
-  description: string;
-  timestamp: string;
-  confidence?: number;
-  status?: string;
 }
 
 // GitHub 风格贡献图组件
@@ -184,6 +174,8 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<"Ask" | "Research" | "Build">(
     "Ask",
   );
+  const [, setError] = useState<string | null>(null);
+  const [, setActivities] = useState<unknown[]>([]);
 
   const greeting = getGreeting();
 
@@ -319,7 +311,9 @@ export default function HomePage() {
               {["Ask", "Research", "Build"].map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab as any)}
+                  onClick={() =>
+                    setActiveTab(tab as "Ask" | "Research" | "Build")
+                  }
                   className={cn(
                     "px-3 py-1.5 text-xs font-medium rounded-lg transition-all",
                     activeTab === tab

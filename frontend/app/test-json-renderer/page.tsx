@@ -4,7 +4,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 import { JsonObjectRenderer } from "@/components/ui/JsonObjectRenderer";
-import { JsonlRenderer } from "@/components/ui/JsonlRenderer";
+// import { JsonlRenderer } from "@/components/ui/JsonlRenderer"; // Commented out unused import
 
 export default function TestJsonRendererPage() {
   // 测试数据
