@@ -526,11 +526,11 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       return (
         <div
           className={`
-            p-4 rounded-lg cursor-pointer transition-all duration-200
+            px-6 py-4 rounded-lg cursor-pointer transition-all duration-200
             ${
               selectedBlock === `${card.id}-main`
-                ? "bg-gray-50 dark:bg-gray-900"
-                : "hover:bg-gray-25 dark:hover:bg-gray-950"
+                ? "linear-bg-1 opacity-90"
+                : "hover:linear-bg-1 hover:opacity-80"
             }
           `}
           onClick={(e) => handleBlockClick(`${card.id}-main`, e)}
@@ -582,26 +582,26 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         <Card
           className={`
           transition-all duration-300 ease-in-out 
-          overflow-hidden relative border-0 analysis-card
+          relative border-0 analysis-card
           ${
             isSelected
-              ? "shadow-lg bg-white dark:bg-gray-950"
-              : "shadow-sm bg-gray-50/50 dark:bg-gray-900/50"
+              ? "shadow-lg linear-bg-1"
+              : "shadow-sm linear-bg-1"
           }
           group-hover:shadow-lg
         `}
         data-exclude-selection
         >
-          <CardContent className="p-4" data-exclude-selection>
+          <CardContent className="px-12 py-4" data-exclude-selection>
             {/* 极简卡片头部 */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <span className="text-lg">{card.emoji}</span>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
                     {card.title}
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
                     {card.subtitle}
                   </p>
                 </div>
@@ -613,7 +613,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-gray-400 hover:text-gray-600"
+                  className="h-7 w-7 text-neutral-400 hover:text-neutral-600"
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleCardCollapse(card.id);
@@ -633,12 +633,12 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                       itemId={content.id}
                       size="sm"
                       variant="ghost"
-                      className="h-7 w-7 text-gray-400 hover:text-gray-600"
+                      className="h-7 w-7 text-neutral-400 hover:text-neutral-600"
                     />
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-gray-400 hover:text-gray-600"
+                      className="h-7 w-7 text-neutral-400 hover:text-neutral-600"
                       onClick={(e) => {
                         e.stopPropagation();
                         console.log("分享");
@@ -678,8 +678,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <Brain className="h-8 w-8 animate-spin mx-auto mb-2 text-gray-400" />
-          <p className="text-sm text-gray-500">正在加载分析结果...</p>
+          <Brain className="h-8 w-8 animate-spin mx-auto mb-2 text-neutral-400" />
+          <p className="text-sm text-neutral-500">正在加载分析结果...</p>
         </div>
       </div>
     );
@@ -714,7 +714,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
             className={`px-6 py-4 ${variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""}`} 
             data-exclude-selection
           >
-            <h1 className="text-xl font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+            <h1 className="text-xl font-medium text-neutral-900 dark:text-neutral-100 line-clamp-2">
               {content.title || "内容分析"}
             </h1>
           </div>
@@ -724,7 +724,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         <div className="px-8 pt-4 pb-6" data-exclude-selection>
           <div className={`space-y-6 ${
             variant === "preview" 
-              ? "max-w-[var(--size-body)] 2xl:max-w-[var(--size-body-lg)] mx-auto" 
+              ? "max-w-2xl mx-auto" 
               : ""
           }`}>
             {cards.length > 0 ? (
@@ -732,10 +732,10 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                 <CardComponent key={card.id} card={card} index={index} />
               ))
             ) : (
-              <div className="flex items-center justify-center p-8 border border-dashed border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/30 dark:bg-gray-900/30">
+              <div className="flex items-center justify-center p-8 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50/30 dark:bg-neutral-900/30">
                 <div className="text-center space-y-2">
-                  <Brain className="h-8 w-8 text-gray-400 mx-auto" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <Brain className="h-8 w-8 text-neutral-400 mx-auto" />
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">
                     暂无分析结果，使用下方AI助手开始分析
                   </p>
                 </div>
@@ -748,16 +748,16 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       {/* 固定底部AI助手 */}
       <div className={`flex-shrink-0 backdrop-blur-md border-t ${
         variant === "preview" 
-          ? "linear-bg-1/95 border-border" 
-          : "bg-white/95 dark:bg-gray-950/95 border-gray-200 dark:border-gray-800"
+          ? "linear-bg-1 border-border" 
+          : "linear-bg-1 border-border dark:border-neutral-800"
       }`} data-exclude-selection>
         <div className="px-6 py-4">
           {/* 历史记录展开面板 */}
           {showHistory && (
             <div className="mb-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
-              <div className="bg-gray-50/80 dark:bg-gray-900/80 rounded-xl p-4 backdrop-blur-sm">
+              <div className="bg-neutral-50/80 dark:bg-neutral-900/80 rounded-xl p-4 backdrop-blur-sm">
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <h4 className="text-sm font-medium text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
                     <MessageSquare className="h-4 w-4" />
                     历史对话
                   </h4>
@@ -767,37 +767,37 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                 <div className="space-y-2 max-h-32 overflow-y-auto scrollbar-hide">
                   {loadingHistory ? (
                     <div className="text-center py-4">
-                      <RefreshCw className="h-4 w-4 animate-spin mx-auto text-gray-400" />
+                      <RefreshCw className="h-4 w-4 animate-spin mx-auto text-neutral-400" />
                     </div>
                   ) : historyRecords.length === 0 ? (
-                    <div className="text-center py-4 text-sm text-gray-500 dark:text-gray-400">
+                    <div className="text-center py-4 text-sm text-neutral-500 dark:text-neutral-400">
                       暂无历史对话
                     </div>
                   ) : (
                     historyRecords.map((record, index) => (
                       <div
                         key={record.id}
-                        className="flex items-center justify-between p-2 rounded-lg hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors duration-200 cursor-pointer group"
+                        className="flex items-center justify-between p-2 rounded-lg hover:bg-white/50 dark:hover:bg-neutral-800/50 transition-colors duration-200 cursor-pointer group"
                         onClick={() => handleHistoryClick(record)}
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                            <MessageSquare className="h-3 w-3 text-gray-600 dark:text-gray-400" />
+                          <div className="w-6 h-6 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center flex-shrink-0">
+                            <MessageSquare className="h-3 w-3 text-neutral-600 dark:text-neutral-400" />
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                            <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
                               {record.title || "未命名对话"}
                             </div>
                             {record.summary && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
                                 {record.summary}
                               </p>
                             )}
                           </div>
 
-                          <span className="text-xs text-gray-400 flex-shrink-0">
+                          <span className="text-xs text-neutral-400 flex-shrink-0">
                             {formatDistanceToNow(new Date(record.created_at), {
                               addSuffix: true,
                               locale: zhCN,
@@ -816,15 +816,15 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           <div className="flex items-center gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
             {loadingPrompts ? (
               <div className="flex items-center gap-2">
-                <RefreshCw className="h-4 w-4 animate-spin text-gray-400" />
-                <span className="text-sm text-gray-500">加载中...</span>
+                <RefreshCw className="h-4 w-4 animate-spin text-neutral-400" />
+                <span className="text-sm text-neutral-500">加载中...</span>
               </div>
             ) : (
               prompts.map((prompt) => (
                 <button
                   key={prompt.id}
                   onClick={() => handlePromptClick(prompt)}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 whitespace-nowrap flex-shrink-0"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 whitespace-nowrap flex-shrink-0"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>{prompt.name}</span>
@@ -836,8 +836,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           {/* 输入框 */}
           <div
             className={`
-            flex items-center px-4 py-3 bg-gray-50 dark:bg-gray-900 rounded-2xl border-2 transition-all duration-200
-            ${inputFocused ? "border-gray-900 dark:border-gray-100" : "border-transparent"}
+            flex items-center px-4 py-3 bg-neutral-50 dark:bg-neutral-900 rounded-2xl border-2 transition-all duration-200
+            ${inputFocused ? "border-neutral-900 dark:border-neutral-100" : "border-transparent"}
           `}
           >
             <input
@@ -853,7 +853,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                 }
               }}
               placeholder="询问关于内容的任何问题..."
-              className="flex-1 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none"
+              className="flex-1 bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none"
               disabled={isAnalyzing}
             />
 
@@ -861,7 +861,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
             {inputValue.trim() && (
               <Button
                 size="icon"
-                className="h-8 w-8 rounded-xl bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 text-white ml-3"
+                className="h-8 w-8 rounded-xl bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white ml-3"
                 onClick={handleAnalysis}
                 disabled={isAnalyzing}
               >

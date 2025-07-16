@@ -36,7 +36,7 @@ export function JsonlRenderer({
   enableHoverEffects = true,
   onExpandLine,
   contentId,
-  styleName = "neumorphism",
+  styleName = "notebook",
   showReferenceIndicators = false,
 }: JsonlRendererProps) {
   // 使用安全的 ReferenceManager

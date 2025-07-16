@@ -157,7 +157,7 @@ export default function ReaderLayout({
             ) : (
               // 显示AI分析区域
               <div className="flex flex-col h-full bg-muted/30 insight-pane ai-analysis-panel" data-exclude-selection>
-                <div className="flex items-center justify-between px-6 border-b border-muted/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm h-header" data-exclude-selection>
+                <div className="flex items-center justify-between px-6 border-b border-muted/40 linear-bg-1/95 backdrop-blur supports-[backdrop-filter]:linear-bg-1/80 shadow-sm h-header" data-exclude-selection>
                   <h2 className="font-semibold text-base">AI分析</h2>
                   <Button
                     onClick={toggleRightPanel}

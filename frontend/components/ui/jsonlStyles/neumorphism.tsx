@@ -1,12 +1,10 @@
 import { StyleRenderer } from "./types";
 import React from "react";
 
-// 优化的 Neumorphism 样式 - 更标准的新拟物效果
+// 基礎 Neumorphism 樣式
 const bg = "linear-bg-1";
-// 外凸效果：使用更小更精致的陰影效果，与HTML文件保持一致
-const card = `${bg} rounded-2xl shadow-[7px_7px_15px_#e8e8e8,_-7px_-7px_15px_#ffffff] p-6`;
-// 内凹效果：使用更小更精致的陰影效果，与HTML文件保持一致
-const cardInset = `${bg} rounded-2xl shadow-[inset_7px_7px_15px_#e8e8e8,_inset_-7px_-7px_15px_#ffffff] p-6`;
+const card = `${bg} rounded-2xl shadow-[7px_7px_15px_#bdbdbd,_-7px_-7px_15px_rgba(255,255,255,0.8)] p-4`;
+const cardInset = `${bg} rounded-2xl shadow-[inset_7px_7px_15px_#bdbdbd,_inset_-7px_-7px_15px_rgba(255,255,255,0.8)] p-4`;
 
 export const neumorphismStyleRenderer: StyleRenderer = ({
   block,
@@ -61,7 +59,7 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
           <ul className="space-y-3">
             {items.map((item, i) => (
               <li key={i} className={`flex items-start gap-3 ${text}`}>
-                <span className="mt-1.5 w-2.5 h-2.5 rounded-full bg-gray-400 shadow-[1px_1px_2px_#e8e8e8,_-1px_-1px_2px_#ffffff] flex-shrink-0" />
+                <span className="mt-1.5 w-2.5 h-2.5 rounded-full bg-gray-400 shadow-[1px_1px_2px_#e8e8e8,_-1px_-1px_2px_rgba(255,255,255,0.8)] flex-shrink-0" />
                 <span className="flex-1 text-sm leading-relaxed">
                   <MarkdownRenderer content={item} inline={true} />
                 </span>
@@ -83,13 +81,13 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
       return (
         <div className={`${card} my-1 space-y-3`}>
           <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-gray-600 shadow-[3px_3px_6px_#e8e8e8,_-3px_-3px_6px_#ffffff]" style={{background: 'inherit'}}>Q</div>
+            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-gray-600 shadow-[3px_3px_6px_#e8e8e8,_-3px_-3px_6px_rgba(255,255,255,0.8)]" style={{background: 'inherit'}}>Q</div>
             <p className={`${text} flex-1 text-sm font-semibold`}>
               <MarkdownRenderer content={String(q)} inline={true} />
             </p>
           </div>
           <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-gray-600 shadow-[inset_3px_3px_6px_#e8e8e8,_inset_-3px_-3px_6px_#ffffff]" style={{background: 'inherit'}}>A</div>
+            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-gray-600 shadow-[inset_3px_3px_6px_#e8e8e8,_inset_-3px_-3px_6px_rgba(255,255,255,0.8)]" style={{background: 'inherit'}}>A</div>
             <p className={`${text} flex-1 text-sm`}>
               <MarkdownRenderer content={String(a)} inline={true} />
             </p>
