@@ -9,33 +9,29 @@ import { JsonlRenderer } from "@/components/ui/JsonlRenderer";
 export default function TestJsonRendererPage() {
   // 测试数据
   const testJsonObject = {
-    "title": "AI分析结果",
-    "summary": "这是一个复杂的AI分析结果对象",
-    "data": {
-      "key_points": [
-        "第一个要点",
-        "第二个要点",
-        "第三个要点"
-      ],
-      "metadata": {
-        "created_at": "2024-01-15",
-        "confidence": 0.95,
-        "sources": ["source1", "source2"],
-        "is_verified": true
+    title: "AI分析结果",
+    summary: "这是一个复杂的AI分析结果对象",
+    data: {
+      key_points: ["第一个要点", "第二个要点", "第三个要点"],
+      metadata: {
+        created_at: "2024-01-15",
+        confidence: 0.95,
+        sources: ["source1", "source2"],
+        is_verified: true,
       },
-      "nested_object": {
-        "level1": {
-          "level2": {
-            "level3": "深层嵌套数据"
-          }
-        }
-      }
+      nested_object: {
+        level1: {
+          level2: {
+            level3: "深层嵌套数据",
+          },
+        },
+      },
     },
-    "statistics": {
-      "word_count": 1500,
-      "reading_time": 6,
-      "complexity_score": null
-    }
+    statistics: {
+      word_count: 1500,
+      reading_time: 6,
+      complexity_score: null,
+    },
   };
 
   const testJsonlContent = `{"type": "h2", "content": "核心观点", "mapping": "h2-1"}
@@ -118,13 +114,13 @@ export default function TestJsonRendererPage() {
               <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 原始JSON数据:
               </h4>
-              <JsonObjectRenderer 
-                data={testJsonObject} 
+              <JsonObjectRenderer
+                data={testJsonObject}
                 defaultExpandDepth={1}
                 className="mb-4"
               />
             </div>
-            
+
             <div>
               <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 字符串化后的效果 (模拟后端返回):
@@ -143,9 +139,17 @@ export default function TestJsonRendererPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="text-blue-800 dark:text-blue-200 space-y-2">
-          <p><strong>JsonObjectRenderer:</strong> 专门用于渲染JSON对象，支持语法高亮、层级展开/折叠、复制功能</p>
-          <p><strong>UniversalContentRenderer:</strong> 自动检测内容格式，支持JSONL、JSON对象、Markdown等格式</p>
-          <p><strong>特性:</strong></p>
+          <p>
+            <strong>JsonObjectRenderer:</strong>{" "}
+            专门用于渲染JSON对象，支持语法高亮、层级展开/折叠、复制功能
+          </p>
+          <p>
+            <strong>UniversalContentRenderer:</strong>{" "}
+            自动检测内容格式，支持JSONL、JSON对象、Markdown等格式
+          </p>
+          <p>
+            <strong>特性:</strong>
+          </p>
           <ul className="list-disc list-inside space-y-1 ml-4">
             <li>🎨 语法高亮 - 不同类型数据使用不同颜色</li>
             <li>📁 可折叠树结构 - 点击展开/折叠嵌套对象</li>
@@ -157,4 +161,4 @@ export default function TestJsonRendererPage() {
       </Card>
     </div>
   );
-} 
+}

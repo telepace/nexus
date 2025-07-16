@@ -300,8 +300,8 @@ export const LLMAnalysisCard: FC<LLMAnalysisCardProps> = ({
                   {/* 流式内容区域 */}
                   <div className="prose prose-sm max-w-none dark:prose-invert">
                     {isJsonl(formattedContent) ? (
-                      <StreamingJsonlRenderer 
-                        content={formattedContent} 
+                      <StreamingJsonlRenderer
+                        content={formattedContent}
                         isLoading={true}
                         showStreamingIndicator={true}
                       />

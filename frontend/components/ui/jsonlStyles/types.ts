@@ -10,6 +10,4 @@ export interface StyleRenderParams {
   EnhancedReferenceIndicator: typeof EnhancedReferenceIndicator;
 }
 
-export type StyleRenderer = (
-  params: StyleRenderParams
-) => React.ReactNode; 
+export type StyleRenderer = (params: StyleRenderParams) => React.ReactNode;

@@ -68,7 +68,10 @@ export const LibraryHeader = ({
   };
 
   return (
-    <div ref={searchContainerRef} className="flex items-center justify-end gap-1">
+    <div
+      ref={searchContainerRef}
+      className="flex items-center justify-end gap-1"
+    >
       {/* Filter Button */}
       <motion.div
         animate={{
@@ -86,7 +89,11 @@ export const LibraryHeader = ({
               size="icon"
               className="h-7 w-7 text-neutral-700 hover:bg-neutral-200/50"
             >
-              {isFiltered ? <FilterX className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
+              {isFiltered ? (
+                <FilterX className="h-4 w-4" />
+              ) : (
+                <Filter className="h-4 w-4" />
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
@@ -98,7 +105,9 @@ export const LibraryHeader = ({
                 onClick={() => onSortChange(option.value)}
               >
                 {option.label}
-                {sortBy === option.value && <Check className="ml-auto h-4 w-4" />}
+                {sortBy === option.value && (
+                  <Check className="ml-auto h-4 w-4" />
+                )}
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
@@ -107,7 +116,9 @@ export const LibraryHeader = ({
             {allTags.map((tag) => (
               <DropdownMenuItem key={tag} onClick={() => onTagToggle(tag)}>
                 {tag}
-                {selectedTags.includes(tag) && <Check className="ml-auto h-4 w-4" />}
+                {selectedTags.includes(tag) && (
+                  <Check className="ml-auto h-4 w-4" />
+                )}
               </DropdownMenuItem>
             ))}
             {isFiltered && (
@@ -142,7 +153,11 @@ export const LibraryHeader = ({
           animate={{
             width: isSearching ? 360 : 40,
             opacity: isSearching ? 1 : 0,
-            transition: { duration: 0.2, ease: "linear", delay: isSearching ? 0.12 : 0 },
+            transition: {
+              duration: 0.2,
+              ease: "linear",
+              delay: isSearching ? 0.12 : 0,
+            },
           }}
           style={{ pointerEvents: isSearching ? "auto" : "none" }}
         >
@@ -156,13 +171,13 @@ export const LibraryHeader = ({
               autoFocus={isSearching}
             />
             <Button
-                aria-label="close-search"
-                variant="link"
-                className="absolute right-0 top-1/2 -translate-y-1/2 h-auto w-auto p-1 hidden"
-                onClick={() => setIsSearching(false)}
-              >
-                <XCircle className="h-4 w-4 text-neutral-400 hover:text-neutral-600" />
-              </Button>
+              aria-label="close-search"
+              variant="link"
+              className="absolute right-0 top-1/2 -translate-y-1/2 h-auto w-auto p-1 hidden"
+              onClick={() => setIsSearching(false)}
+            >
+              <XCircle className="h-4 w-4 text-neutral-400 hover:text-neutral-600" />
+            </Button>
           </div>
         </motion.div>
       </div>

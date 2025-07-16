@@ -44,7 +44,16 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import styles from "./analysis-card.module.css";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AnalysisContentRenderer } from "./AnalysisContentRenderer";
 import { ReferenceManagerProvider } from "./ReferenceManager";
 
@@ -84,19 +93,19 @@ export const parseJsonContent = (content: string): JsonContentItem[] | null => {
   try {
     // 去除 markdown 代码块标记
     let cleanContent = content.trim();
-    
+
     // 识别并去除 ```json 开头和 ``` 结尾
     const jsonBlockRegex = /^```(?:json)?\s*\n?([\s\S]*?)\n?```$/;
     const match = cleanContent.match(jsonBlockRegex);
-    
+
     if (match) {
       cleanContent = match[1].trim();
     }
-    
+
     // 分割成单独的 JSON 行
-    const lines = cleanContent.split('\n').filter(line => line.trim());
+    const lines = cleanContent.split("\n").filter((line) => line.trim());
     const items: JsonContentItem[] = [];
-    
+
     for (const line of lines) {
       try {
         const item = JSON.parse(line.trim()) as JsonContentItem;
@@ -104,13 +113,13 @@ export const parseJsonContent = (content: string): JsonContentItem[] | null => {
           items.push(item);
         }
       } catch (lineError) {
-        console.warn('无法解析 JSON 行:', line, lineError);
+        console.warn("无法解析 JSON 行:", line, lineError);
       }
     }
-    
+
     return items.length > 0 ? items : null;
   } catch (error) {
-    console.warn('JSON 内容解析失败:', error);
+    console.warn("JSON 内容解析失败:", error);
     return null;
   }
 };
@@ -118,7 +127,10 @@ export const parseJsonContent = (content: string): JsonContentItem[] | null => {
 // 解析引用字符串为数组
 const parseReferences = (refString?: string): number[] => {
   if (!refString) return [];
-  return refString.split(',').map(ref => parseInt(ref.trim(), 10)).filter(num => !isNaN(num));
+  return refString
+    .split(",")
+    .map((ref) => parseInt(ref.trim(), 10))
+    .filter((num) => !isNaN(num));
 };
 
 // JSON 内容项渲染组件
@@ -128,56 +140,56 @@ const JsonContentItemRenderer: React.FC<{
   onReferenceClick?: (refNumber: number) => void;
 }> = ({ item, index, onReferenceClick }) => {
   const references = parseReferences(item.ref);
-  
+
   // 根据类型选择样式
   const getTypeStyles = (type: string) => {
     switch (type) {
-      case 'h1':
-        return 'text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4';
-      case 'h2':
-        return 'text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3 border-b border-gray-200 dark:border-gray-700 pb-2';
-      case 'h3':
-        return 'text-lg font-medium text-gray-800 dark:text-gray-200 mb-2';
-      case 'insight':
-        return 'text-sm leading-relaxed text-gray-700 dark:text-gray-300 bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border-l-4 border-blue-400 dark:border-blue-500';
-      case 'summary':
-        return 'text-sm leading-relaxed text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg';
-      case 'list':
-        return 'text-sm leading-relaxed text-gray-700 dark:text-gray-300';
-      case 'code':
-        return 'text-sm font-mono bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700';
-      case 'warning':
-        return 'text-sm leading-relaxed text-orange-800 dark:text-orange-200 bg-orange-50 dark:bg-orange-950/20 p-4 rounded-lg border-l-4 border-orange-400 dark:border-orange-500';
-      case 'error':
-        return 'text-sm leading-relaxed text-red-800 dark:text-red-200 bg-red-50 dark:bg-red-950/20 p-4 rounded-lg border-l-4 border-red-400 dark:border-red-500';
-      case 'success':
-        return 'text-sm leading-relaxed text-green-800 dark:text-green-200 bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border-l-4 border-green-400 dark:border-green-500';
+      case "h1":
+        return "text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4";
+      case "h2":
+        return "text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3 border-b border-gray-200 dark:border-gray-700 pb-2";
+      case "h3":
+        return "text-lg font-medium text-gray-800 dark:text-gray-200 mb-2";
+      case "insight":
+        return "text-sm leading-relaxed text-gray-700 dark:text-gray-300 bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border-l-4 border-blue-400 dark:border-blue-500";
+      case "summary":
+        return "text-sm leading-relaxed text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg";
+      case "list":
+        return "text-sm leading-relaxed text-gray-700 dark:text-gray-300";
+      case "code":
+        return "text-sm font-mono bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700";
+      case "warning":
+        return "text-sm leading-relaxed text-orange-800 dark:text-orange-200 bg-orange-50 dark:bg-orange-950/20 p-4 rounded-lg border-l-4 border-orange-400 dark:border-orange-500";
+      case "error":
+        return "text-sm leading-relaxed text-red-800 dark:text-red-200 bg-red-50 dark:bg-red-950/20 p-4 rounded-lg border-l-4 border-red-400 dark:border-red-500";
+      case "success":
+        return "text-sm leading-relaxed text-green-800 dark:text-green-200 bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border-l-4 border-green-400 dark:border-green-500";
       default:
-        return 'text-sm leading-relaxed text-gray-700 dark:text-gray-300';
+        return "text-sm leading-relaxed text-gray-700 dark:text-gray-300";
     }
   };
 
   // 获取类型图标
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'insight':
-        return '💡';
-      case 'h1':
-      case 'h2':
-      case 'h3':
-        return '📋';
-      case 'summary':
-        return '📝';
-      case 'warning':
-        return '⚠️';
-      case 'error':
-        return '🚨';
-      case 'success':
-        return '✅';
-      case 'code':
-        return '💻';
+      case "insight":
+        return "💡";
+      case "h1":
+      case "h2":
+      case "h3":
+        return "📋";
+      case "summary":
+        return "📝";
+      case "warning":
+        return "⚠️";
+      case "error":
+        return "🚨";
+      case "success":
+        return "✅";
+      case "code":
+        return "💻";
       default:
-        return '📄';
+        return "📄";
     }
   };
 
@@ -188,18 +200,20 @@ const JsonContentItemRenderer: React.FC<{
       transition={{ delay: index * 0.1 }}
       className="relative"
     >
-      <div className={cn(getTypeStyles(item.t), 'relative group')}>
+      <div className={cn(getTypeStyles(item.t), "relative group")}>
         {/* 类型标识 */}
         <div className="flex items-start gap-3">
           <span className="text-lg shrink-0 mt-0.5">{getTypeIcon(item.t)}</span>
           <div className="flex-1 min-w-0">
             {/* 处理列表内容 */}
-            {item.t === 'list' ? (
+            {item.t === "list" ? (
               <div className="space-y-2">
-                {item.c.split('\n').map((listItem, idx) => (
+                {item.c.split("\n").map((listItem, idx) => (
                   <div key={idx} className="flex items-start gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0" />
-                    <span className="whitespace-pre-wrap">{listItem.trim()}</span>
+                    <span className="whitespace-pre-wrap">
+                      {listItem.trim()}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -211,7 +225,7 @@ const JsonContentItemRenderer: React.FC<{
 
         {/* 引用指示器 */}
         {references.length > 0 && (
-          <motion.div 
+          <motion.div
             className="flex items-center gap-2 mt-3 pt-2 border-t border-gray-200/50 dark:border-gray-700/50"
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
@@ -260,11 +274,16 @@ export const JsonContentRenderer: React.FC<{
   className?: string;
 }> = ({ content, onReferenceClick, className }) => {
   const parsedItems = parseJsonContent(content);
-  
+
   if (!parsedItems) {
     // 如果不是 JSON 格式，回退到普通文本显示
     return (
-      <div className={cn("text-sm leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap", className)}>
+      <div
+        className={cn(
+          "text-sm leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap",
+          className,
+        )}
+      >
         {content}
       </div>
     );
@@ -301,49 +320,52 @@ export interface AnalysisCardProps {
   subtitle?: string;
   emoji?: string;
   icon?: ReactNode;
-  
+
   // 内容
   contentBlocks: ContentBlock[];
-  
+
   // 操作
   actions?: CardAction[];
   defaultActions?: boolean; // 是否显示默认操作（复制、分享等）
   onCopyContent?: () => Promise<void> | void; // 新增：复制内容回调
   onDelete?: () => void; // 新增：删除回调
-  
+
   // 样式和状态
   variant?: "default" | "compact" | "detailed" | "featured";
   selected?: boolean;
   loading?: boolean;
   error?: string;
-  
+
   // 交互
   onCardClick?: () => void;
   onBlockClick?: (blockId: string) => void;
   onReferenceClick?: (reference: ReferenceInfo) => void;
-  
+
   // 自定义
   className?: string;
   children?: ReactNode;
 }
 
 // 智能截断函数
-const smartTruncate = (text: string, maxLength: number): { truncated: string; needsTruncation: boolean } => {
+const smartTruncate = (
+  text: string,
+  maxLength: number,
+): { truncated: string; needsTruncation: boolean } => {
   if (text.length <= maxLength) {
     return { truncated: text, needsTruncation: false };
   }
-  
+
   // 尝试在单词边界截断
   let truncated = text.slice(0, maxLength);
-  const lastSpaceIndex = truncated.lastIndexOf(' ');
-  const lastLineIndex = truncated.lastIndexOf('\n');
+  const lastSpaceIndex = truncated.lastIndexOf(" ");
+  const lastLineIndex = truncated.lastIndexOf("\n");
   const lastBoundary = Math.max(lastSpaceIndex, lastLineIndex);
-  
+
   // 如果找到合适的边界且不会截断太多内容
   if (lastBoundary > maxLength * 0.8) {
     truncated = text.slice(0, lastBoundary);
   }
-  
+
   return { truncated, needsTruncation: true };
 };
 
@@ -352,7 +374,8 @@ const cardVariants = {
   default: "",
   compact: "space-y-2",
   detailed: "space-y-4",
-  featured: "border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent",
+  featured:
+    "border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent",
 };
 
 // 内容块组件
@@ -366,9 +389,10 @@ const InteractiveContentBlock: React.FC<{
 
   const handleCopyBlock = async () => {
     try {
-      const textContent = typeof block.content === "string" 
-        ? block.content 
-        : block.content?.toString() || "";
+      const textContent =
+        typeof block.content === "string"
+          ? block.content
+          : block.content?.toString() || "";
       await navigator.clipboard.writeText(textContent);
       toast({
         title: "已复制",
@@ -394,12 +418,13 @@ const InteractiveContentBlock: React.FC<{
   // 智能截断逻辑
   const maxLength = 240;
   const isStringContent = typeof block.content === "string";
-  const { truncated, needsTruncation } = isStringContent 
+  const { truncated, needsTruncation } = isStringContent
     ? smartTruncate(block.content, maxLength)
     : { truncated: "", needsTruncation: false };
-  
+
   const shouldShowTruncation = block.expandable && needsTruncation;
-  const displayContent = shouldShowTruncation && !isExpanded ? truncated : block.content;
+  const displayContent =
+    shouldShowTruncation && !isExpanded ? truncated : block.content;
 
   return (
     <motion.div
@@ -418,15 +443,19 @@ const InteractiveContentBlock: React.FC<{
         <div className="flex-1 min-w-0">
           {/* 内容渲染容器 */}
           <div className="relative">
-            <motion.div 
+            <motion.div
               className={cn(
                 "transition-colors duration-200",
-                block.type === "title" && "text-base font-semibold text-gray-900 dark:text-gray-100",
+                block.type === "title" &&
+                  "text-base font-semibold text-gray-900 dark:text-gray-100",
                 block.type === "summary" && "text-gray-600 dark:text-gray-400",
-                block.type === "code" && "font-mono bg-gray-50 dark:bg-gray-800 p-3 rounded-lg",
+                block.type === "code" &&
+                  "font-mono bg-gray-50 dark:bg-gray-800 p-3 rounded-lg",
                 block.type === "json" && "", // JSON 类型使用 JsonContentRenderer 自己的样式
                 block.type === "analysis" && "", // Analysis 类型使用 AnalysisContentRenderer 自己的样式
-                block.type !== "json" && block.type !== "analysis" && "text-sm leading-relaxed text-gray-700 dark:text-gray-300",
+                block.type !== "json" &&
+                  block.type !== "analysis" &&
+                  "text-sm leading-relaxed text-gray-700 dark:text-gray-300",
               )}
               initial={false}
             >
@@ -436,6 +465,7 @@ const InteractiveContentBlock: React.FC<{
                   content={displayContent}
                   onReferenceClick={handleJsonReferenceClick}
                 />
+<<<<<<< HEAD
               ) : block.type === "analysis" && typeof displayContent === "string" ? (
                 (() => {
                   const cid = block.metadata?.contentId as string | undefined;
@@ -451,60 +481,65 @@ const InteractiveContentBlock: React.FC<{
                     </ReferenceManagerProvider>
                   ) : renderer;
                 })()
+=======
+              ) : block.type === "analysis" &&
+                typeof displayContent === "string" ? (
+                <AnalysisContentRenderer content={displayContent} />
+>>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
               ) : typeof displayContent === "string" ? (
                 <AnimatePresence mode="wait">
-                  <motion.div 
+                  <motion.div
                     key={isExpanded ? "expanded" : "collapsed"}
                     className="whitespace-pre-wrap"
                     initial="hidden"
                     animate="visible"
                     exit="exit"
-                                         variants={{
-                       hidden: {},
-                       visible: {
-                         transition: {
-                           staggerChildren: 0.015,
-                           delayChildren: 0.05
-                         }
-                       },
-                       exit: {
-                         transition: {
-                           staggerChildren: 0.015,
-                           staggerDirection: -1
-                         }
-                       }
-                     }}
+                    variants={{
+                      hidden: {},
+                      visible: {
+                        transition: {
+                          staggerChildren: 0.015,
+                          delayChildren: 0.05,
+                        },
+                      },
+                      exit: {
+                        transition: {
+                          staggerChildren: 0.015,
+                          staggerDirection: -1,
+                        },
+                      },
+                    }}
                   >
-                    {displayContent.split('\n').map((line, index) => (
+                    {displayContent.split("\n").map((line, index) => (
                       <motion.div
                         key={index}
-                                                 variants={{
-                           hidden: { 
-                             opacity: 0, 
-                             y: 8,
-                             filter: "blur(3px)"
-                           },
-                           visible: { 
-                             opacity: 1, 
-                             y: 0,
-                             filter: "blur(0px)",
-                             transition: {
-                               duration: 0.25,
-                               ease: "easeOut"
-                             }
-                           },
-                           exit: { 
-                             opacity: 0, 
-                             y: -8,
-                             filter: "blur(3px)",
-                             transition: {
-                               duration: 0.25,
-                               ease: "easeIn"
-                             }
-                           }
-                         }}
+                        variants={{
+                          hidden: {
+                            opacity: 0,
+                            y: 8,
+                            filter: "blur(3px)",
+                          },
+                          visible: {
+                            opacity: 1,
+                            y: 0,
+                            filter: "blur(0px)",
+                            transition: {
+                              duration: 0.25,
+                              ease: "easeOut",
+                            },
+                          },
+                          exit: {
+                            opacity: 0,
+                            y: -8,
+                            filter: "blur(3px)",
+                            transition: {
+                              duration: 0.25,
+                              ease: "easeIn",
+                            },
+                          },
+                        }}
                       >
-                        {line || '\u00A0'} {/* 空行用不间断空格占位 */}
+                        {line || "\u00A0"} {/* 空行用不间断空格占位 */}
                       </motion.div>
                     ))}
                   </motion.div>
@@ -521,7 +556,7 @@ const InteractiveContentBlock: React.FC<{
                   "absolute bottom-0 left-0 right-0 h-8 pointer-events-none",
                   "bg-gradient-to-t from-white via-white/80 to-transparent",
                   "dark:from-gray-950 dark:via-gray-950/80 dark:to-transparent",
-                  styles.fadeGradient
+                  styles.fadeGradient,
                 )}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -551,7 +586,7 @@ const InteractiveContentBlock: React.FC<{
                     "border border-transparent hover:border-transparent",
                     "text-muted-foreground hover:text-foreground",
                     "transition-all duration-200",
-                    styles.expandButton
+                    styles.expandButton,
                   )}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -561,7 +596,7 @@ const InteractiveContentBlock: React.FC<{
                   <div className="flex items-center gap-2">
                     <motion.div
                       initial={false}
-                      animate={{ 
+                      animate={{
                         rotate: isExpanded ? 180 : 0,
                       }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -574,7 +609,8 @@ const InteractiveContentBlock: React.FC<{
                       <>
                         <span>展开更多</span>
                         <span className="text-xs opacity-70">
-                          (+{block.content.toString().length - truncated.length}字)
+                          (+{block.content.toString().length - truncated.length}
+                          字)
                         </span>
                       </>
                     )}
@@ -586,7 +622,7 @@ const InteractiveContentBlock: React.FC<{
 
           {/* 引用指示器 */}
           {block.references && block.references.length > 0 && (
-            <motion.div 
+            <motion.div
               className="flex items-center gap-2 mt-3"
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
@@ -618,11 +654,8 @@ const InteractiveContentBlock: React.FC<{
         </div>
 
         {/* 悬浮操作按钮 */}
-        <motion.div 
-          className={cn(
-            "flex items-center gap-1",
-            styles.hoverActions,
-          )}
+        <motion.div
+          className={cn("flex items-center gap-1", styles.hoverActions)}
           initial={{ opacity: 0, x: 10 }}
           animate={{ opacity: 0, x: 0 }}
           whileHover={{ opacity: 1, x: 0 }}
@@ -684,10 +717,7 @@ const ReferenceIndicator: React.FC<{
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <motion.div
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-        >
+        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
           <Button
             variant="outline"
             size="sm"
@@ -710,24 +740,24 @@ const ReferenceIndicator: React.FC<{
               </Badge>
             )}
           </div>
-          
+
           {reference.source && (
             <p className="text-xs text-gray-500">{reference.source}</p>
           )}
-          
+
           {reference.snippet && (
             <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
               {reference.snippet}
             </p>
           )}
-          
+
           <div className="flex gap-2">
             {reference.url && (
               <Button
                 variant="outline"
                 size="sm"
                 className="h-7 px-2 text-xs"
-                onClick={() => window.open(reference.url, '_blank')}
+                onClick={() => window.open(reference.url, "_blank")}
               >
                 <ExternalLink className="h-3 w-3 mr-1" />
                 查看来源
@@ -757,13 +787,13 @@ const CardActionsMenu: React.FC<{
   onCopyContent?: () => void; // 新增：复制卡片内容
   onDelete?: () => void; // 新增：删除功能
   contentTitle?: string; // 用于删除确认
-}> = ({ 
-  actions = [], 
-  defaultActions = true, 
-  onCopyAll, 
+}> = ({
+  actions = [],
+  defaultActions = true,
+  onCopyAll,
   onCopyContent,
   onDelete,
-  contentTitle
+  contentTitle,
 }) => {
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -808,7 +838,7 @@ const CardActionsMenu: React.FC<{
 
   // 构建完整的操作列表
   const defaultActionsArray: CardAction[] = [];
-  
+
   if (defaultActions) {
     if (onCopyContent) {
       defaultActionsArray.push({
@@ -819,7 +849,7 @@ const CardActionsMenu: React.FC<{
         group: "copy",
       });
     }
-    
+
     if (onCopyAll) {
       defaultActionsArray.push({
         id: "copy-all",
@@ -852,20 +882,22 @@ const CardActionsMenu: React.FC<{
   }
 
   // 合并并筛选操作
-  const allActions = [
-    ...defaultActionsArray,
-    ...actions,
-  ].filter(action => action.condition !== false);
+  const allActions = [...defaultActionsArray, ...actions].filter(
+    (action) => action.condition !== false,
+  );
 
   // 按组分组
-  const groupedActions = allActions.reduce((groups, action) => {
-    const group = action.group || 'default';
-    if (!groups[group]) {
-      groups[group] = [];
-    }
-    groups[group].push(action);
-    return groups;
-  }, {} as Record<string, CardAction[]>);
+  const groupedActions = allActions.reduce(
+    (groups, action) => {
+      const group = action.group || "default";
+      if (!groups[group]) {
+        groups[group] = [];
+      }
+      groups[group].push(action);
+      return groups;
+    },
+    {} as Record<string, CardAction[]>,
+  );
 
   const renderActionGroup = (groupName: string, groupActions: CardAction[]) => (
     <React.Fragment key={groupName}>
@@ -883,9 +915,9 @@ const CardActionsMenu: React.FC<{
               "focus:bg-neutral-50 text-neutral-700 dark:focus:bg-neutral-800 dark:text-neutral-300",
               "transition-colors duration-150 cursor-pointer",
               "flex items-center gap-3 px-3 py-2.5",
-              action.variant === "destructive" && 
+              action.variant === "destructive" &&
                 "text-red-600 focus:text-red-700 focus:bg-red-50 dark:text-red-400 dark:focus:text-red-300 dark:focus:bg-red-950/20",
-              action.disabled && "opacity-50 cursor-not-allowed"
+              action.disabled && "opacity-50 cursor-not-allowed",
             )}
           >
             <action.icon className="h-4 w-4 shrink-0" />
@@ -910,10 +942,7 @@ const CardActionsMenu: React.FC<{
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               variant="ghost"
               size="sm"
@@ -934,19 +963,21 @@ const CardActionsMenu: React.FC<{
           sideOffset={8}
           className={cn(
             "min-w-[200px] bg-white dark:bg-gray-900",
-            "border border-neutral-200 dark:border-neutral-700", 
+            "border border-neutral-200 dark:border-neutral-700",
             "shadow-lg rounded-xl",
-            "p-1"
+            "p-1",
           )}
         >
-          {Object.entries(groupedActions).map(([groupName, groupActions], groupIndex) => (
-            <React.Fragment key={groupName}>
-              {groupIndex > 0 && (
-                <DropdownMenuSeparator className="bg-neutral-100 dark:bg-neutral-700 my-1" />
-              )}
-              {renderActionGroup(groupName, groupActions)}
-            </React.Fragment>
-          ))}
+          {Object.entries(groupedActions).map(
+            ([groupName, groupActions], groupIndex) => (
+              <React.Fragment key={groupName}>
+                {groupIndex > 0 && (
+                  <DropdownMenuSeparator className="bg-neutral-100 dark:bg-neutral-700 my-1" />
+                )}
+                {renderActionGroup(groupName, groupActions)}
+              </React.Fragment>
+            ),
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -960,7 +991,9 @@ const CardActionsMenu: React.FC<{
                   <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
                 </div>
                 <div>
-                  <AlertDialogTitle className="text-lg">确认删除</AlertDialogTitle>
+                  <AlertDialogTitle className="text-lg">
+                    确认删除
+                  </AlertDialogTitle>
                   <AlertDialogDescription className="text-sm text-muted-foreground mt-1">
                     此操作无法撤销
                   </AlertDialogDescription>
@@ -1061,8 +1094,12 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
       } else {
         // 默认复制逻辑：只复制主要内容块
         const mainContent = contentBlocks
-          .filter(block => block.type !== "title") // 排除标题
-          .map(block => typeof block.content === "string" ? block.content : block.content?.toString() || "")
+          .filter((block) => block.type !== "title") // 排除标题
+          .map((block) =>
+            typeof block.content === "string"
+              ? block.content
+              : block.content?.toString() || "",
+          )
           .join("\n\n");
 
         await navigator.clipboard.writeText(mainContent);
@@ -1100,7 +1137,10 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
 
   if (error) {
     return (
-      <Card className={cn("border-destructive", className)} data-exclude-selection>
+      <Card
+        className={cn("border-destructive", className)}
+        data-exclude-selection
+      >
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="h-4 w-4" />
@@ -1113,7 +1153,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
 
   return (
     <>
-      <Card 
+      <Card
         className={cn(
           styles.cardWrapper,
           "group cursor-pointer transition-all duration-200 ease-out analysis-card relative overflow-hidden",
@@ -1122,18 +1162,23 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
           styles[variant],
           selected && styles.selected,
           error && styles.error,
-          className
+          className,
         )}
         onClick={handleCardClick}
         data-exclude-selection
       >
         {/* 背景光晕效果 */}
-        <div className={cn(styles.backgroundGlow, variant === "featured" && styles.featuredGlow)} />
+        <div
+          className={cn(
+            styles.backgroundGlow,
+            variant === "featured" && styles.featuredGlow,
+          )}
+        />
 
         {/* 加载状态 */}
         <AnimatePresence>
           {loading && (
-            <motion.div 
+            <motion.div
               className={styles.loadingOverlay}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1149,8 +1194,11 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
             <div className="flex items-center gap-3 flex-1 min-w-0">
               {/* 图标或emoji */}
               {(emoji || icon) && (
-                <motion.div 
-                  className={cn(styles.iconContainer, "flex items-center justify-center")}
+                <motion.div
+                  className={cn(
+                    styles.iconContainer,
+                    "flex items-center justify-center",
+                  )}
                   whileHover={{ scale: 1.05, rotate: 5 }}
                   transition={{ duration: 0.2 }}
                 >
@@ -1165,7 +1213,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
               {/* 标题和副标题 */}
               <div className="flex-1 min-w-0">
                 {title && (
-                  <motion.h3 
+                  <motion.h3
                     className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 leading-tight"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -1175,7 +1223,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
                   </motion.h3>
                 )}
                 {subtitle && (
-                  <motion.p 
+                  <motion.p
                     className="text-sm text-gray-500 dark:text-gray-400 mt-1"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -1185,7 +1233,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
                   </motion.p>
                 )}
                 {error && (
-                  <motion.p 
+                  <motion.p
                     className="text-sm text-red-600 dark:text-red-400 mt-1"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -1226,7 +1274,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
               </motion.div>
             ))}
           </AnimatePresence>
-          
+
           {children}
         </CardContent>
       </Card>
@@ -1275,12 +1323,16 @@ export const SimpleAnalysisCard: React.FC<{
   }
 
   const cardActions: CardAction[] = [
-    ...(onViewDetails ? [{
-      id: "details",
-      label: "查看详情",
-      icon: Eye,
-      onClick: onViewDetails,
-    }] : []),
+    ...(onViewDetails
+      ? [
+          {
+            id: "details",
+            label: "查看详情",
+            icon: Eye,
+            onClick: onViewDetails,
+          },
+        ]
+      : []),
     ...(actions || []),
   ];
 
@@ -1295,4 +1347,4 @@ export const SimpleAnalysisCard: React.FC<{
   );
 };
 
-export default AnalysisCard; 
+export default AnalysisCard;

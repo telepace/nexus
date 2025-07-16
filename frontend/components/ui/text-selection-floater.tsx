@@ -65,14 +65,16 @@ const DEFAULT_ACTIONS: TextAction[] = [
     id: "translate",
     label: "翻译",
     icon: "🌐",
-    color: "hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950/30",
+    color:
+      "hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950/30",
     prompt: "请翻译以下内容（如果是中文翻译成英文，如果是英文翻译成中文）：",
   },
   {
     id: "search",
     label: "搜索",
     icon: "🔍",
-    color: "hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-950/30",
+    color:
+      "hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-950/30",
     prompt: "请搜索并分析与以下内容相关的信息：",
   },
 ];
@@ -105,7 +107,10 @@ export const TextSelectionFloater: React.FC<TextSelectionFloaterProps> = ({
 
       const range = selection.getRangeAt(0);
       const container = range.commonAncestorContainer;
-      const element = container.nodeType === Node.TEXT_NODE ? container.parentElement : container as Element;
+      const element =
+        container.nodeType === Node.TEXT_NODE
+          ? container.parentElement
+          : (container as Element);
 
       if (!element) return false;
 
@@ -123,28 +128,28 @@ export const TextSelectionFloater: React.FC<TextSelectionFloaterProps> = ({
 
       // 额外检查：确保不在右侧面板、侧边栏、或任何UI组件中
       const additionalExclusions = [
-        '[data-exclude-selection]',
-        '.sidebar',
-        '.panel',
-        '.analysis-card',
-        '.ai-analysis-card',
-        '.content-analysis-sidebar',
-        '.shadcn-ui-card',
-        '.enhanced-card',
-        'button',
-        'input',
-        'textarea',
-        'select',
-        '.dropdown-menu',
-        '.tooltip',
-        '.popover',
-        '.modal',
-        '.dialog',
-        '.menu',
-        '.toolbar',
-        '.header',
-        '.footer',
-        '.navigation'
+        "[data-exclude-selection]",
+        ".sidebar",
+        ".panel",
+        ".analysis-card",
+        ".ai-analysis-card",
+        ".content-analysis-sidebar",
+        ".shadcn-ui-card",
+        ".enhanced-card",
+        "button",
+        "input",
+        "textarea",
+        "select",
+        ".dropdown-menu",
+        ".tooltip",
+        ".popover",
+        ".modal",
+        ".dialog",
+        ".menu",
+        ".toolbar",
+        ".header",
+        ".footer",
+        ".navigation",
       ];
 
       for (const selector of additionalExclusions) {
@@ -156,56 +161,61 @@ export const TextSelectionFloater: React.FC<TextSelectionFloaterProps> = ({
       // 检查父元素链，确保没有任何祖先元素标记为排除
       let currentElement = element;
       while (currentElement && currentElement !== document.body) {
-        if (currentElement.hasAttribute('data-exclude-selection')) {
+        if (currentElement.hasAttribute("data-exclude-selection")) {
           return false;
         }
-        
+
         // 检查是否在右侧面板中（通过ResizablePanel检查）
-        if (currentElement.getAttribute('data-panel-id') || 
-            currentElement.className?.includes('resizable-panel') ||
-            currentElement.className?.includes('analysis') ||
-            currentElement.className?.includes('sidebar')) {
+        if (
+          currentElement.getAttribute("data-panel-id") ||
+          currentElement.className?.includes("resizable-panel") ||
+          currentElement.className?.includes("analysis") ||
+          currentElement.className?.includes("sidebar")
+        ) {
           return false;
         }
-        
+
         currentElement = currentElement.parentElement;
       }
 
       return true;
     },
-    [containerSelector, excludeSelector]
+    [containerSelector, excludeSelector],
   );
 
   // 计算浮层最佳位置
-  const calculatePosition = useCallback((rect: DOMRect): { x: number; y: number } => {
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    const floaterWidth = 280; // 预估浮层宽度
-    const floaterHeight = 60; // 预估浮层高度
-    const padding = 16;
+  const calculatePosition = useCallback(
+    (rect: DOMRect): { x: number; y: number } => {
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const floaterWidth = 280; // 预估浮层宽度
+      const floaterHeight = 60; // 预估浮层高度
+      const padding = 16;
 
-    let x = rect.left + rect.width / 2;
-    let y = rect.top - floaterHeight - padding;
+      let x = rect.left + rect.width / 2;
+      let y = rect.top - floaterHeight - padding;
 
-    // 水平边界检查
-    if (x + floaterWidth / 2 > viewportWidth - padding) {
-      x = viewportWidth - floaterWidth / 2 - padding;
-    } else if (x - floaterWidth / 2 < padding) {
-      x = floaterWidth / 2 + padding;
-    }
+      // 水平边界检查
+      if (x + floaterWidth / 2 > viewportWidth - padding) {
+        x = viewportWidth - floaterWidth / 2 - padding;
+      } else if (x - floaterWidth / 2 < padding) {
+        x = floaterWidth / 2 + padding;
+      }
 
-    // 垂直边界检查 - 如果上方空间不够，显示在下方
-    if (y < padding) {
-      y = rect.bottom + padding;
-    }
+      // 垂直边界检查 - 如果上方空间不够，显示在下方
+      if (y < padding) {
+        y = rect.bottom + padding;
+      }
 
-    // 如果下方也不够空间，使用视口中央
-    if (y + floaterHeight > viewportHeight - padding) {
-      y = viewportHeight / 2 - floaterHeight / 2;
-    }
+      // 如果下方也不够空间，使用视口中央
+      if (y + floaterHeight > viewportHeight - padding) {
+        y = viewportHeight / 2 - floaterHeight / 2;
+      }
 
-    return { x, y };
-  }, []);
+      return { x, y };
+    },
+    [],
+  );
 
   // 处理文本选择
   const handleTextSelection = useCallback(() => {
@@ -217,7 +227,11 @@ export const TextSelectionFloater: React.FC<TextSelectionFloaterProps> = ({
       clearTimeout(timeoutRef.current);
     }
 
-    if (!text || text.length < minSelectionLength || text.length > maxSelectionLength) {
+    if (
+      !text ||
+      text.length < minSelectionLength ||
+      text.length > maxSelectionLength
+    ) {
       setPosition({ show: false, x: 0, y: 0, selectedText: "" });
       return;
     }
@@ -240,7 +254,12 @@ export const TextSelectionFloater: React.FC<TextSelectionFloaterProps> = ({
         selectedText: text,
       });
     }, 100);
-  }, [isValidSelection, calculatePosition, minSelectionLength, maxSelectionLength]);
+  }, [
+    isValidSelection,
+    calculatePosition,
+    minSelectionLength,
+    maxSelectionLength,
+  ]);
 
   // 隐藏浮层
   const hideFloater = useCallback(() => {
@@ -256,16 +275,16 @@ export const TextSelectionFloater: React.FC<TextSelectionFloaterProps> = ({
       if (onAction && position.selectedText) {
         onAction(action, position.selectedText);
       }
-      
+
       // 清除文本选择
       const selection = window.getSelection();
       if (selection) {
         selection.removeAllRanges();
       }
-      
+
       hideFloater();
     },
-    [onAction, position.selectedText, hideFloater]
+    [onAction, position.selectedText, hideFloater],
   );
 
   // 监听文本选择事件
@@ -307,7 +326,7 @@ export const TextSelectionFloater: React.FC<TextSelectionFloaterProps> = ({
       document.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("scroll", handleScroll, true);
       window.removeEventListener("resize", hideFloater);
-      
+
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -325,7 +344,7 @@ export const TextSelectionFloater: React.FC<TextSelectionFloaterProps> = ({
       ref={floaterRef}
       className={cn(
         "fixed animate-in fade-in-50 slide-in-from-bottom-2 duration-200",
-        className
+        className,
       )}
       style={{
         left: `${position.x}px`,
@@ -346,7 +365,7 @@ export const TextSelectionFloater: React.FC<TextSelectionFloaterProps> = ({
                 className={cn(
                   "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                   "text-gray-700 dark:text-gray-300 hover:scale-105",
-                  action.color
+                  action.color,
                 )}
               >
                 <span className="text-base">{action.icon}</span>
@@ -369,7 +388,9 @@ export const TextSelectionFloater: React.FC<TextSelectionFloaterProps> = ({
 };
 
 // Hook 形式的使用方式
-export const useTextSelectionFloater = (props: Omit<TextSelectionFloaterProps, 'enabled'>) => {
+export const useTextSelectionFloater = (
+  props: Omit<TextSelectionFloaterProps, "enabled">,
+) => {
   const [enabled, setEnabled] = useState(false);
 
   return {
@@ -379,4 +400,4 @@ export const useTextSelectionFloater = (props: Omit<TextSelectionFloaterProps, '
   };
 };
 
-export default TextSelectionFloater; 
+export default TextSelectionFloater;

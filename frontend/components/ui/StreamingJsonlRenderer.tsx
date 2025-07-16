@@ -5,7 +5,10 @@ import { cn } from "@/lib/utils";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
 
-import { EnhancedReferenceIndicator, useReferenceManagerSafe } from "./ReferenceManager";
+import {
+  EnhancedReferenceIndicator,
+  useReferenceManagerSafe,
+} from "./ReferenceManager";
 
 interface StreamingJsonlRendererProps {
   /** 流式 JSONL 内容 */
@@ -33,7 +36,7 @@ interface JsonlBlock {
 
 /**
  * 流式 JSONL 渲染器 - 支持实时块级渲染
- * 
+ *
  * 特点：
  * 1. 实时解析每个完整的 JSON 行
  * 2. 即时渲染完整的块，无需等待防抖
@@ -49,7 +52,7 @@ export function StreamingJsonlRenderer({
   contentId,
 }: StreamingJsonlRendererProps) {
   const [hoveredBlock, setHoveredBlock] = useState<number | null>(null);
-  
+
   // 使用安全的 ReferenceManager
   const { actions } = useReferenceManagerSafe();
 
@@ -57,7 +60,7 @@ export function StreamingJsonlRenderer({
   const blocks = useMemo(() => {
     if (!content) return [];
 
-    const lines = content.split('\n');
+    const lines = content.split("\n");
     const parsedBlocks: JsonlBlock[] = [];
 
     lines.forEach((line, index) => {
@@ -67,8 +70,8 @@ export function StreamingJsonlRenderer({
       try {
         // 尝试解析完整的 JSON 行
         const parsed = JSON.parse(trimmedLine);
-        const type = parsed.type || parsed.t || 'p';
-        const blockContent = parsed.content || parsed.c || '';
+        const type = parsed.type || parsed.t || "p";
+        const blockContent = parsed.content || parsed.c || "";
         const lead = parsed.lead; // 提取 lead 字段
         const ref = parsed.ref; // 提取 ref 字段
 
@@ -84,9 +87,9 @@ export function StreamingJsonlRenderer({
       } catch (error) {
         // 如果解析失败，可能是不完整的行（流式传输中）
         // 只在非加载状态或者看起来是完整行时显示错误行
-        if (!isLoading || trimmedLine.includes('}')) {
+        if (!isLoading || trimmedLine.includes("}")) {
           parsedBlocks.push({
-            type: 'p',
+            type: "p",
             content: trimmedLine,
             raw: trimmedLine,
             index,
@@ -111,7 +114,7 @@ export function StreamingJsonlRenderer({
   const getBlockTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
       h1: "一级标题",
-      h2: "二级标题", 
+      h2: "二级标题",
       h3: "三级标题",
       p: "段落",
       quote: "引用",
@@ -145,23 +148,25 @@ export function StreamingJsonlRenderer({
           "hover:shadow-sm hover:border-slate-200/60 dark:hover:border-slate-700/60",
           "px-3 py-2 -mx-3 -my-2",
           "border border-transparent",
-          isHovered && "bg-slate-50/60 dark:bg-slate-800/40 shadow-sm border-slate-200/60 dark:border-slate-700/60",
-          !isComplete && "opacity-60 border-dashed border-gray-300 dark:border-gray-600"
+          isHovered &&
+            "bg-slate-50/60 dark:bg-slate-800/40 shadow-sm border-slate-200/60 dark:border-slate-700/60",
+          !isComplete &&
+            "opacity-60 border-dashed border-gray-300 dark:border-gray-600",
         )}
         onMouseEnter={() => setHoveredBlock(blockIndex)}
         onMouseLeave={() => setHoveredBlock(null)}
       >
         {/* 主要内容 */}
-        <div className="relative">
-          {children}
-        </div>
+        <div className="relative">{children}</div>
 
         {/* 悬停时显示的操作按钮 */}
         {isComplete && (
-          <div className={cn(
-            "absolute top-2 right-2 flex items-center gap-1",
-            "opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-          )}>
+          <div
+            className={cn(
+              "absolute top-2 right-2 flex items-center gap-1",
+              "opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+            )}
+          >
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -171,7 +176,7 @@ export function StreamingJsonlRenderer({
                 "p-1.5 rounded-md text-slate-500 hover:text-slate-700",
                 "hover:bg-white dark:hover:bg-slate-700 transition-colors duration-150",
                 "shadow-sm border border-slate-200/60 dark:border-slate-600/60",
-                "backdrop-blur-sm bg-white/80 dark:bg-slate-800/80"
+                "backdrop-blur-sm bg-white/80 dark:bg-slate-800/80",
               )}
               title={`复制${getBlockTypeLabel(blockType)}`}
             >
@@ -219,15 +224,20 @@ export function StreamingJsonlRenderer({
           );
         case "list": {
           // 处理列表内容
-          const items = Array.isArray(content) 
-            ? content 
+          const items = Array.isArray(content)
+            ? content
             : typeof content === "string"
-              ? content.split(/[\n,；;]/).map((s) => s.trim()).filter(Boolean)
+              ? content
+                  .split(/[\n,；;]/)
+                  .map((s) => s.trim())
+                  .filter(Boolean)
               : [];
           return (
             <ul className="list-disc ml-4 space-y-1 my-2 select-text">
               {items.map((item, i) => (
-                <li key={i} className="select-text">{item}</li>
+                <li key={i} className="select-text">
+                  {item}
+                </li>
               ))}
             </ul>
           );
@@ -236,7 +246,9 @@ export function StreamingJsonlRenderer({
           return (
             <div className="my-3 rounded-md border-l-4 border-blue-500 bg-blue-50 p-3 dark:bg-blue-900/20 select-text">
               <div className="flex items-start gap-2">
-                <span className="text-blue-600 dark:text-blue-400 text-sm font-medium">💡 洞察</span>
+                <span className="text-blue-600 dark:text-blue-400 text-sm font-medium">
+                  💡 洞察
+                </span>
                 <span className="flex-1">{content}</span>
               </div>
               {ref && (
@@ -251,7 +263,9 @@ export function StreamingJsonlRenderer({
           return (
             <div className="my-3 rounded-md border-l-4 border-purple-500 bg-purple-50 p-3 dark:bg-purple-900/20 select-text">
               <div className="flex items-start gap-2">
-                <span className="text-purple-600 dark:text-purple-400 text-sm font-medium">🎯 概念</span>
+                <span className="text-purple-600 dark:text-purple-400 text-sm font-medium">
+                  🎯 概念
+                </span>
                 <span className="flex-1">{content}</span>
               </div>
             </div>
@@ -259,7 +273,11 @@ export function StreamingJsonlRenderer({
         }
         case "qa": {
           // 如果内容包含 Q: 和 A:，则分别处理
-          if (typeof content === "string" && content.includes("Q:") && content.includes("A:")) {
+          if (
+            typeof content === "string" &&
+            content.includes("Q:") &&
+            content.includes("A:")
+          ) {
             const parts = content.split("A:");
             const question = parts[0].replace("Q:", "").trim();
             const answer = parts[1]?.trim() || "";
@@ -284,7 +302,9 @@ export function StreamingJsonlRenderer({
           return (
             <div className="my-3 rounded-md border-l-4 border-green-500 bg-green-50 p-3 dark:bg-green-900/20 select-text">
               <div className="flex items-start gap-2">
-                <span className="text-green-600 dark:text-green-400 text-sm font-medium">⚡ 行动</span>
+                <span className="text-green-600 dark:text-green-400 text-sm font-medium">
+                  ⚡ 行动
+                </span>
                 <span className="flex-1">{content}</span>
               </div>
             </div>
@@ -293,7 +313,7 @@ export function StreamingJsonlRenderer({
           // 默认段落 - 处理 lead 字段和 ref 字段
           const references = actions.parseReferences(ref);
           const hasReferences = references.length > 0;
-          
+
           return (
             <div className="leading-6 my-2 select-text text-foreground">
               <div className="flex items-start justify-between gap-3">
@@ -348,11 +368,11 @@ export function StreamingJsonlRenderer({
       className={cn(
         "prose prose-slate dark:prose-invert max-w-none space-y-1",
         "select-text",
-        className
+        className,
       )}
     >
       {blocks.map(renderBlock)}
-      
+
       {/* 流式指示器 */}
       {isLoading && showStreamingIndicator && (
         <div className="flex items-center gap-2 mt-4 text-muted-foreground">
@@ -364,4 +384,4 @@ export function StreamingJsonlRenderer({
       )}
     </div>
   );
-} 
+}

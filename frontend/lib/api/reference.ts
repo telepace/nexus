@@ -30,7 +30,13 @@ export const referenceApi = {
    */
   async getContentParagraphs(contentId: string): Promise<ContentReferenceInfo> {
     try {
+<<<<<<< HEAD
       const response = await client.get<ContentReferenceInfo>(`/api/v1/content/${contentId}/segments`);
+=======
+      const response = await client.get<ContentReferenceInfo>(
+        `/api/v1/content/${contentId}/paragraphs`,
+      );
+>>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
       return response;
     } catch (error) {
       console.error("Failed to fetch content paragraphs:", error);
@@ -41,9 +47,18 @@ export const referenceApi = {
   /**
    * 根据引用ID获取段落内容
    */
-  async getParagraphByRef(contentId: string, refId: number): Promise<SourceParagraph | null> {
+  async getParagraphByRef(
+    contentId: string,
+    refId: number,
+  ): Promise<SourceParagraph | null> {
     try {
+<<<<<<< HEAD
       const response = await client.get<SourceParagraph>(`/api/v1/content/${contentId}/segments/${refId}`);
+=======
+      const response = await client.get<SourceParagraph>(
+        `/api/v1/content/${contentId}/paragraphs/${refId}`,
+      );
+>>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
       return response;
     } catch (error) {
       console.error(`Failed to fetch paragraph ${refId}:`, error);
@@ -54,12 +69,25 @@ export const referenceApi = {
   /**
    * 批量获取多个引用段落
    */
-  async getParagraphsByRefs(contentId: string, refIds: number[]): Promise<SourceParagraph[]> {
+  async getParagraphsByRefs(
+    contentId: string,
+    refIds: number[],
+  ): Promise<SourceParagraph[]> {
     try {
+<<<<<<< HEAD
       // 使用查询参数传递段落号列表
       const numbers = refIds.join(',');
       const response = await client.get<ContentReferenceInfo>(`/api/v1/content/${contentId}/segments?numbers=${numbers}`);
       return response.segments;
+=======
+      const response = await client.post<SourceParagraph[]>(
+        `/api/v1/content/${contentId}/paragraphs/batch`,
+        {
+          refIds,
+        },
+      );
+      return response;
+>>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
     } catch (error) {
       console.error("Failed to fetch paragraphs by refs:", error);
       return [];
@@ -69,11 +97,24 @@ export const referenceApi = {
   /**
    * 搜索包含特定文本的段落
    */
-  async searchParagraphs(contentId: string, query: string): Promise<SourceParagraph[]> {
+  async searchParagraphs(
+    contentId: string,
+    query: string,
+  ): Promise<SourceParagraph[]> {
     try {
+<<<<<<< HEAD
       // 注意：后端可能没有实现搜索功能，这里先返回空数组
       console.warn("搜索功能暂未实现");
       return [];
+=======
+      const response = await client.get<SourceParagraph[]>(
+        `/api/v1/content/${contentId}/paragraphs/search`,
+        {
+          q: query,
+        },
+      );
+      return response;
+>>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
     } catch (error) {
       console.error("Failed to search paragraphs:", error);
       return [];
@@ -83,7 +124,11 @@ export const referenceApi = {
   /**
    * 获取段落的上下文（前后几段）
    */
-  async getParagraphContext(contentId: string, refId: number, contextSize: number = 2): Promise<{
+  async getParagraphContext(
+    contentId: string,
+    refId: number,
+    contextSize: number = 2,
+  ): Promise<{
     target: SourceParagraph;
     context: SourceParagraph[];
   } | null> {
@@ -108,4 +153,4 @@ export const referenceApi = {
       return null;
     }
   },
-}; 
+};

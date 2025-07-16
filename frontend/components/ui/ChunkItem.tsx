@@ -9,7 +9,7 @@ interface ChunkItemProps {
 }
 
 export const ChunkItem = React.memo<ChunkItemProps>(({ chunk }) => (
-  <div 
+  <div
     className="chunk-item py-4 border-b border-muted/5 last:border-b-0 min-h-[200px]"
     data-chunk-id={chunk.id}
     data-paragraph-index={chunk.index}
@@ -45,4 +45,4 @@ export const ChunkItem = React.memo<ChunkItemProps>(({ chunk }) => (
   </div>
 ));
 
-ChunkItem.displayName = "ChunkItem"; 
+ChunkItem.displayName = "ChunkItem";

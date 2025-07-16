@@ -31,7 +31,6 @@ export function AIAnalysisDisplay({
   className,
   showCopyButton = true,
 }: AIAnalysisDisplayProps) {
-  
   // 复制内容
   const handleCopy = async () => {
     try {
@@ -75,7 +74,7 @@ export function AIAnalysisDisplay({
             <Brain className="h-5 w-5 text-primary" />
             <CardTitle className="text-base">{title}</CardTitle>
           </div>
-          
+
           {showCopyButton && content && (
             <Button
               size="sm"
@@ -90,9 +89,7 @@ export function AIAnalysisDisplay({
       </CardHeader>
 
       <CardContent className="px-6 pb-6">
-        <div className="min-h-[100px]">
-          {renderContent()}
-        </div>
+        <div className="min-h-[100px]">{renderContent()}</div>
       </CardContent>
     </Card>
   );

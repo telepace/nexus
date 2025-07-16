@@ -10,11 +10,11 @@ import React, {
 import { AlertCircle } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { MarkdownRenderer } from "./MarkdownRenderer";
-import { 
-  SilentLoadingIndicator, 
+import {
+  SilentLoadingIndicator,
   SilentSkeletonLoader,
   SilentTransition,
-  MicroLoadingDot 
+  MicroLoadingDot,
 } from "./SilentLoadingIndicator";
 import { useScrollVelocity } from "@/hooks/useScrollVelocity";
 import { useNetworkQuality } from "@/hooks/useNetworkQuality";
@@ -32,7 +32,7 @@ interface EnhancedVirtualScrollRendererProps {
   // Enhanced options
   enableSmartPreloading?: boolean;
   enableNetworkAdaptation?: boolean;
-  loadingVariant?: 'invisible' | 'ghost' | 'subtle';
+  loadingVariant?: "invisible" | "ghost" | "subtle";
   debugMode?: boolean;
 }
 
@@ -53,7 +53,7 @@ function useDebounce<T extends (...args: unknown[]) => void>(
   delay: number,
 ): T {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   return useCallback(
     (...args: unknown[]) => {
       if (timeoutRef.current) {
@@ -72,12 +72,12 @@ function useThrottle<T extends (...args: unknown[]) => void>(
 ): T {
   const lastCallRef = useRef<number>(0);
   const lastArgsRef = useRef<unknown[]>([]);
-  
+
   return useCallback(
     (...args: unknown[]) => {
       const now = Date.now();
       lastArgsRef.current = args;
-      
+
       if (now - lastCallRef.current >= delay) {
         lastCallRef.current = now;
         callback(...args);
@@ -87,14 +87,16 @@ function useThrottle<T extends (...args: unknown[]) => void>(
   ) as T;
 }
 
-export const EnhancedVirtualScrollRenderer: React.FC<EnhancedVirtualScrollRendererProps> = ({
+export const EnhancedVirtualScrollRenderer: React.FC<
+  EnhancedVirtualScrollRendererProps
+> = ({
   contentId,
   className = "",
   chunkSize = 15,
   maxVisibleChunks = 100, // Increased from 50
   enableSmartPreloading = true,
   enableNetworkAdaptation = true,
-  loadingVariant = 'ghost',
+  loadingVariant = "ghost",
   debugMode = false,
 }) => {
   // State management
@@ -117,21 +119,29 @@ export const EnhancedVirtualScrollRenderer: React.FC<EnhancedVirtualScrollRender
   const lastErrorTimeRef = useRef<number>(0);
 
   // Enhanced hooks
-  const { velocityData, handleScroll: onScroll, isFastScrolling, isScrollingDown } = useScrollVelocity({
+  const {
+    velocityData,
+    handleScroll: onScroll,
+    isFastScrolling,
+    isScrollingDown,
+  } = useScrollVelocity({
     threshold: 200, // pixels per second for "fast" scrolling
     sampleWindow: 150,
     debounceDelay: 200,
   });
 
-  const { networkData, getPreloadStrategy, shouldReducePreloading } = useNetworkQuality();
+  const { networkData, getPreloadStrategy, shouldReducePreloading } =
+    useNetworkQuality();
 
   // Calculate dynamic preload strategy
   const preloadStrategy = useMemo((): PreloadStrategy => {
-    const networkStrategy = enableNetworkAdaptation ? getPreloadStrategy() : {
-      preloadDistance: 800,
-      maxPreloadPages: 3,
-      chunkSize: 20,
-    };
+    const networkStrategy = enableNetworkAdaptation
+      ? getPreloadStrategy()
+      : {
+          preloadDistance: 800,
+          maxPreloadPages: 3,
+          chunkSize: 20,
+        };
 
     let baseDistance = networkStrategy.preloadDistance;
     let velocityMultiplier = 1;
@@ -181,11 +191,11 @@ export const EnhancedVirtualScrollRenderer: React.FC<EnhancedVirtualScrollRender
     async (page: number, isPreload = false) => {
       // Prevent duplicate loads
       if (preloadQueue.has(page)) return;
-      
+
       try {
         // Add to preload queue
         if (isPreload) {
-          setPreloadQueue(prev => new Set(prev.add(page)));
+          setPreloadQueue((prev) => new Set(prev.add(page)));
         }
 
         if (page === 1) {
@@ -212,11 +222,8 @@ export const EnhancedVirtualScrollRenderer: React.FC<EnhancedVirtualScrollRender
           return;
         }
 
-        const response: ContentChunksResponse = await contentApi.getContentChunks(
-          contentId, 
-          page, 
-          chunkSize
-        );
+        const response: ContentChunksResponse =
+          await contentApi.getContentChunks(contentId, page, chunkSize);
 
         // Update cache
         setChunkCache((prev) => ({
@@ -234,36 +241,38 @@ export const EnhancedVirtualScrollRenderer: React.FC<EnhancedVirtualScrollRender
 
         setHasMore(response.pagination?.has_next || false);
         setCurrentPage(page);
-        
+
         // Reset retry count on success
         retryCountRef.current = 0;
-        
       } catch (err) {
         console.error("Error loading chunks:", err);
-        
+
         // Enhanced error handling
         const now = Date.now();
         const timeSinceLastError = now - lastErrorTimeRef.current;
         lastErrorTimeRef.current = now;
-        
+
         // Exponential backoff for retries
-        const shouldRetry = retryCountRef.current < 3 && timeSinceLastError > 1000;
-        
+        const shouldRetry =
+          retryCountRef.current < 3 && timeSinceLastError > 1000;
+
         if (shouldRetry && !isPreload) {
           retryCountRef.current++;
           setTimeout(() => {
             loadChunks(page, isPreload);
           }, Math.pow(2, retryCountRef.current) * 1000);
         } else {
-          setError(err instanceof Error ? err.message : "Failed to load content");
+          setError(
+            err instanceof Error ? err.message : "Failed to load content",
+          );
         }
       } finally {
         setLoading(false);
         setLoadingMore(false);
-        
+
         // Remove from preload queue
         if (isPreload) {
-          setPreloadQueue(prev => {
+          setPreloadQueue((prev) => {
             const newSet = new Set(prev);
             newSet.delete(page);
             return newSet;
@@ -280,7 +289,7 @@ export const EnhancedVirtualScrollRenderer: React.FC<EnhancedVirtualScrollRender
       if (!enableSmartPreloading || shouldReducePreloading) return;
 
       const pagesToPreload = Math.min(preloadStrategy.bufferPages, 2);
-      
+
       for (let i = 1; i <= pagesToPreload; i++) {
         const nextPage = currentPage + i;
         if (!chunkCache[nextPage] && !preloadQueue.has(nextPage)) {
@@ -291,7 +300,14 @@ export const EnhancedVirtualScrollRenderer: React.FC<EnhancedVirtualScrollRender
         }
       }
     },
-    [enableSmartPreloading, shouldReducePreloading, preloadStrategy.bufferPages, chunkCache, preloadQueue, loadChunks],
+    [
+      enableSmartPreloading,
+      shouldReducePreloading,
+      preloadStrategy.bufferPages,
+      chunkCache,
+      preloadQueue,
+      loadChunks,
+    ],
   );
 
   // Load initial chunks
@@ -302,7 +318,7 @@ export const EnhancedVirtualScrollRenderer: React.FC<EnhancedVirtualScrollRender
   // Enhanced scroll handling
   const handleScroll = useThrottle((event: Event) => {
     onScroll(event);
-    
+
     // Trigger preloading based on scroll behavior
     if (enableSmartPreloading && isScrollingDown && !loadingMore) {
       preloadNextPages(currentPage);
@@ -331,13 +347,20 @@ export const EnhancedVirtualScrollRenderer: React.FC<EnhancedVirtualScrollRender
     observer.observe(loadTriggerRef.current);
 
     return () => observer.disconnect();
-  }, [hasMore, loadingMore, loading, currentPage, loadChunks, preloadStrategy.baseDistance]);
+  }, [
+    hasMore,
+    loadingMore,
+    loading,
+    currentPage,
+    loadChunks,
+    preloadStrategy.baseDistance,
+  ]);
 
   // Optimized DOM cleanup with user activity awareness
   const debouncedCleanup = useDebounce(() => {
     // Don't cleanup if user is actively scrolling
     if (velocityData.isScrolling) return;
-    
+
     if (chunks && chunks.length > maxVisibleChunks) {
       const chunksToRemove = Math.min(
         Math.floor(chunkSize / 2), // Remove fewer chunks at a time
@@ -377,15 +400,17 @@ export const EnhancedVirtualScrollRenderer: React.FC<EnhancedVirtualScrollRender
   }, [loadChunks]);
 
   // Debug information
-  const debugInfo = debugMode ? {
-    velocity: Math.round(velocityData.velocity),
-    direction: velocityData.direction,
-    networkQuality: networkData.quality,
-    preloadDistance: Math.round(preloadStrategy.baseDistance),
-    chunksLoaded: chunks.length,
-    cacheSize: Object.keys(chunkCache).length,
-    preloadQueue: preloadQueue.size,
-  } : null;
+  const debugInfo = debugMode
+    ? {
+        velocity: Math.round(velocityData.velocity),
+        direction: velocityData.direction,
+        networkQuality: networkData.quality,
+        preloadDistance: Math.round(preloadStrategy.baseDistance),
+        chunksLoaded: chunks.length,
+        cacheSize: Object.keys(chunkCache).length,
+        preloadQueue: preloadQueue.size,
+      }
+    : null;
 
   if (loading && (!chunks || chunks.length === 0)) {
     return <Loading />;
@@ -435,16 +460,14 @@ export const EnhancedVirtualScrollRenderer: React.FC<EnhancedVirtualScrollRender
       )}
 
       {/* Silent loading indicator */}
-      <SilentLoadingIndicator 
-        isLoading={loadingMore} 
+      <SilentLoadingIndicator
+        isLoading={loadingMore}
         variant={loadingVariant}
         position="bottom"
       />
 
       {/* Top sentinel for DOM cleanup */}
-      {visibleStartIndex > 0 && (
-        <div ref={topSentinelRef} className="h-1" />
-      )}
+      {visibleStartIndex > 0 && <div ref={topSentinelRef} className="h-1" />}
 
       {/* Content chunks with transitions */}
       <SilentTransition isLoading={loadingMore}>
@@ -482,7 +505,10 @@ export const EnhancedVirtualScrollRenderer: React.FC<EnhancedVirtualScrollRender
       {!hasMore && chunks && chunks.length > 0 && (
         <div className="text-center py-8 text-muted-foreground/60">
           <div className="text-xs opacity-60">
-            {totalChunks} chunks • {visibleStartIndex > 0 ? `${visibleStartIndex + 1}-${visibleStartIndex + chunks.length}` : 'All content loaded'}
+            {totalChunks} chunks •{" "}
+            {visibleStartIndex > 0
+              ? `${visibleStartIndex + 1}-${visibleStartIndex + chunks.length}`
+              : "All content loaded"}
           </div>
         </div>
       )}
@@ -507,7 +533,10 @@ export const EnhancedVirtualScrollRenderer: React.FC<EnhancedVirtualScrollRender
 const EnhancedChunkItem = React.memo<{
   chunk: ContentChunk & { key: string };
 }>(({ chunk }) => (
-  <div className="chunk-item py-4 px-8 animate-fade-in-up" style={{ contain: "layout style" }}>
+  <div
+    className="chunk-item py-4 px-8 animate-fade-in-up"
+    style={{ contain: "layout style" }}
+  >
     <div className="chunk-header mb-2 text-xs text-neutral-400 flex justify-between items-center">
       <span className="font-medium">
         Chunk {chunk.index + 1} • {chunk.type}
@@ -527,4 +556,4 @@ const EnhancedChunkItem = React.memo<{
 
 EnhancedChunkItem.displayName = "EnhancedChunkItem";
 
-export default EnhancedVirtualScrollRenderer; 
+export default EnhancedVirtualScrollRenderer;

@@ -41,7 +41,9 @@ export const headspaceStyleRenderer: StyleRenderer = ({
         <h1 className="text-xl font-medium text-white select-text leading-tight flex items-center gap-2">
           <span className="w-2.5 h-2.5 bg-white rounded-full" />
           <MarkdownRenderer content={String(c)} inline={true} />
-          {hasReferences && <EnhancedReferenceIndicator references={references} />}
+          {hasReferences && (
+            <EnhancedReferenceIndicator references={references} />
+          )}
         </h1>,
         "from-green-400",
         "to-teal-400",
@@ -52,7 +54,9 @@ export const headspaceStyleRenderer: StyleRenderer = ({
         <h2 className="text-2xl font-semibold text-white select-text leading-tight flex items-center gap-2">
           <span className="w-3 h-3 bg-white rounded-full" />
           <MarkdownRenderer content={String(c)} inline={true} />
-          {hasReferences && <EnhancedReferenceIndicator references={references} />}
+          {hasReferences && (
+            <EnhancedReferenceIndicator references={references} />
+          )}
         </h2>,
         "from-blue-400",
         "to-purple-400",
@@ -63,7 +67,9 @@ export const headspaceStyleRenderer: StyleRenderer = ({
         <h3 className="text-xl font-medium text-white select-text leading-tight flex items-center gap-2">
           <span className="w-2.5 h-2.5 bg-white rounded-full" />
           <MarkdownRenderer content={String(c)} inline={true} />
-          {hasReferences && <EnhancedReferenceIndicator references={references} />}
+          {hasReferences && (
+            <EnhancedReferenceIndicator references={references} />
+          )}
         </h3>,
         "from-green-400",
         "to-teal-400",
@@ -73,8 +79,15 @@ export const headspaceStyleRenderer: StyleRenderer = ({
       return gradientWrapper(
         <blockquote className="text-lg text-gray-800 leading-relaxed select-text">
           <MarkdownRenderer content={String(c)} inline={true} />
-          {ref && <cite className="block mt-2 text-sm text-gray-700">— {ref}</cite>}
-          {hasReferences && <EnhancedReferenceIndicator references={references} className="ml-2" />}
+          {ref && (
+            <cite className="block mt-2 text-sm text-gray-700">— {ref}</cite>
+          )}
+          {hasReferences && (
+            <EnhancedReferenceIndicator
+              references={references}
+              className="ml-2"
+            />
+          )}
         </blockquote>,
         "from-yellow-200",
         "to-orange-200",
@@ -83,11 +96,18 @@ export const headspaceStyleRenderer: StyleRenderer = ({
     case "list": {
       let items: string[] = [];
       if (Array.isArray(c)) items = c.map(String);
-      else if (typeof c === "string") items = c.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
+      else if (typeof c === "string")
+        items = c
+          .split(/[,;\n]/)
+          .map((s) => s.trim())
+          .filter(Boolean);
       return gradientWrapper(
         <ul className="space-y-3 select-text">
           {items.map((item, i) => (
-            <li key={i} className="flex items-start gap-2 text-gray-800 leading-relaxed">
+            <li
+              key={i}
+              className="flex items-start gap-2 text-gray-800 leading-relaxed"
+            >
               <span className="w-2.5 h-2.5 bg-white rounded-full mt-2" />
               <MarkdownRenderer content={item} inline={true} />
             </li>
@@ -115,7 +135,10 @@ export const headspaceStyleRenderer: StyleRenderer = ({
           <div className="flex-1 text-gray-800 select-text">
             <MarkdownRenderer content={String(c)} inline={true} />
             {hasReferences && (
-              <EnhancedReferenceIndicator references={references} className="ml-2" />
+              <EnhancedReferenceIndicator
+                references={references}
+                className="ml-2"
+              />
             )}
           </div>
         </div>,
@@ -130,7 +153,12 @@ export const headspaceStyleRenderer: StyleRenderer = ({
           <span className="text-2xl">🧠</span>
           <div className="text-gray-800 select-text">
             <MarkdownRenderer content={String(c)} inline={true} />
-            {hasReferences && <EnhancedReferenceIndicator references={references} className="ml-2" />}
+            {hasReferences && (
+              <EnhancedReferenceIndicator
+                references={references}
+                className="ml-2"
+              />
+            )}
           </div>
         </div>,
         "from-purple-300",
@@ -143,9 +171,17 @@ export const headspaceStyleRenderer: StyleRenderer = ({
         const a = (c as any)["a"] || (c as any)["answer"];
         return gradientWrapper(
           <div className="space-y-4 select-text text-gray-800">
-            <p><strong>Q:</strong> <MarkdownRenderer content={String(q)} inline={true} /></p>
-            <p><strong>A:</strong> <MarkdownRenderer content={String(a)} inline={true} /></p>
-            {hasReferences && <EnhancedReferenceIndicator references={references} />}
+            <p>
+              <strong>Q:</strong>{" "}
+              <MarkdownRenderer content={String(q)} inline={true} />
+            </p>
+            <p>
+              <strong>A:</strong>{" "}
+              <MarkdownRenderer content={String(a)} inline={true} />
+            </p>
+            {hasReferences && (
+              <EnhancedReferenceIndicator references={references} />
+            )}
           </div>,
           "from-green-300",
           "to-emerald-300",
@@ -159,7 +195,12 @@ export const headspaceStyleRenderer: StyleRenderer = ({
         <div className="flex items-start gap-3 text-gray-800 select-text">
           <span className="text-2xl">🎯</span>
           <MarkdownRenderer content={String(c)} inline={true} />
-          {hasReferences && <EnhancedReferenceIndicator references={references} className="ml-2" />}
+          {hasReferences && (
+            <EnhancedReferenceIndicator
+              references={references}
+              className="ml-2"
+            />
+          )}
         </div>,
         "from-orange-300",
         "to-red-300",
@@ -175,4 +216,4 @@ export const headspaceStyleRenderer: StyleRenderer = ({
       );
     }
   }
-}; 
+};

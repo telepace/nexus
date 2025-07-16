@@ -153,7 +153,7 @@
 
   /* Neutrals */
   --color-linear-bg-0: #f3f3f3; /* 侧边栏 / 主背景 */
-  --color-linear-bg-1: #f9f9f9; /* 主页面背景 */
+  --color-linear-bg-1: #f5f5f5; /* 主页面背景 */
   --color-linear-bg-2: #ffffff; /* 卡片 / 列 */
   --color-linear-border: #e5e6ea; /* Divider */
 
@@ -994,7 +994,8 @@
 }
 
 @keyframes gentle-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.4;
   }
   50% {
@@ -1552,4 +1553,3 @@
 /* =============================================================================
  * Shadcn/ui Component Animation Overrides
  * ============================================================================= */
-

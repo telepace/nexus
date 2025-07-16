@@ -42,14 +42,19 @@ export function PageHeader({ breadcrumbs, className }: PageHeaderProps) {
             <React.Fragment key={index}>
               <BreadcrumbItem>
                 {item.href ? (
-                  <BreadcrumbLink asChild className="truncate text-neutral-600 hover:text-neutral-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-1 rounded-sm">
+                  <BreadcrumbLink
+                    asChild
+                    className="truncate text-neutral-600 hover:text-neutral-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-1 rounded-sm"
+                  >
                     <Link href={item.href}>{item.label}</Link>
                   </BreadcrumbLink>
                 ) : (
                   <BreadcrumbPage className="truncate text-neutral-900 dark:text-neutral-100">{item.label}</BreadcrumbPage>
                 )}
               </BreadcrumbItem>
-              {index < breadcrumbs.length - 1 && <BreadcrumbSeparator className="text-neutral-400" />}
+              {index < breadcrumbs.length - 1 && (
+                <BreadcrumbSeparator className="text-neutral-400" />
+              )}
             </React.Fragment>
           ))}
         </BreadcrumbList>

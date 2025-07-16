@@ -6,7 +6,7 @@ import { CompactQuestionDisplay } from "@/components/ui/compact-question-display
 
 export default function TestUserQuestionPage() {
   const shortQuestion = "这是一个简短的问题？";
-  
+
   const longQuestion = `我已经很保守的做这件事一天了，我已经让它等一天都不前进随的做过了，感怕很平常的一天，走在任何评上，看着小朋友和小狗嘻嘻的身影我觉得已经很泽了。
 
 世界上只有一种英雄主义，就是你认清了生活的真相之后仍然爱它。
@@ -36,7 +36,8 @@ export default function TestUserQuestionPage() {
 
 组件的设计应该简洁明了，符合现代 UI 设计的美学标准，同时具有良好的可访问性和响应式设计。`;
 
-  const mediumQuestion = "我想了解一下这个功能的具体实现原理，以及在实际项目中如何使用这个组件来优化用户体验？";
+  const mediumQuestion =
+    "我想了解一下这个功能的具体实现原理，以及在实际项目中如何使用这个组件来优化用户体验？";
 
   return (
     <div className="p-6 space-y-8 max-w-4xl mx-auto">
@@ -49,8 +50,10 @@ export default function TestUserQuestionPage() {
 
       {/* 完整版组件 */}
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold border-b pb-2">完整版组件 (UserQuestionDisplay)</h2>
-        
+        <h2 className="text-xl font-semibold border-b pb-2">
+          完整版组件 (UserQuestionDisplay)
+        </h2>
+
         <div className="space-y-6">
           {/* 短问题 */}
           <div className="space-y-2">
@@ -61,7 +64,7 @@ export default function TestUserQuestionPage() {
           {/* 中等长度问题 */}
           <div className="space-y-2">
             <h3 className="text-lg font-medium">中等长度问题（需要折叠）</h3>
-            <UserQuestionDisplay 
+            <UserQuestionDisplay
               question={mediumQuestion}
               collapseThreshold={80}
               previewLength={60}
@@ -71,7 +74,7 @@ export default function TestUserQuestionPage() {
           {/* 很长的问题 */}
           <div className="space-y-2">
             <h3 className="text-lg font-medium">很长的问题（需要折叠）</h3>
-            <UserQuestionDisplay 
+            <UserQuestionDisplay
               question={veryLongQuestion}
               title="详细需求描述"
               collapseThreshold={200}
@@ -83,8 +86,10 @@ export default function TestUserQuestionPage() {
 
       {/* 紧凑版组件 */}
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold border-b pb-2">紧凑版组件 (CompactQuestionDisplay)</h2>
-        
+        <h2 className="text-xl font-semibold border-b pb-2">
+          紧凑版组件 (CompactQuestionDisplay)
+        </h2>
+
         <div className="space-y-6">
           {/* 短问题 */}
           <div className="space-y-2">
@@ -96,11 +101,17 @@ export default function TestUserQuestionPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground mb-2">最小化样式</p>
-                <CompactQuestionDisplay question={shortQuestion} variant="minimal" />
+                <CompactQuestionDisplay
+                  question={shortQuestion}
+                  variant="minimal"
+                />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground mb-2">气泡样式</p>
-                <CompactQuestionDisplay question={shortQuestion} variant="bubble" />
+                <CompactQuestionDisplay
+                  question={shortQuestion}
+                  variant="bubble"
+                />
               </div>
             </div>
           </div>
@@ -111,7 +122,7 @@ export default function TestUserQuestionPage() {
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-muted-foreground mb-2">默认样式</p>
-                <CompactQuestionDisplay 
+                <CompactQuestionDisplay
                   question={mediumQuestion}
                   collapseThreshold={50}
                   previewLength={40}
@@ -119,7 +130,7 @@ export default function TestUserQuestionPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground mb-2">最小化样式</p>
-                <CompactQuestionDisplay 
+                <CompactQuestionDisplay
                   question={mediumQuestion}
                   variant="minimal"
                   collapseThreshold={50}
@@ -128,7 +139,7 @@ export default function TestUserQuestionPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground mb-2">气泡样式</p>
-                <CompactQuestionDisplay 
+                <CompactQuestionDisplay
                   question={mediumQuestion}
                   variant="bubble"
                   collapseThreshold={50}
@@ -142,8 +153,10 @@ export default function TestUserQuestionPage() {
           <div className="space-y-2">
             <h3 className="text-lg font-medium">长问题 - 模拟聊天场景</h3>
             <div className="space-y-3 bg-muted/20 p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground">聊天消息中的用户提问</p>
-              <CompactQuestionDisplay 
+              <p className="text-sm text-muted-foreground">
+                聊天消息中的用户提问
+              </p>
+              <CompactQuestionDisplay
                 question={longQuestion}
                 variant="bubble"
                 collapseThreshold={120}
@@ -160,21 +173,21 @@ export default function TestUserQuestionPage() {
       {/* 对比展示 */}
       <div className="space-y-6">
         <h2 className="text-xl font-semibold border-b pb-2">对比展示</h2>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-2">
             <h3 className="text-lg font-medium">完整版 - 适合独立展示</h3>
-            <UserQuestionDisplay 
+            <UserQuestionDisplay
               question={longQuestion}
               title="用户详细咨询"
               collapseThreshold={200}
               previewLength={120}
             />
           </div>
-          
+
           <div className="space-y-2">
             <h3 className="text-lg font-medium">紧凑版 - 适合聊天消息</h3>
-            <CompactQuestionDisplay 
+            <CompactQuestionDisplay
               question={longQuestion}
               variant="bubble"
               collapseThreshold={120}
@@ -188,14 +201,18 @@ export default function TestUserQuestionPage() {
       <div className="space-y-4 bg-muted/30 p-6 rounded-lg">
         <h2 className="text-lg font-semibold">使用建议</h2>
         <div className="space-y-2 text-sm">
-          <p><strong>完整版 (UserQuestionDisplay)：</strong></p>
+          <p>
+            <strong>完整版 (UserQuestionDisplay)：</strong>
+          </p>
           <ul className="list-disc list-inside space-y-1 ml-4 text-muted-foreground">
             <li>适合独立展示用户问题的场景</li>
             <li>客服系统、问答页面、反馈表单等</li>
             <li>需要突出显示问题重要性的场合</li>
           </ul>
-          
-          <p className="mt-4"><strong>紧凑版 (CompactQuestionDisplay)：</strong></p>
+
+          <p className="mt-4">
+            <strong>紧凑版 (CompactQuestionDisplay)：</strong>
+          </p>
           <ul className="list-disc list-inside space-y-1 ml-4 text-muted-foreground">
             <li>适合聊天消息、对话历史等场景</li>
             <li>需要节省空间但保持可读性</li>
@@ -205,4 +222,4 @@ export default function TestUserQuestionPage() {
       </div>
     </div>
   );
-} 
+}

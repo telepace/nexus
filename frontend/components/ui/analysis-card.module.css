@@ -13,10 +13,12 @@
   border-radius: 1rem;
   opacity: 0;
   transition: opacity 0.3s ease;
-  background: linear-gradient(135deg, 
+  background: linear-gradient(
+    135deg,
     rgba(255, 255, 255, 0.1) 0%,
     rgba(255, 255, 255, 0.05) 50%,
-    rgba(0, 0, 0, 0.02) 100%);
+    rgba(0, 0, 0, 0.02) 100%
+  );
   pointer-events: none;
   z-index: -1;
 }
@@ -27,10 +29,12 @@
 
 /* 特色卡片的光晕效果 */
 .featuredGlow {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(59, 130, 246, 0.1) 0%,
     rgba(147, 51, 234, 0.08) 50%,
-    rgba(236, 72, 153, 0.06) 100%);
+    rgba(236, 72, 153, 0.06) 100%
+  );
 }
 
 /* 主卡片样式 */
@@ -43,7 +47,8 @@
 }
 
 .card:hover {
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px
+    rgba(0, 0, 0, 0.04);
   border-color: rgba(226, 232, 240, 0.8);
 }
 
@@ -54,7 +59,8 @@
 
 .card:hover {
   @apply dark:border-gray-600/80;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px
+    rgba(0, 0, 0, 0.1);
 }
 
 /* 卡片变体 */
@@ -71,30 +77,38 @@
 }
 
 .detailed {
-  background: linear-gradient(135deg, 
+  background: linear-gradient(
+    135deg,
     rgba(255, 255, 255, 0.95) 0%,
-    rgba(248, 250, 252, 0.9) 100%);
+    rgba(248, 250, 252, 0.9) 100%
+  );
 }
 
 .detailed:hover {
-  background: linear-gradient(135deg, 
+  background: linear-gradient(
+    135deg,
     rgba(255, 255, 255, 1) 0%,
-    rgba(248, 250, 252, 0.95) 100%);
+    rgba(248, 250, 252, 0.95) 100%
+  );
 }
 
 .featured {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(59, 130, 246, 0.05) 0%,
     rgba(147, 51, 234, 0.03) 50%,
-    rgba(236, 72, 153, 0.02) 100%);
+    rgba(236, 72, 153, 0.02) 100%
+  );
   border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 .featured:hover {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(59, 130, 246, 0.08) 0%,
     rgba(147, 51, 234, 0.05) 50%,
-    rgba(236, 72, 153, 0.03) 100%);
+    rgba(236, 72, 153, 0.03) 100%
+  );
   border-color: rgba(59, 130, 246, 0.3);
 }
 
@@ -139,9 +153,11 @@
   width: 3rem;
   height: 3rem;
   border-radius: 0.75rem;
-  background: linear-gradient(135deg, 
+  background: linear-gradient(
+    135deg,
     rgba(249, 250, 251, 1) 0%,
-    rgba(243, 244, 246, 1) 100%);
+    rgba(243, 244, 246, 1) 100%
+  );
   display: flex;
   align-items: center;
   justify-content: center;
@@ -155,23 +171,27 @@
 
 /* 内容块样式 */
 .contentBlock {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(249, 250, 251, 0.3) 0%,
     transparent 50%,
-    rgba(243, 244, 246, 0.2) 100%);
+    rgba(243, 244, 246, 0.2) 100%
+  );
   border: 1px solid transparent;
   position: relative;
   overflow: hidden;
 }
 
 .contentBlock::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(59, 130, 246, 0.02) 0%,
     transparent 50%,
-    rgba(147, 51, 234, 0.01) 100%);
+    rgba(147, 51, 234, 0.01) 100%
+  );
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
@@ -183,10 +203,12 @@
 
 .contentBlock:hover {
   border-color: rgba(229, 231, 235, 0.4);
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(249, 250, 251, 0.5) 0%,
     rgba(255, 255, 255, 0.3) 50%,
-    rgba(243, 244, 246, 0.4) 100%);
+    rgba(243, 244, 246, 0.4) 100%
+  );
 }
 
 /* 深色模式的内容块 */
@@ -215,16 +237,18 @@
 }
 
 .expandButton::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(255, 255, 255, 0.2), 
-    transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
   transition: left 0.5s ease;
 }
 
@@ -290,9 +314,11 @@
 
 /* 引用指示器 */
 .referenceIndicator {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(59, 130, 246, 0.1) 0%,
-    rgba(99, 102, 241, 0.08) 100%);
+    rgba(99, 102, 241, 0.08) 100%
+  );
   border: 1px solid rgba(59, 130, 246, 0.2);
   color: rgb(37, 99, 235);
   transition: all 0.2s ease;
@@ -301,12 +327,14 @@
 }
 
 .referenceIndicator::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(59, 130, 246, 0.1) 0%,
-    rgba(99, 102, 241, 0.1) 100%);
+    rgba(99, 102, 241, 0.1) 100%
+  );
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -316,9 +344,11 @@
 }
 
 .referenceIndicator:hover {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(59, 130, 246, 0.15) 0%,
-    rgba(99, 102, 241, 0.12) 100%);
+    rgba(99, 102, 241, 0.12) 100%
+  );
   border-color: rgba(59, 130, 246, 0.3);
   transform: scale(1.05);
 }
@@ -334,7 +364,8 @@
 
 /* 脉动动画 */
 @keyframes pulse-glow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
   }
   50% {
@@ -361,16 +392,18 @@
 }
 
 .expandButton:hover::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg,
+  background: linear-gradient(
+    90deg,
     transparent 20%,
     rgba(255, 255, 255, 0.4) 50%,
-    transparent 80%);
+    transparent 80%
+  );
   animation: shimmer 1.5s ease-out;
   pointer-events: none;
 }
@@ -385,17 +418,17 @@
   .contentBlock {
     padding: 0.75rem;
   }
-  
+
   .iconContainer {
     width: 2.5rem;
     height: 2.5rem;
   }
-  
+
   .hoverActions {
     opacity: 1;
     transform: translateX(0);
   }
-  
+
   .actionsMenu {
     opacity: 1;
   }
@@ -417,11 +450,11 @@
     border-width: 2px;
     border-color: rgb(0, 0, 0);
   }
-  
+
   .contentBlock:hover {
     border-color: rgb(59, 130, 246);
   }
-  
+
   .referenceIndicator {
     border-width: 2px;
   }
@@ -432,10 +465,12 @@
   }
 
   .fadeGradient {
-    background: linear-gradient(to top, 
-      rgb(255, 255, 255) 0%, 
-      rgba(255, 255, 255, 0.8) 70%, 
-      transparent 100%);
+    background: linear-gradient(
+      to top,
+      rgb(255, 255, 255) 0%,
+      rgba(255, 255, 255, 0.8) 70%,
+      transparent 100%
+    );
   }
 }
 
@@ -451,7 +486,7 @@
   .fadeGradient {
     transition: none;
   }
-  
+
   .referenceIndicator {
     animation: none;
   }
@@ -471,7 +506,7 @@
   .fadeGradient {
     display: none;
   }
-  
+
   .card {
     background: white;
     border: 1px solid black;
@@ -482,4 +517,4 @@
     background: transparent;
     border: none;
   }
-} 
+}

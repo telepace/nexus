@@ -187,7 +187,10 @@ export function ShareMarkdownRenderer({
             </ol>
           ),
           li: ({ children, ...props }) => (
-            <li className="leading-relaxed text-neutral-700 dark:text-neutral-300" {...props}>
+            <li
+              className="leading-relaxed text-neutral-700 dark:text-neutral-300"
+              {...props}
+            >
               {children}
             </li>
           ),
@@ -317,7 +320,10 @@ export function ShareMarkdownRenderer({
             </td>
           ),
           hr: ({ ...props }) => (
-            <hr className="border-neutral-200 dark:border-neutral-700 my-12" {...props} />
+            <hr
+              className="border-neutral-200 dark:border-neutral-700 my-12"
+              {...props}
+            />
           ),
         }}
       >
@@ -325,4 +331,4 @@ export function ShareMarkdownRenderer({
       </ReactMarkdown>
     </div>
   );
-} 
+}

@@ -24,7 +24,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
           >
             <MarkdownRenderer content={String(c)} inline={true} />
           </span>
-          {hasReferences && <EnhancedReferenceIndicator references={references} />}
+          {hasReferences && (
+            <EnhancedReferenceIndicator references={references} />
+          )}
         </div>
       );
     case "h2":
@@ -37,7 +39,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
           >
             <MarkdownRenderer content={String(c)} inline={true} />
           </span>
-          {hasReferences && <EnhancedReferenceIndicator references={references} />}
+          {hasReferences && (
+            <EnhancedReferenceIndicator references={references} />
+          )}
         </div>
       );
     case "h3":
@@ -50,13 +54,17 @@ export const notebookStyleRenderer: StyleRenderer = ({
           >
             <MarkdownRenderer content={String(c)} inline={true} />
           </span>
-          {hasReferences && <EnhancedReferenceIndicator references={references} />}
+          {hasReferences && (
+            <EnhancedReferenceIndicator references={references} />
+          )}
         </div>
       );
     case "quote":
       return (
         <div className="relative my-0 select-text">
-          <div className="absolute -left-1 top-0 text-6xl text-pink-300 opacity-50 leading-none">"</div>
+          <div className="absolute -left-1 top-0 text-6xl text-pink-300 opacity-50 leading-none">
+            "
+          </div>
           <blockquote
             className="bg-pink-50 border-l-4 border-pink-300 rounded-r-lg p-4 ml-4 shadow-sm"
             style={{
@@ -68,7 +76,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
               <MarkdownRenderer content={String(c)} inline={true} />
             </div>
             {ref && (
-              <cite className="block mt-2 text-sm text-pink-600 not-italic font-medium">— {ref}</cite>
+              <cite className="block mt-2 text-sm text-pink-600 not-italic font-medium">
+                — {ref}
+              </cite>
             )}
             {hasReferences && (
               <div className="mt-2 flex justify-end">
@@ -81,11 +91,17 @@ export const notebookStyleRenderer: StyleRenderer = ({
     case "list": {
       let items: string[] = [];
       if (Array.isArray(c)) items = c.map(String);
-      else if (typeof c === "string") items = c.split(/[\n,；;]/).map((s) => s.trim()).filter(Boolean);
+      else if (typeof c === "string")
+        items = c
+          .split(/[\n,；;]/)
+          .map((s) => s.trim())
+          .filter(Boolean);
       return (
         <div
           className="my-0 bg-yellow-50 rounded-lg p-4 shadow-sm border border-yellow-200"
-          style={{ background: "linear-gradient(135deg, #fefce8 0%, #fef3c7 100%)" }}
+          style={{
+            background: "linear-gradient(135deg, #fefce8 0%, #fef3c7 100%)",
+          }}
         >
           <ul className="space-y-3 select-text">
             {items.map((item, i) => (
@@ -134,12 +150,18 @@ export const notebookStyleRenderer: StyleRenderer = ({
             fontFamily: '"Kalam", "Comic Sans MS", cursive',
           }}
         >
-          <div className={`absolute -top-2 -left-2 w-6 h-6 rounded-full shadow-md ${colors.accent}`} />
-          <div className={`inline-flex items-baseline gap-1 flex-wrap ${colors.text}`}>
+          <div
+            className={`absolute -top-2 -left-2 w-6 h-6 rounded-full shadow-md ${colors.accent}`}
+          />
+          <div
+            className={`inline-flex items-baseline gap-1 flex-wrap ${colors.text}`}
+          >
             <span className="text-sm">
               <MarkdownRenderer content={String(c)} inline={true} />
             </span>
-            {hasReferences && <EnhancedReferenceIndicator references={references} />}
+            {hasReferences && (
+              <EnhancedReferenceIndicator references={references} />
+            )}
           </div>
         </div>
       );
@@ -158,7 +180,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
             <span className="text-sm">
               <MarkdownRenderer content={String(c)} inline={true} />
             </span>
-            {hasReferences && <EnhancedReferenceIndicator references={references} />}
+            {hasReferences && (
+              <EnhancedReferenceIndicator references={references} />
+            )}
           </div>
         </div>
       );
@@ -216,7 +240,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
             <div className="flex-1 text-sm">
               <MarkdownRenderer content={String(c)} inline={true} />
             </div>
-            {hasReferences && <EnhancedReferenceIndicator references={references} />}
+            {hasReferences && (
+              <EnhancedReferenceIndicator references={references} />
+            )}
           </div>
         </div>
       );
@@ -234,10 +260,12 @@ export const notebookStyleRenderer: StyleRenderer = ({
             <span className="text-sm">
               <MarkdownRenderer content={finalContent} inline={true} />
             </span>
-            {hasReferences && <EnhancedReferenceIndicator references={references} />}
+            {hasReferences && (
+              <EnhancedReferenceIndicator references={references} />
+            )}
           </div>
         </div>
       );
     }
   }
-}; 
+};

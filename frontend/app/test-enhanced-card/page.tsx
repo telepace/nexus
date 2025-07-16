@@ -1,19 +1,17 @@
 "use client";
 
 import React from "react";
-import { AnalysisCard, ContentBlock, CardAction, ReferenceInfo } from "@/components/ui/analysis-card";
+import {
+  AnalysisCard,
+  ContentBlock,
+  CardAction,
+  ReferenceInfo,
+} from "@/components/ui/analysis-card";
 
 // 临时别名，避免构建错误
 const EnhancedCard = AnalysisCard;
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Star, 
-  Download, 
-  Edit, 
-  Target,
-  Eye,
-  Info
-} from "lucide-react";
+import { Star, Download, Edit, Target, Eye, Info } from "lucide-react";
 
 export default function TestAnalysisCardPage() {
   const { toast } = useToast();
@@ -25,14 +23,16 @@ export default function TestAnalysisCardPage() {
       title: "深度学习基础理论",
       source: "《人工智能概论》第3章",
       url: "https://example.com/ai-basics",
-      snippet: "深度学习是机器学习的一个分支，它试图通过多层神经网络来模拟人脑的工作方式...",
+      snippet:
+        "深度学习是机器学习的一个分支，它试图通过多层神经网络来模拟人脑的工作方式...",
       relevanceScore: 0.95,
     },
     {
-      id: "ref2", 
+      id: "ref2",
       title: "神经网络的历史发展",
       source: "AI研究期刊 2023年第2期",
-      snippet: "从感知机到深度神经网络，人工智能领域经历了多次重要的技术突破...",
+      snippet:
+        "从感知机到深度神经网络，人工智能领域经历了多次重要的技术突破...",
       relevanceScore: 0.87,
     },
     {
@@ -40,7 +40,8 @@ export default function TestAnalysisCardPage() {
       title: "现代AI应用案例分析",
       source: "技术前沿报告",
       url: "https://example.com/ai-applications",
-      snippet: "在医疗诊断、自动驾驶、自然语言处理等领域，AI技术正在产生深远影响...",
+      snippet:
+        "在医疗诊断、自动驾驶、自然语言处理等领域，AI技术正在产生深远影响...",
       relevanceScore: 0.92,
     },
   ];
@@ -84,7 +85,8 @@ export default function TestAnalysisCardPage() {
     {
       id: "technical",
       type: "text",
-      content: "技术实现方面，现代AI主要依赖于深度神经网络、大数据处理和高性能计算。通过训练大规模的神经网络模型，AI系统能够在图像识别、语音识别、文本理解等任务上达到甚至超越人类的表现水平。",
+      content:
+        "技术实现方面，现代AI主要依赖于深度神经网络、大数据处理和高性能计算。通过训练大规模的神经网络模型，AI系统能够在图像识别、语音识别、文本理解等任务上达到甚至超越人类的表现水平。",
       tooltip: "AI的核心技术实现原理",
       expandable: true,
     },
@@ -96,7 +98,8 @@ export default function TestAnalysisCardPage() {
       id: "favorite",
       label: "收藏",
       icon: Star,
-      onClick: () => toast({ title: "已收藏", description: "内容已添加到收藏夹" }),
+      onClick: () =>
+        toast({ title: "已收藏", description: "内容已添加到收藏夹" }),
       group: "actions",
     },
     {
@@ -129,16 +132,16 @@ export default function TestAnalysisCardPage() {
 - 自然语言理解`;
 
     await navigator.clipboard.writeText(content);
-    toast({ 
-      title: "已复制", 
+    toast({
+      title: "已复制",
       description: "AI技术内容已复制到剪贴板",
     });
   };
 
   // 删除处理函数
   const handleDelete = () => {
-    toast({ 
-      title: "删除成功", 
+    toast({
+      title: "删除成功",
       description: "AI技术卡片已删除",
       variant: "destructive",
     });
@@ -166,16 +169,33 @@ export default function TestAnalysisCardPage() {
             </h2>
             <div className="grid md:grid-cols-2 gap-4 text-sm text-blue-800 dark:text-blue-200">
               <div className="space-y-2">
-                <div>• <strong>增强的三个点菜单</strong> - 分组显示，更清晰的操作分类</div>
-                <div>• <strong>复制内容功能</strong> - 一键复制卡片主要内容到剪贴板</div>
-                <div>• <strong>删除确认对话框</strong> - 优雅的删除操作确认</div>
-                <div>• <strong>自定义菜单项</strong> - 支持分组、条件显示、快捷键</div>
+                <div>
+                  • <strong>增强的三个点菜单</strong> -
+                  分组显示，更清晰的操作分类
+                </div>
+                <div>
+                  • <strong>复制内容功能</strong> - 一键复制卡片主要内容到剪贴板
+                </div>
+                <div>
+                  • <strong>删除确认对话框</strong> - 优雅的删除操作确认
+                </div>
+                <div>
+                  • <strong>自定义菜单项</strong> - 支持分组、条件显示、快捷键
+                </div>
               </div>
               <div className="space-y-2">
-                <div>• <strong>美学提升</strong> - 更好的间距、颜色和微交互</div>
-                <div>• <strong>操作反馈</strong> - 即时的操作状态提示</div>
-                <div>• <strong>响应式设计</strong> - 在各种屏幕尺寸下优雅显示</div>
-                <div>• <strong>无障碍支持</strong> - 键盘导航和屏幕阅读器支持</div>
+                <div>
+                  • <strong>美学提升</strong> - 更好的间距、颜色和微交互
+                </div>
+                <div>
+                  • <strong>操作反馈</strong> - 即时的操作状态提示
+                </div>
+                <div>
+                  • <strong>响应式设计</strong> - 在各种屏幕尺寸下优雅显示
+                </div>
+                <div>
+                  • <strong>无障碍支持</strong> - 键盘导航和屏幕阅读器支持
+                </div>
               </div>
             </div>
           </div>
@@ -198,7 +218,9 @@ export default function TestAnalysisCardPage() {
                 onCopyContent={handleCopyContent}
                 onDelete={handleDelete}
                 variant="featured"
-                onCardClick={() => toast({ title: "卡片点击", description: "查看 AI 技术详情" })}
+                onCardClick={() =>
+                  toast({ title: "卡片点击", description: "查看 AI 技术详情" })
+                }
               />
 
               {/* 简化版卡片 */}
@@ -210,7 +232,8 @@ export default function TestAnalysisCardPage() {
                   {
                     id: "simple-content",
                     type: "text",
-                    content: "这是一个简化的卡片示例，展示了基础的三个点菜单功能。点击右上角的三个点查看可用操作。",
+                    content:
+                      "这是一个简化的卡片示例，展示了基础的三个点菜单功能。点击右上角的三个点查看可用操作。",
                     tooltip: "简单文本内容",
                   },
                 ]}
@@ -231,7 +254,8 @@ export default function TestAnalysisCardPage() {
                   {
                     id: "readonly-content",
                     type: "summary",
-                    content: "这是一个只读卡片，用户只能复制内容，但不能删除。这在展示重要信息或受保护内容时很有用。",
+                    content:
+                      "这是一个只读卡片，用户只能复制内容，但不能删除。这在展示重要信息或受保护内容时很有用。",
                     tooltip: "受保护的内容",
                   },
                 ]}
@@ -240,13 +264,19 @@ export default function TestAnalysisCardPage() {
                     id: "info",
                     label: "详细信息",
                     icon: Info,
-                    onClick: () => toast({ title: "详细信息", description: "显示更多内容详情" }),
+                    onClick: () =>
+                      toast({
+                        title: "详细信息",
+                        description: "显示更多内容详情",
+                      }),
                     group: "info",
                   },
                 ]}
                 defaultActions={true}
                 onCopyContent={async () => {
-                  await navigator.clipboard.writeText("只读内容卡片 - 受保护信息");
+                  await navigator.clipboard.writeText(
+                    "只读内容卡片 - 受保护信息",
+                  );
                   toast({ title: "已复制", description: "只读内容已复制" });
                 }}
                 // 注意：没有提供 onDelete，所以删除选项不会显示
@@ -262,7 +292,8 @@ export default function TestAnalysisCardPage() {
                   {
                     id: "shortcut-content",
                     type: "text",
-                    content: "这个卡片演示了菜单项的快捷键功能。虽然快捷键在这个演示中不是真正可用的，但显示了如何在菜单中展示快捷键提示。",
+                    content:
+                      "这个卡片演示了菜单项的快捷键功能。虽然快捷键在这个演示中不是真正可用的，但显示了如何在菜单中展示快捷键提示。",
                     tooltip: "快捷键演示",
                   },
                 ]}
@@ -271,7 +302,11 @@ export default function TestAnalysisCardPage() {
                     id: "quick-edit",
                     label: "快速编辑",
                     icon: Edit,
-                    onClick: () => toast({ title: "快速编辑", description: "使用 Ctrl+E 快捷键" }),
+                    onClick: () =>
+                      toast({
+                        title: "快速编辑",
+                        description: "使用 Ctrl+E 快捷键",
+                      }),
                     shortcut: "⌘E",
                     group: "edit",
                   },
@@ -279,7 +314,11 @@ export default function TestAnalysisCardPage() {
                     id: "quick-save",
                     label: "快速保存",
                     icon: Download,
-                    onClick: () => toast({ title: "快速保存", description: "使用 Ctrl+S 快捷键" }),
+                    onClick: () =>
+                      toast({
+                        title: "快速保存",
+                        description: "使用 Ctrl+S 快捷键",
+                      }),
                     shortcut: "⌘S",
                     group: "edit",
                   },
@@ -287,7 +326,10 @@ export default function TestAnalysisCardPage() {
                 defaultActions={true}
                 onCopyContent={async () => {
                   await navigator.clipboard.writeText("快捷键演示卡片内容");
-                  toast({ title: "已复制", description: "快捷键演示内容已复制" });
+                  toast({
+                    title: "已复制",
+                    description: "快捷键演示内容已复制",
+                  });
                 }}
                 onDelete={handleDelete}
                 variant="default"
@@ -303,15 +345,28 @@ export default function TestAnalysisCardPage() {
             <div className="space-y-4 text-sm text-blue-800 dark:text-blue-200">
               <div>
                 <strong>智能识别：</strong>
-                自动识别并去除 <code className="bg-blue-100 dark:bg-blue-900/40 px-1 rounded">\`\`\`json</code> 和 <code className="bg-blue-100 dark:bg-blue-900/40 px-1 rounded">\`\`\`</code> 标记
+                自动识别并去除{" "}
+                <code className="bg-blue-100 dark:bg-blue-900/40 px-1 rounded">
+                  \`\`\`json
+                </code>{" "}
+                和{" "}
+                <code className="bg-blue-100 dark:bg-blue-900/40 px-1 rounded">
+                  \`\`\`
+                </code>{" "}
+                标记
               </div>
               <div>
                 <strong>支持的类型：</strong>
-                h1, h2, h3 (标题), insight (洞察), summary (摘要), list (列表), code (代码), warning (警告), error (错误), success (成功)
+                h1, h2, h3 (标题), insight (洞察), summary (摘要), list (列表),
+                code (代码), warning (警告), error (错误), success (成功)
               </div>
               <div>
                 <strong>引用系统：</strong>
-                通过 <code className="bg-blue-100 dark:bg-blue-900/40 px-1 rounded">"ref":"3,6,8"</code> 格式支持引用标记，点击数字可查看引用详情
+                通过{" "}
+                <code className="bg-blue-100 dark:bg-blue-900/40 px-1 rounded">
+                  "ref":"3,6,8"
+                </code>{" "}
+                格式支持引用标记，点击数字可查看引用详情
               </div>
               <div>
                 <strong>回退机制：</strong>
@@ -322,7 +377,9 @@ export default function TestAnalysisCardPage() {
 
           {/* 预设分析卡片 */}
           <div className="mt-12">
-            <h2 className="text-2xl font-semibold mb-6 text-center">预设分析卡片</h2>
+            <h2 className="text-2xl font-semibold mb-6 text-center">
+              预设分析卡片
+            </h2>
             <div className="grid lg:grid-cols-2 gap-6">
               <AnalysisCard
                 title="自然语言处理技术分析"
@@ -332,7 +389,7 @@ export default function TestAnalysisCardPage() {
                   "语言模型训练",
                   "机器翻译系统",
                   "对话系统开发",
-                  "情感分析应用"
+                  "情感分析应用",
                 ]}
                 references={sampleReferences}
                 onViewDetails={() => {
@@ -351,14 +408,18 @@ export default function TestAnalysisCardPage() {
                   "目标检测与跟踪",
                   "人脸识别技术",
                   "医学图像分析",
-                  "自动驾驶视觉系统"
+                  "自动驾驶视觉系统",
                 ]}
                 actions={[
                   {
                     id: "demo",
                     label: "查看演示",
                     icon: Eye,
-                    onClick: () => toast({ title: "演示", description: "启动CV演示程序..." }),
+                    onClick: () =>
+                      toast({
+                        title: "演示",
+                        description: "启动CV演示程序...",
+                      }),
                   },
                 ]}
               />
@@ -367,7 +428,9 @@ export default function TestAnalysisCardPage() {
 
           {/* 状态示例 */}
           <div className="mt-12">
-            <h2 className="text-2xl font-semibold mb-6 text-center">不同状态示例</h2>
+            <h2 className="text-2xl font-semibold mb-6 text-center">
+              不同状态示例
+            </h2>
             <div className="grid md:grid-cols-3 gap-6">
               {/* 加载状态 */}
               <AnalysisCard
@@ -404,7 +467,8 @@ export default function TestAnalysisCardPage() {
                     id: "retry",
                     label: "重试",
                     icon: Download,
-                    onClick: () => toast({ title: "重试", description: "正在重新加载..." }),
+                    onClick: () =>
+                      toast({ title: "重试", description: "正在重新加载..." }),
                   },
                 ]}
               />
@@ -431,18 +495,42 @@ export default function TestAnalysisCardPage() {
           <div className="mt-12 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-6">
             <h2 className="text-xl font-semibold mb-4">💡 使用提示</h2>
             <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-              <div>• <strong>三个点菜单</strong>：点击卡片右上角的三个点按钮，查看所有可用操作</div>
-              <div>• <strong>复制内容</strong>：菜单中的"复制内容"可以复制卡片的主要文本内容</div>
-              <div>• <strong>复制全部</strong>：菜单中的"复制全部"会复制卡片中的所有内容块</div>
-              <div>• <strong>删除功能</strong>：点击删除会弹出确认对话框，确保误操作的安全性</div>
-              <div>• <strong>分组菜单</strong>：菜单项会根据功能自动分组，用分隔符区分不同类型的操作</div>
-              <div>• <strong>快捷键提示</strong>：某些操作会在菜单中显示对应的快捷键（仅为展示）</div>
-              <div>• <strong>条件显示</strong>：菜单项会根据权限和状态动态显示或隐藏</div>
-              <div>• <strong>内容块操作</strong>：悬浮在单个内容块上可以复制该块的内容</div>
+              <div>
+                • <strong>三个点菜单</strong>
+                ：点击卡片右上角的三个点按钮，查看所有可用操作
+              </div>
+              <div>
+                • <strong>复制内容</strong>
+                ：菜单中的"复制内容"可以复制卡片的主要文本内容
+              </div>
+              <div>
+                • <strong>复制全部</strong>
+                ：菜单中的"复制全部"会复制卡片中的所有内容块
+              </div>
+              <div>
+                • <strong>删除功能</strong>
+                ：点击删除会弹出确认对话框，确保误操作的安全性
+              </div>
+              <div>
+                • <strong>分组菜单</strong>
+                ：菜单项会根据功能自动分组，用分隔符区分不同类型的操作
+              </div>
+              <div>
+                • <strong>快捷键提示</strong>
+                ：某些操作会在菜单中显示对应的快捷键（仅为展示）
+              </div>
+              <div>
+                • <strong>条件显示</strong>
+                ：菜单项会根据权限和状态动态显示或隐藏
+              </div>
+              <div>
+                • <strong>内容块操作</strong>
+                ：悬浮在单个内容块上可以复制该块的内容
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}

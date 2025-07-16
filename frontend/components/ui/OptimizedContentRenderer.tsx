@@ -3,10 +3,7 @@
 import React, { useCallback, useEffect, useState, useRef } from "react";
 import { ChevronDown, CheckCircle, Loader2 } from "lucide-react";
 import { contentApi } from "@/lib/api/content";
-import type {
-  ContentChunk,
-  ContentChunksResponse,
-} from "@/lib/api/content";
+import type { ContentChunk, ContentChunksResponse } from "@/lib/api/content";
 import { ChunkItem } from "./ChunkItem";
 import { Loading } from "@/components/ui/loading";
 import { TextSelectionFloater } from "@/components/ui/text-selection-floater";
@@ -19,18 +16,23 @@ interface OptimizedContentRendererProps {
   /** 是否启用文本选择浮层 */
   enableTextSelection?: boolean;
   /** 文本选择回调 */
-  onTextAction?: (action: { id: string; label: string; prompt: string }, selectedText: string) => void;
+  onTextAction?: (
+    action: { id: string; label: string; prompt: string },
+    selectedText: string,
+  ) => void;
 }
 
 /**
  * OptimizedContentRenderer 提供最佳用户体验：
  * 1. 首屏快速加载（300ms内）
- * 2. 后台预取全部内容  
+ * 2. 后台预取全部内容
  * 3. 无感知内容替换
  * 4. 没有"正在加载"和"End of content"提示
  * 5. 不删除已渲染的内容
  */
-export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> = ({
+export const OptimizedContentRenderer: React.FC<
+  OptimizedContentRendererProps
+> = ({
   contentId,
   className = "",
   initialChunkSize = 5,
@@ -44,7 +46,7 @@ export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> =
   const [error, setError] = useState<string | null>(null);
   const [isFullContentLoaded, setIsFullContentLoaded] = useState(false);
   const [showProgressIndicator, setShowProgressIndicator] = useState(false);
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
 
   // 阶段1：快速加载首屏内容
@@ -52,25 +54,24 @@ export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> =
     try {
       setLoading(true);
       setError(null);
-      
+
       const response: ContentChunksResponse = await contentApi.getContentChunks(
         contentId,
         1,
         initialChunkSize,
-        false // 使用分页获取首屏
+        false, // 使用分页获取首屏
       );
 
       setChunks(response.chunks);
       setTotalChunks(response.pagination?.total_chunks || 0);
       setLoading(false);
-      
+
       // 如果还有更多内容，显示加载进度指示器
       if (response.pagination?.has_next) {
         setShowProgressIndicator(true);
       } else {
         setIsFullContentLoaded(true);
       }
-      
     } catch (err) {
       console.error("Error loading initial content:", err);
       setError(err instanceof Error ? err.message : "Failed to load content");
@@ -81,14 +82,14 @@ export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> =
   // 阶段2：后台加载完整内容
   const loadFullContent = useCallback(async () => {
     try {
-      const response: ContentChunksResponse = await contentApi.getAllContentChunks(contentId);
-      
+      const response: ContentChunksResponse =
+        await contentApi.getAllContentChunks(contentId);
+
       // 无缝替换为完整内容
       setChunks(response.chunks);
       setTotalChunks(response.chunks.length);
       setIsFullContentLoaded(true);
       setShowProgressIndicator(false);
-      
     } catch (err) {
       console.error("Error loading full content:", err);
       // 后台加载失败不影响用户，首屏内容仍然可用
@@ -101,14 +102,14 @@ export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> =
     const executeLoadingStrategy = async () => {
       // 步骤1：立即加载首屏内容
       await loadInitialContent();
-      
+
       // 步骤2：首屏加载完成后，在下一个事件循环中开始后台加载
       // 这确保首屏渲染不被阻塞
       setTimeout(() => {
         loadFullContent();
       }, 0);
     };
-    
+
     executeLoadingStrategy();
   }, [loadInitialContent, loadFullContent]);
 
@@ -149,13 +150,19 @@ export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> =
       {showProgressIndicator && (
         <div className="absolute top-0 left-0 right-0 z-10">
           <div className="h-0.5 bg-primary/20">
-            <div className="h-full bg-primary animate-pulse" style={{ width: "60%" }} />
+            <div
+              className="h-full bg-primary animate-pulse"
+              style={{ width: "60%" }}
+            />
           </div>
         </div>
       )}
 
       {/* 内容区域 */}
-      <div className="space-y-0 content-area" data-testid="optimized-content-renderer">
+      <div
+        className="space-y-0 content-area"
+        data-testid="optimized-content-renderer"
+      >
         {chunks.map((chunk, index) => (
           <ChunkItem key={`${chunk.id}-${index}`} chunk={chunk} />
         ))}
@@ -175,7 +182,7 @@ export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> =
           </div>
         ) : null}
       </div>
-      
+
       {/* 文本选择浮层 */}
       {enableTextSelection && (
         <TextSelectionFloater
@@ -188,4 +195,4 @@ export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> =
       )}
     </div>
   );
-}; 
+};

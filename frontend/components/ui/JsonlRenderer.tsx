@@ -4,8 +4,15 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { JsonLineWithExpandButton } from "./JsonLineWithExpandButton";
+<<<<<<< HEAD
 import { EnhancedReferenceIndicator, useReferenceManagerSafe } from "./ReferenceManager";
 import { Badge } from "@/components/ui/badge";
+=======
+import {
+  EnhancedReferenceIndicator,
+  useReferenceManagerSafe,
+} from "./ReferenceManager";
+>>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
 import { jsonlStyles } from "./jsonlStyles";
 
 interface JsonlRendererProps {
@@ -44,9 +51,10 @@ export function JsonlRenderer({
   const { actions } = useReferenceManagerSafe();
 
   // 根据是否显示引用指示器，决定传递哪个组件
-  const ReferenceIndicatorComponent: typeof EnhancedReferenceIndicator = showReferenceIndicators
-    ? EnhancedReferenceIndicator
-    : (() => null) as unknown as typeof EnhancedReferenceIndicator;
+  const ReferenceIndicatorComponent: typeof EnhancedReferenceIndicator =
+    showReferenceIndicators
+      ? EnhancedReferenceIndicator
+      : ((() => null) as unknown as typeof EnhancedReferenceIndicator);
 
   // 根據 styleName 取得區塊渲染器
   const styleRenderer = jsonlStyles[styleName] || jsonlStyles["default"];
@@ -571,4 +579,4 @@ export function JsonlRenderer({
       {blocks.map(renderBlock)}
     </div>
   );
-} 
+}

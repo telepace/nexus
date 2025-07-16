@@ -247,28 +247,24 @@ export default function ContentLibraryPage() {
       </section>
 
       {/* 右栏：内容预览 */}
-      {showPreview && (
-        isMobile ? (
-          <section
-            className="flex flex-col h-full w-full overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-300 pl-0 pr-2 py-2"
-          >
+      {showPreview &&
+        (isMobile ? (
+          <section className="flex flex-col h-full w-full overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-300 pl-0 pr-2 py-2">
             <header className="flex items-center justify-between h-header px-6 border-b border-border/30 bg-background/80 backdrop-blur-sm">
               <h2 className="text-lg font-semibold">预览</h2>
               <div className="flex items-center gap-3">
                 {previewItem && (
                   <Button
-                    onClick={() => router.push(`/content-library/reader/${previewItem.id}`)}
+                    onClick={() =>
+                      router.push(`/content-library/reader/${previewItem.id}`)
+                    }
                     size="sm"
                     variant="outline"
                   >
                     打开
                   </Button>
                 )}
-                <Button
-                  onClick={togglePreview}
-                  size="sm"
-                  variant="ghost"
-                >
+                <Button onClick={togglePreview} size="sm" variant="ghost">
                   <PanelRightClose className="h-4 w-4" />
                 </Button>
               </div>
@@ -283,8 +279,7 @@ export default function ContentLibraryPage() {
               <ContentPreview item={previewItem} />
             </div>
           </aside>
-        )
-      )}
+        ))}
 
       {/* 移动端预览切换按钮 */}
       {isMobile && !showPreview && selectedItem && (

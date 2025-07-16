@@ -3,9 +3,19 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnalysisCard, ContentBlock } from "@/components/ui/analysis-card";
-import { AnalysisContentRenderer, ReferenceInfo } from "@/components/ui/AnalysisContentRenderer";
+import {
+  AnalysisContentRenderer,
+  ReferenceInfo,
+} from "@/components/ui/AnalysisContentRenderer";
 import { useToast } from "@/hooks/use-toast";
-import { Brain, BookOpen, Lightbulb, Sparkles, FileText, Target } from "lucide-react";
+import {
+  Brain,
+  BookOpen,
+  Lightbulb,
+  Sparkles,
+  FileText,
+  Target,
+} from "lucide-react";
 
 export default function TestAnalysisRendererPage() {
   const { toast } = useToast();
@@ -107,7 +117,8 @@ export default function TestAnalysisRendererPage() {
               分析内容渲染器演示
             </h1>
             <p className="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-              全新的 JSONL 分析内容渲染系统，支持分层渲染、智能间距、引用系统和丰富交互
+              全新的 JSONL
+              分析内容渲染系统，支持分层渲染、智能间距、引用系统和丰富交互
             </p>
           </div>
 
@@ -119,7 +130,9 @@ export default function TestAnalysisRendererPage() {
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
               <div className="space-y-2">
-                <h3 className="font-medium text-blue-800 dark:text-blue-200">🎨 视觉设计</h3>
+                <h3 className="font-medium text-blue-800 dark:text-blue-200">
+                  🎨 视觉设计
+                </h3>
                 <ul className="text-blue-700 dark:text-blue-300 space-y-1">
                   <li>• 分层渲染架构</li>
                   <li>• 类型专属设计语言</li>
@@ -128,7 +141,9 @@ export default function TestAnalysisRendererPage() {
                 </ul>
               </div>
               <div className="space-y-2">
-                <h3 className="font-medium text-blue-800 dark:text-blue-200">🔧 交互功能</h3>
+                <h3 className="font-medium text-blue-800 dark:text-blue-200">
+                  🔧 交互功能
+                </h3>
                 <ul className="text-blue-700 dark:text-blue-300 space-y-1">
                   <li>• 可展开概念块</li>
                   <li>• 引用系统导航</li>
@@ -137,7 +152,9 @@ export default function TestAnalysisRendererPage() {
                 </ul>
               </div>
               <div className="space-y-2">
-                <h3 className="font-medium text-blue-800 dark:text-blue-200">📱 用户体验</h3>
+                <h3 className="font-medium text-blue-800 dark:text-blue-200">
+                  📱 用户体验
+                </h3>
                 <ul className="text-blue-700 dark:text-blue-300 space-y-1">
                   <li>• 流畅动画效果</li>
                   <li>• 渐进式信息展示</li>
@@ -205,7 +222,10 @@ export default function TestAnalysisRendererPage() {
                 title="NotebookLM 技术深度分析"
                 subtitle="基于 JSONL 格式的结构化分析内容"
                 emoji="📊"
-                contentBlocks={createAnalysisCard("主要分析", sampleAnalysisContent)}
+                contentBlocks={createAnalysisCard(
+                  "主要分析",
+                  sampleAnalysisContent,
+                )}
                 variant="featured"
                 defaultActions={true}
                 onCopyContent={async () => {
@@ -237,7 +257,10 @@ export default function TestAnalysisRendererPage() {
                   title="结构化分析渲染"
                   subtitle="使用新的分析渲染器"
                   emoji="✨"
-                  contentBlocks={createAnalysisCard("结构化", simpleAnalysisContent)}
+                  contentBlocks={createAnalysisCard(
+                    "结构化",
+                    simpleAnalysisContent,
+                  )}
                   variant="detailed"
                 />
               </div>
@@ -259,10 +282,18 @@ export default function TestAnalysisRendererPage() {
                     支持的块类型
                   </h3>
                   <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                    <div>• <code>h1, h2, h3</code> - 标题块</div>
-                    <div>• <code>insight</code> - 洞察块（高亮显示）</div>
-                    <div>• <code>concept</code> - 概念块（可展开）</div>
-                    <div>• <code>p</code> - 段落块</div>
+                    <div>
+                      • <code>h1, h2, h3</code> - 标题块
+                    </div>
+                    <div>
+                      • <code>insight</code> - 洞察块（高亮显示）
+                    </div>
+                    <div>
+                      • <code>concept</code> - 概念块（可展开）
+                    </div>
+                    <div>
+                      • <code>p</code> - 段落块
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -283,4 +314,4 @@ export default function TestAnalysisRendererPage() {
       </div>
     </div>
   );
-} 
+}
