@@ -30,8 +30,7 @@ import { adaptAnalysisData } from "./AnalysisCards";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 import { client } from "@/lib/api/client";
 import { getCookie } from "cookies-next";
-import { PromptData } from "@/components/actions/prompts-action";
-import { usePrompts } from "@/contexts/PromptsContext";
+import { fetchPrompts, PromptData } from "@/components/actions/prompts-action";
 import { contentApi } from "@/lib/api/content";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -90,13 +89,12 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   const [floatingMenu, setFloatingMenu] = useState({ show: false, x: 0, y: 0 });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [streamingResponse, setStreamingResponse] = useState("");
+  const [prompts, setPrompts] = useState<PromptData[]>([]);
   const [historyRecords, setHistoryRecords] = useState<ConversationPublic[]>(
     [],
   );
+  const [loadingPrompts, setLoadingPrompts] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(true);
-  
-  // 使用 prompts context 替代本地状态
-  const { prompts, loadingPrompts } = usePrompts();
   const [collapsedCards, setCollapsedCards] = useState<Set<string>>(new Set());
   
   // 动态高度管理
@@ -105,7 +103,68 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   // 移除原有的文本操作按钮 - 现在由独立组件处理
   // const textActions = [...]
 
-  // Prompts现在通过PromptsContext管理，不再需要在这里加载
+  // 获取真实的prompts作为AI指令标签
+  useEffect(() => {
+    const loadPrompts = async () => {
+      try {
+        setLoadingPrompts(true);
+        const promptsResponse = await fetchPrompts({
+          sort: "updated_at",
+          order: "desc",
+        });
+
+        if (Array.isArray(promptsResponse)) {
+          // 优化的过滤逻辑：
+          // 1. 显示用户明确启用的 prompts (user_enabled: true)
+          // 2. 显示系统启用且用户未设置的 prompts (enabled: true && user_enabled: undefined/null)
+          // 3. 排除用户明确禁用的 prompts (user_enabled: false)
+          const availablePrompts = promptsResponse
+            .filter((p) => {
+              // 系统级别必须启用
+              if (!p.enabled) return false;
+
+              // 如果用户明确禁用，则不显示
+              if (p.user_enabled === false) return false;
+
+              // 用户明确启用或者用户未设置（默认采用系统设置）
+              return (
+                p.user_enabled === true ||
+                p.user_enabled === undefined ||
+                p.user_enabled === null
+              );
+            })
+            .slice(0, 7);
+
+          setPrompts(availablePrompts);
+
+          // 调试信息
+          console.log("[ModernAnalysisInterface] Prompts 加载情况:", {
+            总数: promptsResponse.length,
+            系统启用: promptsResponse.filter((p) => p.enabled).length,
+            用户启用: promptsResponse.filter((p) => p.user_enabled === true)
+              .length,
+            用户禁用: promptsResponse.filter((p) => p.user_enabled === false)
+              .length,
+            用户未设置: promptsResponse.filter(
+              (p) => p.user_enabled === undefined || p.user_enabled === null,
+            ).length,
+            最终显示: availablePrompts.length,
+            显示的prompts: availablePrompts.map((p) => ({
+              name: p.name,
+              enabled: p.enabled,
+              user_enabled: p.user_enabled,
+            })),
+          });
+        }
+      } catch (error) {
+        console.error("获取prompts失败:", error);
+      } finally {
+        setLoadingPrompts(false);
+      }
+    };
+
+    loadPrompts();
+  }, []);
 
   // 获取真实的历史对话记录
   useEffect(() => {
@@ -402,7 +461,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         cards.push({
           id: "summary",
           title: "内容摘要",
-          subtitle: "",
+          subtitle: "核心内容提炼",
           emoji: "📝",
           content: {
             type: "summary",
@@ -416,7 +475,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         cards.push({
           id: "keyPoints",
           title: "提问清单",
-          subtitle: "",
+          subtitle: "好奇心的清单",
           emoji: "🎯",
           content: {
             type: "keyPoints",
