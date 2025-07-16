@@ -1461,7 +1461,7 @@ async def _stream_content_completion_updated(
     except Exception as e:
         # 发送错误信息 (类型9)
         error_msg = str(e).replace('"', '\\"')
-        yield f'{{"t":"error","c":"Completion failed: {error_msg}"}}\n'
+        yield f'{{"t":"error","c":"Completion failed: {error_msg}"}}]\n'
 
 
 @router.get(
