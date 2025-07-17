@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   Brain,
   MessageSquare,
-  Send,
+  ArrowUpRight,
   Share,
   Sparkles,
   RefreshCw,
@@ -783,45 +783,43 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
             )}
           </div>
 
-          {/* 输入框 */}
-          <div
-            className={`
-            flex items-center px-4 py-3 bg-neutral-50 dark:bg-neutral-900 rounded-2xl border-2 transition-all duration-200
-            ${inputFocused ? "border-neutral-900 dark:border-neutral-100" : "border-transparent"}
-          `}
-          >
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onFocus={() => setInputFocused(true)}
-              onBlur={() => setInputFocused(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleAnalysis();
-                }
-              }}
-              placeholder="询问关于内容的任何问题..."
-              className="flex-1 bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none"
-              disabled={isAnalyzing}
-            />
+          {/* 现代化聊天输入框 */}
+          <div className="relative bg-white dark:bg-zinc-800 shadow-md rounded-3xl focus-within:ring-1 focus-within:ring-foreground transition-all duration-300">
+            <div className="flex items-center gap-3 pl-6 pr-3 py-1">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onFocus={() => setInputFocused(true)}
+                  onBlur={() => setInputFocused(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleAnalysis();
+                    }
+                  }}
+                  placeholder="询问关于内容的任何问题..."
+                  className="border-0 bg-transparent px-0 py-2 h-auto text-base text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none w-full"
+                  disabled={isAnalyzing}
+                  autoComplete="off"
+                />
+              </div>
 
-            {/* 发送按钮 */}
-            {inputValue.trim() && (
+              {/* 现代化发送按钮 */}
               <Button
                 size="icon"
-                className="h-8 w-8 rounded-xl bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white ml-3"
+                className="rounded-full h-6 w-6 shadow-md text-foreground hover:text-foreground bg-neutral-100 hover:bg-neutral-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 cursor-pointer"
                 onClick={handleAnalysis}
-                disabled={isAnalyzing}
+                disabled={!inputValue.trim() || isAnalyzing}
               >
                 {isAnalyzing ? (
                   <Brain className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Send className="h-4 w-4" />
+                  <ArrowUpRight className="h-4 w-4" />
                 )}
               </Button>
-            )}
+            </div>
           </div>
         </div>
       </div>
