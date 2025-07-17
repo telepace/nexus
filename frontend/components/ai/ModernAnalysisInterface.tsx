@@ -486,7 +486,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       return (
         <div
           className={`
-            px-6 py-4 rounded-lg transition-all duration-200
+            px-6 py-3 rounded-lg transition-all duration-200
             ${
               selectedBlock === `${card.id}-main`
                 ? "linear-bg-1 opacity-90"
@@ -667,7 +667,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         {/* 页面标题 - 根据配置条件渲染 */}
         {!hideHeader && (
           <div
-            className={`px-6 py-4 ${variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""}`}
+            className={`px-6 py-3 ${variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""}`}
             data-exclude-selection
           >
             <h1 className="text-xl font-medium text-neutral-900 dark:text-neutral-100 line-clamp-2">
@@ -708,7 +708,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         }`}
         data-exclude-selection
       >
-        <div className="px-6 py-4">
+        <div className="px-6 py-3">
           {/* 历史记录展开面板 */}
           {showHistory && (
             <div className="mb-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
@@ -770,7 +770,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           )}
 
           {/* AI指令标签行 - 从真实API获取 */}
-          <div className="flex items-center gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
+          <div className="flex items-center gap-2 mb-1 overflow-x-auto scrollbar-hide pb-1">
             {isLoadingPrompts ? (
               <div className="flex items-center gap-2">
                 <RefreshCw className="h-4 w-4 animate-spin text-neutral-400" />
