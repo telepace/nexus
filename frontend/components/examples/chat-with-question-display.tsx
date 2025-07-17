@@ -72,7 +72,7 @@ export function ChatWithQuestionDisplay({
     if (isUser) {
       // 用户消息使用问题展示组件
       return showDetailedQuestions ? (
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end mb-1">
           <div className="max-w-[80%]">
             <UserQuestionDisplay
               question={message.content}
@@ -83,7 +83,7 @@ export function ChatWithQuestionDisplay({
           </div>
         </div>
       ) : (
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end mb-1">
           <div className="max-w-[80%]">
             <CompactQuestionDisplay
               question={message.content}
@@ -98,7 +98,7 @@ export function ChatWithQuestionDisplay({
 
     if (isSystem) {
       return (
-        <div className="flex justify-center mb-4">
+        <div className="flex justify-center mb-1">
           <Badge variant="outline" className="text-xs">
             <Settings className="h-3 w-3 mr-1" />
             {message.content}
@@ -109,7 +109,7 @@ export function ChatWithQuestionDisplay({
 
     // AI回复
     return (
-      <div className="flex items-start gap-3 mb-4">
+      <div className="flex items-start gap-3 mb-1">
         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
           <Bot className="h-4 w-4 text-muted-foreground" />
         </div>
@@ -169,7 +169,7 @@ export function ChatWithQuestionDisplay({
 
               {/* 加载状态 */}
               {isLoading && (
-                <div className="flex items-start gap-3 mb-4">
+                <div className="flex items-start gap-3 mb-1">
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
                     <Bot className="h-4 w-4 text-muted-foreground animate-pulse" />
                   </div>
@@ -276,7 +276,7 @@ export function ChatExamples() {
 
       {/* 使用建议 */}
       <div className="bg-muted/30 p-6 rounded-lg">
-        <h3 className="text-lg font-semibold mb-4">集成建议</h3>
+        <h3 className="text-lg font-semibold mb-1">集成建议</h3>
         <div className="space-y-3 text-sm">
           <div>
             <strong>紧凑模式：</strong>
