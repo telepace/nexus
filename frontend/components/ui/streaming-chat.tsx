@@ -435,7 +435,7 @@ export const StreamingChat = forwardRef<HTMLDivElement, StreamingChatProps>(
             )}
           </ScrollArea>
 
-          <div className="p-4 border-t">
+          <div className="p-2 border-t">
             <form onSubmit={handleSubmit} className="flex gap-2">
               <Input
                 ref={inputRef}
