@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Minus,
   Plus,
+  Loader2,
 } from "lucide-react";
 import { useCardHeight } from "@/hooks/use-card-height";
 import { Card, CardContent } from "@/components/ui/card";
@@ -633,7 +634,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <Brain className="h-8 w-8 animate-spin mx-auto mb-2 text-neutral-400" />
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-neutral-400" />
           <p className="text-sm text-neutral-500">正在加载分析结果...</p>
         </div>
       </div>
@@ -821,7 +822,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                 disabled={!inputValue.trim() || isAnalyzing}
               >
                 {isAnalyzing ? (
-                  <Brain className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <ArrowUpRight className="h-4 w-4" />
                 )}
