@@ -1100,7 +1100,7 @@ async def analyze_ai_sdk_updated_endpoint(
         content_item_title=content_title,
         analysis_instruction=request.analysis_instruction,
         content_to_analyze=content_text,
-        model="or-gemini-2.5-flash-preview-05-20",
+        model=settings.DEFAULT_LLM_MODEL,
         temperature=request.temperature,
         max_tokens=request.max_tokens,
     )
