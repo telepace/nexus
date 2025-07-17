@@ -16,11 +16,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
-  ContentItemPublic,
   AIResult,
   ConversationListResponse,
   ConversationPublic,
 } from "@/lib/api/content";
+import { ContentItemPublic } from "@/app/(withSidebar)/content-library/types";
 import { adaptAnalysisData } from "./AnalysisCards";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 import { getCookie } from "cookies-next";

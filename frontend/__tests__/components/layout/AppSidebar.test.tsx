@@ -53,8 +53,8 @@ describe("AppSidebar", () => {
   it("renders all navigation links", () => {
     renderSidebar();
 
+    expect(screen.getByText("Library")).toBeInTheDocument();
     expect(screen.getByText("Home")).toBeInTheDocument();
-    expect(screen.getByText("Content Library")).toBeInTheDocument();
     expect(screen.getByText("Favorites")).toBeInTheDocument();
     expect(screen.getByText("Prompts")).toBeInTheDocument();
   });

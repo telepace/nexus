@@ -9,9 +9,11 @@ import {
   RefreshCw,
   Upload,
   Heart,
-  MessageSquare,
+  BotMessageSquare,
+  Inbox,
+  GalleryHorizontalEnd,
 } from "lucide-react";
-import { IconInnerShadowTop, IconUser, IconArchive } from "@tabler/icons-react";
+import { IconUser } from "@tabler/icons-react";
 
 import {
   Sidebar,
@@ -44,14 +46,14 @@ import Image from "next/image";
 const data = {
   navMain: [
     {
-      title: "Home",
-      url: "/home",
-      icon: IconInnerShadowTop,
+      title: "Library",
+      url: "/content-library",
+      icon: Inbox,
     },
     {
-      title: "Content Library",
-      url: "/content-library",
-      icon: IconArchive,
+      title: "Home",
+      url: "/home",
+      icon: GalleryHorizontalEnd,
     },
     {
       title: "Favorites",
@@ -61,7 +63,7 @@ const data = {
     {
       title: "Prompts",
       url: "/prompts",
-      icon: MessageSquare,
+      icon: BotMessageSquare,
     },
   ],
 };
@@ -219,7 +221,7 @@ export function AppSidebar({
 
         {/* 主导航菜单 - 折叠状态下优化间距和视觉效果 */}
         <SidebarGroup className="px-0">
-          <SidebarGroupContent>
+          <SidebarGroupContent className="pr-3">
             <SidebarMenu className="space-y-1 group-data-[collapsible=icon]:space-y-3">
               {data.navMain.map((item) => {
                 const isActive = pathname === item.url;
