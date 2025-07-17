@@ -29,6 +29,7 @@ import { contentApi } from "@/lib/api/content";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { FavoriteButton } from "@/components/actions/FavoriteButton";
+import { useLLMAnalysisStore } from "@/lib/stores/llm-analysis-store";
 
 interface ModernAnalysisInterfaceProps {
   content: ContentItemPublic;
@@ -80,11 +81,18 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [streamingResponse, setStreamingResponse] = useState("");
-  const [prompts, setPrompts] = useState<PromptData[]>([]);
+  // Remove local state for prompts
+  // const [prompts, setPrompts] = useState<PromptData[]>([]);
+  // const [loadingPrompts, setLoadingPrompts] = useState(true);
+  // Add store usage
+  const { enabledPrompts, isLoadingPrompts, loadPrompts } = useLLMAnalysisStore();
+  // Load prompts from store
+  useEffect(() => {
+    loadPrompts();
+  }, [loadPrompts]);
   const [historyRecords, setHistoryRecords] = useState<ConversationPublic[]>(
     [],
   );
-  const [loadingPrompts, setLoadingPrompts] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [collapsedCards, setCollapsedCards] = useState<Set<string>>(new Set());
 
@@ -95,67 +103,67 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   // const textActions = [...]
 
   // 获取真实的prompts作为AI指令标签
-  useEffect(() => {
-    const loadPrompts = async () => {
-      try {
-        setLoadingPrompts(true);
-        const promptsResponse = await fetchPrompts({
-          sort: "updated_at",
-          order: "desc",
-        });
+  // useEffect(() => {
+  //   const loadPrompts = async () => {
+  //     try {
+  //       setLoadingPrompts(true);
+  //       const promptsResponse = await fetchPrompts({
+  //         sort: "updated_at",
+  //         order: "desc",
+  //       });
 
-        if (Array.isArray(promptsResponse)) {
-          // 优化的过滤逻辑：
-          // 1. 显示用户明确启用的 prompts (user_enabled: true)
-          // 2. 显示系统启用且用户未设置的 prompts (enabled: true && user_enabled: undefined/null)
-          // 3. 排除用户明确禁用的 prompts (user_enabled: false)
-          const availablePrompts = promptsResponse
-            .filter((p) => {
-              // 系统级别必须启用
-              if (!p.enabled) return false;
+  //       if (Array.isArray(promptsResponse)) {
+  //         // 优化的过滤逻辑：
+  //         // 1. 显示用户明确启用的 prompts (user_enabled: true)
+  //         // 2. 显示系统启用且用户未设置的 prompts (enabled: true && user_enabled: undefined/null)
+  //         // 3. 排除用户明确禁用的 prompts (user_enabled: false)
+  //         const availablePrompts = promptsResponse
+  //           .filter((p) => {
+  //             // 系统级别必须启用
+  //             if (!p.enabled) return false;
 
-              // 如果用户明确禁用，则不显示
-              if (p.user_enabled === false) return false;
+  //             // 如果用户明确禁用，则不显示
+  //             if (p.user_enabled === false) return false;
 
-              // 用户明确启用或者用户未设置（默认采用系统设置）
-              return (
-                p.user_enabled === true ||
-                p.user_enabled === undefined ||
-                p.user_enabled === null
-              );
-            })
-            .slice(0, 7);
+  //             // 用户明确启用或者用户未设置（默认采用系统设置）
+  //             return (
+  //               p.user_enabled === true ||
+  //               p.user_enabled === undefined ||
+  //               p.user_enabled === null
+  //             );
+  //           })
+  //           .slice(0, 7);
 
-          setPrompts(availablePrompts);
+  //         setPrompts(availablePrompts);
 
-          // 调试信息
-          console.log("[ModernAnalysisInterface] Prompts 加载情况:", {
-            总数: promptsResponse.length,
-            系统启用: promptsResponse.filter((p) => p.enabled).length,
-            用户启用: promptsResponse.filter((p) => p.user_enabled === true)
-              .length,
-            用户禁用: promptsResponse.filter((p) => p.user_enabled === false)
-              .length,
-            用户未设置: promptsResponse.filter(
-              (p) => p.user_enabled === undefined || p.user_enabled === null,
-            ).length,
-            最终显示: availablePrompts.length,
-            显示的prompts: availablePrompts.map((p) => ({
-              name: p.name,
-              enabled: p.enabled,
-              user_enabled: p.user_enabled,
-            })),
-          });
-        }
-      } catch (error) {
-        console.error("获取prompts失败:", error);
-      } finally {
-        setLoadingPrompts(false);
-      }
-    };
+  //         // 调试信息
+  //         console.log("[ModernAnalysisInterface] Prompts 加载情况:", {
+  //           总数: promptsResponse.length,
+  //           系统启用: promptsResponse.filter((p) => p.enabled).length,
+  //           用户启用: promptsResponse.filter((p) => p.user_enabled === true)
+  //             .length,
+  //           用户禁用: promptsResponse.filter((p) => p.user_enabled === false)
+  //             .length,
+  //           用户未设置: promptsResponse.filter(
+  //           (p) => p.user_enabled === undefined || p.user_enabled === null,
+  //         ).length,
+  //         最终显示: availablePrompts.length,
+  //         显示的prompts: availablePrompts.map((p) => ({
+  //         name: p.name,
+  //         enabled: p.enabled,
+  //         user_enabled: p.user_enabled,
+  //       })),
+  //     });
+  //   }
+  // } catch (error) {
+  //   console.error("获取prompts失败:", error);
+  // } finally {
+  //   setLoadingPrompts(false);
+  // }
+  // };
 
-    loadPrompts();
-  }, []);
+  // loadPrompts();
+  // }, []);
 
   // 获取真实的历史对话记录
   useEffect(() => {
@@ -467,9 +475,9 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         textContent = cardContent.data;
       } else if (cardContent.data && typeof cardContent.data === "object") {
         textContent =
-          cardContent.data.text ||
-          cardContent.data.content ||
-          cardContent.data.summary ||
+          (cardContent.data as any).text ||
+          (cardContent.data as any).content ||
+          (cardContent.data as any).summary ||
           JSON.stringify(cardContent.data);
       }
 
@@ -764,13 +772,13 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
 
           {/* AI指令标签行 - 从真实API获取 */}
           <div className="flex items-center gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
-            {loadingPrompts ? (
+            {isLoadingPrompts ? (
               <div className="flex items-center gap-2">
                 <RefreshCw className="h-4 w-4 animate-spin text-neutral-400" />
                 <span className="text-sm text-neutral-500">加载中...</span>
               </div>
             ) : (
-              prompts.map((prompt) => (
+              enabledPrompts.slice(0, 7).map((prompt) => (
                 <button
                   key={prompt.id}
                   onClick={() => handlePromptClick(prompt)}

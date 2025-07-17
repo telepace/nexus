@@ -156,6 +156,10 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
       },
 
       loadPrompts: async () => {
+        const state = get();
+        if (state.enabledPrompts.length > 0 || state.isLoadingPrompts) {
+          return;
+        }
         set({ isLoadingPrompts: true, error: null });
 
         try {
