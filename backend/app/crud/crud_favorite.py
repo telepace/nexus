@@ -1,25 +1,54 @@
 import uuid
+from typing import Optional
 
-from sqlmodel import Session, and_, select
+from sqlmodel import Session, and_, select, func
 
 from app.models.favorite import Favorite
 
 
 def get_favorite(
-    session: Session, user_id: uuid.UUID, content_item_id: uuid.UUID
+    session: Session, 
+    user_id: uuid.UUID, 
+    content_item_id: uuid.UUID,
+    block_id: Optional[str] = None
 ) -> Favorite | None:
-    """Get a specific favorite by user and content item."""
-    statement = select(Favorite).where(
-        and_(Favorite.user_id == user_id, Favorite.content_item_id == content_item_id)
-    )
+    """Get a specific favorite by user, content item, and optionally block."""
+    conditions = [
+        Favorite.user_id == user_id,
+        Favorite.content_item_id == content_item_id
+    ]
+    
+    if block_id is not None:
+        conditions.append(Favorite.block_id == block_id)
+    else:
+        conditions.append(Favorite.block_id.is_(None))
+    
+    statement = select(Favorite).where(and_(*conditions))
     return session.exec(statement).first()
 
 
 def create_favorite(
-    session: Session, user_id: uuid.UUID, content_item_id: uuid.UUID
+    session: Session, 
+    user_id: uuid.UUID, 
+    content_item_id: uuid.UUID,
+    block_id: Optional[str] = None,
+    block_type: Optional[str] = None,
+    block_content: Optional[dict] = None,
+    title: Optional[str] = None,
+    description: Optional[str] = None,
+    tags: Optional[list[str]] = None
 ) -> Favorite:
-    """Create a new favorite."""
-    favorite = Favorite(user_id=user_id, content_item_id=content_item_id)
+    """Create a new favorite (content or block level)."""
+    favorite = Favorite(
+        user_id=user_id,
+        content_item_id=content_item_id,
+        block_id=block_id,
+        block_type=block_type,
+        block_content=block_content,
+        title=title,
+        description=description,
+        tags=tags
+    )
     session.add(favorite)
     session.commit()
     session.refresh(favorite)
@@ -27,10 +56,13 @@ def create_favorite(
 
 
 def delete_favorite(
-    session: Session, user_id: uuid.UUID, content_item_id: uuid.UUID
+    session: Session, 
+    user_id: uuid.UUID, 
+    content_item_id: uuid.UUID,
+    block_id: Optional[str] = None
 ) -> bool:
-    """Delete a favorite. Returns True if deleted, False if not found."""
-    favorite = get_favorite(session, user_id, content_item_id)
+    """Delete a favorite."""
+    favorite = get_favorite(session, user_id, content_item_id, block_id)
     if favorite:
         session.delete(favorite)
         session.commit()
@@ -39,29 +71,135 @@ def delete_favorite(
 
 
 def get_user_favorites(
-    session: Session, user_id: uuid.UUID, skip: int = 0, limit: int = 100
+    session: Session, 
+    user_id: uuid.UUID, 
+    skip: int = 0, 
+    limit: int = 100,
+    block_only: bool = False,
+    content_only: bool = False
 ) -> tuple[list[Favorite], int]:
-    """Get user's favorites with pagination."""
-    # Get total count
-    count_statement = select(Favorite).where(Favorite.user_id == user_id)
-    total = len(session.exec(count_statement).all())
-
-    # Get paginated results with content items
-    statement = (
-        select(Favorite)
-        .where(Favorite.user_id == user_id)
-        .offset(skip)
-        .limit(limit)
-        .order_by(Favorite.created_at.desc())
+    """Get user's favorites with pagination and filtering."""
+    base_query = select(Favorite).where(Favorite.user_id == user_id)
+    
+    # 添加过滤条件
+    if block_only:
+        base_query = base_query.where(Favorite.block_id.is_not(None))
+    elif content_only:
+        base_query = base_query.where(Favorite.block_id.is_(None))
+    
+    # 获取总数
+    count_query = select(func.count()).select_from(
+        base_query.subquery()
     )
-
-    favorites = session.exec(statement).all()
+    total = session.exec(count_query).one()
+    
+    # 获取分页数据
+    favorites_query = base_query.order_by(Favorite.created_at.desc()).offset(skip).limit(limit)
+    favorites = session.exec(favorites_query).all()
+    
     return favorites, total
 
 
 def get_user_favorite_content_ids(
-    session: Session, user_id: uuid.UUID
+    session: Session, 
+    user_id: uuid.UUID
 ) -> list[uuid.UUID]:
-    """Get list of content item IDs that user has favorited."""
+    """Get all content IDs that the user has favorited (for backward compatibility)."""
     statement = select(Favorite.content_item_id).where(Favorite.user_id == user_id)
-    return list(session.exec(statement).all())
+    content_ids = session.exec(statement).all()
+    return list(content_ids)
+
+
+def get_user_favorite_blocks(
+    session: Session, 
+    user_id: uuid.UUID, 
+    content_item_id: Optional[uuid.UUID] = None,
+    skip: int = 0, 
+    limit: int = 100
+) -> tuple[list[Favorite], int]:
+    """Get user's block-level favorites."""
+    base_query = select(Favorite).where(
+        and_(
+            Favorite.user_id == user_id,
+            Favorite.block_id.is_not(None)
+        )
+    )
+    
+    if content_item_id:
+        base_query = base_query.where(Favorite.content_item_id == content_item_id)
+    
+    # 获取总数
+    count_query = select(func.count()).select_from(
+        base_query.subquery()
+    )
+    total = session.exec(count_query).one()
+    
+    # 获取分页数据
+    favorites_query = base_query.order_by(Favorite.created_at.desc()).offset(skip).limit(limit)
+    favorites = session.exec(favorites_query).all()
+    
+    return favorites, total
+
+
+def update_favorite(
+    session: Session,
+    favorite_id: uuid.UUID,
+    user_id: uuid.UUID,
+    title: Optional[str] = None,
+    description: Optional[str] = None,
+    tags: Optional[list[str]] = None
+) -> Favorite | None:
+    """Update a favorite's metadata."""
+    statement = select(Favorite).where(
+        and_(
+            Favorite.id == favorite_id,
+            Favorite.user_id == user_id
+        )
+    )
+    favorite = session.exec(statement).first()
+    
+    if favorite:
+        if title is not None:
+            favorite.title = title
+        if description is not None:
+            favorite.description = description
+        if tags is not None:
+            favorite.tags = tags
+        
+        session.add(favorite)
+        session.commit()
+        session.refresh(favorite)
+    
+    return favorite
+
+
+def is_content_favorited(
+    session: Session, 
+    user_id: uuid.UUID, 
+    content_item_id: uuid.UUID
+) -> bool:
+    """Check if a content item is favorited by the user (any level)."""
+    statement = select(Favorite).where(
+        and_(
+            Favorite.user_id == user_id,
+            Favorite.content_item_id == content_item_id
+        )
+    )
+    return session.exec(statement).first() is not None
+
+
+def is_block_favorited(
+    session: Session, 
+    user_id: uuid.UUID, 
+    content_item_id: uuid.UUID,
+    block_id: str
+) -> bool:
+    """Check if a specific block is favorited by the user."""
+    statement = select(Favorite).where(
+        and_(
+            Favorite.user_id == user_id,
+            Favorite.content_item_id == content_item_id,
+            Favorite.block_id == block_id
+        )
+    )
+    return session.exec(statement).first() is not None

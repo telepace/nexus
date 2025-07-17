@@ -50,16 +50,17 @@ interface ModernAnalysisInterfaceProps {
 interface AnalysisCard {
   id: string;
   title: string;
-  subtitle: string;
-  emoji?: string;
+  subtitle?: string;
+  emoji: string;
   content: {
-    type: "summary" | "insights" | "keyPoints" | "metadata";
-    data: string | object;
+    type: "summary" | "keyPoints" | "conversations" | "custom" | "streaming";
+    data: any;
   };
 }
 
 const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   content,
+  conversations,
   analysisResult = null,
   isLoading = false,
   className = "",
@@ -402,7 +403,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
 
   // 构建分析卡片数据
   const buildAnalysisCards = useCallback((): AnalysisCard[] => {
-    if (!analysisResult && !streamingResponse) return [];
+    if (!analysisResult && !streamingResponse && (!conversations || conversations.length === 0)) return [];
 
     const cards: AnalysisCard[] = [];
     // 使用meta_info代替ai_analysis
@@ -440,6 +441,26 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       }
     }
 
+    // 对话历史卡片 - 如果有对话记录就显示
+    if (conversations && conversations.length > 0) {
+      const conversationsWithMessages = conversations.filter(conv => 
+        conv.messages && conv.messages.length > 0
+      );
+      
+      if (conversationsWithMessages.length > 0) {
+        cards.push({
+          id: "conversations",
+          title: "对话记录",
+          subtitle: `${conversationsWithMessages.length} 个对话，${conversationsWithMessages.reduce((total, conv) => total + (conv.messages?.length || 0), 0)} 条消息`,
+          emoji: "💬",
+          content: {
+            type: "conversations",
+            data: conversationsWithMessages,
+          },
+        });
+      }
+    }
+
     // 实时分析结果卡片
     if (streamingResponse) {
       cards.push({
@@ -448,7 +469,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         subtitle: isAnalyzing ? "正在分析..." : "分析完成",
         emoji: "🤖",
         content: {
-          type: "summary",
+          type: "streaming",
           data: streamingResponse,
         },
       });
@@ -461,6 +482,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     streamingResponse,
     isAnalyzing,
     showPreprocessedContent,
+    conversations, // 添加 conversations 依赖
   ]);
 
   const cards = buildAnalysisCards();
@@ -624,7 +646,88 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                 ref={(el) => registerElement(card.id, el)}
                 className="card-content-inner"
               >
-                {renderCardContent(card)}
+                {card.content.type === "summary" || card.content.type === "keyPoints" ? (
+                  renderCardContent(card)
+                ) : card.content.type === "conversations" && (
+                  <div className="space-y-3">
+                    {card.content.data.map((conversation: any, index: number) => (
+                      <div key={conversation.id || index} className="border rounded-lg p-3 bg-muted/20">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium">
+                              {conversation.title || "未命名对话"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {conversation.conversation_type === "auto_analysis" && "自动分析"}
+                              {conversation.conversation_type === "user_chat" && "用户对话"}
+                              {conversation.conversation_type === "prompt_analysis" && "模板分析"}
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(conversation.created_at), {
+                              addSuffix: true,
+                              locale: zhCN,
+                            })}
+                          </span>
+                        </div>
+                        {conversation.messages && conversation.messages.length > 0 && (
+                          <div className="space-y-2 max-h-48 overflow-y-auto">
+                            {conversation.messages
+                              .filter((msg: any) => msg.role !== "system")
+                              .slice(0, 3) // 只显示前3条消息
+                              .map((message: any, msgIndex: number) => (
+                                <div
+                                  key={msgIndex}
+                                  className={`flex gap-2 ${
+                                    message.role === "user" ? "justify-end" : "justify-start"
+                                  }`}
+                                >
+                                  <div
+                                    className={`max-w-[80%] p-2 rounded text-xs ${
+                                      message.role === "user"
+                                        ? "bg-primary text-primary-foreground"
+                                        : "bg-muted text-muted-foreground"
+                                    }`}
+                                  >
+                                    {message.content.length > 100
+                                      ? `${message.content.substring(0, 100)}...`
+                                      : message.content}
+                                  </div>
+                                </div>
+                              ))}
+                            {conversation.messages.filter((msg: any) => msg.role !== "system").length > 3 && (
+                              <div className="text-center text-xs text-muted-foreground">
+                                还有 {conversation.messages.filter((msg: any) => msg.role !== "system").length - 3} 条消息...
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 实时分析结果卡片 */}
+                {card.content.type === "streaming" && (
+                  <div
+                    className={`
+                      px-6 py-4 rounded-lg transition-all duration-200
+                      ${
+                        selectedBlock === `${card.id}-main`
+                          ? "linear-bg-1 opacity-90"
+                          : "hover:linear-bg-1"
+                      }
+                    `}
+                  >
+                    <div className="select-text prose prose-sm max-w-none dark:prose-invert">
+                      <UniversalContentRenderer
+                        content={card.content.data}
+                        onExpandLine={handleJsonLineExpand}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>

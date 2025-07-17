@@ -9,6 +9,24 @@ from .deep_research import (
     DeepResearchJobResponse,
     DeepResearchJobResult,
 )
+from .collected_block import (
+    CollectedBlockBase,
+    CollectedBlockCreate,
+    CollectedBlockPublic,
+    CollectedBlocksPublic,
+)
+from .favorite import (
+    FavoriteBase,
+    FavoriteCreate,
+    FavoriteUpdate,
+    FavoritePublic,
+    FavoriteWithContent,
+    FavoriteListResponse,
+    FavoriteBlockCreate,
+    FavoriteBlockPublic,
+    FavoriteBlockWithContent,
+    FavoriteBlockListResponse,
+)
 from .image import (
     ImageBase,
     ImageCreate,
@@ -36,5 +54,19 @@ __all__ = [
     "DeepResearchJobPublic",
     "DeepResearchJobResponse",
     "DeepResearchJobResult",
+    "CollectedBlockBase",
+    "CollectedBlockCreate",
+    "CollectedBlockPublic",
+    "CollectedBlocksPublic",
+    "FavoriteBase",
+    "FavoriteCreate",
+    "FavoriteUpdate",
+    "FavoritePublic",
+    "FavoriteWithContent",
+    "FavoriteListResponse",
+    "FavoriteBlockCreate",
+    "FavoriteBlockPublic",
+    "FavoriteBlockWithContent",
+    "FavoriteBlockListResponse",
     # Add other schema names here as you create/import them
 ]

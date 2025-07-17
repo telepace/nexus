@@ -122,7 +122,7 @@ function TestReferenceSystemContent() {
         {/* 数据源切换 */}
         <div className="flex justify-center gap-4 mt-4">
           <Button
-            onClick={useMockData}
+            onClick={loadMockData}
             variant={!useRealData ? "default" : "outline"}
             disabled={loading}
           >
