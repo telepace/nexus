@@ -465,8 +465,8 @@ export const EnhancedLLMAnalysisSidebar: FC<
       </div>
 
       {/* Footer */}
-      <div className="shrink-0 p-4 bg-muted/20">
-        <div className="space-y-3">
+      <div className="shrink-0 p-2 bg-muted/20">
+        <div className="space-y-2">
           {/* 推荐提示 */}
           {!isLoadingPrompts && getAvailablePrompts().length > 0 && (
             <PromptRecommendations

@@ -187,7 +187,7 @@ export function ChatWithQuestionDisplay({
         </ScrollArea>
 
         {/* 输入框 */}
-        <div className="p-4 border-t">
+        <div className="p-2 border-t">
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <Input
               value={input}

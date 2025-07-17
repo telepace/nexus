@@ -315,7 +315,7 @@ export function AIChat({
           </div>
         )}
 
-        <div className="p-4 border-t">
+        <div className="p-2 border-t">
           <form onSubmit={handleSubmit} className="relative">
             {/* 现代化聊天输入框容器 */}
             <div className="relative bg-white dark:bg-zinc-800 shadow-md rounded-3xl focus-within:ring-1 focus-within:ring-foreground transition-all duration-300">
