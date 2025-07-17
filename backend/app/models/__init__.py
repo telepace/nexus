@@ -44,6 +44,7 @@ from .segments import ContentSegment, ContentSegmentBase
 
 # Import favorite model
 from .favorite import Favorite
+from .collected_block import CollectedBlock
 
 # Import the new Image model
 from .image import Image
@@ -124,4 +125,5 @@ __all__ = [
     "QueryRoutePublic",
     "SmartRoutingRequest",
     "SmartRoutingResponse",
+    "CollectedBlock",
 ]

@@ -62,6 +62,23 @@ export function MarkdownRenderer({
     );
   }
 
+  // 确保content是字符串类型
+  if (typeof content !== 'string') {
+    console.warn('MarkdownRenderer: content is not a string', { content, type: typeof content });
+    const Wrapper = inline ? "span" : "div";
+    return (
+      <Wrapper
+        data-testid="markdown-renderer"
+        className={cn(
+          inline ? "" : "prose prose-slate dark:prose-invert max-w-none",
+          className,
+        )}
+      >
+        <p className="text-muted-foreground">内容格式错误，无法渲染</p>
+      </Wrapper>
+    );
+  }
+
   // 预处理内容，转义可能导致问题的XML标签
   const sanitizedContent = content
     .replace(

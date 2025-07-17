@@ -9,6 +9,7 @@ from typing import Any
 import httpx
 
 from app.core.config import settings
+from app.utils.token_manager import get_token_limit, get_recommended_settings
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,9 @@ class LLMService:
         messages: list[dict[str, str]],
         model: str | None = None,
         temperature: float = 0.7,
-        max_tokens: int = 8000,
+        max_tokens: int | None = None,
+        task_type: str = "chat",
+        auto_adjust_tokens: bool = True,
     ) -> str:
         """
         执行聊天完成请求
@@ -30,7 +33,9 @@ class LLMService:
             messages: 消息列表
             model: 模型名称（配置的模型名称）
             temperature: 温度参数
-            max_tokens: 最大token数
+            max_tokens: 最大token数（如果为None则自动计算）
+            task_type: 任务类型（用于智能token调整）
+            auto_adjust_tokens: 是否自动调整token限制
 
         Returns:
             str: AI响应内容
@@ -40,14 +45,39 @@ class LLMService:
         """
 
         try:
+            configured_model = model or settings.DEFAULT_LLM_MODEL
+            
+            # 计算输入内容长度以用于token调整
+            input_content = "\n".join([msg.get("content", "") for msg in messages])
+            content_length = len(input_content)
+            
+            # 智能计算max_tokens
+            if max_tokens is None or auto_adjust_tokens:
+                recommended_tokens = get_token_limit(
+                    task_type=task_type,
+                    content_length=content_length,
+                    model_name=configured_model,
+                    base_tokens=max_tokens
+                )
+                final_max_tokens = recommended_tokens
+                
+                if max_tokens is not None:
+                    # 如果用户提供了max_tokens，取两者中的较大值
+                    final_max_tokens = max(max_tokens, recommended_tokens)
+                    
+                logger.info(f"🎯 智能token调整: 任务={task_type}, 内容长度={content_length}, "
+                           f"原始请求={max_tokens}, 智能推荐={recommended_tokens}, "
+                           f"最终使用={final_max_tokens}")
+            else:
+                final_max_tokens = max_tokens
+
             async with httpx.AsyncClient(timeout=120.0) as client:
                 # 构建请求数据
-                configured_model = model or settings.DEFAULT_LLM_MODEL
                 request_data = {
                     "model": configured_model,
                     "messages": messages,
                     "temperature": temperature,
-                    "max_tokens": max_tokens,
+                    "max_tokens": final_max_tokens,
                 }
 
                 # 准备请求头，包含认证信息
@@ -60,7 +90,8 @@ class LLMService:
                 url = f"{base_url}/v1/chat/completions"
 
                 logger.debug(
-                    f"Calling LLM: {url} with configured model: {configured_model}"
+                    f"Calling LLM: {url} with configured model: {configured_model}, "
+                    f"max_tokens: {final_max_tokens}"
                 )
 
                 response = await client.post(
@@ -87,6 +118,15 @@ class LLMService:
                     logger.debug(f"✅ Model direct: {configured_model}")
 
                 content = response_data["choices"][0]["message"]["content"]
+                
+                # 记录token使用情况
+                usage = response_data.get("usage", {})
+                if usage:
+                    logger.info(f"📊 Token使用: 输入={usage.get('prompt_tokens', 0)}, "
+                               f"输出={usage.get('completion_tokens', 0)}, "
+                               f"总计={usage.get('total_tokens', 0)}, "
+                               f"限制={final_max_tokens}")
+                
                 logger.info(f"✅ LLM response received, content length: {len(content)}")
                 return content.strip()
 
@@ -100,6 +140,8 @@ class LLMService:
         context: str,
         conversation_history: list[dict[str, str]] | None = None,
         system_prompt: str | None = None,
+        task_type: str = "conversation",
+        quality: str = "balanced",
     ) -> str:
         """
         生成基于上下文的AI回复
@@ -109,6 +151,8 @@ class LLMService:
             context: 相关的上下文内容（如文档内容）
             conversation_history: 历史对话记录
             system_prompt: 系统提示词
+            task_type: 任务类型（用于token调整）
+            quality: 质量级别 ("fast", "balanced", "high")
 
         Returns:
             str: AI生成的回复
@@ -134,8 +178,28 @@ class LLMService:
 
         # 添加当前用户消息
         messages.append({"role": "user", "content": user_message})
+        
+        # 计算总内容长度
+        total_content = system_content + user_message + (context or "")
+        if conversation_history:
+            total_content += "\n".join([msg.get("content", "") for msg in conversation_history])
+        
+        # 获取推荐设置
+        recommended_settings = get_recommended_settings(
+            task_type=task_type,
+            content_text=total_content,
+            target_quality=quality
+        )
+        
+        logger.info(f"🎯 上下文感知回复: 内容长度={len(total_content)}, "
+                   f"推荐设置={recommended_settings}")
 
-        return await LLMService.chat_completion(messages)
+        return await LLMService.chat_completion(
+            messages=messages,
+            task_type=task_type,
+            max_tokens=recommended_settings["max_tokens"],
+            temperature=recommended_settings["temperature"],
+        )
 
     @staticmethod
     async def analyze_content(

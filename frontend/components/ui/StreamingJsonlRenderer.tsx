@@ -49,6 +49,7 @@ export function StreamingJsonlRenderer({
   className,
   enableHoverEffects = true,
   showStreamingIndicator = true,
+  contentId,
 }: StreamingJsonlRendererProps) {
   const [hoveredBlock, setHoveredBlock] = useState<number | null>(null);
 

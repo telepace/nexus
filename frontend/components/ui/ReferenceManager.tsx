@@ -409,32 +409,35 @@ export const EnhancedReferenceIndicator: React.FC<
   );
 };
 
-// 段落高亮样式工具
+// 样式函数
 export const createParagraphHighlightStyles = () => {
   return `
     .paragraph-highlight {
-      background: linear-gradient(90deg, 
-        rgba(59, 130, 246, 0.1) 0%, 
-        rgba(59, 130, 246, 0.05) 100%);
-      border-left: 3px solid rgb(59, 130, 246);
-      padding-left: 12px;
-      margin-left: -15px;
-      border-radius: 0 4px 4px 0;
-      transition: all 0.3s ease;
+      background-color: rgba(255, 235, 59, 0.2);
+      border-left: 3px solid #FBC02D;
+      padding-left: 8px;
+      margin-left: -11px;
+      transition: all 0.2s ease;
     }
     
     .paragraph-highlight.selected {
-      background: linear-gradient(90deg, 
-        rgba(59, 130, 246, 0.2) 0%, 
-        rgba(59, 130, 246, 0.1) 100%);
-      border-left-color: rgb(37, 99, 235);
-      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+      background-color: rgba(255, 193, 7, 0.3);
+      border-left-color: #F57C00;
     }
     
-    .paragraph-highlight:hover {
-      background: linear-gradient(90deg, 
-        rgba(59, 130, 246, 0.15) 0%, 
-        rgba(59, 130, 246, 0.08) 100%);
+    .dark .paragraph-highlight {
+      background-color: rgba(255, 235, 59, 0.1);
+      border-left-color: #FFF176;
+    }
+    
+    .dark .paragraph-highlight.selected {
+      background-color: rgba(255, 193, 7, 0.2);
+      border-left-color: #FFB74D;
     }
   `;
+};
+
+// 临时占位符组件，防止构建错误
+export const NewEnhancedReferenceIndicator: React.FC<any> = (props) => {
+  return <span>Reference placeholder</span>;
 };

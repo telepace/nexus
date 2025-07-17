@@ -13,6 +13,9 @@ import { navigationState } from "@/lib/services/navigation-state";
 import { useReaderContext } from "@/components/layout/ReaderLayout";
 import { ContentItemPublic } from "@/app/openapi-client/types.gen";
 import { PageHeader } from "@/components/layout/PageHeader";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 
 // 骨架屏组件 - 优化对比度和动画
 const ReaderSkeleton = () => {
@@ -86,7 +89,20 @@ const ProcessedContentRenderer = memo(
       (contentText.length > CONTENT_SIZE_THRESHOLD ||
         contentText.split("\n\n").length > 30); // 粗略估算段落数
 
+    // 临时修复：强制使用markdown渲染器，避免chunks API问题
+    console.log("🔍 ProcessedContentRenderer 调试信息:", {
+      contentId,
+      processing_status: content.processing_status,
+      contentTextLength: contentText?.length || 0,
+      shouldUseVirtualScroll,
+      hasMarkdownContent: !!markdownContent,
+      hasProcessedContent: !!content.processed_content,
+      hasContentText: !!content.content_text
+    });
+
     // 完整内容可用且需要虚拟滚动时，使用 SeamlessContentRenderer
+    // 临时注释掉，强制使用markdown渲染
+    /*
     if (
       contentId &&
       content.processing_status === "completed" &&
@@ -104,16 +120,49 @@ const ProcessedContentRenderer = memo(
         </div>
       );
     }
+    */
 
     // 小文档或中等文档：使用增强阅读器，支持引用跳转
     if (contentText) {
       return (
         <div className="flex justify-center w-full py-4">
-          <EnhancedContentReaderWithProvider
-            content={contentText}
-            contentId={contentId}
-            className="w-full max-w-[35rem] prose prose-sm dark:prose-invert"
-          />
+          <div className="w-full max-w-[35rem]">
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              {/* 修复ReactMarkdown的className问题 */}
+              <div className="markdown-content prose prose-base max-w-none dark:prose-invert">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm, remarkBreaks]}
+                  components={{
+                    // 自定义组件样式，而不是使用className
+                    h1: ({node, ...props}) => <h1 className="text-2xl font-bold mb-4" {...props} />,
+                    h2: ({node, ...props}) => <h2 className="text-xl font-semibold mb-3" {...props} />,
+                    h3: ({node, ...props}) => <h3 className="text-lg font-semibold mb-2" {...props} />,
+                    p: ({node, ...props}) => <p className="mb-3 leading-relaxed" {...props} />,
+                    blockquote: ({node, ...props}) => (
+                      <blockquote className="border-l-4 border-primary/30 pl-4 italic text-muted-foreground" {...props} />
+                    ),
+                    code: ({node, className, children, ...props}) => {
+                      const isInline = !className || !className.includes('language-');
+                      return isInline ? (
+                        <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+                          {children}
+                        </code>
+                      ) : (
+                        <code className="block bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono" {...props}>
+                          {children}
+                        </code>
+                      );
+                    },
+                    ul: ({node, ...props}) => <ul className="list-disc ml-6 mb-4" {...props} />,
+                    ol: ({node, ...props}) => <ol className="list-decimal ml-6 mb-4" {...props} />,
+                    li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                  }}
+                >
+                  {contentText}
+                </ReactMarkdown>
+              </div>
+            </div>
+          </div>
         </div>
       );
     }
@@ -391,16 +440,20 @@ export const ClientContent = ({
   useEffect(() => {
     if (content && onContentItemUpdate) {
       // 将 ContentDetail 转换为 ContentItemPublic 格式
-      const contentItem: Partial<ContentItemPublic> = {
+      const contentItem: any = {
         id: content.id,
         type: content.type,
-        title: content.title,
+        title: content.title || "Untitled", // 确保title不为null
         source_uri: content.source_uri,
         processing_status: content.processing_status,
+        user_id: content.user_id,
+        created_at: content.created_at,
+        updated_at: content.updated_at,
+        content_text: content.content_text,
         // 这些字段在新版本的 ReaderLayout 中会通过 contentApi.getContentItem 重新获取
         // 以确保包含 ai_result 和 ai_analysis 数据
       };
-      onContentItemUpdate(contentItem as ContentItemPublic);
+      onContentItemUpdate(contentItem);
     }
   }, [content, onContentItemUpdate]);
 
@@ -593,7 +646,6 @@ export const ClientContent = ({
             content={content}
             markdownContent={markdownContent}
             contentId={contentId}
-            scrollContainerRef={scrollContainerRef}
             onTextAction={handleTextAction}
           />
         )}

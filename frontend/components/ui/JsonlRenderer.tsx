@@ -9,6 +9,7 @@ import {
   useReferenceManagerSafe,
 } from "./ReferenceManager";
 import { jsonlStyles } from "./jsonlStyles";
+import { Bookmark } from "lucide-react";
 
 interface JsonlRendererProps {
   content: string;

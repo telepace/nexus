@@ -9,6 +9,7 @@ from app.api.routes import (
     deep_research,  # Add deep research router
     extension_stream,  # Add extension stream router
     favorites,  # Add favorites router
+    collected_blocks, # Add collected_blocks router
     google_oauth,
     health,  # Import health router separately
     images,  # Added images router

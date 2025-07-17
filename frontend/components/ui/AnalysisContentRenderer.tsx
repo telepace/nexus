@@ -21,6 +21,7 @@ import {
   Copy,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { BlockFavoriteButton } from "@/components/actions/BlockFavoriteButton";
 
 // 分析块数据类型定义
 export interface AnalysisBlockData {
@@ -45,6 +46,7 @@ export interface AnalysisContentRendererProps {
   references?: ReferenceInfo[]; // 引用数据
   onReferenceClick?: (refId: number) => void;
   className?: string;
+  contentId?: string; // 新增：内容ID用于收藏功能
 }
 
 // 解析 JSONL 内容
@@ -151,7 +153,9 @@ const HeadingBlock: React.FC<{
   references: number[];
   referenceData?: ReferenceInfo[];
   onReferenceClick?: (refId: number) => void;
-}> = ({ block, references, referenceData, onReferenceClick }) => {
+  contentId?: string; // 新增：内容ID用于收藏
+}> = ({ block, references, referenceData, onReferenceClick, contentId }) => {
+  const [isHovered, setIsHovered] = useState(false);
   const HeadingTag = block.t as keyof JSX.IntrinsicElements;
 
   const getHeadingStyles = (type: string) => {
@@ -169,10 +173,12 @@ const HeadingBlock: React.FC<{
 
   return (
     <motion.div
-      className="relative"
+      className="group relative"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* 装饰性左侧条 */}
       <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full" />
@@ -188,6 +194,27 @@ const HeadingBlock: React.FC<{
             referenceData={referenceData}
             onReferenceClick={onReferenceClick}
           />
+          
+          {/* 悬浮时显示收藏按钮 */}
+          {contentId && (
+            <div className={cn(
+              "opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+              isHovered && "opacity-100"
+            )}>
+              <BlockFavoriteButton
+                contentId={contentId}
+                blockId={`heading-${block.c.substring(0, 50).replace(/\s+/g, '-')}`}
+                blockType={block.t}
+                blockContent={block}
+                title={block.c}
+                description={`${block.t.toUpperCase()}标题：${block.c}`}
+                tags={["标题", block.t]}
+                size="sm"
+                variant="ghost"
+                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm"
+              />
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
@@ -200,7 +227,9 @@ const InsightBlock: React.FC<{
   references: number[];
   referenceData?: ReferenceInfo[];
   onReferenceClick?: (refId: number) => void;
-}> = ({ block, references, referenceData, onReferenceClick }) => {
+  contentId?: string; // 新增：内容ID用于收藏
+}> = ({ block, references, referenceData, onReferenceClick, contentId }) => {
+  const [isHovered, setIsHovered] = useState(false);
   const { toast } = useToast();
 
   const handleCopy = async () => {
@@ -223,6 +252,8 @@ const InsightBlock: React.FC<{
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.4 }}
       whileHover={{ scale: 1.01 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 rounded-xl p-4 border border-amber-200 dark:border-amber-800/30 shadow-sm hover:shadow-md transition-all duration-200">
         <div className="flex items-start gap-3">
@@ -253,7 +284,8 @@ const InsightBlock: React.FC<{
             )}
           </div>
 
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          {/* 操作按钮组 */}
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1">
             <Button
               variant="ghost"
               size="sm"
@@ -262,6 +294,22 @@ const InsightBlock: React.FC<{
             >
               <Copy className="h-3 w-3" />
             </Button>
+            
+            {/* 收藏按钮 */}
+            {contentId && (
+              <BlockFavoriteButton
+                contentId={contentId}
+                blockId={`insight-${block.c.substring(0, 50).replace(/\s+/g, '-')}`}
+                blockType="insight"
+                blockContent={block}
+                title={`洞察：${block.c.substring(0, 100)}`}
+                description={block.c}
+                tags={["洞察", "分析"]}
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:text-amber-400 dark:hover:text-amber-300 dark:hover:bg-amber-900/30"
+              />
+            )}
           </div>
         </div>
       </div>
@@ -275,8 +323,10 @@ const ConceptBlock: React.FC<{
   references: number[];
   referenceData?: ReferenceInfo[];
   onReferenceClick?: (refId: number) => void;
-}> = ({ block, references, referenceData, onReferenceClick }) => {
+  contentId?: string; // 新增：内容ID用于收藏
+}> = ({ block, references, referenceData, onReferenceClick, contentId }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <motion.div
@@ -284,6 +334,8 @@ const ConceptBlock: React.FC<{
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="bg-blue-50/50 dark:bg-blue-950/20 rounded-lg border border-blue-200/50 dark:border-blue-800/30 overflow-hidden">
         <button
@@ -312,6 +364,28 @@ const ConceptBlock: React.FC<{
                 referenceData={referenceData}
                 onReferenceClick={onReferenceClick}
               />
+              
+              {/* 收藏按钮 */}
+              {contentId && (
+                <div className={cn(
+                  "opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+                  isHovered && "opacity-100"
+                )}>
+                  <BlockFavoriteButton
+                    contentId={contentId}
+                    blockId={`concept-${block.c.substring(0, 50).replace(/\s+/g, '-')}`}
+                    blockType="concept"
+                    blockContent={block}
+                    title={`概念：${block.c.substring(0, 100)}`}
+                    description={block.c}
+                    tags={["概念", "知识"]}
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
+                  />
+                </div>
+              )}
+              
               <motion.div
                 animate={{ rotate: isExpanded ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
@@ -355,13 +429,18 @@ const ParagraphBlock: React.FC<{
   references: number[];
   referenceData?: ReferenceInfo[];
   onReferenceClick?: (refId: number) => void;
-}> = ({ block, references, referenceData, onReferenceClick }) => {
+  contentId?: string; // 新增：内容ID用于收藏
+}> = ({ block, references, referenceData, onReferenceClick, contentId }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
     <motion.div
       className="group relative"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="bg-gray-50/50 dark:bg-gray-900/20 rounded-lg p-4 border border-gray-200/50 dark:border-gray-700/30 hover:bg-gray-100/50 dark:hover:bg-gray-800/20 transition-colors duration-200">
         <div className="flex items-start gap-3">
@@ -384,6 +463,26 @@ const ParagraphBlock: React.FC<{
               </div>
             )}
           </div>
+
+          {/* 悬浮时显示收藏按钮 */}
+          {contentId && (
+            <div className={cn(
+              "absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+              isHovered && "opacity-100"
+            )}>
+              <BlockFavoriteButton
+                contentId={contentId}
+                blockId={`paragraph-${block.c.substring(0, 50).replace(/\s+/g, '-')}`}
+                blockType="p"
+                blockContent={block}
+                title={block.c.substring(0, 100)}
+                description={block.c}
+                size="sm"
+                variant="ghost"
+                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm"
+              />
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
@@ -393,7 +492,7 @@ const ParagraphBlock: React.FC<{
 // 主渲染组件
 export const AnalysisContentRenderer: React.FC<
   AnalysisContentRendererProps
-> = ({ content, onReferenceClick, className }) => {
+> = ({ content, onReferenceClick, className, contentId }) => {
   const blocks = parseAnalysisContent(content);
 
   if (blocks.length === 0) {
@@ -410,6 +509,7 @@ export const AnalysisContentRenderer: React.FC<
       references: parseReferences(block.ref),
       referenceData: [],
       onReferenceClick,
+      contentId, // 传递内容ID
     };
 
     switch (block.t) {
