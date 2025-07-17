@@ -1,26 +1,9 @@
-export interface ContentItemPublic {
-  id: string;
-  type: string;
-  source_uri?: string | null;
-  title: string | null;
+import type { ContentItemPublic as OpenAPIContentItemPublic } from "@/app/openapi-client/types.gen";
+
+// 扩展 openapi-client 的类型，添加本地需要的字段
+export interface ContentItemPublic extends OpenAPIContentItemPublic {
   summary?: string | null;
-  /** 文章全文或純文本，用於 AI 分析 */
-  content_text?: string | null;
-  user_id: string;
-  processing_status: string;
-  created_at: string;
-  updated_at: string;
-  ai_result?: {
-    optimized_title?: string | null;
-    brief_description?: string | null;
-    summary?: Record<string, unknown> | null;
-    key_points?: Record<string, unknown> | null;
-    labels?: string[] | null;
-    content_analysis?: Record<string, unknown> | null;
-    reading_time_minutes?: number | null;
-    difficulty_level?: string | null;
-    content_quality_score?: number | null;
-  } | null;
+  meta_info?: string | null;
   ai_analysis?: {
     summarizer?: {
       summary?: {
