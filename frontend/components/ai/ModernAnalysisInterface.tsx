@@ -272,41 +272,25 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       // 正确的做法是，useCallback 依赖的应该是那些在组件生命周期内基本不变的函数或值。
       if (isAnalyzing) return;
 
-      console.log("[performCompletion] 开始执行:", {
-        body,
-        isAnalyzing,
-        contentId: content.id
-      });
-
       setIsAnalyzing(true);
       setStreamingResponse("");
 
       try {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-        const url = `${apiUrl}/api/v1/content/${content.id}/completion-updated`;
-        
-        console.log("[performCompletion] 发送请求到:", url);
-        console.log("[performCompletion] 请求体:", body);
-        
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getCookie("accessToken")}`,
+        const response = await fetch(
+          `${apiUrl}/api/v1/content/${content.id}/completion-updated`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${getCookie("accessToken")}`,
+            },
+            body: JSON.stringify(body),
           },
-          body: JSON.stringify(body),
-        });
-        
-        console.log("[performCompletion] 响应状态:", response.status, response.statusText);
+        );
 
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error("[performCompletion] HTTP错误:", {
-            status: response.status,
-            statusText: response.statusText,
-            errorText
-          });
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
@@ -357,14 +341,13 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           description: "AI 分析已成功完成",
         });
       } catch (error) {
-        console.error("[performCompletion] 分析失败:", error);
+        console.error("Analysis failed:", error);
         toast({
           title: "分析失败",
-          description: `错误: ${error instanceof Error ? error.message : "未知错误"}`,
+          description: "请稍后重试",
           variant: "destructive",
         });
       } finally {
-        console.log("[performCompletion] 完成，设置 isAnalyzing = false");
         setIsAnalyzing(false);
       }
     },
@@ -380,20 +363,13 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
 
   const handleAnalysis = useCallback(async () => {
     if (!inputValue.trim()) return;
-    
-    console.log("[ModernAnalysisInterface] 开始分析:", {
-      inputValue,
-      contentId: content.id,
-      isAnalyzing
-    });
-    
     await performCompletion(
       {
         analysis_instruction: inputValue,
       },
       "分析完成",
     );
-  }, [inputValue, performCompletion, content.id, isAnalyzing]);
+  }, [inputValue, performCompletion]);
 
   // 处理JSON行展开请求
   const handleJsonLineExpand = useCallback(
