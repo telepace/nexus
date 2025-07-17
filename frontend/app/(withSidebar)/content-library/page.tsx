@@ -181,10 +181,10 @@ export default function ContentLibraryPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-visible bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="flex h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* 左栏：内容列表 */}
       <section
-        className={`flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-300 ${
+        className={`flex flex-col transition-all duration-300 ${
           isMobile
             ? showPreview
               ? "hidden"
@@ -194,8 +194,8 @@ export default function ContentLibraryPage() {
               : "w-full"
         }`}
       >
-        {/* Header */}
-        <header className="relative flex items-center justify-between h-header px-6 border-b shrink-0 bg-transparent sticky top-0 z-10 backdrop-blur-sm">
+        {/* Header - 固定在顶部 */}
+        <header className="relative flex items-center justify-between h-header px-6 border-b shrink-0 bg-background/95 backdrop-blur-sm z-10">
           <PageHeader breadcrumbs={[{ label: "Library" }]} />
           <LibraryHeader
             items={items}
@@ -209,8 +209,8 @@ export default function ContentLibraryPage() {
           />
         </header>
 
-        {/* 列表 */}
-        <div className="flex-1 px-6 pb-8 pt-8">
+        {/* 列表 - 可滚动区域 */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar px-6 pb-8 pt-8">
           {filteredItems.length === 0 ? (
             <div className="text-center py-16">
               {filters.search || filters.selectedTags.length > 0 ? (
