@@ -32,6 +32,7 @@ import { useGlobalNotificationStore } from "@/lib/stores/useGlobalNotificationSt
 import { extractAndNormalizeUrls } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import { Checkbox } from "../ui/checkbox";
 
 /**
  * 添加内容模态框
@@ -42,29 +43,6 @@ import { toast } from "sonner";
  * - 未选中的链接将保留在文本内容中
  * - 支持全选/取消全选操作
  */
-
-// 简单的复选框组件
-const Checkbox = ({
-  checked,
-  onChange,
-  children,
-  className = "",
-}: {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  children: React.ReactNode;
-  className?: string;
-}) => (
-  <label className={`flex items-center gap-2 cursor-pointer ${className}`}>
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={(e) => onChange(e.target.checked)}
-      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-    />
-    <span className="text-sm">{children}</span>
-  </label>
-);
 
 // 极简基础组件 - 基于参考设计，加入 Fade & Scale 动效
 const Dialog = ({ children, open, onOpenChange }) => {
@@ -986,23 +964,24 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
 
             {/* 检测到的链接选择 */}
             {detectedUrls.length > 0 && (
-              <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="p-3 bg-muted rounded-lg border border-border">
                 <div className="flex items-start gap-2 mb-3">
-                  <Link className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <Link className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <div className="font-medium text-blue-900 dark:text-blue-100">
+                      <div className="font-medium text-foreground">
                         检测到 {detectedUrls.length} 个链接
                       </div>
-                      <Checkbox
-                        checked={selectedUrls.length === detectedUrls.length}
-                        onChange={handleSelectAllUrls}
-                        className="text-xs"
-                      >
-                        全选
-                      </Checkbox>
+                      <div className="flex items-center gap-2 text-xs">
+                        <Checkbox
+                          checked={selectedUrls.length === detectedUrls.length}
+                          onCheckedChange={handleSelectAllUrls}
+                          className=""
+                        />
+                        <span>全选</span>
+                      </div>
                     </div>
-                    <div className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       选择要单独处理的链接（未选中的链接将保留在文本中）
                     </div>
                   </div>
@@ -1012,23 +991,24 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                   {detectedUrls.map((url, index) => (
                     <div
                       key={index}
-                      className="p-2 bg-white dark:bg-gray-800 rounded border border-blue-100 dark:border-blue-800"
+                      className="p-2 bg-card rounded border border-border"
                     >
-                      <Checkbox
-                        checked={selectedUrls.includes(url)}
-                        onChange={(checked) => handleUrlSelection(url, checked)}
-                        className="w-full"
-                      >
-                        <span className="text-blue-700 dark:text-blue-300 text-xs font-mono break-all">
+                      <div className="flex items-center gap-2 w-full">
+                        <Checkbox
+                          checked={selectedUrls.includes(url)}
+                          onCheckedChange={(checked) => handleUrlSelection(url, checked as boolean)}
+                          className=""
+                        />
+                        <span className="text-muted-foreground text-xs font-mono break-all">
                           {url}
                         </span>
-                      </Checkbox>
+                      </div>
                     </div>
                   ))}
                 </div>
 
                 {selectedUrls.length > 0 && (
-                  <div className="mt-2 text-xs text-green-700 dark:text-green-300">
+                  <div className="mt-2 text-xs text-accent">
                     ✓ 已选择 {selectedUrls.length} 个链接进行处理
                   </div>
                 )}
