@@ -278,40 +278,20 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       try {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-        const requestUrl = `${apiUrl}/api/v1/content/${content.id}/completion-updated`;
-        const token = getCookie("accessToken");
-        
-        console.log("[DEBUG] 发送API请求:", {
-          url: requestUrl,
-          body: body,
-          hasToken: !!token,
-          tokenPreview: token ? (typeof token === 'string' ? `${token.substring(0, 10)}...` : "token is promise") : "无token"
-        });
-        
-        const response = await fetch(requestUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+        const response = await fetch(
+          `${apiUrl}/api/v1/content/${content.id}/completion-updated`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${getCookie("accessToken")}`,
+            },
+            body: JSON.stringify(body),
           },
-          body: JSON.stringify(body),
-        });
-        
-        console.log("[DEBUG] API响应:", {
-          status: response.status,
-          statusText: response.statusText,
-          ok: response.ok,
-          headers: Object.fromEntries(response.headers.entries())
-        });
+        );
 
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error("[DEBUG] API错误响应:", {
-            status: response.status,
-            statusText: response.statusText,
-            errorText: errorText
-          });
-          throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
         // 处理流式响应
@@ -361,18 +341,13 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           description: "AI 分析已成功完成",
         });
       } catch (error) {
-        console.error("[DEBUG] 分析完全失败:", {
-          error: error,
-          errorMessage: error instanceof Error ? error.message : String(error),
-          isAnalyzingBefore: true
-        });
+        console.error("Analysis failed:", error);
         toast({
           title: "分析失败",
-          description: error instanceof Error ? error.message : "请稍后重试",
+          description: "请稍后重试",
           variant: "destructive",
         });
       } finally {
-        console.log("[DEBUG] 设置 isAnalyzing = false");
         setIsAnalyzing(false);
       }
     },
