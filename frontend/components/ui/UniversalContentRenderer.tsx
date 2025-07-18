@@ -11,10 +11,12 @@ interface UniversalContentRendererProps {
   content: string | null | undefined;
   /** Additional class names for the container */
   className?: string;
-  /** Original content ID used for reference resolution */
-  contentId?: string;
   /** Callback when expand button is clicked on a JSON line */
   onExpandLine?: (jsonContent: Record<string, unknown>) => void;
+  /** 是否启用延迟渲染（仅对JSONL内容有效） */
+  enableDelayedRendering?: boolean;
+  /** 延迟渲染的延迟时间（毫秒） */
+  renderDelay?: number;
 }
 
 /**
@@ -24,12 +26,9 @@ interface UniversalContentRendererProps {
 export function UniversalContentRenderer({
   content,
   className,
-<<<<<<< HEAD
-  contentId,
-  onExpandLine
-=======
   onExpandLine,
->>>>>>> 53ab41b (fix: 修复AI卡片交互问题并完善CI/CD流水线)
+  enableDelayedRendering = false,
+  renderDelay = 400,
 }: UniversalContentRendererProps) {
   // Helper to detect JSONL format (same logic as in llm-analysis-card)
   const isJsonl = (str: string): boolean => {
@@ -79,7 +78,13 @@ export function UniversalContentRenderer({
   if (isJsonl(content)) {
     return (
       <div data-testid="universal-content-renderer" className={className}>
-        <JsonlRenderer content={content} contentId={contentId} onExpandLine={onExpandLine} />
+        <JsonlRenderer 
+          key={`jsonl-${content.slice(0, 30)}-${content.length}`}
+          content={content} 
+          onExpandLine={onExpandLine}
+          enableDelayedRendering={enableDelayedRendering}
+          renderDelay={renderDelay}
+        />
       </div>
     );
   } else if (isJsonObject(content)) {

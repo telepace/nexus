@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { JsonLineWithExpandButton } from "./JsonLineWithExpandButton";
@@ -9,6 +9,7 @@ import {
   useReferenceManagerSafe,
 } from "./ReferenceManager";
 import { jsonlStyles } from "./jsonlStyles";
+import { ContentSkeleton } from "./ContentSkeleton";
 
 interface JsonlRendererProps {
   content: string;
@@ -20,6 +21,10 @@ interface JsonlRendererProps {
   styleName?: string;
   /** 是否显示引用指示器，默认隐藏 */
   showReferenceIndicators?: boolean;
+  /** 是否启用延迟渲染（用于预览模式优化性能） */
+  enableDelayedRendering?: boolean;
+  /** 延迟渲染的延迟时间（毫秒） */
+  renderDelay?: number;
 }
 
 /**
@@ -39,7 +44,13 @@ export function JsonlRenderer({
   onExpandLine,
   styleName = "notebook",
   showReferenceIndicators = false,
+  enableDelayedRendering = false,
+  renderDelay = 400,
 }: JsonlRendererProps) {
+  // 延迟渲染状态
+  const [isContentReady, setIsContentReady] = useState(!enableDelayedRendering);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   // 使用安全的 ReferenceManager
   const { actions } = useReferenceManagerSafe();
 
@@ -52,12 +63,57 @@ export function JsonlRenderer({
   // 根據 styleName 取得區塊渲染器
   const styleRenderer = jsonlStyles[styleName] || jsonlStyles["default"];
 
+  // 延迟渲染逻辑 - 简化版本
+  useEffect(() => {
+    if (!enableDelayedRendering) {
+      setIsContentReady(true);
+      return;
+    }
+
+    // 清理之前的定时器
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // 重置状态
+    setIsContentReady(false);
+
+    // 启动延迟定时器
+    timeoutRef.current = setTimeout(() => {
+      setIsContentReady(true);
+    }, renderDelay);
+
+    // 清理函数
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [content, enableDelayedRendering, renderDelay]);
+
   if (!content) {
     return (
       <div
         data-testid="jsonl-renderer"
         className={cn("space-y-1", className)}
       />
+    );
+  }
+
+  // 如果启用延迟渲染且内容未准备好，显示骨架屏
+  if (enableDelayedRendering && !isContentReady) {
+    return (
+      <div
+        data-testid="jsonl-renderer"
+        className={cn("space-y-1", className)}
+      >
+        <ContentSkeleton 
+          variant="simple" 
+          blocks={3} 
+          animated={true}
+          className="!p-0"
+        />
+      </div>
     );
   }
 
