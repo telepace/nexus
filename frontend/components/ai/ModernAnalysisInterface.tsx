@@ -499,6 +499,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
             <UniversalContentRenderer
               content={textContent}
               onExpandLine={handleJsonLineExpand}
+              enableDelayedRendering={false}
+              renderDelay={400}
             />
           </div>
         </div>

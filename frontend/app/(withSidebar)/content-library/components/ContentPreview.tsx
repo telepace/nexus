@@ -8,41 +8,15 @@ import { AnimatePresence, motion } from "framer-motion";
 // 不再需要分析卡片导入，统一使用ModernAnalysisInterface
 import { ModernAnalysisInterface } from "@/components/ai/ModernAnalysisInterface";
 
-interface Panel {
-  id: number;
-  item: ContentItemPublic;
-}
-
-let panelIdCounter = 0;
-
 interface Props {
   item: ContentItemPublic | null;
 }
 
 export const ContentPreview = ({ item }: Props) => {
-  const [panels, setPanels] = useState<Panel[]>([]);
-
-  useEffect(() => {
-    if (item) {
-      // 使用函数式更新来避免依赖 panels
-      setPanels((prevPanels) => {
-        // 只有当传入的 item 与栈顶的 item 内容不同时才添加新面板
-        if (item.id !== prevPanels[prevPanels.length - 1]?.item.id) {
-          panelIdCounter++;
-          const newPanels = [
-            ...prevPanels,
-            { id: panelIdCounter, item: item },
-          ].slice(-2);
-          return newPanels;
-        }
-        return prevPanels;
-      });
-    }
-  }, [item]); // 只依赖 item
-
-  if (!panels.length && !item) {
+  // 无内容时的空状态
+  if (!item) {
     return (
-      <div className="relative z-10 h-full shadow-macos-window  rounded-sm flex flex-col overflow-hidden">
+      <div className="relative z-20 h-full shadow-macos-window rounded-sm flex flex-col overflow-hidden">
         <div className="flex items-center justify-between h-header px-4 linear-bg-1">
           <div className="flex items-center gap-2 text-base font-medium">
             <Library className="h-5 w-5" />
@@ -61,45 +35,59 @@ export const ContentPreview = ({ item }: Props) => {
     );
   }
 
+  // 有内容时的预览 - 使用智能动画
   return (
-    <div className="relative w-full h-full">
-      <AnimatePresence>
-        {panels.map((panel, index) => (
+    <div className="relative w-full h-full z-20">
+      <AnimatePresence mode="wait">
+        <div className="absolute inset-0">
           <motion.div
-            key={panel.id}
+            key={item.id} // 使用item.id作为key确保每次切换都重新渲染
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
-            exit={{ scale: 0.7 }}
-            transition={{ type: "spring", stiffness: 400, damping: 40 }}
-            style={{
-              position: "absolute",
-              inset: "0",
-              zIndex: 10 + index,
+            exit={{ x: "-100%" }}
+            transition={{ 
+              type: "spring", 
+              stiffness: 400, 
+              damping: 40,
+              duration: 0.3 
             }}
           >
-            <PanelContent item={panel.item} />
+            <ContentPanel item={item} />
           </motion.div>
-        ))}
+        </div>
       </AnimatePresence>
     </div>
   );
 };
 
-// 子组件渲染实际内容，避免重复
-const PanelContent = ({ item }: { item: ContentItemPublic }) => {
+// 完全分离动画和渲染的面板组件
+const ContentPanel = ({ item }: { item: ContentItemPublic }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const aiResult = item.ai_result;
-  const isFetchingCompleteData = item._fetchingCompleteData === true;
+  const aiResult = (item as any).ai_result;
+  const isFetchingCompleteData = (item as any)._fetchingCompleteData === true;
+  
+  // 简化的渲染状态管理
+  const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
     containerRef.current?.scrollTo({ top: 0 });
-  }, []);
+    
+    // 重置状态
+    setShowContent(false);
+    
+    // 等待动画完成后显示内容
+    const timer = setTimeout(() => {
+      setShowContent(true);
+    }, 450); // 等待450ms确保动画完成和渲染稳定
+    
+    return () => clearTimeout(timer);
+  }, [item.id]);
 
   return (
     <div
       ref={containerRef}
       tabIndex={-1}
-      className="relative z-10 h-full shadow-macos-window linear-bg-1 rounded-sm flex flex-col overflow-hidden"
+      className="relative z-20 h-full shadow-macos-window linear-bg-1 rounded-sm flex flex-col overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center h-header px-4">
@@ -108,24 +96,30 @@ const PanelContent = ({ item }: { item: ContentItemPublic }) => {
           Preview
           {isFetchingCompleteData && (
             <div className="flex items-center gap-1 ml-2">
-              <div className="w-2 h-2 bg-primary/60 rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-primary/60 rounded-full"></div>
               <span className="text-xs text-muted-foreground">更新中</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* 使用统一的ModernAnalysisInterface */}
+      {/* 内容区域 - 简化的两状态：空白/显示 */}
       <div className="flex-1 overflow-hidden">
-        <ModernAnalysisInterface
-          content={item}
-          analysisResult={aiResult}
-          isLoading={isFetchingCompleteData}
-          variant="preview"
-          showPreprocessedContent={true}
-          height="full"
-          hideHeader={true}
-        />
+        {showContent ? (
+          // 渲染完成，瞬间显示内容
+          <ModernAnalysisInterface
+            content={item}
+            analysisResult={aiResult}
+            isLoading={isFetchingCompleteData}
+            variant="preview"
+            showPreprocessedContent={true}
+            height="full"
+            hideHeader={true}
+          />
+        ) : (
+          // 等待期间保持完全空白
+          <div className="h-full" />
+        )}
       </div>
     </div>
   );

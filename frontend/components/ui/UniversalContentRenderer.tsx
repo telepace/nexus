@@ -13,6 +13,10 @@ interface UniversalContentRendererProps {
   className?: string;
   /** Callback when expand button is clicked on a JSON line */
   onExpandLine?: (jsonContent: Record<string, unknown>) => void;
+  /** 是否启用延迟渲染（仅对JSONL内容有效） */
+  enableDelayedRendering?: boolean;
+  /** 延迟渲染的延迟时间（毫秒） */
+  renderDelay?: number;
 }
 
 /**
@@ -23,6 +27,8 @@ export function UniversalContentRenderer({
   content,
   className,
   onExpandLine,
+  enableDelayedRendering = false,
+  renderDelay = 400,
 }: UniversalContentRendererProps) {
   // Helper to detect JSONL format (same logic as in llm-analysis-card)
   const isJsonl = (str: string): boolean => {
@@ -72,7 +78,13 @@ export function UniversalContentRenderer({
   if (isJsonl(content)) {
     return (
       <div data-testid="universal-content-renderer" className={className}>
-        <JsonlRenderer content={content} onExpandLine={onExpandLine} />
+        <JsonlRenderer 
+          key={`jsonl-${content.slice(0, 30)}-${content.length}`}
+          content={content} 
+          onExpandLine={onExpandLine}
+          enableDelayedRendering={enableDelayedRendering}
+          renderDelay={renderDelay}
+        />
       </div>
     );
   } else if (isJsonObject(content)) {
