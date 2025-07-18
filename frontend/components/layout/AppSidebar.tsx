@@ -130,7 +130,7 @@ export function AppSidebar({
       {...props}
     >
       <SidebarHeader className="p-0">
-        <div className="flex h-header shrink-0 items-center justify-center gap-2 border-b border-gray-100/50 px-4 group-data-[collapsible=icon]:px-2 backdrop-blur-sm">
+        <div className="flex h-header shrink-0 items-center justify-center gap-2 border-b border-neutral-100/50 px-4 group-data-[collapsible=icon]:px-2 backdrop-blur-sm">
           {/* 展开状态：Logo + 品牌名称 + 独立展开按钮 */}
           <div className="flex items-center justify-between w-full group-data-[collapsible=icon]:hidden">
             <Link
@@ -150,11 +150,11 @@ export function AppSidebar({
                 Telepace
               </span>
             </Link>
-            <SidebarTrigger className="h-8 w-8 rounded-lg hover:bg-gradient-to-br hover:from-gray-50/60 hover:to-gray-100/40 hover:text-sidebar-accent-foreground transition-all duration-300 border border-transparent hover:border-gray-200/40" />
+            <SidebarTrigger className="h-8 w-8 rounded-lg hover:bg-gradient-to-br hover:from-neutral-50/60 hover:to-neutral-100/40 hover:text-sidebar-accent-foreground transition-all duration-300 border border-transparent hover:border-neutral-200/40" />
           </div>
 
           {/* 折叠状态：优化设计，更精致的视觉效果 */}
-          <SidebarTrigger className="hidden group-data-[collapsible=icon]:flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-white/80 to-gray-50/60 shadow-lg hover:shadow-xl border border-gray-200/30 hover:border-primary/30 transition-all duration-300 hover:scale-105 backdrop-blur-sm">
+          <SidebarTrigger className="hidden group-data-[collapsible=icon]:flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-white/80 to-neutral-50/60 shadow-lg hover:shadow-xl border border-neutral-200/30 hover:border-primary/30 transition-all duration-300 hover:scale-105 backdrop-blur-sm">
             <Image
               src="/img/favicon.png"
               alt="Logo"
@@ -168,8 +168,8 @@ export function AppSidebar({
 
       <SidebarContent className="px-0">
         {/* Upload Content 区域 - 折叠状态下更精致 */}
-        <div className="mb-6 group-data-[collapsible=icon]:mb-4">
-          <div className="px-4 py-6 group-data-[collapsible=icon]:px-3 group-data-[collapsible=icon]:py-4">
+        <div className="mb-3 group-data-[collapsible=icon]:mb-2">
+          <div className="px-4 py-4 group-data-[collapsible=icon]:px-3 group-data-[collapsible=icon]:py-3">
             <div
               className={cn(
                 "relative overflow-hidden rounded-xl transition-all duration-500 ease-out group cursor-pointer",
@@ -204,13 +204,13 @@ export function AppSidebar({
                     "group-data-[collapsible=icon]:drop-shadow-sm",
                   )}
                 >
-                  <Upload className="w-5 h-5 group-data-[collapsible=icon]:w-6 group-data-[collapsible=icon]:h-6 drop-shadow-sm" />
+                  <Upload className="w-4 h-4 group-data-[collapsible=icon]:w-4 group-data-[collapsible=icon]:h-4 drop-shadow-sm" />
                 </div>
                 <div className="flex-1 group-data-[collapsible=icon]:hidden">
-                  <div className="text-sm font-medium text-gray-700 mb-1 group-hover:text-gray-900 transition-colors">
+                  <div className="text-sm font-medium text-neutral-700 mb-1 group-hover:text-neutral-900 transition-colors">
                     Upload
                   </div>
-                  <div className="text-xs text-gray-500 group-hover:text-gray-600 transition-colors">
+                  <div className="text-xs text-neutral-500 group-hover:text-neutral-600 transition-colors">
                     Drop files here
                   </div>
                 </div>
@@ -235,14 +235,14 @@ export function AppSidebar({
                         "group w-full flex items-center gap-3 px-4 py-2.5",
                         "rounded-xl transition-all duration-300 ease-out mx-2",
                         "relative overflow-hidden",
-                        // 折叠状态调整 - 更精致的设计
-                        "group-data-[collapsible=icon]:mx-3 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:rounded-2xl group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:shadow-sm",
-                        // 选中状态样式 - 更优雅的指示器
+                        // 折叠状态调整 - 更精致的设计和完全居中
+                        "group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:rounded-2xl group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:shadow-sm",
+                        // 选中状态样式 - 更优雅的指示器，去除透明度变化
                         isActive
                           ? [
-                              "bg-gray-100/60 text-gray-800",
-                              "border border-gray-200/40",
-                              "shadow-sm shadow-gray-100/50",
+                              "bg-neutral-100 text-neutral-800",
+                              "border border-neutral-200",
+                              "shadow-sm shadow-neutral-100",
                               // 展开状态指示器
                               "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2",
                               "before:w-1 before:h-6 before:bg-gradient-to-b before:from-primary before:to-primary/70",
@@ -256,11 +256,10 @@ export function AppSidebar({
                               "group-data-[collapsible=icon]:border-primary/20 group-data-[collapsible=icon]:shadow-md",
                             ]
                           : [
-                              "text-gray-500 hover:bg-gray-50/60 hover:text-gray-700",
-                              "hover:border hover:border-gray-100/60",
-                              "hover:shadow-sm hover:shadow-gray-50/40",
-                              "",
-                              "group-data-[collapsible=icon]:hover:transform-none group-data-[collapsible=icon]:hover:scale-105 group-data-[collapsible=icon]:hover:shadow-md group-data-[collapsible=icon]:hover:bg-gray-50/80",
+                              "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-700",
+                              "hover:border hover:border-neutral-100",
+                              "hover:shadow-sm hover:shadow-neutral-50",
+                              "group-data-[collapsible=icon]:hover:transform-none group-data-[collapsible=icon]:hover:scale-105 group-data-[collapsible=icon]:hover:shadow-md group-data-[collapsible=icon]:hover:bg-neutral-50",
                             ],
                       )}
                     >
@@ -273,8 +272,8 @@ export function AppSidebar({
                           className={cn(
                             "flex items-center justify-center shrink-0 transition-all duration-300",
                             isActive
-                              ? "text-gray-600"
-                              : "text-gray-400 group-hover:text-gray-600",
+                              ? "text-neutral-600"
+                              : "text-neutral-400 group-hover:text-neutral-600",
                           )}
                         >
                           <item.icon className="w-4 h-4 group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5 drop-shadow-sm" />
@@ -292,9 +291,9 @@ export function AppSidebar({
         </SidebarGroup>
 
         {/* 底部优雅分割 - 折叠状态下隐藏 */}
-        <div className="pt-6 border-t border-gray-100/50 group-data-[collapsible=icon]:hidden">
+        <div className="pt-6 border-t border-neutral-100/50 group-data-[collapsible=icon]:hidden">
           <div className="flex items-center justify-center">
-            <div className="w-8 h-0.5 bg-gradient-to-r from-transparent via-gray-200 to-transparent rounded-full" />
+            <div className="w-8 h-0.5 bg-gradient-to-r from-transparent via-neutral-200 to-transparent rounded-full" />
           </div>
         </div>
       </SidebarContent>
@@ -308,7 +307,7 @@ export function AppSidebar({
                   <SidebarMenuButton
                     size="lg"
                     className={cn(
-                      "w-full p-3 hover:bg-gray-50/60 transition-all duration-300 rounded-xl mx-2",
+                      "w-full p-3 hover:bg-neutral-50/60 transition-all duration-300 rounded-xl mx-2",
                       // 折叠状态下的样式优化 - 更精致的设计
                       "group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-3 group-data-[collapsible=icon]:rounded-2xl group-data-[collapsible=icon]:justify-center",
                       "group-data-[collapsible=icon]:hover:scale-105 group-data-[collapsible=icon]:shadow-sm group-data-[collapsible=icon]:hover:shadow-md",
@@ -322,20 +321,20 @@ export function AppSidebar({
                         className="group-data-[collapsible=icon]:w-6 group-data-[collapsible=icon]:h-6 ring-2 ring-white/50 shadow-sm"
                       />
                       <div className="flex-1 text-left text-sm group-data-[collapsible=icon]:hidden">
-                        <div className="font-medium text-gray-700 truncate">
+                        <div className="font-medium text-neutral-700 truncate">
                           {user.full_name || user.email}
                         </div>
-                        <div className="text-xs text-gray-500 truncate">
+                        <div className="text-xs text-neutral-500 truncate">
                           {user.email}
                         </div>
                       </div>
-                      <ChevronUp className="ml-auto h-4 w-4 text-gray-400 group-data-[collapsible=icon]:hidden" />
+                      <ChevronUp className="ml-auto h-4 w-4 text-neutral-400 group-data-[collapsible=icon]:hidden" />
                     </div>
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent
-                  className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl border border-gray-200/60 bg-white/80 backdrop-blur-md shadow-xl shadow-gray-100/40"
+                  className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl border border-neutral-200/60 bg-white/80 backdrop-blur-md shadow-xl shadow-neutral-100/40"
                   side="bottom"
                   align="end"
                   sideOffset={4}
@@ -345,10 +344,10 @@ export function AppSidebar({
                       e.stopPropagation();
                       onSettingsClick();
                     }}
-                    className="cursor-pointer rounded-lg transition-all duration-200 hover:bg-gray-50/80"
+                    className="cursor-pointer rounded-lg transition-all duration-200 hover:bg-neutral-50/80"
                   >
-                    <Settings className="mr-2 h-4 w-4 text-gray-500" />
-                    <span className="text-gray-700">Settings</span>
+                    <Settings className="mr-2 h-4 w-4 text-neutral-500" />
+                    <span className="text-neutral-700">Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={(e) => {
@@ -356,16 +355,16 @@ export function AppSidebar({
                       handleSyncAuth();
                     }}
                     disabled={isSyncing}
-                    className="cursor-pointer rounded-lg transition-all duration-200 hover:bg-gray-50/80"
+                    className="cursor-pointer rounded-lg transition-all duration-200 hover:bg-neutral-50/80"
                   >
                     <RefreshCw
-                      className={`mr-2 h-4 w-4 text-gray-500 ${isSyncing ? "animate-spin" : ""}`}
+                      className={`mr-2 h-4 w-4 text-neutral-500 ${isSyncing ? "animate-spin" : ""}`}
                     />
-                    <span className="text-gray-700">
+                    <span className="text-neutral-700">
                       {isSyncing ? "同步中..." : "同步登录状态"}
                     </span>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-gray-100/60" />
+                  <DropdownMenuSeparator className="bg-neutral-100/60" />
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation();
@@ -381,7 +380,7 @@ export function AppSidebar({
             ) : (
               <div
                 className={cn(
-                  "p-3 space-y-3 rounded-xl bg-gradient-to-br from-gray-50/30 to-gray-100/20 border border-gray-100/60 mx-2",
+                  "p-3 space-y-3 rounded-xl bg-gradient-to-br from-neutral-50/30 to-neutral-100/20 border border-neutral-100/60 mx-2",
                   // 折叠状态下只显示头像
                   "group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:space-y-0 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center",
                 )}
@@ -394,7 +393,7 @@ export function AppSidebar({
                     className="group-data-[collapsible=icon]:w-6 group-data-[collapsible=icon]:h-6"
                   />
                   <div className="flex-1 text-sm group-data-[collapsible=icon]:hidden">
-                    <div className="font-medium text-gray-500">未登录</div>
+                    <div className="font-medium text-neutral-500">未登录</div>
                   </div>
                 </div>
                 <Button
@@ -405,7 +404,7 @@ export function AppSidebar({
                     handleSyncAuth();
                   }}
                   disabled={isSyncing || isLoading}
-                  className="w-full group-data-[collapsible=icon]:hidden border-gray-200/60 bg-white/60 hover:bg-white hover:border-gray-300/60 transition-all duration-300"
+                  className="w-full group-data-[collapsible=icon]:hidden border-neutral-200/60 bg-white/60 hover:bg-white hover:border-neutral-300/60 transition-all duration-300"
                 >
                   <RefreshCw
                     className={`mr-2 h-3 w-3 ${isSyncing || isLoading ? "animate-spin" : ""}`}
