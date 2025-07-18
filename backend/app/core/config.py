@@ -138,6 +138,151 @@ class Settings(BaseSettings):
     # LLM 配置
     DEFAULT_LLM_MODEL: str = "deepseek-v3-ensemble"
 
+    # Token 配置系统 - 支持不同任务类型的token限制
+    DEFAULT_MAX_TOKENS: int = Field(
+        default=8000,
+        ge=100,
+        le=100000,
+        description="默认最大token数"
+    )
+
+    # 不同任务类型的token配置
+    TOKEN_LIMITS: dict[str, int] = Field(
+        default={
+            "chat": 10000,              # 对话聊天
+            "summary": 10000,           # 摘要生成
+            "key_points": 10000,        # 要点提取
+            "labels": 10000,             # 标签生成
+            "analysis": 10000,         # 深度分析
+            "extension": 10000,         # 浏览器扩展
+            "conversation": 10000,      # 对话系统
+            "completion": 10000,        # 通用补全
+            "research": 10000,         # 深度研究
+            "segmentation": 10000,      # 文本分段
+            "embedding": 10000,         # 嵌入生成
+        },
+        description="不同任务类型的token限制配置"
+    )
+
+    # 环境变量覆盖的单独token配置
+    TOKEN_LIMIT_CHAT: int | None = Field(default=None, description="对话token限制")
+    TOKEN_LIMIT_SUMMARY: int | None = Field(default=None, description="摘要token限制")
+    TOKEN_LIMIT_KEY_POINTS: int | None = Field(default=None, description="要点token限制")
+    TOKEN_LIMIT_LABELS: int | None = Field(default=None, description="标签token限制")
+    TOKEN_LIMIT_ANALYSIS: int | None = Field(default=None, description="分析token限制")
+    TOKEN_LIMIT_EXTENSION: int | None = Field(default=None, description="扩展token限制")
+    TOKEN_LIMIT_CONVERSATION: int | None = Field(default=None, description="对话系统token限制")
+    TOKEN_LIMIT_COMPLETION: int | None = Field(default=None, description="补全token限制")
+    TOKEN_LIMIT_RESEARCH: int | None = Field(default=None, description="研究token限制")
+
+    # 动态token配置
+    ENABLE_DYNAMIC_TOKEN_ADJUSTMENT: bool = Field(
+        default=True,
+        description="是否启用基于内容长度的动态token调整"
+    )
+
+    TOKEN_CONTENT_RATIO: float = Field(
+        default=0.3,
+        ge=0.1,
+        le=0.8,
+        description="输出token与输入内容长度的比例（用于动态调整）"
+    )
+
+    MIN_OUTPUT_TOKENS: int = Field(
+        default=500,
+        ge=100,
+        le=2000,
+        description="最小输出token数"
+    )
+
+    MAX_OUTPUT_TOKENS: int = Field(
+        default=50000,
+        ge=1000,
+        le=200000,
+        description="最大输出token数"
+    )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def resolved_token_limits(self) -> dict[str, int]:
+        """
+        解析最终的token限制配置
+
+        优先级：
+        1. 环境变量中的具体任务token配置 (TOKEN_LIMIT_CHAT等)
+        2. TOKEN_LIMITS 配置
+        3. DEFAULT_MAX_TOKENS 全局默认
+
+        Returns:
+            dict: 最终的任务->token限制映射
+        """
+        resolved = self.TOKEN_LIMITS.copy()
+
+        # 环境变量覆盖具体任务token限制
+        env_overrides = {
+            "chat": self.TOKEN_LIMIT_CHAT,
+            "summary": self.TOKEN_LIMIT_SUMMARY,
+            "key_points": self.TOKEN_LIMIT_KEY_POINTS,
+            "labels": self.TOKEN_LIMIT_LABELS,
+            "analysis": self.TOKEN_LIMIT_ANALYSIS,
+            "extension": self.TOKEN_LIMIT_EXTENSION,
+            "conversation": self.TOKEN_LIMIT_CONVERSATION,
+            "completion": self.TOKEN_LIMIT_COMPLETION,
+            "research": self.TOKEN_LIMIT_RESEARCH,
+        }
+
+        for task, token_limit in env_overrides.items():
+            if token_limit is not None:  # 如果环境变量设置了具体token限制
+                resolved[task] = token_limit
+
+        # 确保所有值都有回退到默认token数
+        for task in resolved:
+            if not resolved[task] or resolved[task] <= 0:
+                resolved[task] = self.DEFAULT_MAX_TOKENS
+
+        return resolved
+
+    def get_token_limit(
+        self,
+        task_type: str = "default",
+        content_length: int | None = None,
+        base_tokens: int | None = None
+    ) -> int:
+        """
+        获取指定任务类型的token限制
+
+        Args:
+            task_type: 任务类型
+            content_length: 输入内容长度（用于动态调整）
+            base_tokens: 基础token数（覆盖默认配置）
+
+        Returns:
+            int: 最终的token限制
+        """
+        # 获取基础token限制
+        if base_tokens is not None:
+            token_limit = base_tokens
+        else:
+            token_limit = self.resolved_token_limits.get(task_type, self.DEFAULT_MAX_TOKENS)
+
+        # 动态调整token限制
+        if self.ENABLE_DYNAMIC_TOKEN_ADJUSTMENT and content_length is not None:
+            # 基于内容长度计算推荐的输出token数
+            estimated_output_tokens = int(content_length * self.TOKEN_CONTENT_RATIO)
+
+            # 应用最小值和最大值限制
+            estimated_output_tokens = max(self.MIN_OUTPUT_TOKENS, estimated_output_tokens)
+            estimated_output_tokens = min(self.MAX_OUTPUT_TOKENS, estimated_output_tokens)
+
+            # 如果估算值更大，使用估算值；否则使用配置值
+            token_limit = max(token_limit, estimated_output_tokens)
+
+            logger.debug(f"动态调整token限制: 任务={task_type}, 内容长度={content_length}, "
+                        f"原始限制={self.resolved_token_limits.get(task_type, self.DEFAULT_MAX_TOKENS)}, "
+                        f"估算需求={estimated_output_tokens}, 最终限制={token_limit}")
+
+        return min(token_limit, self.MAX_OUTPUT_TOKENS)  # 确保不超过绝对最大值
+
     # AI任务模型配置 - 支持为不同任务指定不同模型，可通过环境变量覆盖
     AI_TASK_MODELS: dict[str, str] = Field(
         default={

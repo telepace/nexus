@@ -4,35 +4,34 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   Brain,
   MessageSquare,
-  ArrowUpRight,
+  Send,
   Share,
   Sparkles,
   RefreshCw,
   Minus,
   Plus,
-  Loader2,
 } from "lucide-react";
 import { useCardHeight } from "@/hooks/use-card-height";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
+  ContentItemPublic,
   AIResult,
   ConversationListResponse,
   ConversationPublic,
 } from "@/lib/api/content";
-import { ContentItemPublic } from "@/app/(withSidebar)/content-library/types";
 import { adaptAnalysisData } from "./AnalysisCards";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
-import { getCookie } from "cookies-next";
 import { fetchPrompts, PromptData } from "@/components/actions/prompts-action";
 import { contentApi } from "@/lib/api/content";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { FavoriteButton } from "@/components/actions/FavoriteButton";
-import { useLLMAnalysisStore } from "@/lib/stores/llm-analysis-store";
+import { StreamingConversationCard } from "./StreamingConversationCard";
+import { useStreamingConversation } from "@/hooks/use-streaming-conversation";
 
-interface ModernAnalysisInterfaceProps {
+interface EnhancedModernAnalysisInterfaceProps {
   content: ContentItemPublic;
   conversations?: ConversationListResponse["conversations"];
   analysisResult?: AIResult | null;
@@ -53,18 +52,17 @@ interface AnalysisCard {
   subtitle?: string;
   emoji: string;
   content: {
-    type: "summary" | "keyPoints" | "conversations" | "custom" | "streaming";
+    type: "summary" | "keyPoints" | "conversations" | "custom";
     data: any;
   };
 }
 
-const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
+const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceProps> = ({
   content,
   conversations,
   analysisResult = null,
   isLoading = false,
   className = "",
-  // 新增变体配置，默认为fullscreen（保持现有行为）
   variant = "fullscreen",
   showPreprocessedContent = true,
   height = "full",
@@ -81,100 +79,78 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   const [inputFocused, setInputFocused] = useState(false);
   const showHistory = showHistoryProp;
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [streamingResponse, setStreamingResponse] = useState("");
-  // Remove local state for prompts
-  // const [prompts, setPrompts] = useState<PromptData[]>([]);
-  // const [loadingPrompts, setLoadingPrompts] = useState(true);
-  // Add store usage
-  const { enabledPrompts, isLoadingPrompts, loadPrompts } = useLLMAnalysisStore();
-  // Load prompts from store
-  useEffect(() => {
-    loadPrompts();
-  }, [loadPrompts]);
-  const [historyRecords, setHistoryRecords] = useState<ConversationPublic[]>(
-    [],
-  );
+  const [prompts, setPrompts] = useState<PromptData[]>([]);
+  const [historyRecords, setHistoryRecords] = useState<ConversationPublic[]>([]);
+  const [loadingPrompts, setLoadingPrompts] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [collapsedCards, setCollapsedCards] = useState<Set<string>>(new Set());
 
   // 动态高度管理
   const { registerElement, getCardHeight } = useCardHeight();
 
-  // 移除原有的文本操作按钮 - 现在由独立组件处理
-  // const textActions = [...]
+  // 新的对话管理
+  const {
+    conversations: streamingConversations,
+    isProcessing,
+    sendMessage,
+    retryMessage,
+    deleteConversation,
+    cancelCurrentProcessing,
+  } = useStreamingConversation({
+    contentId: content.id,
+    onConversationUpdate: (conversation) => {
+      // 可以在这里添加额外的处理逻辑
+    },
+    onError: (error) => {
+      toast({
+        title: "处理失败",
+        description: error,
+        variant: "destructive",
+      });
+    },
+  });
 
-  // 获取真实的prompts作为AI指令标签
-  // useEffect(() => {
-  //   const loadPrompts = async () => {
-  //     try {
-  //       setLoadingPrompts(true);
-  //       const promptsResponse = await fetchPrompts({
-  //         sort: "updated_at",
-  //         order: "desc",
-  //       });
+  // 获取prompts
+  useEffect(() => {
+    const loadPrompts = async () => {
+      try {
+        setLoadingPrompts(true);
+        const promptsResponse = await fetchPrompts({
+          sort: "updated_at",
+          order: "desc",
+        });
 
-  //       if (Array.isArray(promptsResponse)) {
-  //         // 优化的过滤逻辑：
-  //         // 1. 显示用户明确启用的 prompts (user_enabled: true)
-  //         // 2. 显示系统启用且用户未设置的 prompts (enabled: true && user_enabled: undefined/null)
-  //         // 3. 排除用户明确禁用的 prompts (user_enabled: false)
-  //         const availablePrompts = promptsResponse
-  //           .filter((p) => {
-  //             // 系统级别必须启用
-  //             if (!p.enabled) return false;
+        if (Array.isArray(promptsResponse)) {
+          const availablePrompts = promptsResponse
+            .filter((p) => {
+              if (!p.enabled) return false;
+              if (p.user_enabled === false) return false;
+              return (
+                p.user_enabled === true ||
+                p.user_enabled === undefined ||
+                p.user_enabled === null
+              );
+            })
+            .slice(0, 7);
 
-  //             // 如果用户明确禁用，则不显示
-  //             if (p.user_enabled === false) return false;
+          setPrompts(availablePrompts);
+        }
+      } catch (error) {
+        console.error("获取prompts失败:", error);
+      } finally {
+        setLoadingPrompts(false);
+      }
+    };
 
-  //             // 用户明确启用或者用户未设置（默认采用系统设置）
-  //             return (
-  //               p.user_enabled === true ||
-  //               p.user_enabled === undefined ||
-  //               p.user_enabled === null
-  //             );
-  //           })
-  //           .slice(0, 7);
+    loadPrompts();
+  }, []);
 
-  //         setPrompts(availablePrompts);
-
-  //         // 调试信息
-  //         console.log("[ModernAnalysisInterface] Prompts 加载情况:", {
-  //           总数: promptsResponse.length,
-  //           系统启用: promptsResponse.filter((p) => p.enabled).length,
-  //           用户启用: promptsResponse.filter((p) => p.user_enabled === true)
-  //             .length,
-  //           用户禁用: promptsResponse.filter((p) => p.user_enabled === false)
-  //             .length,
-  //           用户未设置: promptsResponse.filter(
-  //           (p) => p.user_enabled === undefined || p.user_enabled === null,
-  //         ).length,
-  //         最终显示: availablePrompts.length,
-  //         显示的prompts: availablePrompts.map((p) => ({
-  //         name: p.name,
-  //         enabled: p.enabled,
-  //         user_enabled: p.user_enabled,
-  //       })),
-  //     });
-  //   }
-  // } catch (error) {
-  //   console.error("获取prompts失败:", error);
-  // } finally {
-  //   setLoadingPrompts(false);
-  // }
-  // };
-
-  // loadPrompts();
-  // }, []);
-
-  // 获取真实的历史对话记录
+  // 获取历史对话记录
   useEffect(() => {
     const loadHistory = async () => {
       try {
         setLoadingHistory(true);
-        const historyResponse = await contentApi.getContentConversations(
-          content.id,
-        );
+        const historyResponse = await contentApi.getContentConversations(content.id);
         const records = historyResponse.conversations.slice(0, 10);
         setHistoryRecords(records);
         onHistoryCountChange?.(records.length);
@@ -195,157 +171,36 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   useEffect(() => {
     const handleTextSelectionAction = (event: CustomEvent) => {
       const { action, selectedText } = event.detail;
-
-      // 自动填充输入框并执行分析
       const prompt = `${action.prompt}\n\n${selectedText}`;
       setInputValue(prompt);
-
-      // 可选：自动开始分析
-      // setTimeout(() => {
-      //   if (prompt.trim()) {
-      //     handleAnalysis();
-      //   }
-      // }, 500);
     };
 
     window.addEventListener(
       "textSelectionAction" as keyof WindowEventMap,
-      handleTextSelectionAction,
+      handleTextSelectionAction
     );
 
     return () => {
       window.removeEventListener(
         "textSelectionAction" as keyof WindowEventMap,
-        handleTextSelectionAction,
+        handleTextSelectionAction
       );
     };
   }, []);
 
-  // 监听点击外部 - 简化逻辑
+  // 监听点击外部
   useEffect(() => {
     const handleClickOutside = () => {
       setSelectedBlock(null);
     };
 
     document.addEventListener("click", handleClickOutside);
-
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
   }, []);
 
-  // 处理AI分析
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const performCompletion = useCallback(
-    async (body: Record<string, unknown>, title: string) => {
-      // isAnalyzing 是在函数外部定义的，但在函数内部使用。
-      // 为了确保函数在重新渲染时能够获取到最新的 isAnalyzing 状态，
-      // 我们不应该将其包含在 useCallback 的依赖数组中，
-      // 否则会导致函数在 isAnalyzing 变化时重新创建，从而引发逻辑问题。
-      // 正确的做法是，useCallback 依赖的应该是那些在组件生命周期内基本不变的函数或值。
-      if (isAnalyzing) return;
-
-      setIsAnalyzing(true);
-      
-      // 立即设置加载状态，让卡片立即显示
-      setStreamingResponse("LOADING_PLACEHOLDER_" + Date.now());
-
-      try {
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-        const response = await fetch(
-          `${apiUrl}/api/v1/content/${content.id}/completion-updated`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${getCookie("accessToken")}`,
-            },
-            body: JSON.stringify(body),
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        // 处理流式响应
-        const reader = response.body?.getReader();
-        if (!reader) {
-          throw new Error("无法获取响应流");
-        }
-
-        const decoder = new TextDecoder();
-        let accumulatedContent = "";
-        let hasStartedStreaming = false;
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n");
-
-          for (const line of lines) {
-            // 处理Vercel AI SDK数据流协议
-            if (line.startsWith("0:")) {
-              // 第一次接收到数据时，清空加载占位符
-              if (!hasStartedStreaming) {
-                hasStartedStreaming = true;
-                accumulatedContent = "";
-              }
-              
-              // 文本内容 - 提取JSONL行
-              const jsonlLine = line.slice(2); // 移除 "0:" 前缀
-              if (jsonlLine.trim()) {
-                accumulatedContent += jsonlLine + "\n";
-                setStreamingResponse(accumulatedContent);
-              }
-            } else if (line.startsWith("8:")) {
-              // 完成信号 - 最终更新
-              setStreamingResponse(accumulatedContent);
-              break;
-            } else if (line.startsWith("9:")) {
-              // 错误信号
-              try {
-                const errorData = JSON.parse(line.slice(2));
-                throw new Error(errorData.error || "Stream error");
-              } catch {
-                throw new Error("Stream error");
-              }
-            }
-          }
-        }
-
-        setInputValue("");
-        toast({
-          title: title,
-          description: "AI 分析已成功完成",
-        });
-      } catch (error) {
-        console.error("Analysis failed:", error);
-        // 错误时清空streamingResponse，避免显示加载占位符
-        setStreamingResponse("");
-        toast({
-          title: "分析失败",
-          description: "请稍后重试",
-          variant: "destructive",
-        });
-      } finally {
-        setIsAnalyzing(false);
-      }
-    },
-    [
-      content.id,
-      toast,
-      setInputValue,
-      setStreamingResponse,
-      setIsAnalyzing,
-      isAnalyzing,
-    ],
-  );
-
-  // 处理prompt标签点击
+  // 处理prompt标签点击 - 优化版本
   const handlePromptClick = useCallback(
     async (prompt: PromptData) => {
       // 替换prompt模板中的变量
@@ -353,95 +208,83 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       if (promptContent.includes("{content}")) {
         promptContent = promptContent.replace(
           "{content}",
-          content.content_text || content.title || "内容",
+          content.content_text || content.title || "内容"
         );
       }
 
-      // 立即开始处理，不需要用户再次点击发送
-      await performCompletion(
-        {
-          analysis_instruction: promptContent,
-          template_name: prompt.template_name,
-        },
-        `正在使用"${prompt.name}"模板进行分析`,
-      );
+      // 立即发送消息，而不是填充输入框
+      await sendMessage(promptContent, prompt.template_name, {
+        promptName: prompt.name,
+        promptId: prompt.id,
+      });
 
       // 清空输入框
       setInputValue("");
+
+      toast({
+        title: "开始分析",
+        description: `正在使用 "${prompt.name}" 模板进行分析`,
+      });
     },
-    [content, performCompletion],
+    [content, sendMessage, toast]
   );
 
   // 处理历史记录点击
   const handleHistoryClick = useCallback((conversation: ConversationPublic) => {
     if (conversation.summary) {
       setInputValue(
-        `继续关于"${conversation.title}"的对话：${conversation.summary}`,
+        `继续关于"${conversation.title}"的对话：${conversation.summary}`
       );
     } else {
       setInputValue(`继续关于"${conversation.title}"的对话`);
     }
   }, []);
 
+  // 处理手动输入的分析
   const handleAnalysis = useCallback(async () => {
     if (!inputValue.trim()) return;
-    await performCompletion(
-      {
-        analysis_instruction: inputValue,
-      },
-      "分析完成",
-    );
-  }, [inputValue, performCompletion]);
+
+    await sendMessage(inputValue, undefined, {
+      type: "manual_input",
+    });
+
+    setInputValue("");
+
+    toast({
+      title: "开始分析",
+      description: "正在处理您的问题",
+    });
+  }, [inputValue, sendMessage, toast]);
 
   // 处理JSON行展开请求
   const handleJsonLineExpand = useCallback(
     async (jsonContent: Record<string, unknown>) => {
-      console.log(
-        "[ModernAnalysisInterface] JSON line expand requested:",
-        jsonContent,
-      );
+      console.log("[EnhancedModernAnalysisInterface] JSON line expand requested:", jsonContent);
 
-      // 构造展开讨论的prompt
       const selectedPoint =
         jsonContent.c || jsonContent.content || JSON.stringify(jsonContent);
       const instruction = `请对以下要点进行深度展开讨论：${selectedPoint}`;
 
-      // 立即触发分析，不设置输入值
-      await performCompletion(
-        {
-          analysis_instruction: instruction,
-          template_name: "expand_discussion.j2",
-          selected_point: selectedPoint,
-        },
-        "展开分析完成",
-      );
+      await sendMessage(instruction, "expand_discussion.j2", {
+        type: "expand_discussion",
+        selectedPoint,
+      });
+
+      toast({
+        title: "展开讨论",
+        description: "正在深度分析选中的要点",
+      });
     },
-    [performCompletion],
+    [sendMessage, toast]
   );
 
   // 构建分析卡片数据
   const buildAnalysisCards = useCallback((): AnalysisCard[] => {
-    if (!analysisResult && !streamingResponse && (!conversations || conversations.length === 0)) return [];
+    if (!analysisResult && (!conversations || conversations.length === 0)) return [];
 
     const cards: AnalysisCard[] = [];
-    // 使用meta_info代替ai_analysis
     const metaInfo = content.meta_info ? JSON.parse(content.meta_info) : null;
     const adaptedData = adaptAnalysisData(analysisResult, metaInfo);
-
-    // 实时分析结果卡片 - 优先显示，放在最前面
-    if (streamingResponse) {
-      const isLoading = streamingResponse.startsWith("LOADING_PLACEHOLDER_");
-      cards.push({
-        id: "streaming",
-        title: "AI分析",
-        subtitle: isLoading ? "正在连接AI..." : isAnalyzing ? "正在分析..." : "分析完成",
-        emoji: "🤖",
-        content: {
-          type: "streaming",
-          data: streamingResponse,
-        },
-      });
-    }
 
     // 只有在显示预处理内容时才添加这些卡片
     if (showPreprocessedContent) {
@@ -474,7 +317,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       }
     }
 
-    // 对话历史卡片 - 如果有对话记录就显示
+    // 对话历史卡片
     if (conversations && conversations.length > 0) {
       const conversationsWithMessages = conversations.filter(conv => 
         conv.messages && conv.messages.length > 0
@@ -498,10 +341,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   }, [
     analysisResult,
     content.meta_info,
-    streamingResponse,
-    isAnalyzing,
     showPreprocessedContent,
-    conversations, // 添加 conversations 依赖
+    conversations,
   ]);
 
   const cards = buildAnalysisCards();
@@ -517,9 +358,9 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         textContent = cardContent.data;
       } else if (cardContent.data && typeof cardContent.data === "object") {
         textContent =
-          (cardContent.data as any).text ||
-          (cardContent.data as any).content ||
-          (cardContent.data as any).summary ||
+          cardContent.data.text ||
+          cardContent.data.content ||
+          cardContent.data.summary ||
           JSON.stringify(cardContent.data);
       }
 
@@ -528,7 +369,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       return (
         <div
           className={`
-            px-6 py-3 rounded-lg transition-all duration-200
+            px-6 py-4 rounded-lg transition-all duration-200
             ${
               selectedBlock === `${card.id}-main`
                 ? "linear-bg-1 opacity-90"
@@ -540,8 +381,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
             <UniversalContentRenderer
               content={textContent}
               onExpandLine={handleJsonLineExpand}
-              enableDelayedRendering={false}
-              renderDelay={400}
             />
           </div>
         </div>
@@ -564,7 +403,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     });
   }, []);
 
-  // 主卡片组件 - 极简化设计
+  // 主卡片组件
   const CardComponent = ({ card }: { card: AnalysisCard }) => {
     const isSelected = selectedCard === card.id;
     const isHovered = hoveredCard === card.id;
@@ -578,7 +417,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         onClick={() => setSelectedCard(isSelected ? null : card.id)}
         data-exclude-selection
       >
-        {/* 极简卡片主体 */}
         <Card
           className={`
           transition-all duration-300 ease-in-out 
@@ -588,7 +426,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         `}
         >
           <CardContent className="px-12 py-4">
-            {/* 极简卡片头部 */}
+            {/* 卡片头部 */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <span className="text-lg">{card.emoji}</span>
@@ -602,9 +440,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                 </div>
               </div>
 
-              {/* 操作按钮：使用 flex-row-reverse 保证折叠/展开按钮始终最右 */}
               <div className="flex items-center gap-1 flex-row-reverse relative z-10">
-                {/* 折叠/展开按钮 - 始终显示 */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -622,7 +458,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                   )}
                 </Button>
 
-                {/* 其他操作按钮 - 仅在悬停时显示 */}
                 {isHovered && (
                   <div className="flex items-center gap-1 mr-1 transition-all duration-200 relative z-10">
                     <FavoriteButton
@@ -648,16 +483,14 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
               </div>
             </div>
 
-            {/* 卡片内容 - 支持折叠状态 */}
+            {/* 卡片内容 */}
             <div
               className={`
               transition-all duration-300 ease-in-out overflow-hidden
               ${isCollapsed ? "opacity-0" : "opacity-100"}
             `}
               style={{
-                maxHeight: isCollapsed
-                  ? 0
-                  : `${getCardHeight(card.id, isCollapsed)}px`,
+                maxHeight: isCollapsed ? 0 : `${getCardHeight(card.id, isCollapsed)}px`,
               }}
             >
               <div
@@ -693,7 +526,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                           <div className="space-y-2 max-h-48 overflow-y-auto">
                             {conversation.messages
                               .filter((msg: any) => msg.role !== "system")
-                              .slice(0, 3) // 只显示前3条消息
+                              .slice(0, 3)
                               .map((message: any, msgIndex: number) => (
                                 <div
                                   key={msgIndex}
@@ -725,58 +558,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                     ))}
                   </div>
                 )}
-
-                {/* 实时分析结果卡片 */}
-                {card.content.type === "streaming" && (
-                  <div
-                    className={`
-                      px-6 py-4 rounded-lg transition-all duration-200
-                      ${
-                        selectedBlock === `${card.id}-main`
-                          ? "linear-bg-1 opacity-90"
-                          : "hover:linear-bg-1"
-                      }
-                    `}
-                  >
-                    {card.content.data.startsWith("LOADING_PLACEHOLDER_") ? (
-                      // 加载状态显示
-                      <div className="flex items-center justify-center py-8">
-                        <div className="text-center space-y-4">
-                          <div className="flex items-center justify-center">
-                            <Brain className="h-8 w-8 animate-spin text-blue-500" />
-                          </div>
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                              正在连接AI助手...
-                            </p>
-                            <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                              请稍等，正在为您准备最佳的回答
-                            </p>
-                          </div>
-                          <div className="flex justify-center">
-                            <div className="flex space-x-1">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      // 正常内容显示
-                      <div className="select-text prose prose-sm max-w-none dark:prose-invert">
-                        <UniversalContentRenderer
-                          content={card.content.data}
-                          onExpandLine={handleJsonLineExpand}
-                        />
-                        {/* 流式响应时的打字机效果光标 */}
-                        {isAnalyzing && (
-                          <span className="inline-block w-2 h-4 bg-blue-500 animate-pulse ml-1 align-middle" />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           </CardContent>
@@ -789,7 +570,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-neutral-400" />
+          <Brain className="h-8 w-8 animate-spin mx-auto mb-2 text-neutral-400" />
           <p className="text-sm text-neutral-500">正在加载分析结果...</p>
         </div>
       </div>
@@ -817,13 +598,17 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
 
       {/* 可滚动的主内容区域 */}
       <div
-        className={`flex-1 overflow-y-auto custom-scrollbar ${variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""}`}
+        className={`flex-1 overflow-y-auto custom-scrollbar ${
+          variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""
+        }`}
         data-exclude-selection
       >
-        {/* 页面标题 - 根据配置条件渲染 */}
+        {/* 页面标题 */}
         {!hideHeader && (
           <div
-            className={`px-6 py-3 ${variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""}`}
+            className={`px-6 py-4 ${
+              variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""
+            }`}
             data-exclude-selection
           >
             <h1 className="text-xl font-medium text-neutral-900 dark:text-neutral-100 line-clamp-2">
@@ -832,8 +617,27 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           </div>
         )}
 
-        {/* 卡片列表 */}
-        <div className="px-8 pt-4 pb-6" data-exclude-selection>
+        {/* 新的实时对话卡片 */}
+        <div className="px-8 pt-4 pb-2" data-exclude-selection>
+          <div
+            className={`space-y-6 ${
+              variant === "preview" ? "max-w-2xl mx-auto" : ""
+            }`}
+          >
+            {streamingConversations.map((conversation) => (
+              <StreamingConversationCard
+                key={conversation.id}
+                conversation={conversation.messages}
+                onExpandLine={handleJsonLineExpand}
+                onRetry={retryMessage}
+                onDelete={deleteConversation}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* 原有的分析卡片 */}
+        <div className="px-8 pt-2 pb-6" data-exclude-selection>
           <div
             className={`space-y-6 ${
               variant === "preview" ? "max-w-2xl mx-auto" : ""
@@ -841,7 +645,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           >
             {cards.length > 0 ? (
               cards.map((card) => <CardComponent key={card.id} card={card} />)
-            ) : (
+            ) : streamingConversations.length === 0 ? (
               <div className="flex items-center justify-center p-8 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50/30 dark:bg-neutral-900/30">
                 <div className="text-center space-y-2">
                   <Brain className="h-8 w-8 text-neutral-400 mx-auto" />
@@ -850,7 +654,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                   </p>
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
@@ -864,7 +668,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         }`}
         data-exclude-selection
       >
-        <div className="px-6 py-3">
+        <div className="px-6 py-4">
           {/* 历史记录展开面板 */}
           {showHistory && (
             <div className="mb-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
@@ -874,7 +678,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                     <MessageSquare className="h-4 w-4" />
                     历史对话
                   </h4>
-                  {/* This button is now controlled by the parent */}
                 </div>
 
                 <div className="space-y-2 max-h-32 overflow-y-auto scrollbar-hide">
@@ -925,19 +728,20 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
             </div>
           )}
 
-          {/* AI指令标签行 - 从真实API获取 */}
-          <div className="flex items-center gap-2 mb-1 overflow-x-auto scrollbar-hide pb-1">
-            {isLoadingPrompts ? (
+          {/* AI指令标签行 */}
+          <div className="flex items-center gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
+            {loadingPrompts ? (
               <div className="flex items-center gap-2">
                 <RefreshCw className="h-4 w-4 animate-spin text-neutral-400" />
                 <span className="text-sm text-neutral-500">加载中...</span>
               </div>
             ) : (
-              enabledPrompts.slice(0, 7).map((prompt) => (
+              prompts.map((prompt) => (
                 <button
                   key={prompt.id}
                   onClick={() => handlePromptClick(prompt)}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 whitespace-nowrap flex-shrink-0"
+                  disabled={isProcessing}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 whitespace-nowrap flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>{prompt.name}</span>
@@ -946,48 +750,68 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
             )}
           </div>
 
-          {/* 现代化聊天输入框 */}
-          <div className="relative bg-white dark:bg-zinc-800 shadow-md rounded-3xl focus-within:ring-1 focus-within:ring-foreground transition-all duration-300">
-            <div className="flex items-center gap-3 pl-6 pr-3 py-1">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onFocus={() => setInputFocused(true)}
-                  onBlur={() => setInputFocused(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleAnalysis();
-                    }
-                  }}
-                  placeholder="询问关于内容的任何问题..."
-                  className="border-0 bg-transparent px-0 py-2 h-auto text-base text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none w-full"
-                  disabled={isAnalyzing}
-                  autoComplete="off"
-                />
-              </div>
+          {/* 输入框 */}
+          <div
+            className={`
+            flex items-center px-4 py-3 bg-neutral-50 dark:bg-neutral-900 rounded-2xl border-2 transition-all duration-200
+            ${inputFocused ? "border-neutral-900 dark:border-neutral-100" : "border-transparent"}
+          `}
+          >
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleAnalysis();
+                }
+              }}
+              placeholder="询问关于内容的任何问题..."
+              className="flex-1 bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none"
+              disabled={isProcessing}
+            />
 
-              {/* 现代化发送按钮 */}
+            {/* 发送按钮 */}
+            {inputValue.trim() && (
               <Button
                 size="icon"
-                className="rounded-full h-6 w-6 shadow-md text-foreground hover:text-foreground bg-neutral-100 hover:bg-neutral-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 cursor-pointer"
+                className="h-8 w-8 rounded-xl bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white ml-3"
                 onClick={handleAnalysis}
-                disabled={!inputValue.trim() || isAnalyzing}
+                disabled={isProcessing}
               >
-                {isAnalyzing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                {isProcessing ? (
+                  <Brain className="h-4 w-4 animate-spin" />
                 ) : (
-                  <ArrowUpRight className="h-4 w-4" />
+                  <Send className="h-4 w-4" />
                 )}
               </Button>
-            </div>
+            )}
           </div>
+
+          {/* 当前处理状态提示 */}
+          {isProcessing && (
+            <div className="mt-2 text-center">
+              <div className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center justify-center gap-2">
+                <Brain className="h-3 w-3 animate-pulse" />
+                <span>正在处理您的问题...</span>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 text-xs text-neutral-400 hover:text-neutral-600"
+                  onClick={cancelCurrentProcessing}
+                >
+                  取消
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-export { ModernAnalysisInterface };
+export { EnhancedModernAnalysisInterface };

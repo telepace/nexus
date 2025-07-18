@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
+
+// 防止预渲染
+export const dynamic = 'force-dynamic';
 import { ModernAnalysisInterface } from "@/components/ai/ModernAnalysisInterface";
 import { ContentItemPublic } from "@/lib/api/content";
 import { AIResult } from "@/lib/api/content";

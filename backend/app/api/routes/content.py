@@ -76,6 +76,8 @@ from app.api.deps import get_current_user, get_db, get_async_db
 
 # from app.utils.cache import warm_article_cache  # 暂时注释掉避免redis依赖
 
+from app.utils.token_manager import get_token_limit, get_recommended_settings, validate_token_request
+
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
@@ -1108,7 +1110,7 @@ async def analyze_ai_sdk_updated_endpoint(
     async def stream_analysis():
         try:
             async for chunk in _stream_content_analysis_ai_sdk(
-                content_item_id=content_item_id,  # 使用提前提取的ID
+                _content_item_id=content_item_id,  # 修复参数名匹配
                 content_text=content_text,  # 使用提前提取的内容文本
                 request=request,
                 ai_conversation_id=ai_conversation.id,
@@ -1161,12 +1163,37 @@ async def _stream_content_analysis_ai_sdk(
         resolved_model = settings.resolved_ai_task_models.get(
             "analysis", settings.DEFAULT_LLM_MODEL
         )
+        
+        # 🎯 智能token调整：验证和优化token请求
+        total_input_content = content_text + user_prompt
+        is_valid, error_msg, recommended_tokens = validate_token_request(
+            input_content=total_input_content,
+            requested_max_tokens=request.max_tokens,
+            task_type="analysis"
+        )
+        
+        if not is_valid:
+            logger.warning(f"Token请求验证失败: {error_msg}, 使用推荐值: {recommended_tokens}")
+            final_max_tokens = recommended_tokens
+        else:
+            # 进一步智能调整
+            smart_tokens = get_token_limit(
+                task_type="analysis",
+                content_length=len(total_input_content),
+                model_name=resolved_model,
+                base_tokens=request.max_tokens
+            )
+            final_max_tokens = max(request.max_tokens, smart_tokens)
+            
+        logger.info(f"🎯 内容分析token调整: 原始请求={request.max_tokens}, "
+                   f"智能推荐={smart_tokens if 'smart_tokens' in locals() else recommended_tokens}, "
+                   f"最终使用={final_max_tokens}, 内容长度={len(total_input_content)}")
 
         payload = {
             "model": resolved_model,
             "messages": messages,
             "temperature": request.temperature,
-            "max_tokens": request.max_tokens,
+            "max_tokens": final_max_tokens,  # 使用智能调整后的token数
             "stream": True,
         }
 
@@ -1186,77 +1213,43 @@ async def _stream_content_analysis_ai_sdk(
                     )
 
                 full_response = ""
+                async for line in response.content:
+                    line_str = line.decode("utf-8").strip()
 
-                async for chunk in response.content.iter_chunked(1024):
-                    chunk_str = chunk.decode("utf-8")
-                    lines = chunk_str.strip().split("\n")
+                    if line_str.startswith("data: "):
+                        data_str = line_str[6:]
 
-                    for line in lines:
-                        if line.startswith("data: "):
-                            data_part = line[6:].strip()
-                            if data_part == "[DONE]":
-                                # 处理剩余内容
-                                final_increment = jsonl_processor.finalize()
-                                if final_increment:
-                                    # 直接传输JSONL对象，不进行额外转义
-                                    final_lines = final_increment.strip().split("\n")
-                                    for jsonl_line in final_lines:
-                                        if jsonl_line.strip():
-                                            # 直接传输JSONL对象 (类型0)
-                                            yield f"0:{jsonl_line}\n"
+                        if data_str == "[DONE]":
+                            break
 
-                                # 发送完成信号 (类型8)
-                                # yield f'8:[{{"finishReason":"stop"}}]\n'
+                        try:
+                            data = json.loads(data_str)
+                            if "choices" in data and data["choices"]:
+                                delta = data["choices"][0].get("delta", {})
+                                if "content" in delta:
+                                    content = delta["content"]
+                                    full_response += content
 
-                                # Update AI conversation with response using new session
-                                try:
-                                    with Session(engine) as db_session:
-                                        ai_conversation = db_session.get(
-                                            AIConversation, ai_conversation_id
-                                        )
-                                        if ai_conversation:
-                                            final_content = (
-                                                jsonl_processor.get_current_jsonl()
-                                            )
-                                            update_ai_conversation_response(
-                                                db_session,
-                                                ai_conversation,
-                                                final_content,
-                                            )
-                                except Exception as e:
-                                    logger.error(f"Failed to save AI response: {e}")
-                                return
+                                    # 发送数据流
+                                    formatted_data = f"0:{json.dumps({'text': content})}\n"
+                                    yield formatted_data
 
-                            try:
-                                chunk_data = json.loads(data_part)
-                                if "choices" in chunk_data and chunk_data["choices"]:
-                                    delta = chunk_data["choices"][0].get("delta", {})
-                                    if "content" in delta:
-                                        content = delta["content"]
-                                        full_response += content
+                        except json.JSONDecodeError:
+                            continue
 
-                                        # 使用实时JSONL处理器检测完整的JSONL行
-                                        jsonl_increment, has_new_jsonl = (
-                                            jsonl_processor.process_chunk(content)
-                                        )
+                # 发送完成信号
+                completion_data = f"d:{json.dumps({'finishReason': 'stop', 'usage': {'totalTokens': len(full_response)}})}\n"
+                yield completion_data
 
-                                        if has_new_jsonl and jsonl_increment:
-                                            # 直接传输JSONL对象，不进行额外转义
-                                            jsonl_lines = jsonl_increment.strip().split(
-                                                "\n"
-                                            )
-                                            for jsonl_line in jsonl_lines:
-                                                if jsonl_line.strip():
-                                                    # 直接传输JSONL对象 (类型0)
-                                                    yield f"0:{jsonl_line}\n"
-
-                            except json.JSONDecodeError:
-                                continue
+                # 记录最终结果
+                logger.info(f"📊 分析完成: 输出长度={len(full_response)}, "
+                           f"估算输出token={len(full_response)//3}, "
+                           f"token限制={final_max_tokens}")
 
     except Exception as e:
-        # 发送错误信息 (类型9)
-        error_msg = str(e).replace('"', '\\"')
-        yield f'{{"t":"error","c":"Analysis failed: {error_msg}"}}]\n'
+        logger.error(f"Stream analysis failed: {str(e)}")
+        error_data = f"e:{json.dumps({'error': str(e)})}\n"
+        yield error_data
 
 
 @router.post(
@@ -1321,7 +1314,7 @@ async def completion_updated_endpoint(
     async def stream_completion():
         try:
             async for chunk in _stream_content_completion_updated(
-                content_item_id=content_item_id,  # 使用提前提取的ID
+                _content_item_id=content_item_id,  # 修复参数名匹配
                 content_text=content_text,  # 使用提前提取的内容文本
                 content_title=content_title,  # 使用提前提取的内容标题
                 request=request,
@@ -1855,227 +1848,142 @@ async def _stream_template_analysis(
     _model: str,
 ) -> AsyncGenerator[str, None]:
     """
-    Stream analysis using template-based AI processing
+    流式模板分析，支持动态token调整
     """
-    import json
-    from datetime import datetime, timezone
-
-    import aiohttp
-
-    from app.core.db_factory import engine
-
-    # 使用 ChatService 来获取正确的模型名称
-    chat_service = ChatService()
-
-    # 根据分析类型确定模板名称
-    template_name = f"{analysis_type}.j2"
-
-    # 获取该模板对应的正确模型
-    resolved_model = chat_service.get_model_for_template(template_name)
-
-    logger.info(
-        f"Using resolved model '{resolved_model}' for analysis type '{analysis_type}' (template: {template_name})"
-    )
-
-    # 创建JSONL提取器（用于summary和key_points类型）
-    jsonl_extractor = None
-    if analysis_type in ["summary", "key_points"]:
-        jsonl_extractor = create_streaming_jsonl_extractor()
-
-    # 分析类型到指令的映射
-    analysis_instructions = {
-        "summary": "请对这篇内容进行总结，提取其主要观点和关键信息。",
-        "key_points": "请提取这篇内容的关键要点，以清晰、结构化的方式呈现。",
-        "labels": "请为这篇内容生成合适的标签，帮助分类和检索。",
-        "insights": "请分析这篇内容并提供深入的洞察和见解。",
-    }
-
-    analysis_instruction = analysis_instructions.get(
-        analysis_type, "请分析这篇内容并提供相关信息。"
-    )
-
-    # 准备消息
-    messages = [
-        {"role": "system", "content": content_text},
-        {"role": "user", "content": analysis_instruction},
-    ]
-
-    # 为当前分析创建对话记录
-    ai_conversation = None
     try:
-        with Session(engine) as db_session:
-            ai_conversation = create_ai_conversation(
-                session=db_session,
-                user_id=user_id,
-                content_item_id=content_item_id,
-                content_item_title=content_title or "Untitled",
-                analysis_instruction=analysis_instruction,
-                content_to_analyze=content_text,
-                model=resolved_model,  # 使用解析后的正确模型
-                temperature=0.3,
-                max_tokens=8000,
-            )
-    except Exception as e:
-        logger.error(f"Failed to create AI conversation: {e}")
-        # 如果创建对话失败，继续处理，但记录错误
+        # 根据分析类型映射到任务类型
+        task_type_mapping = {
+            "summary": "summary",
+            "key_points": "key_points", 
+            "labels": "labels",
+            "analysis": "analysis"
+        }
+        task_type = task_type_mapping.get(analysis_type, "analysis")
+        
+        # 获取推荐的分析设置
+        recommended_settings = get_recommended_settings(
+            task_type=task_type,
+            content_text=content_text,
+            target_quality="balanced"
+        )
+        
+        logger.info(f"🎯 模板分析设置: 类型={analysis_type}, 任务={task_type}, "
+                   f"推荐设置={recommended_settings}")
 
-    # LiteLLM 代理配置
-    litellm_url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
-    headers = {"Content-Type": "application/json"}
+        # 渲染分析指令模板
+        template_env = Environment(
+            loader=FileSystemLoader("app/prompt_templates"), trim_blocks=True
+        )
 
-    if settings.LITELLM_MASTER_KEY:
-        headers["Authorization"] = f"Bearer {settings.LITELLM_MASTER_KEY}"
+        # 根据分析类型选择模板
+        template_map = {
+            "summary": "summary.j2",
+            "key_points": "key_points.j2", 
+            "labels": "labels.j2",
+        }
+        
+        template_name = template_map.get(analysis_type, "summary.j2")
+        template = template_env.get_template(template_name)
+        
+        analysis_instruction = template.render(
+            content_title=content_title or "无标题",
+            content_text=content_text[:2000],  # 限制模板中的内容长度
+            content_type="文档",
+        )
 
-    payload = {
-        "model": resolved_model,  # 使用解析后的正确模型
-        "messages": messages,
-        "stream": True,
-        "temperature": 0.3,
-        "max_tokens": 8000,
-    }
+        # 构建消息
+        messages = [
+            {"role": "system", "content": content_text},
+            {"role": "user", "content": analysis_instruction},
+        ]
 
-    try:
+        # 获取解析后的模型
+        resolved_model = settings.resolved_ai_task_models.get(
+            task_type, settings.DEFAULT_LLM_MODEL
+        )
+
+        # 创建AI对话记录
+        try:
+            with Session(engine) as db_session:
+                ai_conversation = create_ai_conversation(
+                    session=db_session,
+                    user_id=user_id,
+                    content_item_id=content_item_id,
+                    content_item_title=content_title or "Untitled",
+                    analysis_instruction=analysis_instruction,
+                    content_to_analyze=content_text,
+                    model=resolved_model,
+                    temperature=recommended_settings["temperature"],
+                    max_tokens=recommended_settings["max_tokens"],
+                )
+        except Exception as e:
+            logger.error(f"Failed to create AI conversation: {e}")
+
+        # LiteLLM 代理配置
+        litellm_url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
+        headers = {"Content-Type": "application/json"}
+
+        if settings.LITELLM_MASTER_KEY:
+            headers["Authorization"] = f"Bearer {settings.LITELLM_MASTER_KEY}"
+
+        payload = {
+            "model": resolved_model,
+            "messages": messages,
+            "stream": True,
+            "temperature": recommended_settings["temperature"],
+            "max_tokens": recommended_settings["max_tokens"],
+        }
+
+        logger.info(f"🚀 开始模板分析: 模型={resolved_model}, "
+                   f"max_tokens={recommended_settings['max_tokens']}, "
+                   f"temperature={recommended_settings['temperature']}")
+
         timeout = aiohttp.ClientTimeout(total=120.0)
-        accumulated_content = ""
-        pure_jsonl_response = ""  # 存储提取的纯净JSONL内容
-
-        async with aiohttp.ClientSession(timeout=timeout) as session_client:
-            async with session_client.post(
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.post(
                 litellm_url, json=payload, headers=headers
             ) as response:
                 if response.status != 200:
-                    error_msg = f"LiteLLM error: HTTP {response.status}"
-                    try:
-                        error_text = await response.text()
-                        error_msg += f" - {error_text}"
-                    except Exception:
-                        pass
+                    error_text = await response.text()
+                    raise HTTPException(
+                        status_code=response.status,
+                        detail=f"LiteLLM error: {error_text}",
+                    )
 
-                    # 发送错误事件
-                    yield f"data: {json.dumps({'type': 'error', 'content': error_msg, 'finished': True})}\n\n"
-                    return
+                accumulated_content = ""
+                async for line in response.content:
+                    line_str = line.decode("utf-8").strip()
 
-                # 处理流式响应
-                async for chunk_bytes in response.content.iter_chunked(1024):
-                    if not chunk_bytes:
-                        continue
+                    if line_str.startswith("data: "):
+                        data_str = line_str[6:]
 
-                    chunk_str = chunk_bytes.decode("utf-8", errors="ignore")
-                    lines = chunk_str.split("\n")
+                        if data_str == "[DONE]":
+                            logger.info(f"📊 模板分析完成: 输出长度={len(accumulated_content)}")
+                            break
 
-                    for line in lines:
-                        if line.startswith("data: "):
-                            data = line[6:].strip()
+                        try:
+                            data = json.loads(data_str)
+                            if "choices" in data and data["choices"]:
+                                delta = data["choices"][0].get("delta", {})
+                                if "content" in delta:
+                                    content = delta["content"]
+                                    accumulated_content += content
 
-                            if data == "[DONE]":
-                                # 使用纯净的JSONL内容或原始内容
-                                final_content = (
-                                    pure_jsonl_response
-                                    if jsonl_extractor
-                                    and jsonl_extractor.has_jsonl_content()
-                                    else accumulated_content
-                                )
+                                    # AI SDK Data Stream Protocol format
+                                    formatted_data = f"0:{json.dumps({'text': content})}\n"
+                                    yield formatted_data
 
-                                # 保存完整的AI响应
-                                if final_content and ai_conversation:
-                                    try:
-                                        with Session(engine) as db_session:
-                                            # 重新查询conversation以确保正确的session绑定
-                                            conversation = db_session.get(
-                                                AIConversation, ai_conversation.id
-                                            )
-                                            if conversation:
-                                                # 更新对话内容
-                                                messages_list = json.loads(
-                                                    conversation.messages or "[]"
-                                                )
-                                                messages_list.append(
-                                                    {
-                                                        "role": "assistant",
-                                                        "content": final_content,
-                                                        "timestamp": datetime.now(
-                                                            timezone.utc
-                                                        ).isoformat(),
-                                                    }
-                                                )
-                                                conversation.messages = json.dumps(
-                                                    messages_list
-                                                )
-                                                db_session.add(conversation)
-                                                db_session.commit()
-                                    except Exception as e:
-                                        logger.error(f"Failed to save AI response: {e}")
+                        except json.JSONDecodeError:
+                            continue
 
-                                # 发送完成事件
-                                yield f"data: {json.dumps({'type': analysis_type, 'content': '', 'finished': True})}\n\n"
-                                return
-
-                            try:
-                                parsed = json.loads(data)
-
-                                # 检查错误
-                                if "error" in parsed:
-                                    error_msg = parsed.get("message", "Unknown error")
-
-                                    # 保存错误
-                                    if ai_conversation:
-                                        try:
-                                            with Session(engine) as db_session:
-                                                conversation = db_session.get(
-                                                    AIConversation, ai_conversation.id
-                                                )
-                                                if conversation:
-                                                    conversation.summary = (
-                                                        f"分析失败: {error_msg}"
-                                                    )
-                                                    db_session.add(conversation)
-                                                    db_session.commit()
-                                        except Exception as e:
-                                            logger.error(f"Failed to save error: {e}")
-
-                                    yield f"data: {json.dumps({'type': 'error', 'content': error_msg, 'finished': True})}\n\n"
-                                    return
-
-                                # 提取内容
-                                if (
-                                    parsed.get("choices")
-                                    and len(parsed["choices"]) > 0
-                                    and "delta" in parsed["choices"][0]
-                                    and "content" in parsed["choices"][0]["delta"]
-                                ):
-                                    content = parsed["choices"][0]["delta"]["content"]
-                                    if content:
-                                        accumulated_content += content
-
-                                        # 如果是JSONL模板，尝试提取JSONL内容
-                                        if jsonl_extractor:
-                                            jsonl_increment, has_new_jsonl = (
-                                                jsonl_extractor.process_chunk(content)
-                                            )
-
-                                            if has_new_jsonl:
-                                                # 有新的JSONL内容，发送纯净的增量内容
-                                                pure_jsonl_response = (
-                                                    jsonl_extractor.get_current_jsonl()
-                                                )
-                                                yield f"data: {json.dumps({'type': analysis_type, 'content': jsonl_increment, 'finished': False})}\n\n"
-                                            elif jsonl_extractor.has_jsonl_content():
-                                                # 已经在提取JSONL，跳过非JSONL内容
-                                                continue
-                                            else:
-                                                # 还没开始提取，发送原始内容
-                                                yield f"data: {json.dumps({'type': analysis_type, 'content': content, 'finished': False})}\n\n"
-                                        else:
-                                            # 非JSONL模板，直接发送内容
-                                            yield f"data: {json.dumps({'type': analysis_type, 'content': content, 'finished': False})}\n\n"
-
-                            except json.JSONDecodeError:
-                                # 忽略无法解析的数据
-                                continue
+                # 发送完成信号
+                completion_data = f"d:{json.dumps({'finishReason': 'stop'})}\n"
+                yield completion_data
 
     except Exception as e:
-        logger.error(f"Template analysis error: {e}")
-        yield f"data: {json.dumps({'type': 'error', 'content': f'分析过程中发生错误: {str(e)}', 'finished': True})}\n\n"
+        logger.error(f"模板分析失败: {str(e)}")
+        error_data = f"e:{json.dumps({'error': str(e)})}\n"
+        yield error_data
 
 
 @router.delete(
@@ -2147,15 +2055,19 @@ def delete_content_item_endpoint(
     "/{id}/favorite",
     status_code=status.HTTP_201_CREATED,
     summary="Add Content to Favorites",
-    description="Add a content item to the user's favorites list.",
+    description="Add a content item or specific block to the user's favorites list.",
 )
 def add_to_favorites_endpoint(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     id: uuid.UUID = Path(..., description="Content item ID to add to favorites"),
+    favorite_data: dict = Body(
+        default={}, 
+        description="Optional block data for block-level favorites"
+    ),
 ) -> dict[str, str]:
-    """Add content item to favorites."""
+    """Add content item or block to favorites."""
     from app.crud.crud_favorite import create_favorite, get_favorite
 
     # Verify content item exists and belongs to user
@@ -2171,18 +2083,45 @@ def add_to_favorites_endpoint(
             detail="You don't have permission to access this content item",
         )
 
+    # Extract block information if provided
+    block_id = favorite_data.get("block_id")
+    block_type = favorite_data.get("block_type")
+    block_content = favorite_data.get("block_content")
+    title = favorite_data.get("title")
+    description = favorite_data.get("description")
+    tags = favorite_data.get("tags")
+
     # Check if already favorited
     existing_favorite = get_favorite(
-        session=session, user_id=current_user.id, content_item_id=id
+        session=session, 
+        user_id=current_user.id, 
+        content_item_id=id,
+        block_id=block_id
     )
     if existing_favorite:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Content item is already in favorites",
-        )
+        if block_id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This block is already in favorites",
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Content item is already in favorites",
+            )
 
     # Create favorite
-    create_favorite(session=session, user_id=current_user.id, content_item_id=id)
+    create_favorite(
+        session=session, 
+        user_id=current_user.id, 
+        content_item_id=id,
+        block_id=block_id,
+        block_type=block_type,
+        block_content=block_content,
+        title=title,
+        description=description,
+        tags=tags
+    )
 
     return {"status": "ok"}
 
@@ -2191,15 +2130,16 @@ def add_to_favorites_endpoint(
     "/{id}/favorite",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Remove Content from Favorites",
-    description="Remove a content item from the user's favorites list.",
+    description="Remove a content item or specific block from the user's favorites list.",
 )
 def remove_from_favorites_endpoint(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     id: uuid.UUID = Path(..., description="Content item ID to remove from favorites"),
+    block_id: Optional[str] = Query(None, description="Block ID to remove from favorites"),
 ) -> None:
-    """Remove content item from favorites."""
+    """Remove content item or block from favorites."""
     from app.crud.crud_favorite import delete_favorite
 
     # Verify content item exists and belongs to user
@@ -2217,27 +2157,37 @@ def remove_from_favorites_endpoint(
 
     # Remove from favorites
     success = delete_favorite(
-        session=session, user_id=current_user.id, content_item_id=id
+        session=session, 
+        user_id=current_user.id, 
+        content_item_id=id,
+        block_id=block_id
     )
     if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content item is not in favorites",
-        )
+        if block_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="This block is not in favorites",
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Content item is not in favorites",
+            )
 
 
 @router.get(
     "/{id}/favorite/status",
     summary="Check Favorite Status",
-    description="Check if a content item is in the user's favorites.",
+    description="Check if a content item or specific block is in the user's favorites.",
 )
 def check_favorite_status_endpoint(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     id: uuid.UUID = Path(..., description="Content item ID to check"),
+    block_id: Optional[str] = Query(None, description="Block ID to check"),
 ) -> dict[str, bool]:
-    """Check if content item is in favorites."""
+    """Check if content item or block is in favorites."""
     from app.crud.crud_favorite import get_favorite
 
     # Verify content item exists and belongs to user
@@ -2255,7 +2205,10 @@ def check_favorite_status_endpoint(
 
     # Check favorite status
     favorite = get_favorite(
-        session=session, user_id=current_user.id, content_item_id=id
+        session=session, 
+        user_id=current_user.id, 
+        content_item_id=id,
+        block_id=block_id
     )
 
     return {"is_favorite": favorite is not None}

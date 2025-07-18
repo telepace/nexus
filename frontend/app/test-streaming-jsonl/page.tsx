@@ -9,15 +9,8 @@ import { JsonlRenderer } from "@/components/ui/JsonlRenderer";
 import { Separator } from "@/components/ui/separator";
 import { Play, Pause, RotateCcw, Zap } from "lucide-react";
 
-export default function TestStreamingJsonlPage() {
-  const [streamingContent, setStreamingContent] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamSpeed, setStreamSpeed] = useState(100); // ms per character
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const contentIndexRef = useRef(0);
-
-  // 模拟的 JSONL 数据
-  const sampleJsonlData = `{"t":"h2","c":"核心观点"}
+// 将组件数据移到组件外部，避免预渲染时的状态问题
+const sampleJsonlData = `{"t":"h2","c":"核心观点"}
 {"t":"insight","c":"类似NotebookLM的RAG系统通过文档解析、文本分块和来源映射技术，实现从多样化文档中提取信息并确保答案可追溯","ref":"2,3,4"}
 {"t":"insight","c":"开源替代方案在文档处理流程上各有侧重，但与商业产品在成熟度上仍有差距","ref":"18,20,29"}
 {"t":"h2","c":"主要内容"}
@@ -29,6 +22,13 @@ export default function TestStreamingJsonlPage() {
 {"t":"concept","c":"字符偏移量是实现精确引用的关键元数据，支持在原始文档中高亮显示","ref":"15","expandable":"字符偏移量"}
 {"t":"list","c":"多种分块策略：Token级分块、句子级分块、语义分块、递归分块、混合分块、自适应分块"}
 {"t":"action","c":"建议开发者评估不同开源方案的成熟度和维护状态，选择最适合自己需求的技术栈"}`;
+
+export default function TestStreamingJsonlPage() {
+  const [streamingContent, setStreamingContent] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamSpeed, setStreamSpeed] = useState(100); // ms per character
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const contentIndexRef = useRef(0);
 
   const startStreaming = () => {
     if (isStreaming) return;
@@ -172,6 +172,7 @@ export default function TestStreamingJsonlPage() {
                 isLoading={isStreaming}
                 showStreamingIndicator={true}
                 enableHoverEffects={true}
+                contentId="test-streaming-jsonl"
               />
             </div>
           </CardContent>
@@ -190,6 +191,7 @@ export default function TestStreamingJsonlPage() {
               <JsonlRenderer
                 content={streamingContent}
                 enableHoverEffects={true}
+                showReferenceIndicators={false}
               />
             </div>
           </CardContent>
@@ -210,6 +212,7 @@ export default function TestStreamingJsonlPage() {
               isLoading={false}
               showStreamingIndicator={false}
               enableHoverEffects={true}
+              contentId="test-streaming-jsonl-complete"
             />
           </div>
         </CardContent>

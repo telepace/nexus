@@ -10,6 +10,7 @@ import {
 } from "./ReferenceManager";
 import { jsonlStyles } from "./jsonlStyles";
 import { ContentSkeleton } from "./ContentSkeleton";
+import { Bookmark } from "lucide-react";
 
 interface JsonlRendererProps {
   content: string;
