@@ -16,10 +16,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
   switch (type) {
     case "h1":
       return (
-        <div className="relative my-3 inline-flex items-baseline gap-1 flex-wrap">
-          <div className="absolute -left-4 top-0 w-2 h-full bg-gradient-to-b from-amber-400 to-orange-500 rounded-full shadow-sm" />
+        <div className="mt-4 mb-2 inline-flex items-baseline gap-1 flex-wrap">
           <span
-            className="text-xl font-bold text-gray-800 select-text leading-relaxed pl-4"
+            className="text-xl font-bold text-gray-800 select-text leading-relaxed"
             style={{ fontFamily: '"Kalam", "Comic Sans MS", cursive' }}
           >
             <MarkdownRenderer content={String(c)} inline={true} />
@@ -31,10 +30,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
       );
     case "h2":
       return (
-        <div className="relative my-0 inline-flex items-baseline gap-1 flex-wrap pl-6">
-          <div className="absolute -left-3 top-1 w-6 h-6 bg-blue-400 rounded-full shadow-md opacity-80" />
+        <div className="mt-4 mb-2 inline-flex items-baseline gap-1 flex-wrap">
           <span
-            className="text-lg font-semibold text-gray-700 select-text leading-relaxed"
+            className="text-lg font-bold text-gray-700 select-text leading-relaxed"
             style={{ fontFamily: '"Kalam", "Comic Sans MS", cursive' }}
           >
             <MarkdownRenderer content={String(c)} inline={true} />
@@ -46,10 +44,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
       );
     case "h3":
       return (
-        <div className="relative my-0 inline-flex items-baseline gap-1 flex-wrap pl-4">
-          <div className="absolute -left-2 top-2 w-4 h-4 bg-green-400 rounded-full shadow-sm opacity-70" />
+        <div className="mt-4 mb-2 inline-flex items-baseline gap-1 flex-wrap">
           <span
-            className="text-base font-medium text-gray-700 select-text leading-relaxed"
+            className="text-base font-bold text-gray-700 select-text leading-relaxed"
             style={{ fontFamily: '"Kalam", "Comic Sans MS", cursive' }}
           >
             <MarkdownRenderer content={String(c)} inline={true} />
@@ -189,7 +186,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
       );
     case "qa": {
       if (typeof c === "object" && c !== null) {
-        const obj = c as Record<string, unknown>;
+        const obj = c as unknown as Record<string, unknown>;
         const q = obj["q"] || obj["question"];
         const a = obj["a"] || obj["answer"];
         return (
