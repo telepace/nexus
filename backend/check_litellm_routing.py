@@ -24,7 +24,7 @@ def test_litellm_routing():
 
     # 测试的模型列表
     test_models = [
-        "or-gemini-2.5-flash-preview-05-20",
+        "or-gemini-2.5-flash",
         "or-gemini-2.5-pro",
         "or-deepseek-r1",
         "deepseek-v3-ensemble",

@@ -45,7 +45,7 @@ async def test_model_selection():
     logger.info(f"Labels模板 -> {resolved_models.get('labels', '未配置')}")
     logger.info(f"默认模型: {settings.DEFAULT_LLM_MODEL}")
 
-    # 2. 测试Summary生成（应使用or-gemini-2.5-flash-preview-05-20）
+    # 2. 测试Summary生成（应使用or-gemini-2.5-flash-05-20）
     logger.info("\n📝 测试Summary生成...")
     try:
         summary_result = await chat_service.generate_with_template(
@@ -87,7 +87,7 @@ async def test_model_selection():
         explicit_model_result = await chat_service.generate_with_template(
             "summary.j2",
             test_context,
-            model="or-gemini-2.5-flash-preview-05-20",  # 显式指定模型
+            model="or-gemini-2.5-flash-05-20",  # 显式指定模型
         )
         logger.info(f"✅ 显式模型调用成功: {bool(explicit_model_result)}")
     except Exception as e:

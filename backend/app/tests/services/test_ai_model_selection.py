@@ -29,7 +29,7 @@ class TestAIModelSelection:
         assert "labels" in resolved_models
 
         # 验证映射的模型名称（基于你的 .env 配置）
-        assert resolved_models["summary"] == "or-gemini-2.5-flash-preview-05-20"
+        assert resolved_models["summary"] == "or-gemini-2.5-flash-05-20"
         assert resolved_models["key_points"] == "or-deepseek-r1"
         assert resolved_models["labels"] == "deepseek-v3-ensemble"
 
@@ -53,7 +53,7 @@ class TestAIModelSelection:
                     "summary.j2", {"content": "test"}
                 )
                 mock_call.assert_called_with(
-                    "test", "mocked prompt", "or-gemini-2.5-flash-preview-05-20"
+                    "test", "mocked prompt", "or-gemini-2.5-flash-05-20"
                 )
 
                 # 重置mock
