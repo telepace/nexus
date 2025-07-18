@@ -213,7 +213,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
       }
 
       // 立即发送消息，而不是填充输入框
-      await sendMessage(promptContent, prompt.template_name, {
+      await sendMessage(promptContent, prompt.name, {
         promptName: prompt.name,
         promptId: prompt.id,
       });
@@ -293,7 +293,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
         cards.push({
           id: "summary",
           title: "内容摘要",
-          subtitle: "核心内容提炼",
+          subtitle: "",
           emoji: "📝",
           content: {
             type: "summary",
@@ -307,7 +307,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
         cards.push({
           id: "keyPoints",
           title: "提问清单",
-          subtitle: "好奇心的清单",
+          subtitle: "",
           emoji: "🎯",
           content: {
             type: "keyPoints",

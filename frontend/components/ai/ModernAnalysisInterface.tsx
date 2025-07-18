@@ -361,7 +361,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       await performCompletion(
         {
           analysis_instruction: promptContent,
-          template_name: prompt.template_name,
+          template_name: prompt.name,
         },
         `正在使用"${prompt.name}"模板进行分析`,
       );
@@ -450,7 +450,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         cards.push({
           id: "summary",
           title: "内容摘要",
-          subtitle: "核心内容提炼",
+          subtitle: "",
           emoji: "📝",
           content: {
             type: "summary",
@@ -464,7 +464,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         cards.push({
           id: "keyPoints",
           title: "提问清单",
-          subtitle: "好奇心的清单",
+          subtitle: "",
           emoji: "🎯",
           content: {
             type: "keyPoints",
