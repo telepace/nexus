@@ -111,9 +111,9 @@ async def cmd_add_gemini_models(manager: ModelManager):
     
     gemini_models = [
         {
-            "name": "gemini-2.5-flash-preview-05-20",
+            "name": "gemini-2.5-flash-05-20",
             "params": {
-                "model": "gemini/gemini-2.5-flash-preview-05-20",
+                "model": "gemini/gemini-2.5-flash-05-20",
                 "api_key": "os.environ/GEMINI_API_KEY"
             }
         },
