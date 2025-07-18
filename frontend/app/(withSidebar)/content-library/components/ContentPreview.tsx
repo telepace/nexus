@@ -39,22 +39,22 @@ export const ContentPreview = ({ item }: Props) => {
   return (
     <div className="relative w-full h-full z-20">
       <AnimatePresence mode="wait">
-        <div className="absolute inset-0">
-          <motion.div
-            key={item.id} // 使用item.id作为key确保每次切换都重新渲染
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            transition={{ 
-              type: "spring", 
-              stiffness: 400, 
-              damping: 40,
-              duration: 0.3 
-            }}
-          >
-            <ContentPanel item={item} />
-          </motion.div>
-        </div>
+        <motion.div
+          key={item.id} // 使用item.id作为key确保每次切换都重新渲染
+          initial={{ x: "100%" }}
+          animate={{ x: 0 }}
+          exit={{ x: "-100%" }}
+          transition={{ 
+            type: "spring", 
+            stiffness: 400, 
+            damping: 40,
+            duration: 0.3 
+          }}
+          className="absolute inset-0"
+          {...({} as any)}
+        >
+          <ContentPanel item={item} />
+        </motion.div>
       </AnimatePresence>
     </div>
   );

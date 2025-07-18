@@ -59,7 +59,9 @@
       "Bash(npm run format:*)",
       "Bash(npm test:*)",
       "Bash(npm run typecheck:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)"
     ]
   },
   "enableAllProjectMcpServers": false
