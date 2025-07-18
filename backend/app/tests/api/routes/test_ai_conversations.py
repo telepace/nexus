@@ -16,7 +16,7 @@ class TestAIConversationsAPI:
         """Test creating a new AI conversation."""
         data = {
             "title": "Test Analysis Conversation",
-            "ai_model_name": "gemini-2.5-flash-preview-05-20",
+            "ai_model_name": "gemini-2.5-flash-05-20",
             "messages": [
                 {"role": "user", "content": "Analyze this content"},
                 {"role": "assistant", "content": "Here is my analysis..."},

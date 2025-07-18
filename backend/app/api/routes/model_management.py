@@ -204,9 +204,9 @@ async def add_latest_gemini_models(
         # 定义最新的 Gemini 模型配置
         gemini_models = [
             {
-                "model_name": "gemini-2.5-flash-preview-05-20",
+                "model_name": "gemini-2.5-flash-05-20",
                 "litellm_params": {
-                    "model": "gemini/gemini-2.5-flash-preview-05-20",
+                    "model": "gemini/gemini-2.5-flash-05-20",
                     "api_key": "os.environ/GEMINI_API_KEY",
                 },
             },

@@ -29,9 +29,9 @@ def fix_conversation_model_names():
     # 模型名称映射：实际返回名称 -> 配置名称
     model_mapping = {
         "deepseek/deepseek-chat-v3-0324": {
-            "auto_analysis": "or-gemini-2.5-flash-preview-05-20",  # 自动分析默认使用Gemini
-            "prompt_analysis": "or-gemini-2.5-flash-preview-05-20",  # 预设分析使用Gemini
-            "user_chat": "or-gemini-2.5-flash-preview-05-20",  # 用户对话使用Gemini
+            "auto_analysis": "or-gemini-2.5-flash-05-20",  # 自动分析默认使用Gemini
+            "prompt_analysis": "or-gemini-2.5-flash-05-20",  # 预设分析使用Gemini
+            "user_chat": "or-gemini-2.5-flash-05-20",  # 用户对话使用Gemini
         }
     }
 
