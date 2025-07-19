@@ -617,27 +617,8 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
           </div>
         )}
 
-        {/* 新的实时对话卡片 */}
+        {/* 原有的分析卡片 - 放在最前面 */}
         <div className="px-8 pt-4 pb-2" data-exclude-selection>
-          <div
-            className={`space-y-6 ${
-              variant === "preview" ? "max-w-2xl mx-auto" : ""
-            }`}
-          >
-            {streamingConversations.map((conversation) => (
-              <StreamingConversationCard
-                key={conversation.id}
-                conversation={conversation.messages}
-                onExpandLine={handleJsonLineExpand}
-                onRetry={retryMessage}
-                onDelete={deleteConversation}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* 原有的分析卡片 */}
-        <div className="px-8 pt-2 pb-6" data-exclude-selection>
           <div
             className={`space-y-6 ${
               variant === "preview" ? "max-w-2xl mx-auto" : ""
@@ -655,6 +636,25 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
                 </div>
               </div>
             ) : null}
+          </div>
+        </div>
+
+        {/* 新的实时对话卡片 - 放在最后面，确保新卡片出现在最下方 */}
+        <div className="px-8 pt-2 pb-6" data-exclude-selection>
+          <div
+            className={`space-y-6 ${
+              variant === "preview" ? "max-w-2xl mx-auto" : ""
+            }`}
+          >
+            {streamingConversations.map((conversation) => (
+              <StreamingConversationCard
+                key={conversation.id}
+                conversation={conversation.messages}
+                onExpandLine={handleJsonLineExpand}
+                onRetry={retryMessage}
+                onDelete={deleteConversation}
+              />
+            ))}
           </div>
         </div>
       </div>

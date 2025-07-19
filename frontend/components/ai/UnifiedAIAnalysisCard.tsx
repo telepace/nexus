@@ -76,6 +76,18 @@ export function UnifiedAIAnalysisCard({
     }
   }, [config.mode, initialContent, actions]);
 
+  // 开始分析
+  const handleStartAnalysis = useCallback(async () => {
+    try {
+      onStart?.();
+      await actions.startAnalysis(instruction);
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error("分析失败");
+      onError?.(err);
+      toast.error(`分析失败: ${err.message}`);
+    }
+  }, [actions, instruction, onError, onStart]);
+
   // 自动开始分析
   useEffect(() => {
     if (
@@ -94,18 +106,6 @@ export function UnifiedAIAnalysisCard({
     config.mode,
     handleStartAnalysis,
   ]);
-
-  // 开始分析
-  const handleStartAnalysis = useCallback(async () => {
-    try {
-      onStart?.();
-      await actions.startAnalysis(instruction);
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error("分析失败");
-      onError?.(err);
-      toast.error(`分析失败: ${err.message}`);
-    }
-  }, [actions, instruction, onError, onStart]);
 
   // 停止分析
   const handleStopAnalysis = () => {
@@ -225,13 +225,13 @@ export function UnifiedAIAnalysisCard({
               </Badge>
             )}
             {state.isCompleted && (
-              <Badge variant="outline" className="text-xs text-green-600">
+              <Badge variant="outline" className="text-xs text-muted-foreground">
                 <Sparkles className="h-3 w-3 mr-1" />
                 已完成
               </Badge>
             )}
             {state.retryCount > 0 && (
-              <Badge variant="outline" className="text-xs text-orange-600">
+              <Badge variant="outline" className="text-xs text-muted-foreground">
                 重试 {state.retryCount}
               </Badge>
             )}

@@ -428,21 +428,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     const metaInfo = content.meta_info ? JSON.parse(content.meta_info) : null;
     const adaptedData = adaptAnalysisData(analysisResult, metaInfo);
 
-    // 实时分析结果卡片 - 优先显示，放在最前面
-    if (streamingResponse) {
-      const isLoading = streamingResponse.startsWith("LOADING_PLACEHOLDER_");
-      cards.push({
-        id: "streaming",
-        title: "AI分析",
-        subtitle: isLoading ? "正在连接AI..." : isAnalyzing ? "正在分析..." : "分析完成",
-        emoji: "🤖",
-        content: {
-          type: "streaming",
-          data: streamingResponse,
-        },
-      });
-    }
-
     // 只有在显示预处理内容时才添加这些卡片
     if (showPreprocessedContent) {
       // 内容摘要卡片
@@ -492,6 +477,21 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           },
         });
       }
+    }
+
+    // 实时分析结果卡片 - 放在最后面，确保新卡片出现在最下方
+    if (streamingResponse) {
+      const isLoading = streamingResponse.startsWith("LOADING_PLACEHOLDER_");
+      cards.push({
+        id: "streaming",
+        title: "AI分析",
+        subtitle: isLoading ? "正在连接AI..." : isAnalyzing ? "正在分析..." : "分析完成",
+        emoji: "🤖",
+        content: {
+          type: "streaming",
+          data: streamingResponse,
+        },
+      });
     }
 
     return cards;
@@ -743,21 +743,21 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                       <div className="flex items-center justify-center py-8">
                         <div className="text-center space-y-4">
                           <div className="flex items-center justify-center">
-                            <Brain className="h-8 w-8 animate-spin text-blue-500" />
+                            <Brain className="h-8 w-8 animate-spin text-muted-foreground" />
                           </div>
                           <div className="space-y-2">
-                            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                            <p className="text-sm font-medium text-foreground">
                               正在连接AI助手...
                             </p>
-                            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                            <p className="text-xs text-muted-foreground">
                               请稍等，正在为您准备最佳的回答
                             </p>
                           </div>
                           <div className="flex justify-center">
                             <div className="flex space-x-1">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                              <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                              <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                              <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                             </div>
                           </div>
                         </div>
@@ -771,7 +771,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                         />
                         {/* 流式响应时的打字机效果光标 */}
                         {isAnalyzing && (
-                          <span className="inline-block w-2 h-4 bg-blue-500 animate-pulse ml-1 align-middle" />
+                          <span className="inline-block w-2 h-4 bg-muted-foreground animate-pulse ml-1 align-middle" />
                         )}
                       </div>
                     )}
