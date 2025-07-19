@@ -8,20 +8,14 @@ import {
   Share,
   Sparkles,
   RefreshCw,
-<<<<<<< HEAD
   Minus,
   Plus,
-=======
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
   Loader2,
 } from "lucide-react";
 import { useCardHeight } from "@/hooks/use-card-height";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-<<<<<<< HEAD
-=======
 import { CollapsibleButton } from "@/components/ui/CollapsibleButton";
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
 import { useToast } from "@/hooks/use-toast";
 import {
   AIResult,
@@ -241,11 +235,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     };
   }, []);
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
   // 处理AI分析
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const performCompletion = useCallback(
@@ -373,11 +362,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       await performCompletion(
         {
           analysis_instruction: promptContent,
-<<<<<<< HEAD
-          template_name: prompt.template_name,
-=======
           template_name: prompt.name,
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
         },
         `正在使用"${prompt.name}"模板进行分析`,
       );
@@ -409,11 +394,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     );
   }, [inputValue, performCompletion]);
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
   // 处理JSON行展开请求
   const handleJsonLineExpand = useCallback(
     async (jsonContent: Record<string, unknown>) => {
@@ -449,9 +429,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     const metaInfo = content.meta_info ? JSON.parse(content.meta_info) : null;
     const adaptedData = adaptAnalysisData(analysisResult, metaInfo);
 
-<<<<<<< HEAD
-    // 实时分析结果卡片 - 优先显示，放在最前面
-=======
     // 只有在显示预处理内容时才添加这些卡片
     if (showPreprocessedContent) {
       // 内容摘要卡片
@@ -504,7 +481,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     }
 
     // 实时分析结果卡片 - 放在最后面，确保新卡片出现在最下方
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
     if (streamingResponse) {
       const isLoading = streamingResponse.startsWith("LOADING_PLACEHOLDER_");
       cards.push({
@@ -613,14 +589,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           `}
         >
           <div className="select-text prose prose-sm max-w-none dark:prose-invert">
-<<<<<<< HEAD
-            <UniversalContentRenderer 
-              content={textContent} 
-              contentId={content.id}
-=======
             <UniversalContentRenderer
               content={textContent}
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
               onExpandLine={handleJsonLineExpand}
               enableDelayedRendering={false}
               renderDelay={400}
@@ -687,33 +657,16 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
               {/* 操作按钮：使用 flex-row-reverse 保证折叠/展开按钮始终最右 */}
               <div className="flex items-center gap-1 flex-row-reverse relative z-10">
                 {/* 折叠/展开按钮 - 始终显示 */}
-<<<<<<< HEAD
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
-=======
                 <CollapsibleButton
                   isCollapsed={isCollapsed}
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
                     toggleCardCollapse(card.id);
                   }}
-<<<<<<< HEAD
-                >
-                  {isCollapsed ? (
-                    <Plus className="h-3.5 w-3.5" />
-                  ) : (
-                    <Minus className="h-3.5 w-3.5" />
-                  )}
-                </Button>
-=======
                   size="md"
                   className="text-neutral-400 hover:text-neutral-600 relative z-10"
                 />
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
 
                 {/* 其他操作按钮 - 仅在悬停时显示 */}
                 {isHovered && (
@@ -833,7 +786,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                   >
                     {card.content.data.startsWith("LOADING_PLACEHOLDER_") ? (
                       // 加载状态显示
-<<<<<<< HEAD
                       <div className="flex items-center justify-center py-8">
                         <div className="text-center space-y-4">
                           <div className="flex items-center justify-center">
@@ -855,10 +807,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                             </div>
                           </div>
                         </div>
-=======
-                      <div className="flex items-center justify-center py-4">
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                       </div>
                     ) : (
                       // 正常内容显示
@@ -869,11 +817,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                         />
                         {/* 流式响应时的打字机效果光标 */}
                         {isAnalyzing && (
-<<<<<<< HEAD
-                          <span className="inline-block w-2 h-4 bg-blue-500 animate-pulse ml-1 align-middle" />
-=======
                           <span className="inline-block w-2 h-4 bg-muted-foreground animate-pulse ml-1 align-middle" />
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                         )}
                       </div>
                     )}
@@ -946,11 +890,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
             ) : (
               <div className="flex items-center justify-center p-8 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50/30 dark:bg-neutral-900/30">
                 <div className="text-center space-y-2">
-<<<<<<< HEAD
-                  <Brain className="h-8 w-8 text-neutral-400 mx-auto" />
-=======
                   <Loader2 className="h-8 w-8 text-neutral-400 mx-auto" />
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                   <p className="text-sm text-neutral-500 dark:text-neutral-400">
                     暂无分析结果，使用下方AI助手开始分析
                   </p>

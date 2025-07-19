@@ -16,21 +16,11 @@ export const notebookStyleRenderer: StyleRenderer = ({
   switch (type) {
     case "h1":
       return (
-<<<<<<< HEAD
         <div className="relative my-3 inline-flex items-baseline gap-1 flex-wrap">
           <div className="absolute -left-4 top-0 w-2 h-full bg-gradient-to-b from-amber-400 to-orange-500 rounded-full shadow-sm" />
           <span
             className="text-xl font-bold text-gray-800 select-text leading-relaxed pl-4"
             style={{ fontFamily: '"Kalam", "Comic Sans MS", cursive' }}
-=======
-        <div className="mt-4 mb-2 inline-flex items-baseline gap-1 flex-wrap">
-          <span
-            className="text-2xl font-bold text-neutral-800 select-text"
-            style={{ 
-              lineHeight: '1.5',
-              fontFamily: '"Kalam", "Comic Sans MS", cursive'
-            }}
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
           >
             <MarkdownRenderer content={String(c)} inline={true} />
           </span>
@@ -41,13 +31,6 @@ export const notebookStyleRenderer: StyleRenderer = ({
       );
     case "h2":
       return (
-<<<<<<< HEAD
-        <div className="relative my-0 inline-flex items-baseline gap-1 flex-wrap pl-6">
-          <div className="absolute -left-3 top-1 w-6 h-6 bg-blue-400 rounded-full shadow-md opacity-80" />
-          <span
-            className="text-lg font-semibold text-gray-700 select-text leading-relaxed"
-            style={{ fontFamily: '"Kalam", "Comic Sans MS", cursive' }}
-=======
         <div className="mt-4 mb-2 inline-flex items-baseline gap-1 flex-wrap">
           <span
             className="text-xl font-bold text-neutral-700 select-text"
@@ -55,7 +38,6 @@ export const notebookStyleRenderer: StyleRenderer = ({
               lineHeight: '1.5',
               fontFamily: '"Kalam", "Comic Sans MS", cursive'
             }}
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
           >
             <MarkdownRenderer content={String(c)} inline={true} />
           </span>
@@ -66,13 +48,6 @@ export const notebookStyleRenderer: StyleRenderer = ({
       );
     case "h3":
       return (
-<<<<<<< HEAD
-        <div className="relative my-0 inline-flex items-baseline gap-1 flex-wrap pl-4">
-          <div className="absolute -left-2 top-2 w-4 h-4 bg-green-400 rounded-full shadow-sm opacity-70" />
-          <span
-            className="text-base font-medium text-gray-700 select-text leading-relaxed"
-            style={{ fontFamily: '"Kalam", "Comic Sans MS", cursive' }}
-=======
         <div className="mt-4 mb-2 inline-flex items-baseline gap-1 flex-wrap">
           <span
             className="text-lg font-bold text-neutral-700 select-text"
@@ -80,7 +55,6 @@ export const notebookStyleRenderer: StyleRenderer = ({
               lineHeight: '1.5',
               fontFamily: '"Kalam", "Comic Sans MS", cursive'
             }}
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
           >
             <MarkdownRenderer content={String(c)} inline={true} />
           </span>
@@ -102,19 +76,11 @@ export const notebookStyleRenderer: StyleRenderer = ({
               fontFamily: '"Kalam", "Comic Sans MS", cursive',
             }}
           >
-<<<<<<< HEAD
-            <div className="italic text-gray-700 leading-relaxed text-sm">
-              <MarkdownRenderer content={String(c)} inline={true} />
-            </div>
-            {ref && (
-              <cite className="block mt-2 text-sm text-pink-600 not-italic font-medium">
-=======
             <div className="italic text-neutral-700 text-base" style={{ lineHeight: '1.5' }}>
               <MarkdownRenderer content={String(c)} inline={true} />
             </div>
             {ref && (
               <cite className="block mt-2 text-base text-pink-600 not-italic font-medium">
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                 — {ref}
               </cite>
             )}
@@ -146,16 +112,11 @@ export const notebookStyleRenderer: StyleRenderer = ({
               <li key={i} className="flex items-start gap-3 select-text">
                 <span className="flex-shrink-0 w-2 h-2 bg-yellow-500 rounded-full mt-2 shadow-sm" />
                 <span
-<<<<<<< HEAD
-                  className="text-sm text-gray-700 leading-relaxed"
-                  style={{ fontFamily: '"Kalam", "Comic Sans MS", cursive' }}
-=======
                   className="text-base text-neutral-700"
                   style={{ 
                     lineHeight: '1.5',
                     fontFamily: '"Kalam", "Comic Sans MS", cursive'
                   }}
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                 >
                   <MarkdownRenderer content={item} inline={true} />
                 </span>
@@ -203,11 +164,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
           <div
             className={`inline-flex items-baseline gap-1 flex-wrap ${colors.text}`}
           >
-<<<<<<< HEAD
-            <span className="text-sm">
-=======
             <span className="text-base" style={{ lineHeight: '1.5' }}>
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
               <MarkdownRenderer content={String(c)} inline={true} />
             </span>
             {hasReferences && (
@@ -228,11 +185,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
         >
           <div className="absolute -top-2 -right-2 w-6 h-6 bg-purple-400 rounded-full shadow-md" />
           <div className="inline-flex items-baseline gap-1 flex-wrap text-purple-700">
-<<<<<<< HEAD
-            <span className="text-sm">
-=======
             <span className="text-base leading-loose">
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
               <MarkdownRenderer content={String(c)} inline={true} />
             </span>
             {hasReferences && (
@@ -243,11 +196,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
       );
     case "qa": {
       if (typeof c === "object" && c !== null) {
-<<<<<<< HEAD
-        const obj = c as Record<string, unknown>;
-=======
         const obj = c as unknown as Record<string, unknown>;
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
         const q = obj["q"] || obj["question"];
         const a = obj["a"] || obj["answer"];
         return (
@@ -263,11 +212,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
                 <span className="flex-shrink-0 w-6 h-6 bg-emerald-400 rounded-full text-white text-sm font-bold flex items-center justify-center shadow-sm">
                   Q
                 </span>
-<<<<<<< HEAD
-                <div className="text-emerald-800 font-medium leading-relaxed flex-1 text-sm">
-=======
                 <div className="text-emerald-800 font-medium flex-1 text-base" style={{ lineHeight: '1.5' }}>
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                   <MarkdownRenderer content={String(q)} inline={true} />
                 </div>
               </div>
@@ -275,11 +220,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
                 <span className="flex-shrink-0 w-6 h-6 bg-emerald-500 rounded-full text-white text-sm font-bold flex items-center justify-center shadow-sm">
                   A
                 </span>
-<<<<<<< HEAD
-                <div className="text-emerald-700 leading-relaxed flex-1 text-sm">
-=======
                 <div className="text-emerald-700 flex-1 text-base" style={{ lineHeight: '1.5' }}>
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                   <MarkdownRenderer content={String(a)} inline={true} />
                 </div>
               </div>
@@ -305,11 +246,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
         >
           <div className="absolute -top-2 -left-2 w-6 h-6 bg-orange-400 rounded-full shadow-md" />
           <div className="inline-flex items-baseline gap-1 flex-wrap text-orange-700">
-<<<<<<< HEAD
-            <div className="flex-1 text-sm">
-=======
             <div className="flex-1 text-base" style={{ lineHeight: '1.5' }}>
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
               <MarkdownRenderer content={String(c)} inline={true} />
             </div>
             {hasReferences && (
@@ -322,22 +259,12 @@ export const notebookStyleRenderer: StyleRenderer = ({
       const finalContent = lead ? `**${lead}:** ${String(c)}` : String(c);
       return (
         <div
-<<<<<<< HEAD
-          className="my-0 bg-gray-50 rounded-lg p-3 shadow-sm border border-gray-200 select-text"
-=======
           className="my-0 bg-neutral-50 rounded-lg p-3 shadow-sm border border-neutral-200 select-text"
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
           style={{
             background: "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)",
             fontFamily: '"Kalam", "Comic Sans MS", cursive',
           }}
         >
-<<<<<<< HEAD
-          <div className="inline-flex items-baseline gap-1 flex-wrap text-gray-700 leading-relaxed">
-            <span className="text-sm">
-              <MarkdownRenderer content={finalContent} inline={true} />
-            </span>
-=======
           <div className="inline-flex items-baseline gap-1 flex-wrap">
             <MarkdownRenderer 
               content={finalContent} 

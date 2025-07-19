@@ -164,21 +164,6 @@ export default function ReaderLayout({
                   className="flex items-center justify-between px-6 border-b border-muted/40 linear-bg-1/95 backdrop-blur supports-[backdrop-filter]:linear-bg-1/80 shadow-sm h-header"
                   data-exclude-selection
                 >
-<<<<<<< HEAD
-                  <div className="flex items-center justify-between px-6 border-b border-muted/40 linear-bg-1/95 backdrop-blur supports-[backdrop-filter]:linear-bg-1/80 shadow-sm h-header" data-exclude-selection>
-                    <h2 className="font-semibold text-base">AI分析</h2>
-                    <Button
-                      onClick={toggleRightPanel}
-                      size="sm"
-                      variant="ghost"
-                      className="hover:bg-muted/60 dark:hover:bg-muted/40 transition-all duration-200 ease-out"
-                    >
-                      <PanelRightClose className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="flex-1 overflow-auto" data-exclude-selection>
-                    {contentItem ? (
-=======
                   <h2 className="font-semibold text-base">AI分析</h2>
                   <Button
                     onClick={toggleRightPanel}
@@ -191,7 +176,6 @@ export default function ReaderLayout({
                 </div>
                 <div className="flex-1 overflow-auto" data-exclude-selection>
                   {contentItem ? (
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                     <ContentAnalysisSidebar
                       content={contentItem}
                       analysisResult={analysisResult}
@@ -209,24 +193,6 @@ export default function ReaderLayout({
                       </div>
                     </div>
                   )}
-<<<<<<< HEAD
-                  </div>
-                </ResizablePanel>
-              )}
-
-              {/* 桌面端右侧面板切换按钮 */}
-              {!showRightPanel && (
-                <div className="absolute top-6 right-6 z-10">
-                  <Button
-                    onClick={toggleRightPanel}
-                    size="sm"
-                    variant="outline"
-                    className="shadow-sm bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 hover:bg-muted/60 transition-all duration-200 ease-out border-muted/40"
-                  >
-                    <PanelRightOpen className="h-4 w-4" />
-                  </Button>
-=======
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                 </div>
               </div>
             )}

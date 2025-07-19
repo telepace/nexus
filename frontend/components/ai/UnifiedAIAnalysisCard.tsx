@@ -76,28 +76,6 @@ export function UnifiedAIAnalysisCard({
     }
   }, [config.mode, initialContent, actions]);
 
-<<<<<<< HEAD
-  // 自动开始分析
-  useEffect(() => {
-    if (
-      autoStart &&
-      !hasAutoStarted &&
-      instruction &&
-      config.mode !== "display"
-    ) {
-      setHasAutoStarted(true);
-      handleStartAnalysis();
-    }
-  }, [
-    autoStart,
-    hasAutoStarted,
-    instruction,
-    config.mode,
-    handleStartAnalysis,
-  ]);
-
-=======
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
   // 开始分析
   const handleStartAnalysis = useCallback(async () => {
     try {
@@ -109,8 +87,6 @@ export function UnifiedAIAnalysisCard({
       toast.error(`分析失败: ${err.message}`);
     }
   }, [actions, instruction, onError, onStart]);
-<<<<<<< HEAD
-=======
 
   // 自动开始分析
   useEffect(() => {
@@ -130,7 +106,6 @@ export function UnifiedAIAnalysisCard({
     config.mode,
     handleStartAnalysis,
   ]);
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
 
   // 停止分析
   const handleStopAnalysis = () => {

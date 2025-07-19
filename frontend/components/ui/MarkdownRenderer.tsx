@@ -90,12 +90,9 @@ export function MarkdownRenderer({
       "&lt;/$1&gt;",
     );
 
-<<<<<<< HEAD
-=======
   // 直接使用处理后的内容
   const processedContent = sanitizedContent;
 
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
   const Root: React.ElementType = inline ? "span" : "div";
 
   return (

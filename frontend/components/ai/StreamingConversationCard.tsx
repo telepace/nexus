@@ -4,10 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-<<<<<<< HEAD
-=======
 import { CollapsibleButton } from "@/components/ui/CollapsibleButton";
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
 import {
   MessageSquare,
   Brain,
@@ -20,11 +17,8 @@ import {
   X,
   Loader2,
   Sparkles,
-<<<<<<< HEAD
   Minus,
   Plus,
-=======
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
 } from "lucide-react";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 import { formatDistanceToNow } from "date-fns";
@@ -96,17 +90,12 @@ export function StreamingConversationCard({
         return {
           icon: <Loader2 className="h-3 w-3 animate-spin" />,
           text: "准备中...",
-<<<<<<< HEAD
           color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300",
-=======
-          color: "bg-muted text-muted-foreground",
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
         };
       case "thinking":
         return {
           icon: <Brain className="h-3 w-3 animate-pulse" />,
           text: "AI 正在思考...",
-<<<<<<< HEAD
           color: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300",
         };
       case "streaming":
@@ -114,35 +103,18 @@ export function StreamingConversationCard({
           icon: <Sparkles className="h-3 w-3 animate-pulse" />,
           text: "实时回复中...",
           color: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300",
-=======
-          color: "bg-muted text-muted-foreground",
-        };
-      case "streaming":
-        return {
-          icon: <Loader2 className="h-3 w-3 animate-spin" />,
-          text: "实时回复中...",
-          color: "bg-muted text-muted-foreground",
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
         };
       case "completed":
         return {
           icon: <Check className="h-3 w-3" />,
           text: "已完成",
-<<<<<<< HEAD
           color: "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300",
-=======
-          color: "bg-muted text-muted-foreground",
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
         };
       case "error":
         return {
           icon: <X className="h-3 w-3" />,
           text: "发生错误",
-<<<<<<< HEAD
           color: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300",
-=======
-          color: "bg-destructive/10 text-destructive",
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
         };
       default:
         return null;
@@ -158,25 +130,11 @@ export function StreamingConversationCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-<<<<<<< HEAD
-      <Card className="transition-all duration-300 hover:shadow-lg border-l-4 border-l-blue-400">
-=======
       <Card className="transition-all duration-300 hover:shadow-lg border-l-4 border-l-muted-foreground/20">
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
         <CardContent className="p-6">
           {/* 卡片头部 */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
-<<<<<<< HEAD
-              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  AI 对话
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-=======
               <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                 <MessageSquare className="h-4 w-4 text-muted-foreground" />
               </div>
@@ -185,7 +143,6 @@ export function StreamingConversationCard({
                   AI 对话
                 </h3>
                 <p className="text-xs text-muted-foreground">
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                   {userMessage ? formatDistanceToNow(userMessage.timestamp, {
                     addSuffix: true,
                     locale: zhCN,
@@ -206,27 +163,12 @@ export function StreamingConversationCard({
               {/* 操作按钮 */}
               <div className="flex items-center gap-1">
                 {/* 折叠按钮 */}
-<<<<<<< HEAD
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => setIsCollapsed(!isCollapsed)}
-                >
-                  {isCollapsed ? (
-                    <Plus className="h-3 w-3" />
-                  ) : (
-                    <Minus className="h-3 w-3" />
-                  )}
-                </Button>
-=======
                 <CollapsibleButton
                   isCollapsed={isCollapsed}
                   onClick={() => setIsCollapsed(!isCollapsed)}
                   size="sm"
                   className="opacity-0 group-hover:opacity-100 transition-opacity"
                 />
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
 
                 {/* 其他操作按钮 - 只在悬停时显示 */}
                 {isHovered && (
@@ -263,19 +205,11 @@ export function StreamingConversationCard({
             {/* 用户消息 */}
             {userMessage && (
               <div className="flex items-start gap-3">
-<<<<<<< HEAD
-                <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                  <User className="h-3 w-3 text-gray-600 dark:text-gray-400" />
-                </div>
-                <div className="flex-1 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
-                  <p className="text-sm text-gray-900 dark:text-gray-100">
-=======
                 <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                   <User className="h-3 w-3 text-muted-foreground" />
                 </div>
                 <div className="flex-1 bg-muted/50 rounded-lg p-3">
                   <p className="text-sm text-foreground">
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                     {userMessage.content}
                   </p>
                 </div>
@@ -284,16 +218,6 @@ export function StreamingConversationCard({
 
             {/* AI 回复 */}
             <div className="flex items-start gap-3">
-<<<<<<< HEAD
-              <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
-                <Bot className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div className="flex-1">
-                {assistantMessage ? (
-                  <div className="bg-blue-50 dark:bg-blue-900/10 rounded-lg p-3">
-                    {assistantMessage.status === "error" ? (
-                      <div className="text-sm text-red-600 dark:text-red-400">
-=======
               <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                 <Bot className="h-3 w-3 text-muted-foreground" />
               </div>
@@ -302,41 +226,17 @@ export function StreamingConversationCard({
                   <div className="bg-muted/30 rounded-lg p-3">
                     {assistantMessage.status === "error" ? (
                       <div className="text-sm text-destructive">
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                         <p className="font-medium">处理失败</p>
                         <p className="text-xs mt-1">{assistantMessage.error || "未知错误"}</p>
                       </div>
                     ) : assistantMessage.content ? (
-<<<<<<< HEAD
-                      <div className="text-sm text-gray-900 dark:text-gray-100">
-=======
                       <div className="text-sm text-foreground">
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                         <UniversalContentRenderer
                           content={assistantMessage.content}
                           onExpandLine={onExpandLine}
                         />
                       </div>
                     ) : (
-<<<<<<< HEAD
-                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                        {assistantMessage.status === "thinking" && (
-                          <>
-                            <Brain className="h-4 w-4 animate-pulse" />
-                            <span>AI 正在思考，请稍候...</span>
-                          </>
-                        )}
-                        {assistantMessage.status === "streaming" && (
-                          <>
-                            <Sparkles className="h-4 w-4 animate-pulse" />
-                            <span>正在接收回复...</span>
-                          </>
-                        )}
-                        {assistantMessage.status === "pending" && (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>准备中...</span>
-=======
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         {assistantMessage.status === "thinking" && (
                           <>
@@ -354,12 +254,10 @@ export function StreamingConversationCard({
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />
                             <span>正在生成回复...</span>
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                           </>
                         )}
                       </div>
                     )}
-<<<<<<< HEAD
 
                     {/* 流式响应时的打字机效果光标 */}
                     {assistantMessage.status === "streaming" && assistantMessage.content && (
@@ -367,18 +265,10 @@ export function StreamingConversationCard({
                     )}
                   </div>
                 ) : (
-                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
-                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>等待 AI 回复...</span>
-=======
-                  </div>
-                ) : (
                   <div className="bg-muted/30 rounded-lg p-3">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <span>等待AI回复...</span>
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                     </div>
                   </div>
                 )}

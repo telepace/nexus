@@ -12,10 +12,7 @@ import {
   BotMessageSquare,
   Inbox,
   GalleryHorizontalEnd,
-<<<<<<< HEAD
-=======
   Plus,
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
 } from "lucide-react";
 import { IconUser } from "@tabler/icons-react";
 
@@ -85,6 +82,7 @@ export function AppSidebar({
   const pathname = usePathname();
   const { user, isLoading, fetchUser } = useAuth();
   const [isSyncing, setIsSyncing] = React.useState(false);
+  const [isUploadHovered, setIsUploadHovered] = React.useState(false);
 
   // 同步登录状态
   const handleSyncAuth = async () => {
@@ -134,11 +132,7 @@ export function AppSidebar({
     >
       <SidebarHeader className="p-0">
         <div className="flex h-header shrink-0 items-center justify-center gap-2 border-b border-neutral-100/50 px-4 group-data-[collapsible=icon]:px-2 backdrop-blur-sm">
-<<<<<<< HEAD
           {/* 展开状态：Logo + 品牌名称 + 独立展开按钮 */}
-=======
-          {/* 展开状态：Logo + 品牌名称 + 上传按钮 */}
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
           <div className="flex items-center justify-between w-full group-data-[collapsible=icon]:hidden">
             <Link
               href="/home"
@@ -157,7 +151,6 @@ export function AppSidebar({
                 Telepace
               </span>
             </Link>
-<<<<<<< HEAD
             <SidebarTrigger className="h-8 w-8 rounded-lg hover:bg-gradient-to-br hover:from-neutral-50/60 hover:to-neutral-100/40 hover:text-sidebar-accent-foreground transition-all duration-300 border border-transparent hover:border-neutral-200/40" />
           </div>
 
@@ -172,9 +165,7 @@ export function AppSidebar({
             />
           </SidebarTrigger>
         </div>
-      </SidebarHeader>
 
-      <SidebarContent className="px-0">
         {/* Upload Content 区域 - 折叠状态下更精致 */}
         <div className="mb-3 group-data-[collapsible=icon]:mb-2">
           <div className="px-4 py-4 group-data-[collapsible=icon]:px-3 group-data-[collapsible=icon]:py-3">
@@ -188,18 +179,13 @@ export function AppSidebar({
                 // 折叠状态样式 - 更圆润的正方形设计
                 "group-data-[collapsible=icon]:rounded-2xl group-data-[collapsible=icon]:aspect-square group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:shadow-md group-data-[collapsible=icon]:bg-gradient-to-br group-data-[collapsible=icon]:from-primary/8 group-data-[collapsible=icon]:to-primary/12 group-data-[collapsible=icon]:hover:shadow-lg group-data-[collapsible=icon]:hover:from-primary/12 group-data-[collapsible=icon]:hover:to-primary/15",
               )}
-              onMouseEnter={() => setIsUploadHovered(true)}
-              onMouseLeave={() => setIsUploadHovered(false)}
-=======
-            <button
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
               onClick={(e) => {
                 e.stopPropagation();
                 onAddContentClick();
               }}
-              className="h-7 w-7 rounded-[10px] bg-[#FCFCFC] border border-[#D1D1D1] shadow-[0px_1px_2px_rgba(0,0,0,0.04),0px_2px_4px_rgba(0,0,0,0.04)] hover:bg-neutral-50 transition-all duration-300 flex items-center justify-center"
+              onMouseEnter={() => setIsUploadHovered(true)}
+              onMouseLeave={() => setIsUploadHovered(false)}
             >
-<<<<<<< HEAD
               {/* 背景动效 */}
               <div
                 className={cn(
@@ -229,22 +215,7 @@ export function AppSidebar({
                 </div>
               </div>
             </div>
-=======
-              <Plus className="w-4 h-4 text-neutral-900" />
-            </button>
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
           </div>
-
-          {/* 折叠状态：上传按钮 */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddContentClick();
-            }}
-            className="hidden group-data-[collapsible=icon]:flex items-center justify-center h-7 w-7 rounded-[10px] bg-[#FCFCFC] border border-[#D1D1D1] shadow-[0px_1px_2px_rgba(0,0,0,0.04),0px_2px_4px_rgba(0,0,0,0.04)] hover:bg-neutral-50 transition-all duration-300"
-          >
-            <Plus className="w-4 h-4 text-neutral-900" />
-          </button>
         </div>
       </SidebarHeader>
 
@@ -266,33 +237,6 @@ export function AppSidebar({
                         "group w-full flex items-center gap-3 px-4 py-2.5",
                         "rounded-md transition-all duration-300 ease-out mx-2",
                         "relative overflow-hidden",
-<<<<<<< HEAD
-                        // 折叠状态调整 - 更精致的设计和完全居中
-                        "group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:rounded-2xl group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:shadow-sm",
-                        // 选中状态样式 - 更优雅的指示器，去除透明度变化
-                        isActive
-                          ? [
-                              "bg-neutral-100 text-neutral-800",
-                              "border border-neutral-200",
-                              "shadow-sm shadow-neutral-100",
-                              // 展开状态指示器
-                              "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2",
-                              "before:w-1 before:h-6 before:bg-gradient-to-b before:from-primary before:to-primary/70",
-                              "before:rounded-r-full before:transition-all before:duration-300",
-                              // 折叠状态指示器 - 底部精致小圆点
-                              "group-data-[collapsible=icon]:before:left-1/2 group-data-[collapsible=icon]:before:-translate-x-1/2",
-                              "group-data-[collapsible=icon]:before:top-auto group-data-[collapsible=icon]:before:bottom-1 group-data-[collapsible=icon]:before:translate-y-0",
-                              "group-data-[collapsible=icon]:before:w-1.5 group-data-[collapsible=icon]:before:h-1.5",
-                              "group-data-[collapsible=icon]:before:rounded-full",
-                              "group-data-[collapsible=icon]:bg-gradient-to-br group-data-[collapsible=icon]:from-primary/15 group-data-[collapsible=icon]:to-primary/8",
-                              "group-data-[collapsible=icon]:border-primary/20 group-data-[collapsible=icon]:shadow-md",
-                            ]
-                          : [
-                              "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-700",
-                              "hover:border hover:border-neutral-100",
-                              "hover:shadow-sm hover:shadow-neutral-50",
-                              "group-data-[collapsible=icon]:hover:transform-none group-data-[collapsible=icon]:hover:scale-105 group-data-[collapsible=icon]:hover:shadow-md group-data-[collapsible=icon]:hover:bg-neutral-50",
-=======
                         // 移除默认的指示器样式
                         "before:hidden",
                         // 折叠状态调整 - 更精致的设计和完全居中
@@ -308,7 +252,6 @@ export function AppSidebar({
                               "text-neutral-900 hover:bg-neutral-100",
                               // 折叠状态hover样式
                               "group-data-[collapsible=icon]:hover:bg-neutral-100",
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                             ],
                       )}
                     >
@@ -320,13 +263,7 @@ export function AppSidebar({
                         <div
                           className={cn(
                             "flex items-center justify-center shrink-0 transition-all duration-300",
-<<<<<<< HEAD
-                            isActive
-                              ? "text-neutral-600"
-                              : "text-neutral-400 group-hover:text-neutral-600",
-=======
                             "text-neutral-900",
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
                           )}
                         >
                           <item.icon className="w-4 h-4 group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5" />

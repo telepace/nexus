@@ -156,11 +156,7 @@ const HeadingBlock: React.FC<{
   contentId?: string; // 新增：内容ID用于收藏
 }> = ({ block, references, referenceData, onReferenceClick, contentId }) => {
   const [isHovered, setIsHovered] = useState(false);
-<<<<<<< HEAD
   const HeadingTag = block.t as keyof JSX.IntrinsicElements;
-=======
-  const HeadingTag = block.t as 'h1' | 'h2' | 'h3';
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
 
   const getHeadingStyles = (type: string) => {
     switch (type) {
