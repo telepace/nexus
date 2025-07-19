@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Minus,
   Plus,
+  Loader2,
 } from "lucide-react";
 import { useCardHeight } from "@/hooks/use-card-height";
 import { Card, CardContent } from "@/components/ui/card";
@@ -570,7 +571,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <Brain className="h-8 w-8 animate-spin mx-auto mb-2 text-neutral-400" />
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-neutral-400" />
           <p className="text-sm text-neutral-500">正在加载分析结果...</p>
         </div>
       </div>
@@ -629,7 +630,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
             ) : streamingConversations.length === 0 ? (
               <div className="flex items-center justify-center p-8 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50/30 dark:bg-neutral-900/30">
                 <div className="text-center space-y-2">
-                  <Brain className="h-8 w-8 text-neutral-400 mx-auto" />
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-neutral-400" />
                   <p className="text-sm text-neutral-500 dark:text-neutral-400">
                     暂无分析结果，使用下方AI助手开始分析
                   </p>
@@ -783,7 +784,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
                 disabled={isProcessing}
               >
                 {isProcessing ? (
-                  <Brain className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Send className="h-4 w-4" />
                 )}
@@ -795,7 +796,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
           {isProcessing && (
             <div className="mt-2 text-center">
               <div className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center justify-center gap-2">
-                <Brain className="h-3 w-3 animate-pulse" />
+                <Loader2 className="h-3 w-3 animate-spin" />
                 <span>正在处理您的问题...</span>
                 <Button
                   variant="link"

@@ -99,7 +99,7 @@ export function StreamingConversationCard({
         };
       case "streaming":
         return {
-          icon: <Sparkles className="h-3 w-3 animate-pulse" />,
+          icon: <Loader2 className="h-3 w-3 animate-spin" />,
           text: "实时回复中...",
           color: "bg-muted text-muted-foreground",
         };
@@ -245,7 +245,7 @@ export function StreamingConversationCard({
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         {assistantMessage.status === "thinking" && (
                           <>
-                            <Brain className="h-4 w-4 animate-pulse" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                             <span>AI 正在思考，请稍候...</span>
                           </>
                         )}
@@ -257,7 +257,7 @@ export function StreamingConversationCard({
                         )}
                         {assistantMessage.status === "streaming" && (
                           <>
-                            <Sparkles className="h-4 w-4 animate-pulse" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                             <span>正在生成回复...</span>
                           </>
                         )}
@@ -267,7 +267,7 @@ export function StreamingConversationCard({
                 ) : (
                   <div className="bg-muted/30 rounded-lg p-3">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Brain className="h-4 w-4 animate-pulse" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                       <span>等待AI回复...</span>
                     </div>
                   </div>

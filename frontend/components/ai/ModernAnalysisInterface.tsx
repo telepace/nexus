@@ -740,27 +740,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                   >
                     {card.content.data.startsWith("LOADING_PLACEHOLDER_") ? (
                       // 加载状态显示
-                      <div className="flex items-center justify-center py-8">
-                        <div className="text-center space-y-4">
-                          <div className="flex items-center justify-center">
-                            <Brain className="h-8 w-8 animate-spin text-muted-foreground" />
-                          </div>
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium text-foreground">
-                              正在连接AI助手...
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              请稍等，正在为您准备最佳的回答
-                            </p>
-                          </div>
-                          <div className="flex justify-center">
-                            <div className="flex space-x-1">
-                              <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                              <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                              <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                            </div>
-                          </div>
-                        </div>
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                       </div>
                     ) : (
                       // 正常内容显示
@@ -844,7 +825,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
             ) : (
               <div className="flex items-center justify-center p-8 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50/30 dark:bg-neutral-900/30">
                 <div className="text-center space-y-2">
-                  <Brain className="h-8 w-8 text-neutral-400 mx-auto" />
+                  <Loader2 className="h-8 w-8 text-neutral-400 mx-auto" />
                   <p className="text-sm text-neutral-500 dark:text-neutral-400">
                     暂无分析结果，使用下方AI助手开始分析
                   </p>
