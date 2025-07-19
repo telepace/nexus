@@ -61,7 +61,9 @@
       "Bash(npm test:*)",
       "Bash(git checkout:*)",
       "Bash(npm run typecheck:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(npx next lint:*)",
+      "Bash(make:*)"
     ]
   },
   "enableAllProjectMcpServers": false

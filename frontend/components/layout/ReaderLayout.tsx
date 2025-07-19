@@ -256,7 +256,7 @@ export default function ReaderLayout({
                     </Button>
                   </div>
                   <div className="flex-1 overflow-auto" data-exclude-selection>
-                  {contentItem ? (
+                    {contentItem ? (
                     <ContentAnalysisSidebar
                       content={contentItem}
                       analysisResult={analysisResult}
@@ -288,6 +288,7 @@ export default function ReaderLayout({
                       </div>
                     </div>
                   )}
+                  </div>
                 </ResizablePanel>
               )}
 
