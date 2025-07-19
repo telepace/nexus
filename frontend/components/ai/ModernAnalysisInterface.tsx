@@ -234,6 +234,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     };
   }, []);
 
+
+
   // 处理AI分析
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const performCompletion = useCallback(
@@ -392,6 +394,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       "分析完成",
     );
   }, [inputValue, performCompletion]);
+
+
 
   // 处理JSON行展开请求
   const handleJsonLineExpand = useCallback(
