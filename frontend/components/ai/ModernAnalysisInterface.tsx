@@ -624,7 +624,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
 
     return (
       <div
-        className="group relative cursor-pointer"
+        className="group relative"
         onMouseEnter={() => setHoveredCard(card.id)}
         onMouseLeave={() => setHoveredCard(null)}
         onClick={() => setSelectedCard(isSelected ? null : card.id)}

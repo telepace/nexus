@@ -96,7 +96,6 @@ export const ContentPreview = ({ item }: Props) => {
 const ContentPanel = ({ item, isActive = true }: { item: ContentItemPublic; isActive?: boolean }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const aiResult = (item as any).ai_result;
-  const isFetchingCompleteData = (item as any)._fetchingCompleteData === true;
   
   // 简化的渲染状态管理
   const [showContent, setShowContent] = useState(false);
@@ -128,12 +127,6 @@ const ContentPanel = ({ item, isActive = true }: { item: ContentItemPublic; isAc
         <div className="flex items-center gap-2 text-base font-medium">
           <Library className="h-5 w-5" />
           Preview
-          {isFetchingCompleteData && (
-            <div className="flex items-center gap-1 ml-2">
-              <div className="w-2 h-2 bg-primary/60 rounded-full"></div>
-              <span className="text-xs text-muted-foreground">更新中</span>
-            </div>
-          )}
         </div>
       </div>
 
@@ -144,7 +137,6 @@ const ContentPanel = ({ item, isActive = true }: { item: ContentItemPublic; isAc
           <ModernAnalysisInterface
             content={item}
             analysisResult={aiResult}
-            isLoading={isFetchingCompleteData}
             variant="preview"
             showPreprocessedContent={true}
             height="full"

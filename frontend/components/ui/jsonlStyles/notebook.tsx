@@ -1,5 +1,114 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleRenderer } from "./types";
+import { NeumorphicExpandButton } from "../NeumorphicExpandButton";
+
+// ActionCard component that manages its own hover state
+interface ActionCardProps {
+  shouldShowExpandButton: boolean;
+  onExpand: () => void;
+  c: React.ReactNode;
+  hasReferences: boolean;
+  references: number[];
+  MarkdownRenderer: any;
+  EnhancedReferenceIndicator: any;
+}
+
+const ActionCard: React.FC<ActionCardProps> = ({
+  shouldShowExpandButton,
+  onExpand,
+  c,
+  hasReferences,
+  references,
+  MarkdownRenderer,
+  EnhancedReferenceIndicator,
+}) => {
+  const [isCardHovered, setIsCardHovered] = useState(false);
+
+  return (
+    <div
+      className={`my-2 relative group min-h-[140px] flex justify-between items-center rounded-2xl p-5 select-text transition-all duration-300 ease-in-out text-neutral-900 linear-bg-1 ${shouldShowExpandButton ? 'pl-20' : ''}`}
+      style={{
+        boxShadow: "10px 10px 20px #c2c2c2, -10px -10px 20px #ffffff",
+        fontFamily: '"Kalam", "Comic Sans MS", cursive',
+      }}
+      onMouseEnter={() => setIsCardHovered(true)}
+      onMouseLeave={() => setIsCardHovered(false)}
+    >
+      {/* Expand button - only show if expandable */}
+      {shouldShowExpandButton && (
+        <NeumorphicExpandButton
+          side="left"
+          onExpand={onExpand}
+          isHovered={isCardHovered}
+        />
+      )}
+      
+      <div className="text-base leading-relaxed flex-1">
+        <MarkdownRenderer content={String(c)} inline={true} />
+      </div>
+      {hasReferences && (
+        <div className="ml-2">
+          <EnhancedReferenceIndicator references={references} />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ParagraphCard component that manages its own hover state
+interface ParagraphCardProps {
+  shouldShowExpandButton: boolean;
+  onExpand: () => void;
+  finalContent: string;
+  hasReferences: boolean;
+  references: number[];
+  MarkdownRenderer: any;
+  EnhancedReferenceIndicator: any;
+}
+
+const ParagraphCard: React.FC<ParagraphCardProps> = ({
+  shouldShowExpandButton,
+  onExpand,
+  finalContent,
+  hasReferences,
+  references,
+  MarkdownRenderer,
+  EnhancedReferenceIndicator,
+}) => {
+  const [isCardHovered, setIsCardHovered] = useState(false);
+
+  return (
+    <div
+      className={`my-0 bg-neutral-50 rounded-lg shadow-sm border border-neutral-200 select-text relative group transition-all duration-300 ease-in-out ${shouldShowExpandButton ? 'pl-20 p-5' : 'p-3'}`}
+      style={{
+        background: "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)",
+        fontFamily: '"Kalam", "Comic Sans MS", cursive',
+      }}
+      onMouseEnter={() => setIsCardHovered(true)}
+      onMouseLeave={() => setIsCardHovered(false)}
+    >
+      {/* Expand button - only show if expandable (same as action) */}
+      {shouldShowExpandButton && (
+        <NeumorphicExpandButton
+          side="left"
+          onExpand={onExpand}
+          isHovered={isCardHovered}
+        />
+      )}
+      
+      <div className="inline-flex items-baseline gap-1 flex-wrap">
+        <MarkdownRenderer 
+          content={finalContent} 
+          inline={true}
+          className="text-base text-neutral-800 [&_strong]:text-neutral-800 [&_strong]:font-black leading-[1.5]"
+        />
+        {hasReferences && (
+          <EnhancedReferenceIndicator references={references} />
+        )}
+      </div>
+    </div>
+  );
+};
 
 export const notebookStyleRenderer: StyleRenderer = ({
   block,
@@ -7,6 +116,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
   hasReferences,
   MarkdownRenderer,
   EnhancedReferenceIndicator,
+  onExpand,
 }) => {
   const type = (block["type"] || block["t"]) as string | undefined;
   const c = (block["content"] ?? block["c"]) as React.ReactNode;
@@ -14,9 +124,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
   const lead = block["lead"] as string | undefined;
 
   switch (type) {
-    case "h1":
-      return (
-        <div className="relative my-3 inline-flex items-baseline gap-1 flex-wrap">
+    case "h1": {
+      const element = (
+        <div className="relative mt-4 mb-2 inline-flex items-baseline gap-1 flex-wrap">
           <div className="absolute -left-4 top-0 w-2 h-full bg-gradient-to-b from-amber-400 to-orange-500 rounded-full shadow-sm" />
           <span
             className="text-xl font-bold text-gray-800 select-text leading-relaxed pl-4"
@@ -29,8 +139,13 @@ export const notebookStyleRenderer: StyleRenderer = ({
           )}
         </div>
       );
-    case "h2":
-      return (
+      return {
+        element,
+        hasCustomExpandButton: false,
+      };
+    }
+    case "h2": {
+      const element = (
         <div className="mt-4 mb-2 inline-flex items-baseline gap-1 flex-wrap">
           <span
             className="text-xl font-bold text-neutral-700 select-text"
@@ -46,8 +161,13 @@ export const notebookStyleRenderer: StyleRenderer = ({
           )}
         </div>
       );
-    case "h3":
-      return (
+      return {
+        element,
+        hasCustomExpandButton: false,
+      };
+    }
+    case "h3": {
+      const element = (
         <div className="mt-4 mb-2 inline-flex items-baseline gap-1 flex-wrap">
           <span
             className="text-lg font-bold text-neutral-700 select-text"
@@ -63,9 +183,14 @@ export const notebookStyleRenderer: StyleRenderer = ({
           )}
         </div>
       );
-    case "quote":
-      return (
-        <div className="relative my-0 select-text">
+      return {
+        element,
+        hasCustomExpandButton: false,
+      };
+    }
+    case "quote": {
+      const element = (
+        <div className="relative my-2 select-text">
           <div className="absolute -left-1 top-0 text-6xl text-pink-300 opacity-50 leading-none">
             &quot;
           </div>
@@ -92,6 +217,11 @@ export const notebookStyleRenderer: StyleRenderer = ({
           </blockquote>
         </div>
       );
+      return {
+        element,
+        hasCustomExpandButton: false,
+      };
+    }
     case "list": {
       let items: string[] = [];
       if (Array.isArray(c)) items = c.map(String);
@@ -100,9 +230,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
           .split(/[\n,；;]/)
           .map((s) => s.trim())
           .filter(Boolean);
-      return (
+      const element = (
         <div
-          className="my-0 bg-yellow-50 rounded-lg p-4 shadow-sm border border-yellow-200"
+          className="my-2 bg-yellow-50 rounded-lg p-4 shadow-sm border border-yellow-200"
           style={{
             background: "linear-gradient(135deg, #fefce8 0%, #fef3c7 100%)",
           }}
@@ -130,6 +260,10 @@ export const notebookStyleRenderer: StyleRenderer = ({
           )}
         </div>
       );
+      return {
+        element,
+        hasCustomExpandButton: false,
+      };
     }
     case "insight": {
       const blockObj = block as Record<string, unknown>;
@@ -150,9 +284,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
               accent: "bg-blue-400",
               gradient: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
             };
-      return (
+      const element = (
         <div
-          className={`my-0 relative rounded-lg p-4 shadow-md transform rotate-1 border-2 ${colors.bg} ${colors.border} select-text`}
+          className={`my-2 relative rounded-lg p-4 shadow-md transform rotate-1 border-2 ${colors.bg} ${colors.border} select-text`}
           style={{
             background: colors.gradient,
             fontFamily: '"Kalam", "Comic Sans MS", cursive',
@@ -173,11 +307,15 @@ export const notebookStyleRenderer: StyleRenderer = ({
           </div>
         </div>
       );
+      return {
+        element,
+        hasCustomExpandButton: false,
+      };
     }
-    case "concept":
-      return (
+    case "concept": {
+      const element = (
         <div
-          className="my-0 relative bg-purple-50 rounded-lg p-4 shadow-md transform -rotate-1 border-2 border-purple-300 select-text"
+          className="my-2 relative bg-purple-50 rounded-lg p-4 shadow-md transform -rotate-1 border-2 border-purple-300 select-text"
           style={{
             background: "linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%)",
             fontFamily: '"Kalam", "Comic Sans MS", cursive',
@@ -194,14 +332,19 @@ export const notebookStyleRenderer: StyleRenderer = ({
           </div>
         </div>
       );
+      return {
+        element,
+        hasCustomExpandButton: false,
+      };
+    }
     case "qa": {
       if (typeof c === "object" && c !== null) {
         const obj = c as unknown as Record<string, unknown>;
         const q = obj["q"] || obj["question"];
         const a = obj["a"] || obj["answer"];
-        return (
+        const element = (
           <div
-            className="my-0 bg-emerald-50 rounded-lg p-4 shadow-sm border-2 border-emerald-200 select-text"
+            className="my-2 bg-emerald-50 rounded-lg p-4 shadow-sm border-2 border-emerald-200 select-text"
             style={{
               background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)",
               fontFamily: '"Kalam", "Comic Sans MS", cursive',
@@ -232,52 +375,56 @@ export const notebookStyleRenderer: StyleRenderer = ({
             </div>
           </div>
         );
+        return {
+          element,
+          hasCustomExpandButton: false,
+        };
       }
       break;
     }
-    case "action":
-      return (
-        <div
-          className="my-0 relative bg-orange-50 rounded-lg p-4 shadow-md transform rotate-1 border-2 border-orange-300 select-text"
-          style={{
-            background: "linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)",
-            fontFamily: '"Kalam", "Comic Sans MS", cursive',
-          }}
-        >
-          <div className="absolute -top-2 -left-2 w-6 h-6 bg-orange-400 rounded-full shadow-md" />
-          <div className="inline-flex items-baseline gap-1 flex-wrap text-orange-700">
-            <div className="flex-1 text-base" style={{ lineHeight: '1.5' }}>
-              <MarkdownRenderer content={String(c)} inline={true} />
-            </div>
-            {hasReferences && (
-              <EnhancedReferenceIndicator references={references} />
-            )}
-          </div>
-        </div>
+    case "action": {
+      // Check if this action should show expand button
+      const shouldShowExpandButton = !!block.expandable && !!onExpand;
+      
+      const element = (
+        <ActionCard
+          shouldShowExpandButton={shouldShowExpandButton}
+          onExpand={() => onExpand && onExpand(block)}
+          c={c}
+          hasReferences={hasReferences}
+          references={references}
+          MarkdownRenderer={MarkdownRenderer}
+          EnhancedReferenceIndicator={EnhancedReferenceIndicator}
+        />
       );
+
+      return {
+        element,
+        hasCustomExpandButton: shouldShowExpandButton,
+      };
+    }
     default: {
       const finalContent = lead ? `**${lead}:** ${String(c)}` : String(c);
-      return (
-        <div
-          className="my-0 bg-neutral-50 rounded-lg p-3 shadow-sm border border-neutral-200 select-text"
-          style={{
-            background: "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)",
-            fontFamily: '"Kalam", "Comic Sans MS", cursive',
-          }}
-        >
-          <div className="inline-flex items-baseline gap-1 flex-wrap">
-            <MarkdownRenderer 
-              content={finalContent} 
-              inline={true}
-              className="text-base text-neutral-800 [&_strong]:text-neutral-800 [&_strong]:font-black leading-[1.5]" // 普通文字更浅，加粗文字更深
-            />
->>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
-            {hasReferences && (
-              <EnhancedReferenceIndicator references={references} />
-            )}
-          </div>
-        </div>
+      
+      // Check if this paragraph should show expand button (same logic as action)
+      const shouldShowExpandButton = !!block.expandable && !!onExpand;
+      
+      const element = (
+        <ParagraphCard
+          shouldShowExpandButton={shouldShowExpandButton}
+          onExpand={() => onExpand && onExpand(block)}
+          finalContent={finalContent}
+          hasReferences={hasReferences}
+          references={references}
+          MarkdownRenderer={MarkdownRenderer}
+          EnhancedReferenceIndicator={EnhancedReferenceIndicator}
+        />
       );
+
+      return {
+        element,
+        hasCustomExpandButton: shouldShowExpandButton,
+      };
     }
   }
 };

@@ -1,5 +1,11 @@
 import React from "react";
-import { StyleRenderer } from "./types";
+import { StyleRenderer, StyleRenderResult } from "./types";
+
+// Helper to create render result
+const wrapElement = (element: React.ReactNode): StyleRenderResult => ({
+  element,
+  hasCustomExpandButton: false,
+});
 
 /**
  * Headspace 風格：使用漸變、大圓角、旋轉動畫等溫暖友好的視覺。
@@ -11,6 +17,7 @@ export const headspaceStyleRenderer: StyleRenderer = ({
   hasReferences,
   MarkdownRenderer,
   EnhancedReferenceIndicator,
+  onExpand,
 }) => {
   const type = (block["type"] || block["t"]) as string | undefined;
   const c = (block["content"] ?? block["c"]) as React.ReactNode;
@@ -37,7 +44,7 @@ export const headspaceStyleRenderer: StyleRenderer = ({
   switch (type) {
     case "h1":
       // 與 H2 視覺完全一致
-      return gradientWrapper(
+      return wrapElement(gradientWrapper(
         <h1 className="text-xl font-medium text-white select-text leading-tight flex items-center gap-2">
           <span className="w-2.5 h-2.5 bg-white rounded-full" />
           <MarkdownRenderer content={String(c)} inline={true} />
@@ -47,10 +54,10 @@ export const headspaceStyleRenderer: StyleRenderer = ({
         </h1>,
         "from-green-400",
         "to-teal-400",
-        true,
+        true)
       );
     case "h2":
-      return gradientWrapper(
+      return wrapElement(gradientWrapper(
         <h2 className="text-2xl font-semibold text-white select-text leading-tight flex items-center gap-2">
           <span className="w-3 h-3 bg-white rounded-full" />
           <MarkdownRenderer content={String(c)} inline={true} />
@@ -60,10 +67,10 @@ export const headspaceStyleRenderer: StyleRenderer = ({
         </h2>,
         "from-blue-400",
         "to-purple-400",
-        true,
+        true)
       );
     case "h3":
-      return gradientWrapper(
+      return wrapElement(gradientWrapper(
         <h3 className="text-xl font-medium text-white select-text leading-tight flex items-center gap-2">
           <span className="w-2.5 h-2.5 bg-white rounded-full" />
           <MarkdownRenderer content={String(c)} inline={true} />
@@ -73,10 +80,10 @@ export const headspaceStyleRenderer: StyleRenderer = ({
         </h3>,
         "from-green-400",
         "to-teal-400",
-        true,
+        true)
       );
     case "quote":
-      return gradientWrapper(
+      return wrapElement(gradientWrapper(
         <blockquote className="text-lg text-gray-800 leading-relaxed select-text">
           <MarkdownRenderer content={String(c)} inline={true} />
           {ref && (
@@ -91,7 +98,7 @@ export const headspaceStyleRenderer: StyleRenderer = ({
         </blockquote>,
         "from-yellow-200",
         "to-orange-200",
-        true,
+        true)
       );
     case "list": {
       let items: string[] = [];
@@ -101,7 +108,7 @@ export const headspaceStyleRenderer: StyleRenderer = ({
           .split(/[,;\n]/)
           .map((s) => s.trim())
           .filter(Boolean);
-      return gradientWrapper(
+      return wrapElement(gradientWrapper(
         <ul className="space-y-3 select-text">
           {items.map((item, i) => (
             <li
@@ -120,7 +127,7 @@ export const headspaceStyleRenderer: StyleRenderer = ({
         </ul>,
         "from-yellow-200",
         "to-orange-200",
-        true,
+        true)
       );
     }
     case "insight": {
@@ -128,7 +135,7 @@ export const headspaceStyleRenderer: StyleRenderer = ({
       const priority = blockObj["priority"] || "normal";
       const icon = priority === "high" ? "⚡" : "💡";
 
-      return gradientWrapper(
+      return wrapElement(gradientWrapper(
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md flex-shrink-0">
             <span className="text-2xl">{icon}</span>
@@ -145,11 +152,11 @@ export const headspaceStyleRenderer: StyleRenderer = ({
         </div>,
         "from-yellow-200",
         "to-orange-200",
-        true,
+        true)
       );
     }
     case "concept":
-      return gradientWrapper(
+      return wrapElement(gradientWrapper(
         <div className="flex items-start gap-3">
           <span className="text-2xl">🧠</span>
           <div className="text-gray-800 select-text">
@@ -164,14 +171,14 @@ export const headspaceStyleRenderer: StyleRenderer = ({
         </div>,
         "from-purple-300",
         "to-pink-300",
-        true,
+        true)
       );
     case "qa": {
       if (typeof c === "object" && c !== null) {
         const obj = c as Record<string, unknown>;
         const q = obj["q"] || obj["question"];
         const a = obj["a"] || obj["answer"];
-        return gradientWrapper(
+        return wrapElement(gradientWrapper(
           <div className="space-y-4 select-text text-gray-800">
             <p>
               <strong>Q:</strong>{" "}
@@ -187,13 +194,13 @@ export const headspaceStyleRenderer: StyleRenderer = ({
           </div>,
           "from-green-300",
           "to-emerald-300",
-          true,
+          true)
         );
       }
       break;
     }
     case "action":
-      return gradientWrapper(
+      return wrapElement(gradientWrapper(
         <div className="flex items-start gap-3 text-gray-800 select-text">
           <span className="text-2xl">🎯</span>
           <MarkdownRenderer content={String(c)} inline={true} />
@@ -206,15 +213,15 @@ export const headspaceStyleRenderer: StyleRenderer = ({
         </div>,
         "from-orange-300",
         "to-red-300",
-        true,
+        true)
       );
     default: {
       const finalContent = lead ? `**${lead}:** ${String(c)}` : String(c);
-      return gradientWrapper(
+      return wrapElement(gradientWrapper(
         <MarkdownRenderer content={finalContent} inline={true} />,
         "from-gray-100",
         "to-gray-200",
-        true,
+        true)
       );
     }
   }

@@ -1,5 +1,11 @@
-import { StyleRenderer } from "./types";
+import { StyleRenderer, StyleRenderResult } from "./types";
 import React from "react";
+
+// Helper to create render result
+const wrapElement = (element: React.ReactNode): StyleRenderResult => ({
+  element,
+  hasCustomExpandButton: false,
+});
 
 // 基礎 Neumorphism 樣式
 const bg = "linear-bg-1";
@@ -12,6 +18,7 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
   hasReferences,
   MarkdownRenderer,
   EnhancedReferenceIndicator,
+  onExpand,
 }) => {
   const type = (block["type"] || block["t"]) as string | undefined;
   const c = (block["content"] ?? block["c"]) as React.ReactNode;
@@ -21,25 +28,25 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
 
   switch (type) {
     case "h1":
-      return (
+      return wrapElement(
         <h1 className="text-2xl font-bold text-gray-700 select-text my-4 text-center">
           <MarkdownRenderer content={String(c)} inline={true} />
         </h1>
       );
     case "h2":
-      return (
+      return wrapElement(
         <h2 className="text-lg font-bold text-gray-600 select-text mt-6 mb-2 border-b-2 border-gray-200 pb-1">
           <MarkdownRenderer content={String(c)} inline={true} />
         </h2>
       );
     case "h3":
-      return (
+      return wrapElement(
         <h3 className="text-base font-semibold text-gray-600 select-text mt-4 mb-1">
           <MarkdownRenderer content={String(c)} inline={true} />
         </h3>
       );
     case "quote":
-      return (
+      return wrapElement(
         <div className={`${cardInset} my-1 border border-gray-300/30`}>
           <blockquote className={`${text} text-sm italic leading-relaxed`}>
             <MarkdownRenderer content={String(c)} inline={true} />
@@ -65,7 +72,7 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
           .split(/[,;\n]/)
           .map((s) => s.trim())
           .filter(Boolean);
-      return (
+      return wrapElement(
         <div className={`${card} my-1`}>
           <ul className="space-y-3">
             {items.map((item, i) => (
@@ -90,7 +97,7 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
       const obj = c as Record<string, unknown>;
       const q = obj["q"] || obj["question"];
       const a = obj["a"] || obj["answer"];
-      return (
+      return wrapElement(
         <div className={`${card} my-1 space-y-3`}>
           <div className="flex items-start gap-4">
             <div
@@ -121,7 +128,7 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
       );
     }
     case "insight": {
-      return (
+      return wrapElement(
         <div className={`${card} my-1`}>
           <p className={`${text} text-sm`}>
             <MarkdownRenderer content={String(c)} inline={true} />
@@ -136,7 +143,7 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
       );
     }
     case "concept":
-      return (
+      return wrapElement(
         <div className={`${card} my-1`}>
           <p className={`${text} text-sm`}>
             <MarkdownRenderer content={String(c)} inline={true} />
@@ -150,7 +157,7 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
         </div>
       );
     case "action":
-      return (
+      return wrapElement(
         <div className={`${card} my-1`}>
           <p className={`${text} text-sm`}>
             <MarkdownRenderer content={String(c)} inline={true} />
@@ -165,7 +172,7 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
       );
     default: {
       const contentStr = lead ? `**${lead}:** ${String(c)}` : String(c);
-      return (
+      return wrapElement(
         <div className={`${card} my-1`}>
           <p className={`${text} text-sm leading-relaxed`}>
             <MarkdownRenderer content={contentStr} inline={true} />

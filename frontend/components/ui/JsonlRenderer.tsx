@@ -174,12 +174,13 @@ export function JsonlRenderer({
     // 解析引用
     const references = actions.parseReferences(ref);
 
-    const blockElement = styleRenderer({
+    const renderResult = styleRenderer({
       block,
       references,
       hasReferences: references.length > 0,
       MarkdownRenderer,
       EnhancedReferenceIndicator: ReferenceIndicatorComponent,
+      onExpand: onExpandLine,
     });
 
     // 统一封装：先用 BlockWrapper 提供引用高亮，再在内部使用 JsonLineWithExpandButton
@@ -189,8 +190,9 @@ export function JsonlRenderer({
           jsonLine={block}
           onExpand={onExpandLine}
           enableHoverEffects={false}
+          hasCustomExpandButton={renderResult.hasCustomExpandButton}
         >
-          {blockElement}
+          {renderResult.element}
         </JsonLineWithExpandButton>
       </BlockWrapper>
     );

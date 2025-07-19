@@ -21,6 +21,8 @@ interface JsonLineWithExpandButtonProps {
   showExpandButton?: boolean;
   /** Whether hover effects are enabled */
   enableHoverEffects?: boolean;
+  /** Whether the child component has already handled expand button (prevents double buttons) */
+  hasCustomExpandButton?: boolean;
 }
 
 /**
@@ -33,12 +35,14 @@ export function JsonLineWithExpandButton({
   onExpand,
   showExpandButton = false,
   enableHoverEffects = true,
+  hasCustomExpandButton = false,
 }: JsonLineWithExpandButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   // Check if this line should show expand button
   // Support both boolean true and string expandable values
-  const shouldShowButton = showExpandButton || !!jsonLine.expandable;
+  // But don't show if child component already has custom expand button
+  const shouldShowButton = !hasCustomExpandButton && (showExpandButton || !!jsonLine.expandable);
 
   const handleExpandClick = (e: React.MouseEvent) => {
     e.preventDefault();
