@@ -126,7 +126,7 @@ export function BlockFavoriteButton({
       }
 
       let url = `${baseUrl}/api/v1/content/${contentId}/favorite`;
-      let method = isFavorited ? "DELETE" : "POST";
+      const method = isFavorited ? "DELETE" : "POST";
       let body = undefined;
 
       if (method === "DELETE") {

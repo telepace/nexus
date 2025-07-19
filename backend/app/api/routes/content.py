@@ -71,7 +71,7 @@ from app.utils.content_processors import ProcessingPipeline
 from app.utils.events import content_event_manager, create_sse_generator
 from app.utils.prompt_helpers import render_user_analysis_prompt
 from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
-from app.services.ai.chat_service import ChatService
+from app.utils.streaming_jsonl_extractor import create_streaming_jsonl_extractor
 from app.api.deps import get_current_user, get_db, get_async_db
 from app.utils.streaming_jsonl_extractor import create_streaming_jsonl_extractor
 

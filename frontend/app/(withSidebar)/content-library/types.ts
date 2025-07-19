@@ -1,7 +1,8 @@
 import type { ContentItemPublic as OpenAPIContentItemPublic } from "@/app/openapi-client/types.gen";
 
 // 扩展 openapi-client 的类型，添加本地需要的字段
-export interface ContentItemPublic extends OpenAPIContentItemPublic {
+export interface ContentItemPublic extends Omit<OpenAPIContentItemPublic, 'title'> {
+  title: string | null;
   summary?: string | null;
   meta_info?: string | null;
   ai_analysis?: {

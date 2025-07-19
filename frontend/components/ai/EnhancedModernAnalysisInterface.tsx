@@ -8,12 +8,12 @@ import {
   Share,
   Sparkles,
   RefreshCw,
-  Minus,
-  Plus,
+  Loader2,
 } from "lucide-react";
 import { useCardHeight } from "@/hooks/use-card-height";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { CollapsibleButton } from "@/components/ui/CollapsibleButton";
 import { useToast } from "@/hooks/use-toast";
 import {
   ContentItemPublic,
@@ -213,7 +213,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
       }
 
       // 立即发送消息，而不是填充输入框
-      await sendMessage(promptContent, prompt.template_name, {
+      await sendMessage(promptContent, prompt.name, {
         promptName: prompt.name,
         promptId: prompt.id,
       });
@@ -307,7 +307,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
         cards.push({
           id: "keyPoints",
           title: "提问清单",
-          subtitle: "好奇心的清单",
+          subtitle: "",
           emoji: "🎯",
           content: {
             type: "keyPoints",
@@ -441,22 +441,16 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
               </div>
 
               <div className="flex items-center gap-1 flex-row-reverse relative z-10">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
+                <CollapsibleButton
+                  isCollapsed={isCollapsed}
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
                     toggleCardCollapse(card.id);
                   }}
-                >
-                  {isCollapsed ? (
-                    <Plus className="h-3.5 w-3.5" />
-                  ) : (
-                    <Minus className="h-3.5 w-3.5" />
-                  )}
-                </Button>
+                  size="md"
+                  className="text-neutral-400 hover:text-neutral-600 relative z-10"
+                />
 
                 {isHovered && (
                   <div className="flex items-center gap-1 mr-1 transition-all duration-200 relative z-10">
@@ -570,7 +564,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <Brain className="h-8 w-8 animate-spin mx-auto mb-2 text-neutral-400" />
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-neutral-400" />
           <p className="text-sm text-neutral-500">正在加载分析结果...</p>
         </div>
       </div>
@@ -617,8 +611,30 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
           </div>
         )}
 
-        {/* 新的实时对话卡片 */}
+        {/* 原有的分析卡片 - 放在最前面 */}
         <div className="px-8 pt-4 pb-2" data-exclude-selection>
+          <div
+            className={`space-y-6 ${
+              variant === "preview" ? "max-w-2xl mx-auto" : ""
+            }`}
+          >
+            {cards.length > 0 ? (
+              cards.map((card) => <CardComponent key={card.id} card={card} />)
+            ) : streamingConversations.length === 0 ? (
+              <div className="flex items-center justify-center p-8 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50/30 dark:bg-neutral-900/30">
+                <div className="text-center space-y-2">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-neutral-400" />
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                    暂无分析结果，使用下方AI助手开始分析
+                  </p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        {/* 新的实时对话卡片 - 放在最后面，确保新卡片出现在最下方 */}
+        <div className="px-8 pt-2 pb-6" data-exclude-selection>
           <div
             className={`space-y-6 ${
               variant === "preview" ? "max-w-2xl mx-auto" : ""
@@ -633,28 +649,6 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
                 onDelete={deleteConversation}
               />
             ))}
-          </div>
-        </div>
-
-        {/* 原有的分析卡片 */}
-        <div className="px-8 pt-2 pb-6" data-exclude-selection>
-          <div
-            className={`space-y-6 ${
-              variant === "preview" ? "max-w-2xl mx-auto" : ""
-            }`}
-          >
-            {cards.length > 0 ? (
-              cards.map((card) => <CardComponent key={card.id} card={card} />)
-            ) : streamingConversations.length === 0 ? (
-              <div className="flex items-center justify-center p-8 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50/30 dark:bg-neutral-900/30">
-                <div className="text-center space-y-2">
-                  <Brain className="h-8 w-8 text-neutral-400 mx-auto" />
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                    暂无分析结果，使用下方AI助手开始分析
-                  </p>
-                </div>
-              </div>
-            ) : null}
           </div>
         </div>
       </div>
@@ -783,7 +777,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
                 disabled={isProcessing}
               >
                 {isProcessing ? (
-                  <Brain className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Send className="h-4 w-4" />
                 )}
@@ -795,7 +789,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
           {isProcessing && (
             <div className="mt-2 text-center">
               <div className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center justify-center gap-2">
-                <Brain className="h-3 w-3 animate-pulse" />
+                <Loader2 className="h-3 w-3 animate-spin" />
                 <span>正在处理您的问题...</span>
                 <Button
                   variant="link"

@@ -208,8 +208,24 @@ export default function ContentLibraryPage() {
               onTagToggle={handleTagToggle}
               sortBy={filters.sortBy}
               onSortChange={handleSortChange}
-              onClearFilters={handleClearFilters}
+              viewMode={filters.viewMode}
+              onViewModeChange={handleViewModeChange}
             />
+            {/* 移动端预览面板切换按钮 */}
+            {isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 ml-2"
+                onClick={() => setShowPreview(!showPreview)}
+              >
+                {showPreview ? (
+                  <PanelRightClose className="h-4 w-4" />
+                ) : (
+                  <PanelRightOpen className="h-4 w-4" />
+                )}
+              </Button>
+            )}
           </div>
         </header>
 

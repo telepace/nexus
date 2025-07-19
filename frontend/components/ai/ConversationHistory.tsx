@@ -32,16 +32,15 @@ interface ConversationHistoryProps {
 const ConversationTypeMap = {
   auto_analysis: {
     label: "自动分析",
-    color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    color: "bg-muted text-muted-foreground",
   },
   user_chat: {
     label: "用户对话",
-    color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    color: "bg-muted text-muted-foreground",
   },
   prompt_analysis: {
     label: "模板分析",
-    color:
-      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    color: "bg-muted text-muted-foreground",
   },
 };
 
@@ -54,8 +53,8 @@ const MessageBubble = ({ message }: { message: ConversationMessage }) => {
   return (
     <div className={`flex gap-3 ${isUser ? "justify-end" : "justify-start"}`}>
       {!isUser && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-          <Bot className="h-4 w-4 text-blue-600 dark:text-blue-300" />
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+          <Bot className="h-4 w-4 text-muted-foreground" />
         </div>
       )}
 
@@ -82,8 +81,8 @@ const MessageBubble = ({ message }: { message: ConversationMessage }) => {
       </div>
 
       {isUser && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-          <User className="h-4 w-4 text-green-600 dark:text-green-300" />
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+          <User className="h-4 w-4 text-muted-foreground" />
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
@@ -90,6 +90,12 @@ export function MarkdownRenderer({
       "&lt;/$1&gt;",
     );
 
+<<<<<<< HEAD
+=======
+  // 直接使用处理后的内容
+  const processedContent = sanitizedContent;
+
+>>>>>>> 16a55a9e4ccac58051fcb40085b70fd0d4936544
   const Root: React.ElementType = inline ? "span" : "div";
 
   return (
@@ -394,7 +400,7 @@ export function MarkdownRenderer({
           }),
         }}
       >
-        {sanitizedContent}
+        {processedContent}
       </ReactMarkdown>
     </Root>
   );

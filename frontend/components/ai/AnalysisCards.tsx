@@ -240,7 +240,7 @@ export const KeyPointsCard = ({
         <ul className="space-y-2">
           {points.map((p, idx) => (
             <li key={idx} className="flex items-start gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 shrink-0" />
               <span>{p}</span>
             </li>
           ))}

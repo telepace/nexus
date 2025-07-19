@@ -212,11 +212,11 @@ export const ConversationCard: React.FC<ConversationCardProps> = ({
                   <div key={index} className="flex gap-3">
                     <div className="flex-shrink-0 mt-1">
                       {message.role === "user" ? (
-                        <User className="h-4 w-4 text-blue-500" />
+                        <User className="h-4 w-4 text-muted-foreground" />
                       ) : message.role === "assistant" ? (
-                        <Bot className="h-4 w-4 text-green-500" />
+                        <Bot className="h-4 w-4 text-muted-foreground" />
                       ) : (
-                        <Settings className="h-4 w-4 text-gray-500" />
+                        <Settings className="h-4 w-4 text-muted-foreground" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
