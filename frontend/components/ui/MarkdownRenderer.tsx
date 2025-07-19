@@ -13,8 +13,6 @@ import mediumZoom from "medium-zoom";
 import copy from "copy-to-clipboard";
 import { cn, normalizeImageUrl } from "@/lib/utils";
 import { OptimizedImage } from "./OptimizedImage";
-import { processChineseBold } from "@/lib/utils/chinese-bold-preprocessor";
-import { getMarkdownConfig } from "@/lib/config/markdown";
 
 // Import highlight.js styles
 import "highlight.js/styles/github-dark.css";
@@ -26,23 +24,13 @@ interface MarkdownRendererProps {
   className?: string;
   /** 当为 true 时，以行内方式渲染，根元素为 <span>，且 p/h 标签映射为 span */
   inline?: boolean;
-  /** 是否启用中文加粗语法修复 */
-  chineseBoldFix?: boolean;
-  /** 调试模式，会在console输出预处理信息 */
-  debugMode?: boolean;
 }
 
 export function MarkdownRenderer({
   content,
   className,
   inline = false,
-  chineseBoldFix,
-  debugMode,
 }: MarkdownRendererProps) {
-  // 获取配置，props优先级高于全局配置
-  const config = getMarkdownConfig();
-  const enableChineseBoldFix = chineseBoldFix ?? config.chineseBoldFix.enabled;
-  const enableDebugMode = debugMode ?? config.chineseBoldFix.debugMode;
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -102,19 +90,8 @@ export function MarkdownRenderer({
       "&lt;/$1&gt;",
     );
 
-  // 中文加粗预处理 - 使用useMemo优化性能
-  const processedContent = useMemo(() => {
-    if (!enableChineseBoldFix) {
-      return sanitizedContent;
-    }
-    
-    return processChineseBold(sanitizedContent, {
-      enabled: enableChineseBoldFix,
-      debugMode: enableDebugMode,
-      cacheSize: config.chineseBoldFix.cacheSize,
-      preserveSpaces: config.chineseBoldFix.preserveOriginalSpaces,
-    });
-  }, [sanitizedContent, enableChineseBoldFix, enableDebugMode, config]);
+  // 直接使用处理后的内容
+  const processedContent = sanitizedContent;
 
   const Root: React.ElementType = inline ? "span" : "div";
 
