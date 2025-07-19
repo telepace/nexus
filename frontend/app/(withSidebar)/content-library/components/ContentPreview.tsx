@@ -13,6 +13,26 @@ interface Props {
 }
 
 export const ContentPreview = ({ item }: Props) => {
+  // 面板管理系统
+  const [panels, setPanels] = useState<Array<{id: number, item: ContentItemPublic, zIndex: number}>>([]);
+
+  // 当item改变时，创建新面板
+  useEffect(() => {
+    if (item) {
+      const timestamp = Date.now();
+      const newPanel = {
+        id: timestamp,                 // 使用时间戳作为唯一ID
+        item: item,                    // 实际的内容
+        zIndex: timestamp              // 层级：新面板总是在上层
+      };
+      
+      setPanels(prev => {
+        const newPanels = [...prev, newPanel];
+        return newPanels.slice(-2);   // 只保留最新的2个面板
+      });
+    }
+  }, [item?.id]);  // 只依赖item的id变化
+
   // 无内容时的空状态
   if (!item) {
     return (
@@ -35,33 +55,45 @@ export const ContentPreview = ({ item }: Props) => {
     );
   }
 
-  // 有内容时的预览 - 使用智能动画
+  // 有内容时的预览 - 使用多面板系统
   return (
     <div className="relative w-full h-full z-20">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={item.id} // 使用item.id作为key确保每次切换都重新渲染
-          initial={{ x: "100%" }}
-          animate={{ x: 0 }}
-          exit={{ x: "-100%" }}
-          transition={{ 
-            type: "spring", 
-            stiffness: 400, 
-            damping: 40,
-            duration: 0.3 
-          }}
-          className="absolute inset-0"
-          {...({} as any)}
-        >
-          <ContentPanel item={item} />
-        </motion.div>
+      <AnimatePresence>
+        {panels.map((panel) => {
+          // 判断是否为最新面板
+          const isLatestPanel = panel.id === Math.max(...panels.map(p => p.id));
+          
+          return (
+            <motion.div
+              key={panel.id}                // 使用递增的唯一ID
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 400, 
+                damping: 40,
+                duration: 0.3 
+              }}
+              style={{ 
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: panel.zIndex 
+              }}
+            >
+              <ContentPanel item={panel.item} isActive={isLatestPanel} />
+            </motion.div>
+          );
+        })}
       </AnimatePresence>
     </div>
   );
 };
 
 // 完全分离动画和渲染的面板组件
-const ContentPanel = ({ item }: { item: ContentItemPublic }) => {
+const ContentPanel = ({ item, isActive = true }: { item: ContentItemPublic; isActive?: boolean }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const aiResult = (item as any).ai_result;
   const isFetchingCompleteData = (item as any)._fetchingCompleteData === true;
@@ -75,13 +107,15 @@ const ContentPanel = ({ item }: { item: ContentItemPublic }) => {
     // 重置状态
     setShowContent(false);
     
-    // 等待动画完成后显示内容
-    const timer = setTimeout(() => {
-      setShowContent(true);
-    }, 450); // 等待450ms确保动画完成和渲染稳定
-    
-    return () => clearTimeout(timer);
-  }, [item.id]);
+    // 只有激活的面板才执行延迟渲染
+    if (isActive) {
+      const timer = setTimeout(() => {
+        setShowContent(true);
+      }, 450); // 等待450ms确保动画完成和渲染稳定
+      
+      return () => clearTimeout(timer);
+    }
+  }, [item.id, isActive]);
 
   return (
     <div
@@ -103,10 +137,10 @@ const ContentPanel = ({ item }: { item: ContentItemPublic }) => {
         </div>
       </div>
 
-      {/* 内容区域 - 简化的两状态：空白/显示 */}
+      {/* 内容区域 - 根据面板状态渲染 */}
       <div className="flex-1 overflow-hidden">
-        {showContent ? (
-          // 渲染完成，瞬间显示内容
+        {isActive && showContent ? (
+          // 只有激活面板才渲染完整内容
           <ModernAnalysisInterface
             content={item}
             analysisResult={aiResult}
@@ -116,8 +150,11 @@ const ContentPanel = ({ item }: { item: ContentItemPublic }) => {
             height="full"
             hideHeader={true}
           />
+        ) : isActive ? (
+          // 激活面板的等待状态
+          <div className="h-full" />
         ) : (
-          // 等待期间保持完全空白
+          // 非激活面板保持空白
           <div className="h-full" />
         )}
       </div>
