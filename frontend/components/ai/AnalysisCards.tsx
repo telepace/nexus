@@ -33,7 +33,6 @@ interface AnalysisCardsProps {
   loading?: boolean;
   layout?: "grid" | "vertical" | "compact";
   variant?: "default" | "sidebar" | "preview";
-  onExpandableClick?: (expandableText: string, blockContent: string) => void; // 新增：extendable按钮点击回调
 }
 
 // 单个卡片属性接口
@@ -131,11 +130,7 @@ function getVariantStyles(
 // 内容摘要卡片
 export const SummaryCard = ({
   summary,
-  onExpandableClick,
-}: { 
-  summary: Record<string, unknown> | string | null;
-  onExpandableClick?: (expandableText: string, blockContent: string) => void;
-}) => {
+}: { summary: Record<string, unknown> | string | null }) => {
   if (!summary) return null;
 
   let summaryText = "";
@@ -172,7 +167,6 @@ export const SummaryCard = ({
       contentBlocks={contentBlocks}
       variant="compact"
       defaultActions={true}
-      onExpandableClick={onExpandableClick}
     />
   );
 };
@@ -180,11 +174,7 @@ export const SummaryCard = ({
 // 关键要点卡片
 export const KeyPointsCard = ({
   keyPoints,
-  onExpandableClick,
-}: { 
-  keyPoints: Record<string, unknown> | string | null;
-  onExpandableClick?: (expandableText: string, blockContent: string) => void;
-}) => {
+}: { keyPoints: Record<string, unknown> | string | null }) => {
   if (!keyPoints) return null;
 
   let points: string[] = [];
@@ -266,7 +256,6 @@ export const KeyPointsCard = ({
       contentBlocks={contentBlocks}
       variant="compact"
       defaultActions={true}
-      onExpandableClick={onExpandableClick}
     />
   );
 };
@@ -418,7 +407,6 @@ export const AnalysisCards = ({
   loading,
   layout = "grid",
   variant = "default",
-  onExpandableClick,
 }: AnalysisCardsProps) => {
   // 如果传入了新的data，使用data；否则适配旧的analysisResult
   const unifiedData =
@@ -445,13 +433,13 @@ export const AnalysisCards = ({
 
   // Summary 卡片
   if (unifiedData.summary) {
-    cards.push(<SummaryCard key="summary" summary={unifiedData.summary} onExpandableClick={onExpandableClick} />);
+    cards.push(<SummaryCard key="summary" summary={unifiedData.summary} />);
   }
 
   // Key Points 卡片
   if (unifiedData.keyPoints) {
     cards.push(
-      <KeyPointsCard key="key-points" keyPoints={unifiedData.keyPoints} onExpandableClick={onExpandableClick} />,
+      <KeyPointsCard key="key-points" keyPoints={unifiedData.keyPoints} />,
     );
   }
 
