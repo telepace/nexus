@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CollapsibleButton } from "@/components/ui/CollapsibleButton";
 import {
   MessageSquare,
   Brain,
@@ -16,8 +17,6 @@ import {
   X,
   Loader2,
   Sparkles,
-  Minus,
-  Plus,
 } from "lucide-react";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 import { formatDistanceToNow } from "date-fns";
@@ -162,18 +161,12 @@ export function StreamingConversationCard({
               {/* 操作按钮 */}
               <div className="flex items-center gap-1">
                 {/* 折叠按钮 */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                <CollapsibleButton
+                  isCollapsed={isCollapsed}
                   onClick={() => setIsCollapsed(!isCollapsed)}
-                >
-                  {isCollapsed ? (
-                    <Plus className="h-3 w-3" />
-                  ) : (
-                    <Minus className="h-3 w-3" />
-                  )}
-                </Button>
+                  size="sm"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                />
 
                 {/* 其他操作按钮 - 只在悬停时显示 */}
                 {isHovered && (

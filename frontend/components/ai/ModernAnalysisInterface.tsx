@@ -8,13 +8,12 @@ import {
   Share,
   Sparkles,
   RefreshCw,
-  Minus,
-  Plus,
   Loader2,
 } from "lucide-react";
 import { useCardHeight } from "@/hooks/use-card-height";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { CollapsibleButton } from "@/components/ui/CollapsibleButton";
 import { useToast } from "@/hooks/use-toast";
 import {
   AIResult,
@@ -609,22 +608,16 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
               {/* 操作按钮：使用 flex-row-reverse 保证折叠/展开按钮始终最右 */}
               <div className="flex items-center gap-1 flex-row-reverse relative z-10">
                 {/* 折叠/展开按钮 - 始终显示 */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
+                <CollapsibleButton
+                  isCollapsed={isCollapsed}
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
                     toggleCardCollapse(card.id);
                   }}
-                >
-                  {isCollapsed ? (
-                    <Plus className="h-3.5 w-3.5" />
-                  ) : (
-                    <Minus className="h-3.5 w-3.5" />
-                  )}
-                </Button>
+                  size="md"
+                  className="text-neutral-400 hover:text-neutral-600 relative z-10"
+                />
 
                 {/* 其他操作按钮 - 仅在悬停时显示 */}
                 {isHovered && (

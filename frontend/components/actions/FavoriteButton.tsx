@@ -102,7 +102,7 @@ export function FavoriteButton({
       }
 
       let url = `${baseUrl}/api/v1/content/${itemId}/favorite`;
-      let method = isFavorited ? "DELETE" : "POST";
+      const method = isFavorited ? "DELETE" : "POST";
       let body = undefined;
 
       // 如果是块级收藏，需要添加查询参数或请求体

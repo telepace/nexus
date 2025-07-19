@@ -8,13 +8,12 @@ import {
   Share,
   Sparkles,
   RefreshCw,
-  Minus,
-  Plus,
   Loader2,
 } from "lucide-react";
 import { useCardHeight } from "@/hooks/use-card-height";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { CollapsibleButton } from "@/components/ui/CollapsibleButton";
 import { useToast } from "@/hooks/use-toast";
 import {
   ContentItemPublic,
@@ -442,22 +441,16 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
               </div>
 
               <div className="flex items-center gap-1 flex-row-reverse relative z-10">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
+                <CollapsibleButton
+                  isCollapsed={isCollapsed}
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
                     toggleCardCollapse(card.id);
                   }}
-                >
-                  {isCollapsed ? (
-                    <Plus className="h-3.5 w-3.5" />
-                  ) : (
-                    <Minus className="h-3.5 w-3.5" />
-                  )}
-                </Button>
+                  size="md"
+                  className="text-neutral-400 hover:text-neutral-600 relative z-10"
+                />
 
                 {isHovered && (
                   <div className="flex items-center gap-1 mr-1 transition-all duration-200 relative z-10">
