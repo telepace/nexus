@@ -434,7 +434,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       // 内容摘要卡片
       if (adaptedData.summary) {
         cards.push({
-          id: "summary",
+          id: `summary-${content.id}`,
           title: "内容摘要",
           subtitle: "",
           emoji: "📝",
@@ -448,7 +448,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       // 关键要点卡片
       if (adaptedData.keyPoints) {
         cards.push({
-          id: "keyPoints",
+          id: `keyPoints-${content.id}`,
           title: "提问清单",
           subtitle: "",
           emoji: "🎯",
@@ -468,7 +468,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       
       if (conversationsWithMessages.length > 0) {
         cards.push({
-          id: "conversations",
+          id: `conversations-${content.id}`,
           title: "对话记录",
           subtitle: `${conversationsWithMessages.length} 个对话，${conversationsWithMessages.reduce((total, conv) => total + (conv.messages?.length || 0), 0)} 条消息`,
           emoji: "💬",
@@ -484,7 +484,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     if (streamingResponse) {
       const isLoading = streamingResponse.startsWith("LOADING_PLACEHOLDER_");
       cards.push({
-        id: "streaming",
+        id: `streaming-${content.id}`,
         title: "AI分析",
         subtitle: isLoading ? "正在连接AI..." : isAnalyzing ? "正在分析..." : "分析完成",
         emoji: "🤖",
@@ -493,57 +493,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           data: streamingResponse,
         },
       });
-    }
-
-    // 只有在显示预处理内容时才添加这些卡片
-    if (showPreprocessedContent) {
-      // 内容摘要卡片
-      if (adaptedData.summary) {
-        cards.push({
-          id: "summary",
-          title: "内容摘要",
-          subtitle: "核心内容提炼",
-          emoji: "📝",
-          content: {
-            type: "summary",
-            data: adaptedData.summary,
-          },
-        });
-      }
-
-      // 关键要点卡片
-      if (adaptedData.keyPoints) {
-        cards.push({
-          id: "keyPoints",
-          title: "提问清单",
-          subtitle: "好奇心的清单",
-          emoji: "🎯",
-          content: {
-            type: "keyPoints",
-            data: adaptedData.keyPoints,
-          },
-        });
-      }
-    }
-
-    // 对话历史卡片 - 如果有对话记录就显示
-    if (conversations && conversations.length > 0) {
-      const conversationsWithMessages = conversations.filter(conv => 
-        conv.messages && conv.messages.length > 0
-      );
-      
-      if (conversationsWithMessages.length > 0) {
-        cards.push({
-          id: "conversations",
-          title: "对话记录",
-          subtitle: `${conversationsWithMessages.length} 个对话，${conversationsWithMessages.reduce((total, conv) => total + (conv.messages?.length || 0), 0)} 条消息`,
-          emoji: "💬",
-          content: {
-            type: "conversations",
-            data: conversationsWithMessages,
-          },
-        });
-      }
     }
 
     return cards;
@@ -785,28 +734,9 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                     `}
                   >
                     {card.content.data.startsWith("LOADING_PLACEHOLDER_") ? (
-                      // 加载状态显示
+                      // 简化的加载状态显示
                       <div className="flex items-center justify-center py-8">
-                        <div className="text-center space-y-4">
-                          <div className="flex items-center justify-center">
-                            <Brain className="h-8 w-8 animate-spin text-blue-500" />
-                          </div>
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                              正在连接AI助手...
-                            </p>
-                            <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                              请稍等，正在为您准备最佳的回答
-                            </p>
-                          </div>
-                          <div className="flex justify-center">
-                            <div className="flex space-x-1">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                            </div>
-                          </div>
-                        </div>
+                        <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
                       </div>
                     ) : (
                       // 正常内容显示

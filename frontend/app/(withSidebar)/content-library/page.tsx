@@ -93,6 +93,11 @@ export default function ContentLibraryPage() {
     clearSelection();
   };
 
+  const handleViewModeChange = (viewMode: "grid" | "list") => {
+    setFilters((prev) => ({ ...prev, viewMode }));
+    clearSelection();
+  };
+
   const handleClearFilters = () => {
     setFilters((prev) => ({
       ...prev,
