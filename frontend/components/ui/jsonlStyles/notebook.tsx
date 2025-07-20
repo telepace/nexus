@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { StyleRenderer } from "./types";
 import { NeumorphicExpandButton } from "../NeumorphicExpandButton";
+import { MarkdownRenderer } from "../MarkdownRenderer";
+import { EnhancedReferenceIndicator } from "../ReferenceManager";
 
 // ActionCard component that manages its own hover state
 interface ActionCardProps {
@@ -9,8 +11,8 @@ interface ActionCardProps {
   c: React.ReactNode;
   hasReferences: boolean;
   references: number[];
-  MarkdownRenderer: any;
-  EnhancedReferenceIndicator: any;
+  MarkdownRenderer: typeof MarkdownRenderer;
+  EnhancedReferenceIndicator: typeof EnhancedReferenceIndicator;
 }
 
 const ActionCard: React.FC<ActionCardProps> = ({
@@ -62,8 +64,8 @@ interface ParagraphCardProps {
   finalContent: string;
   hasReferences: boolean;
   references: number[];
-  MarkdownRenderer: any;
-  EnhancedReferenceIndicator: any;
+  MarkdownRenderer: typeof MarkdownRenderer;
+  EnhancedReferenceIndicator: typeof EnhancedReferenceIndicator;
 }
 
 const ParagraphCard: React.FC<ParagraphCardProps> = ({
@@ -100,7 +102,7 @@ const ParagraphCard: React.FC<ParagraphCardProps> = ({
         <MarkdownRenderer 
           content={finalContent} 
           inline={true}
-          className="text-base text-neutral-800 [&_strong]:text-neutral-800 [&_strong]:font-black leading-[1.5]"
+          className="text-sm text-neutral-800 [&_strong]:text-neutral-800 [&_strong]:font-black leading-relaxed"
         />
         {hasReferences && (
           <EnhancedReferenceIndicator references={references} />
@@ -293,9 +295,6 @@ export const notebookStyleRenderer: StyleRenderer = ({
           }}
         >
           <div
-            className={`absolute -top-2 -left-2 w-6 h-6 rounded-full shadow-md ${colors.accent}`}
-          />
-          <div
             className={`inline-flex items-baseline gap-1 flex-wrap ${colors.text}`}
           >
             <span className="text-base" style={{ lineHeight: '1.5' }}>
@@ -321,7 +320,6 @@ export const notebookStyleRenderer: StyleRenderer = ({
             fontFamily: '"Kalam", "Comic Sans MS", cursive',
           }}
         >
-          <div className="absolute -top-2 -right-2 w-6 h-6 bg-purple-400 rounded-full shadow-md" />
           <div className="inline-flex items-baseline gap-1 flex-wrap text-purple-700">
             <span className="text-base leading-loose">
               <MarkdownRenderer content={String(c)} inline={true} />
