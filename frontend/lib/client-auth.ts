@@ -152,14 +152,19 @@ export function useAuth(): AuthContextType {
         return;
       }
 
-      // 设置cookie，支持 localhost 和 127.0.0.1
+      // 设置cookie，支持开发环境下的所有域名
       const maxAge = 60 * 60 * 24 * 7; // 7天
+      const domain = window.location.hostname;
       const cookieOptions = `path=/;max-age=${maxAge};SameSite=Lax`;
-
+      
       // 为当前域名设置 cookie
       document.cookie = `accessToken=${token};${cookieOptions}`;
       document.cookie = `accessToken_ext=${token};${cookieOptions}`;
-
+      
+      // 调试信息
+      console.log("[Auth] Setting cookie for domain:", domain);
+      console.log("[Auth] Cookie options:", cookieOptions);
+      
       // 验证cookie是否设置成功
       const savedToken = getCookie("accessToken");
       console.log(
@@ -199,13 +204,17 @@ export function useAuth(): AuthContextType {
         return;
       }
 
-      // 设置cookie，支持 localhost 和 127.0.0.1
+      // 设置cookie，支持开发环境下的所有域名
       const maxAge = 60 * 60 * 24 * 7; // 7天
+      const domain = window.location.hostname;
       const cookieOptions = `path=/;max-age=${maxAge};SameSite=Lax`;
-
+      
       // 为当前域名设置 cookie
       document.cookie = `accessToken=${token};${cookieOptions}`;
       document.cookie = `accessToken_ext=${token};${cookieOptions}`;
+      
+      // 调试信息
+      console.log("[Auth] Setting custom token for domain:", domain);
 
       // 验证设置成功
       const savedToken = getCookie("accessToken");
