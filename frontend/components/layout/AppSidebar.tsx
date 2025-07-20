@@ -7,7 +7,6 @@ import {
   Settings,
   ChevronUp,
   RefreshCw,
-  Upload,
   Heart,
   BotMessageSquare,
   Inbox,
@@ -27,7 +26,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -82,7 +80,6 @@ export function AppSidebar({
   const pathname = usePathname();
   const { user, isLoading, fetchUser } = useAuth();
   const [isSyncing, setIsSyncing] = React.useState(false);
-  const [isUploadHovered, setIsUploadHovered] = React.useState(false);
 
   // 同步登录状态
   const handleSyncAuth = async () => {
@@ -132,7 +129,7 @@ export function AppSidebar({
     >
       <SidebarHeader className="p-0">
         <div className="flex h-header shrink-0 items-center justify-center gap-2 border-b border-neutral-100/50 px-4 group-data-[collapsible=icon]:px-2 backdrop-blur-sm">
-          {/* 展开状态：Logo + 品牌名称 + 独立展开按钮 */}
+          {/* 展开状态：Logo + 品牌名称 + 上传按钮 */}
           <div className="flex items-center justify-between w-full group-data-[collapsible=icon]:hidden">
             <Link
               href="/home"
@@ -151,75 +148,31 @@ export function AppSidebar({
                 Telepace
               </span>
             </Link>
-            <SidebarTrigger className="h-8 w-8 rounded-lg hover:bg-gradient-to-br hover:from-neutral-50/60 hover:to-neutral-100/40 hover:text-sidebar-accent-foreground transition-all duration-300 border border-transparent hover:border-neutral-200/40" />
-          </div>
-
-          {/* 折叠状态：优化设计，更精致的视觉效果 */}
-          <SidebarTrigger className="hidden group-data-[collapsible=icon]:flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-white/80 to-neutral-50/60 shadow-lg hover:shadow-xl border border-neutral-200/30 hover:border-primary/30 transition-all duration-300 hover:scale-105 backdrop-blur-sm">
-            <Image
-              src="/img/favicon.png"
-              alt="Logo"
-              width={28}
-              height={28}
-              className="drop-shadow-sm"
-            />
-          </SidebarTrigger>
-        </div>
-
-        {/* Upload Content 区域 - 折叠状态下更精致 */}
-        <div className="mb-3 group-data-[collapsible=icon]:mb-2">
-          <div className="px-4 py-4 group-data-[collapsible=icon]:px-3 group-data-[collapsible=icon]:py-3">
-            <div
-              className={cn(
-                "relative overflow-hidden rounded-xl transition-all duration-500 ease-out group cursor-pointer",
-                "bg-gradient-to-br from-primary/5 via-primary/3 to-primary/8",
-                "border border-primary/10 hover:border-primary/20",
-                "shadow-sm hover:shadow-lg hover:shadow-primary/5",
-                "hover:scale-[1.02] active:scale-[0.98]",
-                // 折叠状态样式 - 更圆润的正方形设计
-                "group-data-[collapsible=icon]:rounded-2xl group-data-[collapsible=icon]:aspect-square group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:shadow-md group-data-[collapsible=icon]:bg-gradient-to-br group-data-[collapsible=icon]:from-primary/8 group-data-[collapsible=icon]:to-primary/12 group-data-[collapsible=icon]:hover:shadow-lg group-data-[collapsible=icon]:hover:from-primary/12 group-data-[collapsible=icon]:hover:to-primary/15",
-              )}
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 onAddContentClick();
               }}
-              onMouseEnter={() => setIsUploadHovered(true)}
-              onMouseLeave={() => setIsUploadHovered(false)}
+              className="h-7 w-7 rounded-[10px] bg-[#FCFCFC] border border-[#D1D1D1] shadow-[0px_1px_2px_rgba(0,0,0,0.04),0px_2px_4px_rgba(0,0,0,0.04)] hover:bg-neutral-50 transition-all duration-300 flex items-center justify-center"
             >
-              {/* 背景动效 */}
-              <div
-                className={cn(
-                  "absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/8 to-primary/0 opacity-0 transition-opacity duration-700 rounded-inherit",
-                  isUploadHovered && "opacity-100",
-                )}
-              />
-
-              {/* 内容 */}
-              <div className="relative flex items-center gap-3 p-4 group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center">
-                <div
-                  className={cn(
-                    "flex items-center justify-center transition-all duration-300",
-                    "text-primary/70 group-hover:text-primary group-hover:scale-110",
-                    "group-data-[collapsible=icon]:drop-shadow-sm",
-                  )}
-                >
-                  <Upload className="w-4 h-4 group-data-[collapsible=icon]:w-4 group-data-[collapsible=icon]:h-4 drop-shadow-sm" />
-                </div>
-                <div className="flex-1 group-data-[collapsible=icon]:hidden">
-                  <div className="text-sm font-medium text-neutral-700 mb-1 group-hover:text-neutral-900 transition-colors">
-                    Upload
-                  </div>
-                  <div className="text-xs text-neutral-500 group-hover:text-neutral-600 transition-colors">
-                    Drop files here
-                  </div>
-                </div>
-              </div>
-            </div>
+              <Plus className="w-4 h-4 text-neutral-900" />
+            </button>
           </div>
+
+          {/* 折叠状态：上传按钮 */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddContentClick();
+            }}
+            className="hidden group-data-[collapsible=icon]:flex items-center justify-center h-7 w-7 rounded-[10px] bg-[#FCFCFC] border border-[#D1D1D1] shadow-[0px_1px_2px_rgba(0,0,0,0.04),0px_2px_4px_rgba(0,0,0,0.04)] hover:bg-neutral-50 transition-all duration-300"
+          >
+            <Plus className="w-4 h-4 text-neutral-900" />
+          </button>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-0">
+      <SidebarContent className="px-0 pt-4">
 
         {/* 主导航菜单 - 折叠状态下优化间距和视觉效果 */}
         <SidebarGroup className="px-0">
