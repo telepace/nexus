@@ -308,7 +308,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
           id: "keyPoints",
           title: "提问清单",
           subtitle: "",
-          emoji: "🎯",
+          emoji: "🤔",
           content: {
             type: "keyPoints",
             data: adaptedData.keyPoints,

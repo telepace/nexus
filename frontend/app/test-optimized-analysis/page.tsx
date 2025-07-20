@@ -24,7 +24,7 @@ import {
 const mockContent: ContentItemPublic = {
   id: "test-content-optimized",
   title: "交互优化测试：立即响应的AI分析界面",
-  description: "测试点击prompt后立即显示卡片、实时渲染流式响应的优化效果",
+  summary: "测试点击prompt后立即显示卡片、实时渲染流式响应的优化效果",
   content_text: `
     这是一个用于测试优化后交互效果的示例内容。
 
@@ -60,7 +60,6 @@ const mockContent: ContentItemPublic = {
   `,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
-  is_public: true,
   meta_info: JSON.stringify({
     summary: "这是一个测试优化后AI分析界面交互效果的示例内容，重点测试立即响应、实时渲染等特性。",
     key_points: [
@@ -72,14 +71,10 @@ const mockContent: ContentItemPublic = {
     ],
     tags: ["交互优化", "实时渲染", "用户体验", "AI分析"]
   }),
-  tags: ["测试", "优化", "交互", "AI"],
-  source_type: "article",
-  source_url: "https://example.com/test-optimized-analysis",
-  author: "测试开发者",
-  language: "zh-CN",
-  ai_processing_status: "completed",
-  created_by: "test-user",
-  owner_id: "test-user"
+  source_uri: "https://example.com/test-optimized-analysis",
+  type: "article",
+  processing_status: "completed",
+  user_id: "test-user"
 };
 
 export default function TestOptimizedAnalysisPage() {
@@ -183,12 +178,12 @@ export default function TestOptimizedAnalysisPage() {
               <div>
                 <h3 className="font-medium mb-3 flex items-center gap-2">
                   <Brain className="h-4 w-4 text-purple-500" />
-                  优雅加载
+                  简洁加载
                 </h3>
                 <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                  <li>• 显示"正在连接AI助手"而非空白</li>
-                  <li>• 动画效果提升等待体验</li>
-                  <li>• 清晰的状态转换提示</li>
+                  <li>• 使用统一的Loader2组件</li>
+                  <li>• 简洁的加载动画</li>
+                  <li>• 减少视觉干扰</li>
                 </ul>
               </div>
               <div>
@@ -245,7 +240,7 @@ export default function TestOptimizedAnalysisPage() {
               <div className="border-l-4 border-green-500 pl-4">
                 <h3 className="font-medium text-green-700 dark:text-green-300">步骤2：观察加载状态</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  注意卡片中是否显示"正在连接AI助手..."的加载动画
+                  注意卡片中是否显示简洁的Loader2加载动画
                 </p>
               </div>
               <div className="border-l-4 border-purple-500 pl-4">
@@ -271,15 +266,17 @@ export default function TestOptimizedAnalysisPage() {
               content={mockContent}
               conversations={[]}
               analysisResult={{
-                summary: "这是一个测试优化后AI分析界面交互效果的示例内容。",
-                key_points: [
-                  "点击Prompt后立即显示分析卡片",
-                  "卡片内显示优雅的加载动画",
-                  "流式响应实时更新内容",
-                  "整个界面保持响应状态"
-                ],
-                tags: ["交互优化", "实时渲染", "用户体验"],
-                insights: "通过立即响应和实时渲染，大大提升了用户的交互体验。"
+                summary: { text: "这是一个测试优化后AI分析界面交互效果的示例内容。" },
+                key_points: { 
+                  points: [
+                    "点击Prompt后立即显示分析卡片",
+                    "卡片内显示简洁的加载动画",
+                    "流式响应实时更新内容",
+                    "整个界面保持响应状态"
+                  ]
+                },
+                labels: ["交互优化", "实时渲染", "用户体验"],
+                content_analysis: { text: "通过立即响应和实时渲染，大大提升了用户的交互体验。" }
               }}
               variant="fullscreen"
               showPreprocessedContent={true}
@@ -301,7 +298,7 @@ export default function TestOptimizedAnalysisPage() {
                 <strong>立即响应机制：</strong> 在 handlePromptClick 中直接调用 performCompletion，无需用户二次点击
               </p>
               <p>
-                <strong>加载状态管理：</strong> 使用 LOADING_PLACEHOLDER_ 前缀标识加载状态，触发特殊渲染逻辑
+                <strong>加载状态管理：</strong> 使用 LOADING_PLACEHOLDER_ 前缀标识加载状态，显示简洁的Loader2组件
               </p>
               <p>
                 <strong>流式响应处理：</strong> 检测到真实数据时清空占位符，开始实时更新内容

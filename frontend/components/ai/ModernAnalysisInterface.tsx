@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Brain,
   MessageSquare,
@@ -84,6 +84,10 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [streamingResponse, setStreamingResponse] = useState("");
+  
+  // 滚动控制相关状态
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [lastCardCount, setLastCardCount] = useState(0);
   // Remove local state for prompts
   // const [prompts, setPrompts] = useState<PromptData[]>([]);
   // const [loadingPrompts, setLoadingPrompts] = useState(true);
@@ -434,10 +438,10 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       // 内容摘要卡片
       if (adaptedData.summary) {
         cards.push({
-          id: "summary",
+          id: `summary-${content.id}`,
           title: "内容摘要",
           subtitle: "",
-          emoji: "📝",
+          emoji: "📄",
           content: {
             type: "summary",
             data: adaptedData.summary,
@@ -448,10 +452,10 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       // 关键要点卡片
       if (adaptedData.keyPoints) {
         cards.push({
-          id: "keyPoints",
+          id: `keyPoints-${content.id}`,
           title: "提问清单",
           subtitle: "",
-          emoji: "🎯",
+          emoji: "🤔",
           content: {
             type: "keyPoints",
             data: adaptedData.keyPoints,
@@ -468,7 +472,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       
       if (conversationsWithMessages.length > 0) {
         cards.push({
-          id: "conversations",
+          id: `conversations-${content.id}`,
           title: "对话记录",
           subtitle: `${conversationsWithMessages.length} 个对话，${conversationsWithMessages.reduce((total, conv) => total + (conv.messages?.length || 0), 0)} 条消息`,
           emoji: "💬",
@@ -484,66 +488,15 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     if (streamingResponse) {
       const isLoading = streamingResponse.startsWith("LOADING_PLACEHOLDER_");
       cards.push({
-        id: "streaming",
+        id: `streaming-${content.id}`,
         title: "AI分析",
-        subtitle: isLoading ? "正在连接AI..." : isAnalyzing ? "正在分析..." : "分析完成",
-        emoji: "🤖",
+        subtitle: "",
+        emoji: "👀",
         content: {
           type: "streaming",
           data: streamingResponse,
         },
       });
-    }
-
-    // 只有在显示预处理内容时才添加这些卡片
-    if (showPreprocessedContent) {
-      // 内容摘要卡片
-      if (adaptedData.summary) {
-        cards.push({
-          id: "summary",
-          title: "内容摘要",
-          subtitle: "核心内容提炼",
-          emoji: "📝",
-          content: {
-            type: "summary",
-            data: adaptedData.summary,
-          },
-        });
-      }
-
-      // 关键要点卡片
-      if (adaptedData.keyPoints) {
-        cards.push({
-          id: "keyPoints",
-          title: "提问清单",
-          subtitle: "好奇心的清单",
-          emoji: "🎯",
-          content: {
-            type: "keyPoints",
-            data: adaptedData.keyPoints,
-          },
-        });
-      }
-    }
-
-    // 对话历史卡片 - 如果有对话记录就显示
-    if (conversations && conversations.length > 0) {
-      const conversationsWithMessages = conversations.filter(conv => 
-        conv.messages && conv.messages.length > 0
-      );
-      
-      if (conversationsWithMessages.length > 0) {
-        cards.push({
-          id: "conversations",
-          title: "对话记录",
-          subtitle: `${conversationsWithMessages.length} 个对话，${conversationsWithMessages.reduce((total, conv) => total + (conv.messages?.length || 0), 0)} 条消息`,
-          emoji: "💬",
-          content: {
-            type: "conversations",
-            data: conversationsWithMessages,
-          },
-        });
-      }
     }
 
     return cards;
@@ -557,6 +510,26 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   ]);
 
   const cards = buildAnalysisCards();
+
+  // 监测新卡片出现并自动滚动到底部
+  useEffect(() => {
+    const currentCardCount = cards.length;
+    
+    // 只在卡片数量增加时（新卡片出现）滚动到底部
+    if (currentCardCount > lastCardCount && lastCardCount > 0) {
+      // 延迟一下以确保DOM已更新
+      setTimeout(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTo({
+            top: scrollContainerRef.current.scrollHeight,
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
+    }
+    
+    setLastCardCount(currentCardCount);
+  }, [cards.length, lastCardCount]);
 
   // 渲染卡片内容
   const renderCardContent = (card: AnalysisCard) => {
@@ -622,13 +595,29 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     const isHovered = hoveredCard === card.id;
     const isCollapsed = collapsedCards.has(card.id);
 
+    // 检测是否为文本选择操作
+    const handleCardClick = (e: React.MouseEvent) => {
+      // 如果用户正在进行文本选择，不触发卡片选中
+      const selection = window.getSelection();
+      if (selection && selection.toString().length > 0) {
+        return;
+      }
+      
+      // 如果点击的是按钮区域，不触发卡片选中
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-exclude-selection]')) {
+        return;
+      }
+      
+      setSelectedCard(isSelected ? null : card.id);
+    };
+
     return (
       <div
         className="group relative"
         onMouseEnter={() => setHoveredCard(card.id)}
         onMouseLeave={() => setHoveredCard(null)}
-        onClick={() => setSelectedCard(isSelected ? null : card.id)}
-        data-exclude-selection
+        onClick={handleCardClick}
       >
         {/* 极简卡片主体 */}
         <Card
@@ -655,13 +644,12 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
               </div>
 
               {/* 操作按钮：使用 flex-row-reverse 保证折叠/展开按钮始终最右 */}
-              <div className="flex items-center gap-1 flex-row-reverse relative z-10">
+              <div className="flex items-center gap-1 flex-row-reverse relative z-10" data-exclude-selection>
                 {/* 折叠/展开按钮 - 始终显示 */}
                 <CollapsibleButton
                   isCollapsed={isCollapsed}
                   onClick={(e) => {
                     e.stopPropagation();
-                    e.preventDefault();
                     toggleCardCollapse(card.id);
                   }}
                   size="md"
@@ -683,7 +671,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                       className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
                       onClick={(e) => {
                         e.stopPropagation();
-                        e.preventDefault();
                         console.log("分享");
                       }}
                     >
@@ -785,28 +772,9 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                     `}
                   >
                     {card.content.data.startsWith("LOADING_PLACEHOLDER_") ? (
-                      // 加载状态显示
+                      // 简化的加载状态显示
                       <div className="flex items-center justify-center py-8">
-                        <div className="text-center space-y-4">
-                          <div className="flex items-center justify-center">
-                            <Brain className="h-8 w-8 animate-spin text-blue-500" />
-                          </div>
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                              正在连接AI助手...
-                            </p>
-                            <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                              请稍等，正在为您准备最佳的回答
-                            </p>
-                          </div>
-                          <div className="flex justify-center">
-                            <div className="flex space-x-1">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                            </div>
-                          </div>
-                        </div>
+                        <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
                       </div>
                     ) : (
                       // 正常内容显示
@@ -863,8 +831,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
 
       {/* 可滚动的主内容区域 */}
       <div
+        ref={scrollContainerRef}
         className={`flex-1 overflow-y-auto custom-scrollbar ${variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""}`}
-        data-exclude-selection
       >
         {/* 页面标题 - 根据配置条件渲染 */}
         {!hideHeader && (
@@ -879,7 +847,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         )}
 
         {/* 卡片列表 */}
-        <div className="px-8 pt-4 pb-6" data-exclude-selection>
+        <div className="px-8 pt-4 pb-6">
           <div
             className={`space-y-6 ${
               variant === "preview" ? "max-w-2xl mx-auto" : ""
