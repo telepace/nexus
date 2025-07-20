@@ -107,12 +107,6 @@ export default function ContentLibraryPage() {
     clearSelection();
   };
 
-  const handleViewModeChange = (viewMode: "grid" | "list") => {
-    setFilters((prev) => ({ ...prev, viewMode }));
-    clearSelection();
-  };
-
-  // 处理卡片点击 - 立即跳转到阅读器
   const handleCardClick = useCallback(
     (item: ContentItemPublic, event?: React.MouseEvent) => {
       if (
