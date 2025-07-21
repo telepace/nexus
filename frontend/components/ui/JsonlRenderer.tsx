@@ -64,9 +64,15 @@ export function JsonlRenderer({
   // 根據 styleName 取得區塊渲染器
   const styleRenderer = jsonlStyles[styleName] || jsonlStyles["default"];
 
-  // 延迟渲染逻辑 - 简化版本
+  // 优化延迟渲染逻辑 - 避免频繁状态切换
   useEffect(() => {
     if (!enableDelayedRendering) {
+      setIsContentReady(true);
+      return;
+    }
+
+    // 如果内容为空或未变化，直接设为就绪
+    if (!content || content.trim() === '') {
       setIsContentReady(true);
       return;
     }
@@ -76,13 +82,15 @@ export function JsonlRenderer({
       clearTimeout(timeoutRef.current);
     }
 
-    // 重置状态
-    setIsContentReady(false);
+    // 只有在内容变化时才重置状态
+    if (isContentReady) {
+      setIsContentReady(false);
+    }
 
-    // 启动延迟定时器
+    // 启动延迟定时器，使用较短延迟减少等待时间
     timeoutRef.current = setTimeout(() => {
       setIsContentReady(true);
-    }, renderDelay);
+    }, Math.min(renderDelay, 200)); // 最大延迟200ms
 
     // 清理函数
     return () => {
@@ -90,7 +98,7 @@ export function JsonlRenderer({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [content, enableDelayedRendering, renderDelay]);
+  }, [content, enableDelayedRendering, renderDelay, isContentReady]);
 
   if (!content) {
     return (
@@ -119,14 +127,31 @@ export function JsonlRenderer({
   }
 
   // Split into lines & parse
-  // 修复常见的 JSON 语法错误
+  // 修复常见的 JSON 语法错误并处理截断内容
   function sanitizeJsonLine(line: string): string {
     // 修复单引号包围的字符串值（如：'文本"内容'）
-    return line.replace(/:\s*'([^']*?)'/g, (match, content) => {
+    let sanitized = line.replace(/:\s*'([^']*?)'/g, (match, content) => {
       // 转义内部的双引号
       const escaped = content.replace(/"/g, '\\"');
       return `: "${escaped}"`;
     });
+    
+    // 处理截断的JSON - 如果行末没有闭合，尝试修复
+    if (sanitized.trim() && !sanitized.trim().endsWith('}')) {
+      // 检查是否是一个不完整的字符串值
+      const openBraceCount = (sanitized.match(/{/g) || []).length;
+      const closeBraceCount = (sanitized.match(/}/g) || []).length;
+      if (openBraceCount > closeBraceCount) {
+        // 尝试找到最后一个不完整的字符串并添加结束引号和括号
+        if (sanitized.includes('"') && !sanitized.trim().endsWith('"')) {
+          sanitized = sanitized.trim() + '"}';
+        } else {
+          sanitized = sanitized.trim() + '}';
+        }
+      }
+    }
+    
+    return sanitized;
   }
 
   const blocks = content
@@ -154,12 +179,14 @@ export function JsonlRenderer({
     return (
       <div
         className={cn(
-          "group relative rounded-lg transition-all duration-200 ease-out",
+          "group relative rounded-lg",
+          // 使用更温和的过渡效果，避免视觉闪烁
+          "transition-opacity duration-150 ease-in-out",
           "px-2 py-1 -mx-2 my-0.5",
-          "border border-transparent",
+          "border border-transparent", 
           "overflow-visible",
-          // 移除 hover 高亮效果（藍色背景 / 邊框）
-          // 如需保留 hover 樣式，可在此添加其他類名
+          // 移除可能导致闪烁的过渡动画
+          // "hover:bg-blue-50/50 hover:border-blue-200/50",
         )}
       >
         {/* 主要内容 */}

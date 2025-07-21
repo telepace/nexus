@@ -1165,36 +1165,17 @@ async def _stream_content_analysis_ai_sdk(
             "analysis", settings.DEFAULT_LLM_MODEL
         )
         
-        # 🎯 智能token调整：验证和优化token请求
-        total_input_content = content_text + user_prompt
-        is_valid, error_msg, recommended_tokens = validate_token_request(
-            input_content=total_input_content,
-            requested_max_tokens=request.max_tokens,
-            task_type="analysis"
-        )
+        # 🎯 简化token处理：直接使用请求的max_tokens或默认值
+        final_max_tokens = request.max_tokens or get_token_limit(task_type="analysis")
         
-        if not is_valid:
-            logger.warning(f"Token请求验证失败: {error_msg}, 使用推荐值: {recommended_tokens}")
-            final_max_tokens = recommended_tokens
-        else:
-            # 进一步智能调整
-            smart_tokens = get_token_limit(
-                task_type="analysis",
-                content_length=len(total_input_content),
-                model_name=resolved_model,
-                base_tokens=request.max_tokens
-            )
-            final_max_tokens = max(request.max_tokens, smart_tokens)
-            
-        logger.info(f"🎯 内容分析token调整: 原始请求={request.max_tokens}, "
-                   f"智能推荐={smart_tokens if 'smart_tokens' in locals() else recommended_tokens}, "
-                   f"最终使用={final_max_tokens}, 内容长度={len(total_input_content)}")
+        logger.info(f"🎯 内容分析token设置: 请求={request.max_tokens}, "
+                   f"最终使用={final_max_tokens}")
 
         payload = {
             "model": resolved_model,
             "messages": messages,
             "temperature": request.temperature,
-            "max_tokens": final_max_tokens,  # 使用智能调整后的token数
+            "max_tokens": final_max_tokens,  # 使用简化后的token数
             "stream": True,
         }
 
@@ -1861,15 +1842,11 @@ async def _stream_template_analysis(
         }
         task_type = task_type_mapping.get(analysis_type, "analysis")
         
-        # 获取推荐的分析设置
-        recommended_settings = get_recommended_settings(
-            task_type=task_type,
-            content_text=content_text,
-            target_quality="balanced"
-        )
+        # 🎯 简化设置：直接使用默认token限制
+        max_tokens = get_token_limit(task_type=task_type)
         
         logger.info(f"🎯 模板分析设置: 类型={analysis_type}, 任务={task_type}, "
-                   f"推荐设置={recommended_settings}")
+                   f"token限制={max_tokens}")
 
         # 渲染分析指令模板
         template_env = Environment(
@@ -1914,8 +1891,8 @@ async def _stream_template_analysis(
                     analysis_instruction=analysis_instruction,
                     content_to_analyze=content_text,
                     model=resolved_model,
-                    temperature=recommended_settings["temperature"],
-                    max_tokens=recommended_settings["max_tokens"],
+                    temperature=0.7,  # 使用固定的温度值
+                    max_tokens=max_tokens,
                 )
         except Exception as e:
             logger.error(f"Failed to create AI conversation: {e}")
@@ -1931,13 +1908,12 @@ async def _stream_template_analysis(
             "model": resolved_model,
             "messages": messages,
             "stream": True,
-            "temperature": recommended_settings["temperature"],
-            "max_tokens": recommended_settings["max_tokens"],
+            "temperature": 0.7,  # 使用固定的温度值
+            "max_tokens": max_tokens,
         }
 
         logger.info(f"🚀 开始模板分析: 模型={resolved_model}, "
-                   f"max_tokens={recommended_settings['max_tokens']}, "
-                   f"temperature={recommended_settings['temperature']}")
+                   f"max_tokens={max_tokens}, temperature=0.7")
 
         timeout = aiohttp.ClientTimeout(total=120.0)
         async with aiohttp.ClientSession(timeout=timeout) as session:

@@ -12,6 +12,7 @@ from app.models.project import Project, QueryRoute
 from app.models.prompt import Tag
 from app.schemas.dashboard import SmartRoutingRequest, SmartRoutingResponse
 from app.utils.llm import get_llm_client
+from app.utils.token_manager import get_token_limit
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +123,7 @@ class SmartRoutingService:
                     {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.3,
-                max_tokens=1000,
+                max_tokens=get_token_limit(task_type="completion"),
             )
 
             # 解析 LLM 响应

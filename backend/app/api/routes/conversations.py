@@ -258,7 +258,7 @@ async def add_message_to_conversation(
             messages=context_messages,
             model=conversation.ai_model_name,
             temperature=0.7,
-            max_tokens=8000,
+            task_type="conversation",  # 使用conversation任务类型
         )
 
         ai_response_content = response.choices[0].message.content

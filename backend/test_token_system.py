@@ -153,10 +153,7 @@ def test_config_integration():
     print("🧪 测试配置集成...")
     
     print(f"  📋 默认最大token: {settings.DEFAULT_MAX_TOKENS}")
-    print(f"  📋 动态调整启用: {settings.ENABLE_DYNAMIC_TOKEN_ADJUSTMENT}")
-    print(f"  📋 内容比例: {settings.TOKEN_CONTENT_RATIO}")
-    print(f"  📋 最小输出token: {settings.MIN_OUTPUT_TOKENS}")
-    print(f"  📋 最大输出token: {settings.MAX_OUTPUT_TOKENS}")
+    print(f"  📋 Token配置已简化，移除了复杂的动态调整逻辑")
     
     print(f"\n  📋 任务token限制:")
     for task, limit in settings.resolved_token_limits.items():

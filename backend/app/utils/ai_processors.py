@@ -20,6 +20,7 @@ from sqlmodel import Session, select
 
 from app.core.config import settings
 from app.models.content import ContentItem
+from app.utils.token_manager import get_token_limit
 from app.services.ai.chat_service import ChatService
 from app.utils.content_processors import (
     ProcessingContext,
@@ -175,7 +176,7 @@ class AIProcessorBase(ProcessingStep):
                         {"role": "user", "content": user_prompt},
                     ],
                     "temperature": 0.3,
-                    "max_tokens": 8000,
+                    "max_tokens": get_token_limit(task_type="analysis"),
                 }
 
                 # 准备请求头，包含认证信息

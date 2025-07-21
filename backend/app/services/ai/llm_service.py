@@ -24,7 +24,7 @@ class LLMService:
         temperature: float = 0.7,
         max_tokens: int | None = None,
         task_type: str = "chat",
-        auto_adjust_tokens: bool = True,
+        auto_adjust_tokens: bool = False,  # 默认关闭自动调整
     ) -> str:
         """
         执行聊天完成请求
@@ -33,9 +33,9 @@ class LLMService:
             messages: 消息列表
             model: 模型名称（配置的模型名称）
             temperature: 温度参数
-            max_tokens: 最大token数（如果为None则自动计算）
-            task_type: 任务类型（用于智能token调整）
-            auto_adjust_tokens: 是否自动调整token限制
+            max_tokens: 最大token数（如果为None则使用默认值）
+            task_type: 任务类型（用于获取默认token限制）
+            auto_adjust_tokens: 是否自动调整token限制（已弃用）
 
         Returns:
             str: AI响应内容
@@ -47,29 +47,15 @@ class LLMService:
         try:
             configured_model = model or settings.DEFAULT_LLM_MODEL
             
-            # 计算输入内容长度以用于token调整
-            input_content = "\n".join([msg.get("content", "") for msg in messages])
-            content_length = len(input_content)
-            
-            # 智能计算max_tokens
-            if max_tokens is None or auto_adjust_tokens:
-                recommended_tokens = get_token_limit(
-                    task_type=task_type,
-                    content_length=content_length,
-                    model_name=configured_model,
-                    base_tokens=max_tokens
-                )
-                final_max_tokens = recommended_tokens
-                
-                if max_tokens is not None:
-                    # 如果用户提供了max_tokens，取两者中的较大值
-                    final_max_tokens = max(max_tokens, recommended_tokens)
-                    
-                logger.info(f"🎯 智能token调整: 任务={task_type}, 内容长度={content_length}, "
-                           f"原始请求={max_tokens}, 智能推荐={recommended_tokens}, "
-                           f"最终使用={final_max_tokens}")
+            # 计算最终的max_tokens
+            if max_tokens is None:
+                # 使用任务类型的默认token限制
+                final_max_tokens = get_token_limit(task_type=task_type)
+                logger.info(f"🎯 使用默认token限制: 任务={task_type}, tokens={final_max_tokens}")
             else:
+                # 使用用户指定的max_tokens
                 final_max_tokens = max_tokens
+                logger.info(f"🎯 使用指定token限制: tokens={final_max_tokens}")
 
             async with httpx.AsyncClient(timeout=120.0) as client:
                 # 构建请求数据

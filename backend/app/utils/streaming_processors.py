@@ -16,12 +16,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
 
+import aiohttp
 import httpx
 from jinja2 import Environment, FileSystemLoader
 from sqlmodel import Session
 
 from app.core.config import settings
 from app.models.content import ContentItem
+from app.utils.token_manager import get_token_limit
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +183,7 @@ class StreamingAIProcessor:
                     ],
                     "stream": True,
                     "temperature": 0.7,
-                    "max_tokens": 8000,
+                    "max_tokens": get_token_limit(task_type="analysis"),
                 }
 
                 # 发送流式请求

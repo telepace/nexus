@@ -7,6 +7,10 @@ general_settings:
   # 添加调试设置
   set_verbose: true
   debug: true
+  # 允许master key直接访问，无需额外的API密钥验证
+  master_key: "os.environ/LITELLM_MASTER_KEY"
+  # 禁用用户API密钥验证，允许master key直接使用
+  disable_spend_logs: false
   environment_variables:
     OPENAI_API_KEY: "os.environ/OPENAI_API_KEY"
     OPENAI_BASE_URL: "os.environ/OPENAI_BASE_URL"

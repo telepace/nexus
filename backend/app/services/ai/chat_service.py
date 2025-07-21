@@ -15,6 +15,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from app.core.config import settings
 from app.utils.tag_manager import tag_manager
+from app.utils.token_manager import get_token_limit
 
 logger = logging.getLogger(__name__)
 
@@ -582,21 +583,10 @@ class ChatService:
             # 选择模型：使用传入的model参数或全局默认
             selected_model = model or settings.DEFAULT_LLM_MODEL
 
-            # 🔧 根据内容长度和模型动态调整max_tokens
-            content_length = len(system_content) + len(user_prompt)
+            # 🔧 简化token限制策略 - 使用配置的默认值
+            max_tokens = get_token_limit(task_type="chat")
             
-            # 为不同模型设置不同的token限制，避免超过账户余额
-            if "gemini-2.5-pro" in selected_model:
-                # Gemini Pro 模型，使用较少的tokens避免超额
-                max_tokens = min(3000, max(500, 5000 - content_length // 4))
-            elif "flash" in selected_model or "lite" in selected_model:
-                # Flash/Lite 模型，可以使用更多tokens
-                max_tokens = min(4000, max(1000, 6000 - content_length // 4))
-            else:
-                # 其他模型，保守设置
-                max_tokens = min(2000, max(500, 4000 - content_length // 4))
-
-            logger.info(f"🎯 动态调整max_tokens: {max_tokens} (内容长度: {content_length}, 模型: {selected_model})")
+            logger.info(f"🎯 使用配置的token限制: {max_tokens} (模型: {selected_model})")
 
             # 构建请求数据
             request_data = {

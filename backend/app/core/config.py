@@ -138,28 +138,28 @@ class Settings(BaseSettings):
     # LLM 配置
     DEFAULT_LLM_MODEL: str = "deepseek-v3-ensemble"
 
-    # Token 配置系统 - 支持不同任务类型的token限制
+    # Token 配置系统 - 简化版本，只使用最大Token限制
     DEFAULT_MAX_TOKENS: int = Field(
-        default=8000,
+        default=20000,
         ge=100,
         le=100000,
         description="默认最大token数"
     )
 
-    # 不同任务类型的token配置
+    # 不同任务类型的token配置（简化版）
     TOKEN_LIMITS: dict[str, int] = Field(
         default={
-            "chat": 10000,              # 对话聊天
-            "summary": 10000,           # 摘要生成
-            "key_points": 10000,        # 要点提取
-            "labels": 10000,             # 标签生成
-            "analysis": 10000,         # 深度分析
-            "extension": 10000,         # 浏览器扩展
-            "conversation": 10000,      # 对话系统
-            "completion": 10000,        # 通用补全
-            "research": 10000,         # 深度研究
-            "segmentation": 10000,      # 文本分段
-            "embedding": 10000,         # 嵌入生成
+            "chat": 20000,              # 对话聊天
+            "summary": 20000,           # 摘要生成
+            "key_points": 20000,        # 要点提取
+            "labels": 20000,            # 标签生成
+            "analysis": 20000,          # 深度分析
+            "extension": 20000,         # 浏览器扩展
+            "conversation": 20000,      # 对话系统
+            "completion": 20000,        # 通用补全
+            "research": 20000,          # 深度研究
+            "segmentation": 20000,      # 文本分段
+            "embedding": 20000,         # 嵌入生成
         },
         description="不同任务类型的token限制配置"
     )
@@ -174,33 +174,6 @@ class Settings(BaseSettings):
     TOKEN_LIMIT_CONVERSATION: int | None = Field(default=None, description="对话系统token限制")
     TOKEN_LIMIT_COMPLETION: int | None = Field(default=None, description="补全token限制")
     TOKEN_LIMIT_RESEARCH: int | None = Field(default=None, description="研究token限制")
-
-    # 动态token配置
-    ENABLE_DYNAMIC_TOKEN_ADJUSTMENT: bool = Field(
-        default=True,
-        description="是否启用基于内容长度的动态token调整"
-    )
-
-    TOKEN_CONTENT_RATIO: float = Field(
-        default=0.3,
-        ge=0.1,
-        le=0.8,
-        description="输出token与输入内容长度的比例（用于动态调整）"
-    )
-
-    MIN_OUTPUT_TOKENS: int = Field(
-        default=500,
-        ge=100,
-        le=2000,
-        description="最小输出token数"
-    )
-
-    MAX_OUTPUT_TOKENS: int = Field(
-        default=50000,
-        ge=1000,
-        le=200000,
-        description="最大输出token数"
-    )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -249,11 +222,11 @@ class Settings(BaseSettings):
         base_tokens: int | None = None
     ) -> int:
         """
-        获取指定任务类型的token限制
+        获取指定任务类型的token限制（简化版本）
 
         Args:
             task_type: 任务类型
-            content_length: 输入内容长度（用于动态调整）
+            content_length: 输入内容长度（已弃用，保留兼容性）
             base_tokens: 基础token数（覆盖默认配置）
 
         Returns:
@@ -265,23 +238,9 @@ class Settings(BaseSettings):
         else:
             token_limit = self.resolved_token_limits.get(task_type, self.DEFAULT_MAX_TOKENS)
 
-        # 动态调整token限制
-        if self.ENABLE_DYNAMIC_TOKEN_ADJUSTMENT and content_length is not None:
-            # 基于内容长度计算推荐的输出token数
-            estimated_output_tokens = int(content_length * self.TOKEN_CONTENT_RATIO)
-
-            # 应用最小值和最大值限制
-            estimated_output_tokens = max(self.MIN_OUTPUT_TOKENS, estimated_output_tokens)
-            estimated_output_tokens = min(self.MAX_OUTPUT_TOKENS, estimated_output_tokens)
-
-            # 如果估算值更大，使用估算值；否则使用配置值
-            token_limit = max(token_limit, estimated_output_tokens)
-
-            logger.debug(f"动态调整token限制: 任务={task_type}, 内容长度={content_length}, "
-                        f"原始限制={self.resolved_token_limits.get(task_type, self.DEFAULT_MAX_TOKENS)}, "
-                        f"估算需求={estimated_output_tokens}, 最终限制={token_limit}")
-
-        return min(token_limit, self.MAX_OUTPUT_TOKENS)  # 确保不超过绝对最大值
+        logger.debug(f"Token限制: 任务={task_type}, 限制={token_limit}")
+        
+        return token_limit
 
     # AI任务模型配置 - 支持为不同任务指定不同模型，可通过环境变量覆盖
     AI_TASK_MODELS: dict[str, str] = Field(
