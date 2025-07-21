@@ -552,10 +552,11 @@ class ChatService:
                     return result
             except Exception as lite_err:
                 logger.error(
-                    f"LiteLLM proxy call failed: {lite_err}; falling back to mock"
+                    f"💥 LiteLLM proxy调用失败: {lite_err}; 回退到Mock数据"
                 )
 
             # --- fallback mock ---
+            logger.warning(f"🔄 启用Mock数据回退机制 for template: {template_name}")
             if template_name == "summary.j2":
                 return await self._generate_mock_summary(context)
             elif template_name == "key_points.j2":
@@ -563,21 +564,39 @@ class ChatService:
             elif template_name == "labels.j2":
                 return await self._generate_mock_labels(context)
             else:
+                logger.warning(f"⚠️ 未知模板 {template_name}，返回通用Mock响应")
                 return {"result": "mock response"}
 
         except Exception as e:
-            logger.error(f"模板生成失败: {template_name}, 错误: {str(e)}")
+            logger.error(f"💥 模板生成完全失败: {template_name}, 错误: {str(e)}")
             return {}
 
     async def _call_litellm_proxy(
         self, system_content: str, user_prompt: str, model: str | None = None
     ) -> str:
-        """通过LiteLLM代理调用LLM"""
+        """通过LiteLLM代理调用LLM，增强错误处理和重试机制"""
+        import time
 
         def sync_request():
-            """同步的requests调用"""
+            """同步的requests调用，带重试机制"""
             # 选择模型：使用传入的model参数或全局默认
             selected_model = model or settings.DEFAULT_LLM_MODEL
+
+            # 🔧 根据内容长度和模型动态调整max_tokens
+            content_length = len(system_content) + len(user_prompt)
+            
+            # 为不同模型设置不同的token限制，避免超过账户余额
+            if "gemini-2.5-pro" in selected_model:
+                # Gemini Pro 模型，使用较少的tokens避免超额
+                max_tokens = min(3000, max(500, 5000 - content_length // 4))
+            elif "flash" in selected_model or "lite" in selected_model:
+                # Flash/Lite 模型，可以使用更多tokens
+                max_tokens = min(4000, max(1000, 6000 - content_length // 4))
+            else:
+                # 其他模型，保守设置
+                max_tokens = min(2000, max(500, 4000 - content_length // 4))
+
+            logger.info(f"🎯 动态调整max_tokens: {max_tokens} (内容长度: {content_length}, 模型: {selected_model})")
 
             # 构建请求数据
             request_data = {
@@ -587,7 +606,7 @@ class ChatService:
                     {"role": "user", "content": user_prompt},
                 ],
                 "temperature": 0.3,
-                "max_tokens": 8000,
+                "max_tokens": max_tokens,  # 使用动态调整的值
             }
 
             # 准备请求头，包含认证信息
@@ -601,52 +620,95 @@ class ChatService:
 
             logger.debug(f"Calling LiteLLM proxy: {url} with model: {selected_model}")
 
-            response = requests.post(
-                url,
-                json=request_data,
-                headers=headers,
-                timeout=60.0,
-            )
+            # 重试机制
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    logger.info(f"🚀 LiteLLM API调用 (尝试 {attempt + 1}/{max_retries}): {selected_model}")
+                    
+                    response = requests.post(
+                        url,
+                        json=request_data,
+                        headers=headers,
+                        timeout=60.0,
+                    )
 
-            response.raise_for_status()
-            response_data = response.json()
+                    # 详细记录响应状态
+                    logger.info(f"📡 LiteLLM API响应: HTTP {response.status_code}")
+                    
+                    if response.status_code == 200:
+                        response_data = response.json()
 
-            # 提取LLM响应内容
-            if "choices" not in response_data or not response_data["choices"]:
-                raise ValueError("Invalid LLM response: missing choices")
+                        # 提取LLM响应内容
+                        if "choices" not in response_data or not response_data["choices"]:
+                            raise ValueError("Invalid LLM response: missing choices")
 
-            content = response_data["choices"][0]["message"]["content"]
-            logger.info(f"✅ LLM response received, content length: {len(content)}")
-            logger.debug(f"🔍 LLM response content preview: {content[:200]}")
-            return content.strip()
+                        content = response_data["choices"][0]["message"]["content"]
+                        logger.info(f"✅ LLM response received successfully, content length: {len(content)}")
+                        logger.debug(f"🔍 LLM response content preview: {content[:200]}")
+                        return content.strip()
+                    else:
+                        # 记录详细的错误信息
+                        error_text = response.text
+                        logger.error(f"❌ LiteLLM API HTTP {response.status_code}: {error_text}")
+                        
+                        if attempt < max_retries - 1:
+                            wait_time = 2 ** attempt  # 指数退避
+                            logger.info(f"⏳ 等待 {wait_time}s 后重试...")
+                            time.sleep(wait_time)
+                            continue
+                        else:
+                            response.raise_for_status()
+
+                except requests.exceptions.Timeout as e:
+                    logger.error(f"⏰ LiteLLM API超时 (尝试 {attempt + 1}): {e}")
+                    if attempt < max_retries - 1:
+                        wait_time = 2 ** attempt
+                        logger.info(f"⏳ 超时重试，等待 {wait_time}s...")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        raise Exception(f"LLM API timeout after {max_retries} attempts: {e}")
+                        
+                except requests.exceptions.ConnectionError as e:
+                    logger.error(f"🔌 LiteLLM API连接错误 (尝试 {attempt + 1}): {e}")
+                    if attempt < max_retries - 1:
+                        wait_time = 2 ** attempt
+                        logger.info(f"⏳ 连接错误重试，等待 {wait_time}s...")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        raise Exception(f"LLM API connection error after {max_retries} attempts: {e}")
+                        
+                except Exception as e:
+                    logger.error(f"💥 LiteLLM API未知错误 (尝试 {attempt + 1}): {e}")
+                    if attempt < max_retries - 1:
+                        wait_time = 2 ** attempt
+                        logger.info(f"⏳ 未知错误重试，等待 {wait_time}s...")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        raise Exception(f"LLM API unknown error after {max_retries} attempts: {e}")
+
+            # 如果所有重试都失败了，抛出异常
+            raise Exception(f"LLM API failed after {max_retries} attempts")
 
         try:
             # 在线程池中运行同步请求，避免阻塞异步事件循环
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(None, sync_request)
 
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 401:
-                logger.error(
-                    "LLM API authentication failed. Check LITELLM_MASTER_KEY configuration."
-                )
-                raise Exception(f"LLM API authentication failed: {e}")
-            else:
-                logger.error(f"LLM API HTTP error {e.response.status_code}: {e}")
-                raise Exception(f"LLM API error: {e}")
-        except requests.exceptions.RequestException as e:
-            logger.error(f"LLM API request failed: {e}")
-            raise Exception(f"LLM API request failed: {e}")
         except Exception as e:
-            logger.error(f"LLM API call failed: {str(e)}")
+            logger.error(f"💥 LiteLLM proxy call completely failed: {e}")
             raise
 
     async def _generate_mock_summary(self, context: dict[str, Any]) -> dict[str, Any]:
         """生成模拟摘要"""
+        logger.warning("🤖 使用Mock数据生成摘要 - LLM API不可用，回退到模拟数据")
         content = context.get("content", "")
         sentences = content.split("。")[:3]
 
-        return {
+        mock_data = {
             "summary": {
                 "main_thesis": sentences[0] if sentences else "主要观点",
                 "key_arguments": sentences[1:3]
@@ -655,12 +717,15 @@ class ChatService:
                 "word_count": len(" ".join(sentences).split()),
             }
         }
+        logger.info("📝 Mock摘要数据已生成")
+        return mock_data
 
     async def _generate_mock_key_points(
         self, context: dict[str, Any]
     ) -> dict[str, Any]:
         """生成模拟关键点"""
-        return {
+        logger.warning("🤖 使用Mock数据生成关键点 - LLM API不可用，回退到模拟数据")
+        mock_data = {
             "key_points": {
                 "core_concepts": [
                     {"point": "关键概念1", "category": "main", "priority": "high"},
@@ -673,9 +738,12 @@ class ChatService:
                 "total_points": 2,
             }
         }
+        logger.info("💡 Mock关键点数据已生成")
+        return mock_data
 
     async def _generate_mock_labels(self, context: dict[str, Any]) -> dict[str, Any]:
         """生成模拟标签、评分和阅读时间（适配新版标签Prompt）"""
+        logger.warning("🤖 使用Mock数据生成标签 - LLM API不可用，回退到模拟数据")
         content = context.get("content", "")
 
         # 从预设标签中随机选择一些作为mock结果
