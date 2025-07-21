@@ -7,9 +7,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  FileText,
-  Link,
-  BookOpen,
   Star,
   Clock,
   MoreHorizontal,
@@ -20,6 +17,7 @@ import {
   Copy,
   RefreshCw,
 } from "lucide-react";
+import { TwitchLogo } from "@phosphor-icons/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,16 +55,7 @@ interface Props {
 }
 
 const getContentIcon = (type: string) => {
-  switch (type) {
-    case "pdf":
-      return <FileText className="h-4 w-4" />;
-    case "url":
-      return <Link className="h-4 w-4" />;
-    case "text":
-      return <BookOpen className="h-4 w-4" />;
-    default:
-      return <FileText className="h-4 w-4" />;
-  }
+  return <TwitchLogo size={20} weight="bold" />;
 };
 
 // 星级评分组件 - 更简洁的设计
