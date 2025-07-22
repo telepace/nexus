@@ -20,7 +20,7 @@ from fastapi import (
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, or_, desc, func
+from sqlalchemy import and_, or_, desc, func
 from typing import List, Optional
 
 from app.api.deps import CurrentUser, SessionDep
@@ -1628,6 +1628,7 @@ def get_content_conversations(
         if not include_inactive:
             query = query.where(AIConversation.is_active == True)
 
+        # 使用 scalars() 方法确保返回模型对象而不是 Row 对象
         conversations = session.exec(query.order_by(AIConversation.created_at)).all()
         
         logger.info(f"Found {len(conversations)} conversations for content {content_id}")
