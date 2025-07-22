@@ -21,10 +21,15 @@ general_settings:
     GEMINI_API_KEY: "os.environ/GEMINI_API_KEY"
 
 model_list:
-  # OpenRouter Gemini Models搭讪
+  # OpenRouter Gemini Models
   - model_name: gemini-2.5-flash-lite-preview-06-17
     litellm_params:
       model: openrouter/google/gemini-2.5-flash-lite-preview-06-17
+      api_key: "os.environ/OR_API_KEY"
+
+  - model_name: gemini-2.5-flash
+    litellm_params:
+      model: openrouter/google/gemini-2.5-flash
       api_key: "os.environ/OR_API_KEY"
 
   - model_name: or-gemini-2.5-pro
