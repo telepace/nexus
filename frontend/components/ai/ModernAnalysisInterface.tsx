@@ -26,6 +26,7 @@ import { ContentItemPublic } from "@/app/(withSidebar)/content-library/types";
 import { adaptAnalysisData } from "./AnalysisCards";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 import { getCookie } from "cookies-next";
+import { getConversationTitle, getConversationTypeLabel } from "@/utils/conversationUtils";
 import { fetchPrompts, PromptData } from "@/components/actions/prompts-action";
 import { contentApi } from "@/lib/api/content";
 import { formatDistanceToNow } from "date-fns";
@@ -54,9 +55,18 @@ interface AnalysisCard {
   subtitle?: string;
   emoji: string;
   content: {
-    type: "summary" | "keyPoints" | "conversations" | "custom" | "streaming";
+    type: "summary" | "keyPoints" | "conversations" | "custom" | "streaming" | "userInput";
     data: any;
   };
+}
+
+// 新增用户输入数据接口
+interface UserInputData {
+  type: "prompt" | "manual" | "history" | "expand";
+  content: string;
+  promptName?: string;
+  originalLength?: number;
+  timestamp: number;
 }
 
 const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
@@ -84,6 +94,12 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [streamingResponse, setStreamingResponse] = useState("");
+  
+  // 新增：用户输入状态管理
+  const [currentUserInput, setCurrentUserInput] = useState<UserInputData | null>(null);
+  
+  // 新增：输入内容展开状态管理
+  const [expandedInputs, setExpandedInputs] = useState<Set<number>>(new Set());
   
   // 滚动控制相关状态
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -242,7 +258,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   // 处理AI分析
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const performCompletion = useCallback(
-    async (body: Record<string, unknown>, title: string) => {
+    async (body: Record<string, unknown>, title: string, userInputData?: UserInputData) => {
       // isAnalyzing 是在函数外部定义的，但在函数内部使用。
       // 为了确保函数在重新渲染时能够获取到最新的 isAnalyzing 状态，
       // 我们不应该将其包含在 useCallback 的依赖数组中，
@@ -251,6 +267,11 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       if (isAnalyzing) return;
 
       setIsAnalyzing(true);
+      
+      // 设置用户输入数据
+      if (userInputData) {
+        setCurrentUserInput(userInputData);
+      }
       
       // 立即设置加载状态，让卡片立即显示
       setStreamingResponse("LOADING_PLACEHOLDER_" + Date.now());
@@ -331,6 +352,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         console.error("Analysis failed:", error);
         // 错误时清空streamingResponse，避免显示加载占位符
         setStreamingResponse("");
+        // 也清空用户输入数据
+        setCurrentUserInput(null);
         toast({
           title: "分析失败",
           description: "请稍后重试",
@@ -362,6 +385,15 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         );
       }
 
+      // 创建用户输入数据
+      const userInputData: UserInputData = {
+        type: "prompt",
+        content: promptContent,
+        promptName: prompt.name,
+        originalLength: promptContent.length,
+        timestamp: Date.now(),
+      };
+
       // 立即开始处理，不需要用户再次点击发送
       await performCompletion(
         {
@@ -369,6 +401,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           template_name: prompt.name,
         },
         `正在使用"${prompt.name}"模板进行分析`,
+        userInputData,
       );
 
       // 清空输入框
@@ -379,22 +412,30 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
 
   // 处理历史记录点击
   const handleHistoryClick = useCallback((conversation: ConversationPublic) => {
-    if (conversation.summary) {
-      setInputValue(
-        `继续关于"${conversation.title}"的对话：${conversation.summary}`,
-      );
-    } else {
-      setInputValue(`继续关于"${conversation.title}"的对话`);
-    }
+    const historyContent = conversation.summary 
+      ? `继续关于"${conversation.title}"的对话：${conversation.summary}`
+      : `继续关于"${conversation.title}"的对话`;
+    
+    setInputValue(historyContent);
   }, []);
 
   const handleAnalysis = useCallback(async () => {
     if (!inputValue.trim()) return;
+    
+    // 创建用户输入数据
+    const userInputData: UserInputData = {
+      type: "manual",
+      content: inputValue.trim(),
+      originalLength: inputValue.trim().length,
+      timestamp: Date.now(),
+    };
+
     await performCompletion(
       {
         analysis_instruction: inputValue,
       },
       "分析完成",
+      userInputData,
     );
   }, [inputValue, performCompletion]);
 
@@ -411,6 +452,14 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         jsonContent.c || jsonContent.content || JSON.stringify(jsonContent);
       const instruction = `请对以下要点进行深度展开讨论：${selectedPoint}`;
 
+      // 创建用户输入数据
+      const userInputData: UserInputData = {
+        type: "expand",
+        content: instruction,
+        originalLength: instruction.length,
+        timestamp: Date.now(),
+      };
+
       // 立即触发分析，不设置输入值
       await performCompletion(
         {
@@ -419,6 +468,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           selected_point: selectedPoint,
         },
         "展开分析完成",
+        userInputData,
       );
     },
     [performCompletion],
@@ -426,7 +476,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
 
   // 构建分析卡片数据
   const buildAnalysisCards = useCallback((): AnalysisCard[] => {
-    if (!analysisResult && !streamingResponse && (!conversations || conversations.length === 0)) return [];
+    if (!analysisResult && !streamingResponse && !currentUserInput && (!conversations || conversations.length === 0)) return [];
 
     const cards: AnalysisCard[] = [];
     // 使用meta_info代替ai_analysis
@@ -484,14 +534,27 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       }
     }
 
-    // 实时分析结果卡片 - 放在最后面，确保新卡片出现在最下方
-    if (streamingResponse) {
-      const isLoading = streamingResponse.startsWith("LOADING_PLACEHOLDER_");
+    // 用户输入卡片 - 当有用户输入或正在分析时显示
+    if (currentUserInput || (streamingResponse && isAnalyzing)) {
+      cards.push({
+        id: `userInput-${content.id}`,
+        title: "用户输入",
+        subtitle: currentUserInput ? getInputSubtitle(currentUserInput) : "",
+        emoji: "💭",
+        content: {
+          type: "userInput",
+          data: currentUserInput,
+        },
+      });
+    }
+
+    // AI响应卡片 - 当有流式响应时显示
+    if (streamingResponse && !streamingResponse.startsWith("LOADING_PLACEHOLDER_")) {
       cards.push({
         id: `streaming-${content.id}`,
-        title: "AI分析",
-        subtitle: "",
-        emoji: "👀",
+        title: "AI 回复",
+        subtitle: isAnalyzing ? "正在生成回复..." : "回复完成",
+        emoji: "🤖",
         content: {
           type: "streaming",
           data: streamingResponse,
@@ -504,10 +567,27 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     analysisResult,
     content.meta_info,
     streamingResponse,
+    currentUserInput,
     isAnalyzing,
     showPreprocessedContent,
     conversations, // 添加 conversations 依赖
   ]);
+
+  // 获取输入类型的副标题
+  const getInputSubtitle = (inputData: UserInputData): string => {
+    switch (inputData.type) {
+      case "prompt":
+        return `使用模板：${inputData.promptName}`;
+      case "manual":
+        return `手动输入 · ${inputData.originalLength || 0} 字符`;
+      case "history":
+        return "基于历史对话";
+      case "expand":
+        return "展开讨论";
+      default:
+        return "";
+    }
+  };
 
   const cards = buildAnalysisCards();
 
@@ -573,7 +653,117 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       );
     }
 
+    // 用户输入卡片内容渲染
+    if (cardContent.type === "userInput") {
+      const inputData = cardContent.data as UserInputData;
+      if (!inputData) return null;
+
+      return (
+        <div
+          className={`
+            px-6 py-4 rounded-lg transition-all duration-200 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30
+            ${
+              selectedBlock === `${card.id}-main`
+                ? "opacity-90"
+                : ""
+            }
+          `}
+        >
+          {/* 输入类型标识 */}
+          <div className="flex items-center gap-2 mb-3">
+            {inputData.type === "prompt" && (
+              <>
+                <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                  {inputData.promptName}
+                </span>
+              </>
+            )}
+            {inputData.type === "manual" && (
+              <>
+                <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                  手动输入
+                </span>
+              </>
+            )}
+            {inputData.type === "expand" && (
+              <>
+                <ArrowUpRight className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                  展开讨论
+                </span>
+              </>
+            )}
+            <span className="text-xs text-blue-500 dark:text-blue-400 ml-auto">
+              {new Date(inputData.timestamp).toLocaleTimeString()}
+            </span>
+          </div>
+
+          {/* 输入内容 - 优雅处理长文本 */}
+          <div className="select-text">
+            {renderInputContent(inputData.content, inputData.timestamp)}
+          </div>
+        </div>
+      );
+    }
+
     return null;
+  };
+
+  // 渲染输入内容 - 优雅处理长文本
+  const renderInputContent = (content: string, timestamp: number) => {
+    const maxLength = 200; // 最大显示长度
+    const isLong = content.length > maxLength;
+    const isExpanded = expandedInputs.has(timestamp);
+    
+    const toggleExpanded = () => {
+      setExpandedInputs(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(timestamp)) {
+          newSet.delete(timestamp);
+        } else {
+          newSet.add(timestamp);
+        }
+        return newSet;
+      });
+    };
+    
+    if (!isLong) {
+      // 短文本直接显示
+      return (
+        <div className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed whitespace-pre-wrap">
+          {content}
+        </div>
+      );
+    }
+
+    // 长文本处理
+    const displayContent = isExpanded ? content : content.substring(0, maxLength) + "...";
+    
+    return (
+      <div className="space-y-2">
+        <div className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed whitespace-pre-wrap">
+          {displayContent}
+        </div>
+        <button
+          onClick={toggleExpanded}
+          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors duration-200 flex items-center gap-1"
+        >
+          {isExpanded ? (
+            <>
+              <Minus className="h-3 w-3" />
+              收起
+            </>
+          ) : (
+            <>
+              <Plus className="h-3 w-3" />
+              显示完整内容 ({content.length - maxLength} 个字符)
+            </>
+          )}
+        </button>
+      </div>
+    );
   };
 
   // 处理卡片折叠状态
@@ -707,12 +897,10 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                           <div className="flex items-center gap-2">
                             <MessageSquare className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm font-medium">
-                              {conversation.title || "未命名对话"}
+                              {conversation.title || getConversationTitle(conversation, 25) || "未命名对话"}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              {conversation.conversation_type === "auto_analysis" && "自动分析"}
-                              {conversation.conversation_type === "user_chat" && "用户对话"}
-                              {conversation.conversation_type === "prompt_analysis" && "模板分析"}
+                              {getConversationTypeLabel(conversation)}
                             </span>
                           </div>
                           <span className="text-xs text-muted-foreground">
@@ -791,6 +979,9 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                     )}
                   </div>
                 )}
+
+                {/* 用户输入卡片内容 */}
+                {card.content.type === "userInput" && renderCardContent(card)}
               </div>
             </div>
           </CardContent>

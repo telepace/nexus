@@ -66,7 +66,8 @@
       "Bash(git show:*)",
       "Bash(git reset:*)",
       "Bash(cp:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(npm run:*)"
     ]
   },
   "enableAllProjectMcpServers": false
