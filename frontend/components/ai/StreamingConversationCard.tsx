@@ -61,6 +61,14 @@ export function StreamingConversationCard({
   const userMessage = conversation.find(msg => msg.role === "user");
   const assistantMessage = conversation.find(msg => msg.role === "assistant");
 
+  // 获取对话标题 - 显示用户实际输入内容
+  const getConversationTitle = (): string => {
+    if (!userMessage?.content) return "AI 对话";
+    
+    const content = userMessage.content.trim();
+    return content.length > 50 ? content.substring(0, 50) + "..." : content;
+  };
+
   // 自动滚动到新的内容
   useEffect(() => {
     if (assistantMessage?.status === "streaming" && cardRef.current) {
@@ -140,7 +148,7 @@ export function StreamingConversationCard({
               </div>
               <div>
                 <h3 className="text-sm font-medium text-foreground">
-                  AI 对话
+                  {getConversationTitle()}
                 </h3>
                 <p className="text-xs text-muted-foreground">
                   {userMessage ? formatDistanceToNow(userMessage.timestamp, {

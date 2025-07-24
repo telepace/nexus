@@ -215,32 +215,31 @@ class Settings(BaseSettings):
 
         return resolved
 
-    def get_token_limit(
-        self,
-        task_type: str = "default",
-        content_length: int | None = None,
-        base_tokens: int | None = None
-    ) -> int:
+    def get_token_limit(self, task_type: str = "default", base_tokens: int | None = None) -> int:
         """
-        获取指定任务类型的token限制（简化版本）
-
+        获取任务类型对应的token限制
+        
         Args:
             task_type: 任务类型
-            content_length: 输入内容长度（已弃用，保留兼容性）
-            base_tokens: 基础token数（覆盖默认配置）
-
+            base_tokens: 基础token数（覆盖配置）
+            
         Returns:
-            int: 最终的token限制
+            int: token限制
         """
-        # 获取基础token限制
         if base_tokens is not None:
-            token_limit = base_tokens
-        else:
-            token_limit = self.resolved_token_limits.get(task_type, self.DEFAULT_MAX_TOKENS)
-
-        logger.debug(f"Token限制: 任务={task_type}, 限制={token_limit}")
+            return base_tokens
+            
+        # 更保守的token限制，避免超出OpenRouter账户余额
+        task_limits = {
+            "chat": 12000,      # 降低聊天token限制
+            "summary": 10000,   # 降低摘要token限制  
+            "key_points": 8000, # 降低关键点token限制
+            "labels": 6000,     # 降低标签token限制
+            "analysis": 15000,  # 分析任务稍高
+            "default": 10000,   # 默认更保守
+        }
         
-        return token_limit
+        return task_limits.get(task_type, task_limits["default"])
 
     # AI任务模型配置 - 支持为不同任务指定不同模型，可通过环境变量覆盖
     AI_TASK_MODELS: dict[str, str] = Field(

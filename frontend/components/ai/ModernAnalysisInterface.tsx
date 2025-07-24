@@ -11,6 +11,8 @@ import {
   Minus,
   Plus,
   Loader2,
+  Bot,
+  User,
 } from "lucide-react";
 import { useCardHeight } from "@/hooks/use-card-height";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,13 +28,51 @@ import { ContentItemPublic } from "@/app/(withSidebar)/content-library/types";
 import { adaptAnalysisData } from "./AnalysisCards";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 import { getCookie } from "cookies-next";
-import { getConversationTitle, getConversationTypeLabel } from "@/utils/conversationUtils";
+// import { getConversationTitle, getConversationTypeLabel } from "@/utils/conversationUtils";
 import { fetchPrompts, PromptData } from "@/components/actions/prompts-action";
 import { contentApi } from "@/lib/api/content";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { FavoriteButton } from "@/components/actions/FavoriteButton";
 import { useLLMAnalysisStore } from "@/lib/stores/llm-analysis-store";
+
+// 简单的对话标题获取函数
+const getConversationTitle = (conversation: ConversationPublic, maxLength: number = 25): string => {
+  if (conversation.title) {
+    return conversation.title.length > maxLength 
+      ? conversation.title.substring(0, maxLength) + '...'
+      : conversation.title;
+  }
+  
+  // 如果没有标题，尝试从第一条消息获取
+  if (conversation.messages && conversation.messages.length > 0) {
+    const firstMessage = conversation.messages[0];
+    const content = firstMessage.content || '';
+    return content.length > maxLength 
+      ? content.substring(0, maxLength) + '...'
+      : content;
+  }
+  
+  return "未命名对话";
+};
+
+// 简单的对话类型标签获取函数
+const getConversationTypeLabel = (conversation: ConversationPublic): string => {
+  // 根据对话的属性判断类型
+  if (conversation.conversation_type) {
+    switch (conversation.conversation_type) {
+      case 'chat_conversation':
+        return '对话';
+      case 'summarizer':
+        return '摘要';
+      case 'processing_pipeline':
+        return '处理';
+      default:
+        return '分析';
+    }
+  }
+  return '对话';
+};
 
 interface ModernAnalysisInterfaceProps {
   content: ContentItemPublic;
@@ -55,18 +95,9 @@ interface AnalysisCard {
   subtitle?: string;
   emoji: string;
   content: {
-    type: "summary" | "keyPoints" | "conversations" | "custom" | "streaming" | "userInput";
+    type: "summary" | "keyPoints" | "conversations" | "historyConversation" | "custom" | "streaming";
     data: any;
   };
-}
-
-// 新增用户输入数据接口
-interface UserInputData {
-  type: "prompt" | "manual" | "history" | "expand";
-  content: string;
-  promptName?: string;
-  originalLength?: number;
-  timestamp: number;
 }
 
 const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
@@ -95,19 +126,9 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [streamingResponse, setStreamingResponse] = useState("");
   
-  // 新增：用户输入状态管理
-  const [currentUserInput, setCurrentUserInput] = useState<UserInputData | null>(null);
-  
-  // 新增：输入内容展开状态管理
-  const [expandedInputs, setExpandedInputs] = useState<Set<number>>(new Set());
-  
   // 滚动控制相关状态
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [lastCardCount, setLastCardCount] = useState(0);
-  // Remove local state for prompts
-  // const [prompts, setPrompts] = useState<PromptData[]>([]);
-  // const [loadingPrompts, setLoadingPrompts] = useState(true);
-  // Add store usage
   const { enabledPrompts, isLoadingPrompts, loadPrompts } = useLLMAnalysisStore();
   // Load prompts from store
   useEffect(() => {
@@ -258,7 +279,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   // 处理AI分析
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const performCompletion = useCallback(
-    async (body: Record<string, unknown>, title: string, userInputData?: UserInputData) => {
+    async (body: Record<string, unknown>, title: string) => {
       // isAnalyzing 是在函数外部定义的，但在函数内部使用。
       // 为了确保函数在重新渲染时能够获取到最新的 isAnalyzing 状态，
       // 我们不应该将其包含在 useCallback 的依赖数组中，
@@ -267,11 +288,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       if (isAnalyzing) return;
 
       setIsAnalyzing(true);
-      
-      // 设置用户输入数据
-      if (userInputData) {
-        setCurrentUserInput(userInputData);
-      }
       
       // 立即设置加载状态，让卡片立即显示
       setStreamingResponse("LOADING_PLACEHOLDER_" + Date.now());
@@ -352,8 +368,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         console.error("Analysis failed:", error);
         // 错误时清空streamingResponse，避免显示加载占位符
         setStreamingResponse("");
-        // 也清空用户输入数据
-        setCurrentUserInput(null);
         toast({
           title: "分析失败",
           description: "请稍后重试",
@@ -385,15 +399,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         );
       }
 
-      // 创建用户输入数据
-      const userInputData: UserInputData = {
-        type: "prompt",
-        content: promptContent,
-        promptName: prompt.name,
-        originalLength: promptContent.length,
-        timestamp: Date.now(),
-      };
-
       // 立即开始处理，不需要用户再次点击发送
       await performCompletion(
         {
@@ -401,7 +406,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           template_name: prompt.name,
         },
         `正在使用"${prompt.name}"模板进行分析`,
-        userInputData,
       );
 
       // 清空输入框
@@ -422,20 +426,11 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   const handleAnalysis = useCallback(async () => {
     if (!inputValue.trim()) return;
     
-    // 创建用户输入数据
-    const userInputData: UserInputData = {
-      type: "manual",
-      content: inputValue.trim(),
-      originalLength: inputValue.trim().length,
-      timestamp: Date.now(),
-    };
-
     await performCompletion(
       {
         analysis_instruction: inputValue,
       },
       "分析完成",
-      userInputData,
     );
   }, [inputValue, performCompletion]);
 
@@ -452,14 +447,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
         jsonContent.c || jsonContent.content || JSON.stringify(jsonContent);
       const instruction = `请对以下要点进行深度展开讨论：${selectedPoint}`;
 
-      // 创建用户输入数据
-      const userInputData: UserInputData = {
-        type: "expand",
-        content: instruction,
-        originalLength: instruction.length,
-        timestamp: Date.now(),
-      };
-
       // 立即触发分析，不设置输入值
       await performCompletion(
         {
@@ -468,7 +455,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           selected_point: selectedPoint,
         },
         "展开分析完成",
-        userInputData,
       );
     },
     [performCompletion],
@@ -476,7 +462,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
 
   // 构建分析卡片数据
   const buildAnalysisCards = useCallback((): AnalysisCard[] => {
-    if (!analysisResult && !streamingResponse && !currentUserInput && (!conversations || conversations.length === 0)) return [];
+    if (!analysisResult && !streamingResponse && (!conversations || conversations.length === 0)) return [];
 
     const cards: AnalysisCard[] = [];
     // 使用meta_info代替ai_analysis
@@ -514,41 +500,39 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       }
     }
 
-    // 对话历史卡片 - 如果有对话记录就显示
+    // 历史对话卡片 - 每个对话作为独立卡片显示
     if (conversations && conversations.length > 0) {
       const conversationsWithMessages = conversations.filter(conv => 
         conv.messages && conv.messages.length > 0
       );
       
-      if (conversationsWithMessages.length > 0) {
+      // 为每个历史对话创建独立卡片
+      conversationsWithMessages.forEach((conversation, index) => {
+        const userMessages = conversation.messages?.filter((msg: any) => msg.role !== "system") || [];
+        const messageCount = userMessages.length;
+        
+        // 获取对话标题
+        const conversationTitle = conversation.title || 
+          getConversationTitle(conversation, 25) || 
+          "历史对话";
+          
+        // 获取对话类型标签
+        const typeLabel = getConversationTypeLabel(conversation);
+        
         cards.push({
-          id: `conversations-${content.id}`,
-          title: "对话记录",
-          subtitle: `${conversationsWithMessages.length} 个对话，${conversationsWithMessages.reduce((total, conv) => total + (conv.messages?.length || 0), 0)} 条消息`,
+          id: `conversation-${conversation.id}`,
+          title: conversationTitle,
+          subtitle: `${typeLabel} · ${messageCount} 条消息 · ${formatDistanceToNow(new Date(conversation.created_at), { addSuffix: true, locale: zhCN })}`,
           emoji: "💬",
           content: {
-            type: "conversations",
-            data: conversationsWithMessages,
+            type: "historyConversation",
+            data: conversation,
           },
         });
-      }
-    }
-
-    // 用户输入卡片 - 当有用户输入或正在分析时显示
-    if (currentUserInput || (streamingResponse && isAnalyzing)) {
-      cards.push({
-        id: `userInput-${content.id}`,
-        title: "用户输入",
-        subtitle: currentUserInput ? getInputSubtitle(currentUserInput) : "",
-        emoji: "💭",
-        content: {
-          type: "userInput",
-          data: currentUserInput,
-        },
       });
     }
 
-    // AI响应卡片 - 当有流式响应时显示
+    // AI响应卡片 - 当有流式响应时显示（但不显示用户输入）
     if (streamingResponse && !streamingResponse.startsWith("LOADING_PLACEHOLDER_")) {
       cards.push({
         id: `streaming-${content.id}`,
@@ -567,27 +551,10 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     analysisResult,
     content.meta_info,
     streamingResponse,
-    currentUserInput,
     isAnalyzing,
     showPreprocessedContent,
-    conversations, // 添加 conversations 依赖
+    conversations,
   ]);
-
-  // 获取输入类型的副标题
-  const getInputSubtitle = (inputData: UserInputData): string => {
-    switch (inputData.type) {
-      case "prompt":
-        return `使用模板：${inputData.promptName}`;
-      case "manual":
-        return `手动输入 · ${inputData.originalLength || 0} 字符`;
-      case "history":
-        return "基于历史对话";
-      case "expand":
-        return "展开讨论";
-      default:
-        return "";
-    }
-  };
 
   const cards = buildAnalysisCards();
 
@@ -653,61 +620,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       );
     }
 
-    // 用户输入卡片内容渲染
-    if (cardContent.type === "userInput") {
-      const inputData = cardContent.data as UserInputData;
-      if (!inputData) return null;
-
-      return (
-        <div
-          className={`
-            px-6 py-4 rounded-lg transition-all duration-200 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30
-            ${
-              selectedBlock === `${card.id}-main`
-                ? "opacity-90"
-                : ""
-            }
-          `}
-        >
-          {/* 输入类型标识 */}
-          <div className="flex items-center gap-2 mb-3">
-            {inputData.type === "prompt" && (
-              <>
-                <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                  {inputData.promptName}
-                </span>
-              </>
-            )}
-            {inputData.type === "manual" && (
-              <>
-                <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                  手动输入
-                </span>
-              </>
-            )}
-            {inputData.type === "expand" && (
-              <>
-                <ArrowUpRight className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                  展开讨论
-                </span>
-              </>
-            )}
-            <span className="text-xs text-blue-500 dark:text-blue-400 ml-auto">
-              {new Date(inputData.timestamp).toLocaleTimeString()}
-            </span>
-          </div>
-
-          {/* 输入内容 - 优雅处理长文本 */}
-          <div className="select-text">
-            {renderInputContent(inputData.content, inputData.timestamp)}
-          </div>
-        </div>
-      );
-    }
-
     return null;
   };
 
@@ -715,18 +627,9 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   const renderInputContent = (content: string, timestamp: number) => {
     const maxLength = 200; // 最大显示长度
     const isLong = content.length > maxLength;
-    const isExpanded = expandedInputs.has(timestamp);
     
     const toggleExpanded = () => {
-      setExpandedInputs(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(timestamp)) {
-          newSet.delete(timestamp);
-        } else {
-          newSet.add(timestamp);
-        }
-        return newSet;
-      });
+      // This function is no longer needed as expandedInputs state is removed
     };
     
     if (!isLong) {
@@ -739,7 +642,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     }
 
     // 长文本处理
-    const displayContent = isExpanded ? content : content.substring(0, maxLength) + "...";
+    const displayContent = content; // No longer need to truncate
     
     return (
       <div className="space-y-2">
@@ -750,7 +653,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
           onClick={toggleExpanded}
           className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors duration-200 flex items-center gap-1"
         >
-          {isExpanded ? (
+          {/* This button is no longer needed as expandedInputs state is removed */}
+          {/* {isExpanded ? (
             <>
               <Minus className="h-3 w-3" />
               收起
@@ -760,7 +664,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
               <Plus className="h-3 w-3" />
               显示完整内容 ({content.length - maxLength} 个字符)
             </>
-          )}
+          )} */}
         </button>
       </div>
     );
@@ -947,6 +851,63 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                   </div>
                 )}
 
+                {/* 单个历史对话卡片 */}
+                {card.content.type === "historyConversation" && (
+                  <div className="space-y-4">
+                    {card.content.data.messages && card.content.data.messages.length > 0 ? (
+                      card.content.data.messages
+                        .filter((msg: any) => msg.role !== "system")
+                        .map((message: any, msgIndex: number) => (
+                          <div
+                            key={msgIndex}
+                            className={`flex gap-3 ${
+                              message.role === "user" ? "justify-end" : "justify-start"
+                            }`}
+                          >
+                            {message.role !== "user" && (
+                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                                <Bot className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
+                            
+                            <div
+                              className={`max-w-[80%] p-3 rounded-lg ${
+                                message.role === "user"
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted text-muted-foreground"
+                              }`}
+                            >
+                              <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                                {message.content.length > 1000
+                                  ? `${message.content.substring(0, 1000)}...`
+                                  : message.content}
+                              </div>
+                              {message.timestamp && (
+                                <div className="text-xs opacity-70 mt-1">
+                                  {formatDistanceToNow(new Date(message.timestamp), {
+                                    addSuffix: true,
+                                    locale: zhCN,
+                                  })}
+                                </div>
+                              )}
+                            </div>
+
+                            {message.role === "user" && (
+                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                        ))
+                    ) : (
+                      <div className="text-center text-muted-foreground py-4">
+                        <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">此对话暂无消息</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* 实时分析结果卡片 */}
                 {card.content.type === "streaming" && (
                   <div
@@ -979,9 +940,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                     )}
                   </div>
                 )}
-
-                {/* 用户输入卡片内容 */}
-                {card.content.type === "userInput" && renderCardContent(card)}
               </div>
             </div>
           </CardContent>
@@ -1079,7 +1037,6 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                     <MessageSquare className="h-4 w-4" />
                     历史对话
                   </h4>
-                  {/* This button is now controlled by the parent */}
                 </div>
 
                 <div className="space-y-2 max-h-32 overflow-y-auto scrollbar-hide">

@@ -9,6 +9,8 @@ import {
   Sparkles,
   RefreshCw,
   Loader2,
+  Bot,
+  User,
 } from "lucide-react";
 import { useCardHeight } from "@/hooks/use-card-height";
 import { Card, CardContent } from "@/components/ui/card";
@@ -52,7 +54,7 @@ interface AnalysisCard {
   subtitle?: string;
   emoji: string;
   content: {
-    type: "summary" | "keyPoints" | "conversations" | "custom";
+    type: "summary" | "keyPoints" | "conversations" | "historyConversation" | "custom";
     data: any;
   };
 }
@@ -317,24 +319,36 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
       }
     }
 
-    // 对话历史卡片
+    // 历史对话卡片 - 每个对话作为独立卡片显示
     if (conversations && conversations.length > 0) {
       const conversationsWithMessages = conversations.filter(conv => 
         conv.messages && conv.messages.length > 0
       );
       
-      if (conversationsWithMessages.length > 0) {
+      // 为每个历史对话创建独立卡片
+      conversationsWithMessages.forEach((conversation, index) => {
+        const userMessages = conversation.messages?.filter((msg: any) => msg.role !== "system") || [];
+        const messageCount = userMessages.length;
+        
+        // 获取对话标题
+        const conversationTitle = conversation.title || "历史对话";
+          
+        // 获取对话类型标签
+        const typeLabel = conversation.conversation_type === "auto_analysis" ? "自动分析" :
+                          conversation.conversation_type === "user_chat" ? "用户对话" :
+                          conversation.conversation_type === "prompt_analysis" ? "模板分析" : "对话";
+        
         cards.push({
-          id: "conversations",
-          title: "对话记录",
-          subtitle: `${conversationsWithMessages.length} 个对话，${conversationsWithMessages.reduce((total, conv) => total + (conv.messages?.length || 0), 0)} 条消息`,
+          id: `conversation-${conversation.id}`,
+          title: conversationTitle,
+          subtitle: `${typeLabel} · ${messageCount} 条消息 · ${formatDistanceToNow(new Date(conversation.created_at), { addSuffix: true, locale: zhCN })}`,
           emoji: "💬",
           content: {
-            type: "conversations",
-            data: conversationsWithMessages,
+            type: "historyConversation",
+            data: conversation,
           },
         });
-      }
+      });
     }
 
     return cards;
@@ -550,6 +564,63 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
                         )}
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {/* 单个历史对话卡片 */}
+                {card.content.type === "historyConversation" && (
+                  <div className="space-y-4">
+                    {card.content.data.messages && card.content.data.messages.length > 0 ? (
+                      card.content.data.messages
+                        .filter((msg: any) => msg.role !== "system")
+                        .map((message: any, msgIndex: number) => (
+                          <div
+                            key={msgIndex}
+                            className={`flex gap-3 ${
+                              message.role === "user" ? "justify-end" : "justify-start"
+                            }`}
+                          >
+                            {message.role !== "user" && (
+                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                                <Bot className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
+                            
+                            <div
+                              className={`max-w-[80%] p-3 rounded-lg ${
+                                message.role === "user"
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted text-muted-foreground"
+                              }`}
+                            >
+                              <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                                {message.content.length > 1000
+                                  ? `${message.content.substring(0, 1000)}...`
+                                  : message.content}
+                              </div>
+                              {message.timestamp && (
+                                <div className="text-xs opacity-70 mt-1">
+                                  {formatDistanceToNow(new Date(message.timestamp), {
+                                    addSuffix: true,
+                                    locale: zhCN,
+                                  })}
+                                </div>
+                              )}
+                            </div>
+
+                            {message.role === "user" && (
+                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                        ))
+                    ) : (
+                      <div className="text-center text-muted-foreground py-4">
+                        <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">此对话暂无消息</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
