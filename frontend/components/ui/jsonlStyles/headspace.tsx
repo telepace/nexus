@@ -82,6 +82,45 @@ export const headspaceStyleRenderer: StyleRenderer = ({
         "to-teal-400",
         true)
       );
+    case "h4":
+      return wrapElement(gradientWrapper(
+        <h4 className="text-lg font-medium text-white select-text leading-tight flex items-center gap-2">
+          <span className="w-2 h-2 bg-white rounded-full" />
+          <MarkdownRenderer content={String(c)} inline={true} />
+          {hasReferences && (
+            <EnhancedReferenceIndicator references={references} />
+          )}
+        </h4>,
+        "from-purple-400",
+        "to-pink-400",
+        true)
+      );
+    case "h5":
+      return wrapElement(gradientWrapper(
+        <h5 className="text-base font-medium text-white select-text leading-tight flex items-center gap-2">
+          <span className="w-1.5 h-1.5 bg-white rounded-full" />
+          <MarkdownRenderer content={String(c)} inline={true} />
+          {hasReferences && (
+            <EnhancedReferenceIndicator references={references} />
+          )}
+        </h5>,
+        "from-indigo-400",
+        "to-cyan-400",
+        true)
+      );
+    case "h6":
+      return wrapElement(gradientWrapper(
+        <h6 className="text-sm font-medium text-white select-text leading-tight flex items-center gap-2 opacity-90">
+          <span className="w-1 h-1 bg-white rounded-full" />
+          <MarkdownRenderer content={String(c)} inline={true} />
+          {hasReferences && (
+            <EnhancedReferenceIndicator references={references} />
+          )}
+        </h6>,
+        "from-gray-400",
+        "to-slate-400",
+        true)
+      );
     case "quote":
       return wrapElement(gradientWrapper(
         <blockquote className="text-lg text-gray-800 leading-relaxed select-text">

@@ -10,7 +10,7 @@ import {
 } from "./ReferenceManager";
 import { jsonlStyles } from "./jsonlStyles";
 import { ContentSkeleton } from "./ContentSkeleton";
-import { Bookmark } from "lucide-react";
+import { HoverableBlock } from "./HoverableBlock";
 
 interface JsonlRendererProps {
   content: string;
@@ -169,59 +169,71 @@ export function JsonlRenderer({
       }
     });
 
-  const BlockWrapper: React.FC<{
-    children: React.ReactNode;
-  }> = ({ children }) => {
-    if (!enableHoverEffects) {
-      return <>{children}</>;
-    }
-
-    return (
-      <div
-        className={cn(
-          "group relative rounded-lg",
-          // 使用更温和的过渡效果，避免视觉闪烁
-          "transition-opacity duration-150 ease-in-out",
-          "px-2 py-1 -mx-2 my-0.5",
-          "border border-transparent", 
-          "overflow-visible",
-          // 移除可能导致闪烁的过渡动画
-          // "hover:bg-blue-50/50 hover:border-blue-200/50",
-        )}
-      >
-        {/* 主要内容 */}
-        <div className="relative">{children}</div>
-      </div>
-    );
-  };
-
   const renderBlock = (block: Record<string, unknown>, idx: number) => {
     const ref = block["ref"] as string | undefined;
 
     // 解析引用
-    const references = actions.parseReferences(ref);
+    const references = actions?.parseReferences ? actions.parseReferences(ref) : [];
 
     const renderResult = styleRenderer({
       block,
       references,
-      hasReferences: references.length > 0,
+      hasReferences: (references || []).length > 0,
       MarkdownRenderer,
       EnhancedReferenceIndicator: ReferenceIndicatorComponent,
       onExpand: onExpandLine,
     });
 
-    // 统一封装：先用 BlockWrapper 提供引用高亮，再在内部使用 JsonLineWithExpandButton
+    // 🎯 使用优化的HoverableBlock组件，提供右侧操作按钮
+    const rightActions = enableHoverEffects ? (
+      <div className="flex items-center gap-2">
+        {/* 展开按钮 */}
+        {onExpandLine && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onExpandLine(block);
+            }}
+            className="w-6 h-6 rounded-md bg-background/80 backdrop-blur-sm border border-border/50 flex items-center justify-center hover:bg-background hover:border-border hover:shadow-sm transition-all duration-200"
+            title="AI深度展开"
+          >
+            <span className="text-xs">💭</span>
+          </button>
+        )}
+        
+        {/* 引用指示器 */}
+        {references.length > 0 && (
+          <div className="flex gap-1">
+            {references.slice(0, 3).map((refNum) => (
+              <ReferenceIndicatorComponent
+                key={refNum}
+                references={[refNum]}
+                className="w-5 h-5 text-xs"
+              />
+            ))}
+            {references.length > 3 && (
+              <div className="w-5 h-5 rounded-full bg-muted text-xs flex items-center justify-center">
+                +{references.length - 3}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    ) : undefined;
+
     return (
-      <BlockWrapper key={idx}>
-        <JsonLineWithExpandButton
-          jsonLine={block}
-          onExpand={onExpandLine}
-          enableHoverEffects={false}
-          hasCustomExpandButton={renderResult.hasCustomExpandButton}
-        >
+      <HoverableBlock
+        key={idx}
+        enableHover={enableHoverEffects}
+        hoverIntensity="subtle"
+        showRightActions={!!rightActions}
+        rightActions={rightActions}
+        className="my-0.5"
+      >
+        <div className="relative">
           {renderResult.element}
-        </JsonLineWithExpandButton>
-      </BlockWrapper>
+        </div>
+      </HoverableBlock>
     );
   };
 

@@ -230,7 +230,13 @@ export default function ReaderLayout({
                   markLeftReady,
                 }}
               >
-                <div className="flex-1 flex flex-col bg-background overflow-auto">
+                <div 
+                  className="flex-1 flex flex-col bg-background overflow-auto"
+                  style={{
+                    contain: "layout style paint",
+                    overscrollBehavior: "contain",
+                  }}
+                >
                   {children}
                 </div>
               </ReaderContext.Provider>
@@ -238,7 +244,7 @@ export default function ReaderLayout({
 
             {/* 分割线 - 仅在显示右侧面板时显示 */}
             {showRightPanel && (
-              <ResizableHandle className="bg-border hover:bg-primary/20 transition-colors" />
+              <ResizableHandle className="bg-border hover:bg-primary/20 transition-colors w-1" />
             )}
 
             {/* AI 分析区域 - 默认占50%，可调整 */}
@@ -249,6 +255,10 @@ export default function ReaderLayout({
                 maxSize={70}
                 className="flex flex-col bg-muted/30 insight-pane ai-analysis-panel"
                 data-exclude-selection
+                style={{
+                  contain: "layout style paint",
+                  willChange: "auto",
+                }}
               >
                 {contentItem ? (
                   <ContentAnalysisSidebar
@@ -274,7 +284,13 @@ export default function ReaderLayout({
                     </div>
 
                     {/* Content Body Skeleton - 简化骨架屏 */}
-                    <div className="flex-1 min-h-0 overflow-auto px-6 space-y-6">
+                    <div 
+                      className="flex-1 min-h-0 overflow-auto px-6 space-y-6"
+                      style={{
+                        contain: "layout style paint",
+                        overscrollBehavior: "contain",
+                      }}
+                    >
                       <div className="space-y-4">
                         <div className="w-full h-24 bg-muted/30 dark:bg-muted/20 rounded-lg animate-pulse"></div>
                         <div className="w-full h-32 bg-muted/30 dark:bg-muted/20 rounded-lg animate-pulse"></div>

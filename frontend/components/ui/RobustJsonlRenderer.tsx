@@ -369,8 +369,8 @@ export function RobustJsonlRenderer({
 
   // 渲染单个块
   const renderBlock = (block: JsonlBlock, index: number) => {
-    const references = actions.parseReferences(block.ref);
-    const hasReferences = references.length > 0;
+    const references = actions?.parseReferences ? actions.parseReferences(block.ref) : [];
+    const hasReferences = (references || []).length > 0;
 
     // 错误块的特殊渲染
     if (block.type === 'error') {
@@ -446,6 +446,38 @@ export function RobustJsonlRenderer({
             {content}
             {referenceElement}
           </h2>
+        );
+
+      case 'h3':
+        return (
+          <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
+            {content}
+            {referenceElement}
+          </h3>
+        );
+
+      case 'h4':
+        return (
+          <h4 className="text-base font-medium mb-2 flex items-center gap-2">
+            {content}
+            {referenceElement}
+          </h4>
+        );
+
+      case 'h5':
+        return (
+          <h5 className="text-sm font-medium mb-1 flex items-center gap-2 uppercase tracking-wide">
+            {content}
+            {referenceElement}
+          </h5>
+        );
+
+      case 'h6':
+        return (
+          <h6 className="text-xs font-medium mb-1 flex items-center gap-2 uppercase tracking-wider text-muted-foreground">
+            {content}
+            {referenceElement}
+          </h6>
         );
 
       case 'insight':

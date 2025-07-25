@@ -13,9 +13,11 @@ import {
   Loader2,
   Bot,
   User,
+  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 import { useCardHeight } from "@/hooks/use-card-height";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CollapsibleButton } from "@/components/ui/CollapsibleButton";
 import { useToast } from "@/hooks/use-toast";
@@ -125,6 +127,8 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [streamingResponse, setStreamingResponse] = useState("");
+  // 新增：追踪当前分析的标题
+  const [currentAnalysisTitle, setCurrentAnalysisTitle] = useState<string>("AI 回复");
   
   // 滚动控制相关状态
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -390,6 +394,9 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   // 处理prompt标签点击
   const handlePromptClick = useCallback(
     async (prompt: PromptData) => {
+      // 设置分析标题为 prompt 名称
+      setCurrentAnalysisTitle(prompt.name);
+      
       // 替换prompt模板中的变量
       let promptContent = prompt.content;
       if (promptContent.includes("{content}")) {
@@ -420,15 +427,26 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       ? `继续关于"${conversation.title}"的对话：${conversation.summary}`
       : `继续关于"${conversation.title}"的对话`;
     
+    // 设置分析标题为历史对话标题
+    const title = conversation.title || "历史对话";
+    const displayTitle = title.length > 20 ? title.substring(0, 20) + "..." : title;
+    setCurrentAnalysisTitle(`继续：${displayTitle}`);
+    
     setInputValue(historyContent);
   }, []);
 
   const handleAnalysis = useCallback(async () => {
     if (!inputValue.trim()) return;
     
+    // 设置分析标题为用户输入的消息（截取前20个字符）
+    const userMessage = inputValue.trim();
+    const title = userMessage.length > 20 ? userMessage.substring(0, 20) + "..." : userMessage;
+    setCurrentAnalysisTitle(title);
+    
     await performCompletion(
       {
         analysis_instruction: inputValue,
+        template_name: "simple_chat.j2",  // 🎯 手动输入使用简单聊天模板
       },
       "分析完成",
     );
@@ -446,6 +464,11 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       const selectedPoint =
         jsonContent.c || jsonContent.content || JSON.stringify(jsonContent);
       const instruction = `请对以下要点进行深度展开讨论：${selectedPoint}`;
+
+      // 设置分析标题
+      const pointText = String(selectedPoint);
+      const title = pointText.length > 15 ? pointText.substring(0, 15) + "..." : pointText;
+      setCurrentAnalysisTitle(`展开：${title}`);
 
       // 立即触发分析，不设置输入值
       await performCompletion(
@@ -536,7 +559,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     if (streamingResponse && !streamingResponse.startsWith("LOADING_PLACEHOLDER_")) {
       cards.push({
         id: `streaming-${content.id}`,
-        title: "AI 回复",
+        title: currentAnalysisTitle,
         subtitle: isAnalyzing ? "正在生成回复..." : "回复完成",
         emoji: "🤖",
         content: {
@@ -554,6 +577,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     isAnalyzing,
     showPreprocessedContent,
     conversations,
+    currentAnalysisTitle,
   ]);
 
   const cards = buildAnalysisCards();
@@ -683,7 +707,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
     });
   }, []);
 
-  // 主卡片组件 - 极简化设计
+  // 渲染卡片组件
   const CardComponent = ({ card }: { card: AnalysisCard }) => {
     const isSelected = selectedCard === card.id;
     const isHovered = hoveredCard === card.id;
@@ -696,86 +720,79 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
       if (selection && selection.toString().length > 0) {
         return;
       }
-      
-      // 如果点击的是按钮区域，不触发卡片选中
+
+      // 如果点击的是按钮或链接，不触发卡片选中
       const target = e.target as HTMLElement;
-      if (target.closest('[data-exclude-selection]')) {
+      if (
+        target.tagName === "BUTTON" ||
+        target.tagName === "A" ||
+        target.closest("button") ||
+        target.closest("a")
+      ) {
         return;
       }
-      
+
       setSelectedCard(isSelected ? null : card.id);
     };
 
     return (
       <div
-        className="group relative"
+        className={`
+          transition-all duration-300 ease-in-out
+          ${isSelected ? "scale-[1.02] shadow-lg" : ""}
+          ${isHovered ? "shadow-md" : ""}
+        `}
         onMouseEnter={() => setHoveredCard(card.id)}
         onMouseLeave={() => setHoveredCard(null)}
         onClick={handleCardClick}
       >
-        {/* 极简卡片主体 */}
         <Card
           className={`
-          transition-all duration-300 ease-in-out 
-          relative border-0 analysis-card
-          ${isSelected ? "shadow-lg linear-bg-1" : "shadow-sm linear-bg-1"}
-          group-hover:shadow-lg
-        `}
+            cursor-pointer transition-all duration-200 overflow-hidden
+            ${
+              isSelected
+                ? "ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-900"
+                : ""
+            }
+            ${isHovered ? "border-neutral-300 dark:border-neutral-600" : ""}
+          `}
         >
-          <CardContent className="px-12 py-4">
-            {/* 极简卡片头部 */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">{card.emoji}</span>
-                <div>
-                  <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="text-2xl" role="img" aria-label={card.title}>
+                  {card.emoji}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 truncate">
                     {card.title}
                   </h3>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    {card.subtitle}
-                  </p>
+                  {card.subtitle && (
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 truncate">
+                      {card.subtitle}
+                    </p>
+                  )}
                 </div>
               </div>
-
-              {/* 操作按钮：使用 flex-row-reverse 保证折叠/展开按钮始终最右 */}
-              <div className="flex items-center gap-1 flex-row-reverse relative z-10" data-exclude-selection>
-                {/* 折叠/展开按钮 - 始终显示 */}
-                <CollapsibleButton
-                  isCollapsed={isCollapsed}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleCardCollapse(card.id);
-                  }}
-                  size="md"
-                  className="text-neutral-400 hover:text-neutral-600 relative z-10"
-                />
-
-                {/* 其他操作按钮 - 仅在悬停时显示 */}
-                {isHovered && (
-                  <div className="flex items-center gap-1 mr-1 transition-all duration-200 relative z-10">
-                    <FavoriteButton
-                      itemId={content.id}
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log("分享");
-                      }}
-                    >
-                      <Share className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleCardCollapse(card.id);
+                }}
+                className="flex-shrink-0"
+              >
+                {isCollapsed ? (
+                  <ChevronRight className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
                 )}
-              </div>
+              </Button>
             </div>
+          </CardHeader>
 
-            {/* 卡片内容 - 支持折叠状态 */}
+          <CardContent className="pt-0">
             <div
               className={`
               transition-all duration-300 ease-in-out overflow-hidden
@@ -793,7 +810,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
               >
                 {card.content.type === "summary" || card.content.type === "keyPoints" ? (
                   renderCardContent(card)
-                ) : card.content.type === "conversations" && (
+                ) : card.content.type === "conversations" ? (
                   <div className="space-y-3">
                     {card.content.data.map((conversation: any, index: number) => (
                       <div key={conversation.id || index} className="border rounded-lg p-3 bg-muted/20">
@@ -819,26 +836,55 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                             {conversation.messages
                               .filter((msg: any) => msg.role !== "system")
                               .slice(0, 3) // 只显示前3条消息
-                              .map((message: any, msgIndex: number) => (
-                                <div
-                                  key={msgIndex}
-                                  className={`flex gap-2 ${
-                                    message.role === "user" ? "justify-end" : "justify-start"
-                                  }`}
-                                >
+                              .map((message: any, msgIndex: number) => {
+                                // 🎯 优化消息内容显示
+                                const getDisplayContent = (msg: any) => {
+                                  if (msg.role === "user") {
+                                    const metadata = msg.metadata || {};
+                                    
+                                    // 如果是基于prompt的消息，优先显示prompt名称
+                                    if (metadata.isPromptBased && metadata.promptName) {
+                                      return `📝 ${metadata.promptName}`;
+                                    }
+                                    
+                                    // 如果有原始用户输入，显示原始输入
+                                    if (metadata.originalUserInput) {
+                                      return metadata.originalUserInput.length > 60
+                                        ? `${metadata.originalUserInput.substring(0, 60)}...`
+                                        : metadata.originalUserInput;
+                                    }
+                                    
+                                    // 默认显示消息内容，但限制长度
+                                    return msg.content.length > 60
+                                      ? `${msg.content.substring(0, 60)}...`
+                                      : msg.content;
+                                  } else {
+                                    // AI消息正常显示，但限制长度
+                                    return msg.content.length > 100
+                                      ? `${msg.content.substring(0, 100)}...`
+                                      : msg.content;
+                                  }
+                                };
+
+                                return (
                                   <div
-                                    className={`max-w-[80%] p-2 rounded text-xs ${
-                                      message.role === "user"
-                                        ? "bg-primary text-primary-foreground"
-                                        : "bg-muted text-muted-foreground"
+                                    key={msgIndex}
+                                    className={`flex gap-2 ${
+                                      message.role === "user" ? "justify-end" : "justify-start"
                                     }`}
                                   >
-                                    {message.content.length > 100
-                                      ? `${message.content.substring(0, 100)}...`
-                                      : message.content}
+                                    <div
+                                      className={`max-w-[80%] p-2 rounded text-xs ${
+                                        message.role === "user"
+                                          ? "bg-primary text-primary-foreground"
+                                          : "bg-muted text-muted-foreground"
+                                      }`}
+                                    >
+                                      {getDisplayContent(message)}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                );
+                              })}
                             {conversation.messages.filter((msg: any) => msg.role !== "system").length > 3 && (
                               <div className="text-center text-xs text-muted-foreground">
                                 还有 {conversation.messages.filter((msg: any) => msg.role !== "system").length - 3} 条消息...
@@ -849,56 +895,82 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                       </div>
                     ))}
                   </div>
-                )}
-
-                {/* 单个历史对话卡片 */}
-                {card.content.type === "historyConversation" && (
+                ) : card.content.type === "historyConversation" ? (
                   <div className="space-y-4">
                     {card.content.data.messages && card.content.data.messages.length > 0 ? (
                       card.content.data.messages
                         .filter((msg: any) => msg.role !== "system")
-                        .map((message: any, msgIndex: number) => (
-                          <div
-                            key={msgIndex}
-                            className={`flex gap-3 ${
-                              message.role === "user" ? "justify-end" : "justify-start"
-                            }`}
-                          >
-                            {message.role !== "user" && (
-                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                                <Bot className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                            )}
-                            
+                        .map((message: any, msgIndex: number) => {
+                          // 🎯 优化消息内容显示
+                          const getDisplayContent = (msg: any) => {
+                            if (msg.role === "user") {
+                              const metadata = msg.metadata || {};
+                              
+                              // 如果是基于prompt的消息，优先显示prompt名称
+                              if (metadata.isPromptBased && metadata.promptName) {
+                                return `📝 ${metadata.promptName}`;
+                              }
+                              
+                              // 如果有原始用户输入，显示原始输入
+                              if (metadata.originalUserInput) {
+                                return metadata.originalUserInput.length > 80
+                                  ? `${metadata.originalUserInput.substring(0, 80)}...`
+                                  : metadata.originalUserInput;
+                              }
+                              
+                              // 默认显示消息内容，但限制长度
+                              return msg.content.length > 80
+                                ? `${msg.content.substring(0, 80)}...`
+                                : msg.content;
+                            } else {
+                              // AI消息正常显示，但限制长度
+                              return msg.content.length > 200
+                                ? `${msg.content.substring(0, 200)}...`
+                                : msg.content;
+                            }
+                          };
+
+                          return (
                             <div
-                              className={`max-w-[80%] p-3 rounded-lg ${
-                                message.role === "user"
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-muted text-muted-foreground"
+                              key={msgIndex}
+                              className={`flex gap-3 ${
+                                message.role === "user" ? "justify-end" : "justify-start"
                               }`}
                             >
-                              <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                                {message.content.length > 1000
-                                  ? `${message.content.substring(0, 1000)}...`
-                                  : message.content}
+                              {message.role !== "user" && (
+                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                                  <Bot className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                              )}
+                              
+                              <div
+                                className={`max-w-[80%] p-3 rounded-lg ${
+                                  message.role === "user"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                                  {getDisplayContent(message)}
+                                </div>
+                                {message.timestamp && (
+                                  <div className="text-xs opacity-70 mt-1">
+                                    {formatDistanceToNow(new Date(message.timestamp), {
+                                      addSuffix: true,
+                                      locale: zhCN,
+                                    })}
+                                  </div>
+                                )}
                               </div>
-                              {message.timestamp && (
-                                <div className="text-xs opacity-70 mt-1">
-                                  {formatDistanceToNow(new Date(message.timestamp), {
-                                    addSuffix: true,
-                                    locale: zhCN,
-                                  })}
+
+                              {message.role === "user" && (
+                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                                  <User className="h-4 w-4 text-muted-foreground" />
                                 </div>
                               )}
                             </div>
-
-                            {message.role === "user" && (
-                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                                <User className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                            )}
-                          </div>
-                        ))
+                          );
+                        })
                     ) : (
                       <div className="text-center text-muted-foreground py-4">
                         <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -906,10 +978,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                       </div>
                     )}
                   </div>
-                )}
-
-                {/* 实时分析结果卡片 */}
-                {card.content.type === "streaming" && (
+                ) : card.content.type === "streaming" ? (
                   <div
                     className={`
                       px-6 py-4 rounded-lg transition-all duration-200
@@ -939,7 +1008,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                       </div>
                     )}
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
           </CardContent>
@@ -1049,38 +1118,78 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
                       暂无历史对话
                     </div>
                   ) : (
-                    historyRecords.map((record, index) => (
-                      <div
-                        key={record.id}
-                        className="flex items-center justify-between p-2 rounded-lg hover:bg-white/50 dark:hover:bg-neutral-800/50 transition-colors duration-200 cursor-pointer group"
-                        onClick={() => handleHistoryClick(record)}
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="w-6 h-6 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center flex-shrink-0">
-                            <MessageSquare className="h-3 w-3 text-neutral-600 dark:text-neutral-400" />
-                          </div>
+                    historyRecords.map((record, index) => {
+                      // 提取用户意图
+                      const getUserIntentSummary = () => {
+                        if (!record.messages || record.messages.length === 0) return "无用户输入";
+                        
+                        const userMessages = record.messages.filter((msg: any) => msg.role === "user");
+                        if (userMessages.length === 0) return "无用户输入";
+                        
+                        const firstUserMessage = userMessages[0];
+                        const metadata = (firstUserMessage.metadata as any) || {};
+                        
+                        // 优先显示prompt名称
+                        if (metadata.isPromptBased && metadata.promptName) {
+                          return `📝 ${metadata.promptName}`;
+                        }
+                        
+                        // 显示原始用户输入
+                        if (metadata.originalUserInput) {
+                          const originalInput = String(metadata.originalUserInput);
+                          return originalInput.length > 40
+                            ? `${originalInput.substring(0, 40)}...`
+                            : originalInput;
+                        }
+                        
+                        // 默认显示消息内容
+                        const content = String(firstUserMessage.content || "");
+                        return content.length > 40
+                          ? `${content.substring(0, 40)}...`
+                          : content;
+                      };
 
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
-                              {record.title || "未命名对话"}
+                      return (
+                        <div
+                          key={record.id}
+                          className="bg-white/60 dark:bg-neutral-800/60 rounded-lg p-3 hover:bg-white/80 dark:hover:bg-neutral-800/80 transition-all duration-200 cursor-pointer group border border-neutral-200/50 dark:border-neutral-700/50"
+                          onClick={() => handleHistoryClick(record)}
+                          style={{ animationDelay: `${index * 50}ms` }}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 mt-0.5">
+                              <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/50 dark:to-purple-950/50 flex items-center justify-center border border-blue-200/30 dark:border-blue-700/30">
+                                <Sparkles className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                              </div>
                             </div>
-                            {record.summary && (
-                              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
-                                {record.summary}
-                              </p>
-                            )}
-                          </div>
 
-                          <span className="text-xs text-neutral-400 flex-shrink-0">
-                            {formatDistanceToNow(new Date(record.created_at), {
-                              addSuffix: true,
-                              locale: zhCN,
-                            })}
-                          </span>
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
+                                {record.title || "未命名对话"}
+                              </div>
+                              
+                              <div className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed">
+                                {getUserIntentSummary()}
+                              </div>
+                              
+                              <div className="flex items-center justify-between">
+                                {record.summary && (
+                                  <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate flex-1 mr-2">
+                                    {record.summary}
+                                  </p>
+                                )}
+                                <span className="text-xs text-neutral-400 flex-shrink-0">
+                                  {formatDistanceToNow(new Date(record.created_at), {
+                                    addSuffix: true,
+                                    locale: zhCN,
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </div>

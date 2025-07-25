@@ -45,6 +45,24 @@ export const neumorphismStyleRenderer: StyleRenderer = ({
           <MarkdownRenderer content={String(c)} inline={true} />
         </h3>
       );
+    case "h4":
+      return wrapElement(
+        <h4 className="text-sm font-semibold text-gray-600 select-text mt-3 mb-1">
+          <MarkdownRenderer content={String(c)} inline={true} />
+        </h4>
+      );
+    case "h5":
+      return wrapElement(
+        <h5 className="text-xs font-semibold text-gray-500 select-text mt-2 mb-1 uppercase tracking-wide">
+          <MarkdownRenderer content={String(c)} inline={true} />
+        </h5>
+      );
+    case "h6":
+      return wrapElement(
+        <h6 className="text-xs font-medium text-gray-400 select-text mt-2 mb-1 uppercase tracking-wider">
+          <MarkdownRenderer content={String(c)} inline={true} />
+        </h6>
+      );
     case "quote":
       return wrapElement(
         <div className={`${cardInset} my-1 border border-gray-300/30`}>

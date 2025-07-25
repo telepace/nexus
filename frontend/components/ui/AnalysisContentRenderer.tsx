@@ -166,6 +166,12 @@ const HeadingBlock: React.FC<{
         return "text-xl font-semibold text-gray-900 dark:text-gray-100 py-3";
       case "h3":
         return "text-lg font-medium text-gray-800 dark:text-gray-200 py-2";
+      case "h4":
+        return "text-base font-medium text-gray-700 dark:text-gray-300 py-2";
+      case "h5":
+        return "text-sm font-medium text-gray-600 dark:text-gray-400 py-1 uppercase tracking-wide";
+      case "h6":
+        return "text-xs font-medium text-gray-500 dark:text-gray-500 py-1 uppercase tracking-wider";
       default:
         return "text-base font-medium text-gray-700 dark:text-gray-300 py-2";
     }
@@ -516,6 +522,9 @@ export const AnalysisContentRenderer: React.FC<
       case "h1":
       case "h2":
       case "h3":
+      case "h4":
+      case "h5":
+      case "h6":
         return <HeadingBlock key={index} {...blockProps} />;
 
       case "insight":

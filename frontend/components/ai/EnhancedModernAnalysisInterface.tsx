@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { usePathname } from "next/navigation"; // 🎯 添加路由检测
 import {
   Brain,
   MessageSquare,
@@ -21,7 +22,7 @@ import {
   ContentItemPublic,
   AIResult,
   ConversationListResponse,
-  ConversationPublic,
+  ConversationPublic, // 🎯 恢复使用content.ts中的类型，因为它包含messages属性
 } from "@/lib/api/content";
 import { adaptAnalysisData } from "./AnalysisCards";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
@@ -32,6 +33,7 @@ import { zhCN } from "date-fns/locale";
 import { FavoriteButton } from "@/components/actions/FavoriteButton";
 import { StreamingConversationCard } from "./StreamingConversationCard";
 import { useStreamingConversation } from "@/hooks/use-streaming-conversation";
+import { useConversationHistory } from "@/hooks/use-conversation-history";
 
 interface EnhancedModernAnalysisInterfaceProps {
   content: ContentItemPublic;
@@ -54,7 +56,7 @@ interface AnalysisCard {
   subtitle?: string;
   emoji: string;
   content: {
-    type: "summary" | "keyPoints" | "conversations" | "historyConversation" | "custom";
+    type: "summary" | "keyPoints" | "custom";  // 🎯 移除 "conversations" | "historyConversation" 类型
     data: any;
   };
 }
@@ -73,6 +75,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
   showHistory: showHistoryProp,
 }) => {
   const { toast } = useToast();
+  const pathname = usePathname(); // 🎯 获取当前路由
 
   // 状态管理
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
@@ -82,18 +85,64 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
   const showHistory = showHistoryProp;
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [prompts, setPrompts] = useState<PromptData[]>([]);
-  const [historyRecords, setHistoryRecords] = useState<ConversationPublic[]>([]);
   const [loadingPrompts, setLoadingPrompts] = useState(true);
-  const [loadingHistory, setLoadingHistory] = useState(true);
-  const [collapsedCards, setCollapsedCards] = useState<Set<string>>(new Set());
+  
+  // 使用统一的历史记录管理hook
+  const {
+    historyRecords,
+    isLoadingHistory: loadingHistory,
+    refreshHistory,
+    addHistoryRecord
+  } = useConversationHistory({
+    contentId: content.id,
+    onError: (error) => {
+      console.error('历史记录加载失败:', error);
+      toast({
+        title: "加载失败",
+        description: error,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // 🎯 在/reader/页面为非核心卡片设置默认折叠状态
+  const getInitialCollapsedCards = useCallback(() => {
+    const initialCollapsed = new Set<string>();
+    
+    // 如果是在/reader/页面，除了"内容摘要"和"提问清单"外，其他卡片默认折叠
+    if (pathname.includes("/reader/")) {
+      // 这里暂时为空，因为我们主要控制的是StreamingConversationCard
+      // 静态分析卡片（summary, keyPoints）应该保持展开
+    }
+    
+    return initialCollapsed;
+  }, [pathname]);
+  
+  const [collapsedCards, setCollapsedCards] = useState<Set<string>>(getInitialCollapsedCards);
+
+  // 🎯 添加滚动容器引用
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // 动态高度管理
   const { registerElement, getCardHeight } = useCardHeight();
 
+  // 🎯 优化滚动处理，添加节流
+  const scrollToBottom = useCallback(() => {
+    if (scrollContainerRef.current) {
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTo({
+            top: scrollContainerRef.current.scrollHeight,
+            behavior: 'smooth'
+          });
+        }
+      });
+    }
+  }, []);
+
   // 新的对话管理
   const {
     conversations: streamingConversations,
-    isProcessing,
     sendMessage,
     retryMessage,
     deleteConversation,
@@ -111,6 +160,23 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
       });
     },
   });
+
+  // 🎯 监听路由变化，重置折叠状态
+  useEffect(() => {
+    setCollapsedCards(getInitialCollapsedCards());
+  }, [pathname, getInitialCollapsedCards]);
+
+  // 🎯 监听新对话出现，优化自动滚动
+  useEffect(() => {
+    if (streamingConversations.length > 0) {
+      // 使用防抖，避免频繁滚动
+      const timeoutId = setTimeout(() => {
+        scrollToBottom();
+      }, 150);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [streamingConversations.length, scrollToBottom]);
 
   // 获取prompts
   useEffect(() => {
@@ -147,27 +213,10 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     loadPrompts();
   }, []);
 
-  // 获取历史对话记录
+  // 监听历史记录数量变化
   useEffect(() => {
-    const loadHistory = async () => {
-      try {
-        setLoadingHistory(true);
-        const historyResponse = await contentApi.getContentConversations(content.id);
-        const records = historyResponse.conversations.slice(0, 10);
-        setHistoryRecords(records);
-        onHistoryCountChange?.(records.length);
-      } catch (error) {
-        console.error("获取历史记录失败:", error);
-        onHistoryCountChange?.(0);
-      } finally {
-        setLoadingHistory(false);
-      }
-    };
-
-    if (content.id) {
-      loadHistory();
-    }
-  }, [content.id, onHistoryCountChange]);
+    onHistoryCountChange?.(historyRecords.length);
+  }, [historyRecords.length, onHistoryCountChange]);
 
   // 监听来自正文区域的文本选择事件
   useEffect(() => {
@@ -205,28 +254,47 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
   // 处理prompt标签点击 - 优化版本
   const handlePromptClick = useCallback(
     async (prompt: PromptData) => {
-      // 替换prompt模板中的变量
-      let promptContent = prompt.content;
-      if (promptContent.includes("{content}")) {
-        promptContent = promptContent.replace(
-          "{content}",
-          content.content_text || content.title || "内容"
-        );
+      try {
+        console.log("🔘 Prompt 点击事件:", prompt.name);
+
+        // 替换prompt模板中的变量
+        let promptContent = prompt.content;
+        if (promptContent.includes("{content}")) {
+          promptContent = promptContent.replace(
+            "{content}",
+            content.content_text || content.title || "内容"
+          );
+        }
+
+        console.log("📝 处理后的 prompt 内容:", {
+          originalContent: prompt.content,
+          processedContent: promptContent,
+          promptName: prompt.name
+        });
+
+        // 🎯 修复：用户消息显示prompt名称，但实际发送的是完整内容
+        await sendMessage(prompt.name, "simple_chat.j2", {
+          promptName: prompt.name,
+          promptId: prompt.id,
+          originalUserInput: prompt.name, // 用户界面显示的简洁内容
+          actualPromptContent: promptContent, // 实际发送给AI的完整prompt内容
+        });
+
+        // 清空输入框
+        setInputValue("");
+
+        toast({
+          title: "开始分析",
+          description: `正在使用 "${prompt.name}" 模板进行分析`,
+        });
+      } catch (error) {
+        console.error("❌ handlePromptClick 错误:", error);
+        toast({
+          title: "处理失败",
+          description: error instanceof Error ? error.message : "未知错误",
+          variant: "destructive",
+        });
       }
-
-      // 立即发送消息，而不是填充输入框
-      await sendMessage(promptContent, prompt.name, {
-        promptName: prompt.name,
-        promptId: prompt.id,
-      });
-
-      // 清空输入框
-      setInputValue("");
-
-      toast({
-        title: "开始分析",
-        description: `正在使用 "${prompt.name}" 模板进行分析`,
-      });
     },
     [content, sendMessage, toast]
   );
@@ -244,18 +312,34 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
 
   // 处理手动输入的分析
   const handleAnalysis = useCallback(async () => {
-    if (!inputValue.trim()) return;
+    try {
+      console.log("🔘 手动输入分析事件");
+      if (!inputValue.trim()) {
+        console.warn("⚠️ 输入值为空，跳过分析");
+        return;
+      }
 
-    await sendMessage(inputValue, undefined, {
-      type: "manual_input",
-    });
+      console.log("📝 手动输入内容:", inputValue);
 
-    setInputValue("");
+      await sendMessage(inputValue, "simple_chat.j2", {
+        type: "manual_input",
+        originalUserInput: inputValue, // 手动输入直接显示用户输入的内容
+      });
 
-    toast({
-      title: "开始分析",
-      description: "正在处理您的问题",
-    });
+      setInputValue("");
+
+      toast({
+        title: "开始分析",
+        description: "正在处理您的问题",
+      });
+    } catch (error) {
+      console.error("❌ handleAnalysis 错误:", error);
+      toast({
+        title: "处理失败",
+        description: error instanceof Error ? error.message : "未知错误",
+        variant: "destructive",
+      });
+    }
   }, [inputValue, sendMessage, toast]);
 
   // 处理JSON行展开请求
@@ -267,9 +351,13 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
         jsonContent.c || jsonContent.content || JSON.stringify(jsonContent);
       const instruction = `请对以下要点进行深度展开讨论：${selectedPoint}`;
 
+      const displayText = `展开讨论: ${selectedPoint}`;
+      
       await sendMessage(instruction, "expand_discussion.j2", {
         type: "expand_discussion",
         selectedPoint,
+        originalUserInput: displayText, // 显示简洁的用户意图
+        actualPromptContent: instruction, // 完整的指令内容
       });
 
       toast({
@@ -282,7 +370,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
 
   // 构建分析卡片数据
   const buildAnalysisCards = useCallback((): AnalysisCard[] => {
-    if (!analysisResult && (!conversations || conversations.length === 0)) return [];
+    if (!analysisResult) return [];
 
     const cards: AnalysisCard[] = [];
     const metaInfo = content.meta_info ? JSON.parse(content.meta_info) : null;
@@ -319,44 +407,15 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
       }
     }
 
-    // 历史对话卡片 - 每个对话作为独立卡片显示
-    if (conversations && conversations.length > 0) {
-      const conversationsWithMessages = conversations.filter(conv => 
-        conv.messages && conv.messages.length > 0
-      );
-      
-      // 为每个历史对话创建独立卡片
-      conversationsWithMessages.forEach((conversation, index) => {
-        const userMessages = conversation.messages?.filter((msg: any) => msg.role !== "system") || [];
-        const messageCount = userMessages.length;
-        
-        // 获取对话标题
-        const conversationTitle = conversation.title || "历史对话";
-          
-        // 获取对话类型标签
-        const typeLabel = conversation.conversation_type === "auto_analysis" ? "自动分析" :
-                          conversation.conversation_type === "user_chat" ? "用户对话" :
-                          conversation.conversation_type === "prompt_analysis" ? "模板分析" : "对话";
-        
-        cards.push({
-          id: `conversation-${conversation.id}`,
-          title: conversationTitle,
-          subtitle: `${typeLabel} · ${messageCount} 条消息 · ${formatDistanceToNow(new Date(conversation.created_at), { addSuffix: true, locale: zhCN })}`,
-          emoji: "💬",
-          content: {
-            type: "historyConversation",
-            data: conversation,
-          },
-        });
-      });
-    }
+    // 🎯 移除历史对话卡片显示 - 过时的呈现方式，与下方模块化展示产生冗余
+    // 历史对话现在通过底部的历史记录面板和新的实时对话卡片来处理
 
     return cards;
   }, [
     analysisResult,
     content.meta_info,
     showPreprocessedContent,
-    conversations,
+    // 移除 conversations 依赖，因为不再显示历史对话卡片
   ]);
 
   const cards = buildAnalysisCards();
@@ -417,26 +476,40 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     });
   }, []);
 
-  // 主卡片组件
+  // 主卡片组件 - 性能优化版本
   const CardComponent = ({ card }: { card: AnalysisCard }) => {
     const isSelected = selectedCard === card.id;
     const isHovered = hoveredCard === card.id;
     const isCollapsed = collapsedCards.has(card.id);
 
+    // 🎯 优化悬浮状态处理，减少重复渲染
+    const handleMouseEnter = useCallback(() => {
+      setHoveredCard(card.id);
+    }, [card.id]);
+
+    const handleMouseLeave = useCallback(() => {
+      setHoveredCard(null);
+    }, []);
+
+    const handleClick = useCallback(() => {
+      setSelectedCard(isSelected ? null : card.id);
+    }, [isSelected, card.id]);
+
     return (
       <div
         className="group relative cursor-pointer"
-        onMouseEnter={() => setHoveredCard(card.id)}
-        onMouseLeave={() => setHoveredCard(null)}
-        onClick={() => setSelectedCard(isSelected ? null : card.id)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
         data-exclude-selection
       >
         <Card
           className={`
-          transition-all duration-300 ease-in-out 
+          transition-all duration-200 ease-out 
           relative border-0 analysis-card
           ${isSelected ? "shadow-lg linear-bg-1" : "shadow-sm linear-bg-1"}
           group-hover:shadow-lg
+          transform-gpu will-change-transform
         `}
         >
           <CardContent className="px-12 py-4">
@@ -466,35 +539,37 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
                   className="text-neutral-400 hover:text-neutral-600 relative z-10"
                 />
 
-                {isHovered && (
-                  <div className="flex items-center gap-1 mr-1 transition-all duration-200 relative z-10">
-                    <FavoriteButton
-                      itemId={content.id}
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        console.log("分享");
-                      }}
-                    >
-                      <Share className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                )}
+                {/* 🎯 优化悬浮操作按钮显示 */}
+                <div className={`
+                  flex items-center gap-1 mr-1 transition-opacity duration-200 relative z-10
+                  ${isHovered ? 'opacity-100' : 'opacity-0'}
+                `}>
+                  <FavoriteButton
+                    itemId={content.id}
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      console.log("分享");
+                    }}
+                  >
+                    <Share className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             </div>
 
-            {/* 卡片内容 */}
+            {/* 卡片内容 - 优化动画性能 */}
             <div
               className={`
-              transition-all duration-300 ease-in-out overflow-hidden
+              transition-all duration-200 ease-out overflow-hidden transform-gpu
               ${isCollapsed ? "opacity-0" : "opacity-100"}
             `}
               style={{
@@ -502,127 +577,21 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
               }}
             >
               <div
-                ref={(el) => registerElement(card.id, el)}
+                ref={(el) => {
+                  // 延迟注册，避免在渲染过程中引起问题
+                  if (el) {
+                    requestAnimationFrame(() => registerElement(card.id, el));
+                  } else {
+                    registerElement(card.id, null);
+                  }
+                }}
                 className="card-content-inner"
               >
                 {card.content.type === "summary" || card.content.type === "keyPoints" ? (
                   renderCardContent(card)
-                ) : card.content.type === "conversations" && (
-                  <div className="space-y-3">
-                    {card.content.data.map((conversation: any, index: number) => (
-                      <div key={conversation.id || index} className="border rounded-lg p-3 bg-muted/20">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">
-                              {conversation.title || "未命名对话"}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {conversation.conversation_type === "auto_analysis" && "自动分析"}
-                              {conversation.conversation_type === "user_chat" && "用户对话"}
-                              {conversation.conversation_type === "prompt_analysis" && "模板分析"}
-                            </span>
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(conversation.created_at), {
-                              addSuffix: true,
-                              locale: zhCN,
-                            })}
-                          </span>
-                        </div>
-                        {conversation.messages && conversation.messages.length > 0 && (
-                          <div className="space-y-2 max-h-48 overflow-y-auto">
-                            {conversation.messages
-                              .filter((msg: any) => msg.role !== "system")
-                              .slice(0, 3)
-                              .map((message: any, msgIndex: number) => (
-                                <div
-                                  key={msgIndex}
-                                  className={`flex gap-2 ${
-                                    message.role === "user" ? "justify-end" : "justify-start"
-                                  }`}
-                                >
-                                  <div
-                                    className={`max-w-[80%] p-2 rounded text-xs ${
-                                      message.role === "user"
-                                        ? "bg-primary text-primary-foreground"
-                                        : "bg-muted text-muted-foreground"
-                                    }`}
-                                  >
-                                    {message.content.length > 100
-                                      ? `${message.content.substring(0, 100)}...`
-                                      : message.content}
-                                  </div>
-                                </div>
-                              ))}
-                            {conversation.messages.filter((msg: any) => msg.role !== "system").length > 3 && (
-                              <div className="text-center text-xs text-muted-foreground">
-                                还有 {conversation.messages.filter((msg: any) => msg.role !== "system").length - 3} 条消息...
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                ) : null}
 
-                {/* 单个历史对话卡片 */}
-                {card.content.type === "historyConversation" && (
-                  <div className="space-y-4">
-                    {card.content.data.messages && card.content.data.messages.length > 0 ? (
-                      card.content.data.messages
-                        .filter((msg: any) => msg.role !== "system")
-                        .map((message: any, msgIndex: number) => (
-                          <div
-                            key={msgIndex}
-                            className={`flex gap-3 ${
-                              message.role === "user" ? "justify-end" : "justify-start"
-                            }`}
-                          >
-                            {message.role !== "user" && (
-                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                                <Bot className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                            )}
-                            
-                            <div
-                              className={`max-w-[80%] p-3 rounded-lg ${
-                                message.role === "user"
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-muted text-muted-foreground"
-                              }`}
-                            >
-                              <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                                {message.content.length > 1000
-                                  ? `${message.content.substring(0, 1000)}...`
-                                  : message.content}
-                              </div>
-                              {message.timestamp && (
-                                <div className="text-xs opacity-70 mt-1">
-                                  {formatDistanceToNow(new Date(message.timestamp), {
-                                    addSuffix: true,
-                                    locale: zhCN,
-                                  })}
-                                </div>
-                              )}
-                            </div>
-
-                            {message.role === "user" && (
-                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                                <User className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                            )}
-                          </div>
-                        ))
-                    ) : (
-                      <div className="text-center text-muted-foreground py-4">
-                        <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">此对话暂无消息</p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* 🎯 移除所有历史对话卡片的渲染逻辑 - 过时的呈现方式 */}
               </div>
             </div>
           </CardContent>
@@ -659,14 +628,36 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
         }
+        
+        /* 🎯 性能优化样式 */
+        .analysis-card {
+          contain: layout style paint;
+        }
+        
+        .analysis-card:hover {
+          will-change: box-shadow;
+        }
+        
+        .analysis-card:not(:hover) {
+          will-change: auto;
+        }
       `}</style>
 
-      {/* 可滚动的主内容区域 */}
+      {/* 可滚动的主内容区域 - 优化滚动性能 */}
       <div
-        className={`flex-1 overflow-y-auto custom-scrollbar ${
-          variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""
-        }`}
+        className={`
+          flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent 
+          scrollbar-thumb-neutral-300 hover:scrollbar-thumb-neutral-400
+          dark:scrollbar-thumb-neutral-600 dark:hover:scrollbar-thumb-neutral-500
+          ${variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""}
+        `}
         data-exclude-selection
+        ref={scrollContainerRef}
+        style={{
+          contain: "layout style paint",
+          willChange: "scroll-position",
+          overscrollBehavior: "contain",
+        }}
       >
         {/* 页面标题 */}
         {!hideHeader && (
@@ -690,13 +681,15 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
             }`}
           >
             {cards.length > 0 ? (
-              cards.map((card) => <CardComponent key={card.id} card={card} />)
+              cards.map((card) => (
+                <CardComponent key={card.id} card={card} />
+              ))
             ) : streamingConversations.length === 0 ? (
               <div className="flex items-center justify-center p-8 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50/30 dark:bg-neutral-900/30">
                 <div className="text-center space-y-2">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto text-neutral-400" />
                   <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                    暂无分析结果，使用下方AI助手开始分析
+                    暂无分析结果，正在处理 ...
                   </p>
                 </div>
               </div>
@@ -755,45 +748,88 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
                       暂无历史对话
                     </div>
                   ) : (
-                    historyRecords.map((record, index) => (
-                      <div
-                        key={record.id}
-                        className="flex items-center justify-between p-2 rounded-lg hover:bg-white/50 dark:hover:bg-neutral-800/50 transition-colors duration-200 cursor-pointer group"
-                        onClick={() => handleHistoryClick(record)}
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="w-6 h-6 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center flex-shrink-0">
-                            <MessageSquare className="h-3 w-3 text-neutral-600 dark:text-neutral-400" />
-                          </div>
+                    historyRecords.map((record, index) => {
+                      // 🎯 类型断言：历史记录实际上包含messages属性
+                      const fullRecord = record as ConversationPublic;
+                      
+                      // 提取用户意图
+                      const getUserIntentSummary = () => {
+                        if (!fullRecord.messages || fullRecord.messages.length === 0) return "无用户输入";
+                        
+                        const userMessages = fullRecord.messages.filter((msg: any) => msg.role === "user");
+                        if (userMessages.length === 0) return "无用户输入";
+                        
+                        const firstUserMessage = userMessages[0];
+                        const metadata = (firstUserMessage.metadata as any) || {};
+                        
+                        // 优先显示prompt名称
+                        if (metadata.isPromptBased && metadata.promptName) {
+                          return `📝 ${metadata.promptName}`;
+                        }
+                        
+                        // 显示原始用户输入
+                        if (metadata.originalUserInput) {
+                          const originalInput = String(metadata.originalUserInput);
+                          return originalInput.length > 40
+                            ? `${originalInput.substring(0, 40)}...`
+                            : originalInput;
+                        }
+                        
+                        // 默认显示消息内容
+                        const content = String(firstUserMessage.content || "");
+                        return content.length > 40
+                          ? `${content.substring(0, 40)}...`
+                          : content;
+                      };
 
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
-                              {record.title || "未命名对话"}
+                      return (
+                        <div
+                          key={record.id}
+                          className="bg-white/60 dark:bg-neutral-800/60 rounded-lg p-3 hover:bg-white/80 dark:hover:bg-neutral-800/80 transition-all duration-200 cursor-pointer group border border-neutral-200/50 dark:border-neutral-700/50"
+                          onClick={() => handleHistoryClick(fullRecord)}
+                          style={{ animationDelay: `${index * 50}ms` }}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 mt-0.5">
+                              <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/50 dark:to-purple-950/50 flex items-center justify-center border border-blue-200/30 dark:border-blue-700/30">
+                                <Sparkles className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                              </div>
                             </div>
-                            {record.summary && (
-                              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
-                                {record.summary}
-                              </p>
-                            )}
-                          </div>
 
-                          <span className="text-xs text-neutral-400 flex-shrink-0">
-                            {formatDistanceToNow(new Date(record.created_at), {
-                              addSuffix: true,
-                              locale: zhCN,
-                            })}
-                          </span>
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
+                                {record.title || "未命名对话"}
+                              </div>
+                              
+                              <div className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed">
+                                {getUserIntentSummary()}
+                              </div>
+                              
+                              <div className="flex items-center justify-between">
+                                {record.summary && (
+                                  <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate flex-1 mr-2">
+                                    {record.summary}
+                                  </p>
+                                )}
+                                <span className="text-xs text-neutral-400 flex-shrink-0">
+                                  {formatDistanceToNow(new Date(record.created_at), {
+                                    addSuffix: true,
+                                    locale: zhCN,
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </div>
             </div>
           )}
 
-          {/* AI指令标签行 */}
+          {/* AI指令标签行 - 优化滚动性能 */}
           <div className="flex items-center gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
             {loadingPrompts ? (
               <div className="flex items-center gap-2">
@@ -805,8 +841,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
                 <button
                   key={prompt.id}
                   onClick={() => handlePromptClick(prompt)}
-                  disabled={isProcessing}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 whitespace-nowrap flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 whitespace-nowrap flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transform-gpu will-change-transform"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>{prompt.name}</span>
@@ -836,7 +871,6 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
               }}
               placeholder="询问关于内容的任何问题..."
               className="flex-1 bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none"
-              disabled={isProcessing}
             />
 
             {/* 发送按钮 */}
@@ -845,34 +879,14 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
                 size="icon"
                 className="h-8 w-8 rounded-xl bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white ml-3"
                 onClick={handleAnalysis}
-                disabled={isProcessing}
               >
-                {isProcessing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
+                <Send className="h-4 w-4" />
               </Button>
             )}
           </div>
 
           {/* 当前处理状态提示 */}
-          {isProcessing && (
-            <div className="mt-2 text-center">
-              <div className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center justify-center gap-2">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                <span>正在处理您的问题...</span>
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="h-auto p-0 text-xs text-neutral-400 hover:text-neutral-600"
-                  onClick={cancelCurrentProcessing}
-                >
-                  取消
-                </Button>
-              </div>
-            </div>
-          )}
+          {/* isProcessing is no longer needed here as each conversation is independent */}
         </div>
       </div>
     </div>

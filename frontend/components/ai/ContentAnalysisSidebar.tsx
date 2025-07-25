@@ -3,7 +3,7 @@
 import { FC, useState, useCallback } from "react";
 import { ContentItemPublic } from "@/lib/api/content";
 import { AIResult, ConversationListResponse } from "@/lib/api/content";
-import { ModernAnalysisInterface } from "./ModernAnalysisInterface";
+import { EnhancedModernAnalysisInterface } from "./EnhancedModernAnalysisInterface";
 import { Button } from "@/components/ui/button";
 import { MessageSquare } from "lucide-react";
 
@@ -72,7 +72,7 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
 
       {/* Modern Analysis Interface */}
       <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
-        <ModernAnalysisInterface
+        <EnhancedModernAnalysisInterface
           content={content}
           conversations={conversations}
           analysisResult={analysisResult}

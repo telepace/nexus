@@ -57,6 +57,42 @@ export const defaultStyleRenderer: StyleRenderer = ({
           )}
         </h3>
       );
+    case "h4":
+      return wrapElement(
+        <h4 className="scroll-m-16 text-sm font-semibold tracking-tight select-text leading-[1.3] mt-4 mb-2">
+          <MarkdownRenderer content={String(c)} inline={true} />
+          {hasReferences && (
+            <EnhancedReferenceIndicator
+              references={references}
+              className="ml-2"
+            />
+          )}
+        </h4>
+      );
+    case "h5":
+      return wrapElement(
+        <h5 className="scroll-m-16 text-xs font-semibold tracking-tight select-text leading-[1.3] mt-3 mb-1 uppercase">
+          <MarkdownRenderer content={String(c)} inline={true} />
+          {hasReferences && (
+            <EnhancedReferenceIndicator
+              references={references}
+              className="ml-2"
+            />
+          )}
+        </h5>
+      );
+    case "h6":
+      return wrapElement(
+        <h6 className="scroll-m-16 text-xs font-medium tracking-tight select-text leading-[1.3] mt-2 mb-1 text-muted-foreground uppercase">
+          <MarkdownRenderer content={String(c)} inline={true} />
+          {hasReferences && (
+            <EnhancedReferenceIndicator
+              references={references}
+              className="ml-2"
+            />
+          )}
+        </h6>
+      );
     case "quote":
       return wrapElement(
         <blockquote className="italic border-l-2 pl-4 my-2 select-text">

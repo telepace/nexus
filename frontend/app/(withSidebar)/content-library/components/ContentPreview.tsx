@@ -5,8 +5,8 @@ import type { ContentItemPublic } from "@/lib/api/content";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-// 不再需要分析卡片导入，统一使用ModernAnalysisInterface
-import { ModernAnalysisInterface } from "@/components/ai/ModernAnalysisInterface";
+// 不再需要分析卡片导入，统一使用EnhancedModernAnalysisInterface
+import { EnhancedModernAnalysisInterface } from "@/components/ai/EnhancedModernAnalysisInterface";
 
 interface Props {
   item: ContentItemPublic | null;
@@ -134,7 +134,7 @@ const ContentPanel = ({ item, isActive = true }: { item: ContentItemPublic; isAc
       <div className="flex-1 overflow-hidden">
         {isActive && showContent ? (
           // 只有激活面板才渲染完整内容
-          <ModernAnalysisInterface
+          <EnhancedModernAnalysisInterface
             content={item}
             analysisResult={aiResult}
             variant="preview"

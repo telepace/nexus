@@ -190,6 +190,72 @@ export const notebookStyleRenderer: StyleRenderer = ({
         hasCustomExpandButton: false,
       };
     }
+    case "h4": {
+      const element = (
+        <div className="mt-3 mb-2 inline-flex items-baseline gap-1 flex-wrap">
+          <span
+            className="text-base font-bold text-neutral-600 select-text"
+            style={{ 
+              lineHeight: '1.4',
+              fontFamily: '"Kalam", "Comic Sans MS", cursive'
+            }}
+          >
+            <MarkdownRenderer content={String(c)} inline={true} />
+          </span>
+          {hasReferences && (
+            <EnhancedReferenceIndicator references={references} />
+          )}
+        </div>
+      );
+      return {
+        element,
+        hasCustomExpandButton: false,
+      };
+    }
+    case "h5": {
+      const element = (
+        <div className="mt-2 mb-1 inline-flex items-baseline gap-1 flex-wrap">
+          <span
+            className="text-sm font-bold text-neutral-600 select-text uppercase tracking-wide"
+            style={{ 
+              lineHeight: '1.4',
+              fontFamily: '"Kalam", "Comic Sans MS", cursive'
+            }}
+          >
+            <MarkdownRenderer content={String(c)} inline={true} />
+          </span>
+          {hasReferences && (
+            <EnhancedReferenceIndicator references={references} />
+          )}
+        </div>
+      );
+      return {
+        element,
+        hasCustomExpandButton: false,
+      };
+    }
+    case "h6": {
+      const element = (
+        <div className="mt-2 mb-1 inline-flex items-baseline gap-1 flex-wrap">
+          <span
+            className="text-xs font-bold text-neutral-500 select-text uppercase tracking-wider"
+            style={{ 
+              lineHeight: '1.4',
+              fontFamily: '"Kalam", "Comic Sans MS", cursive'
+            }}
+          >
+            <MarkdownRenderer content={String(c)} inline={true} />
+          </span>
+          {hasReferences && (
+            <EnhancedReferenceIndicator references={references} />
+          )}
+        </div>
+      );
+      return {
+        element,
+        hasCustomExpandButton: false,
+      };
+    }
     case "quote": {
       const element = (
         <div className="relative my-2 select-text">

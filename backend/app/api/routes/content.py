@@ -43,6 +43,11 @@ from app.crud.crud_content import (
 from app.crud.crud_content import (
     get_content_item_sync as crud_get_content_item,
 )
+# 🎯 导入统一的AI对话CRUD操作
+from app.crud.crud_ai_conversation import (
+    create_ai_conversation_for_analysis,
+    update_ai_conversation_response,
+)
 from app.models import (
     AIConversation,
     AIResult,  # Added for AIResult storage
@@ -73,7 +78,6 @@ from app.utils.prompt_helpers import render_user_analysis_prompt
 from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
 from app.utils.streaming_jsonl_extractor import create_streaming_jsonl_extractor
 from app.api.deps import get_current_user, get_db, get_async_db
-from app.utils.streaming_jsonl_extractor import create_streaming_jsonl_extractor
 
 # from app.utils.cache import warm_article_cache  # 暂时注释掉避免redis依赖
 
@@ -112,125 +116,6 @@ def _extract_title_from_content(content_text: str | None) -> str:
         return title if title else "新内容"
 
     return "新内容"
-
-
-def create_ai_conversation(
-    session: Session,
-    user_id: uuid.UUID,
-    content_item_id: uuid.UUID,
-    content_item_title: str,
-    analysis_instruction: str,
-    content_to_analyze: str,
-    model: str,
-    temperature: float,
-    max_tokens: int,
-) -> AIConversation:
-    """
-    创建AIConversation记录来存储AI分析对话
-
-    Args:
-        session: 数据库会话
-        user_id: 用户ID
-        content_item_id: 内容项ID
-        content_item_title: 内容项标题
-        analysis_instruction: 分析指令
-        content_to_analyze: 要分析的内容
-        model: AI模型名称（使用配置的模型名称，不是LiteLLM返回的实际模型名称）
-        temperature: 温度参数
-        max_tokens: 最大token数
-
-    Returns:
-        AIConversation: 创建的对话记录
-    """
-
-    # 使用用户分析模板渲染prompt
-    user_prompt = render_user_analysis_prompt(analysis_instruction)
-
-    # 准备对话消息
-    conversation_messages = [
-        {"role": "system", "content": content_to_analyze},
-        {"role": "user", "content": user_prompt},  # 使用渲染后的prompt
-    ]
-
-    # 创建AIConversation记录 - 使用配置的模型名称而不是LiteLLM响应的实际模型
-    ai_conversation = AIConversation(
-        user_id=user_id,
-        content_item_id=content_item_id,
-        title=f"AI分析: {content_item_title or '内容分析'}",
-        ai_model_name=model,  # 保持使用传入的配置模型名称
-        messages=json.dumps(conversation_messages),
-        summary=analysis_instruction[:200] + "..."
-        if len(analysis_instruction) > 200
-        else analysis_instruction,
-        meta_info=json.dumps(
-            {
-                "temperature": temperature,
-                "max_tokens": max_tokens,
-                "analysis_type": "content_analysis",
-                "content_length": len(content_to_analyze),
-                "configured_model": model,  # 记录配置的模型名称
-                "note": "模型名称为配置值，实际调用可能通过LiteLLM路由到不同后端",
-            }
-        ),
-    )
-
-    # 保存到数据库
-    session.add(ai_conversation)
-    session.commit()
-
-    # 重新获取ai_conversation以确保session绑定，避免refresh错误
-    refreshed_ai_conversation = session.get(AIConversation, ai_conversation.id)
-    if refreshed_ai_conversation:
-        ai_conversation = refreshed_ai_conversation
-
-    return ai_conversation
-
-
-def update_ai_conversation_response(
-    session: Session,
-    ai_conversation: AIConversation,
-    ai_response: str,
-    status: str = "completed",
-    error: str | None = None,
-) -> None:
-    """
-    更新AIConversation记录，添加AI响应
-    """
-    try:
-        # To avoid "Instance <...> is not bound to a Session" error, we must fetch
-        # a "live" version of the object from the session we're about to use,
-        # instead of trying to merge the detached instance from a closed session.
-        live_conversation = session.get(AIConversation, ai_conversation.id)
-
-        if not live_conversation:
-            logger.error(
-                f"Failed to find AIConversation {ai_conversation.id} for update."
-            )
-            return
-
-        # 获取现有消息
-        conversation_messages = json.loads(live_conversation.messages)
-
-        # 添加AI响应
-        conversation_messages.append({"role": "assistant", "content": ai_response})
-
-        # 更新记录
-        live_conversation.messages = json.dumps(conversation_messages)
-
-        # 更新元信息
-        meta_info = json.loads(live_conversation.meta_info)
-        meta_info.update({"status": status, "response_length": len(ai_response)})
-
-        if error:
-            meta_info["error"] = error
-
-        live_conversation.meta_info = json.dumps(meta_info)
-
-        session.add(live_conversation)
-        session.commit()
-    except Exception as e:
-        logger.error(f"Failed to update AIConversation {ai_conversation.id}: {e}")
-        session.rollback()
 
 
 @router.get(
@@ -857,7 +742,7 @@ async def analyze_content_stream_endpoint(
     )
 
     # 创建AIConversation记录
-    ai_conversation = create_ai_conversation(
+    ai_conversation = create_ai_conversation_for_analysis(
         session=session,
         user_id=current_user.id,
         content_item_id=content_item.id,
@@ -962,15 +847,14 @@ async def _stream_content_analysis(
                                 if accumulated_content:
                                     try:
                                         with next(get_db()) as new_session:
-                                            conversation = new_session.get(
-                                                AIConversation, ai_conversation_id
+                                            # 🎯 使用新的CRUD接口
+                                            success = update_ai_conversation_response(
+                                                new_session,
+                                                ai_conversation_id,
+                                                accumulated_content,
                                             )
-                                            if conversation is not None:
-                                                update_ai_conversation_response(
-                                                    new_session,
-                                                    conversation,
-                                                    accumulated_content,
-                                                )
+                                            if not success:
+                                                logger.error(f"Failed to save AI response for conversation {ai_conversation_id}")
                                     except Exception as e:
                                         logger.error(f"Failed to save AI response: {e}")
 
@@ -988,17 +872,16 @@ async def _stream_content_analysis(
                                     # 保存错误
                                     try:
                                         with next(get_db()) as new_session:
-                                            conversation = new_session.get(
-                                                AIConversation, ai_conversation_id
+                                            # 🎯 使用新的CRUD接口
+                                            success = update_ai_conversation_response(
+                                                new_session,
+                                                ai_conversation_id,
+                                                accumulated_content,
+                                                "failed",
+                                                error_msg,
                                             )
-                                            if conversation is not None:
-                                                update_ai_conversation_response(
-                                                    new_session,
-                                                    conversation,
-                                                    accumulated_content,
-                                                    "failed",
-                                                    error_msg,
-                                                )
+                                            if not success:
+                                                logger.error(f"Failed to save error for conversation {ai_conversation_id}")
                                     except Exception as e:
                                         logger.error(f"Failed to save error: {e}")
 
@@ -1029,11 +912,12 @@ async def _stream_content_analysis(
         if accumulated_content:
             try:
                 with next(get_db()) as new_session:
-                    conversation = new_session.get(AIConversation, ai_conversation_id)
-                    if conversation is not None:
-                        update_ai_conversation_response(
-                            new_session, conversation, accumulated_content
-                        )
+                    # 🎯 使用新的CRUD接口
+                    success = update_ai_conversation_response(
+                        new_session, ai_conversation_id, accumulated_content
+                    )
+                    if not success:
+                        logger.error(f"Failed to save final response for conversation {ai_conversation_id}")
             except Exception as e:
                 logger.error(f"Failed to save final response: {e}")
             yield '8:[{"finishReason":"stop"}]\n'
@@ -1042,11 +926,12 @@ async def _stream_content_analysis(
         # 在新的数据库会话中保存错误
         try:
             with next(get_db()) as new_session:
-                conversation = new_session.get(AIConversation, ai_conversation_id)
-                if conversation is not None:
-                    update_ai_conversation_response(
-                        new_session, conversation, "", "failed", str(e)
-                    )
+                # 🎯 使用新的CRUD接口
+                success = update_ai_conversation_response(
+                    new_session, ai_conversation_id, "", "failed", str(e)
+                )
+                if not success:
+                    logger.error(f"Failed to save stream error for conversation {ai_conversation_id}")
         except Exception as save_error:
             logger.error(f"Failed to save stream error: {save_error}")
 
@@ -1096,7 +981,7 @@ async def analyze_ai_sdk_updated_endpoint(
     content_title = content_item.title or "Untitled Content"
 
     # Create AI conversation record
-    ai_conversation = create_ai_conversation(
+    ai_conversation = create_ai_conversation_for_analysis(
         session=session,
         user_id=current_user.id,
         content_item_id=content_item_id,
@@ -1274,14 +1159,21 @@ async def completion_updated_endpoint(
     content_text = content_item.content_text
     content_title = content_item.title or "Untitled Content"
 
-    # 使用配置的模型，支持任务特定的模型选择
-    # 对于内容分析，使用 analysis 任务对应的模型
-    resolved_model = settings.resolved_ai_task_models.get(
-        "analysis", settings.DEFAULT_LLM_MODEL
-    )
+    # 🎯 优化模型选择逻辑：根据template_name动态选择模型
+    chat_service = ChatService()
+    if request.template_name:
+        # 如果指定了模板名称，使用模板映射选择模型
+        resolved_model = chat_service.get_model_for_template(request.template_name)
+        logger.info(f"使用模板 '{request.template_name}' 对应的模型: {resolved_model}")
+    else:
+        # 如果没有指定模板，这是用户的自由对话，使用聊天模型
+        resolved_model = settings.resolved_ai_task_models.get(
+            "chat", settings.DEFAULT_LLM_MODEL
+        )
+        logger.info(f"使用默认聊天模型: {resolved_model}")
 
     # Create AI conversation record
-    ai_conversation = create_ai_conversation(
+    ai_conversation = create_ai_conversation_for_analysis(
         session=session,
         user_id=current_user.id,
         content_item_id=content_item_id,
@@ -1293,33 +1185,22 @@ async def completion_updated_endpoint(
         max_tokens=request.max_tokens,
     )
 
-    async def stream_completion():
-        try:
-            async for chunk in _stream_content_completion_updated(
-                _content_item_id=content_item_id,  # 修复参数名匹配
-                content_text=content_text,  # 使用提前提取的内容文本
-                content_title=content_title,  # 使用提前提取的内容标题
-                request=request,
-                ai_conversation_id=ai_conversation.id,
-            ):
-                yield chunk
-        except Exception as e:
-            logger.error(f"Error in completion streaming: {e}")
-            error_response = {
-                "type": "error",
-                "content": f"Completion failed: {str(e)}",
-                "finished": True,
-            }
-            yield f"data: {json.dumps(error_response)}\n\n"
-
+    # Return streaming response
     return StreamingResponse(
-        stream_completion(),
-        media_type="text/plain",
+        _stream_content_completion_updated(
+            content_item_id,
+            content_text,
+            content_title,
+            request,
+            ai_conversation.id,
+            resolved_model,
+        ),
+        media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "Access-Control-Allow-Origin": "*",
-            "X-Vercel-AI-Data-Stream": "v1",  # Vercel AI SDK Data Stream Protocol 标识
+            "Access-Control-Allow-Headers": "Cache-Control",
         },
     )
 
@@ -1330,6 +1211,7 @@ async def _stream_content_completion_updated(
     content_title: str,  # 内容标题
     request: ContentAnalysisRequest,
     ai_conversation_id: uuid.UUID,
+    resolved_model: str,  # 🎯 新增：接收预选择的模型
 ) -> AsyncGenerator[str, None]:
     """Stream content completion with updated prompt structure."""
     import aiohttp
@@ -1365,14 +1247,11 @@ async def _stream_content_completion_updated(
             {"role": "user", "content": user_prompt},  # 使用渲染后的用户prompt
         ]
 
-        # 使用配置的模型，支持任务特定的模型选择
-        # 对于内容分析，使用 analysis 任务对应的模型
-        resolved_model = settings.resolved_ai_task_models.get(
-            "analysis", settings.DEFAULT_LLM_MODEL
-        )
+        # 🎯 使用传入的预选择模型
+        logger.info(f"流式处理使用模型: {resolved_model}")
 
         payload = {
-            "model": resolved_model,
+            "model": resolved_model,  # 使用传入的模型
             "messages": messages,
             "temperature": request.temperature,
             "max_tokens": request.max_tokens,
@@ -1396,9 +1275,9 @@ async def _stream_content_completion_updated(
 
                 full_response = ""
 
-                async for chunk in response.content.iter_chunked(1024):
-                    chunk_str = chunk.decode("utf-8")
-                    lines = chunk_str.strip().split("\n")
+                async for line in response.content.iter_chunked(1024):
+                    line_str = line.decode("utf-8")
+                    lines = line_str.strip().split("\n")
 
                     for line in lines:
                         if line.startswith("data: "):
@@ -1420,18 +1299,17 @@ async def _stream_content_completion_updated(
                                 # Update AI conversation with response using new session
                                 try:
                                     with Session(engine) as db_session:
-                                        ai_conversation = db_session.get(
-                                            AIConversation, ai_conversation_id
+                                        final_content = (
+                                            jsonl_processor.get_current_jsonl()
                                         )
-                                        if ai_conversation:
-                                            final_content = (
-                                                jsonl_processor.get_current_jsonl()
-                                            )
-                                            update_ai_conversation_response(
-                                                db_session,
-                                                ai_conversation,
-                                                final_content,
-                                            )
+                                        # 🎯 使用新的CRUD接口
+                                        success = update_ai_conversation_response(
+                                            db_session,
+                                            ai_conversation_id,
+                                            final_content,
+                                        )
+                                        if not success:
+                                            logger.error(f"Failed to save AI completion response for conversation {ai_conversation_id}")
                                 except Exception as e:
                                     logger.error(
                                         f"Failed to save AI completion response: {e}"
@@ -1884,7 +1762,7 @@ async def _stream_template_analysis(
         # 创建AI对话记录
         try:
             with Session(engine) as db_session:
-                ai_conversation = create_ai_conversation(
+                ai_conversation = create_ai_conversation_for_analysis(
                     session=db_session,
                     user_id=user_id,
                     content_item_id=content_item_id,

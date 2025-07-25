@@ -1,29 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
+import { usePathname } from "next/navigation"; // 🎯 添加路由检测
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { CollapsibleButton } from "@/components/ui/CollapsibleButton";
-import {
-  MessageSquare,
-  Brain,
-  User,
-  Bot,
-  Copy,
-  Share,
-  RefreshCw,
-  Check,
-  X,
-  Loader2,
-  Sparkles,
-  Minus,
-  Plus,
-} from "lucide-react";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
-import { formatDistanceToNow } from "date-fns";
-import { zhCN } from "date-fns/locale";
-import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 export interface ConversationMessage {
   id: string;
@@ -54,249 +36,98 @@ export function StreamingConversationCard({
   onDelete,
   className = "",
 }: StreamingConversationCardProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname(); // 🎯 获取当前路由
+  
+  // 🎯 在/reader/页面默认折叠，其他页面默认展开
+  const defaultCollapsed = pathname.includes("/reader/");
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
+  // 获取用户消息和AI消息
   const userMessage = conversation.find(msg => msg.role === "user");
   const assistantMessage = conversation.find(msg => msg.role === "assistant");
 
-  // 获取对话标题 - 显示用户实际输入内容
-  const getConversationTitle = (): string => {
-    if (!userMessage?.content) return "AI 对话";
-    
-    const content = userMessage.content.trim();
-    return content.length > 50 ? content.substring(0, 50) + "..." : content;
-  };
+  if (!userMessage || !assistantMessage) {
+    return null;
+  }
 
-  // 自动滚动到新的内容
-  useEffect(() => {
-    if (assistantMessage?.status === "streaming" && cardRef.current) {
-      cardRef.current.scrollIntoView({ 
-        behavior: "smooth", 
-        block: "nearest" 
-      });
-    }
-  }, [assistantMessage?.content, assistantMessage?.status]);
-
-  // 复制内容
-  const handleCopy = async (content: string) => {
-    try {
-      await navigator.clipboard.writeText(content);
-      toast.success("已复制到剪贴板");
-    } catch (error) {
-      toast.error("复制失败");
-    }
-  };
-
-  // 获取状态显示
-  const getStatusInfo = () => {
-    if (!assistantMessage) return null;
-
-    switch (assistantMessage.status) {
-      case "pending":
-        return {
-          icon: <Loader2 className="h-3 w-3 animate-spin" />,
-          text: "准备中...",
-          color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300",
-        };
-      case "thinking":
-        return {
-          icon: <Brain className="h-3 w-3 animate-pulse" />,
-          text: "AI 正在思考...",
-          color: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300",
-        };
-      case "streaming":
-        return {
-          icon: <Sparkles className="h-3 w-3 animate-pulse" />,
-          text: "实时回复中...",
-          color: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300",
-        };
-      case "completed":
-        return {
-          icon: <Check className="h-3 w-3" />,
-          text: "已完成",
-          color: "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300",
-        };
-      case "error":
-        return {
-          icon: <X className="h-3 w-3" />,
-          text: "发生错误",
-          color: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300",
-        };
-      default:
-        return null;
-    }
-  };
-
-  const statusInfo = getStatusInfo();
+  // 确定卡片标题 - 使用用户消息内容
+  const cardTitle = userMessage.content;
+  
+  // 确定显示的内容
+  const displayContent = assistantMessage.content;
+  const isLoading = assistantMessage.status === "pending" || assistantMessage.status === "thinking";
+  const isStreaming = assistantMessage.status === "streaming";
+  const hasError = assistantMessage.status === "error";
 
   return (
-    <div
-      ref={cardRef}
-      className={`group ${className}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <Card className="transition-all duration-300 hover:shadow-lg border-l-4 border-l-muted-foreground/20">
-        <CardContent className="p-6">
-          {/* 卡片头部 */}
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                <MessageSquare className="h-4 w-4 text-muted-foreground" />
-              </div>
+    <div className="group relative">
+      <Card className="transition-all duration-300 ease-in-out relative border-0 analysis-card shadow-sm linear-bg-1 group-hover:shadow-lg">
+        <CardContent className="px-12 py-4">
+          {/* 卡片头部 - 简化设计 */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🤖</span>
               <div>
-                <h3 className="text-sm font-medium text-foreground">
-                  {getConversationTitle()}
+                <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                  {cardTitle.length > 30 ? `${cardTitle.substring(0, 30)}...` : cardTitle}
                 </h3>
-                <p className="text-xs text-muted-foreground">
-                  {userMessage ? formatDistanceToNow(userMessage.timestamp, {
-                    addSuffix: true,
-                    locale: zhCN,
-                  }) : "刚刚"}
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  AI 回复
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* 状态标识 */}
-              {statusInfo && (
-                <Badge variant="secondary" className={`text-xs ${statusInfo.color}`}>
-                  {statusInfo.icon}
-                  <span className="ml-1">{statusInfo.text}</span>
-                </Badge>
+            <div className="flex items-center gap-1 flex-row-reverse relative z-10">
+              <CollapsibleButton
+                isCollapsed={isCollapsed}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIsCollapsed(!isCollapsed);
+                }}
+                size="md"
+                className="text-neutral-400 hover:text-neutral-600 relative z-10"
+              />
+            </div>
+          </div>
+
+          {/* 卡片内容 - 纯内容展示 */}
+          <div
+            className={`transition-all duration-300 ease-in-out overflow-hidden ${
+              isCollapsed ? "opacity-0" : "opacity-100"
+            }`}
+            style={{
+              maxHeight: isCollapsed ? 0 : "none",
+            }}
+          >
+            <div className="px-6 py-4 rounded-lg transition-all duration-200 hover:linear-bg-1">
+              {hasError ? (
+                <div className="text-center py-8 text-red-500">
+                  <p className="text-sm">生成失败: {assistantMessage.error}</p>
+                </div>
+              ) : isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
+                </div>
+              ) : displayContent ? (
+                <div className="select-text prose prose-sm max-w-none dark:prose-invert">
+                  <UniversalContentRenderer
+                    content={displayContent}
+                    onExpandLine={onExpandLine}
+                    enableDelayedRendering={false}
+                  />
+                  {/* 流式响应时的打字机光标 */}
+                  {isStreaming && (
+                    <span className="inline-block w-2 h-4 bg-muted-foreground animate-pulse ml-1 align-middle" />
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
+                </div>
               )}
-
-              {/* 操作按钮 */}
-              <div className="flex items-center gap-1">
-                {/* 折叠按钮 */}
-                <CollapsibleButton
-                  isCollapsed={isCollapsed}
-                  onClick={() => setIsCollapsed(!isCollapsed)}
-                  size="sm"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                />
-
-                {/* 其他操作按钮 - 只在悬停时显示 */}
-                {isHovered && (
-                  <>
-                    {assistantMessage?.content && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => handleCopy(assistantMessage.content)}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    )}
-                    
-                    {assistantMessage?.status === "error" && onRetry && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => onRetry(assistantMessage.id)}
-                      >
-                        <RefreshCw className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </>
-                )}
-              </div>
             </div>
           </div>
-
-          {/* 对话内容 */}
-          <div className={`space-y-4 ${isCollapsed ? "hidden" : ""}`}>
-            {/* 用户消息 */}
-            {userMessage && (
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                  <User className="h-3 w-3 text-muted-foreground" />
-                </div>
-                <div className="flex-1 bg-muted/50 rounded-lg p-3">
-                  <p className="text-sm text-foreground">
-                    {userMessage.content}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* AI 回复 */}
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                <Bot className="h-3 w-3 text-muted-foreground" />
-              </div>
-              <div className="flex-1">
-                {assistantMessage ? (
-                  <div className="bg-muted/30 rounded-lg p-3">
-                    {assistantMessage.status === "error" ? (
-                      <div className="text-sm text-destructive">
-                        <p className="font-medium">处理失败</p>
-                        <p className="text-xs mt-1">{assistantMessage.error || "未知错误"}</p>
-                      </div>
-                    ) : assistantMessage.content ? (
-                      <div className="text-sm text-foreground">
-                        <UniversalContentRenderer
-                          content={assistantMessage.content}
-                          onExpandLine={onExpandLine}
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        {assistantMessage.status === "thinking" && (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>AI 正在思考，请稍候...</span>
-                          </>
-                        )}
-                        {assistantMessage.status === "pending" && (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>正在准备回复...</span>
-                          </>
-                        )}
-                        {assistantMessage.status === "streaming" && (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>正在生成回复...</span>
-                          </>
-                        )}
-                      </div>
-                    )}
-
-                    {/* 流式响应时的打字机效果光标 */}
-                    {assistantMessage.status === "streaming" && assistantMessage.content && (
-                      <span className="inline-block w-2 h-4 bg-blue-500 animate-pulse ml-1" />
-                    )}
-                  </div>
-                ) : (
-                  <div className="bg-muted/30 rounded-lg p-3">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>等待AI回复...</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* 元数据信息 */}
-          {assistantMessage?.metadata && !isCollapsed && (
-            <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                {assistantMessage.metadata.model && (
-                  <span>模型: {assistantMessage.metadata.model}</span>
-                )}
-                {assistantMessage.metadata.promptTemplate && (
-                  <span>模板: {assistantMessage.metadata.promptTemplate}</span>
-                )}
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

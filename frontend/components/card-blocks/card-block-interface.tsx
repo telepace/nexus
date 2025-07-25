@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { NotionStyleBlock } from "@/components/ui/HoverableBlock";
 import {
   Bookmark,
   Share2,
@@ -131,7 +132,6 @@ const CapabilityModal = ({ block, capability, onClose }) => {
 };
 
 const BlockComponent = ({ block, onCapabilityClick }) => {
-  const [isHovered, setIsHovered] = useState(false);
   const capability = capabilities[block.capability];
   const Icon = capability.icon;
 
@@ -169,54 +169,43 @@ const BlockComponent = ({ block, onCapabilityClick }) => {
 
   const styles = getTypeStyles(block.type);
 
-  return (
-    <div
-      className={`group relative ${styles.wrapper}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Notion风格左侧操作 - 只保留拖拽句柄 */}
-      <div
-        className={`
-        absolute -left-8 top-1 transition-all duration-200
-        ${isHovered ? "opacity-100" : "opacity-0"}
-      `}
+  // 左侧操作：拖拽句柄
+  const leftActions = (
+    <button className="w-5 h-5 flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/50 rounded transition-all">
+      <GripVertical className="w-3.5 h-3.5" />
+    </button>
+  );
+
+  // 右侧操作：能力按钮和提示
+  const rightActions = (
+    <div className="flex items-center gap-2">
+      {/* 能力指示点 */}
+      <div className="w-1 h-1 rounded-full bg-muted-foreground/30"></div>
+      
+      {/* 能力按钮 */}
+      <button
+        onClick={() => onCapabilityClick(block, capability)}
+        className="w-5 h-5 rounded-md bg-background/80 backdrop-blur-sm border border-border/50 flex items-center justify-center hover:bg-background hover:border-border hover:shadow-sm transition-all duration-200"
       >
-        <button className="w-5 h-5 flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/50 rounded transition-all">
-          <GripVertical className="w-3.5 h-3.5" />
-        </button>
+        <Icon className="w-3 h-3 text-muted-foreground" />
+      </button>
+      
+      {/* 能力名称提示 */}
+      <div className="text-xs text-muted-foreground/60 whitespace-nowrap">
+        {capability.name}
       </div>
+    </div>
+  );
 
-      {/* 主要内容区域 */}
-      <div className="relative group/content">
+  return (
+    <div className={`${styles.wrapper}`}>
+      <NotionStyleBlock
+        leftActions={leftActions}
+        rightActions={rightActions}
+        className="group/content"
+      >
         <div className={styles.content}>{block.content}</div>
-
-        {/* 能力标记 - 更自然的位置和样式 */}
-        <div
-          className={`
-          absolute top-0 -right-10 flex items-center gap-1 transition-all duration-300
-          ${isHovered ? "opacity-100" : "opacity-0"}
-        `}
-        >
-          {/* 能力指示点 */}
-          <div className="w-1 h-1 rounded-full bg-muted-foreground/30"></div>
-
-          {/* 能力按钮 */}
-          <button
-            onClick={() => onCapabilityClick(block, capability)}
-            className="w-5 h-5 rounded-md bg-background/80 backdrop-blur-sm border border-border/50 flex items-center justify-center hover:bg-background hover:border-border hover:shadow-sm transition-all duration-200"
-          >
-            <Icon className="w-3 h-3 text-muted-foreground" />
-          </button>
-        </div>
-
-        {/* 智能提示 - 悬浮时显示能力名称 */}
-        {isHovered && (
-          <div className="absolute top-6 -right-10 text-xs text-muted-foreground/60 whitespace-nowrap">
-            {capability.name}
-          </div>
-        )}
-      </div>
+      </NotionStyleBlock>
     </div>
   );
 };

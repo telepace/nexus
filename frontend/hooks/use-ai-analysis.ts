@@ -242,6 +242,7 @@ export function useAIAnalysis(config: AIAnalysisConfig): AIAnalysisReturn {
             body: JSON.stringify({
               analysis_instruction: instruction,
               model: model,
+              template_name: "simple_chat.j2",  // 🎯 AI分析hook使用简单聊天模板
             }),
           },
         );

@@ -130,6 +130,7 @@ export function OptimizedChatContainer({
         ? {
             analysis_instruction: messageContent.trim(),
             model: model,
+            template_name: "simple_chat.j2",  // 🎯 聊天容器使用简单聊天模板
           }
         : {
             messages: [

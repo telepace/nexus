@@ -7,7 +7,70 @@ module.exports = {
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
     extend: {
+      colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: "hsl(var(--sidebar-primary))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))",
+        },
+        // 日式极简美学色彩系统
+        library: {
+          bg: "#ffffff",
+          border: "rgba(0, 0, 0, 0.06)",
+          "border-hover": "rgba(0, 0, 0, 0.12)",
+          text: "#000000",
+          "text-muted": "#666666",
+          "text-subtle": "#999999",
+          "tag-bg": "rgba(0, 0, 0, 0.04)",
+          "tag-bg-hover": "rgba(0, 0, 0, 0.08)",
+        },
+      },
       screens: {
         xs: "475px", // 额外的小屏幕断点
         "3xl": "1920px", // 额外的大屏幕断点
@@ -58,18 +121,10 @@ module.exports = {
         "safe-left": "env(safe-area-inset-left)",
         "safe-right": "env(safe-area-inset-right)",
       },
-      colors: {
-        // 日式极简美学色彩系统
-        library: {
-          bg: "#ffffff",
-          border: "rgba(0, 0, 0, 0.06)",
-          "border-hover": "rgba(0, 0, 0, 0.12)",
-          text: "#000000",
-          "text-muted": "#666666",
-          "text-subtle": "#999999",
-          "tag-bg": "rgba(0, 0, 0, 0.04)",
-          "tag-bg-hover": "rgba(0, 0, 0, 0.08)",
-        },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
       backgroundImage: {
         "linear-bg-2":
@@ -87,6 +142,8 @@ module.exports = {
         "slide-in": "slideIn 0.3s ease-out",
         "slide-up": "slideUp 0.3s ease-out",
         "scale-in": "scaleIn 0.2s ease-out",
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
       keyframes: {
         fadeIn: {
@@ -104,6 +161,14 @@ module.exports = {
         scaleIn: {
           from: { opacity: "0", transform: "scale(0.95)" },
           to: { opacity: "1", transform: "scale(1)" },
+        },
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       // 添加无滚动条的工具类
@@ -181,6 +246,34 @@ module.exports = {
         ".text-responsive-lg": {
           "font-size": "clamp(1rem, 3vw, 1.25rem)",
           "line-height": "1.4",
+        },
+        // 优化悬浮效果的工具类
+        ".hover-optimized": {
+          "will-change": "transform, opacity, background-color",
+          "transition-property": "transform, opacity, background-color, border-color, box-shadow",
+          "transition-timing-function": "cubic-bezier(0.4, 0, 0.2, 1)",
+          "transition-duration": "200ms",
+        },
+        ".hover-subtle": {
+          "&:hover": {
+            "background-color": "hsl(var(--muted) / 0.3)",
+            "border-color": "hsl(var(--muted-foreground) / 0.1)",
+          },
+        },
+        ".hover-medium": {
+          "&:hover": {
+            "background-color": "hsl(var(--muted) / 0.5)",
+            "border-color": "hsl(var(--muted-foreground) / 0.2)",
+            "box-shadow": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+          },
+        },
+        ".hover-strong": {
+          "&:hover": {
+            "background-color": "hsl(var(--muted) / 0.7)",
+            "border-color": "hsl(var(--muted-foreground) / 0.3)",
+            "box-shadow": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+            transform: "scale(1.01)",
+          },
         },
       };
 

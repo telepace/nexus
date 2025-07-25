@@ -47,8 +47,16 @@ class ChatService:
             "key_points.j2": "key_points",
             "labels.j2": "labels",
             "segment_aware_chat.j2": "chat",
+            "simple_chat.j2": "chat",  # 🎯 新增：简单聊天模板使用chat任务
             "user_analysis.j2": "analysis",
             "expand_discussion.j2": "analysis",  # 使用analysis任务的模型配置
+            
+            # 🎯 新增：支持常见的prompt名称映射到chat任务
+            "提取要点": "chat",
+            "总结内容": "chat", 
+            "关键信息": "chat",
+            "深度分析": "analysis",
+            "详细解读": "analysis",
         }
 
         # 获取任务名称

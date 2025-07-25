@@ -77,15 +77,14 @@ export function UniversalContentRenderer({
   // Auto-detect format and render accordingly
   if (isJsonl(content)) {
     return (
-      <div data-testid="universal-content-renderer" className={className}>
-        <JsonlRenderer 
-          key={`jsonl-${content.slice(0, 30)}-${content.length}`}
-          content={content} 
-          onExpandLine={onExpandLine}
-          enableDelayedRendering={enableDelayedRendering}
-          renderDelay={renderDelay}
-        />
-      </div>
+      <JsonlRenderer
+        content={content}
+        className={className}
+        enableHoverEffects={true} // 🎯 确保启用悬浮效果
+        onExpandLine={onExpandLine}
+        enableDelayedRendering={enableDelayedRendering}
+        renderDelay={renderDelay}
+      />
     );
   } else if (isJsonObject(content)) {
     return (
