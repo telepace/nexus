@@ -1,8 +1,9 @@
 "use client";
 
+import React from "react";
 import { Library } from "lucide-react";
 import type { ContentItemPublic } from "@/lib/api/content";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 // 不再需要分析卡片导入，统一使用EnhancedModernAnalysisInterface
@@ -16,22 +17,35 @@ export const ContentPreview = ({ item }: Props) => {
   // 面板管理系统
   const [panels, setPanels] = useState<Array<{id: number, item: ContentItemPublic, zIndex: number}>>([]);
 
-  // 当item改变时，创建新面板
+  // 当item改变时，创建新面板 - 优化版本，减少不必要的面板创建
   useEffect(() => {
-    if (item) {
+    if (!item) {
+      setPanels([]);
+      return;
+    }
+
+    setPanels(prev => {
+      // 检查是否已经存在相同item的面板
+      const existingPanel = prev.find(panel => panel.item.id === item.id);
+      if (existingPanel) {
+        // 如果已存在，将其移到最前面并更新zIndex
+        const otherPanels = prev.filter(panel => panel.item.id !== item.id);
+        const updatedPanel = { ...existingPanel, zIndex: Date.now() };
+        return [...otherPanels, updatedPanel].slice(-2);
+      }
+      
+      // 创建新面板
       const timestamp = Date.now();
       const newPanel = {
-        id: timestamp,                 // 使用时间戳作为唯一ID
-        item: item,                    // 实际的内容
-        zIndex: timestamp              // 层级：新面板总是在上层
+        id: timestamp,
+        item: item,
+        zIndex: timestamp
       };
       
-      setPanels(prev => {
-        const newPanels = [...prev, newPanel];
-        return newPanels.slice(-2);   // 只保留最新的2个面板
-      });
-    }
-  }, [item?.id]);  // 只依赖item的id变化
+      const newPanels = [...prev, newPanel];
+      return newPanels.slice(-2); // 只保留最新的2个面板
+    });
+  }, [item?.id]);
 
   // 无内容时的空状态
   if (!item) {
@@ -70,9 +84,9 @@ export const ContentPreview = ({ item }: Props) => {
               animate={{ x: 0 }}
               transition={{ 
                 type: "spring", 
-                stiffness: 400, 
-                damping: 40,
-                duration: 0.3 
+                stiffness: 200, 
+                damping: 25,
+                duration: 0.2 
               }}
               style={{ 
                 position: "absolute",
@@ -92,8 +106,8 @@ export const ContentPreview = ({ item }: Props) => {
   );
 };
 
-// 完全分离动画和渲染的面板组件
-const ContentPanel = ({ item, isActive = true }: { item: ContentItemPublic; isActive?: boolean }) => {
+// 完全分离动画和渲染的面板组件 - 使用 React.memo 优化性能
+const ContentPanel = React.memo(({ item, isActive = true }: { item: ContentItemPublic; isActive?: boolean }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const aiResult = (item as any).ai_result;
   
@@ -103,18 +117,32 @@ const ContentPanel = ({ item, isActive = true }: { item: ContentItemPublic; isAc
   useEffect(() => {
     containerRef.current?.scrollTo({ top: 0 });
     
-    // 重置状态
-    setShowContent(false);
-    
-    // 只有激活的面板才执行延迟渲染
+    // 只有激活的面板才执行渲染逻辑
     if (isActive) {
+      // 先重置状态
+      setShowContent(false);
+      
+      // 延迟渲染，确保面板动画完成
       const timer = setTimeout(() => {
         setShowContent(true);
-      }, 450); // 等待450ms确保动画完成和渲染稳定
+      }, 200); // 稍微增加延迟，确保动画稳定
       
       return () => clearTimeout(timer);
+    } else {
+      // 非激活面板立即隐藏内容
+      setShowContent(false);
     }
   }, [item.id, isActive]);
+
+  // 使用 useMemo 缓存 EnhancedModernAnalysisInterface 的 props
+  const analysisProps = useMemo(() => ({
+    content: item,
+    analysisResult: aiResult,
+    variant: "preview" as const,
+    showPreprocessedContent: true,
+    height: "full" as const,
+    hideHeader: true,
+  }), [item, aiResult]);
 
   return (
     <div
@@ -134,14 +162,7 @@ const ContentPanel = ({ item, isActive = true }: { item: ContentItemPublic; isAc
       <div className="flex-1 overflow-hidden">
         {isActive && showContent ? (
           // 只有激活面板才渲染完整内容
-          <EnhancedModernAnalysisInterface
-            content={item}
-            analysisResult={aiResult}
-            variant="preview"
-            showPreprocessedContent={true}
-            height="full"
-            hideHeader={true}
-          />
+          <EnhancedModernAnalysisInterface {...analysisProps} />
         ) : isActive ? (
           // 激活面板的等待状态
           <div className="h-full" />
@@ -152,4 +173,14 @@ const ContentPanel = ({ item, isActive = true }: { item: ContentItemPublic; isAc
       </div>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // 更严格的比较函数，避免不必要的重渲染
+  if (!prevProps.item && !nextProps.item) return true;
+  if (!prevProps.item || !nextProps.item) return false;
+  
+  return (
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.isActive === nextProps.isActive &&
+    prevProps.item.updated_at === nextProps.item.updated_at
+  );
+});

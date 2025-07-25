@@ -72,6 +72,12 @@ export default function ContentLibraryPage() {
     setHoveredItem(null);
   };
 
+  // 清除预览的函数（当点击空白区域时）
+  const clearPreview = useCallback(() => {
+    setHoveredItem(null);
+    setSelectedItem(null);
+  }, []);
+
   // 处理筛选和排序的回调函数
   const handleSearchChange = (query: string) => {
     setFilters((prev) => ({ ...prev, search: query }));
@@ -131,17 +137,25 @@ export default function ContentLibraryPage() {
     [router, prefetchContent, isMobile],
   );
 
-  // 处理悬浮事件
+  // 处理悬浮事件 - 实现粘性预览行为
   const handleCardHover = useCallback(
     (item: ContentItemPublic | null) => {
       if (isMobile) return;
-      setHoveredItem(item);
+      
+      // 只有当悬浮到新卡片时才更新状态
+      // 离开卡片时 (item === null) 不立即清空预览
       if (item) {
-        setSelectedItem(item);
-        prefetchContent(item);
+        setHoveredItem(item);
+        // 只有在没有选中项时才通过悬浮设置预览
+        // 或者悬浮的不是当前选中项时才更新
+        if (!selectedItem || selectedItem.id !== item.id) {
+          prefetchContent(item);
+        }
       }
+      // 注意：当 item 为 null 时，我们不清空 hoveredItem
+      // 这样预览内容会保持显示直到悬浮到下一个卡片
     },
-    [prefetchContent, isMobile],
+    [prefetchContent, isMobile, selectedItem],
   );
 
   // 处理内容项删除
@@ -168,7 +182,14 @@ export default function ContentLibraryPage() {
     [refreshItems],
   );
 
-  const previewItem = hoveredItem || selectedItem;
+  // 优化预览项目选择逻辑，减少不必要的切换
+  const previewItem = useMemo(() => {
+    // 优先显示选中的项目，只有在没有选中项时才显示悬浮项
+    if (selectedItem) {
+      return selectedItem;
+    }
+    return hoveredItem;
+  }, [selectedItem, hoveredItem]);
 
   if (authLoading || loading) {
     return <Loading />;
@@ -234,7 +255,15 @@ export default function ContentLibraryPage() {
         </header>
 
         {/* 列表 - 可滚动区域 */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar px-6 pb-8 pt-8">
+        <div 
+          className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar px-6 pb-8 pt-8"
+          onClick={(e) => {
+            // 只有点击空白区域时才清除预览
+            if (e.target === e.currentTarget) {
+              clearPreview();
+            }
+          }}
+        >
           {filteredItems.length === 0 ? (
             <div className="text-center py-16">
               {filters.search || filters.selectedTags.length > 0 ? (

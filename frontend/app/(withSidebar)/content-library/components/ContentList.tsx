@@ -17,7 +17,7 @@ interface Props {
   onItemUpdated?: (item: ContentItemPublic) => void;
 }
 
-export const ContentList = ({
+export const ContentList = React.memo(({
   items,
   selectedItem,
   hoveredItem,
@@ -53,4 +53,15 @@ export const ContentList = ({
       ))}
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // 优化比较函数，检查关键属性变化
+  return (
+    prevProps.items.length === nextProps.items.length &&
+    prevProps.selectedItem?.id === nextProps.selectedItem?.id &&
+    prevProps.hoveredItem?.id === nextProps.hoveredItem?.id &&
+    prevProps.items.every((item, index) => 
+      item.id === nextProps.items[index]?.id &&
+      item.updated_at === nextProps.items[index]?.updated_at
+    )
+  );
+});

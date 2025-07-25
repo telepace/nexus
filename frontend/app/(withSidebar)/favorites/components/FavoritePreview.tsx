@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useMemo, useCallback } from "react";
 import { ExternalLink, Heart, Calendar, Clock, Star, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +37,7 @@ interface Props {
   item: FavoriteItemData | null;
 }
 
-export const FavoritePreview = ({ item }: Props) => {
+export const FavoritePreview = React.memo(({ item }: Props) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
 
@@ -56,15 +56,6 @@ export const FavoritePreview = ({ item }: Props) => {
   if (!item) {
     return (
       <div className="h-full shadow-macos-window linear-bg-1 rounded-sm flex flex-col overflow-hidden">
-        <style jsx global>{`
-          .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-          }
-          .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-          }
-        `}</style>
         <div className="flex items-center justify-between h-header px-4 border-b border-border/30">
           <div className="flex items-center gap-2 text-base font-medium">
             <Heart className="h-5 w-5 text-amber-500" />
@@ -86,20 +77,20 @@ export const FavoritePreview = ({ item }: Props) => {
   const { content_item } = item;
   const aiResult = content_item.ai_result;
 
-  // 处理查看原文
-  const handleViewContent = () => {
+  // 使用 useCallback 优化事件处理函数
+  const handleViewContent = useCallback(() => {
     router.push(`/content-library/reader/${content_item.id}`);
-  };
+  }, [router, content_item.id]);
 
   // 处理打开源链接
-  const handleOpenSource = () => {
+  const handleOpenSource = useCallback(() => {
     if (content_item.source_uri) {
       window.open(content_item.source_uri, "_blank");
     }
-  };
+  }, [content_item.source_uri]);
 
-  // 获取摘要内容
-  const getSummaryContent = (): string | null => {
+  // 使用 useMemo 缓存摘要内容计算结果
+  const summaryContent = useMemo((): string | null => {
     // 处理 ai_result.summary (可能是对象)
     if (aiResult?.summary) {
       if (typeof aiResult.summary === 'string') {
@@ -123,10 +114,10 @@ export const FavoritePreview = ({ item }: Props) => {
     
     // 后备方案：使用 content_item.summary 或 brief_description
     return content_item.summary || aiResult?.brief_description || null;
-  };
+  }, [aiResult?.summary, content_item.summary, aiResult?.brief_description]);
 
-  // 获取关键要点
-  const getKeyPoints = (): string[] => {
+  // 使用 useMemo 缓存关键要点计算结果  
+  const keyPoints = useMemo((): string[] => {
     // 处理 ai_result.key_points (可能是对象或数组)
     if (aiResult?.key_points) {
       // 如果是字符串数组，直接返回
@@ -169,7 +160,7 @@ export const FavoritePreview = ({ item }: Props) => {
     }
     
     return [];
-  };
+  }, [aiResult?.key_points]);
 
   return (
     <div
@@ -177,27 +168,6 @@ export const FavoritePreview = ({ item }: Props) => {
       tabIndex={-1}
       className="h-full shadow-macos-window linear-bg-1 rounded-sm flex flex-col overflow-hidden"
     >
-      <style jsx global>{`
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .content-glass {
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .content-section {
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.9) 100%);
-          border: 1px solid rgba(203, 213, 225, 0.3);
-        }
-        .tag-glow:hover {
-          box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.1);
-        }
-      `}</style>
 
       {/* Header - 现代化设计 */}
       <div className="flex items-center justify-between h-header px-6 border-b border-border/30 content-glass">
@@ -301,7 +271,7 @@ export const FavoritePreview = ({ item }: Props) => {
           )}
 
           {/* AI 摘要 - 现代卡片设计 */}
-          {getSummaryContent() && (
+          {summaryContent && (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center shadow-sm">
@@ -311,14 +281,14 @@ export const FavoritePreview = ({ item }: Props) => {
               </div>
               <div className="bg-gradient-to-br from-blue-50/80 to-blue-100/40 border border-blue-200/60 rounded-xl p-4 shadow-sm">
                 <div className="prose prose-sm max-w-none text-neutral-700">
-                  <UniversalContentRenderer content={getSummaryContent()!} />
+                  <UniversalContentRenderer content={summaryContent!} />
                 </div>
               </div>
             </div>
           )}
 
           {/* 关键要点 - 现代列表设计 */}
-          {getKeyPoints().length > 0 && (
+          {keyPoints.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center shadow-sm">
@@ -327,7 +297,7 @@ export const FavoritePreview = ({ item }: Props) => {
                 <h3 className="text-sm font-medium text-neutral-900">关键要点</h3>
               </div>
               <div className="bg-gradient-to-br from-green-50/80 to-green-100/40 border border-green-200/60 rounded-xl p-4 space-y-3 shadow-sm">
-                {getKeyPoints().map((point, index) => (
+                {keyPoints.map((point, index) => (
                   <div key={index} className="flex items-start gap-3 group">
                     <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2 flex-shrink-0 group-hover:bg-green-600 transition-colors" />
                     <p className="text-sm text-neutral-700 leading-relaxed">{point}</p>
@@ -399,4 +369,7 @@ export const FavoritePreview = ({ item }: Props) => {
       </div>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // 自定义比较函数，只有在关键属性改变时才重新渲染
+  return prevProps.item?.id === nextProps.item?.id;
+});

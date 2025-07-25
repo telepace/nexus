@@ -46,13 +46,13 @@ const ActionCard: React.FC<ActionCardProps> = ({
       )}
       
       <div className="text-base leading-relaxed flex-1">
-        <MarkdownRenderer content={String(c)} inline={true} />
+        <MarkdownRenderer 
+          content={String(c)} 
+          inline={true} 
+          ref={hasReferences ? references.join(',') : undefined}
+          refVariant="badge"
+        />
       </div>
-      {hasReferences && (
-        <div className="ml-2">
-          <EnhancedReferenceIndicator references={references} />
-        </div>
-      )}
     </div>
   );
 };
@@ -102,11 +102,10 @@ const ParagraphCard: React.FC<ParagraphCardProps> = ({
         <MarkdownRenderer 
           content={finalContent} 
           inline={true}
+          ref={hasReferences ? references.join(',') : undefined}
+          refVariant="minimal"
           className="text-sm text-neutral-800 [&_strong]:text-neutral-800 [&_strong]:font-black leading-relaxed"
         />
-        {hasReferences && (
-          <EnhancedReferenceIndicator references={references} />
-        )}
       </div>
     </div>
   );
@@ -134,11 +133,13 @@ export const notebookStyleRenderer: StyleRenderer = ({
             className="text-xl font-bold text-gray-800 select-text leading-relaxed pl-4"
             style={{ fontFamily: '"Kalam", "Comic Sans MS", cursive' }}
           >
-            <MarkdownRenderer content={String(c)} inline={true} />
+            <MarkdownRenderer 
+              content={String(c)} 
+              inline={true} 
+              ref={hasReferences ? references.join(',') : undefined}
+              refVariant="inline"
+            />
           </span>
-          {hasReferences && (
-            <EnhancedReferenceIndicator references={references} />
-          )}
         </div>
       );
       return {
@@ -156,11 +157,13 @@ export const notebookStyleRenderer: StyleRenderer = ({
               fontFamily: '"Kalam", "Comic Sans MS", cursive'
             }}
           >
-            <MarkdownRenderer content={String(c)} inline={true} />
+            <MarkdownRenderer 
+              content={String(c)} 
+              inline={true} 
+              ref={hasReferences ? references.join(',') : undefined}
+              refVariant="inline"
+            />
           </span>
-          {hasReferences && (
-            <EnhancedReferenceIndicator references={references} />
-          )}
         </div>
       );
       return {
@@ -178,11 +181,13 @@ export const notebookStyleRenderer: StyleRenderer = ({
               fontFamily: '"Kalam", "Comic Sans MS", cursive'
             }}
           >
-            <MarkdownRenderer content={String(c)} inline={true} />
+            <MarkdownRenderer 
+              content={String(c)} 
+              inline={true} 
+              ref={hasReferences ? references.join(',') : undefined}
+              refVariant="inline"
+            />
           </span>
-          {hasReferences && (
-            <EnhancedReferenceIndicator references={references} />
-          )}
         </div>
       );
       return {
@@ -200,11 +205,13 @@ export const notebookStyleRenderer: StyleRenderer = ({
               fontFamily: '"Kalam", "Comic Sans MS", cursive'
             }}
           >
-            <MarkdownRenderer content={String(c)} inline={true} />
+            <MarkdownRenderer 
+              content={String(c)} 
+              inline={true} 
+              ref={hasReferences ? references.join(',') : undefined}
+              refVariant="inline"
+            />
           </span>
-          {hasReferences && (
-            <EnhancedReferenceIndicator references={references} />
-          )}
         </div>
       );
       return {
@@ -222,11 +229,13 @@ export const notebookStyleRenderer: StyleRenderer = ({
               fontFamily: '"Kalam", "Comic Sans MS", cursive'
             }}
           >
-            <MarkdownRenderer content={String(c)} inline={true} />
+            <MarkdownRenderer 
+              content={String(c)} 
+              inline={true} 
+              ref={hasReferences ? references.join(',') : undefined}
+              refVariant="inline"
+            />
           </span>
-          {hasReferences && (
-            <EnhancedReferenceIndicator references={references} />
-          )}
         </div>
       );
       return {
@@ -244,11 +253,13 @@ export const notebookStyleRenderer: StyleRenderer = ({
               fontFamily: '"Kalam", "Comic Sans MS", cursive'
             }}
           >
-            <MarkdownRenderer content={String(c)} inline={true} />
+            <MarkdownRenderer 
+              content={String(c)} 
+              inline={true} 
+              ref={hasReferences ? references.join(',') : undefined}
+              refVariant="inline"
+            />
           </span>
-          {hasReferences && (
-            <EnhancedReferenceIndicator references={references} />
-          )}
         </div>
       );
       return {
@@ -270,17 +281,17 @@ export const notebookStyleRenderer: StyleRenderer = ({
             }}
           >
             <div className="italic text-neutral-700 text-base" style={{ lineHeight: '1.5' }}>
-              <MarkdownRenderer content={String(c)} inline={true} />
+              <MarkdownRenderer 
+                content={String(c)} 
+                inline={true} 
+                ref={hasReferences ? references.join(',') : undefined}
+                refVariant="minimal"
+              />
             </div>
             {ref && (
               <cite className="block mt-2 text-base text-pink-600 not-italic font-medium">
                 — {ref}
               </cite>
-            )}
-            {hasReferences && (
-              <div className="mt-2 flex justify-end">
-                <EnhancedReferenceIndicator references={references} />
-              </div>
             )}
           </blockquote>
         </div>
@@ -323,7 +334,12 @@ export const notebookStyleRenderer: StyleRenderer = ({
           </ul>
           {hasReferences && (
             <div className="mt-2 flex justify-end">
-              <EnhancedReferenceIndicator references={references} />
+              <MarkdownRenderer 
+                content=""
+                inline={true}
+                ref={references.join(',')}
+                refVariant="minimal"
+              />
             </div>
           )}
         </div>
@@ -364,11 +380,13 @@ export const notebookStyleRenderer: StyleRenderer = ({
             className={`inline-flex items-baseline gap-1 flex-wrap ${colors.text}`}
           >
             <span className="text-base" style={{ lineHeight: '1.5' }}>
-              <MarkdownRenderer content={String(c)} inline={true} />
+              <MarkdownRenderer 
+                content={String(c)} 
+                inline={true} 
+                ref={hasReferences ? references.join(',') : undefined}
+                refVariant="badge"
+              />
             </span>
-            {hasReferences && (
-              <EnhancedReferenceIndicator references={references} />
-            )}
           </div>
         </div>
       );
@@ -388,11 +406,13 @@ export const notebookStyleRenderer: StyleRenderer = ({
         >
           <div className="inline-flex items-baseline gap-1 flex-wrap text-purple-700">
             <span className="text-base leading-loose">
-              <MarkdownRenderer content={String(c)} inline={true} />
+              <MarkdownRenderer 
+                content={String(c)} 
+                inline={true} 
+                ref={hasReferences ? references.join(',') : undefined}
+                refVariant="badge"
+              />
             </span>
-            {hasReferences && (
-              <EnhancedReferenceIndicator references={references} />
-            )}
           </div>
         </div>
       );
@@ -433,7 +453,12 @@ export const notebookStyleRenderer: StyleRenderer = ({
               </div>
               {hasReferences && (
                 <div className="mt-2 flex justify-end">
-                  <EnhancedReferenceIndicator references={references} />
+                  <MarkdownRenderer 
+                    content=""
+                    inline={true}
+                    ref={references.join(',')}
+                    refVariant="minimal"
+                  />
                 </div>
               )}
             </div>

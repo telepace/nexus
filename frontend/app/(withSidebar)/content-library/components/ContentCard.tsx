@@ -33,7 +33,7 @@ import {
 import { FavoriteButton } from "@/components/actions/FavoriteButton";
 import { createRipple } from "../utils/ripple";
 import type { ContentItemPublic } from "../types";
-import { useState } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { contentApi } from "@/lib/api/content";
 import { toast } from "sonner";
@@ -110,16 +110,39 @@ export const ContentCard = ({
     onCardClick(item, event);
   };
 
-  // 处理鼠标进入事件
-  const handleMouseEnter = () => {
+  // 防抖定时器引用
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 处理鼠标进入事件 - 添加防抖处理
+  const handleMouseEnter = useCallback(() => {
+    // 清除之前的定时器
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    
+    // 立即设置悬浮状态
     onCardHover(item);
     prefetchContent(item);
-  };
+  }, [item, onCardHover, prefetchContent]);
 
-  // 处理鼠标离开事件
-  const handleMouseLeave = () => {
-    onCardHover(null);
-  };
+  // 处理鼠标离开事件 - 粘性预览行为，不清空悬浮状态
+  const handleMouseLeave = useCallback(() => {
+    // 清除之前的定时器
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    // 不再调用 onCardHover(null)，实现预览内容的粘性显示
+    // 预览内容会保持到用户悬浮到下一个卡片为止
+  }, []);
+
+  // 清理定时器
+  React.useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // 处理查看详情
   const handleViewDetails = () => {

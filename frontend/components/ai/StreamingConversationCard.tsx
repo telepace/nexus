@@ -29,7 +29,7 @@ interface StreamingConversationCardProps {
   className?: string;
 }
 
-export function StreamingConversationCard({
+export const StreamingConversationCard = React.memo(function StreamingConversationCard({
   conversation,
   onExpandLine,
   onRetry,
@@ -132,4 +132,20 @@ export function StreamingConversationCard({
       </Card>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // 自定义比较函数，检查关键属性变化
+  if (prevProps.conversation.length !== nextProps.conversation.length) {
+    return false;
+  }
+  
+  // 检查最后一条消息的状态变化（流式传输状态）
+  const prevLastMessage = prevProps.conversation[prevProps.conversation.length - 1];
+  const nextLastMessage = nextProps.conversation[nextProps.conversation.length - 1];
+  
+  if (prevLastMessage?.status !== nextLastMessage?.status ||
+      prevLastMessage?.content !== nextLastMessage?.content) {
+    return false;
+  }
+  
+  return true;
+});

@@ -13,6 +13,7 @@ import mediumZoom from "medium-zoom";
 import copy from "copy-to-clipboard";
 import { cn, normalizeImageUrl } from "@/lib/utils";
 import { OptimizedImage } from "./OptimizedImage";
+import { ReferenceHyperlinkRenderer } from "./ReferenceHyperlinkRenderer";
 
 // Import highlight.js styles
 import "highlight.js/styles/github-dark.css";
@@ -24,12 +25,21 @@ interface MarkdownRendererProps {
   className?: string;
   /** 当为 true 时，以行内方式渲染，根元素为 <span>，且 p/h 标签映射为 span */
   inline?: boolean;
+  /** 引用字符串，用于在内容后显示引用链接 */
+  ref?: string;
+  /** 引用链接的显示变体 */
+  refVariant?: 'default' | 'minimal' | 'badge' | 'inline';
+  /** 引用点击回调 */
+  onReferenceClick?: (refId: number) => void;
 }
 
 export function MarkdownRenderer({
   content,
   className,
   inline = false,
+  ref: refString,
+  refVariant = 'default',
+  onReferenceClick,
 }: MarkdownRendererProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -95,34 +105,52 @@ export function MarkdownRenderer({
 
   const Root: React.ElementType = inline ? "span" : "div";
 
+  // 渲染引用链接
+  const renderReferences = () => {
+    if (!refString) return null;
+    
+    return (
+      <ReferenceHyperlinkRenderer
+        refString={refString}
+        variant={refVariant}
+        onReferenceClick={onReferenceClick}
+        className={inline ? "ml-1" : "ml-2"}
+        animated={!inline}
+        showTooltip={!inline}
+      />
+    );
+  };
+
   return (
     <Root
       ref={contentRef}
       data-testid="markdown-renderer"
       className={cn(
-        inline ? "" : "prose prose-slate dark:prose-invert max-w-none",
+        inline ? "inline-flex items-baseline flex-wrap gap-1" : "prose prose-slate dark:prose-invert max-w-none",
         // 自定义样式
-        "prose-headings:scroll-m-16 prose-headings:tracking-tight",
-        "prose-h1:text-2xl prose-h1:font-bold prose-h1:lg:text-4xl",
-        "prose-h2:border-b prose-h2:pb-1.5 prose-h2:text-xl prose-h2:font-semibold prose-h2:tracking-tight prose-h2:first:mt-0",
-        "prose-h3:text-lg prose-h3:font-semibold prose-h3:tracking-tight",
-        "prose-h4:text-base prose-h4:font-semibold prose-h4:tracking-tight",
-        "prose-p:leading-[1.5] prose-p:[&:not(:first-child)]:mb-3 prose-p:mb-3",
-        "prose-blockquote:mt-4 prose-blockquote:border-l-2 prose-blockquote:pl-4 prose-blockquote:italic",
-        "prose-ul:my-4 prose-ul:ml-4 prose-ul:list-disc prose-ul:[&>li]:mt-1",
-        "prose-ol:my-4 prose-ol:ml-4 prose-ol:list-decimal prose-ol:[&>li]:mt-1",
-        "prose-li:mt-1",
-        "prose-table:my-6 prose-table:w-full prose-table:overflow-y-auto",
-        "prose-thead:border-b",
-        "prose-th:border prose-th:px-4 prose-th:py-2 prose-th:text-left prose-th:font-bold prose-th:[&[align=center]]:text-center prose-th:[&[align=right]]:text-right",
-        "prose-td:border prose-td:px-4 prose-td:py-2 prose-td:[&[align=center]]:text-center prose-td:[&[align=right]]:text-right",
-        "prose-tr:m-0 prose-tr:border-t prose-tr:p-0 prose-tr:even:bg-muted",
-        "prose-code:relative prose-code:rounded prose-code:bg-muted prose-code:px-[0.3rem] prose-code:py-[0.2rem] prose-code:font-mono prose-code:text-sm prose-code:font-semibold",
-        "prose-pre:mt-6 prose-pre:mb-4 prose-pre:overflow-x-auto prose-pre:rounded-lg prose-pre:bg-muted prose-pre:p-4",
-        "prose-pre:code:bg-transparent prose-pre:code:p-0",
-        "prose-a:font-medium prose-a:underline prose-a:underline-offset-4",
-        "prose-img:rounded-md prose-img:border prose-img:mx-auto prose-img:object-contain prose-img:max-h-[80vh] prose-img:w-auto prose-img:h-auto",
-        "prose-hr:my-4 prose-hr:md:my-8",
+        !inline && [
+          "prose-headings:scroll-m-16 prose-headings:tracking-tight",
+          "prose-h1:text-2xl prose-h1:font-bold prose-h1:lg:text-4xl",
+          "prose-h2:border-b prose-h2:pb-1.5 prose-h2:text-xl prose-h2:font-semibold prose-h2:tracking-tight prose-h2:first:mt-0",
+          "prose-h3:text-lg prose-h3:font-semibold prose-h3:tracking-tight",
+          "prose-h4:text-base prose-h4:font-semibold prose-h4:tracking-tight",
+          "prose-p:leading-[1.5] prose-p:[&:not(:first-child)]:mb-3 prose-p:mb-3",
+          "prose-blockquote:mt-4 prose-blockquote:border-l-2 prose-blockquote:pl-4 prose-blockquote:italic",
+          "prose-ul:my-4 prose-ul:ml-4 prose-ul:list-disc prose-ul:[&>li]:mt-1",
+          "prose-ol:my-4 prose-ol:ml-4 prose-ol:list-decimal prose-ol:[&>li]:mt-1",
+          "prose-li:mt-1",
+          "prose-table:my-6 prose-table:w-full prose-table:overflow-y-auto",
+          "prose-thead:border-b",
+          "prose-th:border prose-th:px-4 prose-th:py-2 prose-th:text-left prose-th:font-bold prose-th:[&[align=center]]:text-center prose-th:[&[align=right]]:text-right",
+          "prose-td:border prose-td:px-4 prose-td:py-2 prose-td:[&[align=center]]:text-center prose-td:[&[align=right]]:text-right",
+          "prose-tr:m-0 prose-tr:border-t prose-tr:p-0 prose-tr:even:bg-muted",
+          "prose-code:relative prose-code:rounded prose-code:bg-muted prose-code:px-[0.3rem] prose-code:py-[0.2rem] prose-code:font-mono prose-code:text-sm prose-code:font-semibold",
+          "prose-pre:mt-6 prose-pre:mb-4 prose-pre:overflow-x-auto prose-pre:rounded-lg prose-pre:bg-muted prose-pre:p-4",
+          "prose-pre:code:bg-transparent prose-pre:code:p-0",
+          "prose-a:font-medium prose-a:underline prose-a:underline-offset-4",
+          "prose-img:rounded-md prose-img:border prose-img:mx-auto prose-img:object-contain prose-img:max-h-[80vh] prose-img:w-auto prose-img:h-auto",
+          "prose-hr:my-4 prose-hr:md:my-8",
+        ],
         className,
       )}
     >
@@ -399,6 +427,9 @@ export function MarkdownRenderer({
       >
         {processedContent}
       </ReactMarkdown>
+      
+      {/* 渲染引用链接 */}
+      {renderReferences()}
     </Root>
   );
 }

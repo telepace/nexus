@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
 import { HoverableBlock } from "./HoverableBlock";
-import { Badge } from "./ui/badge";
+import { Badge } from "@/components/ui/badge";
 
 import {
   EnhancedReferenceIndicator,
