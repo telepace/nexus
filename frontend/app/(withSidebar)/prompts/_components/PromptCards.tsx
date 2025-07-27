@@ -227,7 +227,7 @@ export function PromptCards({ prompts, currentUser }: PromptCardsProps) {
       if (
         event.target instanceof HTMLElement &&
         (event.target.closest("button") ||
-          event.target.closest([role=switch]) ||
+          event.target.closest("[role=switch]") ||
           event.target.closest("[data-dropdown-trigger]") ||
           event.target.closest(".prompt-toggle-container"))
       ) {
