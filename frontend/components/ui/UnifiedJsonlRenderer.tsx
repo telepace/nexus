@@ -112,7 +112,7 @@ export function UnifiedJsonlRenderer({
       return;
     }
 
-    if (!content || content.trim() === '') {
+    if (!content || typeof content !== 'string' || content.trim() === '') {
       setIsContentReady(true);
       return;
     }
@@ -164,7 +164,7 @@ export function UnifiedJsonlRenderer({
 
   // 解析JSONL内容
   const { blocks, stats } = useMemo(() => {
-    if (!content) return { blocks: [], stats: { totalLines: 0, validBlocks: 0, errorBlocks: 0, emptyLines: 0 } };
+    if (!content || typeof content !== 'string') return { blocks: [], stats: { totalLines: 0, validBlocks: 0, errorBlocks: 0, emptyLines: 0 } };
 
     const lines = content.split("\n");
     const parsedBlocks: JsonlBlock[] = [];
@@ -275,6 +275,7 @@ export function UnifiedJsonlRenderer({
       MarkdownRenderer,
       EnhancedReferenceIndicator: ReferenceIndicatorComponent,
       onExpand: onExpandLine,
+      contentId,
     });
 
     // 🎯 右侧操作按钮

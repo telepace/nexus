@@ -31,6 +31,10 @@ interface MarkdownRendererProps {
   refVariant?: 'default' | 'minimal' | 'badge' | 'inline';
   /** 引用点击回调 */
   onReferenceClick?: (refId: number) => void;
+  /** 内容ID，用于获取真实的引用数据 */
+  contentId?: string;
+  /** 是否启用增强的tooltip功能 */
+  enableEnhancedTooltip?: boolean;
 }
 
 export function MarkdownRenderer({
@@ -40,6 +44,8 @@ export function MarkdownRenderer({
   ref: refString,
   refVariant = 'default',
   onReferenceClick,
+  contentId,
+  enableEnhancedTooltip = true,
 }: MarkdownRendererProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -116,7 +122,9 @@ export function MarkdownRenderer({
         onReferenceClick={onReferenceClick}
         className={inline ? "ml-1" : "ml-2"}
         animated={!inline}
-        showTooltip={!inline}
+        showTooltip={!inline && enableEnhancedTooltip}
+        contentId={contentId}
+        enableEnhancedTooltip={enableEnhancedTooltip}
       />
     );
   };

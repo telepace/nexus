@@ -12,6 +12,8 @@ const testJsonlContent = `{"t":"h2","c":"测试标题"}
 {"t":"list","c":"项目1,项目2,项目3"}
 {"t":"p","c":"另一个段落，用于测试悬浮效果的一致性。","ref":"1,2"}`;
 
+export const dynamic = 'force-dynamic';
+
 export default function TestJsonlHoverPage() {
   const handleExpandLine = (jsonContent: Record<string, unknown>) => {
     console.log("展开请求:", jsonContent);
@@ -117,4 +119,4 @@ export default function TestJsonlHoverPage() {
       </Card>
     </div>
   );
-} 
+}

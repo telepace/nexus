@@ -34,6 +34,9 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
   const [selectedParagraph, setSelectedParagraph] = useState<number | null>(
     null,
   );
+  
+  // 新增：自动清除高亮的定时器
+  const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 处理跳转到段落的事件
   const handleJumpToParagraph = useCallback(
@@ -136,6 +139,15 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
               setSelectedParagraph(refId);
               setHighlightedParagraphs(new Set([refId]));
 
+              // 设置自动清除高亮
+              if (highlightTimeoutRef.current) {
+                clearTimeout(highlightTimeoutRef.current);
+              }
+              highlightTimeoutRef.current = setTimeout(() => {
+                setHighlightedParagraphs(new Set());
+                setSelectedParagraph(null);
+              }, 4000); // 4秒后自动清除高亮
+
               console.log("✅ 跳转成功", {
                 refId,
                 targetChunk,
@@ -179,8 +191,20 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
             block: "center",
             inline: "nearest",
           });
+          
+          // 设置高亮状态
           setSelectedParagraph(refId);
           setHighlightedParagraphs(new Set([refId]));
+          
+          // 设置自动清除高亮（与chunks模式保持一致）
+          if (highlightTimeoutRef.current) {
+            clearTimeout(highlightTimeoutRef.current);
+          }
+          highlightTimeoutRef.current = setTimeout(() => {
+            setHighlightedParagraphs(new Set());
+            setSelectedParagraph(null);
+          }, 4000); // 4秒后自动清除高亮
+          
           console.log("✅ Markdown模式跳转成功");
         } else {
           console.warn("⚠️ Markdown模式未找到目标段落");
@@ -194,14 +218,30 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
 
   // 处理高亮段落的事件
   const handleHighlightParagraphs = useCallback((event: CustomEvent) => {
-    const { refIds } = event.detail;
+    const { refIds, autoTimeout = true } = event.detail;
     setHighlightedParagraphs(new Set(refIds));
+    
+    // 如果启用自动超时，设置定时器
+    if (autoTimeout) {
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+      highlightTimeoutRef.current = setTimeout(() => {
+        setHighlightedParagraphs(new Set());
+        setSelectedParagraph(null);
+      }, 4000); // 4秒后自动清除高亮
+    }
   }, []);
 
   // 处理清除高亮的事件
   const handleClearHighlights = useCallback(() => {
     setHighlightedParagraphs(new Set());
     setSelectedParagraph(null);
+    // 清除自动清除的定时器
+    if (highlightTimeoutRef.current) {
+      clearTimeout(highlightTimeoutRef.current);
+      highlightTimeoutRef.current = null;
+    }
   }, []);
 
   // 注册事件监听器
@@ -232,6 +272,12 @@ export const EnhancedContentReader: React.FC<EnhancedContentReaderProps> = ({
         "clearHighlights",
         handleClearHighlights as EventListener,
       );
+      
+      // 清理定时器
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+        highlightTimeoutRef.current = null;
+      }
     };
   }, [handleJumpToParagraph, handleHighlightParagraphs, handleClearHighlights]);
 

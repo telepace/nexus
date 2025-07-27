@@ -9,6 +9,7 @@ import {
   type ReferenceGroup 
 } from "@/lib/utils/reference-parser";
 import { useReferenceManagerSafe } from "./ReferenceManager";
+import { OptimizedReferenceTooltip, CompactReferenceTooltip } from "./EnhancedReferenceTooltip";
 
 interface ReferenceHyperlinkRendererProps {
   refString?: string;
@@ -18,6 +19,11 @@ interface ReferenceHyperlinkRendererProps {
   showTooltip?: boolean;
   animated?: boolean;
   onReferenceClick?: (refId: number) => void;
+  // 新增tooltip相关参数
+  contentId?: string;
+  enableEnhancedTooltip?: boolean;
+  tooltipDelay?: number;
+  showTooltipContext?: boolean;
 }
 
 /**
@@ -38,6 +44,10 @@ export const ReferenceHyperlinkRenderer: React.FC<ReferenceHyperlinkRendererProp
   showTooltip = true,
   animated = true,
   onReferenceClick,
+  contentId,
+  enableEnhancedTooltip = true,
+  tooltipDelay = 500,
+  showTooltipContext = false,
 }) => {
   const [hoveredRef, setHoveredRef] = useState<number | null>(null);
   const { actions } = useReferenceManagerSafe();
@@ -126,38 +136,71 @@ export const ReferenceHyperlinkRenderer: React.FC<ReferenceHyperlinkRendererProp
       ? `跳转到第${primaryId}段` 
       : `跳转到第${ids[0]}-${ids[ids.length - 1]}段`;
 
-    return (
-      <div key={index} className="relative group">
-        <a
-          href={`#ref-${primaryId}`}
-          className={cn(
-            styles.link,
-            animated && "transform transition-transform duration-200",
-            isHovered && "z-10",
-            className
-          )}
-          onClick={(e) => handleReferenceClick(primaryId, e)}
-          onMouseEnter={() => setHoveredRef(primaryId)}
-          onMouseLeave={() => setHoveredRef(null)}
-          title={description}
-          aria-label={description}
-        >
-          {group}
-        </a>
+    // 引用链接元素
+    const linkElement = (
+      <a
+        href={`#ref-${primaryId}`}
+        className={cn(
+          styles.link,
+          animated && "transform transition-transform duration-200",
+          isHovered && "z-10",
+          className
+        )}
+        onClick={(e) => handleReferenceClick(primaryId, e)}
+        onMouseEnter={() => setHoveredRef(primaryId)}
+        onMouseLeave={() => setHoveredRef(null)}
+        title={enableEnhancedTooltip ? undefined : description} // 如果有增强tooltip就不用原生title
+        aria-label={description}
+      >
+        {group}
+      </a>
+    );
 
-        {/* 优雅的工具提示 */}
-        {showTooltip && isHovered && variant !== 'minimal' && (
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50 whitespace-nowrap">
-            <div className="font-medium">{description}</div>
-            {ids.length > 1 && (
-              <div className="text-gray-300 dark:text-gray-600 text-xs mt-1">
-                包含 {ids.length} 个段落
+    // 决定使用哪种tooltip
+    if (showTooltip && variant !== 'minimal') {
+      if (enableEnhancedTooltip && contentId) {
+        // 使用增强的tooltip
+        const TooltipComponent = variant === 'inline' ? CompactReferenceTooltip : OptimizedReferenceTooltip;
+        
+        return (
+          <TooltipComponent
+            key={index}
+            refId={primaryId}
+            contentId={contentId}
+            delay={tooltipDelay}
+            showContext={showTooltipContext}
+            maxLength={variant === 'badge' ? 150 : 200}
+          >
+            {linkElement}
+          </TooltipComponent>
+        );
+      } else {
+        // 使用原来的简单tooltip
+        return (
+          <div key={index} className="relative group">
+            {linkElement}
+            
+            {isHovered && (
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50 whitespace-nowrap">
+                <div className="font-medium">{description}</div>
+                {ids.length > 1 && (
+                  <div className="text-gray-300 dark:text-gray-600 text-xs mt-1">
+                    包含 {ids.length} 个段落
+                  </div>
+                )}
+                {/* 小箭头 */}
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-100"></div>
               </div>
             )}
-            {/* 小箭头 */}
-            <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-100"></div>
           </div>
-        )}
+        );
+      }
+    }
+
+    // 没有tooltip的情况
+    return (
+      <div key={index}>
+        {linkElement}
       </div>
     );
   };

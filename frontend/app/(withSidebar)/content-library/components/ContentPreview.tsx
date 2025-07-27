@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 // 不再需要分析卡片导入，统一使用EnhancedModernAnalysisInterface
 import { EnhancedModernAnalysisInterface } from "@/components/ai/EnhancedModernAnalysisInterface";
+import { PreviewWrapper } from "@/components/ui/UnifiedVisibilityWrapper";
 
 interface Props {
   item: ContentItemPublic | null;
@@ -106,33 +107,19 @@ export const ContentPreview = ({ item }: Props) => {
   );
 };
 
-// 完全分离动画和渲染的面板组件 - 使用 React.memo 优化性能
+// 大幅简化的内容面板组件 - 使用统一可见性包装器
 const ContentPanel = React.memo(({ item, isActive = true }: { item: ContentItemPublic; isActive?: boolean }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const aiResult = (item as any).ai_result;
-  
-  // 简化的渲染状态管理
-  const [showContent, setShowContent] = useState(false);
 
+  // 滚动到顶部的优化处理
   useEffect(() => {
-    containerRef.current?.scrollTo({ top: 0 });
-    
-    // 只有激活的面板才执行渲染逻辑
-    if (isActive) {
-      // 先重置状态
-      setShowContent(false);
-      
-      // 延迟渲染，确保面板动画完成
-      const timer = setTimeout(() => {
-        setShowContent(true);
-      }, 200); // 稍微增加延迟，确保动画稳定
-      
-      return () => clearTimeout(timer);
-    } else {
-      // 非激活面板立即隐藏内容
-      setShowContent(false);
+    if (containerRef.current && isActive) {
+      requestAnimationFrame(() => {
+        containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      });
     }
-  }, [item.id, isActive]);
+  }, [isActive]);
 
   // 使用 useMemo 缓存 EnhancedModernAnalysisInterface 的 props
   const analysisProps = useMemo(() => ({
@@ -158,29 +145,33 @@ const ContentPanel = React.memo(({ item, isActive = true }: { item: ContentItemP
         </div>
       </div>
 
-      {/* 内容区域 - 根据面板状态渲染 */}
-      <div className="flex-1 overflow-hidden">
-        {isActive && showContent ? (
-          // 只有激活面板才渲染完整内容
+      {/* 内容区域 - 使用统一可见性包装器大幅简化 */}
+      <div className="flex-1 overflow-hidden relative">
+        <PreviewWrapper
+          contentId={item.id}
+          visible={isActive}
+          priority={Date.now()}
+          fallback={
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="animate-pulse">
+                <div className="h-4 bg-muted rounded w-32 mx-auto"></div>
+              </div>
+            </div>
+          }
+        >
           <EnhancedModernAnalysisInterface {...analysisProps} />
-        ) : isActive ? (
-          // 激活面板的等待状态
-          <div className="h-full" />
-        ) : (
-          // 非激活面板保持空白
-          <div className="h-full" />
-        )}
+        </PreviewWrapper>
       </div>
     </div>
   );
 }, (prevProps, nextProps) => {
-  // 更严格的比较函数，避免不必要的重渲染
+  // 优化的比较函数 - 减少不必要的重渲染
   if (!prevProps.item && !nextProps.item) return true;
   if (!prevProps.item || !nextProps.item) return false;
   
+  // 主要比较ID和激活状态，避免因为其他属性变化导致重渲染
   return (
     prevProps.item.id === nextProps.item.id &&
-    prevProps.isActive === nextProps.isActive &&
-    prevProps.item.updated_at === nextProps.item.updated_at
+    prevProps.isActive === nextProps.isActive
   );
 });

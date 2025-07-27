@@ -202,18 +202,18 @@ export function JsonlRenderer({
         )}
         
         {/* 引用指示器 */}
-        {references.length > 0 && (
+        {(references || []).length > 0 && (
           <div className="flex gap-1">
-            {references.slice(0, 3).map((refNum) => (
+            {(references || []).slice(0, 3).map((refNum) => (
               <ReferenceIndicatorComponent
                 key={refNum}
                 references={[refNum]}
                 className="w-5 h-5 text-xs"
               />
             ))}
-            {references.length > 3 && (
+            {(references || []).length > 3 && (
               <div className="w-5 h-5 rounded-full bg-muted text-xs flex items-center justify-center">
-                +{references.length - 3}
+                +{(references || []).length - 3}
               </div>
             )}
           </div>

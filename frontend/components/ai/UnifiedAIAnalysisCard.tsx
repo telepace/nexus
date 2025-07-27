@@ -51,6 +51,8 @@ export interface UnifiedAIAnalysisCardProps {
   onError?: (error: Error) => void;
   /** 开始回调 */
   onStart?: () => void;
+  /** 内容ID，用于引用tooltip功能 */
+  contentId?: string;
 }
 
 export function UnifiedAIAnalysisCard({
@@ -65,6 +67,7 @@ export function UnifiedAIAnalysisCard({
   onComplete,
   onError,
   onStart,
+  contentId,
 }: UnifiedAIAnalysisCardProps) {
   const { state, actions } = useAIAnalysis(config);
   const [hasAutoStarted, setHasAutoStarted] = useState(false);
@@ -162,7 +165,11 @@ export function UnifiedAIAnalysisCard({
       case "markdown":
         return (
           <div className="prose prose-sm max-w-none dark:prose-invert">
-            <MarkdownRenderer content={processedContent} />
+            <MarkdownRenderer 
+              content={processedContent}
+              contentId={contentId}
+              enableEnhancedTooltip={!!contentId}
+            />
           </div>
         );
 
@@ -171,13 +178,20 @@ export function UnifiedAIAnalysisCard({
           <StreamingJsonlRenderer
             content={processedContent}
             isLoading={streaming}
+            contentId={contentId}
           />
         ) : (
-          <JsonlRenderer content={processedContent} />
+          <JsonlRenderer 
+            content={processedContent}
+            contentId={contentId}
+          />
         );
 
       case "universal":
-        return <UniversalContentRenderer content={processedContent} />;
+        return <UniversalContentRenderer 
+          content={processedContent}
+          contentId={contentId}
+        />;
 
       case "auto":
       default:
@@ -187,14 +201,22 @@ export function UnifiedAIAnalysisCard({
             <StreamingJsonlRenderer
               content={processedContent}
               isLoading={streaming}
+              contentId={contentId}
             />
           ) : (
-            <JsonlRenderer content={processedContent} />
+            <JsonlRenderer 
+            content={processedContent}
+            contentId={contentId}
+          />
           );
         } else {
           return (
             <div className="prose prose-sm max-w-none dark:prose-invert">
-              <MarkdownRenderer content={processedContent} />
+              <MarkdownRenderer 
+                content={processedContent}
+                contentId={contentId}
+                enableEnhancedTooltip={!!contentId}
+              />
             </div>
           );
         }

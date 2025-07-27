@@ -8,6 +8,7 @@ import { CollapsibleButton } from "@/components/ui/CollapsibleButton";
 import { FavoriteButton } from "@/components/actions/FavoriteButton";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 import { useCardHeight } from "@/hooks/use-card-height";
+import { useUnifiedVisibility, visibilityPresets } from "@/hooks/use-unified-visibility";
 import type { ContentItemPublic } from "@/lib/api/content";
 
 interface AnalysisCard {
@@ -43,7 +44,9 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
   onBlockSelect,
 }) => {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  
+  // 使用统一的可见性管理替代单独的悬浮状态
+  const hoverVisibility = useUnifiedVisibility(visibilityPresets.hover);
   
   // 使用外部传入的选中状态，如果没有传入则使用内部状态
   const selectedBlock = externalSelectedBlock;
@@ -91,6 +94,7 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
             <UniversalContentRenderer
               content={textContent}
               onExpandLine={onExpandLine}
+              contentId={content.id}
             />
           </div>
         </div>
@@ -100,20 +104,21 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
     return null;
   }, [selectedBlock, onExpandLine, onBlockSelect]);
 
-  // 主卡片组件 - 性能优化版本
+  // 主卡片组件 - 使用统一可见性管理
   const CardComponent = React.memo(({ card }: { card: AnalysisCard }) => {
     const isSelected = selectedCard === card.id;
-    const isHovered = hoveredCard === card.id;
+    const hoverButtonsId = `card-hover-${card.id}`;
+    const isHovered = hoverVisibility.isVisible(hoverButtonsId);
     const isCollapsed = collapsedCards.has(card.id);
 
-    // 优化悬浮状态处理，减少重复渲染
+    // 优化悬浮状态处理，使用统一可见性管理
     const handleMouseEnter = useCallback(() => {
-      setHoveredCard(card.id);
-    }, [card.id]);
+      hoverVisibility.setVisible(hoverButtonsId, true, Date.now());
+    }, [card.id, hoverButtonsId, hoverVisibility]);
 
     const handleMouseLeave = useCallback(() => {
-      setHoveredCard(null);
-    }, []);
+      hoverVisibility.setVisible(hoverButtonsId, false);
+    }, [hoverButtonsId, hoverVisibility]);
 
     const handleClick = useCallback(() => {
       setSelectedCard(isSelected ? null : card.id);
@@ -163,11 +168,13 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
                   className="text-neutral-400 hover:text-neutral-600 relative z-10"
                 />
 
-                {/* 优化悬浮操作按钮显示 */}
-                <div className={`
-                  flex items-center gap-1 mr-1 transition-opacity duration-200 relative z-10
-                  ${isHovered ? 'opacity-100' : 'opacity-0'}
-                `}>
+                {/* 优化悬浮操作按钮显示 - 使用统一可见性管理 */}
+                <div 
+                  className={hoverVisibility.getVisibilityClasses(
+                    hoverButtonsId, 
+                    "flex items-center gap-1 mr-1 relative z-10"
+                  )}
+                >
                   <FavoriteButton
                     itemId={content.id}
                     size="sm"

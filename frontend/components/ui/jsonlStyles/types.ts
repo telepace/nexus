@@ -18,6 +18,8 @@ export interface StyleRenderParams {
   EnhancedReferenceIndicator: typeof EnhancedReferenceIndicator;
   /** Callback when expand button is clicked */
   onExpand?: (jsonContent: Record<string, unknown>) => void;
+  /** 内容ID，用于增强的引用tooltip功能 */
+  contentId?: string;
 }
 
 export type StyleRenderer = (params: StyleRenderParams) => StyleRenderResult;

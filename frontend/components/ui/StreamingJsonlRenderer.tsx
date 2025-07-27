@@ -58,7 +58,7 @@ export function StreamingJsonlRenderer({
 
   // 解析 JSONL 内容为可渲染的块
   const blocks = useMemo(() => {
-    if (!content) return [];
+    if (!content || typeof content !== 'string') return [];
 
     const lines = content.split("\n");
     const parsedBlocks: JsonlBlock[] = [];
@@ -70,10 +70,10 @@ export function StreamingJsonlRenderer({
       try {
         // 尝试解析完整的 JSON 行
         const parsed = JSON.parse(trimmedLine);
-        const type = parsed.type || parsed.t || "p";
-        const blockContent = parsed.content || parsed.c || "";
-        const lead = parsed.lead; // 提取 lead 字段
-        const ref = parsed.ref; // 提取 ref 字段
+        const type = String(parsed.type || parsed.t || "p");
+        const blockContent = String(parsed.content || parsed.c || "");
+        const lead = parsed.lead ? String(parsed.lead) : undefined; // 提取 lead 字段
+        const ref = parsed.ref ? String(parsed.ref) : undefined; // 提取 ref 字段
 
         parsedBlocks.push({
           type,
@@ -199,15 +199,15 @@ export function StreamingJsonlRenderer({
           {/* 主要内容 */}
           {type === "list" ? (
             <div className="space-y-2">
-              {blockContent.split("\n").map((listItem, idx) => (
+              {(blockContent || "").split("\n").map((listItem, idx) => (
                 <div key={idx} className="flex items-start gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0" />
-                  <span className="whitespace-pre-wrap">{listItem.trim()}</span>
+                  <span className="whitespace-pre-wrap">{(listItem || "").trim()}</span>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="whitespace-pre-wrap">{blockContent}</div>
+            <div className="whitespace-pre-wrap">{blockContent || ""}</div>
           )}
         </div>
       </HoverableBlock>

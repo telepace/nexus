@@ -13,6 +13,7 @@ interface ActionCardProps {
   references: number[];
   MarkdownRenderer: typeof MarkdownRenderer;
   EnhancedReferenceIndicator: typeof EnhancedReferenceIndicator;
+  contentId?: string;
 }
 
 const ActionCard: React.FC<ActionCardProps> = ({
@@ -23,6 +24,7 @@ const ActionCard: React.FC<ActionCardProps> = ({
   references,
   MarkdownRenderer,
   EnhancedReferenceIndicator,
+  contentId,
 }) => {
   const [isCardHovered, setIsCardHovered] = useState(false);
 
@@ -51,6 +53,8 @@ const ActionCard: React.FC<ActionCardProps> = ({
           inline={true} 
           ref={hasReferences ? references.join(',') : undefined}
           refVariant="badge"
+          contentId={contentId}
+          enableEnhancedTooltip={!!contentId}
         />
       </div>
     </div>
@@ -66,6 +70,7 @@ interface ParagraphCardProps {
   references: number[];
   MarkdownRenderer: typeof MarkdownRenderer;
   EnhancedReferenceIndicator: typeof EnhancedReferenceIndicator;
+  contentId?: string;
 }
 
 const ParagraphCard: React.FC<ParagraphCardProps> = ({
@@ -76,6 +81,7 @@ const ParagraphCard: React.FC<ParagraphCardProps> = ({
   references,
   MarkdownRenderer,
   EnhancedReferenceIndicator,
+  contentId,
 }) => {
   const [isCardHovered, setIsCardHovered] = useState(false);
 
@@ -105,6 +111,8 @@ const ParagraphCard: React.FC<ParagraphCardProps> = ({
           ref={hasReferences ? references.join(',') : undefined}
           refVariant="minimal"
           className="text-sm text-neutral-800 [&_strong]:text-neutral-800 [&_strong]:font-black leading-relaxed"
+          contentId={contentId}
+          enableEnhancedTooltip={!!contentId}
         />
       </div>
     </div>
@@ -118,6 +126,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
   MarkdownRenderer,
   EnhancedReferenceIndicator,
   onExpand,
+  contentId,
 }) => {
   const type = (block["type"] || block["t"]) as string | undefined;
   const c = (block["content"] ?? block["c"]) as React.ReactNode;
@@ -138,6 +147,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
               inline={true} 
               ref={hasReferences ? references.join(',') : undefined}
               refVariant="inline"
+              contentId={contentId}
+              enableEnhancedTooltip={!!contentId}
             />
           </span>
         </div>
@@ -162,6 +173,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
               inline={true} 
               ref={hasReferences ? references.join(',') : undefined}
               refVariant="inline"
+              contentId={contentId}
+              enableEnhancedTooltip={!!contentId}
             />
           </span>
         </div>
@@ -186,6 +199,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
               inline={true} 
               ref={hasReferences ? references.join(',') : undefined}
               refVariant="inline"
+              contentId={contentId}
+              enableEnhancedTooltip={!!contentId}
             />
           </span>
         </div>
@@ -210,6 +225,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
               inline={true} 
               ref={hasReferences ? references.join(',') : undefined}
               refVariant="inline"
+              contentId={contentId}
+              enableEnhancedTooltip={!!contentId}
             />
           </span>
         </div>
@@ -234,6 +251,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
               inline={true} 
               ref={hasReferences ? references.join(',') : undefined}
               refVariant="inline"
+              contentId={contentId}
+              enableEnhancedTooltip={!!contentId}
             />
           </span>
         </div>
@@ -258,6 +277,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
               inline={true} 
               ref={hasReferences ? references.join(',') : undefined}
               refVariant="inline"
+              contentId={contentId}
+              enableEnhancedTooltip={!!contentId}
             />
           </span>
         </div>
@@ -286,6 +307,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
                 inline={true} 
                 ref={hasReferences ? references.join(',') : undefined}
                 refVariant="minimal"
+                contentId={contentId}
+                enableEnhancedTooltip={!!contentId}
               />
             </div>
             {ref && (
@@ -327,7 +350,12 @@ export const notebookStyleRenderer: StyleRenderer = ({
                     fontFamily: '"Kalam", "Comic Sans MS", cursive'
                   }}
                 >
-                  <MarkdownRenderer content={item} inline={true} />
+                  <MarkdownRenderer 
+                    content={item} 
+                    inline={true}
+                    contentId={contentId}
+                    enableEnhancedTooltip={!!contentId}
+                  />
                 </span>
               </li>
             ))}
@@ -339,6 +367,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
                 inline={true}
                 ref={references.join(',')}
                 refVariant="minimal"
+                contentId={contentId}
+                enableEnhancedTooltip={!!contentId}
               />
             </div>
           )}
@@ -385,6 +415,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
                 inline={true} 
                 ref={hasReferences ? references.join(',') : undefined}
                 refVariant="badge"
+                contentId={contentId}
+                enableEnhancedTooltip={!!contentId}
               />
             </span>
           </div>
@@ -411,6 +443,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
                 inline={true} 
                 ref={hasReferences ? references.join(',') : undefined}
                 refVariant="badge"
+                contentId={contentId}
+                enableEnhancedTooltip={!!contentId}
               />
             </span>
           </div>
@@ -440,7 +474,12 @@ export const notebookStyleRenderer: StyleRenderer = ({
                   Q
                 </span>
                 <div className="text-emerald-800 font-medium flex-1 text-base" style={{ lineHeight: '1.5' }}>
-                  <MarkdownRenderer content={String(q)} inline={true} />
+                  <MarkdownRenderer 
+                    content={String(q)} 
+                    inline={true}
+                    contentId={contentId}
+                    enableEnhancedTooltip={!!contentId}
+                  />
                 </div>
               </div>
               <div className="flex items-start gap-2">
@@ -448,7 +487,12 @@ export const notebookStyleRenderer: StyleRenderer = ({
                   A
                 </span>
                 <div className="text-emerald-700 flex-1 text-base" style={{ lineHeight: '1.5' }}>
-                  <MarkdownRenderer content={String(a)} inline={true} />
+                  <MarkdownRenderer 
+                    content={String(a)} 
+                    inline={true}
+                    contentId={contentId}
+                    enableEnhancedTooltip={!!contentId}
+                  />
                 </div>
               </div>
               {hasReferences && (
@@ -458,6 +502,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
                     inline={true}
                     ref={references.join(',')}
                     refVariant="minimal"
+                    contentId={contentId}
+                    enableEnhancedTooltip={!!contentId}
                   />
                 </div>
               )}
@@ -484,6 +530,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
           references={references}
           MarkdownRenderer={MarkdownRenderer}
           EnhancedReferenceIndicator={EnhancedReferenceIndicator}
+          contentId={contentId}
         />
       );
 
@@ -507,6 +554,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
           references={references}
           MarkdownRenderer={MarkdownRenderer}
           EnhancedReferenceIndicator={EnhancedReferenceIndicator}
+          contentId={contentId}
         />
       );
 
