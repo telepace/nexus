@@ -985,3 +985,118 @@ export async function togglePromptEnabled(
     return { error: "操作失败" };
   }
 }
+
+
+// Add a prompt to favorites
+export async function favoritePrompt(promptId: string) {
+  const user = await requireAuth();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const token = await getAuthToken();
+  if (!token) {
+    redirect("/login");
+  }
+
+  try {
+    const { data, error } = await createFavoritePrompt({
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: {
+        prompt_id: promptId,
+      },
+    });
+
+    if (error) {
+      console.error("Favoriting prompt failed:", error);
+      return {
+        error: typeof error === "string" ? error : JSON.stringify(error),
+      };
+    }
+
+    revalidatePath("/prompts");
+    revalidatePath("/favorites");
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Favoriting prompt failed:", error);
+    return { error: "Operation failed" };
+  }
+}
+
+
+
+// Remove a prompt from favorites
+export async function unfavoritePrompt(favoriteId: string) {
+  const user = await requireAuth();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const token = await getAuthToken();
+  if (!token) {
+    redirect("/login");
+  }
+
+  try {
+    const { data, error } = await deleteFavoritePrompt({
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      path: {
+        id: favoriteId,
+      },
+    });
+
+    if (error) {
+      console.error("Unfavoriting prompt failed:", error);
+      return {
+        error: typeof error === "string" ? error : JSON.stringify(error),
+      };
+    }
+
+    revalidatePath("/prompts");
+    revalidatePath("/favorites");
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Unfavoriting prompt failed:", error);
+    return { error: "Operation failed" };
+  }
+}
+
+// Fetch all favorite prompts
+export async function fetchFavoritePrompts() {
+  const user = await requireAuth();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const token = await getAuthToken();
+  if (!token) {
+    redirect("/login");
+  }
+
+  try {
+    const { data, error } = await readUserFavoritePrompts({
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (error) {
+      console.error("Fetching favorite prompts failed:", error);
+      return {
+        error: typeof error === "string" ? error : JSON.stringify(error),
+      };
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Fetching favorite prompts failed:", error);
+    return { error: "Operation failed" };
+  }
+}
+

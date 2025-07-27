@@ -1,0 +1,39 @@
+# Railway configuration for Backend service
+# This configuration defines the build and deployment settings for the FastAPI backend
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# Database migration before starting the service
+preDeployCommand = ["alembic upgrade head"]
+
+# Start command for FastAPI application
+startCommand = "fastapi run --workers 4 app/main.py"
+
+# Health check configuration
+healthcheckPath = "/api/v1/utils/health-check/"
+healthcheckTimeout = 10
+
+# Restart policy for failures
+restartPolicyType = "on_failure"
+
+# Environment-specific configurations
+[environments.production]
+PORT = 8000
+WORKERS = 4
+
+[environments.staging]
+PORT = 8000 
+WORKERS = 2
+
+# Watch patterns for automated deployments
+watchPatterns = [
+    "app/**",
+    "scripts/**", 
+    "pyproject.toml",
+    "uv.lock",
+    "alembic.ini",
+    "Dockerfile"
+]

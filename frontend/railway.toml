@@ -1,0 +1,41 @@
+# Railway configuration for Frontend service  
+# This configuration defines the build and deployment settings for the Next.js frontend
+
+[build]
+builder = "nixpacks"
+buildCommand = "npm run build"
+
+[deploy]
+# Start command for Next.js production server
+startCommand = "npm run start"
+
+# Health check - Custom API endpoint
+healthcheckPath = "/api/health"
+healthcheckTimeout = 10
+
+# Restart policy for failures
+restartPolicyType = "on_failure"
+
+# Environment-specific configurations
+[environments.production]
+PORT = 3000
+NODE_ENV = "production"
+
+[environments.staging]  
+PORT = 3000
+NODE_ENV = "production"
+
+# Watch patterns for automated deployments
+watchPatterns = [
+    "app/**",
+    "components/**",
+    "lib/**", 
+    "hooks/**",
+    "styles/**",
+    "public/**",
+    "package.json",
+    "package-lock.json",
+    "next.config.mjs",
+    "tailwind.config.js",
+    "tsconfig.json"
+]

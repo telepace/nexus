@@ -1,0 +1,40 @@
+# Railway configuration for Website service
+# This configuration defines the build and deployment settings for the Next.js documentation website
+
+[build]
+builder = "nixpacks"
+buildCommand = "npm run build"
+
+[deploy]
+# Start command for Next.js production server
+startCommand = "npm run start"
+
+# Health check - Next.js typically serves on root path
+healthcheckPath = "/"
+healthcheckTimeout = 10
+
+# Restart policy for failures
+restartPolicyType = "on_failure"
+
+# Environment-specific configurations
+[environments.production]
+PORT = 3000
+NODE_ENV = "production"
+
+[environments.staging]
+PORT = 3000
+NODE_ENV = "production"
+
+# Watch patterns for automated deployments
+watchPatterns = [
+    "src/**",
+    "content/**",
+    "public/**",
+    "package.json",
+    "package-lock.json",
+    "next.config.ts",
+    "theme.config.tsx",
+    "tailwind.config.ts",
+    "tsconfig.json",
+    "mdx-components.tsx"
+]

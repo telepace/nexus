@@ -12,8 +12,8 @@ import Link from "next/link";
 import { DateDisplay } from "@/components/ui/DateDisplay";
 import { PromptToggle } from "../promptToggle";
 import { DeleteButton } from "../deleteButton";
-import { PromptData } from "@/components/actions/prompts-action";
-import { memo, useCallback, useMemo } from "react";
+import { PromptData, favoritePrompt, unfavoritePrompt } from "@/components/actions/prompts-action";
+import { memo, useCallback, useMemo, useState } from "react";
 
 interface PromptCardsProps {
   prompts: PromptData[];
@@ -60,6 +60,19 @@ const PromptCard = memo(
       () => generateConsistentStats(prompt.id),
       [prompt.id],
     );
+
+    const [isFavorited, setIsFavorited] = useState(prompt.is_favorited);
+
+    const handleFavoriteClick = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (isFavorited) {
+        await unfavoritePrompt(prompt.id);
+        setIsFavorited(false);
+      } else {
+        await favoritePrompt(prompt.id);
+        setIsFavorited(true);
+      }
+    };
 
     // 使用 useCallback 优化点击处理函数
     const handleClick = useCallback(
@@ -110,40 +123,48 @@ const PromptCard = memo(
                 <span>{stats.useCount}</span>
               </div>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-100 rounded-lg transition-opacity duration-200"
-                  data-dropdown-trigger
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreHorizontal className="h-4 w-4 text-slate-500" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem asChild>
-                  <Link
-                    href={`/prompts/${prompt.id}`}
-                    className="flex items-center"
+            <div className="flex items-center gap-2">
+              <button
+                className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-100 rounded-lg transition-opacity duration-200"
+                onClick={handleFavoriteClick}
+              >
+                <Heart className={`h-4 w-4 ${isFavorited ? text-red-500 : text-slate-500}`} />
+              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-100 rounded-lg transition-opacity duration-200"
+                    data-dropdown-trigger
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <Eye className="mr-2 h-4 w-4" />
-                    查看详情
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    href={`/prompts/edit/${prompt.id}`}
-                    className="flex items-center"
-                  >
-                    <span className="mr-2">✏️</span>
-                    编辑
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive focus:text-destructive">
-                  <DeleteButton promptId={prompt.id} />
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href={`/prompts/${prompt.id}`}
+                      className="flex items-center"
+                    >
+                      <Eye className="mr-2 h-4 w-4" />
+                      查看详情
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href={`/prompts/edit/${prompt.id}`}
+                      className="flex items-center"
+                    >
+                      <span className="mr-2">✏️</span>
+                      编辑
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive focus:text-destructive">
+                    <DeleteButton promptId={prompt.id} />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
           {/* Tags - 减少间距和尺寸 */}
@@ -206,7 +227,7 @@ export function PromptCards({ prompts, currentUser }: PromptCardsProps) {
       if (
         event.target instanceof HTMLElement &&
         (event.target.closest("button") ||
-          event.target.closest('[role="switch"]') ||
+          event.target.closest([role=switch]) ||
           event.target.closest("[data-dropdown-trigger]") ||
           event.target.closest(".prompt-toggle-container"))
       ) {
@@ -231,3 +252,4 @@ export function PromptCards({ prompts, currentUser }: PromptCardsProps) {
     </div>
   );
 }
+

@@ -69,7 +69,9 @@
       "Bash(git stash:*)",
       "Bash(npm run:*)",
       "Bash(mkdir:*)",
-      "Bash(pnpm ls:*)"
+      "Bash(pnpm ls:*)",
+      "WebFetch(domain:docs.railway.com)",
+      "WebFetch(domain:docs.railway.com)"
     ]
   },
   "enableAllProjectMcpServers": false

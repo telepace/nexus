@@ -1,0 +1,99 @@
+# Railway Root Project Configuration
+# This is the main configuration file for the Nexus multi-service project
+
+# Note: Railway supports multi-service deployments where each service 
+# can have its own railway.toml file in respective directories
+# This root config serves as project-level settings and documentation
+
+# Project metadata
+[project]
+name = "nexus"
+description = "Full-stack content management and AI analysis platform"
+
+# Global environment variables for all services
+[env.production]
+# Domain configuration - Railway will provide these automatically
+DOMAIN = "${{ RAILWAY_PUBLIC_DOMAIN }}"
+ENVIRONMENT = "production"
+
+# Service URLs - These will be set by Railway based on service deployments
+FRONTEND_URL = "https://${{ frontend.RAILWAY_PUBLIC_DOMAIN }}"
+BACKEND_URL = "https://${{ backend.RAILWAY_PUBLIC_DOMAIN }}"
+ADMIN_URL = "https://${{ admin.RAILWAY_PUBLIC_DOMAIN }}"
+WEBSITE_URL = "https://${{ website.RAILWAY_PUBLIC_DOMAIN }}"
+
+# Security and secrets
+SECRET_KEY = "${{ SECRET_KEY }}"
+FIRST_SUPERUSER = "${{ FIRST_SUPERUSER }}"
+FIRST_SUPERUSER_PASSWORD = "${{ FIRST_SUPERUSER_PASSWORD }}"
+
+# Email configuration (optional)
+SMTP_HOST = "${{ SMTP_HOST }}"
+SMTP_USER = "${{ SMTP_USER }}" 
+SMTP_PASSWORD = "${{ SMTP_PASSWORD }}"
+EMAILS_FROM_EMAIL = "${{ EMAILS_FROM_EMAIL }}"
+
+# External services
+SENTRY_DSN = "${{ SENTRY_DSN }}"
+POSTHOG_KEY = "${{ POSTHOG_KEY }}"
+
+# AI and LLM configuration
+OPENAI_API_KEY = "${{ OPENAI_API_KEY }}"
+OPENAI_BASE_URL = "${{ OPENAI_BASE_URL }}"
+OR_API_KEY = "${{ OR_API_KEY }}"
+LITELLM_MASTER_KEY = "${{ LITELLM_MASTER_KEY }}"
+
+# Storage configuration
+SUPABASE_URL = "${{ SUPABASE_URL }}"
+SUPABASE_ANON_KEY = "${{ SUPABASE_ANON_KEY }}"
+
+[env.staging]
+DOMAIN = "${{ RAILWAY_PUBLIC_DOMAIN }}"
+ENVIRONMENT = "staging"
+
+# Service URLs for staging
+FRONTEND_URL = "https://${{ frontend.RAILWAY_PUBLIC_DOMAIN }}"
+BACKEND_URL = "https://${{ backend.RAILWAY_PUBLIC_DOMAIN }}"
+ADMIN_URL = "https://${{ admin.RAILWAY_PUBLIC_DOMAIN }}"
+WEBSITE_URL = "https://${{ website.RAILWAY_PUBLIC_DOMAIN }}"
+
+# Deployment configuration
+[deploy]
+# Global deployment settings
+# Services will be deployed in dependency order
+
+# Watch patterns for project-level changes
+watchPatterns = [
+    "docker-compose.yml",
+    "railway.toml",
+    ".env.example",
+    "specs/**"
+]
+
+# Service dependencies (Railway will handle automatic service discovery)
+# Backend depends on: PostgreSQL, Redis
+# Frontend depends on: Backend
+# Admin depends on: Backend
+# Website is independent
+
+# Documentation for Railway CLI users:
+# 
+# 1. Deploy specific services:
+#    railway deploy --service backend
+#    railway deploy --service frontend
+#    railway deploy --service admin
+#    railway deploy --service website
+#
+# 2. Set environment variables:
+#    railway variables set SECRET_KEY=your-secret-key
+#    railway variables set FIRST_SUPERUSER=admin@your-domain.com
+#
+# 3. Add database and Redis:
+#    railway add postgresql
+#    railway add redis
+#
+# 4. View service logs:
+#    railway logs --service backend
+#
+# 5. Connect to database:
+#    railway connect postgresql
