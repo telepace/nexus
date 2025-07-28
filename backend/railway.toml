@@ -8,6 +8,7 @@ dockerfilePath = "Dockerfile"
 restartPolicyType = "always"
 healthcheckPath = "/api/v1/utils/health-check/"
 healthcheckTimeout = 100
+startCommand = "uv run fastapi run --host 0.0.0.0 --port $PORT --workers 4 app/main.py"
 
 # Backend specific environment variables
 [env]

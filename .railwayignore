@@ -1,25 +1,65 @@
-# Railway ignore file
-# This prevents Railway from detecting the root requirements.txt as a Python app
-# The actual services are in subdirectories with their own configurations
+# Railway ignore file - PREVENTS ROOT DEPLOYMENT
+# This file ensures Railway doesn't try to auto-detect and deploy the entire monorepo
+# Each service should be deployed from its own subdirectory
 
-# Ignore root-level Python files that are for scripts only
+# === CRITICAL: Prevent root-level auto-detection ===
+# These files at root cause Railway to detect this as various app types
 requirements.txt
+package.json
+package-lock.json
+pnpm-lock.yaml
+Dockerfile
+Dockerfile.*
+docker-compose*.yml
+railway.toml
+
+# Python files at root (scripts only, not the app)
 *.py
 test_*.py
+__pycache__/
+*.pyc
 
-# Ignore development and build artifacts
-_output/
-_typos.toml
+# Node.js artifacts
 node_modules/
+.npm/
+.yarn/
+
+# Build and output directories
+_output/
+dist/
+build/
+.next/
+target/
+htmlcov/
+
+# Development files
 .git/
 .vscode/
 .idea/
+.cursor/
+.env*
+*.log
 
-# Ignore documentation and specs
+# Documentation and metadata
 docs/
 specs/
 images/
 *.md
+LICENSE
+README*
 
-# Ignore other service directories when deploying a specific service
-# Railway will deploy each service separately based on their railway.toml configs
+# Configuration files
+_typos.toml
+.pre-commit-config.yaml
+.gitignore
+.gitattributes
+copier.yml
+Makefile
+
+# === SERVICE DIRECTORIES ===
+# When deploying a specific service, ignore other service directories
+# Railway will deploy each service from its own directory with its own railway.toml
+
+# Note: Railway should NEVER deploy from root
+# Use: railway up --service <service-name> from the service directory
+# Or: Use our deployment scripts that handle this correctly

@@ -40,4 +40,12 @@ COPY ./app /app/app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync
 
-CMD ["uv", "run", "fastapi", "run", "--workers", "4", "app/main.py"]
+# Expose port for Railway
+EXPOSE 8000
+
+# Set host and port for Railway deployment
+ENV HOST=0.0.0.0
+ENV PORT=8000
+
+# Run FastAPI with proper host binding for Railway
+CMD ["uv", "run", "fastapi", "run", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "app/main.py"]

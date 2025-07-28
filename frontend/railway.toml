@@ -6,6 +6,7 @@ dockerfilePath = "Dockerfile"
 
 [deploy]
 restartPolicyType = "always"
+startCommand = "pnpm start"
 
 # Frontend specific environment variables
 [env]

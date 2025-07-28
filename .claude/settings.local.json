@@ -72,7 +72,12 @@
       "Bash(pnpm ls:*)",
       "WebFetch(domain:docs.railway.com)",
       "WebFetch(domain:docs.railway.com)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(npm install:*)",
+      "Bash(railway --version)",
+      "Bash(railway whoami:*)",
+      "Bash(railway login:*)",
+      "Bash(./scripts/emergency-railway-fix.sh:*)"
     ]
   },
   "enableAllProjectMcpServers": false
