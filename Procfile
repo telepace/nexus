@@ -1,1 +1,1 @@
-web: cd backend && fastapi run --workers 4 app/main.py
+web: cd backend && uvx fastapi run --workers 4 app/main.py
