@@ -41,9 +41,9 @@ RUN echo '<!DOCTYPE html>' > index.html && \
     echo '</body>' >> index.html && \
     echo '</html>' >> index.html
 
-# Create nginx config to serve on port 5173
+# Create nginx config to serve on standard HTTP port
 RUN echo 'server {' > /etc/nginx/conf.d/default.conf && \
-    echo '    listen 5173;' >> /etc/nginx/conf.d/default.conf && \
+    echo '    listen 80;' >> /etc/nginx/conf.d/default.conf && \
     echo '    server_name localhost;' >> /etc/nginx/conf.d/default.conf && \
     echo '    root /usr/share/nginx/html;' >> /etc/nginx/conf.d/default.conf && \
     echo '    index index.html;' >> /etc/nginx/conf.d/default.conf && \
@@ -62,6 +62,6 @@ RUN echo 'server {' > /etc/nginx/conf.d/default.conf && \
 # Remove default nginx config
 RUN rm /etc/nginx/conf.d/default.conf.dpkg-dist 2>/dev/null || true
 
-EXPOSE 5173
+EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"] 
