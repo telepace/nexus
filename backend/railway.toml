@@ -1,9 +1,15 @@
 # Railway configuration for Backend service
-# This configuration defines the build and deployment settings for the FastAPI backend
+# Using pre-built Docker images from CI/CD pipeline
+
+[build]
+# Use pre-built Docker image instead of building from source
+# Railway will pull the latest image from the registry
+builder = "docker"
 
 [deploy]
 # Database migration before starting the service
-preDeployCommand = ["cd backend && uv sync && uv run alembic upgrade head"]
+# 注意：这里不需要 uv sync，因为依赖已经在镜像中了
+preDeployCommand = ["alembic upgrade head"]
 
 # Health check configuration
 healthcheckPath = "/api/v1/utils/health-check/"
@@ -16,16 +22,22 @@ restartPolicyType = "on_failure"
 [environments.production]
 PORT = 8000
 WORKERS = 4
+# 生产环境使用稳定版本
+dockerImage = "ghcr.io/telepace/nexus-backend:latest"
 
 [environments.staging]
 PORT = 8000 
 WORKERS = 2
+# 测试环境使用测试版本
+dockerImage = "ghcr.io/telepace/nexus-backend-testing:latest"
 
 # Watch patterns for automated deployments
+# 当这些文件变化时，触发重新部署（但不重新构建）
 watchPatterns = [
     "app/**",
     "scripts/**", 
     "pyproject.toml",
     "uv.lock",
-    "alembic.ini"
+    "alembic.ini",
+    "Dockerfile"
 ]

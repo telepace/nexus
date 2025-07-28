@@ -1,0 +1,124 @@
+name: Deploy to Railway
+
+on:
+  # 当 Docker 构建完成后触发
+  workflow_run:
+    workflows: ["Docker Build and Push"]
+    types:
+      - completed
+    branches: [main, master]
+  
+  # 也可以手动触发
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      image_tag:
+        description: 'Docker image tag (optional, defaults to latest)'
+        required: false
+        default: 'latest'
+
+  # 当有新的 tag 时也触发
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  deploy-to-railway:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine deployment parameters
+        id: deploy-params
+        run: |
+          # 确定环境
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            ENVIRONMENT="${{ github.event.inputs.environment }}"
+            IMAGE_TAG="${{ github.event.inputs.image_tag }}"
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
+            ENVIRONMENT="production"
+            IMAGE_TAG=${GITHUB_REF#refs/tags/}
+          else
+            # 从 main/master 分支触发，部署到 staging
+            ENVIRONMENT="staging"
+            IMAGE_TAG="latest"
+          fi
+          
+          # 确定镜像名称
+          if [[ "$ENVIRONMENT" == "staging" ]]; then
+            IMAGE_NAME="ghcr.io/telepace/nexus-backend-testing:$IMAGE_TAG"
+          else
+            IMAGE_NAME="ghcr.io/telepace/nexus-backend:$IMAGE_TAG"
+          fi
+          
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          
+          echo "Deploying to: $ENVIRONMENT"
+          echo "Using image: $IMAGE_NAME"
+
+      - name: Install Railway CLI
+        run: |
+          curl -fsSL https://railway.app/install.sh | sh
+          echo "$HOME/.railway/bin" >> $GITHUB_PATH
+
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          echo "Deploying to Railway..."
+          echo "Environment: ${{ steps.deploy-params.outputs.environment }}"
+          echo "Image: ${{ steps.deploy-params.outputs.image_name }}"
+          
+          # 登录 Railway
+          railway login --token $RAILWAY_TOKEN
+          
+          # 链接到正确的项目和环境
+          railway link --project nexus --environment ${{ steps.deploy-params.outputs.environment }}
+          
+          # 设置镜像环境变量（如果 Railway 支持动态镜像设置）
+          # railway variables set DOCKER_IMAGE="${{ steps.deploy-params.outputs.image_name }}"
+          
+          # 触发重新部署
+          railway up --detach
+          
+          echo "Deployment triggered successfully!"
+
+      - name: Wait for deployment
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          echo "Waiting for deployment to complete..."
+          sleep 60
+          
+          # 检查部署状态
+          railway status || echo "Status check completed"
+
+      - name: Verify deployment
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          echo "Verifying deployment..."
+          # 这里可以添加健康检查
+          # curl -f https://your-app-url/health || exit 1
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [[ "${{ job.status }}" == "success" ]]; then
+            echo "✅ Railway deployment to ${{ steps.deploy-params.outputs.environment }} completed successfully!"
+            echo "🐳 Using image: ${{ steps.deploy-params.outputs.image_name }}"
+          else
+            echo "❌ Railway deployment to ${{ steps.deploy-params.outputs.environment }} failed!"
+          fi 

@@ -1,2 +1,0 @@
-# Install uv for managing backend dependencies
-uv>=0.5.0
