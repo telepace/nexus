@@ -1,43 +1,49 @@
-# Railway configuration for Backend service
-# Using pre-built Docker images from CI/CD pipeline
+# Railway Backend Service Configuration
 
 [build]
-# Use pre-built Docker image instead of building from source
-# Railway will pull the latest image from the registry
-builder = "docker"
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-# Database migration before starting the service
-# 注意：这里不需要 uv sync，因为依赖已经在镜像中了
-preDeployCommand = ["alembic upgrade head"]
-
-# Health check configuration
+restartPolicyType = "always"
 healthcheckPath = "/api/v1/utils/health-check/"
-healthcheckTimeout = 10
+healthcheckTimeout = 100
 
-# Restart policy for failures
-restartPolicyType = "on_failure"
+# Backend specific environment variables
+[env]
+# FastAPI settings
+ENVIRONMENT = "production"
+BACKEND_CORS_ORIGINS = "https://${{ frontend.RAILWAY_PUBLIC_DOMAIN }},https://${{ admin.RAILWAY_PUBLIC_DOMAIN }}"
 
-# Environment-specific configurations
-[environments.production]
-PORT = 8000
-WORKERS = 4
-# 生产环境使用稳定版本
-dockerImage = "ghcr.io/telepace/nexus-backend:latest"
+# Database connection (Railway PostgreSQL)
+POSTGRES_SERVER = "${{ POSTGRES.RAILWAY_PRIVATE_DOMAIN }}"
+POSTGRES_PORT = "${{ POSTGRES.RAILWAY_PORT }}"
+POSTGRES_DB = "${{ POSTGRES.PGDATABASE }}"
+POSTGRES_USER = "${{ POSTGRES.PGUSER }}"
+POSTGRES_PASSWORD = "${{ POSTGRES.PGPASSWORD }}"
 
-[environments.staging]
-PORT = 8000 
-WORKERS = 2
-# 测试环境使用测试版本
-dockerImage = "ghcr.io/telepace/nexus-backend-testing:latest"
+# Redis connection (Railway Redis)
+REDIS_HOST = "${{ REDIS.RAILWAY_PRIVATE_DOMAIN }}"
+REDIS_PORT = "${{ REDIS.RAILWAY_PORT }}"
+REDIS_DB = "0"
+REDIS_PASSWORD = "${{ REDIS.REDIS_PASSWORD }}"
+REDIS_TTL_SECONDS = "86400"
+REDIS_ENABLED = "true"
 
-# Watch patterns for automated deployments
-# 当这些文件变化时，触发重新部署（但不重新构建）
-watchPatterns = [
-    "app/**",
-    "scripts/**", 
-    "pyproject.toml",
-    "uv.lock",
-    "alembic.ini",
-    "Dockerfile"
-]
+# Application secrets
+SECRET_KEY = "${{ SECRET_KEY }}"
+FIRST_SUPERUSER = "${{ FIRST_SUPERUSER }}"
+FIRST_SUPERUSER_PASSWORD = "${{ FIRST_SUPERUSER_PASSWORD }}"
+
+# External services
+OPENAI_API_KEY = "${{ OPENAI_API_KEY }}"
+OPENAI_BASE_URL = "${{ OPENAI_BASE_URL }}"
+SUPABASE_URL = "${{ SUPABASE_URL }}"
+SUPABASE_ANON_KEY = "${{ SUPABASE_ANON_KEY }}"
+SENTRY_DSN = "${{ SENTRY_DSN }}"
+
+# Email configuration
+SMTP_HOST = "${{ SMTP_HOST }}"
+SMTP_USER = "${{ SMTP_USER }}"
+SMTP_PASSWORD = "${{ SMTP_PASSWORD }}"
+EMAILS_FROM_EMAIL = "${{ EMAILS_FROM_EMAIL }}"

@@ -1,38 +1,18 @@
-# Railway configuration for Admin service
-# This configuration defines the build and deployment settings for the Vite admin panel
+# Railway Admin Service Configuration
 
 [build]
-builder = "nixpacks"
-buildCommand = "npm run build"
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-# Start command for Vite preview (production mode)
-startCommand = "npm run preview -- --host 0.0.0.0 --port 5173"
+restartPolicyType = "always"
 
-# Health check - Vite typically serves on root path
-healthcheckPath = "/"
-healthcheckTimeout = 10
-
-# Restart policy for failures
-restartPolicyType = "on_failure"
-
-# Environment-specific configurations
-[environments.production]
-PORT = 5173
+# Admin specific environment variables
+[env]
+# API connection
+VITE_API_URL = "https://${{ backend.RAILWAY_PUBLIC_DOMAIN }}"
+VITE_ADMIN_API_URL = "https://${{ backend.RAILWAY_PUBLIC_DOMAIN }}"
+VITE_DOMAIN = "${{ RAILWAY_PUBLIC_DOMAIN }}"
+VITE_PROJECT_NAME = "nexus"
+VITE_ENVIRONMENT = "production"
 NODE_ENV = "production"
-
-[environments.staging]
-PORT = 5173  
-NODE_ENV = "production"
-
-# Watch patterns for automated deployments
-watchPatterns = [
-    "src/**",
-    "public/**",
-    "package.json",
-    "package-lock.json", 
-    "vite.config.js",
-    "vite.config.ts",
-    "tsconfig.json",
-    "index.html"
-]
