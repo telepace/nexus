@@ -1,1 +1,1 @@
-web: cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 4
+web: cd backend && uv sync && uv run fastapi run --workers 4 app/main.py --host 0.0.0.0 --port ${PORT:-8000}
