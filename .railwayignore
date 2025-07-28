@@ -1,0 +1,25 @@
+# Railway ignore file
+# This prevents Railway from detecting the root requirements.txt as a Python app
+# The actual services are in subdirectories with their own configurations
+
+# Ignore root-level Python files that are for scripts only
+requirements.txt
+*.py
+test_*.py
+
+# Ignore development and build artifacts
+_output/
+_typos.toml
+node_modules/
+.git/
+.vscode/
+.idea/
+
+# Ignore documentation and specs
+docs/
+specs/
+images/
+*.md
+
+# Ignore other service directories when deploying a specific service
+# Railway will deploy each service separately based on their railway.toml configs

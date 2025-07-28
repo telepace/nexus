@@ -1,0 +1,1 @@
+web: cd backend && fastapi run --workers 4 app/main.py
