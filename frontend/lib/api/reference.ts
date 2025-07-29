@@ -126,9 +126,10 @@ export const referenceApi = {
       console.warn('Invalid contentId provided:', contentId);
       // 返回降级数据而不是抛出错误
       return {
+        contentId: contentId || 'unknown',
         paragraphs: [],
-        references: [],
-        metadata: { totalParagraphs: 0, lastUpdated: new Date() }
+        mappings: [],
+        totalParagraphs: 0
       };
     }
     
@@ -139,39 +140,70 @@ export const referenceApi = {
     }
 
     try {
-      const response = await withRetry(async () => {
-        console.log(`正在获取内容段落信息: ${contentId}`);
-        return await client.get<ContentReferenceInfo>(
-          `/api/v1/content/${contentId}/paragraphs`,
-        );
-      }, 2, 1500); // 减少重试次数和延迟
+      console.log(`正在获取内容段落信息: ${contentId}`);
+      // 修改API路径从paragraphs改为segments
+      const response = await client.get<{
+        segments: Array<{
+          id: string;
+          display_number: number;
+          content: string;
+          start_offset?: number;
+          end_offset?: number;
+          created_at: string;
+        }>;
+        total: number;
+        missing_numbers: number[];
+      }>(`/api/v1/content/${contentId}/segments`);
+      
+      // 转换后端数据格式为前端期望的格式
+      const convertedResponse: ContentReferenceInfo = {
+        contentId: contentId,
+        paragraphs: response.segments.map(segment => ({
+          id: segment.id,
+          index: segment.display_number - 1, // 后端是1-based，前端期望0-based
+          content: segment.content,
+          startOffset: segment.start_offset,
+          endOffset: segment.end_offset,
+          metadata: {
+            created_at: segment.created_at
+          }
+        })),
+        mappings: [],
+        totalParagraphs: response.total
+      };
       
       // 缓存结果
-      referenceCache.set(cacheKey, response, 10 * 60 * 1000); // 10分钟缓存
-      return response;
+      referenceCache.set(cacheKey, convertedResponse, 10 * 60 * 1000); // 10分钟缓存
+      return convertedResponse;
     } catch (error) {
       console.error(`获取内容段落失败 (${contentId}):`, error);
       
       // HTTP 500 或其他服务器错误特殊处理 - 返回降级数据而不是抛出错误
       const errorStatus = (error as any)?.status;
-      if (errorStatus >= 500 || errorStatus === 500 || (error as Error).message.includes('HTTP 500')) {
+      const errorMessage = (error as Error).message || '';
+      console.log(`DEBUG: Error status: ${errorStatus}, Error message: "${errorMessage}"`);
+      
+      // 更宽泛的服务器错误检测
+      const isServerError = 
+        errorStatus >= 500 || 
+        errorStatus === 500 ||
+        errorMessage.includes('HTTP 500') || 
+        errorMessage.includes('Internal Server Error') ||
+        errorMessage.includes('500');
+        
+      if (isServerError) {
         console.warn(`服务器错误，使用降级数据 (${contentId})`);
         const fallbackData: ContentReferenceInfo = {
+          contentId: contentId,
           paragraphs: [
             {
               id: '1',
               content: '原文内容暂时无法加载，请稍后重试',
-              index: 0,
-              chapter: undefined,
-              section: undefined
+              index: 0
             }
           ],
-          references: [],
-          metadata: { 
-            totalParagraphs: 1, 
-            lastUpdated: new Date(),
-            errorMessage: 'API服务暂时不可用'
-          }
+          mappings: [],
+          totalParagraphs: 1
         };
         
         // 缓存降级数据，但缓存时间较短
@@ -179,12 +211,24 @@ export const referenceApi = {
         return fallbackData;
       }
       
-      // 其他错误仍然抛出
-      throw createApiError(
-        `无法获取内容 ${contentId} 的段落信息`, 
-        (error as any)?.status,
-        'FETCH_PARAGRAPHS_FAILED'
-      );
+      // 其他错误也返回降级数据，避免应用崩溃
+      console.warn(`未预期的错误，使用降级数据 (${contentId}):`, error);
+      const safeFallbackData: ContentReferenceInfo = {
+        contentId: contentId,
+        paragraphs: [
+          {
+            id: '1',
+            content: '内容加载失败，请稍后重试',
+            index: 0
+          }
+        ],
+        mappings: [],
+        totalParagraphs: 1
+      };
+      
+      // 缓存降级数据，但缓存时间很短
+      referenceCache.set(cacheKey, safeFallbackData, 30 * 1000); // 30秒缓存
+      return safeFallbackData;
     }
   },
 

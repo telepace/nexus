@@ -1,0 +1,51 @@
+{
+  "analysis": {
+    "title": "AI Analysis",
+    "analyzing": "Analyzing content...",
+    "summary": "Summary",
+    "keyPoints": "Key Points",
+    "insights": "Insights",
+    "regenerate": "Regenerate Analysis",
+    "expand": "Expand Discussion",
+    "noAnalysis": "No analysis available",
+    "analysisError": "Failed to generate analysis",
+    "analysisComplete": "Analysis completed"
+  },
+  "chat": {
+    "placeholder": "Ask a question about this content...",
+    "send": "Send",
+    "thinking": "AI is thinking...",
+    "noMessages": "No messages yet",
+    "startConversation": "Start a conversation",
+    "conversationHistory": "Conversation History",
+    "newConversation": "New Conversation"
+  },
+  "prompts": {
+    "title": "AI Prompts",
+    "custom": "Custom Prompt",
+    "preset": "Preset Prompts",
+    "favorite": "Favorite Prompts",
+    "createPrompt": "Create Prompt",
+    "editPrompt": "Edit Prompt",
+    "deletePrompt": "Delete Prompt",
+    "promptName": "Prompt Name",
+    "promptContent": "Prompt Content",
+    "promptDescription": "Description",
+    "savePrompt": "Save Prompt",
+    "usePrompt": "Use Prompt"
+  },
+  "processing": {
+    "queued": "Queued for processing",
+    "inProgress": "Processing in progress",
+    "completed": "Processing completed",
+    "failed": "Processing failed",
+    "retrying": "Retrying...",
+    "estimatedTime": "Estimated time"
+  },
+  "models": {
+    "selectModel": "Select AI Model",
+    "currentModel": "Current Model",
+    "switchModel": "Switch Model",
+    "modelSettings": "Model Settings"
+  }
+}

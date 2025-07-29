@@ -1,0 +1,72 @@
+{
+  "navigation": {
+    "home": "首页",
+    "library": "内容库",
+    "favorites": "收藏",
+    "prompts": "提示词",
+    "settings": "设置"
+  },
+  "actions": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "add": "添加",
+    "search": "搜索",
+    "filter": "筛选",
+    "sync": "同步",
+    "refresh": "刷新",
+    "logout": "退出登录",
+    "login": "登录",
+    "register": "注册",
+    "submit": "提交",
+    "close": "关闭",
+    "open": "打开",
+    "copy": "复制",
+    "share": "分享",
+    "favorite": "收藏",
+    "unfavorite": "取消收藏"
+  },
+  "status": {
+    "loading": "加载中...",
+    "saving": "保存中...",
+    "error": "错误",
+    "success": "成功",
+    "processing": "处理中...",
+    "completed": "已完成",
+    "failed": "失败",
+    "syncing": "同步中..."
+  },
+  "languages": {
+    "en": "English",
+    "zh": "中文"
+  },
+  "auth": {
+    "login": "登录",
+    "register": "注册",
+    "logout": "退出登录",
+    "email": "邮箱",
+    "password": "密码",
+    "confirmPassword": "确认密码",
+    "forgotPassword": "忘记密码？",
+    "noAccount": "还没有账户？",
+    "hasAccount": "已有账户？",
+    "loginSuccess": "登录成功",
+    "logoutSuccess": "退出成功",
+    "loginError": "登录失败",
+    "registerSuccess": "注册成功",
+    "registerError": "注册失败"
+  },
+  "validation": {
+    "required": "此字段为必填项",
+    "emailInvalid": "邮箱地址无效",
+    "passwordTooShort": "密码至少需要8个字符",
+    "passwordsNotMatch": "两次输入的密码不一致"
+  },
+  "messages": {
+    "confirmDelete": "确定要删除此项吗？",
+    "unsavedChanges": "您有未保存的更改。确定要离开吗？",
+    "actionSuccess": "操作成功完成",
+    "actionError": "执行此操作时发生错误"
+  }
+}

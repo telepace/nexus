@@ -1,0 +1,72 @@
+{
+  "navigation": {
+    "home": "Home",
+    "library": "Library",
+    "favorites": "Favorites",
+    "prompts": "Prompts",
+    "settings": "Settings"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "sync": "Sync",
+    "refresh": "Refresh",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register",
+    "submit": "Submit",
+    "close": "Close",
+    "open": "Open",
+    "copy": "Copy",
+    "share": "Share",
+    "favorite": "Favorite",
+    "unfavorite": "Unfavorite"
+  },
+  "status": {
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "error": "Error",
+    "success": "Success",
+    "processing": "Processing...",
+    "completed": "Completed",
+    "failed": "Failed",
+    "syncing": "Syncing..."
+  },
+  "languages": {
+    "en": "English",
+    "zh": "中文"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginSuccess": "Login successful",
+    "logoutSuccess": "Logout successful",
+    "loginError": "Login failed",
+    "registerSuccess": "Registration successful",
+    "registerError": "Registration failed"
+  },
+  "validation": {
+    "required": "This field is required",
+    "emailInvalid": "Invalid email address",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordsNotMatch": "Passwords do not match"
+  },
+  "messages": {
+    "confirmDelete": "Are you sure you want to delete this item?",
+    "unsavedChanges": "You have unsaved changes. Are you sure you want to leave?",
+    "actionSuccess": "Action completed successfully",
+    "actionError": "An error occurred while performing this action"
+  }
+}

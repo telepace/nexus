@@ -3,6 +3,15 @@
 # Each service should be deployed from its own subdirectory
 
 # === CRITICAL: Prevent root-level auto-detection ===
+# Ignore EVERYTHING except service directories
+*
+!backend/
+!frontend/
+!admin/
+!website/
+!.railwayignore
+!nixpacks.toml
+
 # These files at root cause Railway to detect this as various app types
 requirements.txt
 package.json

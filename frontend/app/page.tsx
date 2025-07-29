@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { IconInnerShadowTop } from "@tabler/icons-react";
+import { detectLocale } from "@/lib/i18n";
 
 export default function RootPage() {
   const router = useRouter();
@@ -18,9 +19,11 @@ export default function RootPage() {
       return; // 等待登录状态检查完成
     }
 
+    const locale = detectLocale();
+
     if (user) {
       // 用户已登录，跳转到 home 页面
-      router.replace("/home");
+      router.replace(`/${locale}/home`);
     } else {
       // 用户未登录，显示着陆页
       setShowLanding(true);
@@ -56,7 +59,7 @@ export default function RootPage() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="text-lg px-8 py-3">
-                <Link href="/login">立即登录</Link>
+                <Link href={`/${detectLocale()}/login`}>立即登录</Link>
               </Button>
               <Button
                 asChild
@@ -64,7 +67,7 @@ export default function RootPage() {
                 size="lg"
                 className="text-lg px-8 py-3"
               >
-                <Link href="/register">免费注册</Link>
+                <Link href={`/${detectLocale()}/register`}>免费注册</Link>
               </Button>
             </div>
 

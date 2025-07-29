@@ -36,36 +36,39 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { SidebarToggleButton } from "@/components/ui/sidebar-toggle-button";
 import { useAuth } from "@/lib/auth";
 import { logout } from "@/components/actions/logout-action";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { useTranslation } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
-// 主要导航数据
-const data = {
+// Navigation structure
+const getNavData = (t: (key: string) => string) => ({
   navMain: [
     {
-      title: "Library",
+      title: t("navigation.library"),
       url: "/content-library",
       icon: Inbox,
     },
     {
-      title: "Home",
+      title: t("navigation.home"),
       url: "/home",
       icon: GalleryHorizontalEnd,
     },
     {
-      title: "Favorites",
+      title: t("navigation.favorites"),
       url: "/favorites",
       icon: Heart,
     },
     {
-      title: "Prompts",
+      title: t("navigation.prompts"),
       url: "/prompts",
       icon: BotMessageSquare,
     },
   ],
-};
+});
 
 export interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   onSettingsClick: () => void;
@@ -80,6 +83,9 @@ export function AppSidebar({
   const pathname = usePathname();
   const { user, isLoading, fetchUser } = useAuth();
   const [isSyncing, setIsSyncing] = React.useState(false);
+  const { t } = useTranslation('common');
+  
+  const data = getNavData(t);
 
   // 同步登录状态
   const handleSyncAuth = async () => {
@@ -124,13 +130,14 @@ export function AppSidebar({
   return (
     <Sidebar
       collapsible="icon"
-      className="group-data-[state=collapsed]:border-none"
+      className="group-data-[state=collapsed]:border-none group relative"
       {...props}
     >
       <SidebarHeader className="p-0">
-        <div className="flex h-header shrink-0 items-center justify-center gap-2 border-b border-neutral-100/50 px-4 group-data-[collapsible=icon]:px-2 backdrop-blur-sm">
-          {/* 展开状态：Logo + 品牌名称 + 上传按钮 */}
-          <div className="flex items-center justify-between w-full group-data-[collapsible=icon]:hidden">
+        {/* 展开状态：垂直布局，标题在上，按钮在下 */}
+        <div className="group-data-[collapsible=icon]:hidden">
+          {/* Telepace 品牌区域 */}
+          <div className="flex h-header shrink-0 items-center justify-between border-b border-neutral-100/50 px-4 backdrop-blur-sm">
             <Link
               href="/home"
               className="flex items-center gap-2 overflow-hidden hover:opacity-80 transition-opacity"
@@ -148,31 +155,45 @@ export function AppSidebar({
                 Telepace
               </span>
             </Link>
+            
+            {/* 收缩按钮 */}
+            <SidebarToggleButton 
+              size="sm" 
+              iconType="panel"
+              className="ml-2 opacity-70 hover:opacity-100"
+            />
+          </div>
+          
+          {/* 添加按钮区域 - 作为品牌区域的子元素 */}
+          <div className="px-4 py-3 border-b border-neutral-100/30">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onAddContentClick();
               }}
-              className="h-7 w-7 rounded-[10px] bg-[#FCFCFC] border border-[#D1D1D1] shadow-[0px_1px_2px_rgba(0,0,0,0.04),0px_2px_4px_rgba(0,0,0,0.04)] hover:bg-neutral-50 transition-all duration-300 flex items-center justify-center"
+              className="w-full h-8 rounded-[10px] bg-[#FCFCFC] border border-[#D1D1D1] shadow-[0px_1px_2px_rgba(0,0,0,0.04),0px_2px_4px_rgba(0,0,0,0.04)] hover:bg-neutral-50 transition-all duration-300 flex items-center justify-center gap-2 text-sm text-neutral-700 hover:text-neutral-900"
             >
-              <Plus className="w-4 h-4 text-neutral-900" />
+              <Plus className="w-4 h-4" />
+              <span>添加内容</span>
             </button>
           </div>
+        </div>
 
-          {/* 折叠状态：上传按钮 */}
+        {/* 折叠状态：只显示添加按钮 */}
+        <div className="hidden group-data-[collapsible=icon]:flex h-header shrink-0 items-center justify-center border-b border-neutral-100/50 px-2 backdrop-blur-sm">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onAddContentClick();
             }}
-            className="hidden group-data-[collapsible=icon]:flex items-center justify-center h-7 w-7 rounded-[10px] bg-[#FCFCFC] border border-[#D1D1D1] shadow-[0px_1px_2px_rgba(0,0,0,0.04),0px_2px_4px_rgba(0,0,0,0.04)] hover:bg-neutral-50 transition-all duration-300"
+            className="h-7 w-7 rounded-[10px] bg-[#FCFCFC] border border-[#D1D1D1] shadow-[0px_1px_2px_rgba(0,0,0,0.04),0px_2px_4px_rgba(0,0,0,0.04)] hover:bg-neutral-50 transition-all duration-300 flex items-center justify-center"
           >
             <Plus className="w-4 h-4 text-neutral-900" />
           </button>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-0 pt-4">
+      <SidebarContent className="px-0 pt-2">
 
         {/* 主导航菜单 - 折叠状态下优化间距和视觉效果 */}
         <SidebarGroup className="px-0">
@@ -290,8 +311,11 @@ export function AppSidebar({
                     className="cursor-pointer rounded-lg transition-all duration-200 hover:bg-neutral-50/80"
                   >
                     <Settings className="mr-2 h-4 w-4 text-neutral-500" />
-                    <span className="text-neutral-700">Settings</span>
+                    <span className="text-neutral-700">{t('navigation.settings')}</span>
                   </DropdownMenuItem>
+                  <div className="px-2 py-1">
+                    <LanguageSwitcher />
+                  </div>
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation();
@@ -304,7 +328,7 @@ export function AppSidebar({
                       className={`mr-2 h-4 w-4 text-neutral-500 ${isSyncing ? "animate-spin" : ""}`}
                     />
                     <span className="text-neutral-700">
-                      {isSyncing ? "同步中..." : "同步登录状态"}
+                      {isSyncing ? t('status.syncing') : t('actions.sync')}
                     </span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-neutral-100/60" />
@@ -316,7 +340,7 @@ export function AppSidebar({
                     className="cursor-pointer text-rose-600 focus:text-rose-600 rounded-lg transition-all duration-200 hover:bg-rose-50/80"
                   >
                     <IconUser className="mr-2 h-4 w-4" />
-                    <span>Sign out</span>
+                    <span>{t('auth.logout')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -359,6 +383,15 @@ export function AppSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+
+      {/* 边缘hover收缩按钮 - 仅在展开状态下显示 */}
+      <div className="group-data-[collapsible=icon]:hidden">
+        <SidebarToggleButton 
+          showOnEdge={true}
+          size="sm" 
+          iconType="chevron"
+        />
+      </div>
 
       {/* 添加侧边栏边缘，提供更好的交互区域 */}
       <SidebarRail />

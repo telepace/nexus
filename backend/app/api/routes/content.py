@@ -2442,59 +2442,75 @@ async def get_content_segments(
     3. 全部段落：不传任何参数
     """
     
-    # 验证内容项存在且用户有权限访问
-    content_item = await db.scalar(
-        select(ContentItem).where(
-            and_(
-                ContentItem.id == content_id,
-                ContentItem.user_id == current_user.id
+    try:
+        # 验证内容项存在且用户有权限访问
+        content_item = await db.scalar(
+            select(ContentItem).where(
+                and_(
+                    ContentItem.id == content_id,
+                    ContentItem.user_id == current_user.id
+                )
             )
         )
-    )
-    
-    if not content_item:
-        raise HTTPException(status_code=404, detail="Content not found")
-    
-    # 构建查询条件
-    query = select(ContentSegment).where(ContentSegment.content_item_id == content_id)
-    requested_numbers = []
-    
-    if numbers:
-        # 指定段落号列表模式
-        try:
-            requested_numbers = [int(n.strip()) for n in numbers.split(',') if n.strip()]
-            query = query.where(ContentSegment.display_number.in_(requested_numbers))
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid numbers format")
-    
-    elif from_number is not None and to_number is not None:
-        # 区间模式
-        if from_number > to_number:
-            from_number, to_number = to_number, from_number
-        query = query.where(
-            and_(
-                ContentSegment.display_number >= from_number,
-                ContentSegment.display_number <= to_number
+        
+        if not content_item:
+            raise HTTPException(status_code=404, detail="Content not found")
+        
+        # 构建查询条件
+        query = select(ContentSegment).where(ContentSegment.content_item_id == content_id)
+        requested_numbers = []
+        
+        if numbers:
+            # 指定段落号列表模式
+            try:
+                requested_numbers = [int(n.strip()) for n in numbers.split(',') if n.strip()]
+                query = query.where(ContentSegment.display_number.in_(requested_numbers))
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid numbers format")
+        
+        elif from_number is not None and to_number is not None:
+            # 区间模式
+            if from_number > to_number:
+                from_number, to_number = to_number, from_number
+            query = query.where(
+                and_(
+                    ContentSegment.display_number >= from_number,
+                    ContentSegment.display_number <= to_number
+                )
             )
+            requested_numbers = list(range(from_number, to_number + 1))
+        
+        elif from_number is not None or to_number is not None:
+            raise HTTPException(status_code=400, detail="Both from_number and to_number are required for range query")
+        
+        # 执行查询
+        query = query.order_by(ContentSegment.display_number)
+        result = await db.execute(query)
+        segments = result.scalars().all()
+        
+        # 计算缺失的段落号
+        missing_numbers = []
+        if requested_numbers:
+            found_numbers = {seg.display_number for seg in segments}
+            missing_numbers = [num for num in requested_numbers if num not in found_numbers]
+        
+        return ContentSegmentBulkResponse(
+            segments=segments,
+            total=len(segments),
+            missing_numbers=missing_numbers
         )
-        requested_numbers = list(range(from_number, to_number + 1))
     
-    elif from_number is not None or to_number is not None:
-        raise HTTPException(status_code=400, detail="Both from_number and to_number are required for range query")
-    
-    # 执行查询
-    query = query.order_by(ContentSegment.display_number)
-    result = await db.execute(query)
-    segments = result.scalars().all()
-    
-    # 计算缺失的段落号
-    missing_numbers = []
-    if requested_numbers:
-        found_numbers = {seg.display_number for seg in segments}
-        missing_numbers = [num for num in requested_numbers if num not in found_numbers]
-    
-    return ContentSegmentBulkResponse(
-        segments=segments,
-        total=len(segments),
-        missing_numbers=missing_numbers
-    )
+    except HTTPException:
+        # 重新抛出HTTP异常
+        raise
+    except Exception as e:
+        # 记录详细错误信息
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"获取内容段落时发生错误 - content_id: {content_id}, error: {str(e)}", exc_info=True)
+        
+        # 返回通用500错误，避免暴露内部错误信息
+        raise HTTPException(
+            status_code=500, 
+            detail="Internal server error while retrieving content segments"
+        )

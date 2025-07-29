@@ -1,0 +1,24 @@
+{
+  "name": "nexus-monorepo-root",
+  "version": "1.0.0", 
+  "description": "This is a monorepo root - DO NOT DEPLOY FROM HERE",
+  "private": true,
+  "scripts": {
+    "deploy": "echo 'ERROR: Do not deploy from root. Use individual service directories.' && exit 1",
+    "build": "echo 'ERROR: Do not build from root. Use individual service directories.' && exit 1",
+    "start": "echo 'ERROR: Do not start from root. Use individual service directories.' && exit 1"
+  },
+  "workspaces": [
+    "backend",
+    "frontend", 
+    "admin",
+    "website"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "railway": {
+    "deploy": false,
+    "build": false
+  }
+}

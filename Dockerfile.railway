@@ -1,0 +1,156 @@
+# Railway Dockerfile - Multi-stage build for monorepo deployment
+# This creates a single container with all services using supervisord
+
+# Stage 1: Build backend
+FROM python:3.10 as backend-builder
+WORKDIR /app/backend
+COPY --from=ghcr.io/astral-sh/uv:0.5.11 /uv /uvx /bin/
+ENV PATH="/app/backend/.venv/bin:$PATH"
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+
+COPY backend/uv.lock backend/pyproject.toml ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-project
+
+COPY backend/ ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync
+
+# Stage 2: Build frontend
+FROM node:20-bookworm as frontend-builder
+WORKDIR /app/frontend
+RUN npm install -g pnpm
+COPY frontend/package.json frontend/pnpm-lock.yaml* ./
+RUN pnpm install --frozen-lockfile
+
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+COPY frontend/ ./
+RUN pnpm build
+
+# Stage 3: Final runtime image
+FROM ubuntu:22.04
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3.10-venv \
+    python3-pip \
+    nodejs \
+    npm \
+    nginx \
+    supervisor \
+    curl \
+    postgresql-client \
+    redis-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pnpm globally
+RUN npm install -g pnpm
+
+# Create app directory
+WORKDIR /app
+
+# Copy backend from builder
+COPY --from=backend-builder /app/backend /app/backend
+COPY --from=backend-builder /usr/local/bin/uv /usr/local/bin/uv
+
+# Copy frontend from builder  
+COPY --from=frontend-builder /app/frontend/.next /app/frontend/.next
+COPY --from=frontend-builder /app/frontend/node_modules /app/frontend/node_modules
+COPY --from=frontend-builder /app/frontend/package.json /app/frontend/package.json
+COPY --from=frontend-builder /app/frontend/next.config.mjs /app/frontend/next.config.mjs
+
+# Copy admin (simple nginx setup)
+COPY admin/ /app/admin/
+
+# Create supervisor configuration
+RUN mkdir -p /var/log/supervisor
+
+COPY <<EOF /etc/supervisor/conf.d/supervisord.conf
+[supervisord]
+nodaemon=true
+user=root
+logfile=/var/log/supervisor/supervisord.log
+pidfile=/var/run/supervisord.pid
+
+[program:backend]
+directory=/app/backend
+command=/usr/local/bin/uv run fastapi run --host 0.0.0.0 --port 8000 --workers 2 app/main.py
+autostart=true
+autorestart=true
+stderr_logfile=/var/log/supervisor/backend.err.log
+stdout_logfile=/var/log/supervisor/backend.out.log
+environment=PATH="/app/backend/.venv/bin:%(ENV_PATH)s",PYTHONPATH="/app/backend"
+
+[program:frontend]
+directory=/app/frontend
+command=pnpm start
+autostart=true
+autorestart=true
+stderr_logfile=/var/log/supervisor/frontend.err.log
+stdout_logfile=/var/log/supervisor/frontend.out.log
+
+[program:nginx]
+command=/usr/sbin/nginx -g "daemon off;"
+autostart=true
+autorestart=true
+stderr_logfile=/var/log/supervisor/nginx.err.log
+stdout_logfile=/var/log/supervisor/nginx.out.log
+EOF
+
+# Configure nginx as reverse proxy
+COPY <<EOF /etc/nginx/sites-available/default
+server {
+    listen 80 default_server;
+    server_name _;
+
+    # Frontend
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass \$http_upgrade;
+    }
+
+    # Backend API
+    location /api {
+        proxy_pass http://localhost:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    # Admin interface  
+    location /admin {
+        alias /app/admin/;
+        try_files \$uri \$uri/ /admin/index.html;
+    }
+}
+EOF
+
+# Set environment variables
+ENV PYTHONPATH=/app/backend
+ENV PATH="/app/backend/.venv/bin:$PATH"
+ENV PORT=80
+
+# Expose the main port
+EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost/api/v1/utils/health-check/ || exit 1
+
+# Start supervisor to manage all services
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
