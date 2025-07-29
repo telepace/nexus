@@ -1,31 +1,35 @@
 
-这篇文章我还没看过，但我想快速获取其精髓，我想通过从"好问题"的提出和回答来实现这个目的。你作为很懂文章的人，你也希望然我快速获得精髓，你会建议给我哪些问题可以问？很重要的前提是1.我还没看过这篇文章 2.这些问题必须是我一看就觉很有兴趣问的，想知道答案的，会引起我的兴趣，哪怕我没看过这文章呢 
+I haven't read this article yet, but I want to quickly grasp its essence by asking and answering "good questions". As someone who understands the article well, you also want me to quickly grasp the essence. What questions would you suggest I ask? The important prerequisites are: 1. I haven't read this article yet 2. These questions must be ones that I find very interesting at first glance, want to know the answers to, and will arouse my interest, even though I haven't read this article.
 
-你会建议哪些问题？现在我们头脑风暴，你可以用各种不同思路来提出不同类型的各种问题
+What questions would you suggest? Let's brainstorm now, you can use various different approaches to propose different types of questions.
 
 
 
-## 输出结构
-1.按以下顺序输出 **JSONL** 块
-2.仅输出 **JSONL**，不包含任何额外解释文字。
-3.最多不超过 5 个问题！
+## Output Structure
+1. Output **JSONL** blocks in the following order
+2. Only output **JSONL**, no additional explanatory text.
+3. Maximum of 5 questions!
 
-示例 JSONL:
+Example JSONL:
 ```
-{"t": "h2", "c": "第一类：悬念破冰式问题}
-{"t": "p", "c": "这篇文章的开头提到了一个让他至今都会惊醒的噩梦。这个反复出现的噩梦究竟是什么？它揭示了作者内心深处怎样的恐惧，以至于在他功成名就后依然挥之不去？","expandable": "true"}
-{"t": "p", "c": "在故事的高潮，作者和他的伙伴看到了某个东西，让他们瞬间感到"这件事正在发生，而我们置身事外！" 这个"东西"到底是什么？它为什么有如此大的魔力，让他们感觉一旦错过，就会错过一个时代？","expandable": "true"}
-{"t": "p", "c": "文章结尾，作者的伙伴带着他们呕心沥血的成果，进行了一场决定公司生死的演示。在最关键的时刻，发生了什么意想不到的状况？他们是成功了，还是搞砸了？","expandable": "true"}
-{"t": "h2", "c": "第二类：关于人的深度探寻"}
-{"t": "p", "c": "作者和他的伙伴曾面临一个重大的选择：是做**硬件还是做软件**？一次怎样的惨痛失败经历，让他最终下定决心，认定"软件才是我们的优势所在，才是我们的未来"？","expandable": "true"}
-{"t": "p", "c": "作者曾沉迷于一场高风险的扑克牌局，对手都是数学和科学领域的顶尖高手。他在这个牌局中是赢家还是输家？这段经历让他学到了什么比金钱更重要的东西？","expandable": "true"}
+{"t": "h2", "c": "Category 1: Suspense-breaking Questions"}
+{"t": "p", "c": "The article mentions a nightmare that still haunts the author to this day. What exactly is this recurring nightmare? What deep-seated fear does it reveal that continues to plague him even after achieving success?","expandable": "true"}
+{"t": "p", "c": "At the story's climax, the author and his partner saw something that made them instantly feel 'this is happening, and we're on the outside!' What was this 'thing'? Why did it have such power that missing it would mean missing an entire era?","expandable": "true"}
+{"t": "p", "c": "At the article's conclusion, the author's partner gave a make-or-break presentation with their hard work. At the crucial moment, what unexpected situation occurred? Did they succeed or fail?","expandable": "true"}
+{"t": "h2", "c": "Category 2: Deep Personal Exploration"}
+{"t": "p", "c": "The author and his partner faced a major choice: **hardware or software**? What painful failure experience finally convinced him that 'software is our advantage, our future'?","expandable": "true"}
+{"t": "p", "c": "The author was once obsessed with a high-stakes poker game against top experts in mathematics and science. Was he a winner or loser in this game? What did this experience teach him that was more valuable than money?","expandable": "true"}
 ```
-**注意**：为每个关键要点添加expandable字段，内容应该是一个简短的问题或话题，引导用户点击进行深度讨论。
+**Note**: Add an expandable field for each key point, containing a brief question or topic to guide users to click for in-depth discussion.
 
-## 约束
-- 使用markdown的加粗符号**加粗关键词**来加粗关键词、关键信息， 确保语法和格式正确的渲染。
-## 核心要求
-你應該根據原文的內容長度和內容質量決定你問幾個問題和每個問題的長度如果原文內容很少或者沒什麼有營養的信息那幾乎就沒有什麼問題而且問題很簡單反之如果原文的內容質量比較高 那就內容可以比較詳細和問題比較多你要靈活的去判斷你的問題長度和問題數量 
+## Constraints
+- Use markdown's bold symbols **bold keywords** to emphasize key words and information, ensuring correct grammar and formatting.
+## Core Requirements
+You should determine how many questions to ask and the length of each question based on the original content's length and quality. If the original content is limited or lacks substantial information, there should be few and simple questions. Conversely, if the original content is of high quality, the content can be more detailed with more questions. You should flexibly judge your question length and quantity. 
 
-# 语言
-- 输出必须为中文
+# Output Language
+{% if output_language %}
+Output should be returned in {{ output_language }}.
+{% else %}
+Your output language must be 中文.
+{% endif %}

@@ -14,6 +14,7 @@ from app.api.api_v1.endpoints import (
     users,
     user_favorite_prompts,
 )
+from app.api.routes import user_settings
 
 api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
@@ -38,6 +39,11 @@ api_router.include_router(
     user_favorite_prompts.router,
     prefix="/user-favorite-prompts",
     tags=["user-favorite-prompts"],
+)
+api_router.include_router(
+    user_settings.router,
+    prefix="/user-settings",
+    tags=["user-settings"],
 )
 
 

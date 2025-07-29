@@ -4,6 +4,7 @@ import { promptsApi, Prompt } from "@/lib/api/services/prompts";
 import { getCookie } from "@/lib/auth";
 import { convertPromptToRecommendation } from "@/lib/utils/prompt-utils";
 import { generateFriendlyTitle, isQuestion, formatQuestionTitle } from "@/lib/utils/title-utils";
+import { detectLocale } from "@/lib/i18n";
 
 export interface LLMAnalysis {
   id: string;
@@ -262,6 +263,25 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
               },
               body: JSON.stringify({
                 analysis_instruction: analysisInstruction, // 用户的分析指令
+                // 移除硬编码的语言检测，让后端从用户设置获取
+                // output_language 参数现在是可选的，后端会自动从用户设置获取
+                // 如果前端需要覆盖用户设置，可以传递这个参数
+                // output_language: (() => {
+                //   try {
+                //     const locale = detectLocale();
+                //     const outputLang = locale === 'en' ? 'English' : 'Chinese';
+                //     console.log('🌐 语言检测详情:', { 
+                //       locale, 
+                //       outputLang,
+                //       navigatorLanguage: typeof navigator !== 'undefined' ? navigator.language : 'N/A',
+                //       storedLanguage: typeof localStorage !== 'undefined' ? localStorage.getItem('preferred-language') : 'N/A'
+                //     });
+                //     return outputLang;
+                //   } catch (error) {
+                //     console.error('❌ 语言检测失败，使用默认值 English:', error);
+                //     return 'English'; // 出错时使用英文作为默认值
+                //   }
+                // })(),
               }),
             },
           );

@@ -7,12 +7,13 @@ import os
 from jinja2 import Environment, FileSystemLoader
 
 
-def render_user_analysis_prompt(analysis_instruction: str) -> str:
+def render_user_analysis_prompt(analysis_instruction: str, output_language: str = "English") -> str:
     """
     渲染用户分析prompt，将用户指令与JSONL输出规则结合
 
     Args:
         analysis_instruction: 用户的分析指令
+        output_language: 输出语言
 
     Returns:
         str: 渲染后的完整prompt
@@ -29,7 +30,10 @@ def render_user_analysis_prompt(analysis_instruction: str) -> str:
     template = env.get_template("user_analysis.j2")
 
     # 渲染模板
-    rendered_prompt = template.render(analysis_instruction=analysis_instruction)
+    rendered_prompt = template.render(
+        analysis_instruction=analysis_instruction,
+        output_language=output_language
+    )
 
     return rendered_prompt
 

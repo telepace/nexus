@@ -136,11 +136,13 @@ class EnhancedChatService:
         try:
             # 为 labels.j2 模板添加预设标签
             if template_name == "labels.j2":
-                preset_tag_names = tag_manager.get_preset_tag_names()
+                # 根据输出语言选择合适的标签语言
+                output_language = context.get("output_language", "zh")
+                preset_tag_names = tag_manager.get_preset_tag_names_by_language(output_language)
                 context = context.copy()
                 context["existing_tags"] = preset_tag_names
                 logger.info(
-                    f"为 labels.j2 模板添加了 {len(preset_tag_names)} 个预设标签"
+                    f"为 labels.j2 模板添加了 {len(preset_tag_names)} 个预设标签 (语言: {output_language})"
                 )
 
             # 加载模板

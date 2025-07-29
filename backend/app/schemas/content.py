@@ -115,6 +115,10 @@ class ContentAnalysisRequest(BaseModel):
         default=None,
         description="选中的要点内容（用于expand_discussion模板）",
     )
+    output_language: str | None = Field(
+        default="English",
+        description="输出语言（可选，如Chinese, English, Japanese等）",
+    )
     temperature: float = Field(default=0.7, description="温度参数")
     max_tokens: int = Field(default=15000, description="最大token数")
 

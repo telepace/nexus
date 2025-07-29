@@ -1,27 +1,31 @@
 
-# 我想了解的问题：
+# Question I Want to Understand:
 {{ selected_point }}
 ---
-- 我对这个点感兴趣，给我展开原文是怎么讨论这个点的。原文里有没有什么具体的例子、故事、数据或比喻，最能让你生动地理解这个点。并且挑选摘录**所有**原文与之相关的quotes，按合适的行文逻辑line连贯起来。
-- 如果没有，请你以这个领域最insightful 的理解，解读给我，这个点作者最想传达的意思一针见血、言简意骇的讲清楚。如果原文已经讨论的很清楚了，那你就绝对不要额外解读了。只有在原文讨论不充足的时候才要补充！
+- I'm interested in this point. Please expand on how the original text discusses this point. Are there any specific examples, stories, data, or metaphors in the original text that help you vividly understand this point? And select and excerpt **all** related quotes from the original text, connecting them with appropriate narrative logic.
+- If not available, please use your most insightful understanding of this field to interpret for me what the author most wants to convey about this point, explaining it clearly and concisely. If the original text already discusses it clearly, then absolutely do not add extra interpretation! Only supplement when the original text's discussion is insufficient!
 
-# 风格要求，是最核心的点！
--  风格必须为通俗易懂!说普通人听得懂话!不要比喻，具体详实，行文内容要足够有细节、足够具体的描写，语句连贯，有隐性的 storyline（不要明面上说故事、story 等字眼，不要用过于故事化的比喻，我想强调的行文是有 line 连贯一致的）
-- 一定要言简意骇，一针见血，不要啰嗦，保证信息质量和信息密度，但同时要足够容易理解（容易理解来自**足够具体、足够有细节**）
+# Style Requirements - This is the Core Point!
+- Style must be easy to understand! Use language that ordinary people can understand! Avoid metaphors, be concrete and detailed, with sufficient detail and specific descriptions, coherent sentences, and an implicit storyline (don't explicitly mention story or use overly narrative metaphors, I want to emphasize that the writing should have a consistent line of flow).
+- Must be concise and to the point, direct and sharp, not verbose, ensuring information quality and density, while being sufficiently easy to understand (ease of understanding comes from being **sufficiently specific and detailed**).
 
-# 输出要求
-输出 JSONL，每行输出一个完整的 JSON 对象，不允许换行嵌套。
+# Output Requirements
+Output JSONL, with each line containing a complete JSON object, no nested line breaks allowed.
 
-## 输出示例
-{"t": "h3", "c": "用户想了解的问题，以问句作为标题"}
-{"t": "p", "c": "具体内容"}
-{"t": "p", "c": "具体内容"}
-{"t": "p", "c": "具体内容"}
+## Output Example
+{"t": "h3", "c": "User's question of interest, with question as title"}
+{"t": "p", "c": "Specific content"}
+{"t": "p", "c": "Specific content"}
+{"t": "p", "c": "Specific content"}
 
-## 约束
-- 只能输出合法 JSONL 行；
-- 使用markdown的加粗符号**加粗关键词**来加粗关键词、关键信息， 确保语法和格式正确的渲染。
+## Constraints
+- Only output valid JSONL lines;
+- Use markdown's bold symbols **bold keywords** to emphasize key words and information, ensuring correct grammar and formatting.
 
-# 语言
-- 输出必须为中文
+# Output Language
+{% if output_language %}
+Output should be returned in {{ output_language }}.
+{% else %}
+Your output language must be 中文.
+{% endif %}
 

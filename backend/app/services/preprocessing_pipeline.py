@@ -106,19 +106,26 @@ class PreprocessingPipeline:
         metadata: DocumentMetadata,
         user_preferences: dict[str, Any] | None = None,
         content_item_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,  # 新增用户ID参数
+        session: Any | None = None,  # 新增数据库会话参数
     ) -> PreprocessingResult:
         """
-        主要处理流程：
-        1. 输入层：内容清理和验证
-        2. 解析层：格式转换和结构化
-        3. 分段层：智能分段处理
-        4. AI初始化层：生成摘要、要点、标签
-        5. 存储层：持久化到数据库
-        6. 输出层：格式化结果
+        多层次预处理管道
+
+        Args:
+            content: 原始内容
+            metadata: 文档元数据
+            user_preferences: 用户偏好设置（可选）
+            content_item_id: 内容项ID（可选）
+            user_id: 用户ID，用于获取语言偏好
+            session: 数据库会话
+
+        Returns:
+            PreprocessingResult: 处理结果
         """
         start_time = datetime.now()
         errors: list[str] = []
-        processing_stats = {}
+        processing_stats: dict[str, Any] = {}
 
         try:
             content_id = (
@@ -143,8 +150,26 @@ class PreprocessingPipeline:
             processing_stats["segmentation_layer"] = segmentation_stats
 
             # 4. AI初始化层
+            # 获取用户语言偏好
+            output_language = "English"  # 默认值
+            
+            # 优先使用用户偏好中的语言设置
+            if user_preferences and "output_language" in user_preferences:
+                output_language = user_preferences["output_language"]
+            # 如果有用户ID和数据库会话，从数据库获取用户语言偏好
+            elif user_id and session:
+                try:
+                    from app.services.user_settings_service import UserSettingsService
+                    output_language = UserSettingsService.get_user_ai_language(session, user_id)
+                    logger.info(f"🌐 从数据库获取用户语言偏好: {output_language}")
+                except Exception as e:
+                    logger.warning(f"获取用户语言偏好失败，使用默认值: {e}")
+                    output_language = "English"
+            
+            logger.info(f"🌐 AI处理使用语言: {output_language}")
+            
             ai_results, ai_stats = await self._ai_initialization_layer(
-                markdown_content, metadata, user_preferences
+                markdown_content, metadata, user_preferences, output_language
             )
             processing_stats["ai_layer"] = ai_stats
 
@@ -298,6 +323,7 @@ class PreprocessingPipeline:
         content: str,
         metadata: DocumentMetadata,
         user_preferences: dict[str, Any] | None = None,
+        output_language: str = "English",
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         """AI初始化层：生成摘要、要点、标签等"""
         logger.info("🤖 开始AI初始化层处理...")
@@ -310,6 +336,7 @@ class PreprocessingPipeline:
             "document_metadata": asdict(metadata),
             "user_preferences": user_preferences or {},
             "content_type": metadata.content_type.value,
+            "output_language": output_language,
         }
 
         # 🆕 获取内容段落并生成带标号的格式化内容

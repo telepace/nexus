@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from sqlmodel import SQLModel, Field, Relationship
-from sqlalchemy import Index, Column, Text, Integer
+from sqlalchemy import Index, Column, Text, Integer, UniqueConstraint
 
 from app.utils.timezone import now_utc
 
@@ -27,10 +27,15 @@ class ContentSegment(ContentSegmentBase, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
 
-    # 优化查询性能的索引
+    # 优化查询性能的索引和唯一约束
     __table_args__ = (
         Index('idx_segments_item_number', 'content_item_id', 'display_number'),
         Index('idx_segments_item_created', 'content_item_id', 'created_at'),
+        UniqueConstraint(
+            'content_item_id', 
+            'display_number', 
+            name='uq_content_segments_item_number'
+        ),
     )
 
     # 关联关系

@@ -790,10 +790,35 @@ async def _stream_content_analysis(
         from app.api.deps import get_db
 
         # 准备系统消息和用户消息
+        # 根据输出语言调整系统消息
+        # 优先使用请求中的语言，否则从用户设置获取
+        output_language = request.output_language
+        if not output_language:
+            try:
+                from app.services.user_settings_service import UserSettingsService
+                from app.api.deps import get_db
+                
+                # 创建数据库会话来获取用户语言偏好
+                with next(get_db()) as db_session:
+                    output_language = UserSettingsService.get_user_ai_language(
+                        db_session, current_user.id
+                    )
+                logger.info(f"🌐 从用户设置获取语言偏好: {output_language}")
+            except Exception as e:
+                logger.warning(f"获取用户语言偏好失败，使用默认值: {e}")
+                output_language = "English"
+        
+        logger.info(f"🌐 _stream_content_analysis 使用语言: {output_language}")
+        
+        if output_language.lower() in ["english", "en"]:
+            system_message = f"You are a professional content analysis assistant. Please analyze the following content according to the user's requirements:\n\n{content_text}"
+        else:
+            system_message = f"你是一个专业的内容分析助手。请根据用户的要求分析以下内容：\n\n{content_text}"
+        
         messages = [
             {
                 "role": "system",
-                "content": f"你是一个专业的内容分析助手。请根据用户的要求分析以下内容：\n\n{content_text}",
+                "content": system_message,
             },
             {"role": "user", "content": request.analysis_instruction},
         ]
@@ -1036,7 +1061,29 @@ async def _stream_content_analysis_ai_sdk(
         jsonl_processor = create_realtime_jsonl_processor()
 
         # 使用新的用户分析模板渲染prompt
-        user_prompt = render_user_analysis_prompt(request.analysis_instruction)
+        # 优先使用请求中的语言，否则从用户设置获取
+        output_language = request.output_language
+        if not output_language:
+            try:
+                from app.services.user_settings_service import UserSettingsService
+                from app.api.deps import get_db
+                
+                # 创建数据库会话来获取用户语言偏好
+                with next(get_db()) as db_session:
+                    output_language = UserSettingsService.get_user_ai_language(
+                        db_session, current_user.id
+                    )
+                logger.info(f"🌐 从用户设置获取语言偏好: {output_language}")
+            except Exception as e:
+                logger.warning(f"获取用户语言偏好失败，使用默认值: {e}")
+                output_language = "English"
+        
+        logger.info(f"🌐 _stream_content_analysis_ai_sdk 使用语言: {output_language}")
+        
+        user_prompt = render_user_analysis_prompt(
+            request.analysis_instruction, 
+            output_language
+        )
 
         # Prepare messages with updated structure
         messages = [
@@ -1626,6 +1673,9 @@ async def analyze_content_stream_with_template_endpoint(
     analysis_type: str = Query(
         ..., description="Analysis type: 'summary' or 'key_points'"
     ),
+    language: str = Query(
+        "Chinese", description="Output language: 'Chinese', 'English', etc."
+    ),
 ) -> StreamingResponse:
     """
     使用预定义模板进行流式内容分析
@@ -1688,6 +1738,7 @@ async def analyze_content_stream_with_template_endpoint(
             analysis_type=analysis_type,
             user_id=current_user.id,
             _model=resolved_model,
+            language=language,
         ),
         media_type="text/event-stream",
         headers={
@@ -1707,6 +1758,7 @@ async def _stream_template_analysis(
     analysis_type: str,
     user_id: uuid.UUID,
     _model: str,
+    language: str = "English",
 ) -> AsyncGenerator[str, None]:
     """
     流式模板分析，支持动态token调整
@@ -1742,10 +1794,13 @@ async def _stream_template_analysis(
         template_name = template_map.get(analysis_type, "summary.j2")
         template = template_env.get_template(template_name)
         
+        logger.info(f"🌐 _stream_template_analysis 接收到的语言参数: {language}")
+        
         analysis_instruction = template.render(
             content_title=content_title or "无标题",
             content_text=content_text[:2000],  # 限制模板中的内容长度
             content_type="文档",
+            output_language=language,
         )
 
         # 构建消息

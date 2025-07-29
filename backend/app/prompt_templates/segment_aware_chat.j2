@@ -38,4 +38,11 @@ You are an expert AI assistant. You will be provided with content segments and a
 8. Provide accurate and helpful answers based on the context
 
 ## User Question:
-{{ user_question }} 
+{{ user_question }}
+
+# Output Language
+{% if output_language %}
+Output should be returned in {{ output_language }}.
+{% else %}
+Your output language must be 中文.
+{% endif %} 
