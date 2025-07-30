@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Share, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,7 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
   hasActiveConversations = false,
 }) => {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
+  const [isScrolling, setIsScrolling] = useState(false);
   
   // 使用统一的可见性管理替代单独的悬浮状态
   // 针对preview模式，使用更保守的可见性配置
@@ -61,6 +62,42 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
 
   // 动态高度管理
   const { registerElement, getCardHeight } = useCardHeight();
+
+  // 滚动检测 - Jobs式的细致体验优化
+  useEffect(() => {
+    let scrollTimeout: NodeJS.Timeout;
+    
+    const handleScroll = () => {
+      setIsScrolling(true);
+      
+      // 清除之前的超时
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+      }
+      
+      // 滚动停止150ms后重新启用动画
+      scrollTimeout = setTimeout(() => {
+        setIsScrolling(false);
+      }, 150);
+    };
+
+    // 监听全局滚动和容器滚动
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    const containers = document.querySelectorAll('[data-scrollable]');
+    containers.forEach(container => {
+      container.addEventListener('scroll', handleScroll, { passive: true });
+    });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      containers.forEach(container => {
+        container.removeEventListener('scroll', handleScroll);
+      });
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+      }
+    };
+  }, []);
 
   // 渲染卡片内容
   const renderCardContent = useCallback((card: AnalysisCard) => {
@@ -142,11 +179,10 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
       >
         <Card
           className={`
-          transition-all duration-200 ease-out 
+          jobs-card-transition
           relative border-0 analysis-card
-          ${isSelected ? "shadow-lg linear-bg-1" : "shadow-sm linear-bg-1"}
-          group-hover:shadow-lg
-          transform-gpu will-change-transform
+          ${isSelected ? "jobs-card-selected" : "jobs-card-idle"}
+          ${variant === "preview" ? "jobs-card-preview" : ""}
         `}
         >
           <CardContent className="px-12 py-4">
@@ -253,24 +289,125 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
   return (
     <>
       <style jsx global>{`
-        /* 性能优化样式 */
+        /* 
+         * Jobs-inspired Animation System
+         * "Details are not details. They make the design."
+         */
+        
         .analysis-card {
           contain: layout style paint;
+          border-radius: 12px;
+          backdrop-filter: blur(8px);
         }
-        
-        .analysis-card:hover {
-          will-change: box-shadow;
+
+        /* 核心过渡系统 - 只动画必要的属性 */
+        .jobs-card-transition {
+          transition: 
+            transform 420ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+            box-shadow 380ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+            background-color 320ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          transform-origin: center center;
         }
-        
-        .analysis-card:not(:hover) {
+
+        /* 静息状态 - 优雅的基础阴影 */
+        .jobs-card-idle {
+          transform: translateZ(0);
+          box-shadow: 
+            0 1px 3px rgba(0, 0, 0, 0.12),
+            0 1px 2px rgba(0, 0, 0, 0.08);
+        }
+
+        /* 悬浮状态 - 模拟纸张被轻抬的感觉 */
+        .group:hover .jobs-card-idle {
+          transform: translateY(-2px) translateZ(0) scale(1.005);
+          box-shadow: 
+            0 8px 24px rgba(0, 0, 0, 0.12),
+            0 4px 8px rgba(0, 0, 0, 0.08),
+            0 0 0 0.5px rgba(255, 255, 255, 0.05);
+        }
+
+        /* 选中状态 - 更明显的提升感 */
+        .jobs-card-selected {
+          transform: translateY(-1px) translateZ(0) scale(1.01);
+          box-shadow: 
+            0 12px 32px rgba(0, 0, 0, 0.15),
+            0 6px 12px rgba(0, 0, 0, 0.1),
+            0 0 0 1px rgba(255, 255, 255, 0.08);
+        }
+
+        .group:hover .jobs-card-selected {
+          transform: translateY(-3px) translateZ(0) scale(1.01);
+          box-shadow: 
+            0 16px 40px rgba(0, 0, 0, 0.18),
+            0 8px 16px rgba(0, 0, 0, 0.12),
+            0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        /* 预览模式专属 - 更细腻的背景变化 */
+        .jobs-card-preview.jobs-card-idle {
+          background: rgba(255, 255, 255, 0.6);
+        }
+
+        .group:hover .jobs-card-preview.jobs-card-idle {
+          background: rgba(255, 255, 255, 0.85);
+        }
+
+        /* 暗色模式优化 */
+        .dark .jobs-card-idle {
+          box-shadow: 
+            0 1px 3px rgba(0, 0, 0, 0.3),
+            0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .dark .group:hover .jobs-card-idle {
+          box-shadow: 
+            0 8px 24px rgba(0, 0, 0, 0.35),
+            0 4px 8px rgba(0, 0, 0, 0.25),
+            0 0 0 0.5px rgba(255, 255, 255, 0.08);
+        }
+
+        .dark .jobs-card-selected {
+          box-shadow: 
+            0 12px 32px rgba(0, 0, 0, 0.4),
+            0 6px 12px rgba(0, 0, 0, 0.3),
+            0 0 0 1px rgba(255, 255, 255, 0.12);
+        }
+
+        .dark .group:hover .jobs-card-selected {
+          box-shadow: 
+            0 16px 40px rgba(0, 0, 0, 0.45),
+            0 8px 16px rgba(0, 0, 0, 0.35),
+            0 0 0 1px rgba(255, 255, 255, 0.15);
+        }
+
+        .dark .jobs-card-preview.jobs-card-idle {
+          background: rgba(23, 23, 23, 0.6);
+        }
+
+        .dark .group:hover .jobs-card-preview.jobs-card-idle {
+          background: rgba(23, 23, 23, 0.85);
+        }
+
+        /* 滚动时禁用动画，防止抖动 */
+        .scrolling .jobs-card-transition {
+          transition: none !important;
+        }
+
+        /* 性能优化 */
+        .jobs-card-transition:hover {
+          will-change: transform, box-shadow;
+        }
+
+        .jobs-card-transition:not(:hover) {
           will-change: auto;
         }
       `}</style>
       
       <div
         className={`space-y-6 ${
-          variant === "preview" ? "max-w-2xl mx-auto" : ""
-        }`}
+          variant === "preview" ? "max-w-2xl mx-auto preview-mode" : ""
+        } ${isScrolling ? "scrolling" : ""}`}
+        data-scrollable
       >
         {cards.map((card) => (
           <CardComponent key={card.id} card={card} />

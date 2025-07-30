@@ -31,6 +31,12 @@ export interface ContentAnalysisViewProps {
   onHistoryCountChange?: (count: number) => void;
   /** 是否显示历史面板 */
   showHistory?: boolean;
+  /** 无缝模式 - 隐藏边框和标题，用于右侧预览 */
+  seamless?: boolean;
+  /** 是否显示头部边框 */
+  showHeaderBorder?: boolean;
+  /** 是否显示头部标题 */
+  showHeaderTitle?: boolean;
 }
 
 export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
@@ -45,6 +51,9 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
   emptyStateText = "选择内容进行预览",
   onHistoryCountChange,
   showHistory: externalShowHistory,
+  seamless = false,
+  showHeaderBorder = true,
+  showHeaderTitle = true,
 }) => {
   // 状态管理
   const [currentItem, setCurrentItem] = useState<ContentItemPublic | null>(item);
@@ -64,6 +73,11 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
 
   // 是否使用外部历史面板控制
   const showHistory = externalShowHistory !== undefined ? externalShowHistory : internalShowHistory;
+
+  // 无缝模式下的样式控制
+  const finalHideHeader = hideHeader || seamless;
+  const finalShowHeaderBorder = showHeaderBorder && !seamless;
+  const finalShowHeaderTitle = showHeaderTitle && !seamless;
 
   // 内容切换逻辑
   useEffect(() => {
@@ -198,13 +212,13 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
   const containerClasses = useMemo(() => {
     const baseClasses = "flex flex-col h-full overflow-hidden";
     const variantClasses = {
-      preview: "bg-gradient-to-br from-background via-background to-muted/20",
+      preview: seamless ? "" : "bg-gradient-to-br from-background via-background to-muted/20",
       sidebar: "linear-bg-1",
       fullscreen: ""
     };
     
     return `${baseClasses} ${variantClasses[variant]} ${className}`;
-  }, [variant, className]);
+  }, [variant, className, seamless]);
 
   // 智能选择数据源：优先使用外部提供的数据，其次使用内部获取的数据
   const finalAnalysisResult = externalAnalysisResult || internalAnalysisResult;
@@ -232,13 +246,15 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
   if (!currentItem) {
     return (
       <div className={containerClasses}>
-        {!hideHeader && (
-          <div className="flex items-center h-header px-4 border-b flex-shrink-0">
+        {!finalHideHeader && (
+          <div className={`flex items-center h-header px-4 flex-shrink-0 ${finalShowHeaderBorder ? 'border-b' : ''}`}>
             <div className="flex items-center gap-2 min-w-0">
               <Library className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-              <span className="text-sm font-medium text-muted-foreground truncate">
-                {getHeaderTitle()}
-              </span>
+              {finalShowHeaderTitle && (
+                <span className="text-sm font-medium text-muted-foreground truncate">
+                  {getHeaderTitle()}
+                </span>
+              )}
             </div>
           </div>
         )}
@@ -278,14 +294,16 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
       data-exclude-selection
     >
       {/* 统一头部 */}
-      {!hideHeader && (
-        <div className="flex items-center justify-between h-header px-4 border-b flex-shrink-0">
+      {!finalHideHeader && (
+        <div className={`flex items-center justify-between h-header px-4 flex-shrink-0 ${finalShowHeaderBorder ? 'border-b' : ''}`}>
           <div className="flex items-center gap-2 min-w-0">
             <Library className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-            <span className="text-sm font-medium text-muted-foreground truncate">
-              {getHeaderTitle()}
-            </span>
-            {aiStatus === 'processing' && (
+            {finalShowHeaderTitle && (
+              <span className="text-sm font-medium text-muted-foreground truncate">
+                {getHeaderTitle()}
+              </span>
+            )}
+            {aiStatus === 'processing' && finalShowHeaderTitle && (
               <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse flex-shrink-0 ml-1" />
             )}
           </div>

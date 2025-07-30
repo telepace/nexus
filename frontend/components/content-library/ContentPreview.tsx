@@ -13,7 +13,7 @@ export const ContentPreview = ({ item }: Props) => {
     <ContentAnalysisView
       item={item}
       variant="preview"
-      hideHeader={false}
+      seamless={true}
       emptyStateText="选择内容进行预览"
     />
   );
