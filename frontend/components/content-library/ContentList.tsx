@@ -1,6 +1,6 @@
 "use client";
 
-import type { ContentItemPublic } from "../types";
+import type { ContentItemPublic } from "./types";
 import { ContentCard } from "./ContentCard";
 import { Separator } from "@/components/ui/separator";
 import React from "react";

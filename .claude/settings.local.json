@@ -80,7 +80,10 @@
       "Bash(./scripts/emergency-railway-fix.sh:*)",
       "WebFetch(domain:github.com)",
       "Bash(npx typescript:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(diff:*)",
+      "Bash(/dev/null)",
+      "Bash(pnpm run:*)"
     ]
   },
   "enableAllProjectMcpServers": false

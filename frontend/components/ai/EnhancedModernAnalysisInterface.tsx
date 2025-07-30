@@ -37,6 +37,8 @@ interface EnhancedModernAnalysisInterfaceProps {
   hideHeader?: boolean;
   onHistoryCountChange?: (count: number) => void;
   showHistory?: boolean;
+  // 新增AI状态变化回调
+  onStatusChange?: (status: 'idle' | 'processing' | 'completed', hasConversations: boolean) => void;
 }
 
 interface AnalysisCard {
@@ -62,9 +64,22 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
   hideHeader = false,
   onHistoryCountChange,
   showHistory: showHistoryProp,
+  onStatusChange,
 }) => {
   const { toast } = useToast();
   const pathname = usePathname(); // 🎯 获取当前路由
+
+  // 早期返回检查 - 防止 content 为空导致的错误 
+  if (!content) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center space-y-2">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">加载内容中...</p>
+        </div>
+      </div>
+    );
+  }
 
   // 状态管理
   const [inputValue, setInputValue] = useState("");
@@ -81,7 +96,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     refreshHistory,
     addHistoryRecord
   } = useConversationHistory({
-    contentId: content.id,
+    contentId: content?.id || '',
     onError: (error) => {
       console.error('历史记录加载失败:', error);
       toast({
@@ -132,7 +147,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     deleteConversation,
     cancelCurrentProcessing,
   } = useStreamingConversation({
-    contentId: content.id,
+    contentId: content?.id || '',
     onConversationUpdate: (conversation) => {
       // 可以在这里添加额外的处理逻辑
     },
@@ -161,6 +176,38 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
       return () => clearTimeout(timeoutId);
     }
   }, [streamingConversations.length, scrollToBottom]);
+
+  // 🎯 监听AI处理状态变化，通知ContentPreview更新标题
+  useEffect(() => {
+    const hasConversations = streamingConversations.length > 0;
+    
+    // 检查是否有正在处理的对话
+    const hasProcessing = streamingConversations.some(conv => 
+      conv.messages.some(msg => 
+        msg.role === "assistant" && 
+        (msg.status === "pending" || msg.status === "thinking" || msg.status === "streaming")
+      )
+    );
+    
+    // 检查是否有已完成的对话
+    const hasCompleted = streamingConversations.some(conv => 
+      conv.messages.some(msg => 
+        msg.role === "assistant" && msg.status === "completed"
+      )
+    );
+
+    let status: 'idle' | 'processing' | 'completed' = 'idle';
+    
+    if (hasProcessing) {
+      status = 'processing';
+    } else if (hasCompleted || hasConversations) {
+      status = 'completed';
+    }
+    
+    // 通知父组件状态变化
+    onStatusChange?.(status, hasConversations);
+    
+  }, [streamingConversations, onStatusChange]);
 
   // 获取prompts
   useEffect(() => {
@@ -483,6 +530,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
             onToggleCardCollapse={toggleCardCollapse}
             selectedBlock={selectedBlock}
             onBlockSelect={setSelectedBlock}
+            hasActiveConversations={streamingConversations.length > 0}
           />
         </div>
 

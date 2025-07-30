@@ -1,5 +1,5 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
-import ReaderPage from "@/app/(withSidebar)/content-library/reader/[id]/page";
+import ReaderPage from "@/app/[locale]/(withSidebar)/content-library/reader/[id]/page";
 import { useAuth } from "@/lib/client-auth";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -43,7 +43,7 @@ jest.mock("@/components/layout/ReaderLayout", () => {
 
 // Mock ClientContent
 jest.mock(
-  "@/app/(withSidebar)/content-library/reader/[id]/ClientContent",
+  "@/app/[locale]/(withSidebar)/content-library/reader/[id]/ClientContent",
   () => ({
     ClientContent: ({
       contentId,

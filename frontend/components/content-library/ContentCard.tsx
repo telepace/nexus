@@ -31,8 +31,8 @@ import {
   ProcessingStatus,
 } from "@/components/ui/ProcessingStatusBadge";
 import { FavoriteButton } from "@/components/actions/FavoriteButton";
-import { createRipple } from "../utils/ripple";
-import type { ContentItemPublic } from "../types";
+import { createRipple } from "./utils/ripple";
+import type { ContentItemPublic } from "./types";
 import React, { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { contentApi } from "@/lib/api/content";

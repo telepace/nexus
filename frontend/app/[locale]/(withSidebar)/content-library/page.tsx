@@ -3,18 +3,21 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { ContentList } from "./components/ContentList";
-import { ContentPreview } from "./components/ContentPreview";
-import { useContentItems } from "./hooks/useContentItems";
-import type { ContentItemPublic } from "./types";
+import { 
+  ContentList, 
+  ContentPreview, 
+  useContentItems, 
+  type ContentItemPublic, 
+  filterAndSortItems, 
+  LibraryHeader, 
+  type SortOption 
+} from "@/components/content-library";
 import { useRouter } from "next/navigation";
 import { Loading } from "@/components/ui/loading";
-import { filterAndSortItems } from "./utils/filtering";
 import { useAuth } from "@/lib/client-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { PanelRightOpen, PanelRightClose } from "lucide-react";
-import { LibraryHeader, type SortOption } from "./components/LibraryHeader";
 import { PageHeader } from "@/components/layout/PageHeader";
 
 interface FilterOptions {

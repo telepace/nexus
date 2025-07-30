@@ -7,6 +7,7 @@ import { useState } from "react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
 import { I18nProvider } from "@/components/providers/I18nProvider";
+import { AuthProvider } from "@/lib/auth-context";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -39,13 +40,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
         enableSystem
         disableTransitionOnChange
       >
-        <I18nProvider>
-          <NotificationProvider>
-            <ProgressBar />
-            {children}
-            <Toaster richColors position="top-right" />
-          </NotificationProvider>
-        </I18nProvider>
+        <AuthProvider>
+          <I18nProvider>
+            <NotificationProvider>
+              <ProgressBar />
+              {children}
+              <Toaster richColors position="top-right" />
+            </NotificationProvider>
+          </I18nProvider>
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

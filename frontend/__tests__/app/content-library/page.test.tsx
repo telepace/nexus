@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { useRouter } from "next/navigation";
-import ContentLibraryPage from "@/app/(withSidebar)/content-library/page";
+import ContentLibraryPage from "@/app/[locale]/(withSidebar)/content-library/page";
 import { useAuth } from "@/lib/client-auth";
 
 // Mock dependencies

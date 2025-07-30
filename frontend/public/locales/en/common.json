@@ -25,7 +25,12 @@
     "copy": "Copy",
     "share": "Share",
     "favorite": "Favorite",
-    "unfavorite": "Unfavorite"
+    "unfavorite": "Unfavorite",
+    "selectAll": "Select All",
+    "retry": "Retry",
+    "clear": "Clear",
+    "start": "Start",
+    "stop": "Stop"
   },
   "status": {
     "loading": "Loading...",
@@ -35,7 +40,12 @@
     "processing": "Processing...",
     "completed": "Completed",
     "failed": "Failed",
-    "syncing": "Syncing..."
+    "syncing": "Syncing...",
+    "loadingContent": "Loading content...",
+    "noContent": "No content available",
+    "analyzing": "Analyzing...",
+    "extracting": "Extracting...",
+    "parsing": "Parsing..."
   },
   "languages": {
     "en": "English",
@@ -55,7 +65,9 @@
     "logoutSuccess": "Logout successful",
     "loginError": "Login failed",
     "registerSuccess": "Registration successful",
-    "registerError": "Registration failed"
+    "registerError": "Registration failed",
+    "loginRequired": "Please login first",
+    "sessionExpired": "Session expired, please login again"
   },
   "validation": {
     "required": "This field is required",
@@ -67,6 +79,63 @@
     "confirmDelete": "Are you sure you want to delete this item?",
     "unsavedChanges": "You have unsaved changes. Are you sure you want to leave?",
     "actionSuccess": "Action completed successfully",
-    "actionError": "An error occurred while performing this action"
+    "actionError": "An error occurred while performing this action",
+    "copySuccess": "Copied to clipboard",
+    "copyError": "Failed to copy to clipboard",
+    "networkError": "Network connection failed, please check your connection or try again later",
+    "serverError": "Server internal error, please try again later",
+    "operationFailed": "Operation failed, please try again later"
+  },
+  "detection": {
+    "linksDetected": "Detected {{count}} link",
+    "linksDetected_plural": "Detected {{count}} links",
+    "filesSelected": "Selected {{count}} file",
+    "filesSelected_plural": "Selected {{count}} files",
+    "urlsSelected": "✓ Selected {{count}} link for processing",
+    "urlsSelected_plural": "✓ Selected {{count}} links for processing",
+    "variablesDetected": "Detected {{count}} variable",
+    "variablesDetected_plural": "Detected {{count}} variables"
+  },
+  "contentTypes": {
+    "images": "{{count}} image",
+    "images_plural": "{{count}} images",
+    "videos": "{{count}} video", 
+    "videos_plural": "{{count}} videos",
+    "documents": "{{count}} document",
+    "documents_plural": "{{count}} documents",
+    "files": "{{count}} file",
+    "files_plural": "{{count}} files",
+    "links": "{{count}} link",
+    "links_plural": "{{count}} links"
+  },
+  "contentProcessing": {
+    "aboutToAnalyzeImages": "About to analyze image content",
+    "aboutToExtractVideo": "About to extract video content", 
+    "aboutToParseDocuments": "About to parse document content",
+    "aboutToFetchWebpage": "About to fetch webpage content",
+    "aboutToAnalyzeArticle": "About to analyze article content",
+    "aboutToProcessText": "About to process text content",
+    "aboutToProcessFiles": "About to process files",
+    "selectLinksToProcess": "Select links to process separately (unselected links will remain in text)"
+  },
+  "favorites": {
+    "addToFavorites": "Add to favorites",
+    "removeFromFavorites": "Remove from favorites",
+    "favoriteBlock": "Favorite this block",
+    "unfavoriteBlock": "Unfavorite this block",
+    "favoriteSuccess": "Added to favorites",
+    "unfavoriteSuccess": "Removed from favorites",
+    "favoriteBlockSuccess": "Favorited this block",
+    "unfavoriteBlockSuccess": "Unfavorited this block",
+    "alreadyFavorited": "Already in favorites",
+    "blockAlreadyFavorited": "This block is already favorited",
+    "contentNotFound": "Content not found",
+    "blockNotFound": "Block not found or has been deleted"
+  },
+  "analysis": {
+    "analysisFailed": "Analysis failed",
+    "retryFailed": "Retry failed",
+    "resultCopied": "Analysis result copied to clipboard",
+    "cannotCopyContent": "Cannot copy content to clipboard"
   }
 }

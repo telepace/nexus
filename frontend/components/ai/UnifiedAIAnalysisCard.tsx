@@ -27,6 +27,7 @@ import {
   extractJsonlFromDataStream,
   AIAnalysisConfig,
 } from "@/hooks/use-ai-analysis";
+import { useTranslationUtils } from "@/lib/i18n-utils";
 
 export interface UnifiedAIAnalysisCardProps {
   /** 分析标题 */
@@ -71,6 +72,7 @@ export function UnifiedAIAnalysisCard({
 }: UnifiedAIAnalysisCardProps) {
   const { state, actions } = useAIAnalysis(config);
   const [hasAutoStarted, setHasAutoStarted] = useState(false);
+  const { t } = useTranslationUtils();
 
   // 处理初始内容设置（只读模式）
   useEffect(() => {
@@ -85,11 +87,11 @@ export function UnifiedAIAnalysisCard({
       onStart?.();
       await actions.startAnalysis(instruction);
     } catch (error) {
-      const err = error instanceof Error ? error : new Error("分析失败");
+      const err = error instanceof Error ? error : new Error(t("analysis.analysisFailed"));
       onError?.(err);
-      toast.error(`分析失败: ${err.message}`);
+      toast.error(`${t("analysis.analysisFailed")}: ${err.message}`);
     }
-  }, [actions, instruction, onError, onStart]);
+  }, [actions, instruction, onError, onStart, t]);
 
   // 自动开始分析
   useEffect(() => {
@@ -120,9 +122,9 @@ export function UnifiedAIAnalysisCard({
     try {
       await actions.retryAnalysis();
     } catch (error) {
-      const err = error instanceof Error ? error : new Error("重试失败");
+      const err = error instanceof Error ? error : new Error(t("analysis.retryFailed"));
       onError?.(err);
-      toast.error(`重试失败: ${err.message}`);
+      toast.error(`${t("analysis.retryFailed")}: ${err.message}`);
     }
   };
 
@@ -130,9 +132,9 @@ export function UnifiedAIAnalysisCard({
   const handleCopyResult = async () => {
     const success = await actions.copyResult();
     if (success) {
-      toast.success("分析结果已复制到剪贴板");
+      toast.success(t("analysis.resultCopied"));
     } else {
-      toast.error("无法复制内容到剪贴板");
+      toast.error(t("analysis.cannotCopyContent"));
     }
   };
 

@@ -9,6 +9,7 @@ import { Badge } from "./badge";
 import { Button } from "./button";
 import { Copy, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslationUtils } from "@/lib/i18n-utils";
 
 // 内容块类型定义
 export interface ContentBlock {
@@ -342,6 +343,7 @@ export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> =
   onBlockClick,
 }) => {
   const { toast } = useToast();
+  const { t } = useTranslationUtils();
   
   // 默认配置
   const mergedConfig: RendererConfig = {
@@ -361,11 +363,11 @@ export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> =
   const handleCopy = useCallback(async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
-      toast({ title: "已复制", description: "内容已复制到剪贴板" });
+      toast({ title: t("messages.copySuccess"), description: t("messages.copySuccess") });
     } catch {
-      toast({ title: "复制失败", description: "无法复制内容", variant: "destructive" });
+      toast({ title: t("messages.copyError"), description: t("messages.copyError"), variant: "destructive" });
     }
-  }, [toast]);
+  }, [toast, t]);
   
   // 渲染单个块
   const renderBlock = useCallback((block: ContentBlock, index: number) => {
@@ -401,7 +403,7 @@ export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> =
   if (blocks.length === 0) {
     return (
       <div className={cn("text-center py-8 text-muted-foreground", className)}>
-        暂无内容
+        {t("status.noContent")}
       </div>
     );
   }

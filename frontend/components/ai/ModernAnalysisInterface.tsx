@@ -26,7 +26,7 @@ import {
   ConversationListResponse,
   ConversationPublic,
 } from "@/lib/api/content";
-import { ContentItemPublic } from "@/app/(withSidebar)/content-library/types";
+import { type ContentItemPublic } from "@/components/content-library";
 import { adaptAnalysisData } from "./AnalysisCards";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 import { getCookie } from "cookies-next";

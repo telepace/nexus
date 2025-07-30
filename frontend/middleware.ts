@@ -44,6 +44,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Handle locale redirection for paths without locale prefix
+  if (!locales.includes(pathname.split('/')[1])) {
+    console.log("[Middleware] 路径缺少locale前缀，重定向到:", `/${defaultLocale}${pathname}`);
+    return NextResponse.redirect(new URL(`/${defaultLocale}${pathname}`, request.url));
+  }
+
   // Skip locale processing for auth pages and API routes
   if (pathnameWithoutLocale.startsWith('/login') || 
       pathnameWithoutLocale.startsWith('/register') || 

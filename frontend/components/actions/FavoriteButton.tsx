@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { useFavorites } from "@/lib/hooks/useFavorites";
 import { getCookie } from "@/lib/utils";
 import { toast } from "sonner";
+import { useTranslationUtils } from "@/lib/i18n-utils";
+import { useAuth } from "@/lib/client-auth";
 
 interface FavoriteButtonProps {
   itemId: string;
@@ -22,6 +24,8 @@ interface FavoriteButtonProps {
   tags?: string[];
   // 新增：回调函数
   onFavoriteChange?: (isFavorited: boolean) => void;
+  initialFavorited?: boolean;
+  showLabel?: boolean;
 }
 
 export function FavoriteButton({
@@ -36,13 +40,18 @@ export function FavoriteButton({
   description,
   tags,
   onFavoriteChange,
+  initialFavorited = false,
+  showLabel = false,
 }: FavoriteButtonProps) {
   const { data: favoriteIds = [], mutate } = useFavorites();
+  const [isFavorited, setIsFavorited] = useState(initialFavorited);
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslationUtils();
+  const { user } = useAuth();
   
   // 对于块级收藏，需要检查特定的块是否被收藏
   // 这里简化处理，实际应该有专门的hook来检查块级收藏状态
-  const isFavorited = favoriteIds.includes(itemId);
+  // const isFavorited = favoriteIds.includes(itemId); // This line is now redundant
 
   const makeRequest = async (
     url: string,
@@ -86,6 +95,11 @@ export function FavoriteButton({
   ) => {
     e.stopPropagation(); // 阻止事件冒泡到父元素
     if (isLoading) return; // 防止重复点击
+
+    if (!user) {
+      toast.error(t("auth.loginRequired"));
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -186,13 +200,35 @@ export function FavoriteButton({
       // 乐观更新缓存
       mutate();
     } catch (error) {
-      console.error("Failed to toggle favorite:", error);
-
-      // 根据错误类型提供更具体的提示
-      if (error instanceof TypeError && error.message.includes("fetch")) {
-        toast.error("网络连接失败，请检查网络或稍后重试");
+      console.error("收藏操作失败:", error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes("401")) {
+          toast.error(t("auth.sessionExpired"));
+        } else if (error.message.includes("404")) {
+          if (blockId) {
+            toast.error(t("favorites.blockNotFound"));
+          } else {
+            toast.error(t("favorites.contentNotFound"));
+          }
+        } else if (error.message.includes("409")) {
+          if (blockId) {
+            toast.error(t("favorites.blockAlreadyFavorited"));
+          } else {
+            toast.error(t("favorites.alreadyFavorited"));
+          }
+        } else if (error.message.includes("500")) {
+          toast.error(t("messages.serverError"));
+        } else {
+          toast.error(`${t("messages.operationFailed")}: ${response.status}`);
+        }
       } else {
-        toast.error("操作失败，请稍后重试");
+        // 网络错误等其他类型错误
+        if (error instanceof TypeError && error.message.includes("fetch")) {
+          toast.error(t("messages.networkError"));
+        } else {
+          toast.error(t("messages.operationFailed"));
+        }
       }
     } finally {
       setIsLoading(false);
@@ -229,8 +265,8 @@ export function FavoriteButton({
       )}
       aria-label={
         blockId 
-          ? (isFavorited ? "取消收藏该块" : "收藏该块")
-          : (isFavorited ? "取消收藏" : "添加收藏")
+          ? (isFavorited ? t("favorites.unfavoriteBlock") : t("favorites.favoriteBlock"))
+          : (isFavorited ? t("favorites.removeFromFavorites") : t("favorites.addToFavorites"))
       }
       tabIndex={0}
     >

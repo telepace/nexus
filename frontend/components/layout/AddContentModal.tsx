@@ -33,6 +33,7 @@ import { extractAndNormalizeUrls } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { Checkbox } from "../ui/checkbox";
+import { useTranslationUtils } from "@/lib/i18n-utils";
 
 /**
  * 添加内容模态框
@@ -348,6 +349,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   const { user } = useAuth();
   const { createContentProcessingNotification } = useGlobalNotificationStore();
   const isMobile = useIsMobile();
+  const { t, tPlural } = useTranslationUtils();
 
   // 内容分析
   const contentAnalysis = analyzeContent(content, selectedFiles);
@@ -911,7 +913,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
               {selectedFiles.length > 0 ? (
                 <div className="space-y-2">
                   <div className="text-sm font-medium text-card-foreground">
-                    已选择 {selectedFiles.length} 个文件
+                    {tPlural("detection.filesSelected", selectedFiles.length)}
                   </div>
                   <div className="space-y-1 max-h-20 overflow-y-auto">
                     {selectedFiles.map((file, index) => (
@@ -970,7 +972,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <div className="font-medium text-foreground">
-                        检测到 {detectedUrls.length} 个链接
+                        {tPlural("detection.linksDetected", detectedUrls.length)}
                       </div>
                       <div className="flex items-center gap-2 text-xs">
                         <Checkbox
@@ -978,11 +980,11 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                           onCheckedChange={handleSelectAllUrls}
                           className=""
                         />
-                        <span>全选</span>
+                        <span>{t("actions.selectAll")}</span>
                       </div>
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
-                      选择要单独处理的链接（未选中的链接将保留在文本中）
+                      {t("contentProcessing.selectLinksToProcess")}
                     </div>
                   </div>
                 </div>
@@ -1009,7 +1011,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
 
                 {selectedUrls.length > 0 && (
                   <div className="mt-2 text-xs text-accent">
-                    ✓ 已选择 {selectedUrls.length} 个链接进行处理
+                    {tPlural("detection.urlsSelected", selectedUrls.length)}
                   </div>
                 )}
               </div>

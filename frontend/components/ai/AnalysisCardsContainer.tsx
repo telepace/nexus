@@ -31,6 +31,8 @@ interface AnalysisCardsContainerProps {
   onToggleCardCollapse: (cardId: string) => void;
   selectedBlock?: string | null;
   onBlockSelect?: (blockId: string | null) => void;
+  // 新增：是否有活跃的AI对话
+  hasActiveConversations?: boolean;
 }
 
 export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
@@ -42,6 +44,7 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
   onToggleCardCollapse,
   selectedBlock: externalSelectedBlock,
   onBlockSelect,
+  hasActiveConversations = false,
 }) => {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   
@@ -233,7 +236,8 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
     );
   });
 
-  if (cards.length === 0) {
+  // 只有在没有卡片且没有活跃对话时才显示空状态
+  if (cards.length === 0 && !hasActiveConversations) {
     return (
       <div className="flex items-center justify-center p-8 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50/30 dark:bg-neutral-900/30">
         <div className="text-center space-y-2">

@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useClickOutside } from "@/hooks/use-click-outside";
-import type { ContentItemPublic } from "../types";
+import type { ContentItemPublic } from "./types";
 
 export type SortOption = "time" | "rating" | "title" | "views";
 

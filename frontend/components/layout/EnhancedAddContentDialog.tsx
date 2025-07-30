@@ -26,6 +26,7 @@ import { contentCache } from "@/lib/services/content-cache";
 import { eventBus } from "@/lib/event-bus";
 import { useGlobalNotificationStore } from "@/lib/stores/useGlobalNotificationStore";
 import { extractAndNormalizeUrls } from "@/lib/utils";
+import { useTranslationUtils } from "@/lib/i18n-utils";
 
 // 更精致的基础组件
 const Dialog = ({ children, open, onOpenChange }) => {
@@ -176,7 +177,7 @@ const extractUrls = (text: string) => {
 };
 
 // 增强的内容分析系统
-const analyzeContent = (text: string, files: File[] = []) => {
+const analyzeContent = (text: string, files: File[] = [], tPlural: (key: string, count: number) => string, t: (key: string) => string) => {
   if (!text.trim() && files.length === 0) return null;
 
   // 文件分析优先
@@ -188,11 +189,11 @@ const analyzeContent = (text: string, files: File[] = []) => {
       return {
         type: "images",
         icon: Camera,
-        label: `${files.length} 张图片`,
+        label: tPlural("contentTypes.images", files.length),
         color: "text-purple-600",
         bgColor: "bg-purple-50",
         borderColor: "border-purple-100",
-        description: "即将分析图片内容",
+        description: t("contentProcessing.aboutToAnalyzeImages"),
       };
     }
 
@@ -200,11 +201,11 @@ const analyzeContent = (text: string, files: File[] = []) => {
       return {
         type: "videos",
         icon: Film,
-        label: `${files.length} 个视频`,
+        label: tPlural("contentTypes.videos", files.length),
         color: "text-orange-600",
         bgColor: "bg-orange-50",
         borderColor: "border-orange-100",
-        description: "即将提取视频内容",
+        description: t("contentProcessing.aboutToExtractVideo"),
       };
     }
 
@@ -212,22 +213,22 @@ const analyzeContent = (text: string, files: File[] = []) => {
       return {
         type: "documents",
         icon: BookOpen,
-        label: `${files.length} 个文档`,
+        label: tPlural("contentTypes.documents", files.length),
         color: "text-blue-600",
         bgColor: "bg-blue-50",
         borderColor: "border-blue-100",
-        description: "即将解析文档内容",
+        description: t("contentProcessing.aboutToParseDocuments"),
       };
     }
 
     return {
       type: "files",
       icon: Paperclip,
-      label: `${files.length} 个文件`,
+      label: tPlural("contentTypes.files", files.length),
       color: "text-gray-600",
       bgColor: "bg-gray-50",
       borderColor: "border-gray-100",
-      description: "即将处理文件",
+      description: t("contentProcessing.aboutToProcessFiles"),
     };
   }
 
@@ -239,11 +240,11 @@ const analyzeContent = (text: string, files: File[] = []) => {
     return {
       type: "link",
       icon: Globe,
-      label: `${urls.length} 个链接`,
+      label: tPlural("contentTypes.links", urls.length),
       color: "text-green-600",
       bgColor: "bg-green-50",
       borderColor: "border-green-100",
-      description: "即将获取网页内容",
+      description: t("contentProcessing.aboutToFetchWebpage"),
     };
   }
 
@@ -339,9 +340,10 @@ export default function EnhancedAddContentDialog({
   // Hooks
   const { user } = useAuth();
   const { createContentProcessingNotification } = useGlobalNotificationStore();
+  const { t, tPlural } = useTranslationUtils();
 
   // 内容分析
-  const contentAnalysis = analyzeContent(content, files);
+  const contentAnalysis = analyzeContent(content, files, tPlural, t);
   const isResearch = contentAnalysis?.type === "research";
   const detectedUrls = extractUrls(content);
 
