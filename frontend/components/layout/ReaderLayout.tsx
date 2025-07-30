@@ -25,6 +25,7 @@ import { useAuth } from "@/lib/client-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { PanelRightOpen, PanelRightClose } from "lucide-react";
+import { useI18nSafe } from "@/lib/i18n-fallback";
 
 // 创建上下文来传递内容更新函数和分析数据
 const ReaderContext = createContext<{
@@ -46,6 +47,7 @@ export default function ReaderLayout({
   children,
   contentId,
 }: ReaderLayoutProps) {
+  const { t } = useI18nSafe();
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -164,7 +166,7 @@ export default function ReaderLayout({
                   className="flex items-center justify-between px-6 border-b border-muted/40 linear-bg-1/95 backdrop-blur supports-[backdrop-filter]:linear-bg-1/80 shadow-sm h-header"
                   data-exclude-selection
                 >
-                  <h2 className="font-semibold text-base">AI分析</h2>
+                  <h2 className="font-semibold text-base">{t('content.aiAnalysis')}</h2>
                   <Button
                     onClick={toggleRightPanel}
                     size="sm"
@@ -189,7 +191,7 @@ export default function ReaderLayout({
                       data-exclude-selection
                     >
                       <div className="text-center text-muted-foreground">
-                        加载中...
+                        {t('messages.loading')}
                       </div>
                     </div>
                   )}

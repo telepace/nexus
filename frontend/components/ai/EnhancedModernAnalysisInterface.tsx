@@ -9,6 +9,7 @@ import {
   User,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useI18nSafe } from "@/lib/i18n-fallback";
 import {
   ContentItemPublic,
   AIResult,
@@ -67,6 +68,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
   onStatusChange,
 }) => {
   const { toast } = useToast();
+  const { t } = useI18nSafe();
   const pathname = usePathname(); // 🎯 获取当前路由
 
   // 早期返回检查 - 防止 content 为空导致的错误 
@@ -417,7 +419,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
       if (adaptedData.summary) {
         cards.push({
           id: "summary",
-          title: "内容摘要",
+          title: t('analysis.contentSummary'),
           subtitle: "核心内容提炼",
           emoji: "📝",
           content: {
@@ -431,7 +433,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
       if (adaptedData.keyPoints) {
         cards.push({
           id: "keyPoints",
-          title: "提问清单",
+          title: t('analysis.questionList'),
           subtitle: "",
           emoji: "🤔",
           content: {

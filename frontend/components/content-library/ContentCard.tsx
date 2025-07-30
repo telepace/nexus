@@ -42,6 +42,7 @@ import {
   shouldSkipDeleteConfirm,
 } from "./DeleteConfirmDialog";
 import { useRelativeTime } from "@/hooks/useRelativeTime";
+import { useI18nSafe } from "@/lib/i18n-fallback";
 
 interface Props {
   item: ContentItemPublic;
@@ -96,6 +97,7 @@ export const ContentCard = ({
   onItemDeleted,
   onItemUpdated,
 }: Props) => {
+  const { t } = useI18nSafe();
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -155,10 +157,10 @@ export const ContentCard = ({
     try {
       const updatedItem = await contentApi.reprocessContentItem(item.id);
       onItemUpdated?.(updatedItem);
-      toast.success("重新处理请求已提交");
+      toast.success(t('content.reprocessRequested'));
     } catch (error) {
-      console.error("重新处理失败:", error);
-      toast.error("重新处理失败，请稍后重试");
+      console.error("Reprocess failed:", error);
+      toast.error(t('content.reprocessFailed'));
     } finally {
       setIsProcessing(false);
     }
@@ -169,12 +171,12 @@ export const ContentCard = ({
     try {
       await contentApi.analyzeContent(
         item.id,
-        "请分析这个内容的主要观点和见解",
+        "Please analyze the main points and insights of this content",
       );
-      toast.success("AI 分析已开始，请稍后查看结果");
+      toast.success(t('content.aiAnalysisStarted'));
     } catch (error) {
-      console.error("AI 分析失败:", error);
-      toast.error("AI 分析失败，请稍后重试");
+      console.error("AI analysis failed:", error);
+      toast.error(t('content.aiAnalysisFailed'));
     }
   };
 
@@ -183,12 +185,12 @@ export const ContentCard = ({
     setIsRegeneratingAI(true);
     try {
       await contentApi.regenerateAIAnalysis(item.id);
-      toast.success("AI 分析重新生成已开始，请稍后查看结果");
+      toast.success(t('content.aiAnalysisRegenerateStarted'));
       // 可选：触发数据刷新
       onItemUpdated?.(item);
     } catch (error) {
-      console.error("重新生成 AI 分析失败:", error);
-      toast.error("重新生成 AI 分析失败，请稍后重试");
+      console.error("Regenerate AI analysis failed:", error);
+      toast.error(t('content.aiAnalysisRegenerateFailed'));
     } finally {
       setIsRegeneratingAI(false);
     }
@@ -199,10 +201,10 @@ export const ContentCard = ({
     try {
       const url = `${window.location.origin}/content-library/reader/${item.id}`;
       await navigator.clipboard.writeText(url);
-      toast.success("链接已复制到剪贴板");
+      toast.success(t('content.linkCopied'));
     } catch (error) {
-      console.error("复制链接失败:", error);
-      toast.error("复制链接失败");
+      console.error("Copy link failed:", error);
+      toast.error(t('content.linkCopyFailed'));
     }
   };
 
@@ -217,28 +219,28 @@ export const ContentCard = ({
       }
 
       if (briefDescription) {
-        content += `## 摘要\n${briefDescription}\n\n`;
+        content += `## ${t('content.summary')}\n${briefDescription}\n\n`;
       }
 
       const fullText = (item as ContentItemPublic & { content_text?: string })
         .content_text;
       if (fullText) {
-        content += `## 内容\n${fullText}\n\n`;
+        content += `## ${t('content.content')}\n${fullText}\n\n`;
       }
 
       if (hasLabels && aiResult.labels) {
-        content += `## 标签\n${aiResult.labels.join(", ")}\n\n`;
+        content += `## ${t('analysis.tags')}\n${aiResult.labels.join(", ")}\n\n`;
       }
 
       if (item.source_uri) {
-        content += `## 来源\n${item.source_uri}`;
+        content += `## ${t('content.source')}\n${item.source_uri}`;
       }
 
       await navigator.clipboard.writeText(content.trim());
-      toast.success("内容已复制到剪贴板");
+      toast.success(t('content.contentCopied'));
     } catch (error) {
-      console.error("复制内容失败:", error);
-      toast.error("复制内容失败");
+      console.error("Copy content failed:", error);
+      toast.error(t('content.contentCopyFailed'));
     }
   };
 
@@ -262,10 +264,10 @@ export const ContentCard = ({
     try {
       await contentApi.deleteContentItem(item.id);
       onItemDeleted?.(item.id);
-      toast.success("内容已删除");
+      toast.success("Content deleted");
     } catch (error) {
-      console.error("删除失败:", error);
-      toast.error("删除失败，请稍后重试");
+      console.error("Delete failed:", error);
+      toast.error("Delete failed, please try again later");
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);
@@ -399,7 +401,7 @@ export const ContentCard = ({
                       className="focus:bg-accent/50"
                     >
                       <Copy className="h-4 w-4 mr-2" />
-                      复制链接
+                      Copy Link
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
@@ -407,7 +409,7 @@ export const ContentCard = ({
                       className="focus:bg-accent/50"
                     >
                       <Copy className="h-4 w-4 mr-2" />
-                      复制内容
+                      Copy Content
                     </DropdownMenuItem>
 
                     <DropdownMenuSeparator />
@@ -422,7 +424,7 @@ export const ContentCard = ({
                       className="text-[var(--destructive)] focus:text-[var(--destructive)] hover:bg-[var(--destructive)/0.1]"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      {isDeleting ? "删除中..." : "删除"}
+                      {isDeleting ? "Deleting..." : "Delete"}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

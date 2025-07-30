@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { Library, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedModernAnalysisInterface } from "./EnhancedModernAnalysisInterface";
+import { useI18nSafe } from "@/lib/i18n-fallback";
 import type { ContentItemPublic } from "@/lib/api/content";
 import { AIResult, ConversationListResponse, contentApi } from "@/lib/api/content";
 import { useAuth } from "@/lib/client-auth";
@@ -47,14 +48,20 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
   className = "",
   variant = "preview",
   hideHeader = false,
-  headerTitle = "内容分析",
-  emptyStateText = "选择内容进行预览",
+  headerTitle,
+  emptyStateText,
   onHistoryCountChange,
   showHistory: externalShowHistory,
   seamless = false,
   showHeaderBorder = true,
   showHeaderTitle = true,
 }) => {
+  const { t } = useI18nSafe();
+  
+  // 使用翻译的默认值
+  const defaultHeaderTitle = headerTitle || t('analysis.contentAnalysis');
+  const defaultEmptyStateText = emptyStateText || t('analysis.selectContentForPreview');
+  
   // 状态管理
   const [currentItem, setCurrentItem] = useState<ContentItemPublic | null>(item);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -195,7 +202,7 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
 
   // 动态头部标题
   const getHeaderTitle = () => {
-    if (headerTitle !== "内容分析") {
+    if (headerTitle && headerTitle !== t('analysis.contentAnalysis')) {
       return headerTitle; // 使用自定义标题
     }
     
@@ -266,7 +273,7 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
             </div>
             <div className="space-y-2">
               <h3 className="text-lg font-medium text-muted-foreground">
-                {emptyStateText}
+                {defaultEmptyStateText}
               </h3>
               <p className="text-sm text-muted-foreground/70 leading-relaxed">
                 在左侧列表中选择或悬停内容项目来查看详细信息

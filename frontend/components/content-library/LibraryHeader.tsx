@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useClickOutside } from "@/hooks/use-click-outside";
+import { useI18nSafe } from "@/lib/i18n-fallback";
 import type { ContentItemPublic } from "./types";
 
 export type SortOption = "time" | "rating" | "title" | "views";
@@ -39,6 +40,7 @@ export const LibraryHeader = ({
   onSortChange,
   onClearFilters,
 }: LibraryHeaderProps) => {
+  const { t } = useI18nSafe();
   const [isSearching, setIsSearching] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
@@ -55,10 +57,10 @@ export const LibraryHeader = ({
   ).sort();
 
   const sortOptions = [
-    { value: "time" as const, label: "最新" },
-    { value: "rating" as const, label: "评分" },
-    { value: "title" as const, label: "标题" },
-    { value: "views" as const, label: "热度" },
+    { value: "time" as const, label: t('content.latest') },
+    { value: "rating" as const, label: t('content.rating') },
+    { value: "title" as const, label: t('content.title') },
+    { value: "views" as const, label: t('content.popularity') },
   ];
 
   const isFiltered = selectedTags.length > 0 || sortBy !== "time";
@@ -97,7 +99,7 @@ export const LibraryHeader = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>排序方式</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('content.sortBy')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {sortOptions.map((option) => (
               <DropdownMenuItem
@@ -111,7 +113,7 @@ export const LibraryHeader = ({
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuLabel>按标签筛选</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('content.filterByTags')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {allTags.map((tag) => (
               <DropdownMenuItem key={tag} onClick={() => onTagToggle(tag)}>
@@ -125,7 +127,7 @@ export const LibraryHeader = ({
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onClearFilters}>
-                  清除筛选
+                  {t('content.clearFilter')}
                 </DropdownMenuItem>
               </>
             )}
@@ -164,7 +166,7 @@ export const LibraryHeader = ({
           <div className="relative h-full w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
             <Input
-              placeholder="搜索..."
+              placeholder={t('content.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               className="pl-10 pr-8 h-9 w-full bg-white rounded-md border border-neutral-200 focus:shadow-macos-window focus:border-macos-container focus:ring-0"

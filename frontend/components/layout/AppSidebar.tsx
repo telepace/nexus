@@ -174,7 +174,7 @@ export function AppSidebar({
               className="w-full h-8 rounded-[10px] bg-[#FCFCFC] border border-[#D1D1D1] shadow-[0px_1px_2px_rgba(0,0,0,0.04),0px_2px_4px_rgba(0,0,0,0.04)] hover:bg-neutral-50 transition-all duration-300 flex items-center justify-center gap-2 text-sm text-neutral-700 hover:text-neutral-900"
             >
               <Plus className="w-4 h-4" />
-              <span>添加内容</span>
+              <span>{t('content.addContent')}</span>
             </button>
           </div>
         </div>

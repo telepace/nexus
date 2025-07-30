@@ -22,6 +22,7 @@ import {
 import { ConversationPublic, ConversationMessage } from "@/lib/api/content";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
+import { useI18nSafe } from "@/lib/i18n-fallback";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 
 interface ConversationHistoryProps {
@@ -32,17 +33,17 @@ interface ConversationHistoryProps {
 
 const ConversationTypeMap = {
   auto_analysis: {
-    label: "自动分析",
+    labelKey: "analysis.autoAnalysis",
     color: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
     icon: Sparkles,
   },
   user_chat: {
-    label: "用户对话",
+    labelKey: "analysis.userConversation",
     color: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
     icon: MessageSquare,
   },
   prompt_analysis: {
-    label: "模板分析",
+    labelKey: "analysis.templateAnalysis",
     color: "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
     icon: Brain,
   },
@@ -73,7 +74,7 @@ const extractStructuredContent = (messages: ConversationMessage[]) => {
 // 获取用户意图摘要
 const getUserIntentSummary = (messages: ConversationMessage[]) => {
   const userMessages = messages.filter(msg => msg.role === "user");
-  if (userMessages.length === 0) return "无用户输入";
+  if (userMessages.length === 0) return t('analysis.noUserInput');
 
   const firstUserMessage = userMessages[0];
   const metadata = firstUserMessage.metadata || {};
@@ -101,11 +102,12 @@ const ConversationCard = ({
   conversation,
 }: { conversation: ConversationPublic }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { t } = useI18nSafe();
   
   const typeInfo = ConversationTypeMap[
     conversation.conversation_type as keyof typeof ConversationTypeMap
   ] || {
-    label: conversation.conversation_type || "未知类型",
+    labelKey: "analysis.unknownType",
     color: "bg-gray-50 text-gray-700 dark:bg-gray-950 dark:text-gray-300",
     icon: MessageSquare,
   };
@@ -131,11 +133,11 @@ const ConversationCard = ({
                 <div className="flex-1 min-w-0 space-y-2">
                 <div>
                     <CardTitle className="text-base leading-tight">
-                      {conversation.title || "未命名对话"}
+                      {conversation.title || t('analysis.untitledConversation')}
                   </CardTitle>
                   <div className="flex items-center gap-2 mt-1">
                       <Badge className={`${typeInfo.color} text-xs`} variant="secondary">
-                      {typeInfo.label}
+                      {t(typeInfo.labelKey)}
                     </Badge>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" />
@@ -149,7 +151,7 @@ const ConversationCard = ({
 
                   {/* 用户意图摘要 */}
                   <div className="bg-muted/40 rounded-lg p-3">
-                    <div className="text-xs font-medium text-muted-foreground mb-1">用户问题</div>
+                    <div className="text-xs font-medium text-muted-foreground mb-1">{t('analysis.userQuestion')}</div>
                     <div className="text-sm text-foreground leading-relaxed">
                       {userIntentSummary}
                     </div>
@@ -166,7 +168,7 @@ const ConversationCard = ({
 
               <div className="flex items-center gap-2 flex-shrink-0 ml-3">
                 <Badge variant="outline" className="text-xs">
-                  {userMessages.length} 条消息
+                  {userMessages.length} {t('analysis.messages')}
                 </Badge>
                 {isExpanded ? (
                   <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -187,7 +189,7 @@ const ConversationCard = ({
                   <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
                     <Sparkles className="h-3 w-3 text-white" />
                   </div>
-                  <span className="text-sm font-medium text-muted-foreground">AI 分析结果</span>
+                  <span className="text-sm font-medium text-muted-foreground">{t('analysis.aiAnalysisResult')}</span>
                   <Badge variant="outline" className="text-xs">
                     {conversation.ai_model_name}
                   </Badge>
@@ -207,7 +209,7 @@ const ConversationCard = ({
                   <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
                     <MessageSquare className="h-3 w-3 text-muted-foreground" />
                   </div>
-                  <span className="text-sm font-medium text-muted-foreground">对话内容</span>
+                  <span className="text-sm font-medium text-muted-foreground">{t('analysis.conversationContent')}</span>
                 </div>
                 
                 <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
@@ -219,14 +221,14 @@ const ConversationCard = ({
                 
                 {structuredContent.originalLength > 500 && (
                   <div className="text-xs text-muted-foreground mt-2">
-                    显示了前500个字符，总共{structuredContent.originalLength}个字符
+                    Showing first 500 characters, total {structuredContent.originalLength} characters
                   </div>
                 )}
               </div>
             ) : (
               <div className="text-center text-muted-foreground py-6">
                 <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">此对话暂无内容</p>
+                <p className="text-sm">{t('analysis.thisConversationEmpty')}</p>
               </div>
             )}
           </CardContent>
@@ -264,6 +266,8 @@ export const ConversationHistory = ({
   loading,
   onRefresh,
 }: ConversationHistoryProps) => {
+  const { t } = useI18nSafe();
+  
   if (loading) {
     return <LoadingSkeleton />;
   }
@@ -273,12 +277,12 @@ export const ConversationHistory = ({
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium flex items-center gap-2">
           <MessageSquare className="h-4 w-4" />
-          AI 对话历史 ({conversations.length})
+          {t('analysis.aiConversationHistory')} ({conversations.length})
         </h3>
         {onRefresh && (
           <Button variant="outline" size="sm" onClick={onRefresh}>
             <RefreshCw className="h-4 w-4 mr-2" />
-            刷新
+            {t('actions.refresh')}
           </Button>
         )}
       </div>
@@ -288,7 +292,7 @@ export const ConversationHistory = ({
           <CardContent>
             <div className="text-center text-muted-foreground">
               <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">暂无对话记录</p>
+              <p className="text-sm">{t('analysis.noConversationRecords')}</p>
             </div>
           </CardContent>
         </Card>
