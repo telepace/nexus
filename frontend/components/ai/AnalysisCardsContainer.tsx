@@ -46,7 +46,12 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   
   // 使用统一的可见性管理替代单独的悬浮状态
-  const hoverVisibility = useUnifiedVisibility(visibilityPresets.hover);
+  // 针对preview模式，使用更保守的可见性配置
+  const hoverVisibility = useUnifiedVisibility({
+    ...visibilityPresets.hover,
+    fadeDuration: variant === "preview" ? 100 : 200, // 预览模式下更快的动画
+    autoHideDelay: variant === "preview" ? 0 : 2000, // 预览模式下禁用自动隐藏
+  });
   
   // 使用外部传入的选中状态，如果没有传入则使用内部状态
   const selectedBlock = externalSelectedBlock;
@@ -197,26 +202,27 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
               </div>
             </div>
 
-            {/* 卡片内容 - 优化动画性能 */}
+            {/* 卡片内容 - 使用稳定的高度过渡 */}
             <div
               className={`
-              transition-all duration-200 ease-out overflow-hidden transform-gpu
+              card-height-stable overflow-hidden
               ${isCollapsed ? "opacity-0" : "opacity-100"}
             `}
+              data-transitioning={isCollapsed ? "true" : "false"}
               style={{
                 maxHeight: isCollapsed ? 0 : `${getCardHeight(card.id, isCollapsed)}px`,
               }}
             >
               <div
                 ref={(el) => {
-                  // 延迟注册，避免在渲染过程中引起问题
+                  // 使用微任务替代requestAnimationFrame，减少竞态条件
                   if (el) {
-                    requestAnimationFrame(() => registerElement(card.id, el));
+                    Promise.resolve().then(() => registerElement(card.id, el));
                   } else {
                     registerElement(card.id, null);
                   }
                 }}
-                className="card-content-inner"
+                className="card-content-inner preview-stable"
               >
                 {renderCardContent(card)}
               </div>

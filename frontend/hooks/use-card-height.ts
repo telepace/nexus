@@ -22,8 +22,8 @@ export function useCardHeight() {
         delete elements.current[cardId];
         // 只有在组件仍然挂载时才更新状态
         if (isMountedRef.current) {
-          // 使用requestAnimationFrame来延迟状态更新，避免在渲染过程中调用setState
-          requestAnimationFrame(() => {
+          // 使用微任务来延迟状态更新，避免在渲染过程中调用setState
+          Promise.resolve().then(() => {
             if (isMountedRef.current) {
               setHeights((prev) => {
                 const updated = { ...prev };
@@ -46,28 +46,35 @@ export function useCardHeight() {
         observers.current[cardId].disconnect();
       }
 
-      // 防抖器，避免频繁更新
+      // 更强的防抖和节流机制
       let updateTimeout: NodeJS.Timeout | null = null;
+      let lastUpdateTime = 0;
+      const MIN_UPDATE_INTERVAL = 100; // 增加最小更新间隔到100ms
 
       // 创建新的 ResizeObserver
       observers.current[cardId] = new ResizeObserver((entries) => {
         const entry = entries[0];
         if (entry) {
           const height = entry.contentRect.height;
+          const now = Date.now();
           
           // 清除之前的更新计划
           if (updateTimeout) {
             clearTimeout(updateTimeout);
           }
           
-          // 防抖更新，减少状态更新频率
+          // 更激进的防抖和节流，减少状态更新频率
+          const timeSinceLastUpdate = now - lastUpdateTime;
+          const delay = Math.max(MIN_UPDATE_INTERVAL - timeSinceLastUpdate, 50);
+          
           updateTimeout = setTimeout(() => {
             if (isMountedRef.current) {
               setHeights((prev) => {
                 const currentHeight = prev[cardId];
                 const newHeight = Math.max(height, 50);
-                // 只有高度变化超过阈值时才更新状态
-                if (Math.abs((currentHeight || 0) - newHeight) > 5) {
+                // 提高变化阈值，减少微小变化的更新
+                if (Math.abs((currentHeight || 0) - newHeight) > 10) {
+                  lastUpdateTime = Date.now();
                   return {
                     ...prev,
                     [cardId]: newHeight,
@@ -76,7 +83,7 @@ export function useCardHeight() {
                 return prev;
               });
             }
-          }, 16); // 约60fps的更新频率
+          }, delay);
         }
       });
 
@@ -84,14 +91,15 @@ export function useCardHeight() {
       observers.current[cardId].observe(element);
       elements.current[cardId] = element;
 
-      // 立即获取初始高度（延迟执行避免同步更新）
-      setTimeout(() => {
-        if (isMountedRef.current && elements.current[cardId] === element) { // 确保组件还挂载且元素还有效
+      // 使用微任务获取初始高度，避免与ResizeObserver冲突
+      Promise.resolve().then(() => {
+        if (isMountedRef.current && elements.current[cardId] === element) {
           const rect = element.getBoundingClientRect();
           const newHeight = Math.max(rect.height, 50);
           setHeights((prev) => {
             const currentHeight = prev[cardId];
-            if (Math.abs((currentHeight || 0) - newHeight) > 5) {
+            // 使用更高的初始阈值
+            if (Math.abs((currentHeight || 0) - newHeight) > 15) {
               return {
                 ...prev,
                 [cardId]: newHeight,
@@ -100,7 +108,7 @@ export function useCardHeight() {
             return prev;
           });
         }
-      }, 50);
+      });
     },
     [],
   );

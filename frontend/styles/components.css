@@ -132,16 +132,34 @@
 
 /* Preview 专用样式优化 */
 .preview-panel {
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity;
+  contain: layout style paint;
 }
 
 .preview-panel:not(.active) {
-  transform: translateX(100%);
+  opacity: 0.7;
 }
 
 .preview-panel.active {
-  transform: translateX(0);
+  opacity: 1;
+}
+
+/* 预防ResizeObserver抖动的关键样式 */
+.preview-stable {
+  min-height: 0;
+  flex-shrink: 0;
+  contain: layout style paint;
+  isolation: isolate;
+}
+
+/* 卡片高度稳定性样式 */
+.card-height-stable {
+  transition: max-height 0.2s ease-out;
+}
+
+.card-height-stable[data-transitioning="true"] {
+  pointer-events: none;
 }
 
 /* 卡片悬浮效果优化 */

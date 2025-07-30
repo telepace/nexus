@@ -4,52 +4,42 @@ import React from "react";
 import { Library } from "lucide-react";
 import type { ContentItemPublic } from "@/lib/api/content";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 
-// 不再需要分析卡片导入，统一使用EnhancedModernAnalysisInterface
+// 移除复杂动画库，使用CSS过渡
 import { EnhancedModernAnalysisInterface } from "@/components/ai/EnhancedModernAnalysisInterface";
-import { PreviewWrapper } from "@/components/ui/UnifiedVisibilityWrapper";
 
 interface Props {
   item: ContentItemPublic | null;
 }
 
 export const ContentPreview = ({ item }: Props) => {
-  // 面板管理系统
-  const [panels, setPanels] = useState<Array<{id: number, item: ContentItemPublic, zIndex: number}>>([]);
+  // 简化状态管理：只保留当前项和过渡状态
+  const [currentItem, setCurrentItem] = useState<ContentItemPublic | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // 当item改变时，创建新面板 - 优化版本，减少不必要的面板创建
+  // 优化的内容切换逻辑，避免不必要的状态更新
   useEffect(() => {
-    if (!item) {
-      setPanels([]);
+    // 如果新项目与当前项目相同，直接返回
+    if (item?.id === currentItem?.id) {
       return;
     }
 
-    setPanels(prev => {
-      // 检查是否已经存在相同item的面板
-      const existingPanel = prev.find(panel => panel.item.id === item.id);
-      if (existingPanel) {
-        // 如果已存在，将其移到最前面并更新zIndex
-        const otherPanels = prev.filter(panel => panel.item.id !== item.id);
-        const updatedPanel = { ...existingPanel, zIndex: Date.now() };
-        return [...otherPanels, updatedPanel].slice(-2);
-      }
-      
-      // 创建新面板
-      const timestamp = Date.now();
-      const newPanel = {
-        id: timestamp,
-        item: item,
-        zIndex: timestamp
-      };
-      
-      const newPanels = [...prev, newPanel];
-      return newPanels.slice(-2); // 只保留最新的2个面板
+    // 启动过渡状态
+    setIsTransitioning(true);
+    
+    // 使用微任务确保状态更新的原子性
+    Promise.resolve().then(() => {
+      setCurrentItem(item);
+      // 延迟重置过渡状态，确保CSS动画完成
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 200);
     });
-  }, [item?.id]);
+  }, [item?.id, currentItem?.id]);
 
-  // 无内容时的空状态
-  if (!item) {
+  // 空状态渲染（当前项为null时）
+  if (!currentItem) {
     return (
       <div className="relative z-20 h-full shadow-macos-window rounded-sm flex flex-col overflow-hidden">
         <div className="flex items-center justify-between h-header px-4 linear-bg-1">
@@ -70,58 +60,40 @@ export const ContentPreview = ({ item }: Props) => {
     );
   }
 
-  // 有内容时的预览 - 使用多面板系统
+  // 内容渲染 - 简化为单一容器，使用CSS过渡
   return (
-    <div className="relative w-full h-full z-20">
-      <AnimatePresence>
-        {panels.map((panel) => {
-          // 判断是否为最新面板
-          const isLatestPanel = panel.id === Math.max(...panels.map(p => p.id));
-          
-          return (
-            <motion.div
-              key={panel.id}                // 使用递增的唯一ID
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              transition={{ 
-                type: "spring", 
-                stiffness: 200, 
-                damping: 25,
-                duration: 0.2 
-              }}
-              style={{ 
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: panel.zIndex 
-              }}
-            >
-              <ContentPanel item={panel.item} isActive={isLatestPanel} />
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
+    <div 
+      ref={containerRef}
+      className={`
+        relative w-full h-full z-20 transition-opacity duration-200 ease-out
+        ${isTransitioning ? 'opacity-70' : 'opacity-100'}
+      `}
+      style={{
+        // 使用CSS containment优化渲染性能
+        contain: 'layout style paint',
+      }}
+    >
+      <ContentPanel item={currentItem} />
     </div>
   );
 };
 
-// 大幅简化的内容面板组件 - 使用统一可见性包装器
-const ContentPanel = React.memo(({ item, isActive = true }: { item: ContentItemPublic; isActive?: boolean }) => {
+// 深度简化的内容面板组件 - 移除复杂包装层
+const ContentPanel = React.memo(({ item }: { item: ContentItemPublic }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const aiResult = (item as any).ai_result;
 
-  // 滚动到顶部的优化处理
+  // 简化的滚动处理，避免requestAnimationFrame竞态
   useEffect(() => {
-    if (containerRef.current && isActive) {
-      requestAnimationFrame(() => {
+    if (containerRef.current) {
+      // 使用微任务延迟滚动，避免与渲染冲突
+      Promise.resolve().then(() => {
         containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
       });
     }
-  }, [isActive]);
+  }, [item.id]); // 只依赖item.id
 
-  // 使用 useMemo 缓存 EnhancedModernAnalysisInterface 的 props
+  // 稳定的props对象，避免不必要的重新渲染
   const analysisProps = useMemo(() => ({
     content: item,
     analysisResult: aiResult,
@@ -129,49 +101,33 @@ const ContentPanel = React.memo(({ item, isActive = true }: { item: ContentItemP
     showPreprocessedContent: true,
     height: "full" as const,
     hideHeader: true,
-  }), [item, aiResult]);
+  }), [item.id, aiResult]); // 精确依赖
 
   return (
     <div
       ref={containerRef}
-      tabIndex={-1}
       className="relative z-20 h-full shadow-macos-window linear-bg-1 rounded-sm flex flex-col overflow-hidden"
+      style={{
+        // 防止布局抖动的关键样式
+        contain: 'layout style paint',
+        willChange: 'auto',
+      }}
     >
       {/* Header */}
-      <div className="flex items-center h-header px-4">
+      <div className="flex items-center h-header px-4 flex-shrink-0">
         <div className="flex items-center gap-2 text-base font-medium">
           <Library className="h-5 w-5" />
           Preview
         </div>
       </div>
 
-      {/* 内容区域 - 使用统一可见性包装器大幅简化 */}
-      <div className="flex-1 overflow-hidden relative">
-        <PreviewWrapper
-          contentId={item.id}
-          visible={isActive}
-          priority={Date.now()}
-          fallback={
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="animate-pulse">
-                <div className="h-4 bg-muted rounded w-32 mx-auto"></div>
-              </div>
-            </div>
-          }
-        >
-          <EnhancedModernAnalysisInterface {...analysisProps} />
-        </PreviewWrapper>
+      {/* 内容区域 - 直接渲染，移除中间包装层 */}
+      <div className="flex-1 overflow-hidden relative min-h-0">
+        <EnhancedModernAnalysisInterface {...analysisProps} />
       </div>
     </div>
   );
 }, (prevProps, nextProps) => {
-  // 优化的比较函数 - 减少不必要的重渲染
-  if (!prevProps.item && !nextProps.item) return true;
-  if (!prevProps.item || !nextProps.item) return false;
-  
-  // 主要比较ID和激活状态，避免因为其他属性变化导致重渲染
-  return (
-    prevProps.item.id === nextProps.item.id &&
-    prevProps.isActive === nextProps.isActive
-  );
+  // 极简的比较函数 - 只比较核心标识
+  return prevProps.item.id === nextProps.item.id;
 });

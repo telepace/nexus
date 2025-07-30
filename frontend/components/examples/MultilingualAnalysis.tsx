@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { analyzeContentWithTemplate, parseStreamingResponse } from '@/lib/api/content-analysis';
-import { useAuthStore } from '@/lib/stores/auth-store';
+import { useAuth } from '@/lib/client-auth';
 import { detectLocale } from '@/lib/i18n';
 
 interface MultilingualAnalysisProps {
@@ -27,10 +27,10 @@ export function MultilingualAnalysis({ contentId }: MultilingualAnalysisProps) {
   const [results, setResults] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   
-  const { token } = useAuthStore();
+  const { user } = useAuth();
 
   const handleAnalyze = async () => {
-    if (!token) {
+    if (!user?.token) {
       setError('请先登录');
       return;
     }
@@ -44,7 +44,7 @@ export function MultilingualAnalysis({ contentId }: MultilingualAnalysisProps) {
         contentId,
         analysisType,
         language: outputLanguage === 'English' ? 'en' : 'zh',
-        token,
+        token: user.token,
       });
 
       if (!stream) {
