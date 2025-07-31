@@ -1,9 +1,14 @@
 import uuid
 from datetime import datetime
-from sqlmodel import SQLModel, Field, Relationship
-from sqlalchemy import Index, Column, Text, Integer, UniqueConstraint
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Column, Index, Text, UniqueConstraint
+from sqlmodel import Field, Relationship, SQLModel
 
 from app.utils.timezone import now_utc
+
+if TYPE_CHECKING:
+    from app.models.content import ContentItem
 
 
 class ContentSegmentBase(SQLModel):
@@ -32,8 +37,8 @@ class ContentSegment(ContentSegmentBase, table=True):
         Index('idx_segments_item_number', 'content_item_id', 'display_number'),
         Index('idx_segments_item_created', 'content_item_id', 'created_at'),
         UniqueConstraint(
-            'content_item_id', 
-            'display_number', 
+            'content_item_id',
+            'display_number',
             name='uq_content_segments_item_number'
         ),
     )
@@ -43,4 +48,4 @@ class ContentSegment(ContentSegmentBase, table=True):
         sa_relationship_kwargs={
             "primaryjoin": "foreign(ContentSegment.content_item_id) == ContentItem.id"
         }
-    ) 
+    )

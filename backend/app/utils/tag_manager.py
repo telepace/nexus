@@ -57,18 +57,18 @@ class TagManager:
     def get_preset_tag_names_by_language(self, language: str = "zh") -> list[str]:
         """
         根据语言获取预设标签的名称列表
-        
+
         Args:
             language: 语言代码，支持 'zh'(中文) 或 'en'(英文)
-            
+
         Returns:
             List[str]: 对应语言的标签名称列表
         """
         preset_tags = self.load_preset_tags()
-        
+
         # 判断是否为英文
         is_english = language.lower() in ["english", "en"]
-        
+
         tag_names = []
         for tag in preset_tags:
             if is_english:
@@ -78,7 +78,7 @@ class TagManager:
                 # 使用中文名称
                 tag_name = tag["name"]
             tag_names.append(tag_name)
-            
+
         return tag_names
 
     def get_preset_tag_by_name(self, name: str) -> dict[str, Any] | None:

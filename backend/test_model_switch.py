@@ -18,14 +18,14 @@ def test_configuration():
     """测试配置"""
     print("🔧 当前配置:")
     print(f"   DEFAULT_LLM_MODEL: {settings.DEFAULT_LLM_MODEL}")
-    print(f"   基础AI任务模型配置:")
+    print("   基础AI任务模型配置:")
     for task, model in settings.AI_TASK_MODELS.items():
         print(f"     {task:15} -> {model}")
-    print(f"   最终解析的模型配置:")
+    print("   最终解析的模型配置:")
     for task, model in settings.resolved_ai_task_models.items():
         print(f"     {task:15} -> {model}")
 
-    print(f"   环境变量覆盖:")
+    print("   环境变量覆盖:")
     env_vars = {
         "AI_MODEL_SUMMARY": settings.AI_MODEL_SUMMARY,
         "AI_MODEL_KEY_POINTS": settings.AI_MODEL_KEY_POINTS,

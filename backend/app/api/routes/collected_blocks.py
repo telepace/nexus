@@ -1,10 +1,10 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from fastapi import APIRouter, HTTPException
+from sqlmodel import select
 
-from app.api.deps import CurrentUser, SessionDep, get_current_active_user
-from app.models import CollectedBlock, User
+from app.api.deps import CurrentUser, SessionDep
+from app.models import CollectedBlock
 from app.schemas.collected_block import (
     CollectedBlockCreate,
     CollectedBlockPublic,

@@ -11,8 +11,8 @@ from app.api.api_v1.endpoints import (
     prompt_collections,
     prompts,
     stats,
-    users,
     user_favorite_prompts,
+    users,
 )
 from app.api.routes import user_settings
 

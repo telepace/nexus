@@ -5,7 +5,7 @@
 
 import asyncio
 import uuid
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import Mock
 
 
 # 模拟背景任务处理函数的关键部分
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     # 测试AI成功场景
     result2 = asyncio.run(test_ai_success_scenario())
 
-    print(f"\n📊 总结:")
+    print("\n📊 总结:")
     print(f"   AI失败场景测试: {'通过' if result1 else '失败'}")
     print(f"   AI成功场景测试: {'通过' if result2 else '失败'}")
 

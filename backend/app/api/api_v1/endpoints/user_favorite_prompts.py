@@ -1,7 +1,7 @@
 
-from typing import Any, List
-
 import uuid
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -11,7 +11,7 @@ from app.api import deps
 router = APIRouter()
 
 
-@router.get("/", response_model=List[schemas.UserFavoritePrompt])
+@router.get("/", response_model=list[schemas.UserFavoritePrompt])
 def read_user_favorite_prompts(
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_active_user),

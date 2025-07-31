@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
-from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint, Column, JSON
+from sqlmodel import JSON, Column, Field, Relationship, SQLModel, UniqueConstraint
 
 from app.utils.timezone import now_utc
 
@@ -15,17 +15,17 @@ class FavoriteBase(SQLModel):
 
     user_id: uuid.UUID = Field(foreign_key="user.id", index=True)
     content_item_id: uuid.UUID = Field(foreign_key="contentitem.id", index=True)
-    
+
     # 新增：支持块级收藏
-    block_id: Optional[str] = Field(default=None, description="块ID，如果为空则表示收藏整个内容")
-    block_type: Optional[str] = Field(default=None, description="块类型：h1, h2, h3, p, insight, concept, etc.")
-    block_content: Optional[dict] = Field(default=None, sa_column=Column(JSON), description="块内容的JSON数据")
-    
+    block_id: str | None = Field(default=None, description="块ID，如果为空则表示收藏整个内容")
+    block_type: str | None = Field(default=None, description="块类型：h1, h2, h3, p, insight, concept, etc.")
+    block_content: dict | None = Field(default=None, sa_column=Column(JSON), description="块内容的JSON数据")
+
     # 收藏元数据
-    title: Optional[str] = Field(default=None, description="收藏项的标题")
-    description: Optional[str] = Field(default=None, description="收藏项的描述")
-    tags: Optional[list[str]] = Field(default=None, sa_column=Column(JSON), description="用户自定义标签")
-    
+    title: str | None = Field(default=None, description="收藏项的标题")
+    description: str | None = Field(default=None, description="收藏项的描述")
+    tags: list[str] | None = Field(default=None, sa_column=Column(JSON), description="用户自定义标签")
+
     created_at: datetime = Field(default_factory=now_utc, nullable=False)
 
 

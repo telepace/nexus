@@ -16,7 +16,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
 
-import aiohttp
 import httpx
 from jinja2 import Environment, FileSystemLoader
 from sqlmodel import Session

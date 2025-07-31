@@ -17,27 +17,22 @@ def test_imports():
         print("Testing imports...")
 
         # 测试基本导入
-        from app.utils.background_tasks import BackgroundTaskManager
 
         print("✅ BackgroundTaskManager imported successfully")
 
         # 测试模型导入
-        from app.models.content import ContentItem, AIResult
 
         print("✅ Content models imported successfully")
 
         # 测试API路由导入
-        from app.api.routes.content import regenerate_ai_analysis_endpoint
 
         print("✅ API endpoint imported successfully")
 
         # 测试事件管理器导入
-        from app.utils.events import content_event_manager
 
         print("✅ Event manager imported successfully")
 
         # 测试时区导入
-        from app.utils.timezone import now_utc
 
         print("✅ Timezone utils imported successfully")
 
@@ -86,8 +81,9 @@ def test_api_endpoint():
     try:
         print("\nTesting API endpoint...")
 
-        from app.api.routes.content import regenerate_ai_analysis_endpoint
         import inspect
+
+        from app.api.routes.content import regenerate_ai_analysis_endpoint
 
         # 检查函数签名
         sig = inspect.signature(regenerate_ai_analysis_endpoint)

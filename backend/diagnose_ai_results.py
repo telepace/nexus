@@ -3,9 +3,6 @@
 简单的AI结果诊断脚本 - 无需依赖项
 """
 
-import json
-import os
-import sys
 from pathlib import Path
 
 
@@ -29,7 +26,7 @@ def check_environment():
 
             # 读取环境文件内容
             try:
-                with open(env_file, "r") as f:
+                with open(env_file) as f:
                     content = f.read()
 
                 # 检查关键配置
@@ -74,13 +71,13 @@ def check_templates():
         template_path = template_dir / template
         if template_path.exists():
             try:
-                with open(template_path, "r", encoding="utf-8") as f:
+                with open(template_path, encoding="utf-8") as f:
                     content = f.read()
                     print(f"   ✅ {template} (长度: {len(content)} 字符)")
 
                     # 检查模板内容完整性
                     if len(content.strip()) < 100:
-                        print(f"      ⚠️  模板内容过短，可能不完整")
+                        print("      ⚠️  模板内容过短，可能不完整")
             except Exception as e:
                 print(f"   ❌ 读取 {template} 失败: {e}")
         else:
@@ -103,7 +100,7 @@ def check_database_schema():
             print(f"✅ 模型文件存在: {model_file.name}")
 
             try:
-                with open(model_file, "r") as f:
+                with open(model_file) as f:
                     content = f.read()
 
                 # 检查关键模型类
@@ -129,7 +126,7 @@ def check_background_tasks():
         print(f"✅ 后台任务文件存在: {task_file}")
 
         try:
-            with open(task_file, "r") as f:
+            with open(task_file) as f:
                 content = f.read()
 
             # 检查关键功能
@@ -154,10 +151,10 @@ def check_api_routes():
 
     routes_file = Path("/Users/a1234/nexus/backend/app/api/routes/content.py")
     if routes_file.exists():
-        print(f"✅ 内容API路由文件存在")
+        print("✅ 内容API路由文件存在")
 
         try:
-            with open(routes_file, "r") as f:
+            with open(routes_file) as f:
                 content = f.read()
 
             # 检查AI结果相关API
@@ -171,7 +168,7 @@ def check_api_routes():
         except Exception as e:
             print(f"   ❌ 读取API路由文件失败: {e}")
     else:
-        print(f"❌ 内容API路由文件不存在")
+        print("❌ 内容API路由文件不存在")
 
     print()
 

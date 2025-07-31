@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import uuid
 from collections.abc import Sequence
-from datetime import datetime
 
 from sqlmodel import Session, select
 
@@ -14,7 +13,7 @@ from app.utils.timezone import now_utc
 __all__ = [
     "create_ai_conversation",
     "create_ai_conversation_for_analysis",
-    "update_ai_conversation_response", 
+    "update_ai_conversation_response",
     "get_ai_conversation",
     "get_ai_conversations",
 ]
@@ -55,7 +54,7 @@ def create_ai_conversation_for_analysis(
 ) -> AIConversation:
     """
     创建用于内容分析的AIConversation记录
-    
+
     这是专门为内容分析场景设计的创建函数，包含完整的元数据和消息结构。
     """
     from app.utils.prompt_helpers import render_user_analysis_prompt
@@ -109,20 +108,20 @@ def update_ai_conversation_response(
 ) -> bool:
     """
     更新AIConversation记录，添加AI响应
-    
+
     Args:
         session: 数据库会话
         conversation_id: 对话ID
         ai_response: AI响应内容
         status: 状态（completed/failed）
         error: 错误信息（如果有）
-        
+
     Returns:
         bool: 更新是否成功
     """
     import logging
     logger = logging.getLogger(__name__)
-    
+
     try:
         # 获取对话记录
         conversation = session.get(AIConversation, conversation_id)
@@ -139,7 +138,7 @@ def update_ai_conversation_response(
 
         # 添加AI响应
         conversation_messages.append({
-            "role": "assistant", 
+            "role": "assistant",
             "content": ai_response,
             "timestamp": now_utc().isoformat()
         })
@@ -153,7 +152,7 @@ def update_ai_conversation_response(
         except (json.JSONDecodeError, TypeError):
             logger.warning(f"Failed to parse meta_info for conversation {conversation_id}, using empty dict")
             meta_info = {}
-            
+
         meta_info.update({
             "status": status,
             "response_length": len(ai_response),
@@ -168,10 +167,10 @@ def update_ai_conversation_response(
 
         session.add(conversation)
         session.commit()
-        
+
         logger.info(f"Successfully updated AIConversation {conversation_id} with response length {len(ai_response)}")
         return True
-        
+
     except Exception as e:
         logger.error(f"Failed to update AIConversation {conversation_id}: {e}")
         session.rollback()

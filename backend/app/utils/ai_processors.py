@@ -20,13 +20,13 @@ from sqlmodel import Session, select
 
 from app.core.config import settings
 from app.models.content import ContentItem
-from app.utils.token_manager import get_token_limit
 from app.services.ai.chat_service import ChatService
 from app.utils.content_processors import (
     ProcessingContext,
     ProcessingResult,
     ProcessingStep,
 )
+from app.utils.token_manager import get_token_limit
 
 logger = logging.getLogger(__name__)
 

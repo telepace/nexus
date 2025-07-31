@@ -1,13 +1,15 @@
-from typing import Any, Dict, Optional
-from sqlmodel import Field, SQLModel
 import datetime
 import uuid
+from typing import Any
+
+from sqlmodel import SQLModel
+
 
 class CollectedBlockBase(SQLModel):
-    block_content: Dict[str, Any]
+    block_content: dict[str, Any]
     block_type: str
     source_analysis_id: str
-    source_document_id: Optional[str] = None
+    source_document_id: str | None = None
 
 class CollectedBlockCreate(CollectedBlockBase):
     pass

@@ -1,23 +1,23 @@
-from fastapi import APIRouter, Query, HTTPException, Path
-from typing import Optional
 import uuid
+
+from fastapi import APIRouter, HTTPException, Path, Query
 
 from app.api.deps import CurrentUser, SessionDep
 from app.crud import crud_content
 from app.crud.crud_favorite import (
+    delete_favorite,
+    get_user_favorite_blocks,
     get_user_favorite_content_ids,
     get_user_favorites,
-    get_user_favorite_blocks,
     update_favorite,
-    delete_favorite,
 )
 from app.schemas.content import ContentItemPublic
 from app.schemas.favorite import (
-    FavoriteListResponse,
-    FavoriteWithContent,
     FavoriteBlockListResponse,
     FavoriteBlockWithContent,
+    FavoriteListResponse,
     FavoriteUpdate,
+    FavoriteWithContent,
 )
 
 router = APIRouter()
@@ -42,9 +42,9 @@ def get_favorites_endpoint(
 ) -> FavoriteListResponse:
     """Get user's favorites with filtering options."""
     favorites, total = get_user_favorites(
-        session=session, 
-        user_id=current_user.id, 
-        skip=skip, 
+        session=session,
+        user_id=current_user.id,
+        skip=skip,
         limit=limit,
         block_only=block_only,
         content_only=content_only
@@ -92,14 +92,14 @@ def get_block_favorites_endpoint(
     limit: int = Query(
         100, ge=1, le=200, description="Maximum number of items to return"
     ),
-    content_item_id: Optional[uuid.UUID] = Query(None, description="Filter by content item ID"),
+    content_item_id: uuid.UUID | None = Query(None, description="Filter by content item ID"),
 ) -> FavoriteBlockListResponse:
     """Get user's block-level favorites."""
     favorites, total = get_user_favorite_blocks(
-        session=session, 
-        user_id=current_user.id, 
+        session=session,
+        user_id=current_user.id,
         content_item_id=content_item_id,
-        skip=skip, 
+        skip=skip,
         limit=limit
     )
 
@@ -154,13 +154,13 @@ def update_favorite_endpoint(
         description=favorite_update.description,
         tags=favorite_update.tags
     )
-    
+
     if not favorite:
         raise HTTPException(
             status_code=404,
             detail="Favorite not found or you don't have permission to update it"
         )
-    
+
     return {"status": "ok", "message": "Favorite updated successfully"}
 
 
@@ -178,22 +178,22 @@ def delete_favorite_endpoint(
 ) -> None:
     """Delete a favorite by ID."""
     # First get the favorite to check ownership and get content details
-    from app.crud.crud_favorite import get_favorite
     from sqlmodel import select
+
     from app.models.favorite import Favorite
-    
+
     statement = select(Favorite).where(
         Favorite.id == favorite_id,
         Favorite.user_id == current_user.id
     )
     favorite = session.exec(statement).first()
-    
+
     if not favorite:
         raise HTTPException(
             status_code=404,
             detail="Favorite not found or you don't have permission to delete it"
         )
-    
+
     # Delete the favorite
     success = delete_favorite(
         session=session,
@@ -201,7 +201,7 @@ def delete_favorite_endpoint(
         content_item_id=favorite.content_item_id,
         block_id=favorite.block_id
     )
-    
+
     if not success:
         raise HTTPException(
             status_code=500,

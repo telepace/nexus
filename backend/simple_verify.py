@@ -3,8 +3,6 @@
 简单验证脚本 - 直接检查代码结构
 """
 
-import ast
-import os
 from pathlib import Path
 
 
@@ -17,7 +15,7 @@ def check_background_tasks_file():
         return False
 
     try:
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             content = f.read()
 
         # 检查关键方法是否存在
@@ -62,7 +60,7 @@ def check_content_api_file():
         return False
 
     try:
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             content = f.read()
 
         # 检查regenerate_ai_analysis_endpoint是否存在
@@ -97,7 +95,7 @@ def check_content_card_file():
         return False
 
     try:
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             content = f.read()
 
         # 检查重新生成AI分析按钮是否正确处理事件

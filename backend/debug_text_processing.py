@@ -10,14 +10,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 import logging
+
 from sqlmodel import Session
 
 from app.core.db import engine
 from app.models.content import ContentItem
 from app.utils.content_processors import (
+    MarkItDownProcessor,
     ModernProcessor,
     ProcessingPipeline,
-    MarkItDownProcessor,
 )
 
 # 设置详细日志

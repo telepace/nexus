@@ -152,7 +152,7 @@ class PreprocessingPipeline:
             # 4. AI初始化层
             # 获取用户语言偏好
             output_language = "English"  # 默认值
-            
+
             # 优先使用用户偏好中的语言设置
             if user_preferences and "output_language" in user_preferences:
                 output_language = user_preferences["output_language"]
@@ -165,9 +165,9 @@ class PreprocessingPipeline:
                 except Exception as e:
                     logger.warning(f"获取用户语言偏好失败，使用默认值: {e}")
                     output_language = "English"
-            
+
             logger.info(f"🌐 AI处理使用语言: {output_language}")
-            
+
             ai_results, ai_stats = await self._ai_initialization_layer(
                 markdown_content, metadata, user_preferences, output_language
             )

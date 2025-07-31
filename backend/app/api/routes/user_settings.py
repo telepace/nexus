@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
-from sqlmodel import Session
 
-from app.api.deps import SessionDep, CurrentUser
+from app.api.deps import CurrentUser, SessionDep
 from app.models.user_settings import UserSettingsPublic, UserSettingsUpdate
 from app.services.user_settings_service import UserSettingsService
 
@@ -42,7 +41,7 @@ def update_user_settings(
     user_settings = UserSettingsService.update_user_settings(
         session, current_user.id, settings_update
     )
-    
+
     if not user_settings:
         # 如果用户设置不存在，创建一个
         user_settings = UserSettingsService.get_or_create_user_settings(
@@ -52,7 +51,7 @@ def update_user_settings(
         user_settings = UserSettingsService.update_user_settings(
             session, current_user.id, settings_update
         )
-    
+
     return UserSettingsPublic.from_orm(user_settings)
 
 
@@ -86,13 +85,13 @@ def set_ai_language(
 ) -> dict[str, str]:
     """设置用户的 AI 输出语言偏好"""
     language = language_data.get("ai_output_language")
-    
+
     if not language:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="ai_output_language is required"
         )
-    
+
     # 验证语言选项
     supported_languages = ["English", "Chinese", "Japanese", "Korean", "French", "German", "Spanish"]
     if language not in supported_languages:
@@ -100,6 +99,6 @@ def set_ai_language(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Unsupported language. Supported languages: {', '.join(supported_languages)}"
         )
-    
+
     UserSettingsService.set_user_ai_language(session, current_user.id, language)
-    return {"ai_output_language": language, "message": "Language preference updated successfully"} 
+    return {"ai_output_language": language, "message": "Language preference updated successfully"}

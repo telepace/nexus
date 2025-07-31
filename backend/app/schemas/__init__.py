@@ -3,29 +3,29 @@ from .ai_conversations import (
     AIConversationDetail,
     AIConversationPublic,
 )
-from .deep_research import (
-    DeepResearchJobCreate,
-    DeepResearchJobPublic,
-    DeepResearchJobResponse,
-    DeepResearchJobResult,
-)
 from .collected_block import (
     CollectedBlockBase,
     CollectedBlockCreate,
     CollectedBlockPublic,
     CollectedBlocksPublic,
 )
+from .deep_research import (
+    DeepResearchJobCreate,
+    DeepResearchJobPublic,
+    DeepResearchJobResponse,
+    DeepResearchJobResult,
+)
 from .favorite import (
     FavoriteBase,
-    FavoriteCreate,
-    FavoriteUpdate,
-    FavoritePublic,
-    FavoriteWithContent,
-    FavoriteListResponse,
     FavoriteBlockCreate,
+    FavoriteBlockListResponse,
     FavoriteBlockPublic,
     FavoriteBlockWithContent,
-    FavoriteBlockListResponse,
+    FavoriteCreate,
+    FavoriteListResponse,
+    FavoritePublic,
+    FavoriteUpdate,
+    FavoriteWithContent,
 )
 from .image import (
     ImageBase,

@@ -5,9 +5,10 @@ LiteLLM路由诊断脚本
 用于调查为什么所有模型请求都被路由到同一个后端模型的问题
 """
 
-import requests
 import sys
 from pathlib import Path
+
+import requests
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent))
@@ -110,11 +111,11 @@ def test_litellm_routing():
     print(f"🎯 实际后端数量: {len(actual_models)}")
 
     if len(actual_models) == 1 and len(successful_models) > 1:
-        print(f"\n⚠️  问题发现: 所有模型都路由到同一后端!")
+        print("\n⚠️  问题发现: 所有模型都路由到同一后端!")
         print(f"   实际后端: {list(actual_models)[0]}")
-        print(f"   这解释了为什么监控中显示的都是同一个模型名称")
+        print("   这解释了为什么监控中显示的都是同一个模型名称")
 
-    print(f"\n🔍 实际后端模型列表:")
+    print("\n🔍 实际后端模型列表:")
     for actual in sorted(actual_models):
         count = sum(
             1 for r in routing_results.values() if r.get("actual_model") == actual
@@ -122,7 +123,7 @@ def test_litellm_routing():
         print(f"   {actual}: {count} 个配置模型路由到此")
 
     if failed_models:
-        print(f"\n❌ 失败的模型:")
+        print("\n❌ 失败的模型:")
         for model in failed_models:
             error = routing_results[model]["error"]
             print(f"   {model}: {error}")
@@ -132,7 +133,7 @@ def test_litellm_routing():
 
 def check_litellm_config():
     """检查LiteLLM配置文件"""
-    print(f"\n📋 检查LiteLLM配置...")
+    print("\n📋 检查LiteLLM配置...")
 
     config_path = Path(__file__).parent.parent / "litellm" / "config.yaml"
 
@@ -141,7 +142,7 @@ def check_litellm_config():
         return
 
     try:
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, encoding="utf-8") as f:
             content = f.read()
 
         print(f"✅ 配置文件路径: {config_path}")
@@ -166,7 +167,7 @@ def check_litellm_config():
                 else:
                     models_to_backends[backend] = [current_model]
 
-        print(f"\n🔗 后端映射统计:")
+        print("\n🔗 后端映射统计:")
         for backend, models in models_to_backends.items():
             if len(models) > 1:
                 print(f"   ⚠️  {backend}: {len(models)} 个模型 -> {models}")
@@ -179,7 +180,7 @@ def check_litellm_config():
 
 def suggest_solutions():
     """提供解决方案建议"""
-    print(f"\n💡 解决方案建议:")
+    print("\n💡 解决方案建议:")
     print("=" * 60)
 
     print("1. 🔧 检查LiteLLM服务状态:")
@@ -209,17 +210,17 @@ if __name__ == "__main__":
         check_litellm_config()
         suggest_solutions()
 
-        print(f"\n🎯 诊断完成!")
+        print("\n🎯 诊断完成!")
 
         # 判断是否有路由问题
         successful_results = {k: v for k, v in routing_results.items() if v["success"]}
-        unique_backends = set(r["actual_model"] for r in successful_results.values())
+        unique_backends = {r["actual_model"] for r in successful_results.values()}
 
         if len(unique_backends) == 1 and len(successful_results) > 1:
             print(f"⚠️  确认存在路由问题: 所有模型都路由到 {list(unique_backends)[0]}")
             sys.exit(1)
         else:
-            print(f"✅ 路由功能正常")
+            print("✅ 路由功能正常")
 
     except Exception as e:
         print(f"❌ 诊断过程中出错: {e}")

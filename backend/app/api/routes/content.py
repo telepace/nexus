@@ -4,29 +4,38 @@ import logging
 import uuid
 from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
-from typing import Any  # Added Optional and Literal
-from typing import Annotated
+from typing import (
+    Annotated,
+    Any,  # Added Optional and Literal
+)
 
+import aiohttp
 from fastapi import (
     APIRouter,
     BackgroundTasks,
     Body,
+    Depends,
     HTTPException,
     Path,  # Added Path
     Query,
     status,
-    Depends,
 )
 from fastapi.responses import StreamingResponse
-from sqlmodel import Session, select
+from jinja2 import Environment, FileSystemLoader
+from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_, or_, desc, func
-from typing import List, Optional
+from sqlmodel import Session, select
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentUser, SessionDep, get_async_db
 from app.core.config import settings
 from app.core.db_factory import engine  # 修复导入路径：从db_factory导入engine
 from app.core.security import verify_password
+
+# 🎯 导入统一的AI对话CRUD操作
+from app.crud.crud_ai_conversation import (
+    create_ai_conversation_for_analysis,
+    update_ai_conversation_response,
+)
 from app.crud.crud_content import (
     create_content_item_sync,
     create_content_share,
@@ -43,32 +52,22 @@ from app.crud.crud_content import (
 from app.crud.crud_content import (
     get_content_item_sync as crud_get_content_item,
 )
-# 🎯 导入统一的AI对话CRUD操作
-from app.crud.crud_ai_conversation import (
-    create_ai_conversation_for_analysis,
-    update_ai_conversation_response,
-)
 from app.models import (
     AIConversation,
     AIResult,  # Added for AIResult storage
     ContentItem,  # For converting ContentItemCreate to ContentItem model for CRUD
-    Segment,  # Added for chunks summary endpoint
     ContentSegment,  # 新增
-)
-from app.models.segments import ContentSegment  # 新增
-from app.models.content import (
-    ContentItem,
+    Segment,  # Added for chunks summary endpoint
 )
 from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is just base + id and audit fields
     AIResultPublic,
     ContentAnalysisRequest,
     ContentItemCreate,
     ContentItemPublic,
+    ContentSegmentBulkResponse,  # 新增
+    ContentSegmentOut,
     ContentShareCreate,
     ContentSharePublic,
-    ContentItemUpdate, 
-    ContentSegmentOut,
-    ContentSegmentBulkResponse,  # 新增
 )
 from app.services.ai.chat_service import ChatService
 from app.utils.background_tasks import background_task_manager
@@ -76,12 +75,11 @@ from app.utils.content_processors import ProcessingPipeline
 from app.utils.events import content_event_manager, create_sse_generator
 from app.utils.prompt_helpers import render_user_analysis_prompt
 from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
-from app.utils.streaming_jsonl_extractor import create_streaming_jsonl_extractor
-from app.api.deps import get_current_user, get_db, get_async_db
 
 # from app.utils.cache import warm_article_cache  # 暂时注释掉避免redis依赖
-
-from app.utils.token_manager import get_token_limit, get_recommended_settings, validate_token_request
+from app.utils.token_manager import (
+    get_token_limit,
+)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -761,6 +759,7 @@ async def analyze_content_stream_endpoint(
             content_text=content_item.content_text,  # 传递内容文本
             request=request,
             ai_conversation_id=ai_conversation.id,  # 传递 conversation ID 而不是对象
+            user_id=current_user.id,  # Add user_id parameter
             resolved_model=resolved_model,
         ),
         media_type="text/plain",
@@ -779,6 +778,7 @@ async def _stream_content_analysis(
     content_text: str,  # 直接传递内容文本
     request: ContentAnalysisRequest,
     ai_conversation_id: uuid.UUID,  # 使用 ID 而不是对象
+    user_id: uuid.UUID,  # Add user_id parameter
     resolved_model: str | None = None,
 ) -> AsyncGenerator[str, None]:
     """
@@ -795,26 +795,26 @@ async def _stream_content_analysis(
         output_language = request.output_language
         if not output_language:
             try:
-                from app.services.user_settings_service import UserSettingsService
                 from app.api.deps import get_db
-                
+                from app.services.user_settings_service import UserSettingsService
+
                 # 创建数据库会话来获取用户语言偏好
                 with next(get_db()) as db_session:
                     output_language = UserSettingsService.get_user_ai_language(
-                        db_session, current_user.id
+                        db_session, user_id
                     )
                 logger.info(f"🌐 从用户设置获取语言偏好: {output_language}")
             except Exception as e:
                 logger.warning(f"获取用户语言偏好失败，使用默认值: {e}")
                 output_language = "English"
-        
+
         logger.info(f"🌐 _stream_content_analysis 使用语言: {output_language}")
-        
+
         if output_language.lower() in ["english", "en"]:
             system_message = f"You are a professional content analysis assistant. Please analyze the following content according to the user's requirements:\n\n{content_text}"
         else:
             system_message = f"你是一个专业的内容分析助手。请根据用户的要求分析以下内容：\n\n{content_text}"
-        
+
         messages = [
             {
                 "role": "system",
@@ -1025,6 +1025,7 @@ async def analyze_ai_sdk_updated_endpoint(
                 content_text=content_text,  # 使用提前提取的内容文本
                 request=request,
                 ai_conversation_id=ai_conversation.id,
+                user_id=current_user.id,  # Add user_id parameter
             ):
                 yield chunk
         except Exception as e:
@@ -1051,37 +1052,35 @@ async def _stream_content_analysis_ai_sdk(
     _content_item_id: uuid.UUID,  # 使用ID而不是对象
     content_text: str,  # 直接传递内容文本
     request: ContentAnalysisRequest,
-    ai_conversation_id: uuid.UUID,
+    _ai_conversation_id: uuid.UUID,  # Unused but kept for interface compatibility
+    user_id: uuid.UUID,  # Add user_id parameter
 ) -> AsyncGenerator[str, None]:
     """Stream AI SDK analysis with updated prompt structure."""
     import aiohttp
 
     try:
-        # 创建实时JSONL处理器
-        jsonl_processor = create_realtime_jsonl_processor()
-
         # 使用新的用户分析模板渲染prompt
         # 优先使用请求中的语言，否则从用户设置获取
         output_language = request.output_language
         if not output_language:
             try:
-                from app.services.user_settings_service import UserSettingsService
                 from app.api.deps import get_db
-                
+                from app.services.user_settings_service import UserSettingsService
+
                 # 创建数据库会话来获取用户语言偏好
                 with next(get_db()) as db_session:
                     output_language = UserSettingsService.get_user_ai_language(
-                        db_session, current_user.id
+                        db_session, user_id
                     )
                 logger.info(f"🌐 从用户设置获取语言偏好: {output_language}")
             except Exception as e:
                 logger.warning(f"获取用户语言偏好失败，使用默认值: {e}")
                 output_language = "English"
-        
+
         logger.info(f"🌐 _stream_content_analysis_ai_sdk 使用语言: {output_language}")
-        
+
         user_prompt = render_user_analysis_prompt(
-            request.analysis_instruction, 
+            request.analysis_instruction,
             output_language
         )
 
@@ -1096,10 +1095,10 @@ async def _stream_content_analysis_ai_sdk(
         resolved_model = settings.resolved_ai_task_models.get(
             "analysis", settings.DEFAULT_LLM_MODEL
         )
-        
+
         # 🎯 简化token处理：直接使用请求的max_tokens或默认值
         final_max_tokens = request.max_tokens or get_token_limit(task_type="analysis")
-        
+
         logger.info(f"🎯 内容分析token设置: 请求={request.max_tokens}, "
                    f"最终使用={final_max_tokens}")
 
@@ -1265,9 +1264,10 @@ async def _stream_content_completion_updated(
 
     from app.utils.prompt_helpers import render_template_prompt
 
+    # 创建实时JSONL处理器
+    jsonl_processor = create_realtime_jsonl_processor()
+
     try:
-        # 创建实时JSONL处理器
-        jsonl_processor = create_realtime_jsonl_processor()
 
         # 根据请求的模板选择渲染方式
         template_name = request.template_name or "user_analysis.j2"
@@ -1461,7 +1461,7 @@ def convert_conversation_to_public(conversation: AIConversation) -> dict:
                 "created_at": getattr(conversation, 'created_at', '').isoformat() if hasattr(getattr(conversation, 'created_at', ''), 'isoformat') else str(getattr(conversation, 'created_at', '')),
                 "updated_at": getattr(conversation, 'updated_at', '').isoformat() if hasattr(getattr(conversation, 'updated_at', ''), 'isoformat') else str(getattr(conversation, 'updated_at', '')),
             }
-        
+
         messages_data = (
             json.loads(conversation.messages) if conversation.messages else []
         )
@@ -1551,11 +1551,11 @@ def get_content_conversations(
         )
 
         if not include_inactive:
-            query = query.where(AIConversation.is_active == True)
+            query = query.where(AIConversation.is_active)
 
         # 使用 scalars() 方法确保返回模型对象而不是 Row 对象
         conversations = session.exec(query.order_by(AIConversation.created_at)).all()
-        
+
         logger.info(f"Found {len(conversations)} conversations for content {content_id}")
 
         # 转换为public schema - 添加额外的错误处理
@@ -1585,7 +1585,7 @@ def get_content_conversations(
             "total": len(public_conversations),
             "has_auto_analysis": has_auto_analysis,
         }
-        
+
     except Exception as e:
         logger.error(f"Error in get_content_conversations: {e}")
         logger.error(f"Content ID: {content_id}, User ID: {current_user.id}")
@@ -1767,15 +1767,15 @@ async def _stream_template_analysis(
         # 根据分析类型映射到任务类型
         task_type_mapping = {
             "summary": "summary",
-            "key_points": "key_points", 
+            "key_points": "key_points",
             "labels": "labels",
             "analysis": "analysis"
         }
         task_type = task_type_mapping.get(analysis_type, "analysis")
-        
+
         # 🎯 简化设置：直接使用默认token限制
         max_tokens = get_token_limit(task_type=task_type)
-        
+
         logger.info(f"🎯 模板分析设置: 类型={analysis_type}, 任务={task_type}, "
                    f"token限制={max_tokens}")
 
@@ -1787,15 +1787,15 @@ async def _stream_template_analysis(
         # 根据分析类型选择模板
         template_map = {
             "summary": "summary.j2",
-            "key_points": "key_points.j2", 
+            "key_points": "key_points.j2",
             "labels": "labels.j2",
         }
-        
+
         template_name = template_map.get(analysis_type, "summary.j2")
         template = template_env.get_template(template_name)
-        
+
         logger.info(f"🌐 _stream_template_analysis 接收到的语言参数: {language}")
-        
+
         analysis_instruction = template.render(
             content_title=content_title or "无标题",
             content_text=content_text[:2000],  # 限制模板中的内容长度
@@ -1817,7 +1817,8 @@ async def _stream_template_analysis(
         # 创建AI对话记录
         try:
             with Session(engine) as db_session:
-                ai_conversation = create_ai_conversation_for_analysis(
+                # ai_conversation = create_ai_conversation_for_analysis(  # Unused variable
+                create_ai_conversation_for_analysis(
                     session=db_session,
                     user_id=user_id,
                     content_item_id=content_item_id,
@@ -1974,7 +1975,7 @@ def add_to_favorites_endpoint(
     current_user: CurrentUser,
     id: uuid.UUID = Path(..., description="Content item ID to add to favorites"),
     favorite_data: dict = Body(
-        default={}, 
+        default={},
         description="Optional block data for block-level favorites"
     ),
 ) -> dict[str, str]:
@@ -2004,8 +2005,8 @@ def add_to_favorites_endpoint(
 
     # Check if already favorited
     existing_favorite = get_favorite(
-        session=session, 
-        user_id=current_user.id, 
+        session=session,
+        user_id=current_user.id,
         content_item_id=id,
         block_id=block_id
     )
@@ -2023,8 +2024,8 @@ def add_to_favorites_endpoint(
 
     # Create favorite
     create_favorite(
-        session=session, 
-        user_id=current_user.id, 
+        session=session,
+        user_id=current_user.id,
         content_item_id=id,
         block_id=block_id,
         block_type=block_type,
@@ -2048,7 +2049,7 @@ def remove_from_favorites_endpoint(
     session: SessionDep,
     current_user: CurrentUser,
     id: uuid.UUID = Path(..., description="Content item ID to remove from favorites"),
-    block_id: Optional[str] = Query(None, description="Block ID to remove from favorites"),
+    block_id: str | None = Query(None, description="Block ID to remove from favorites"),
 ) -> None:
     """Remove content item or block from favorites."""
     from app.crud.crud_favorite import delete_favorite
@@ -2068,8 +2069,8 @@ def remove_from_favorites_endpoint(
 
     # Remove from favorites
     success = delete_favorite(
-        session=session, 
-        user_id=current_user.id, 
+        session=session,
+        user_id=current_user.id,
         content_item_id=id,
         block_id=block_id
     )
@@ -2096,7 +2097,7 @@ def check_favorite_status_endpoint(
     session: SessionDep,
     current_user: CurrentUser,
     id: uuid.UUID = Path(..., description="Content item ID to check"),
-    block_id: Optional[str] = Query(None, description="Block ID to check"),
+    block_id: str | None = Query(None, description="Block ID to check"),
 ) -> dict[str, bool]:
     """Check if content item or block is in favorites."""
     from app.crud.crud_favorite import get_favorite
@@ -2116,8 +2117,8 @@ def check_favorite_status_endpoint(
 
     # Check favorite status
     favorite = get_favorite(
-        session=session, 
-        user_id=current_user.id, 
+        session=session,
+        user_id=current_user.id,
         content_item_id=id,
         block_id=block_id
     )
@@ -2451,7 +2452,7 @@ async def get_content_segment(
     db: AsyncSessionDep
 ):
     """获取指定内容的特定段落"""
-    
+
     # 验证内容项存在且用户有权限访问
     content_item = await db.scalar(
         select(ContentItem).where(
@@ -2461,10 +2462,10 @@ async def get_content_segment(
             )
         )
     )
-    
+
     if not content_item:
         raise HTTPException(status_code=404, detail="Content not found")
-    
+
     # 获取指定段落
     segment = await db.scalar(
         select(ContentSegment).where(
@@ -2474,10 +2475,10 @@ async def get_content_segment(
             )
         )
     )
-    
+
     if not segment:
         raise HTTPException(status_code=404, detail=f"Segment {segment_number} not found")
-    
+
     return segment
 
 @router.get("/{content_id}/segments", response_model=ContentSegmentBulkResponse)
@@ -2485,18 +2486,17 @@ async def get_content_segments(
     content_id: uuid.UUID,
     current_user: CurrentUser,
     db: AsyncSessionDep,
-    numbers: Optional[str] = Query(None, description="逗号分隔的段落号列表，如 '1,3,5'"),
-    from_number: Optional[int] = Query(None, description="起始段落号（包含）"),
-    to_number: Optional[int] = Query(None, description="结束段落号（包含）")
+    numbers: str | None = Query(None, description="逗号分隔的段落号列表，如 '1,3,5'"),
+    from_number: int | None = Query(None, description="起始段落号（包含）"),
+    to_number: int | None = Query(None, description="结束段落号（包含）")
 ):
     """批量获取内容段落
-    
     支持三种查询模式：
     1. 指定段落号列表：?numbers=1,3,5
     2. 段落区间：?from_number=6&to_number=24
     3. 全部段落：不传任何参数
     """
-    
+
     try:
         # 验证内容项存在且用户有权限访问
         content_item = await db.scalar(
@@ -2507,14 +2507,14 @@ async def get_content_segments(
                 )
             )
         )
-        
+
         if not content_item:
             raise HTTPException(status_code=404, detail="Content not found")
-        
+
         # 构建查询条件
         query = select(ContentSegment).where(ContentSegment.content_item_id == content_id)
         requested_numbers = []
-        
+
         if numbers:
             # 指定段落号列表模式
             try:
@@ -2522,7 +2522,7 @@ async def get_content_segments(
                 query = query.where(ContentSegment.display_number.in_(requested_numbers))
             except ValueError:
                 raise HTTPException(status_code=400, detail="Invalid numbers format")
-        
+
         elif from_number is not None and to_number is not None:
             # 区间模式
             if from_number > to_number:
@@ -2534,27 +2534,27 @@ async def get_content_segments(
                 )
             )
             requested_numbers = list(range(from_number, to_number + 1))
-        
+
         elif from_number is not None or to_number is not None:
             raise HTTPException(status_code=400, detail="Both from_number and to_number are required for range query")
-        
+
         # 执行查询
         query = query.order_by(ContentSegment.display_number)
         result = await db.execute(query)
         segments = result.scalars().all()
-        
+
         # 计算缺失的段落号
         missing_numbers = []
         if requested_numbers:
             found_numbers = {seg.display_number for seg in segments}
             missing_numbers = [num for num in requested_numbers if num not in found_numbers]
-        
+
         return ContentSegmentBulkResponse(
             segments=segments,
             total=len(segments),
             missing_numbers=missing_numbers
         )
-    
+
     except HTTPException:
         # 重新抛出HTTP异常
         raise
@@ -2563,9 +2563,9 @@ async def get_content_segments(
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"获取内容段落时发生错误 - content_id: {content_id}, error: {str(e)}", exc_info=True)
-        
+
         # 返回通用500错误，避免暴露内部错误信息
         raise HTTPException(
-            status_code=500, 
+            status_code=500,
             detail="Internal server error while retrieving content segments"
         )

@@ -9,7 +9,7 @@ from typing import Any
 import httpx
 
 from app.core.config import settings
-from app.utils.token_manager import get_token_limit, get_recommended_settings
+from app.utils.token_manager import get_recommended_settings, get_token_limit
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ class LLMService:
 
         try:
             configured_model = model or settings.DEFAULT_LLM_MODEL
-            
+
             # 计算最终的max_tokens
             if max_tokens is None:
                 # 使用任务类型的默认token限制
@@ -104,7 +104,7 @@ class LLMService:
                     logger.debug(f"✅ Model direct: {configured_model}")
 
                 content = response_data["choices"][0]["message"]["content"]
-                
+
                 # 记录token使用情况
                 usage = response_data.get("usage", {})
                 if usage:
@@ -112,7 +112,7 @@ class LLMService:
                                f"输出={usage.get('completion_tokens', 0)}, "
                                f"总计={usage.get('total_tokens', 0)}, "
                                f"限制={final_max_tokens}")
-                
+
                 logger.info(f"✅ LLM response received, content length: {len(content)}")
                 return content.strip()
 
@@ -164,19 +164,19 @@ class LLMService:
 
         # 添加当前用户消息
         messages.append({"role": "user", "content": user_message})
-        
+
         # 计算总内容长度
         total_content = system_content + user_message + (context or "")
         if conversation_history:
             total_content += "\n".join([msg.get("content", "") for msg in conversation_history])
-        
+
         # 获取推荐设置
         recommended_settings = get_recommended_settings(
             task_type=task_type,
             content_text=total_content,
             target_quality=quality
         )
-        
+
         logger.info(f"🎯 上下文感知回复: 内容长度={len(total_content)}, "
                    f"推荐设置={recommended_settings}")
 

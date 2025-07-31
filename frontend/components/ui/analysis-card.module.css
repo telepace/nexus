@@ -54,11 +54,11 @@
 
 /* 深色模式 */
 .card {
-  @apply dark:border-gray-700/60 dark:bg-gray-950/80;
+  @apply dark:border-gray-700 dark:bg-gray-950;
 }
 
 .card:hover {
-  @apply dark:border-gray-600/80;
+  @apply dark:border-gray-600;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px
     rgba(0, 0, 0, 0.1);
 }
@@ -144,7 +144,7 @@
 }
 
 .loadingOverlay {
-  @apply dark:bg-gray-950/80;
+  @apply dark:bg-gray-950;
 }
 
 /* 图标容器 */
@@ -166,7 +166,7 @@
 }
 
 .iconContainer {
-  @apply dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-700 dark:border-gray-700/40;
+  @apply dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-700 dark:border-gray-700;
 }
 
 /* 内容块样式 */
@@ -213,11 +213,11 @@
 
 /* 深色模式的内容块 */
 .contentBlock {
-  @apply dark:hover:border-gray-700/40;
+  @apply dark:hover:border-gray-700;
 }
 
 .contentBlock:hover {
-  @apply dark:bg-gradient-to-r dark:from-gray-800/30 dark:via-transparent dark:to-gray-700/20;
+  @apply dark:bg-gradient-to-r dark:from-gray-800 dark:via-transparent dark:to-gray-700;
 }
 
 /* 渐变遮罩效果 */
@@ -227,7 +227,7 @@
 }
 
 .fadeGradient {
-  @apply dark:from-gray-950 dark:via-gray-950/80 dark:to-transparent;
+  @apply dark:from-gray-950 dark:via-gray-950 dark:to-transparent;
 }
 
 /* 展开按钮样式 */
@@ -258,7 +258,7 @@
 
 /* 深色模式的展开按钮 */
 .expandButton::before {
-  @apply dark:bg-gradient-to-r dark:from-transparent dark:via-white/10 dark:to-transparent;
+  @apply dark:bg-gradient-to-r dark:from-transparent dark:via-white dark:to-transparent;
 }
 
 .expandButton {
@@ -276,7 +276,7 @@
 
 /* 深色模式的展开按钮悬浮效果 */
 .expandButton:hover {
-  @apply dark:shadow-blue-500/20;
+  @apply dark:shadow-blue-500;
 }
 
 /* 悬浮操作按钮 */
@@ -309,7 +309,7 @@
 
 /* 深色模式的操作菜单 */
 .actionsMenu {
-  @apply dark:bg-gray-800/80 dark:hover:bg-gray-700/90;
+  @apply dark:bg-gray-800 dark:hover:bg-gray-700;
 }
 
 /* 引用指示器 */
@@ -355,11 +355,11 @@
 
 /* 深色模式的引用指示器 */
 .referenceIndicator {
-  @apply dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-400;
+  @apply dark:bg-blue-950 dark:border-blue-800 dark:text-blue-400;
 }
 
 .referenceIndicator:hover {
-  @apply dark:bg-blue-900/40 dark:border-blue-700;
+  @apply dark:bg-blue-900 dark:border-blue-700;
 }
 
 /* 脉动动画 */
@@ -410,7 +410,7 @@
 
 /* 深色模式的光泽动画 */
 .expandButton:hover::after {
-  @apply dark:bg-gradient-to-r dark:from-transparent dark:via-white/20 dark:to-transparent;
+  @apply dark:bg-gradient-to-r dark:from-transparent dark:via-white dark:to-transparent;
 }
 
 /* 响应式设计 */
