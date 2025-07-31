@@ -142,7 +142,7 @@ const JsonContentItemRenderer: React.FC<{
       case "h1":
         return "text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4";
       case "h2":
-        return "text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3 border-b border-gray-200 dark:border-gray-700 pb-2";
+        return "text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3 border-b border-gray-200 dark:border-border pb-2";
       case "h3":
         return "text-lg font-medium text-gray-800 dark:text-gray-200 mb-2";
       case "insight":
@@ -152,7 +152,7 @@ const JsonContentItemRenderer: React.FC<{
       case "list":
         return "text-sm leading-relaxed text-gray-700 dark:text-gray-300";
       case "code":
-        return "text-sm font-mono bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700";
+        return "text-sm font-mono bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-border";
       case "warning":
         return "text-sm leading-relaxed text-orange-800 dark:text-orange-200 bg-orange-50 dark:bg-orange-950/20 p-4 rounded-lg border-l-4 border-orange-400 dark:border-orange-500";
       case "error":
@@ -221,7 +221,7 @@ const JsonContentItemRenderer: React.FC<{
         {/* 引用指示器 */}
         {references.length > 0 && (
           <motion.div
-            className="flex items-center gap-2 mt-3 pt-2 border-t border-gray-200/50 dark:border-gray-700/50"
+            className="flex items-center gap-2 mt-3 pt-2 border-t border-gray-200/50 dark:border-border/50"
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}

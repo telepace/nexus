@@ -99,7 +99,7 @@ export function JsonLineWithExpandButton({
                   className={cn(
                     "h-6 w-6 rounded-md",
                     "bg-white dark:bg-gray-950",
-                    "border border-gray-200 dark:border-gray-700",
+                    "border border-gray-200 dark:border-border",
                     "shadow-sm hover:shadow-md",
                     "text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400",
                     "transition-all duration-200",

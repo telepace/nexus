@@ -259,7 +259,7 @@ export function JsonObjectRenderer({
       )}
 
       {/* JSON tree */}
-      <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 font-mono text-sm overflow-auto max-h-96 border border-gray-200 dark:border-gray-700">
+      <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 font-mono text-sm overflow-auto max-h-96 border border-gray-200 dark:border-border">
         <JsonNode
           data={parsedData}
           level={0}

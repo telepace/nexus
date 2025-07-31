@@ -358,7 +358,7 @@ export const OptimizedReferenceTooltip: React.FC<OptimizedReferenceTooltipProps>
   const getArrowClasses = useCallback(() => {
     const baseArrow = "absolute border-6 border-transparent";
     const lightArrow = "border-t-white dark:border-t-gray-900";
-    const darkBorder = "border-gray-200 dark:border-gray-700";
+    const darkBorder = "border-gray-200 dark:border-border";
     
     switch (position) {
       case 'top':
@@ -411,7 +411,7 @@ export const OptimizedReferenceTooltip: React.FC<OptimizedReferenceTooltipProps>
               
               {/* 内容预览部分 */}
               {showPreview && (
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                <div className="border-t border-gray-200 dark:border-border pt-3">
                   <TooltipContent
                     content={referenceInfo?.content}
                     snippet={referenceInfo?.snippet}

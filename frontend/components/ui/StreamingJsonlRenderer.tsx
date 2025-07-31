@@ -125,7 +125,7 @@ export function StreamingJsonlRenderer({
         case "h1":
           return "text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4";
         case "h2":
-          return "text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3 border-b border-gray-200 dark:border-gray-700 pb-2";
+          return "text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3 border-b border-gray-200 dark:border-border pb-2";
         case "h3":
           return "text-lg font-medium text-gray-800 dark:text-gray-200 mb-2";
         case "insight":
@@ -135,7 +135,7 @@ export function StreamingJsonlRenderer({
         case "list":
           return "text-sm leading-relaxed text-gray-700 dark:text-gray-300";
         case "code":
-          return "text-sm font-mono bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700";
+          return "text-sm font-mono bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-border";
         default:
           return "text-sm leading-relaxed text-gray-700 dark:text-gray-300";
       }

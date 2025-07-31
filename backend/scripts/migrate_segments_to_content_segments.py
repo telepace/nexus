@@ -14,14 +14,14 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-import uuid
+import uuid  # noqa: E402
 
-from sqlalchemy import func, text
-from sqlmodel import Session, select
+from sqlalchemy import func, text  # noqa: E402
+from sqlmodel import Session, select  # noqa: E402
 
-from app.core.db_factory import engine
-from app.models.content import Segment
-from app.models.segments import ContentSegment
+from app.core.db_factory import engine  # noqa: E402
+from app.models.content import Segment  # noqa: E402
+from app.models.segments import ContentSegment  # noqa: E402
 
 
 def migrate_segments_to_content_segments():

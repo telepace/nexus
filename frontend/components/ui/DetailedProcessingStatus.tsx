@@ -146,7 +146,7 @@ export const DetailedProcessingStatus: FC<DetailedProcessingStatusProps> = ({
                   step.status === "failed" &&
                     "bg-red-100 border-red-200 dark:bg-red-900/20 dark:border-red-700",
                   step.status === "pending" &&
-                    "bg-gray-100 border-gray-200 dark:bg-gray-900/20 dark:border-gray-700",
+                    "bg-gray-100 border-gray-200 dark:bg-gray-900/20 dark:border-border",
                 )}
               >
                 <Icon

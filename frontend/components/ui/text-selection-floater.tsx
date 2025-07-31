@@ -353,7 +353,7 @@ export const TextSelectionFloater: React.FC<TextSelectionFloaterProps> = ({
         zIndex,
       }}
     >
-      <Card className="shadow-2xl border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-white/95 dark:bg-gray-900/95">
+      <Card className="shadow-2xl border-gray-200 dark:border-border backdrop-blur-sm bg-white/95 dark:bg-gray-900/95">
         <CardContent className="p-2">
           <div className="flex items-center gap-1">
             {actions.map((action) => (

@@ -448,7 +448,7 @@ const ParagraphBlock: React.FC<{
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="bg-gray-50/50 dark:bg-gray-900/20 rounded-lg p-4 border border-gray-200/50 dark:border-gray-700/30 hover:bg-gray-100/50 dark:hover:bg-gray-800/20 transition-colors duration-200">
+      <div className="bg-gray-50/50 dark:bg-gray-900/20 rounded-lg p-4 border border-gray-200/50 dark:border-border/30 hover:bg-gray-100/50 dark:hover:bg-gray-800/20 transition-colors duration-200">
         <div className="flex items-start gap-3">
           <div className="shrink-0 w-6 h-6 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mt-0.5">
             <Target className="h-3 w-3 text-gray-600 dark:text-gray-400" />

@@ -13,10 +13,10 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from sqlmodel import Session
+from sqlmodel import Session  # noqa: E402
 
-from app.core.db_factory import engine
-from app.crud.crud_ai_conversation import (
+from app.core.db_factory import engine  # noqa: E402
+from app.crud.crud_ai_conversation import (  # noqa: E402
     create_ai_conversation_for_analysis,
     get_ai_conversation,
     update_ai_conversation_response,

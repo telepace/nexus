@@ -499,7 +499,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                           setFormData({ ...formData, name: e.target.value })
                         }
                         placeholder="请输入您的姓名"
-                        className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
+                        className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-border focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
                       />
                       <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <Edit2 className="w-4 h-4 text-gray-400" />
@@ -518,7 +518,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         onChange={(e) =>
                           setFormData({ ...formData, email: e.target.value })
                         }
-                        className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light transition-all duration-300"
+                        className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-border focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light transition-all duration-300"
                       />
                       <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <Edit2 className="w-4 h-4 text-gray-400" />
@@ -588,7 +588,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         }))
                       }
                       placeholder="请输入当前密码"
-                      className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
+                      className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-border focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
                     />
                   </div>
 
@@ -606,7 +606,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         }))
                       }
                       placeholder="请输入新密码（至少8个字符）"
-                      className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
+                      className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-border focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
                     />
                   </div>
 
@@ -624,7 +624,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         }))
                       }
                       placeholder="请再次输入新密码"
-                      className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
+                      className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-border focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
                     />
                   </div>
 
@@ -692,7 +692,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                             className={`group p-6 rounded-2xl border-2 transition-all duration-300 hover:scale-105 ${
                               theme === themeOption.value
                                 ? "border-gray-900 dark:border-white"
-                                : "border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500"
+                                : "border-gray-200 dark:border-border hover:border-gray-400 dark:hover:border-gray-500"
                             }`}
                           >
                             <div
@@ -953,7 +953,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                             className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all duration-300 ${
                               privacySettings.profileVisibility === option.value
                                 ? "border-gray-900 dark:border-white bg-gray-50/50 dark:bg-gray-800/50"
-                                : "border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500"
+                                : "border-gray-200 dark:border-border hover:border-gray-400 dark:hover:border-gray-500"
                             }`}
                           >
                             <div className="w-8 h-8 bg-gray-100/50 dark:bg-gray-800/50 rounded-lg flex items-center justify-center">
