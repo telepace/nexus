@@ -83,6 +83,10 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     );
   }
 
+  // 内存优化：preview模式下限制功能，减少组件复杂度
+  const isPreviewMode = variant === "preview";
+  const shouldLimitFeatures = isPreviewMode;
+
   // 状态管理
   const [inputValue, setInputValue] = useState("");
   const [inputFocused, setInputFocused] = useState(false);
@@ -91,21 +95,23 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
   const [prompts, setPrompts] = useState<PromptData[]>([]);
   const [loadingPrompts, setLoadingPrompts] = useState(true);
   
-  // 使用统一的历史记录管理hook
+  // 使用统一的历史记录管理hook - 在preview模式下禁用以节省资源
   const {
     historyRecords,
     isLoadingHistory: loadingHistory,
     refreshHistory,
     addHistoryRecord
   } = useConversationHistory({
-    contentId: content?.id || '',
+    contentId: shouldLimitFeatures ? '' : (content?.id || ''), // preview模式下不加载历史
     onError: (error) => {
-      console.error('历史记录加载失败:', error);
-      toast({
-        title: "加载失败",
-        description: error,
-        variant: "destructive",
-      });
+      if (!shouldLimitFeatures) { // 只在非preview模式下显示错误
+        console.error('历史记录加载失败:', error);
+        toast({
+          title: "加载失败",
+          description: error,
+          variant: "destructive",
+        });
+      }
     }
   });
   
@@ -141,7 +147,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     }
   }, []);
 
-  // 新的对话管理
+  // 新的对话管理 - 在preview模式下禁用以节省资源  
   const {
     conversations: streamingConversations,
     sendMessage,
@@ -149,16 +155,21 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     deleteConversation,
     cancelCurrentProcessing,
   } = useStreamingConversation({
-    contentId: content?.id || '',
+    contentId: shouldLimitFeatures ? '' : (content?.id || ''), // preview模式下禁用
     onConversationUpdate: (conversation) => {
-      // 可以在这里添加额外的处理逻辑
+      // 只在非preview模式下处理对话更新
+      if (!shouldLimitFeatures) {
+        // 可以在这里添加额外的处理逻辑
+      }
     },
     onError: (error) => {
-      toast({
-        title: "处理失败",
-        description: error,
-        variant: "destructive",
-      });
+      if (!shouldLimitFeatures) { // 只在非preview模式下显示错误
+        toast({
+          title: "处理失败",
+          description: error,
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -166,6 +177,17 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
   useEffect(() => {
     setCollapsedCards(getInitialCollapsedCards());
   }, [pathname, getInitialCollapsedCards]);
+
+  // 组件卸载时的清理机制
+  useEffect(() => {
+    return () => {
+      // 取消正在进行的请求
+      if (!shouldLimitFeatures) {
+        cancelCurrentProcessing();
+      }
+      // 清理定时器和事件监听器在各自的useEffect中已经处理
+    };
+  }, [cancelCurrentProcessing, shouldLimitFeatures]);
 
   // 🎯 监听新对话出现，优化自动滚动
   useEffect(() => {
@@ -550,6 +572,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
                 onExpandLine={handleJsonLineExpand}
                 onRetry={retryMessage}
                 onDelete={deleteConversation}
+                contentId={content?.id}
               />
             ))}
           </div>

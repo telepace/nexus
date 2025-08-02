@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Filter, FilterX, Search, XCircle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useClickOutside } from "@/hooks/use-click-outside";
-import { useI18nSafe } from "@/lib/i18n-fallback";
-import type { ContentItemPublic } from "./types";
+import type { ContentItemPublic } from "../types";
 
 export type SortOption = "time" | "rating" | "title" | "views";
 
@@ -27,7 +26,9 @@ interface LibraryHeaderProps {
   onTagToggle: (tag: string) => void;
   sortBy: SortOption;
   onSortChange: (sort: SortOption) => void;
-  onClearFilters: () => void;
+  onClearFilters?: () => void;
+  viewMode?: "grid" | "list";
+  onViewModeChange?: (viewMode: "grid" | "list") => void;
 }
 
 export const LibraryHeader = ({
@@ -39,8 +40,11 @@ export const LibraryHeader = ({
   sortBy,
   onSortChange,
   onClearFilters,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  viewMode: _viewMode,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onViewModeChange: _onViewModeChange,
 }: LibraryHeaderProps) => {
-  const { t } = useI18nSafe();
   const [isSearching, setIsSearching] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
@@ -50,20 +54,28 @@ export const LibraryHeader = ({
     }
   });
 
-  const allTags = Array.from(
-    new Set(
-      items.flatMap((item) => item.ai_result?.labels || []).filter(Boolean),
-    ),
-  ).sort();
+  // 🚀 优化：使用 useMemo 缓存标签计算，避免每次渲染重新计算
+  const allTags = useMemo(() => {
+    return Array.from(
+      new Set(
+        items.flatMap((item) => item.ai_result?.labels || []).filter(Boolean),
+      ),
+    ).sort();
+  }, [items]);
 
-  const sortOptions = [
-    { value: "time" as const, label: t('content.latest') },
-    { value: "rating" as const, label: t('content.rating') },
-    { value: "title" as const, label: t('content.title') },
-    { value: "views" as const, label: t('content.popularity') },
-  ];
+  // 🚀 优化：使用 useMemo 缓存排序选项
+  const sortOptions = useMemo(() => [
+    { value: "time" as const, label: "最新" },
+    { value: "rating" as const, label: "评分" },
+    { value: "title" as const, label: "标题" },
+    { value: "views" as const, label: "热度" },
+  ], []);
 
-  const isFiltered = selectedTags.length > 0 || sortBy !== "time";
+  // 🚀 优化：使用 useMemo 缓存过滤状态
+  const isFiltered = useMemo(() => 
+    selectedTags.length > 0 || sortBy !== "time",
+    [selectedTags.length, sortBy]
+  );
 
   const handleSearchClick = () => {
     setIsSearching(true);
@@ -99,7 +111,7 @@ export const LibraryHeader = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>{t('content.sortBy')}</DropdownMenuLabel>
+            <DropdownMenuLabel>排序方式</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {sortOptions.map((option) => (
               <DropdownMenuItem
@@ -113,7 +125,7 @@ export const LibraryHeader = ({
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuLabel>{t('content.filterByTags')}</DropdownMenuLabel>
+            <DropdownMenuLabel>按标签筛选</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {allTags.map((tag) => (
               <DropdownMenuItem key={tag} onClick={() => onTagToggle(tag)}>
@@ -127,7 +139,7 @@ export const LibraryHeader = ({
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onClearFilters}>
-                  {t('content.clearFilter')}
+                  清除筛选
                 </DropdownMenuItem>
               </>
             )}
@@ -166,7 +178,7 @@ export const LibraryHeader = ({
           <div className="relative h-full w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
             <Input
-              placeholder={t('content.searchPlaceholder')}
+              placeholder="搜索..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               className="pl-10 pr-8 h-9 w-full bg-white rounded-md border border-neutral-200 focus:shadow-macos-window focus:border-macos-container focus:ring-0"

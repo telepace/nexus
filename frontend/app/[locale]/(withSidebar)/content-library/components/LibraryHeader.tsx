@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Filter, FilterX, Search, XCircle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,9 @@ interface LibraryHeaderProps {
   onTagToggle: (tag: string) => void;
   sortBy: SortOption;
   onSortChange: (sort: SortOption) => void;
-  onClearFilters: () => void;
+  onClearFilters?: () => void;
+  viewMode?: "grid" | "list";
+  onViewModeChange?: (viewMode: "grid" | "list") => void;
 }
 
 export const LibraryHeader = ({
@@ -38,6 +40,10 @@ export const LibraryHeader = ({
   sortBy,
   onSortChange,
   onClearFilters,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  viewMode: _viewMode,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onViewModeChange: _onViewModeChange,
 }: LibraryHeaderProps) => {
   const [isSearching, setIsSearching] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -48,20 +54,28 @@ export const LibraryHeader = ({
     }
   });
 
-  const allTags = Array.from(
-    new Set(
-      items.flatMap((item) => item.ai_result?.labels || []).filter(Boolean),
-    ),
-  ).sort();
+  // 🚀 优化：使用 useMemo 缓存标签计算，避免每次渲染重新计算
+  const allTags = useMemo(() => {
+    return Array.from(
+      new Set(
+        items.flatMap((item) => item.ai_result?.labels || []).filter(Boolean),
+      ),
+    ).sort();
+  }, [items]);
 
-  const sortOptions = [
+  // 🚀 优化：使用 useMemo 缓存排序选项
+  const sortOptions = useMemo(() => [
     { value: "time" as const, label: "最新" },
     { value: "rating" as const, label: "评分" },
     { value: "title" as const, label: "标题" },
     { value: "views" as const, label: "热度" },
-  ];
+  ], []);
 
-  const isFiltered = selectedTags.length > 0 || sortBy !== "time";
+  // 🚀 优化：使用 useMemo 缓存过滤状态
+  const isFiltered = useMemo(() => 
+    selectedTags.length > 0 || sortBy !== "time",
+    [selectedTags.length, sortBy]
+  );
 
   const handleSearchClick = () => {
     setIsSearching(true);

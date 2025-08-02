@@ -17,6 +17,12 @@ interface UniversalContentRendererProps {
   enableDelayedRendering?: boolean;
   /** 延迟渲染的延迟时间（毫秒） */
   renderDelay?: number;
+  /** 内容ID，用于获取引用数据 */
+  contentId?: string;
+  /** 是否启用增强的引用tooltip */
+  enableEnhancedTooltip?: boolean;
+  /** 引用点击回调 */
+  onReferenceClick?: (refId: number) => void;
 }
 
 /**
@@ -29,6 +35,9 @@ export function UniversalContentRenderer({
   onExpandLine,
   enableDelayedRendering = false,
   renderDelay = 400,
+  contentId,
+  enableEnhancedTooltip = true,
+  onReferenceClick,
 }: UniversalContentRendererProps) {
   // Helper to detect JSONL format (same logic as in llm-analysis-card)
   const isJsonl = (str: string): boolean => {
@@ -84,6 +93,9 @@ export function UniversalContentRenderer({
         onExpandLine={onExpandLine}
         enableDelayedRendering={enableDelayedRendering}
         renderDelay={renderDelay}
+        contentId={contentId}
+        enableEnhancedTooltip={enableEnhancedTooltip}
+        onReferenceClick={onReferenceClick}
       />
     );
   } else if (isJsonObject(content)) {
@@ -95,7 +107,12 @@ export function UniversalContentRenderer({
   } else {
     return (
       <div data-testid="universal-content-renderer" className={className}>
-        <MarkdownRenderer content={content} />
+        <MarkdownRenderer 
+          content={content} 
+          contentId={contentId}
+          enableEnhancedTooltip={enableEnhancedTooltip}
+          onReferenceClick={onReferenceClick}
+        />
       </div>
     );
   }

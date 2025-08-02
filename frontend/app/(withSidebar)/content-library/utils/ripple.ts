@@ -17,7 +17,7 @@ export const createRipple = (event: React.MouseEvent<HTMLElement>) => {
     width: ${size}px;
     height: ${size}px;
     pointer-events: none;
-    z-index: 1;
+    z-index: 0;
   `;
 
   button.style.position = "relative";

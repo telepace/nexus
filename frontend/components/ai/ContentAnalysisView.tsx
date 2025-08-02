@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { Library, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedModernAnalysisInterface } from "./EnhancedModernAnalysisInterface";
+import { ReferenceManagerProvider } from "@/components/ui/ReferenceManager";
 import { useI18nSafe } from "@/lib/i18n-fallback";
 import type { ContentItemPublic } from "@/lib/api/content";
 import { AIResult, ConversationListResponse, contentApi } from "@/lib/api/content";
@@ -102,16 +103,42 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
     });
   }, [item?.id, currentItem?.id]);
 
-  // 自动获取缺失的分析数据（当外部没有提供时）
+  // 优化的数据获取逻辑 - 完全禁用preview模式下的对话历史加载
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchMissingData() {
-      if (!currentItem?.id || !user?.token) return;
+      if (!currentItem?.id || !user?.token || !isMounted) return;
       
       // 如果外部已经提供了数据，不需要重新获取
       const hasExternalAnalysis = externalAnalysisResult !== null;
       const hasExternalConversations = externalConversations.length > 0;
       
       if (hasExternalAnalysis && hasExternalConversations) {
+        return;
+      }
+
+      // 🚫 preview模式下完全禁用对话历史加载，避免触发500错误
+      const isPreviewMode = variant === "preview";
+      if (isPreviewMode) {
+        console.log('🚫 Preview模式下跳过对话历史加载');
+        // 只加载分析结果，不加载对话历史
+        if (!hasExternalAnalysis) {
+          try {
+            setDataLoading(true);
+            const item = await contentApi.getContentItem(currentItem.id);
+            if (isMounted) {
+              const analysisData = (item as { ai_result?: AIResult }).ai_result;
+              setInternalAnalysisResult(analysisData || null);
+            }
+          } catch (error) {
+            console.error('获取分析数据失败:', error);
+          } finally {
+            if (isMounted) {
+              setDataLoading(false);
+            }
+          }
+        }
         return;
       }
 
@@ -129,7 +156,11 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
           promises.push(contentApi.getContentConversations(currentItem.id, false));
         }
 
+        if (promises.length === 0) return;
+
         const results = await Promise.allSettled(promises);
+        
+        if (!isMounted) return;
         
         let resultIndex = 0;
         
@@ -148,18 +179,26 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
           const conversationsResult = results[resultIndex];
           if (conversationsResult.status === 'fulfilled') {
             setInternalConversations((conversationsResult.value as ConversationListResponse).conversations || []);
+          } else {
+            console.error('获取对话历史失败:', conversationsResult.reason);
           }
         }
         
       } catch (error) {
         console.error('获取分析数据失败:', error);
       } finally {
-        setDataLoading(false);
+        if (isMounted) {
+          setDataLoading(false);
+        }
       }
     }
 
     fetchMissingData();
-  }, [currentItem?.id, user?.token, externalAnalysisResult, externalConversations.length]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentItem?.id, user?.token, externalAnalysisResult, externalConversations.length, variant]);
 
   // 滚动到顶部
   useEffect(() => {
@@ -252,9 +291,60 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
   // 空状态渲染
   if (!currentItem) {
     return (
-      <div className={containerClasses}>
+      <ReferenceManagerProvider contentId={undefined}>
+        <div className={containerClasses}>
+          {!finalHideHeader && (
+            <div className={`flex items-center h-header px-4 flex-shrink-0 ${finalShowHeaderBorder ? 'border-b' : ''}`}>
+              <div className="flex items-center gap-2 min-w-0">
+                <Library className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                {finalShowHeaderTitle && (
+                  <span className="text-sm font-medium text-muted-foreground truncate">
+                    {getHeaderTitle()}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <div className="flex-1 flex items-center justify-center p-8">
+            <div className="text-center space-y-4 max-w-md">
+              <div className="w-16 h-16 bg-muted/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Library className="w-8 h-8 text-muted-foreground/60" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium text-muted-foreground">
+                  {defaultEmptyStateText}
+                </h3>
+                <p className="text-sm text-muted-foreground/70 leading-relaxed">
+                  在左侧列表中选择或悬停内容项目来查看详细信息
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ReferenceManagerProvider>
+    );
+  }
+
+  // 主内容渲染
+  return (
+    <ReferenceManagerProvider contentId={currentItem?.id}>
+      <div 
+        ref={containerRef}
+        className={`
+          ${containerClasses}
+          transition-opacity duration-200 ease-out
+          ${isTransitioning ? 'opacity-70' : 'opacity-100'}
+        `}
+        style={{
+          contain: 'layout style paint',
+          willChange: 'auto',
+        }}
+        data-exclude-selection
+      >
+        {/* 统一头部 */}
         {!finalHideHeader && (
-          <div className={`flex items-center h-header px-4 flex-shrink-0 ${finalShowHeaderBorder ? 'border-b' : ''}`}>
+          <div className={`flex items-center justify-between h-header px-4 flex-shrink-0 ${finalShowHeaderBorder ? 'border-b' : ''}`}>
             <div className="flex items-center gap-2 min-w-0">
               <Library className="w-4 h-4 text-muted-foreground flex-shrink-0" />
               {finalShowHeaderTitle && (
@@ -262,84 +352,37 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
                   {getHeaderTitle()}
                 </span>
               )}
+              {aiStatus === 'processing' && finalShowHeaderTitle && (
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse flex-shrink-0 ml-1" />
+              )}
             </div>
+            
+            {/* 历史面板切换按钮 */}
+            {historyCount > 0 && externalShowHistory === undefined && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  onClick={toggleHistoryPanel}
+                  title="切换历史记录"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  <div className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-muted text-muted-foreground text-[10px] font-bold">
+                    {historyCount}
+                  </div>
+                </Button>
+              </div>
+            )}
           </div>
         )}
-        
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="text-center space-y-4 max-w-md">
-            <div className="w-16 h-16 bg-muted/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Library className="w-8 h-8 text-muted-foreground/60" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium text-muted-foreground">
-                {defaultEmptyStateText}
-              </h3>
-              <p className="text-sm text-muted-foreground/70 leading-relaxed">
-                在左侧列表中选择或悬停内容项目来查看详细信息
-              </p>
-            </div>
-          </div>
+
+        {/* 分析界面内容 */}
+        <div className="flex-1 overflow-hidden relative min-h-0">
+          <EnhancedModernAnalysisInterface {...analysisProps} />
         </div>
       </div>
-    );
-  }
-
-  // 主内容渲染
-  return (
-    <div 
-      ref={containerRef}
-      className={`
-        ${containerClasses}
-        transition-opacity duration-200 ease-out
-        ${isTransitioning ? 'opacity-70' : 'opacity-100'}
-      `}
-      style={{
-        contain: 'layout style paint',
-        willChange: 'auto',
-      }}
-      data-exclude-selection
-    >
-      {/* 统一头部 */}
-      {!finalHideHeader && (
-        <div className={`flex items-center justify-between h-header px-4 flex-shrink-0 ${finalShowHeaderBorder ? 'border-b' : ''}`}>
-          <div className="flex items-center gap-2 min-w-0">
-            <Library className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-            {finalShowHeaderTitle && (
-              <span className="text-sm font-medium text-muted-foreground truncate">
-                {getHeaderTitle()}
-              </span>
-            )}
-            {aiStatus === 'processing' && finalShowHeaderTitle && (
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse flex-shrink-0 ml-1" />
-            )}
-          </div>
-          
-          {/* 历史面板切换按钮 */}
-          {historyCount > 0 && externalShowHistory === undefined && (
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={toggleHistoryPanel}
-                title="切换历史记录"
-              >
-                <MessageSquare className="h-4 w-4" />
-                <div className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-muted text-muted-foreground text-[10px] font-bold">
-                  {historyCount}
-                </div>
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 分析界面内容 */}
-      <div className="flex-1 overflow-hidden relative min-h-0">
-        <EnhancedModernAnalysisInterface {...analysisProps} />
-      </div>
-    </div>
+    </ReferenceManagerProvider>
   );
 };
 

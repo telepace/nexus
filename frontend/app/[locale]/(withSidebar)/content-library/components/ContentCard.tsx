@@ -86,7 +86,7 @@ const StarRating = ({ score }: { score: number }) => {
   );
 };
 
-export const ContentCard = ({
+export const ContentCard = React.memo(({
   item,
   selected,
   hovered,
@@ -105,19 +105,20 @@ export const ContentCard = ({
   // 相对时间标签
   const relativeLabel = useRelativeTime(item.created_at);
 
-  // 处理点击事件 - 立即跳转到阅读器
-  const handleClick = (event: React.MouseEvent) => {
+  // 简化的卡片点击处理 - 只处理卡片主体区域的点击
+  const handleCardClick = useCallback((event: React.MouseEvent) => {
     onCardClick(item, event);
-  };
+  }, [item, onCardClick]);
 
   // 防抖定时器引用
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 处理鼠标进入事件 - 添加防抖处理
+  // 处理鼠标进入事件 - 优化性能，减少不必要的调用
   const handleMouseEnter = useCallback(() => {
     // 清除之前的定时器
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
     }
     
     // 立即设置悬浮状态
@@ -130,6 +131,7 @@ export const ContentCard = ({
     // 清除之前的定时器
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
     }
     // 不再调用 onCardHover(null)，实现预览内容的粘性显示
     // 预览内容会保持到用户悬浮到下一个卡片为止
@@ -282,9 +284,8 @@ export const ContentCard = ({
   return (
     <Card
       key={item.id}
-      tabIndex={0}
       className={`
-        group cursor-pointer relative overflow-hidden
+        group relative overflow-hidden
         w-libraryCard
         transition-all duration-200 ease-out
         rounded-lg overflow-hidden
@@ -296,137 +297,138 @@ export const ContentCard = ({
               : "bg-transparent border border-transparent shadow-none hover:bg-transparent hover:border-transparent"
         }
       `}
-      onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onMouseDown={createRipple}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handleClick(e as unknown as React.MouseEvent);
-        }
-      }}
     >
-      <CardContent className="p-4 pl-1 flex flex-col h-full">
-        <div className="flex items-start gap-2 flex-1 min-w-0">
+      <CardContent className="p-4 pl-1 flex flex-col h-full relative">
+        {/* 交互按钮层 - 绝对定位，独立于卡片内容 */}
+        <div className="absolute top-4 right-4 flex items-center gap-1 z-20 opacity-0 group-hover:opacity-100 transition-all duration-200">
+          <FavoriteButton
+            itemId={item.id}
+            size="sm"
+            variant="ghost"
+            className="h-7 w-7 p-0 hover:bg-accent/50 focus-visible:ring-0 focus-visible:border-transparent"
+          />
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 hover:bg-accent/50 focus-visible:ring-0 focus-visible:border-transparent"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="sr-only">更多操作</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-48 z-50">
+              <DropdownMenuItem
+                onClick={handleViewDetails}
+                className="focus:bg-accent/50"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                查看详情
+              </DropdownMenuItem>
+
+              {isProcessingFailed && (
+                <DropdownMenuItem
+                  onClick={handleReprocess}
+                  disabled={isProcessing}
+                  className="focus:bg-accent/50"
+                >
+                  <RotateCcw
+                    className={`h-4 w-4 mr-2 ${isProcessing ? "animate-spin" : ""}`}
+                  />
+                  {isProcessing ? "处理中..." : "重新处理"}
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuItem
+                onClick={handleAIAnalysis}
+                className="focus:bg-accent/50"
+              >
+                <Brain className="h-4 w-4 mr-2" />
+                AI 分析
+              </DropdownMenuItem>
+
+              {item.ai_result &&
+                item.processing_status === "completed" && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleRegenerateAI();
+                    }}
+                    disabled={isRegeneratingAI}
+                    className="focus:bg-accent/50"
+                  >
+                    <RefreshCw
+                      className={`h-4 w-4 mr-2 ${isRegeneratingAI ? "animate-spin" : ""}`}
+                    />
+                    {isRegeneratingAI
+                      ? "重新生成中..."
+                      : "重新生成 AI 分析"}
+                  </DropdownMenuItem>
+                )}
+
+              <DropdownMenuItem
+                onClick={handleCopyLink}
+                className="focus:bg-accent/50"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                复制链接
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={handleCopyContent}
+                className="focus:bg-accent/50"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                复制内容
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDelete(e);
+                }}
+                disabled={isDeleting}
+                className="text-[var(--destructive)] focus:text-[var(--destructive)] hover:bg-[var(--destructive)/0.1]"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                {isDeleting ? "删除中..." : "删除"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* 卡片主体内容区域 - 独立的点击区域 */}
+        <div 
+          className="flex items-start gap-2 flex-1 min-w-0 cursor-pointer"
+          onClick={handleCardClick}
+          onMouseDown={(e) => {
+            createRipple(e);
+          }}
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleCardClick(e as unknown as React.MouseEvent);
+            }
+          }}
+        >
           <div className="w-10 h-10 rounded-lg bg-transparent flex items-center justify-center">
             {getContentIcon(item.type)}
           </div>
 
-          <div className="flex-1 min-w-0 space-y-2">
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-1 flex-1 min-w-0">
-                <h3 className="font-medium text-base line-clamp-4 text-neutral-800 dark:text-neutral-100 max-w-cardTitle break-words">
-                  {item.title || "无标题"}
-                </h3>
-
-                {/* 移除这里的评分显示 */}
-              </div>
-
-              <div className="flex items-center shrink-0">
-                <FavoriteButton
-                  itemId={item.id}
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-accent/50 focus-visible:ring-0 focus-visible:border-transparent"
-                />
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0 hover:bg-accent/50 focus-visible:ring-0 focus-visible:border-transparent"
-                      data-dropdown-trigger
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">更多操作</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-48">
-                    <DropdownMenuItem
-                      onClick={handleViewDetails}
-                      className="focus:bg-accent/50"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      查看详情
-                    </DropdownMenuItem>
-
-                    {isProcessingFailed && (
-                      <DropdownMenuItem
-                        onClick={handleReprocess}
-                        disabled={isProcessing}
-                        className="focus:bg-accent/50"
-                      >
-                        <RotateCcw
-                          className={`h-4 w-4 mr-2 ${isProcessing ? "animate-spin" : ""}`}
-                        />
-                        {isProcessing ? "处理中..." : "重新处理"}
-                      </DropdownMenuItem>
-                    )}
-
-                    <DropdownMenuItem
-                      onClick={handleAIAnalysis}
-                      className="focus:bg-accent/50"
-                    >
-                      <Brain className="h-4 w-4 mr-2" />
-                      AI 分析
-                    </DropdownMenuItem>
-
-                    {item.ai_result &&
-                      item.processing_status === "completed" && (
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleRegenerateAI();
-                          }}
-                          disabled={isRegeneratingAI}
-                          className="focus:bg-accent/50"
-                        >
-                          <RefreshCw
-                            className={`h-4 w-4 mr-2 ${isRegeneratingAI ? "animate-spin" : ""}`}
-                          />
-                          {isRegeneratingAI
-                            ? "重新生成中..."
-                            : "重新生成 AI 分析"}
-                        </DropdownMenuItem>
-                      )}
-
-                    <DropdownMenuItem
-                      onClick={handleCopyLink}
-                      className="focus:bg-accent/50"
-                    >
-                      <Copy className="h-4 w-4 mr-2" />
-                      复制链接
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                      onClick={handleCopyContent}
-                      className="focus:bg-accent/50"
-                    >
-                      <Copy className="h-4 w-4 mr-2" />
-                      复制内容
-                    </DropdownMenuItem>
-
-                    <DropdownMenuSeparator />
-
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleDelete(e);
-                      }}
-                      disabled={isDeleting}
-                      className="text-[var(--destructive)] focus:text-[var(--destructive)] hover:bg-[var(--destructive)/0.1]"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      {isDeleting ? "删除中..." : "删除"}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+          <div className="flex-1 min-w-0 space-y-2 pr-16">
+            <div className="space-y-1">
+              <h3 className="font-medium text-base line-clamp-4 text-neutral-800 dark:text-neutral-100 max-w-cardTitle break-words">
+                {item.title || "无标题"}
+              </h3>
             </div>
 
             <p className="text-sm text-neutral-600 line-clamp-3 leading-relaxed max-w-cardTitle break-words">
@@ -488,4 +490,14 @@ export const ContentCard = ({
       />
     </Card>
   );
-};
+}, (prevProps, nextProps) => {
+  // 性能优化：只在关键属性变化时重新渲染
+  return (
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.selected === nextProps.selected &&
+    prevProps.hovered === nextProps.hovered &&
+    prevProps.item.title === nextProps.item.title &&
+    prevProps.item.processing_status === nextProps.item.processing_status &&
+    JSON.stringify(prevProps.item.ai_result) === JSON.stringify(nextProps.item.ai_result)
+  );
+});

@@ -2,6 +2,7 @@ import "./globals.css";
 import { Inter } from "next/font/google";
 import { TimeZoneProvider } from "@/lib/time-zone-context";
 import { Providers } from "./providers";
+import { I18nProvider } from "@/components/providers/I18nProvider";
 
 // 配置 Inter 字体
 const inter = Inter({
@@ -29,7 +30,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={inter.variable}>
       <body className="font-sans antialiased">
         <Providers>
-          <TimeZoneProvider>{children}</TimeZoneProvider>
+          <I18nProvider initialLocale="en">
+            <TimeZoneProvider>{children}</TimeZoneProvider>
+          </I18nProvider>
         </Providers>
         <script
           dangerouslySetInnerHTML={{

@@ -26,6 +26,12 @@ interface JsonlRendererProps {
   enableDelayedRendering?: boolean;
   /** 延迟渲染的延迟时间（毫秒） */
   renderDelay?: number;
+  /** 内容ID，用于获取引用数据 */
+  contentId?: string;
+  /** 是否启用增强的引用tooltip */
+  enableEnhancedTooltip?: boolean;
+  /** 引用点击回调 */
+  onReferenceClick?: (refId: number) => void;
 }
 
 /**
@@ -47,6 +53,9 @@ export function JsonlRenderer({
   showReferenceIndicators = false,
   enableDelayedRendering = false,
   renderDelay = 400,
+  contentId,
+  enableEnhancedTooltip = true,
+  onReferenceClick,
 }: JsonlRendererProps) {
   // 延迟渲染状态
   const [isContentReady, setIsContentReady] = useState(!enableDelayedRendering);
@@ -182,6 +191,7 @@ export function JsonlRenderer({
       MarkdownRenderer,
       EnhancedReferenceIndicator: ReferenceIndicatorComponent,
       onExpand: onExpandLine,
+      contentId,
     });
 
     // 🎯 使用优化的HoverableBlock组件，提供右侧操作按钮

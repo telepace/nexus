@@ -27,6 +27,7 @@ interface StreamingConversationCardProps {
   onRetry?: (messageId: string) => void;
   onDelete?: (conversationId: string) => void;
   className?: string;
+  contentId?: string;
 }
 
 export const StreamingConversationCard = React.memo(function StreamingConversationCard({
@@ -35,6 +36,7 @@ export const StreamingConversationCard = React.memo(function StreamingConversati
   onRetry,
   onDelete,
   className = "",
+  contentId,
 }: StreamingConversationCardProps) {
   const pathname = usePathname(); // 🎯 获取当前路由
   
@@ -115,6 +117,8 @@ export const StreamingConversationCard = React.memo(function StreamingConversati
                     content={displayContent}
                     onExpandLine={onExpandLine}
                     enableDelayedRendering={false}
+                    contentId={contentId}
+                    enableEnhancedTooltip={!!contentId}
                   />
                   {/* 流式响应时的打字机光标 */}
                   {isStreaming && (

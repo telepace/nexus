@@ -28,16 +28,25 @@ export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
 
   // Get current locale from pathname or localStorage
   React.useEffect(() => {
-    const stored = localStorage.getItem("preferred-language");
-    if (stored && languages.some(lang => lang.code === stored)) {
-      setCurrentLocale(stored);
-    } else {
+    // Cache the locale detection logic
+    const detectLocale = () => {
+      const stored = localStorage.getItem("preferred-language");
+      if (stored && languages.some(lang => lang.code === stored)) {
+        return stored;
+      }
+      
       // Try to detect from pathname
       const pathLocale = pathname.split("/")[1];
       if (languages.some(lang => lang.code === pathLocale)) {
-        setCurrentLocale(pathLocale);
+        return pathLocale;
       }
-    }
+      
+      // If no locale in path, assume English (root path)
+      return "en";
+    };
+
+    const detectedLocale = detectLocale();
+    setCurrentLocale(detectedLocale);
   }, [pathname]);
 
   const handleLanguageChange = (locale: string) => {
@@ -48,15 +57,23 @@ export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
     // Navigate to the same page with new locale
     const segments = pathname.split("/").filter(Boolean);
     
-    // Remove current locale if it exists
-    if (languages.some(lang => lang.code === segments[0])) {
+    // Remove current locale if it exists (for non-English languages)
+    if (languages.some(lang => lang.code === segments[0] && lang.code !== 'en')) {
       segments.shift();
     }
     
-    // Add new locale - handle empty path case
+    // Generate new path based on locale
     const pathWithoutLocale = segments.length > 0 ? `/${segments.join("/")}` : "";
-    const newPath = `/${locale}${pathWithoutLocale}`;
-    router.push(newPath);
+    
+    if (locale === 'en') {
+      // For English, use root path
+      const newPath = pathWithoutLocale || "/";
+      router.push(newPath);
+    } else {
+      // For other languages, add locale prefix
+      const newPath = `/${locale}${pathWithoutLocale}`;
+      router.push(newPath);
+    }
   };
 
   const currentLanguage = languages.find(lang => lang.code === currentLocale) || languages[0];

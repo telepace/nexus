@@ -15,7 +15,7 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
-import { type ContentItemPublic } from "@/components/content-library";
+import { type ContentItemPublic } from "@/app/[locale]/(withSidebar)/content-library/types";
 import {
   contentApi,
   ConversationListResponse,

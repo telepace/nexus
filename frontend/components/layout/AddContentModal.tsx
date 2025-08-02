@@ -5,7 +5,6 @@ import React, {
   useRef,
   useCallback,
   useEffect,
-  useMemo,
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -34,6 +33,29 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { Checkbox } from "../ui/checkbox";
 import { useTranslationUtils } from "@/lib/i18n-utils";
+
+// 防抖函数 - 带cancel方法
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): ((...args: Parameters<T>) => void) & { cancel: () => void } {
+  let timeout: NodeJS.Timeout | null = null;
+  
+  const debounced = (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+  
+  debounced.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+  };
+  
+  return debounced;
+}
 
 /**
  * 添加内容模态框
@@ -355,27 +377,45 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   const contentAnalysis = analyzeContent(content, selectedFiles);
   const isResearch = contentAnalysis?.type === "research";
 
-  // 使用 useMemo 优化 detectedUrls 计算，避免每次渲染都创建新数组
-  const detectedUrls = useMemo(() => extractUrls(content), [content]);
-
-  // 使用 useRef 来跟踪上一次检测到的URLs，避免不必要的状态更新
-  const lastDetectedUrlsRef = useRef<string[]>([]);
-
-  // 当检测到的链接变化时，更新选中的链接列表
+  // 🚀 优化：使用 useRef 存储检测到的URLs，避免无限循环
+  const detectedUrlsRef = useRef<string[]>([]);
+  const [detectedUrls, setDetectedUrls] = useState<string[]>([]);
+  
+  // 🚀 防抖处理URL检测，避免频繁更新
+  const updateDetectedUrls = useCallback(() => {
+    return debounce((text: string) => {
+      const urls = extractUrls(text);
+      const urlsChanged = 
+        urls.length !== detectedUrlsRef.current.length ||
+        urls.some((url, index) => url !== detectedUrlsRef.current[index]);
+      
+      if (urlsChanged) {
+        detectedUrlsRef.current = urls;
+        setDetectedUrls(urls);
+        setSelectedUrls(urls); // 默认选中所有检测到的URL
+      }
+    }, 300);
+  }, []);
+  
+  // 当content变化时，防抖更新URLs
   useEffect(() => {
-    // 比较当前检测到的URLs和上次的URLs是否相同
-    const urlsChanged =
-      detectedUrls.length !== lastDetectedUrlsRef.current.length ||
-      detectedUrls.some(
-        (url, index) => url !== lastDetectedUrlsRef.current[index],
-      );
-
-    // 只有当URLs实际发生变化时才更新状态
-    if (urlsChanged) {
-      lastDetectedUrlsRef.current = [...detectedUrls];
-      setSelectedUrls([...detectedUrls]);
+    const debouncedUpdate = updateDetectedUrls();
+    
+    if (content.trim()) {
+      debouncedUpdate(content);
+    } else {
+      // 内容为空时清空URLs
+      if (detectedUrlsRef.current.length > 0) {
+        detectedUrlsRef.current = [];
+        setDetectedUrls([]);
+        setSelectedUrls([]);
+      }
     }
-  }, [detectedUrls]);
+    
+    return () => {
+      debouncedUpdate.cancel();
+    };
+  }, [content, updateDetectedUrls]);
 
   // 自适应高度 - 固定高度，避免跳动
   useEffect(() => {
@@ -430,28 +470,11 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
     }
   }, []);
 
-  // 粘贴处理
-  const handlePaste = useCallback((e: ClipboardEvent) => {
-    // 防止默认粘贴行为，我们手动处理
-    e.preventDefault();
-
-    const pastedText = e.clipboardData?.getData("text") || "";
-    console.log("[粘贴事件] 原始粘贴数据:", pastedText);
-
-    if (pastedText.trim()) {
-      const trimmedText = pastedText.trim();
-      console.log("[粘贴事件] 处理后的文本:", trimmedText);
-
-      // 直接设置到textarea
-      if (textareaRef.current) {
-        textareaRef.current.value = trimmedText;
-        // 触发React的onChange事件
-        const event = new Event("input", { bubbles: true });
-        textareaRef.current.dispatchEvent(event);
-      }
-
-      setContent(trimmedText);
-    }
+  // 🚀 优化粘贴处理：移除全局监听，改为textarea原生处理
+  const handleTextareaChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    console.log("[textarea变化] 新值:", newValue);
+    setContent(newValue);
   }, []);
 
   // Deep Research API调用
@@ -672,16 +695,17 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
         toast.dismiss(loadingToastId);
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     content,
     selectedFiles,
-    selectedUrls, // 添加selectedUrls依赖
+    selectedUrls,
     isResearch,
     user?.token,
     createContentProcessingNotification,
     createDeepResearchJob,
     onClose,
-    detectedUrls,
+    // 🚀 移除detectedUrls依赖，避免无限循环
   ]);
 
   // 链接选择处理函数
@@ -696,13 +720,14 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   };
 
   // 全选/取消全选链接
-  const handleSelectAllUrls = (checked: boolean) => {
+  const handleSelectAllUrls = useCallback((checked: boolean) => {
     if (checked) {
       setSelectedUrls([...detectedUrls]);
     } else {
       setSelectedUrls([]);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detectedUrls]);
 
   // 快捷键处理 - 基于参考代码的快捷键逻辑
   const handleKeyDown = useCallback(
@@ -715,19 +740,17 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
     [handleSubmit],
   );
 
-  // 事件监听
+  // 🚀 优化事件监听：只保留快捷键，移除全局粘贴监听
   useEffect(() => {
     if (open) {
       document.addEventListener("keydown", handleKeyDown);
-      document.addEventListener("paste", handlePaste);
       return () => {
         document.removeEventListener("keydown", handleKeyDown);
-        document.removeEventListener("paste", handlePaste);
       };
     }
-  }, [open, handleKeyDown, handlePaste]);
+  }, [open, handleKeyDown]);
 
-  // 重置状态当模态框关闭时
+  // 🚀 优化状态重置
   useEffect(() => {
     if (!open) {
       setContent("");
@@ -735,9 +758,12 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
       setError("");
       setIsLoading(false);
       setShowResearchConfig(false);
-      setSelectedUrls([]); // 重置链接选择状态
+      setSelectedUrls([]);
+      setDetectedUrls([]);
+      detectedUrlsRef.current = [];
+      // 清理防抖定时器会在useEffect的cleanup中处理
     }
-  }, [open]);
+  }, [open, updateDetectedUrls]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -865,10 +891,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
               <textarea
                 ref={textareaRef}
                 value={content}
-                onChange={(e) => {
-                  console.log("[onChange事件] 新值:", e.target.value);
-                  setContent(e.target.value);
-                }}
+                onChange={handleTextareaChange}
                 placeholder="输入研究主题、粘贴链接或文本内容..."
                 className={`w-full p-3 bg-muted/50 rounded-lg border-0 outline-none resize-none text-card-foreground placeholder:text-muted-foreground text-sm leading-relaxed transition-all focus:bg-background focus:ring-2 focus:ring-primary/20 ${
                   isMobile

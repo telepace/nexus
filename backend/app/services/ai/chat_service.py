@@ -348,9 +348,11 @@ class ChatService:
                         if template_name == "labels.j2" and "tags" in parsed:
                             ai_generated_tags = parsed["tags"]
                             if isinstance(ai_generated_tags, list):
+                                # 从context中获取output_language参数，确保标签语言一致性
+                                output_language = context.get("output_language", "zh")
                                 # 使用标签管理器进行匹配和过滤
                                 matched_tags = tag_manager.filter_and_match_preset_tags(
-                                    ai_generated_tags
+                                    ai_generated_tags, output_language
                                 )
                                 parsed["tags"] = matched_tags
                                 logger.info(

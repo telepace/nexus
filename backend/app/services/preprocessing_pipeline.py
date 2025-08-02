@@ -175,7 +175,7 @@ class PreprocessingPipeline:
 
             # 5. 存储层
             storage_stats = await self._storage_layer(
-                content_id, markdown_content, segments, ai_results, metadata
+                content_id, markdown_content, segments, ai_results, metadata, output_language
             )
             processing_stats["storage_layer"] = storage_stats
 
@@ -450,6 +450,7 @@ class PreprocessingPipeline:
         segments: list[dict[str, Any]],
         ai_results: dict[str, Any],
         metadata: DocumentMetadata,
+        output_language: str = "zh",
     ) -> dict[str, Any]:
         """存储层：持久化数据到数据库"""
         logger.debug("执行存储层处理")
@@ -490,10 +491,10 @@ class PreprocessingPipeline:
                 # 3. 处理AI生成的标签
                 try:
                     logger.info(f"🏷️ 开始处理AI生成的标签，内容ID: {content_id}")
-                    # 从AI结果中处理标签
+                    # 从AI结果中处理标签（传递语言参数确保标签语言一致性）
                     created_tags = (
                         ai_tag_processor.process_and_create_tags_from_ai_result(
-                            session, ai_results, content_id
+                            session, ai_results, content_id, output_language
                         )
                     )
                     storage_stats["tags_created"] = len(created_tags)

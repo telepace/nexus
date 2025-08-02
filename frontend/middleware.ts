@@ -9,15 +9,25 @@ const defaultLocale = 'en';
 function getLocaleFromPath(pathname: string): { locale: string; pathnameWithoutLocale: string } {
   const [, firstSegment, ...rest] = pathname.split('/');
   
-  if (locales.includes(firstSegment)) {
+  // Check if first segment is a non-english locale
+  if (locales.includes(firstSegment) && firstSegment !== 'en') {
     return {
       locale: firstSegment,
       pathnameWithoutLocale: '/' + rest.join('/')
     };
   }
   
+  // For root paths and /en/ paths, treat as English
+  if (firstSegment === 'en') {
+    return {
+      locale: 'en',
+      pathnameWithoutLocale: '/' + rest.join('/')
+    };
+  }
+  
+  // Default: treat root paths as English
   return {
-    locale: defaultLocale,
+    locale: 'en',
     pathnameWithoutLocale: pathname
   };
 }
@@ -40,14 +50,22 @@ export async function middleware(request: NextRequest) {
 
   // Handle locale redirection for root path
   if (pathname === "/") {
-    console.log("[Middleware] 根路径，直接放行");
+    console.log("[Middleware] 根路径，直接放行 (默认英文)");
     return NextResponse.next();
   }
 
-  // Handle locale redirection for paths without locale prefix
-  if (!locales.includes(pathname.split('/')[1])) {
-    console.log("[Middleware] 路径缺少locale前缀，重定向到:", `/${defaultLocale}${pathname}`);
-    return NextResponse.redirect(new URL(`/${defaultLocale}${pathname}`, request.url));
+  // Handle /en/ paths - optionally redirect to root paths
+  if (pathname.startsWith('/en/')) {
+    const pathWithoutEn = pathname.replace('/en', '');
+    console.log("[Middleware] /en/ 路径，重定向到根路径:", pathWithoutEn);
+    return NextResponse.redirect(new URL(pathWithoutEn, request.url));
+  }
+
+  // Handle paths without locale prefix - treat as English (no redirect needed)
+  const firstSegment = pathname.split('/')[1];
+  if (!locales.includes(firstSegment)) {
+    console.log("[Middleware] 根路径访问，识别为英文");
+    // No redirect needed, treat as English root path
   }
 
   // Skip locale processing for auth pages and API routes
@@ -66,7 +84,8 @@ export async function middleware(request: NextRequest) {
   if (!token) {
     console.log("[Middleware] 没有token，重定向到登录页面");
     // 保存原始URL以便登录后重定向回来
-    const redirectUrl = new URL(`/${locale}/login`, request.url);
+    const loginPath = locale === 'en' ? '/login' : `/${locale}/login`;
+    const redirectUrl = new URL(loginPath, request.url);
     redirectUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);
   }
@@ -83,7 +102,8 @@ export async function middleware(request: NextRequest) {
 
     if (error) {
       console.log("[Middleware] 验证失败:", error);
-      return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
+      const loginPath = locale === 'en' ? '/login' : `/${locale}/login`;
+      return NextResponse.redirect(new URL(loginPath, request.url));
     }
 
     console.log("[Middleware] 验证成功, 用户:", data?.email);
@@ -93,7 +113,8 @@ export async function middleware(request: NextRequest) {
     // Scenario 1: Setup not complete
     if (data.is_setup_complete === false && pathnameWithoutLocale !== "/setup") {
       console.log("[Middleware] Setup not complete, redirecting to /setup");
-      const setupRedirectUrl = new URL(`/${locale}/setup`, request.url);
+      const setupPath = locale === 'en' ? '/setup' : `/${locale}/setup`;
+      const setupRedirectUrl = new URL(setupPath, request.url);
       // Preserve original intended path as callbackUrl for after setup
       setupRedirectUrl.searchParams.set("callbackUrl", pathname + search);
       return NextResponse.redirect(setupRedirectUrl);
@@ -104,20 +125,23 @@ export async function middleware(request: NextRequest) {
       console.log(
         "[Middleware] Setup complete, redirecting from /setup to /content-library",
       );
-      return NextResponse.redirect(new URL(`/${locale}/content-library`, request.url));
+      const contentLibraryPath = locale === 'en' ? '/content-library' : `/${locale}/content-library`;
+      return NextResponse.redirect(new URL(contentLibraryPath, request.url));
     }
 
     const response = NextResponse.next();
     return response;
   } catch (e) {
     console.error("[Middleware] 处理请求时出错:", e);
-    return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
+    const loginPath = locale === 'en' ? '/login' : `/${locale}/login`;
+    return NextResponse.redirect(new URL(loginPath, request.url));
   }
 }
 
 export const config = {
   matcher: [
     "/",
+    // English routes (root paths)
     "/dashboard/:path*",
     "/home/:path*",
     "/settings/:path*",
@@ -125,12 +149,21 @@ export const config = {
     "/favorites/:path*",
     "/prompts/:path*",
     "/content-library/:path*",
-    "/(en|zh)/dashboard/:path*",
-    "/(en|zh)/home/:path*",
-    "/(en|zh)/settings/:path*",
-    "/(en|zh)/setup",
-    "/(en|zh)/favorites/:path*",
-    "/(en|zh)/prompts/:path*",
-    "/(en|zh)/content-library/:path*",
+    "/login",
+    "/register",
+    "/password-recovery/:path*",
+    // Legacy /en/ routes (will be redirected)
+    "/en/:path*",
+    // Other language routes
+    "/(zh)/dashboard/:path*",
+    "/(zh)/home/:path*",
+    "/(zh)/settings/:path*",
+    "/(zh)/setup",
+    "/(zh)/favorites/:path*",
+    "/(zh)/prompts/:path*",
+    "/(zh)/content-library/:path*",
+    "/(zh)/login",
+    "/(zh)/register",
+    "/(zh)/password-recovery/:path*",
   ],
 };

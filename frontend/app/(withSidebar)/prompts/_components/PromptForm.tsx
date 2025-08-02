@@ -41,6 +41,7 @@ import type {
   PromptData,
 } from "@/components/actions/prompts-action";
 import { addTag } from "@/components/actions/prompts-action";
+import { useTranslationUtils } from "@/lib/i18n-utils";
 
 // Define the expected shape of the state from useFormState
 interface FormState {
@@ -110,6 +111,8 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
   const [newTagName, setNewTagName] = useState("");
   const [newTagColor, setNewTagColor] = useState("#3B82F6");
   const [creatingTag, setCreatingTag] = useState(false);
+
+  const { t, tPlural } = useTranslationUtils();
 
   // 解析内容中的变量
   const parseVariablesFromContent = useCallback((contentText: string) => {
@@ -660,10 +663,10 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
               提示词的主体内容，可以包含文本、指令和输入变量
             </p>
             {parseVariablesFromContent(content).length > 0 && (
-              <p className="text-sm text-blue-600">
-                检测到 {parseVariablesFromContent(content).length} 个变量:{" "}
+              <div className="text-sm text-muted-foreground mt-2">
+                {tPlural("detection.variablesDetected", parseVariablesFromContent(content).length)}:{" "}
                 {parseVariablesFromContent(content).join(", ")}
-              </p>
+              </div>
             )}
           </div>
 

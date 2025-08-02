@@ -122,4 +122,49 @@ export class TranslationUtils {
     
     return translation;
   }
+}
+
+/**
+ * 路径生成工具函数
+ * 根据语言生成正确的路径格式
+ */
+export function generateLocalePath(locale: string, path: string): string {
+  // 确保路径以 / 开头
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  
+  if (locale === 'en') {
+    // 英文使用根路径
+    return normalizedPath;
+  } else {
+    // 其他语言添加前缀
+    return `/${locale}${normalizedPath}`;
+  }
+}
+
+/**
+ * 从路径中提取语言和无语言路径
+ */
+export function parseLocalePath(pathname: string): { locale: string; pathWithoutLocale: string } {
+  const segments = pathname.split('/').filter(Boolean);
+  const supportedLocales = ['en', 'zh'];
+  
+  if (segments.length > 0 && supportedLocales.includes(segments[0]) && segments[0] !== 'en') {
+    return {
+      locale: segments[0],
+      pathWithoutLocale: '/' + segments.slice(1).join('/')
+    };
+  }
+  
+  return {
+    locale: 'en',
+    pathWithoutLocale: pathname
+  };
+}
+
+/**
+ * 获取当前语言
+ */
+export function getCurrentLocale(pathname: string): string {
+  const { locale } = parseLocalePath(pathname);
+  return locale;
 } 

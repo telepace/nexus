@@ -50,15 +50,29 @@ export function useStreamingConversation({
     }
   }, [contentId, STORAGE_KEY]);
   
-  // 对话状态变化时保存到localStorage
+  // 对话状态变化时保存到localStorage - 添加防抖机制
   useEffect(() => {
     if (conversations.length > 0) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
-        console.log('💾 保存对话历史:', conversations.length, '个对话');
-      } catch (error) {
-        console.error('❌ 保存对话历史失败:', error);
-      }
+      const timeoutId = setTimeout(() => {
+        try {
+          // 限制存储的对话数量，只保留最近50个对话以防止内存泄漏
+          const limitedConversations = conversations.slice(-50);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(limitedConversations));
+          console.log('💾 保存对话历史:', limitedConversations.length, '个对话');
+        } catch (error) {
+          console.error('❌ 保存对话历史失败:', error);
+          // 如果存储失败，尝试清理旧数据后重试
+          try {
+            localStorage.removeItem(STORAGE_KEY);
+            const limitedConversations = conversations.slice(-20);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(limitedConversations));
+          } catch (retryError) {
+            console.error('❌ 重试保存也失败:', retryError);
+          }
+        }
+      }, 500); // 500ms防抖延迟
+
+      return () => clearTimeout(timeoutId);
     }
   }, [conversations, STORAGE_KEY]);
 

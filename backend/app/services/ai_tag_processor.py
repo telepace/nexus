@@ -26,6 +26,7 @@ class AITagProcessor:
         session: Session,
         ai_result: dict[str, Any],
         content_item_id: str | None = None,
+        output_language: str = "zh",
     ) -> list[Tag]:
         """
         从AI分析结果中处理标签，创建数据库标签记录
@@ -34,6 +35,7 @@ class AITagProcessor:
             session: 数据库会话
             ai_result: AI分析结果字典
             content_item_id: 内容项ID（可选，用于关联ContentItemTag）
+            output_language: 输出语言 ("zh"中文 或 "en"英文)
 
         Returns:
             List[Tag]: 创建或获取到的标签列表
@@ -49,8 +51,8 @@ class AITagProcessor:
 
         logger.info(f"🔍 从AI结果中提取到 {len(tag_names)} 个原始标签: {tag_names}")
 
-        # 过滤和匹配预设标签
-        matched_tag_names = self.tag_manager.filter_and_match_preset_tags(tag_names)
+        # 过滤和匹配预设标签（传递语言参数确保标签语言一致性）
+        matched_tag_names = self.tag_manager.filter_and_match_preset_tags(tag_names, output_language)
         logger.info(
             f"✅ 匹配预设标签后得到 {len(matched_tag_names)} 个标签: {matched_tag_names}"
         )

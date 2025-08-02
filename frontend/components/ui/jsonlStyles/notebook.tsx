@@ -149,6 +149,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
               refVariant="inline"
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
+              contentId={contentId}
+              enableEnhancedTooltip={!!contentId}
             />
           </span>
         </div>
@@ -173,6 +175,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
               inline={true} 
               ref={hasReferences ? references.join(',') : undefined}
               refVariant="inline"
+              contentId={contentId}
+              enableEnhancedTooltip={!!contentId}
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
             />
@@ -201,6 +205,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
               refVariant="inline"
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
+              contentId={contentId}
+              enableEnhancedTooltip={!!contentId}
             />
           </span>
         </div>
@@ -225,6 +231,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
               inline={true} 
               ref={hasReferences ? references.join(',') : undefined}
               refVariant="inline"
+              contentId={contentId}
+              enableEnhancedTooltip={!!contentId}
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
             />
@@ -253,6 +261,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
               refVariant="inline"
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
+              contentId={contentId}
+              enableEnhancedTooltip={!!contentId}
             />
           </span>
         </div>
@@ -277,6 +287,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
               inline={true} 
               ref={hasReferences ? references.join(',') : undefined}
               refVariant="inline"
+              contentId={contentId}
+              enableEnhancedTooltip={!!contentId}
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
             />
@@ -417,6 +429,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
                 refVariant="badge"
                 contentId={contentId}
                 enableEnhancedTooltip={!!contentId}
+                contentId={contentId}
+                enableEnhancedTooltip={!!contentId}
               />
             </span>
           </div>
@@ -443,6 +457,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
                 inline={true} 
                 ref={hasReferences ? references.join(',') : undefined}
                 refVariant="badge"
+                contentId={contentId}
+                enableEnhancedTooltip={!!contentId}
                 contentId={contentId}
                 enableEnhancedTooltip={!!contentId}
               />
