@@ -16,11 +16,7 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import { type ContentItemPublic } from "@/app/[locale]/(withSidebar)/content-library/types";
-import {
-  contentApi,
-  ConversationListResponse,
-  AIResult,
-} from "@/lib/api/content";
+import { contentDataManager, ContentData } from "@/lib/services/content-data-manager";
 import { useAuth } from "@/lib/client-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -56,14 +52,9 @@ export default function ReaderLayout({
   // 简化右侧面板控制 - 桌面端默认显示，移动端默认隐藏
   const [showRightPanel, setShowRightPanel] = useState(!isMobile);
 
-  const [contentItem, setContentItem] = useState<ContentItemPublic | null>(
-    null,
-  );
-  const [conversations, setConversations] = useState<
-    ConversationListResponse["conversations"]
-  >([]);
+  // 统一的内容数据状态
+  const [contentData, setContentData] = useState<ContentData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<AIResult | null>(null);
 
   const markLeftReady = useCallback(() => {}, []);
 
@@ -76,42 +67,24 @@ export default function ReaderLayout({
     }
   }, [isMobile]);
 
-  // 获取完整的内容项数据和对话历史
+  // 获取完整的内容数据 - 使用智能数据管理器
   useEffect(() => {
     async function fetchContentData() {
-      if (!contentId || !user?.token) return;
+      if (!contentId || !user?.token) {
+        setContentData(null);
+        return;
+      }
 
       try {
         setLoading(true);
-
-        // 并行获取内容项和对话历史
-        const [item, conversationsResponse] = await Promise.allSettled([
-          contentApi.getContentItem(contentId),
-          contentApi.getContentConversations(contentId, false),
-        ]);
-
-        // 处理内容项
-        if (item.status === "fulfilled") {
-          setContentItem(item.value);
-          // 提取 ai_result 字段
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          setAnalysisResult((item.value as any).ai_result ?? null);
-        } else {
-          console.error("Failed to fetch content item:", item.reason);
-        }
-
-        // 处理对话历史
-        if (conversationsResponse.status === "fulfilled") {
-          setConversations(conversationsResponse.value.conversations);
-        } else {
-          console.error(
-            "Failed to fetch conversations:",
-            conversationsResponse.reason,
-          );
-        }
+        
+        // 使用智能数据管理器获取完整数据
+        const data = await contentDataManager.getFullData(contentId);
+        setContentData(data);
+        
       } catch (error) {
         console.error("Failed to fetch content data:", error);
-        // 可以选择在此处设置错误状态
+        setContentData(null);
       } finally {
         setLoading(false);
       }
@@ -127,8 +100,10 @@ export default function ReaderLayout({
 
   // 更新内容项
   const handleContentItemUpdate = useCallback((item: ContentItemPublic) => {
-    setContentItem(item);
-  }, []);
+    if (contentData) {
+      setContentData({ ...contentData, item });
+    }
+  }, [contentData]);
 
   // 切换右侧面板显示
   const toggleRightPanel = useCallback(() => {
@@ -148,7 +123,7 @@ export default function ReaderLayout({
                 value={{
                   onContentChange: handleContentChange,
                   onContentItemUpdate: handleContentItemUpdate,
-                  contentItem,
+                  contentItem: contentData?.item || null,
                   markLeftReady,
                 }}
               >
@@ -177,11 +152,11 @@ export default function ReaderLayout({
                   </Button>
                 </div>
                 <div className="flex-1 overflow-auto" data-exclude-selection>
-                  {contentItem ? (
+                  {contentData ? (
                     <ContentAnalysisSidebar
-                      content={contentItem}
-                      analysisResult={analysisResult}
-                      conversations={conversations}
+                      content={contentData.item}
+                      analysisResult={contentData.analysisResult}
+                      conversations={contentData.conversations}
                       isLoading={loading}
                       hideHeader={true}
                     />
@@ -228,7 +203,7 @@ export default function ReaderLayout({
                 value={{
                   onContentChange: handleContentChange,
                   onContentItemUpdate: handleContentItemUpdate,
-                  contentItem,
+                  contentItem: contentData?.item || null,
                   markLeftReady,
                 }}
               >
@@ -262,11 +237,11 @@ export default function ReaderLayout({
                   willChange: "auto",
                 }}
               >
-                {contentItem ? (
+                {contentData ? (
                   <ContentAnalysisSidebar
-                    content={contentItem}
-                    analysisResult={analysisResult}
-                    conversations={conversations}
+                    content={contentData.item}
+                    analysisResult={contentData.analysisResult}
+                    conversations={contentData.conversations}
                     isLoading={loading}
                   />
                 ) : (

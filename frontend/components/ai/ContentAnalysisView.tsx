@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useMemoryManager, useSmartState } from "@/lib/utils/memory-manager";
 import { Library, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedModernAnalysisInterface } from "./EnhancedModernAnalysisInterface";
 import { ReferenceManagerProvider } from "@/components/ui/ReferenceManager";
 import { useI18nSafe } from "@/lib/i18n-fallback";
 import type { ContentItemPublic } from "@/lib/api/content";
-import { AIResult, ConversationListResponse, contentApi } from "@/lib/api/content";
+import { AIResult, ConversationListResponse } from "@/lib/api/content";
+import { contentDataManager, ContentData } from "@/lib/services/content-data-manager";
 import { useAuth } from "@/lib/client-auth";
 
 export interface ContentAnalysisViewProps {
@@ -58,22 +60,23 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
   showHeaderTitle = true,
 }) => {
   const { t } = useI18nSafe();
+  const memoryManager = useMemoryManager();
   
   // 使用翻译的默认值
   const defaultHeaderTitle = headerTitle || t('analysis.contentAnalysis');
   const defaultEmptyStateText = emptyStateText || t('analysis.selectContentForPreview');
   
-  // 状态管理
-  const [currentItem, setCurrentItem] = useState<ContentItemPublic | null>(item);
+  // 智能状态管理 - 减少不必要的重渲染
+  const [currentItem, setCurrentItem] = useSmartState<ContentItemPublic | null>(item);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [historyCount, setHistoryCount] = useState(0);
   const [internalShowHistory, setInternalShowHistory] = useState(false);
-  const [aiStatus, setAiStatus] = useState<'idle' | 'processing' | 'completed'>('idle');
+  const [aiStatus, setAiStatus] = useSmartState<'idle' | 'processing' | 'completed'>('idle');
   const [hasAnyConversations, setHasAnyConversations] = useState(false);
   
   // 内部数据获取状态
-  const [internalAnalysisResult, setInternalAnalysisResult] = useState<AIResult | null>(null);
-  const [internalConversations, setInternalConversations] = useState<ConversationListResponse["conversations"]>([]);
+  const [internalAnalysisResult, setInternalAnalysisResult] = useSmartState<AIResult | null>(null);
+  const [internalConversations, setInternalConversations] = useSmartState<ConversationListResponse["conversations"]>([]);
   const [dataLoading, setDataLoading] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
@@ -87,7 +90,7 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
   const finalShowHeaderBorder = showHeaderBorder && !seamless;
   const finalShowHeaderTitle = showHeaderTitle && !seamless;
 
-  // 内容切换逻辑
+  // 内容切换逻辑 - 使用内存管理器
   useEffect(() => {
     if (item?.id === currentItem?.id) {
       return;
@@ -97,91 +100,48 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
     
     Promise.resolve().then(() => {
       setCurrentItem(item);
-      setTimeout(() => {
+      
+      const timer = memoryManager.setTimeout(() => {
         setIsTransitioning(false);
       }, 200);
+      
+      // 返回清理函数
+      return () => memoryManager.clearTimeout(timer);
     });
-  }, [item?.id, currentItem?.id]);
+  }, [item?.id, currentItem?.id, memoryManager]);
 
-  // 优化的数据获取逻辑 - 完全禁用preview模式下的对话历史加载
+  // 优化的数据获取逻辑 - 使用智能数据管理器
   useEffect(() => {
     let isMounted = true;
 
     async function fetchMissingData() {
       if (!currentItem?.id || !user?.token || !isMounted) return;
       
-      // 如果外部已经提供了数据，不需要重新获取
+      // 如果外部已经提供了完整数据，不需要重新获取
       const hasExternalAnalysis = externalAnalysisResult !== null;
       const hasExternalConversations = externalConversations.length > 0;
       
-      if (hasExternalAnalysis && hasExternalConversations) {
-        return;
-      }
-
-      // 🚫 preview模式下完全禁用对话历史加载，避免触发500错误
-      const isPreviewMode = variant === "preview";
-      if (isPreviewMode) {
-        console.log('🚫 Preview模式下跳过对话历史加载');
-        // 只加载分析结果，不加载对话历史
-        if (!hasExternalAnalysis) {
-          try {
-            setDataLoading(true);
-            const item = await contentApi.getContentItem(currentItem.id);
-            if (isMounted) {
-              const analysisData = (item as { ai_result?: AIResult }).ai_result;
-              setInternalAnalysisResult(analysisData || null);
-            }
-          } catch (error) {
-            console.error('获取分析数据失败:', error);
-          } finally {
-            if (isMounted) {
-              setDataLoading(false);
-            }
-          }
-        }
+      if (hasExternalAnalysis && (variant === "preview" || hasExternalConversations)) {
         return;
       }
 
       try {
         setDataLoading(true);
         
-        const promises: Promise<unknown>[] = [];
+        // 使用智能数据管理器获取数据
+        const data = variant === "preview" 
+          ? await contentDataManager.getPreviewData(currentItem.id)
+          : await contentDataManager.getFullData(currentItem.id);
         
-        // 只获取缺失的数据
+        if (!isMounted || !data) return;
+        
+        // 只设置缺失的数据
         if (!hasExternalAnalysis) {
-          promises.push(contentApi.getContentItem(currentItem.id));
+          setInternalAnalysisResult(data.analysisResult || null);
         }
         
-        if (!hasExternalConversations) {
-          promises.push(contentApi.getContentConversations(currentItem.id, false));
-        }
-
-        if (promises.length === 0) return;
-
-        const results = await Promise.allSettled(promises);
-        
-        if (!isMounted) return;
-        
-        let resultIndex = 0;
-        
-        // 处理分析结果
-        if (!hasExternalAnalysis && results[resultIndex]) {
-          const analysisResult = results[resultIndex];
-          if (analysisResult.status === 'fulfilled') {
-            const analysisData = (analysisResult.value as { ai_result?: AIResult }).ai_result;
-            setInternalAnalysisResult(analysisData || null);
-          }
-          resultIndex++;
-        }
-        
-        // 处理对话历史
-        if (!hasExternalConversations && results[resultIndex]) {
-          const conversationsResult = results[resultIndex];
-          if (conversationsResult.status === 'fulfilled') {
-            setInternalConversations((conversationsResult.value as ConversationListResponse).conversations || []);
-          } else {
-            console.error('获取对话历史失败:', conversationsResult.reason);
-          }
+        if (!hasExternalConversations && variant !== "preview") {
+          setInternalConversations(data.conversations || []);
         }
         
       } catch (error) {
@@ -200,16 +160,18 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
     };
   }, [currentItem?.id, user?.token, externalAnalysisResult, externalConversations.length, variant]);
 
-  // 滚动到顶部
+  // 滚动到顶部 - 使用内存管理器优化
   useEffect(() => {
     if (containerRef.current && currentItem) {
-      Promise.resolve().then(() => {
+      const timer = memoryManager.setTimeout(() => {
         containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-      });
+      }, 0);
+      
+      return () => memoryManager.clearTimeout(timer);
     }
-  }, [currentItem?.id]);
+  }, [currentItem?.id, memoryManager]);
 
-  // 监听AI状态变化
+  // 监听AI状态变化 - 使用内存管理器
   useEffect(() => {
     const handleAIStatusUpdate = (event: CustomEvent) => {
       const { status, hasConversations } = event.detail;
@@ -219,12 +181,16 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
       }
     };
 
-    window.addEventListener('aiStatusUpdate' as keyof WindowEventMap, handleAIStatusUpdate);
+    const listenerId = memoryManager.addEventListener(
+      window, 
+      'aiStatusUpdate', 
+      handleAIStatusUpdate as EventListener
+    );
     
     return () => {
-      window.removeEventListener('aiStatusUpdate' as keyof WindowEventMap, handleAIStatusUpdate);
+      memoryManager.removeEventListener(listenerId);
     };
-  }, []);
+  }, [memoryManager, setAiStatus]);
 
   // 历史记录计数处理
   const handleHistoryCountChange = useCallback((count: number) => {

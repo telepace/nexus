@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { usePathname } from "next/navigation"; // 🎯 添加路由检测
 import {
   Brain,
@@ -86,6 +86,14 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
   // 内存优化：preview模式下限制功能，减少组件复杂度
   const isPreviewMode = variant === "preview";
   const shouldLimitFeatures = isPreviewMode;
+  
+  // Preview模式下的功能限制（使用useMemo避免对象重新创建）
+  const previewOptimizations = useMemo(() => ({
+    disableStreamingConversations: isPreviewMode, // 禁用流式对话
+    disablePromptLoading: isPreviewMode, // 禁用prompt加载
+    disableHistoryLoading: isPreviewMode, // 禁用历史记录
+    reduceEventListeners: isPreviewMode, // 减少事件监听器
+  }), [isPreviewMode]);
 
   // 状态管理
   const [inputValue, setInputValue] = useState("");
@@ -95,6 +103,11 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
   const [prompts, setPrompts] = useState<PromptData[]>([]);
   const [loadingPrompts, setLoadingPrompts] = useState(true);
   
+  // 稳定的contentId，避免Hook频繁重新初始化
+  const stableContentId = useMemo(() => {
+    return previewOptimizations.disableHistoryLoading ? '' : (content?.id || '');
+  }, [previewOptimizations.disableHistoryLoading, content?.id]);
+  
   // 使用统一的历史记录管理hook - 在preview模式下禁用以节省资源
   const {
     historyRecords,
@@ -102,9 +115,9 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     refreshHistory,
     addHistoryRecord
   } = useConversationHistory({
-    contentId: shouldLimitFeatures ? '' : (content?.id || ''), // preview模式下不加载历史
+    contentId: stableContentId,
     onError: (error) => {
-      if (!shouldLimitFeatures) { // 只在非preview模式下显示错误
+      if (!previewOptimizations.disableHistoryLoading) {
         console.error('历史记录加载失败:', error);
         toast({
           title: "加载失败",
@@ -147,6 +160,29 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     }
   }, []);
 
+  // 稳定的流式对话contentId
+  const stableStreamingContentId = useMemo(() => {
+    return previewOptimizations.disableStreamingConversations ? '' : (content?.id || '');
+  }, [previewOptimizations.disableStreamingConversations, content?.id]);
+
+  // 稳定的回调函数，避免重新创建
+  const handleConversationUpdate = useCallback((conversation: any) => {
+    // 只在非preview模式下处理对话更新
+    if (!previewOptimizations.disableStreamingConversations) {
+      // 可以在这里添加额外的处理逻辑
+    }
+  }, [previewOptimizations.disableStreamingConversations]);
+
+  const handleStreamingError = useCallback((error: any) => {
+    if (!previewOptimizations.disableStreamingConversations) {
+      toast({
+        title: "处理失败",
+        description: error,
+        variant: "destructive",
+      });
+    }
+  }, [previewOptimizations.disableStreamingConversations, toast]);
+
   // 新的对话管理 - 在preview模式下禁用以节省资源  
   const {
     conversations: streamingConversations,
@@ -155,22 +191,9 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     deleteConversation,
     cancelCurrentProcessing,
   } = useStreamingConversation({
-    contentId: shouldLimitFeatures ? '' : (content?.id || ''), // preview模式下禁用
-    onConversationUpdate: (conversation) => {
-      // 只在非preview模式下处理对话更新
-      if (!shouldLimitFeatures) {
-        // 可以在这里添加额外的处理逻辑
-      }
-    },
-    onError: (error) => {
-      if (!shouldLimitFeatures) { // 只在非preview模式下显示错误
-        toast({
-          title: "处理失败",
-          description: error,
-          variant: "destructive",
-        });
-      }
-    },
+    contentId: stableStreamingContentId,
+    onConversationUpdate: handleConversationUpdate,
+    onError: handleStreamingError,
   });
 
   // 🎯 监听路由变化，重置折叠状态
@@ -201,40 +224,56 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     }
   }, [streamingConversations.length, scrollToBottom]);
 
-  // 🎯 监听AI处理状态变化，通知ContentPreview更新标题
-  useEffect(() => {
+  // 🎯 优化AI处理状态变化监听 - 使用memo避免重复计算
+  const aiStatusInfo = useMemo(() => {
     const hasConversations = streamingConversations.length > 0;
     
-    // 检查是否有正在处理的对话
-    const hasProcessing = streamingConversations.some(conv => 
-      conv.messages.some(msg => 
-        msg.role === "assistant" && 
-        (msg.status === "pending" || msg.status === "thinking" || msg.status === "streaming")
-      )
-    );
-    
-    // 检查是否有已完成的对话
-    const hasCompleted = streamingConversations.some(conv => 
-      conv.messages.some(msg => 
-        msg.role === "assistant" && msg.status === "completed"
-      )
-    );
-
-    let status: 'idle' | 'processing' | 'completed' = 'idle';
-    
-    if (hasProcessing) {
-      status = 'processing';
-    } else if (hasCompleted || hasConversations) {
-      status = 'completed';
+    // 如果没有对话，直接返回idle状态
+    if (!hasConversations) {
+      return { status: 'idle' as const, hasConversations: false };
     }
-    
-    // 通知父组件状态变化
-    onStatusChange?.(status, hasConversations);
-    
-  }, [streamingConversations, onStatusChange]);
 
-  // 获取prompts
+    // 使用标志位避免重复遍历
+    let hasProcessing = false;
+    let hasCompleted = false;
+
+    // 单次遍历检查所有状态
+    for (const conv of streamingConversations) {
+      for (const msg of conv.messages) {
+        if (msg.role === "assistant") {
+          const status = msg.status;
+          if (status === "pending" || status === "thinking" || status === "streaming") {
+            hasProcessing = true;
+            break; // 找到processing状态就可以跳出
+          } else if (status === "completed") {
+            hasCompleted = true;
+          }
+        }
+      }
+      
+      // 如果已经找到processing状态，可以提前结束外层循环
+      if (hasProcessing) break;
+    }
+
+    const status = hasProcessing ? 'processing' : 
+                   (hasCompleted || hasConversations) ? 'completed' : 'idle';
+    
+    return { status, hasConversations };
+  }, [streamingConversations]);
+
+  // 分离的effect用于通知状态变化，避免在memo计算中产生副作用
   useEffect(() => {
+    onStatusChange?.(aiStatusInfo.status, aiStatusInfo.hasConversations);
+  }, [aiStatusInfo.status, aiStatusInfo.hasConversations, onStatusChange]);
+
+  // 获取prompts - preview模式下跳过
+  useEffect(() => {
+    if (previewOptimizations.disablePromptLoading) {
+      setPrompts([]);
+      setLoadingPrompts(false);
+      return;
+    }
+
     const loadPrompts = async () => {
       try {
         setLoadingPrompts(true);
@@ -266,15 +305,19 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     };
 
     loadPrompts();
-  }, []);
+  }, [previewOptimizations.disablePromptLoading]);
 
   // 监听历史记录数量变化
   useEffect(() => {
     onHistoryCountChange?.(historyRecords.length);
   }, [historyRecords.length, onHistoryCountChange]);
 
-  // 监听来自正文区域的文本选择事件
+  // 监听来自正文区域的文本选择事件 - preview模式下禁用
   useEffect(() => {
+    if (previewOptimizations.reduceEventListeners) {
+      return; // preview模式下不添加事件监听器
+    }
+
     const handleTextSelectionAction = (event: CustomEvent) => {
       const { action, selectedText } = event.detail;
       const prompt = `${action.prompt}\n\n${selectedText}`;
@@ -292,10 +335,14 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
         handleTextSelectionAction
       );
     };
-  }, []);
+  }, [previewOptimizations.reduceEventListeners]);
 
-  // 监听点击外部，清除选中的 JSONL 块
+  // 监听点击外部，清除选中的 JSONL 块 - preview模式下禁用
   useEffect(() => {
+    if (previewOptimizations.reduceEventListeners) {
+      return; // preview模式下不添加事件监听器
+    }
+
     const handleClickOutside = (event: MouseEvent) => {
       // 如果点击的不是可选择的文本区域，清除选择
       const target = event.target as HTMLElement;
@@ -308,7 +355,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
-  }, []);
+  }, [previewOptimizations.reduceEventListeners]);
 
   // 处理prompt标签点击 - 优化版本
   const handlePromptClick = useCallback(
@@ -503,38 +550,51 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     );
   }
 
-  // 根据变体计算样式
-  const containerHeight = height === "fixed" ? "h-80" : "h-full";
-  const containerClasses =
-    variant === "preview"
-      ? `flex flex-col ${containerHeight} ${className} linear-bg-1`
-      : `flex flex-col h-full ${className}`;
+  // 根据变体计算样式 - 使用useMemo避免重复计算
+  const containerClasses = useMemo(() => {
+    const baseClasses = "flex flex-col";
+    const heightClass = height === "fixed" ? "h-80" : "h-full";
+    const previewClass = variant === "preview" ? "linear-bg-1" : "";
+    
+    return `${baseClasses} ${heightClass} ${previewClass} ${className}`.trim();
+  }, [variant, height, className]);
+
+  const scrollAreaClasses = useMemo(() => {
+    const baseClasses = "flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-300 hover:scrollbar-thumb-neutral-400 dark:scrollbar-thumb-neutral-600 dark:hover:scrollbar-thumb-neutral-500";
+    const previewBg = variant === "preview" ? "bg-[var(--color-linear-bg-1)]" : "";
+    
+    return `${baseClasses} ${previewBg}`.trim();
+  }, [variant]);
+
+  // 稳定的内联样式，避免对象重新创建
+  const scrollContainerStyle = useMemo(() => ({
+    contain: "layout style paint" as const,
+    overscrollBehavior: "contain" as const,
+    // 移除willChange以避免与其他变化冲突
+  }), []);
+
+  // 稳定的标题样式
+  const headerClasses = useMemo(() => {
+    const baseClasses = "px-6 py-4";
+    const previewBg = variant === "preview" ? "bg-[var(--color-linear-bg-1)]" : "";
+    
+    return `${baseClasses} ${previewBg}`.trim();
+  }, [variant]);
 
   return (
     <div className={containerClasses} data-exclude-selection>
 
       {/* 可滚动的主内容区域 - 优化滚动性能 */}
       <div
-        className={`
-          flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent 
-          scrollbar-thumb-neutral-300 hover:scrollbar-thumb-neutral-400
-          dark:scrollbar-thumb-neutral-600 dark:hover:scrollbar-thumb-neutral-500
-          ${variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""}
-        `}
+        className={scrollAreaClasses}
         data-exclude-selection
         ref={scrollContainerRef}
-        style={{
-          contain: "layout style paint",
-          willChange: "scroll-position",
-          overscrollBehavior: "contain",
-        }}
+        style={scrollContainerStyle}
       >
         {/* 页面标题 */}
         {!hideHeader && (
           <div
-            className={`px-6 py-4 ${
-              variant === "preview" ? "!bg-[var(--color-linear-bg-1)]" : ""
-            }`}
+            className={headerClasses}
             data-exclude-selection
           >
             <h1 className="text-xl font-medium text-neutral-900 dark:text-neutral-100 line-clamp-2">

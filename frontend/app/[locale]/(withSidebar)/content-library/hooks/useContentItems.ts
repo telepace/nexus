@@ -5,6 +5,7 @@ import { useAuth, getCookie } from "@/lib/client-auth";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { contentCache } from "@/lib/services/content-cache";
+import { contentDataManager } from "@/lib/services/content-data-manager";
 import { useContentEvents, ContentEvent } from "@/hooks/useContentEvents";
 import { eventBus } from "@/lib/event-bus";
 import type { ContentItemPublic } from "../types";
@@ -70,52 +71,28 @@ export const useContentItems = () => {
     return () => eventBus.off("contentCreated", handler);
   }, []);
 
-  /** 单个内容预加载 */
+  /** 单个内容预加载 - 使用智能数据管理器 */
   const prefetchContent = useCallback(
     async (item: ContentItemPublic) => {
-      if (contentCache.has(`content-detail-${item.id}`)) return;
-
       try {
-        const token = user?.token || getCookie("accessToken");
-        if (!token) return;
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
-        const [detailRes, mdRes] = await Promise.allSettled([
-          fetch(`${apiUrl}/api/v1/content/${item.id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-            credentials: "include",
-          }),
-          fetch(`${apiUrl}/api/v1/content/${item.id}/markdown`, {
-            headers: { Authorization: `Bearer ${token}` },
-            credentials: "include",
-          }),
-        ]);
-
-        if (detailRes.status === "fulfilled" && detailRes.value.ok) {
-          contentCache.setContentDetail(item.id, await detailRes.value.json());
-        }
-        if (mdRes.status === "fulfilled" && mdRes.value.ok) {
-          const data = await mdRes.value.json();
-          contentCache.setMarkdownContent(item.id, data.markdown_content);
-        }
+        // 使用智能数据管理器进行预加载，只获取preview数据
+        await contentDataManager.getPreviewData(item.id);
       } catch (err) {
         console.debug("Prefetch failed:", err);
       }
     },
-    [user],
+    [],
   );
 
-  /** 🚀 优化批量预加载 - 减少状态更新频率*/
+  /** 🚀 优化批量预加载 - 使用智能数据管理器*/
   const batchPrefetchContent = useCallback(
     async (list: ContentItemPublic[]) => {
-      const token = user?.token || getCookie("accessToken");
-      if (!token) return;
+      if (!user?.token) return;
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
       const toPrefetch = list
         .filter((i) => i.processing_status === "completed")
-        .slice(0, 15);
+        .slice(0, 15)
+        .map(i => i.id);
       
       setPrefetchStats({
         total: toPrefetch.length,
@@ -123,44 +100,23 @@ export const useContentItems = () => {
         inProgress: true,
       });
 
-      // 🚀 优化：使用本地计数器，减少状态更新
-      let cachedCount = 0;
-      
-      const tasks = toPrefetch.map(async (i) => {
-        if (contentCache.has(`content-detail-${i.id}`)) {
-          cachedCount++;
-          return;
-        }
-        try {
-          const [detailRes, mdRes] = await Promise.allSettled([
-            fetch(`${apiUrl}/api/v1/content/${i.id}`, {
-              headers: { Authorization: `Bearer ${token}` },
-              credentials: "include",
-            }),
-            fetch(`${apiUrl}/api/v1/content/${i.id}/markdown`, {
-              headers: { Authorization: `Bearer ${token}` },
-              credentials: "include",
-            }),
-          ]);
-          if (detailRes.status === "fulfilled" && detailRes.value.ok) {
-            contentCache.setContentDetail(i.id, await detailRes.value.json());
-          }
-          if (mdRes.status === "fulfilled" && mdRes.value.ok) {
-            const data = await mdRes.value.json();
-            contentCache.setMarkdownContent(i.id, data.markdown_content);
-          }
-          cachedCount++;
-        } catch {}
-      });
-
-      // 🚀 优化：只在所有任务完成后更新一次状态
-      Promise.allSettled(tasks).then(() => {
+      try {
+        // 使用智能数据管理器进行批量预加载
+        await contentDataManager.batchPrefetch(toPrefetch);
+        
         setPrefetchStats({
           total: toPrefetch.length,
-          cached: cachedCount,
+          cached: toPrefetch.length,
           inProgress: false,
         });
-      });
+      } catch (error) {
+        console.error("Batch prefetch failed:", error);
+        setPrefetchStats({
+          total: toPrefetch.length,
+          cached: 0,
+          inProgress: false,
+        });
+      }
     },
     [user],
   );

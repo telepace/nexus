@@ -8,7 +8,50 @@ export function useCardHeight() {
   const [heights, setHeights] = useState<Record<string, number>>({});
   const observers = useRef<Record<string, ResizeObserver>>({});
   const elements = useRef<Record<string, HTMLElement>>({});
-  const isMountedRef = useRef(true); // 跟踪组件是否已挂载
+  const isMountedRef = useRef(true);
+  const pendingUpdates = useRef<Set<string>>(new Set()); // 防止重复更新
+
+  // 稳定的状态更新函数
+  const updateHeight = useCallback((cardId: string, newHeight: number) => {
+    if (!isMountedRef.current || pendingUpdates.current.has(cardId)) {
+      return;
+    }
+    
+    pendingUpdates.current.add(cardId);
+    
+    setHeights((prev) => {
+      const currentHeight = prev[cardId];
+      // 提高变化阈值，减少微小变化的更新
+      if (Math.abs((currentHeight || 0) - newHeight) > 10) {
+        pendingUpdates.current.delete(cardId);
+        return {
+          ...prev,
+          [cardId]: newHeight,
+        };
+      }
+      pendingUpdates.current.delete(cardId);
+      return prev;
+    });
+  }, []);
+
+  const removeHeight = useCallback((cardId: string) => {
+    if (!isMountedRef.current || pendingUpdates.current.has(cardId)) {
+      return;
+    }
+    
+    pendingUpdates.current.add(cardId);
+    
+    setHeights((prev) => {
+      if (cardId in prev) {
+        const updated = { ...prev };
+        delete updated[cardId];
+        pendingUpdates.current.delete(cardId);
+        return updated;
+      }
+      pendingUpdates.current.delete(cardId);
+      return prev;
+    });
+  }, []);
 
   // 注册元素用于高度监听
   const registerElement = useCallback(
@@ -20,19 +63,11 @@ export function useCardHeight() {
           delete observers.current[cardId];
         }
         delete elements.current[cardId];
-        // 只有在组件仍然挂载时才更新状态
-        if (isMountedRef.current) {
-          // 使用微任务来延迟状态更新，避免在渲染过程中调用setState
-          Promise.resolve().then(() => {
-            if (isMountedRef.current) {
-              setHeights((prev) => {
-                const updated = { ...prev };
-                delete updated[cardId];
-                return updated;
-              });
-            }
-          });
-        }
+        
+        // 延迟清理状态，避免同步状态更新
+        setTimeout(() => {
+          removeHeight(cardId);
+        }, 0);
         return;
       }
 
@@ -46,15 +81,15 @@ export function useCardHeight() {
         observers.current[cardId].disconnect();
       }
 
-      // 更强的防抖和节流机制
+      // 防抖机制
       let updateTimeout: NodeJS.Timeout | null = null;
       let lastUpdateTime = 0;
-      const MIN_UPDATE_INTERVAL = 100; // 增加最小更新间隔到100ms
+      const MIN_UPDATE_INTERVAL = 150; // 增加间隔以确保稳定性
 
       // 创建新的 ResizeObserver
       observers.current[cardId] = new ResizeObserver((entries) => {
         const entry = entries[0];
-        if (entry) {
+        if (entry && isMountedRef.current) {
           const height = entry.contentRect.height;
           const now = Date.now();
           
@@ -63,25 +98,15 @@ export function useCardHeight() {
             clearTimeout(updateTimeout);
           }
           
-          // 更激进的防抖和节流，减少状态更新频率
+          // 防抖处理
           const timeSinceLastUpdate = now - lastUpdateTime;
           const delay = Math.max(MIN_UPDATE_INTERVAL - timeSinceLastUpdate, 50);
           
           updateTimeout = setTimeout(() => {
-            if (isMountedRef.current) {
-              setHeights((prev) => {
-                const currentHeight = prev[cardId];
-                const newHeight = Math.max(height, 50);
-                // 提高变化阈值，减少微小变化的更新
-                if (Math.abs((currentHeight || 0) - newHeight) > 10) {
-                  lastUpdateTime = Date.now();
-                  return {
-                    ...prev,
-                    [cardId]: newHeight,
-                  };
-                }
-                return prev;
-              });
+            if (isMountedRef.current && elements.current[cardId] === element) {
+              const newHeight = Math.max(height, 50);
+              lastUpdateTime = Date.now();
+              updateHeight(cardId, newHeight);
             }
           }, delay);
         }
@@ -91,26 +116,16 @@ export function useCardHeight() {
       observers.current[cardId].observe(element);
       elements.current[cardId] = element;
 
-      // 使用微任务获取初始高度，避免与ResizeObserver冲突
-      Promise.resolve().then(() => {
+      // 获取初始高度 - 使用更长的延迟避免冲突
+      setTimeout(() => {
         if (isMountedRef.current && elements.current[cardId] === element) {
           const rect = element.getBoundingClientRect();
           const newHeight = Math.max(rect.height, 50);
-          setHeights((prev) => {
-            const currentHeight = prev[cardId];
-            // 使用更高的初始阈值
-            if (Math.abs((currentHeight || 0) - newHeight) > 15) {
-              return {
-                ...prev,
-                [cardId]: newHeight,
-              };
-            }
-            return prev;
-          });
+          updateHeight(cardId, newHeight);
         }
-      });
+      }, 100);
     },
-    [],
+    [updateHeight, removeHeight],
   );
 
   // 获取指定卡片的高度
@@ -120,8 +135,8 @@ export function useCardHeight() {
         return 0;
       }
       const height = heights[cardId];
-      // 如果还没有测量到高度，返回一个较大的默认值以确保内容可见
-      return height !== undefined ? height : 2000; // 增加默认高度以适应更长的内容
+      // 如果还没有测量到高度，返回一个合理的默认值，避免视觉跳跃
+      return height !== undefined ? height : 400; // 使用更合理的默认高度
     },
     [heights],
   );
@@ -136,6 +151,7 @@ export function useCardHeight() {
       });
       observers.current = {};
       elements.current = {};
+      pendingUpdates.current.clear(); // 清理待处理的更新
     };
   }, []);
 

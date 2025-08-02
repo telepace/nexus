@@ -50,12 +50,14 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
   const [isScrolling, setIsScrolling] = useState(false);
   
   // 使用统一的可见性管理替代单独的悬浮状态
-  // 针对preview模式，使用更保守的可见性配置
-  const hoverVisibility = useUnifiedVisibility({
+  // 针对preview模式，使用更保守的可见性配置 - useMemo避免重新创建
+  const visibilityConfig = useMemo(() => ({
     ...visibilityPresets.hover,
     fadeDuration: variant === "preview" ? 100 : 200, // 预览模式下更快的动画
     autoHideDelay: variant === "preview" ? 0 : 2000, // 预览模式下禁用自动隐藏
-  });
+  }), [variant]);
+  
+  const hoverVisibility = useUnifiedVisibility(visibilityConfig);
   
   // 使用外部传入的选中状态，如果没有传入则使用内部状态
   const selectedBlock = externalSelectedBlock;
@@ -63,8 +65,16 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
   // 动态高度管理
   const { registerElement, getCardHeight } = useCardHeight();
 
-  // 滚动检测 - Jobs式的细致体验优化
+  // 稳定化 content.id，避免重复传递
+  const stableContentId = useMemo(() => content.id, [content.id]);
+
+  // 滚动检测 - Jobs式的细致体验优化（preview模式下禁用）
   useEffect(() => {
+    // Preview模式下禁用全局滚动监听以提升性能
+    if (variant === "preview") {
+      return;
+    }
+
     let scrollTimeout: NodeJS.Timeout;
     
     const handleScroll = () => {
@@ -97,7 +107,7 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
         clearTimeout(scrollTimeout);
       }
     };
-  }, []);
+  }, [variant]);
 
   // 渲染卡片内容
   const renderCardContent = useCallback((card: AnalysisCard) => {
@@ -139,7 +149,8 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
             <UniversalContentRenderer
               content={textContent}
               onExpandLine={onExpandLine}
-              contentId={content.id}
+              contentId={stableContentId}
+              enableDelayedRendering={false}
             />
           </div>
         </div>
@@ -147,23 +158,38 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
     }
 
     return null;
-  }, [selectedBlock, onExpandLine, onBlockSelect]);
+  }, [selectedBlock, onExpandLine, onBlockSelect, stableContentId]);
 
   // 主卡片组件 - 使用统一可见性管理
   const CardComponent = React.memo(({ card }: { card: AnalysisCard }) => {
     const isSelected = selectedCard === card.id;
     const hoverButtonsId = `card-hover-${card.id}`;
-    const isHovered = hoverVisibility.isVisible(hoverButtonsId);
     const isCollapsed = collapsedCards.has(card.id);
+    
+    // 在Preview模式下完全禁用hover效果，避免状态管理开销
+    const shouldShowHoverButtons = variant !== "preview";
+
+    // 稳定的ref回调，避免重复注册 - Preview模式下禁用以提升性能
+    const elementRef = useCallback((el: HTMLElement | null) => {
+      if (variant !== "preview") {
+        registerElement(card.id, el);
+      }
+    }, [card.id, registerElement, variant]);
 
     // 优化悬浮状态处理，使用统一可见性管理
     const handleMouseEnter = useCallback(() => {
-      hoverVisibility.setVisible(hoverButtonsId, true, Date.now());
-    }, [card.id, hoverButtonsId, hoverVisibility]);
+      // 只在非Preview模式下处理hover状态
+      if (shouldShowHoverButtons) {
+        hoverVisibility.setVisible(hoverButtonsId, true, 1);
+      }
+    }, [card.id, hoverButtonsId, hoverVisibility, shouldShowHoverButtons]);
 
     const handleMouseLeave = useCallback(() => {
-      hoverVisibility.setVisible(hoverButtonsId, false);
-    }, [hoverButtonsId, hoverVisibility]);
+      // 只在非Preview模式下处理hover状态
+      if (shouldShowHoverButtons) {
+        hoverVisibility.setVisible(hoverButtonsId, false);
+      }
+    }, [hoverButtonsId, hoverVisibility, shouldShowHoverButtons]);
 
     const handleClick = useCallback(() => {
       setSelectedCard(isSelected ? null : card.id);
@@ -212,55 +238,59 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
                   className="text-neutral-400 hover:text-neutral-600 relative z-10"
                 />
 
-                {/* 优化悬浮操作按钮显示 - 使用统一可见性管理 */}
-                <div 
-                  className={hoverVisibility.getVisibilityClasses(
-                    hoverButtonsId, 
-                    "flex items-center gap-1 mr-1 relative z-10"
-                  )}
-                >
-                  <FavoriteButton
-                    itemId={content.id}
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      console.log("分享");
-                    }}
+                {/* 优化悬浮操作按钮显示 - Preview模式下完全禁用 */}
+                {shouldShowHoverButtons && (
+                  <div 
+                    className={`
+                      flex items-center gap-1 mr-1 relative z-10
+                      transition-opacity duration-100
+                      group-hover:opacity-100 opacity-0
+                    `}
                   >
-                    <Share className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                    <FavoriteButton
+                      itemId={content.id}
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        console.log("分享");
+                      }}
+                    >
+                      <Share className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* 卡片内容 - 使用稳定的高度过渡 */}
             <div
               className={`
-              card-height-stable overflow-hidden
+              card-height-stable overflow-hidden transition-all duration-300
               ${isCollapsed ? "opacity-0" : "opacity-100"}
             `}
               data-transitioning={isCollapsed ? "true" : "false"}
-              style={{
-                maxHeight: isCollapsed ? 0 : `${getCardHeight(card.id, isCollapsed)}px`,
-              }}
+              style={
+                variant === "preview" 
+                  ? {
+                      // Preview模式下使用auto高度，避免动态计算导致的闪烁
+                      maxHeight: isCollapsed ? 0 : "none",
+                      height: isCollapsed ? 0 : "auto"
+                    }
+                  : {
+                      maxHeight: isCollapsed ? 0 : `${getCardHeight(card.id, isCollapsed)}px`,
+                    }
+              }
             >
               <div
-                ref={(el) => {
-                  // 使用微任务替代requestAnimationFrame，减少竞态条件
-                  if (el) {
-                    Promise.resolve().then(() => registerElement(card.id, el));
-                  } else {
-                    registerElement(card.id, null);
-                  }
-                }}
+                ref={elementRef}
                 className="card-content-inner preview-stable"
               >
                 {renderCardContent(card)}
@@ -269,6 +299,13 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
           </CardContent>
         </Card>
       </div>
+    );
+  }, (prevProps, nextProps) => {
+    // 自定义比较函数，避免不必要的重新渲染
+    return (
+      prevProps.card.id === nextProps.card.id &&
+      prevProps.card.title === nextProps.card.title &&
+      prevProps.card.content === nextProps.card.content
     );
   });
 

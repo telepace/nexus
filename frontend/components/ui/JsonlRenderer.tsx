@@ -57,10 +57,6 @@ export function JsonlRenderer({
   enableEnhancedTooltip = true,
   onReferenceClick,
 }: JsonlRendererProps) {
-  // 延迟渲染状态
-  const [isContentReady, setIsContentReady] = useState(!enableDelayedRendering);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
   // 使用安全的 ReferenceManager
   const { actions } = useReferenceManagerSafe();
 
@@ -73,41 +69,19 @@ export function JsonlRenderer({
   // 根據 styleName 取得區塊渲染器
   const styleRenderer = jsonlStyles[styleName] || jsonlStyles["default"];
 
-  // 优化延迟渲染逻辑 - 避免频繁状态切换
-  useEffect(() => {
-    if (!enableDelayedRendering) {
-      setIsContentReady(true);
-      return;
-    }
-
-    // 如果内容为空或未变化，直接设为就绪
-    if (!content || content.trim() === '') {
-      setIsContentReady(true);
-      return;
-    }
-
-    // 清理之前的定时器
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    // 只有在内容变化时才重置状态
-    if (isContentReady) {
-      setIsContentReady(false);
-    }
-
-    // 启动延迟定时器，使用较短延迟减少等待时间
-    timeoutRef.current = setTimeout(() => {
-      setIsContentReady(true);
-    }, Math.min(renderDelay, 200)); // 最大延迟200ms
-
-    // 清理函数
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [content, enableDelayedRendering, renderDelay, isContentReady]);
+  // 统一的渲染状态管理 - 避免多个状态冲突
+  const [renderState, setRenderState] = useState<{
+    isReady: boolean;
+    isLoading: boolean;
+    blocks: Record<string, unknown>[];
+  }>({
+    isReady: !enableDelayedRendering,
+    isLoading: false,
+    blocks: []
+  });
+  
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const contentRef = useRef<string>('');
 
   if (!content) {
     return (
@@ -118,8 +92,101 @@ export function JsonlRenderer({
     );
   }
 
+  // 统一的内容处理逻辑 - 消除状态冲突
+  useEffect(() => {
+    // 避免重复处理相同内容
+    if (contentRef.current === content) {
+      return;
+    }
+    contentRef.current = content;
+
+    // 清理之前的定时器
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // 如果内容为空，直接设为就绪状态
+    if (!content.trim()) {
+      setRenderState({
+        isReady: true,
+        isLoading: false,
+        blocks: []
+      });
+      return;
+    }
+
+    // 立即开始解析，避免延迟造成的状态不一致
+    const parseContentSync = () => {
+      const lines = content
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      if (lines.length === 0) {
+        setRenderState({
+          isReady: true,
+          isLoading: false,
+          blocks: []
+        });
+        return;
+      }
+
+      const results: Record<string, unknown>[] = [];
+      
+      lines.forEach(line => {
+        try {
+          // 简化的JSON修复
+          let sanitized = line.trim();
+          if (!sanitized.startsWith('{')) sanitized = '{' + sanitized;
+          if (!sanitized.endsWith('}')) sanitized = sanitized + '}';
+          
+          const parsed = JSON.parse(sanitized) as Record<string, unknown>;
+          results.push(parsed);
+        } catch {
+          // 解析失败时包装为段落块
+          results.push({ type: "p", content: line } as Record<string, unknown>);
+        }
+      });
+
+      // 根据是否启用延迟渲染决定显示时机
+      if (enableDelayedRendering) {
+        // 先设置加载状态
+        setRenderState({
+          isReady: false,
+          isLoading: true,
+          blocks: results
+        });
+
+        // 延迟显示内容
+        timeoutRef.current = setTimeout(() => {
+          setRenderState({
+            isReady: true,
+            isLoading: false,
+            blocks: results
+          });
+        }, Math.min(renderDelay, 200));
+      } else {
+        // 立即显示
+        setRenderState({
+          isReady: true,
+          isLoading: false,
+          blocks: results
+        });
+      }
+    };
+
+    parseContentSync();
+
+    // 清理函数
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [content, enableDelayedRendering, renderDelay]);
+
   // 如果启用延迟渲染且内容未准备好，显示骨架屏
-  if (enableDelayedRendering && !isContentReady) {
+  if (enableDelayedRendering && !renderState.isReady) {
     return (
       <div
         data-testid="jsonl-renderer"
@@ -134,49 +201,6 @@ export function JsonlRenderer({
       </div>
     );
   }
-
-  // Split into lines & parse
-  // 修复常见的 JSON 语法错误并处理截断内容
-  function sanitizeJsonLine(line: string): string {
-    // 修复单引号包围的字符串值（如：'文本"内容'）
-    let sanitized = line.replace(/:\s*'([^']*?)'/g, (match, content) => {
-      // 转义内部的双引号
-      const escaped = content.replace(/"/g, '\\"');
-      return `: "${escaped}"`;
-    });
-    
-    // 处理截断的JSON - 如果行末没有闭合，尝试修复
-    if (sanitized.trim() && !sanitized.trim().endsWith('}')) {
-      // 检查是否是一个不完整的字符串值
-      const openBraceCount = (sanitized.match(/{/g) || []).length;
-      const closeBraceCount = (sanitized.match(/}/g) || []).length;
-      if (openBraceCount > closeBraceCount) {
-        // 尝试找到最后一个不完整的字符串并添加结束引号和括号
-        if (sanitized.includes('"') && !sanitized.trim().endsWith('"')) {
-          sanitized = sanitized.trim() + '"}';
-        } else {
-          sanitized = sanitized.trim() + '}';
-        }
-      }
-    }
-    
-    return sanitized;
-  }
-
-  const blocks = content
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      try {
-        // 先尝试清理 JSON 语法错误，然后解析
-        const sanitizedLine = sanitizeJsonLine(line);
-        return JSON.parse(sanitizedLine) as Record<string, unknown>;
-      } catch {
-        // If parsing fails, wrap line as a paragraph block so we still show it
-        return { type: "p", content: line } as Record<string, unknown>;
-      }
-    });
 
   const renderBlock = (block: Record<string, unknown>, idx: number) => {
     const ref = block["ref"] as string | undefined;
@@ -257,7 +281,7 @@ export function JsonlRenderer({
         className,
       )}
     >
-      {blocks.map(renderBlock)}
+      {renderState.blocks.map(renderBlock)}
     </div>
   );
 }

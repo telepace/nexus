@@ -63,6 +63,9 @@ export default function ContentLibraryPage() {
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
       }
+      if (prefetchTimeoutRef.current) {
+        clearTimeout(prefetchTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -147,8 +150,9 @@ export default function ContentLibraryPage() {
     [router, prefetchContent, isMobile],
   );
 
-  // 🚀 优化悬浮事件处理 - 添加防抖，减少频繁更新
+  // 🚀 优化悬浮事件处理 - 大幅增加防抖时间，减少频繁更新
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const prefetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const handleCardHover = useCallback(
     (item: ContentItemPublic | null) => {
@@ -160,14 +164,26 @@ export default function ContentLibraryPage() {
         hoverTimeoutRef.current = null;
       }
       
+      if (prefetchTimeoutRef.current) {
+        clearTimeout(prefetchTimeoutRef.current);
+        prefetchTimeoutRef.current = null;
+      }
+      
       if (item) {
-        // 防抖处理，减少频繁状态更新
+        // UI更新防抖 - 200ms
         hoverTimeoutRef.current = setTimeout(() => {
           setHoveredItem(item);
+        }, 200);
+        
+        // 预加载防抖 - 500ms，只有用户停留较长时间才预加载
+        prefetchTimeoutRef.current = setTimeout(() => {
           if (!selectedItem || selectedItem.id !== item.id) {
             prefetchContent(item);
           }
-        }, 100); // 100ms 防抖
+        }, 500);
+      } else {
+        // 立即清除悬停状态
+        setHoveredItem(null);
       }
     },
     [prefetchContent, isMobile, selectedItem],
