@@ -14,12 +14,9 @@ import type { ConversationPublic } from "@/lib/api/content";
 import type { PromptData } from "@/components/actions/prompts-action";
 
 interface AIAssistantPanelProps {
-  // 输入相关
-  inputValue: string;
-  setInputValue: (value: string) => void;
-  inputFocused: boolean;
-  setInputFocused: (focused: boolean) => void;
-  onAnalysis: () => void;
+  // 输入相关 - 状态下沉到组件内部
+  onAnalysis: (inputValue: string) => void; // 修改为接收输入值的回调
+  onTextSelection?: (text: string) => void; // 新增：处理文本选择
   
   // 历史记录相关
   showHistory?: boolean;
@@ -36,12 +33,12 @@ interface AIAssistantPanelProps {
   variant?: "preview" | "sidebar" | "fullscreen";
 }
 
-export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
-  inputValue,
-  setInputValue,
-  inputFocused,
-  setInputFocused,
+export const AIAssistantPanel = React.forwardRef<
+  { setText: (text: string) => void },
+  AIAssistantPanelProps
+>(({
   onAnalysis,
+  onTextSelection,
   showHistory = false,
   historyRecords,
   loadingHistory,
@@ -50,7 +47,44 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
   loadingPrompts,
   onPromptClick,
   variant = "fullscreen",
-}) => {
+}, ref) => {
+  // 🎯 状态下沉：将输入状态移到组件内部管理
+  const [inputValue, setInputValue] = useState("");
+  const [inputFocused, setInputFocused] = useState(false);
+  // 🔍 AIAssistantPanel 输入状态追踪日志
+  const inputRenderCount = React.useRef(0);
+  const prevInputState = React.useRef<any>({});
+  
+  inputRenderCount.current += 1;
+  
+  React.useEffect(() => {
+    const currentState = {
+      inputLength: inputValue.length,
+      inputFocused,
+      showHistory,
+      historyCount: historyRecords.length,
+      promptsCount: prompts.length,
+      variant,
+    };
+    
+    const changes = Object.keys(currentState).filter(
+      key => prevInputState.current[key] !== currentState[key]
+    );
+    
+    // 只在有变化时记录日志，避免输入时的日志洪水
+    if (changes.length > 0) {
+      console.log(`⌨️ AIAssistantPanel [${variant}] render #${inputRenderCount.current}:`, {
+        ...currentState,
+        changes,
+        timestamp: new Date().toISOString().split('T')[1],
+        // 特别关注输入值变化
+        inputChange: prevInputState.current.inputLength !== inputValue.length ? 
+          `${prevInputState.current.inputLength} → ${inputValue.length} chars` : null,
+      });
+    }
+    
+    prevInputState.current = currentState;
+  });
   // 优化的历史记录渲染
   const historyItems = useMemo(() => {
     return historyRecords.map((record, index) => {
@@ -92,13 +126,38 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
     });
   }, [historyRecords]);
 
-  // 优化的输入处理
+  // 优化的输入处理 - 状态下沉后的回调处理
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      onAnalysis();
+      handleAnalysis();
     }
-  }, [onAnalysis]);
+  }, [inputValue, onAnalysis]);
+  
+  // 处理分析提交
+  const handleAnalysis = useCallback(() => {
+    if (!inputValue.trim()) return;
+    
+    onAnalysis(inputValue.trim()); // 通过回调传递输入值
+    setInputValue(""); // 清空输入框
+  }, [inputValue, onAnalysis]);
+  
+  // 处理 Prompt 点击
+  const handlePromptClick = useCallback((prompt: PromptData) => {
+    onPromptClick(prompt);
+    setInputValue(""); // Prompt 点击后也清空输入框
+  }, [onPromptClick]);
+  
+  // 处理历史记录点击
+  const handleHistoryClick = useCallback((conversation: ConversationPublic) => {
+    onHistoryClick(conversation);
+    // 历史记录点击可能会设置输入框内容，这里由父组件通过 onTextSelection 处理
+  }, [onHistoryClick]);
+  
+  // 暴露文本设置方法给父组件
+  React.useImperativeHandle(ref, () => ({
+    setText: (text: string) => setInputValue(text)
+  }), []);
 
   return (
     <div
@@ -135,7 +194,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
                     <div
                       key={item.id}
                       className="bg-white/60 dark:bg-neutral-800/60 rounded-lg p-3 hover:bg-white/80 dark:hover:bg-neutral-800/80 transition-all duration-200 cursor-pointer group border border-neutral-200/50 dark:border-neutral-700/50"
-                      onClick={() => onHistoryClick(item)}
+                      onClick={() => handleHistoryClick(item)}
                       style={{ animationDelay: `${item.index * 50}ms` }}
                     >
                       <div className="flex items-start gap-3">
@@ -188,8 +247,8 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
             prompts.map((prompt) => (
               <button
                 key={prompt.id}
-                onClick={() => onPromptClick(prompt)}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 whitespace-nowrap flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transform-gpu will-change-transform"
+                onClick={() => handlePromptClick(prompt)}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-colors duration-150 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 whitespace-nowrap flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>{prompt.name}</span>
@@ -198,10 +257,10 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
           )}
         </div>
 
-        {/* 输入框 */}
+        {/* 输入框 - 修复抖动问题 */}
         <div
           className={`
-            flex items-center px-4 py-3 bg-neutral-50 dark:bg-neutral-900 rounded-2xl border-2 transition-all duration-200
+            flex items-center px-4 py-3 bg-neutral-50 dark:bg-neutral-900 rounded-2xl border-2
             ${inputFocused ? "border-neutral-900 dark:border-neutral-100" : "border-transparent"}
           `}
         >
@@ -216,18 +275,25 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
             className="flex-1 bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none"
           />
 
-          {/* 发送按钮 */}
-          {inputValue.trim() && (
-            <Button
-              size="icon"
-              className="h-8 w-8 rounded-xl bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white ml-3"
-              onClick={onAnalysis}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          )}
+          {/* 🎯 关键修复：发送按钮始终存在，避免DOM元素频繁添加移除导致的布局抖动 */}
+          <Button
+            size="icon"
+            disabled={!inputValue.trim()}
+            className={`
+              h-8 w-8 rounded-xl ml-3 transition-opacity duration-150
+              ${inputValue.trim() 
+                ? "bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white opacity-100" 
+                : "bg-neutral-300 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400 opacity-50 cursor-not-allowed"
+              }
+            `}
+            onClick={handleAnalysis}
+          >
+            <Send className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </div>
   );
-};
+});
+
+AIAssistantPanel.displayName = 'AIAssistantPanel';

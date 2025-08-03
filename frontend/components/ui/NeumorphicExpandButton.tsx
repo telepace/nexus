@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useTranslationUtils } from "@/lib/i18n-utils";
 
 
 interface NeumorphicExpandButtonProps {
@@ -27,6 +28,7 @@ export function NeumorphicExpandButton({
 }: NeumorphicExpandButtonProps) {
   const [internalIsHovered, setInternalIsHovered] = useState(false);
   const isHovered = externalIsHovered !== undefined ? externalIsHovered : internalIsHovered;
+  const { t } = useTranslationUtils();
 
 
   const handleClick = (e: React.MouseEvent) => {
@@ -85,7 +87,7 @@ export function NeumorphicExpandButton({
           "text-gray-700 font-semibold text-sm whitespace-nowrap transition-opacity duration-200",
           isHovered ? "opacity-100 delay-200" : "opacity-0"
         )}>
-          深入挖掘
+          {t('content.deepDig')}
         </span>
       </button>
     </div>

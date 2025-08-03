@@ -5,24 +5,31 @@ import { ConversationPublic } from "@/lib/api/ai-conversations";
 import { contentApi } from "@/lib/api/content";
 
 interface ConversationHistoryOptions {
-  contentId: string;
+  contentId: string; // API调用使用的原始ID
+  storageId?: string; // 可选的存储ID，用于状态隔离
   onError?: (error: string) => void;
 }
 
 /**
  * 统一的对话历史管理Hook
  * 负责加载、缓存和管理历史对话记录
+ * 
+ * 🎯 支持分离的API ID和存储ID：
+ * - contentId: 用于API调用（如 "12345"）
+ * - storageId: 用于状态存储（如 "preview_12345"）
  */
 export function useConversationHistory({
   contentId,
+  storageId,
   onError,
 }: ConversationHistoryOptions) {
   const [historyRecords, setHistoryRecords] = useState<ConversationPublic[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [lastLoadTime, setLastLoadTime] = useState<number>(0);
   
-  // 缓存键
-  const CACHE_KEY = `conversation_history_${contentId}`;
+  // 🎯 缓存键使用storageId（如果提供）或回退到contentId
+  const effectiveStorageId = storageId || contentId;
+  const CACHE_KEY = `conversation_history_${effectiveStorageId}`;
   const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
 
   // 从localStorage加载缓存的历史记录
@@ -176,7 +183,7 @@ export function useConversationHistory({
   // 初始化加载历史记录 - 修复无限循环问题
   useEffect(() => {
     let mounted = true;
-    let timeoutId: NodeJS.Timeout | null = null;
+    const timeoutId: NodeJS.Timeout | null = null;
     
     const initializeHistory = async () => {
       // 如果contentId为空，直接返回
@@ -205,7 +212,7 @@ export function useConversationHistory({
         clearTimeout(timeoutId);
       }
     };
-  }, [contentId]); // 只依赖contentId，移除其他可能导致循环的依赖
+  }, [contentId, effectiveStorageId]); // 依赖API调用的contentId和存储用的effectiveStorageId
 
   // 手动刷新历史记录
   const refreshHistory = useCallback(async () => {

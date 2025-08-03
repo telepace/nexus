@@ -437,6 +437,7 @@ export const ClientContent = ({
   }, [content, markdownContent, onContentChange]);
 
   // 当内容加载完成后，通知 ReaderLayout 更新完整的内容项数据
+  // 🎯 修复：移除onContentItemUpdate依赖，避免重复触发
   useEffect(() => {
     if (content && onContentItemUpdate) {
       // 将 ContentDetail 转换为 ContentItemPublic 格式
@@ -455,7 +456,7 @@ export const ClientContent = ({
       };
       onContentItemUpdate(contentItem);
     }
-  }, [content, onContentItemUpdate]);
+  }, [content?.id, content?.title, content?.processing_status]); // 🎯 只依赖关键字段，避免函数依赖
 
   // 获取内容详情和markdown
   useEffect(() => {

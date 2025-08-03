@@ -196,6 +196,7 @@
     "contentCopyFailed": "Failed to copy content",
     "summary": "Summary",
     "content": "Content",
-    "source": "Source"
+    "source": "Source",
+    "deepDig": "Deep Dig"
   }
 }

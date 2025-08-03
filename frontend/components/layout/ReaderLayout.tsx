@@ -98,12 +98,15 @@ export default function ReaderLayout({
     // 目前没有使用文本更新功能
   }, []);
 
-  // 更新内容项
+  // 更新内容项 - 🎯 修复循环依赖，使用函数形式避免依赖contentData
   const handleContentItemUpdate = useCallback((item: ContentItemPublic) => {
-    if (contentData) {
-      setContentData({ ...contentData, item });
-    }
-  }, [contentData]);
+    setContentData(prevData => {
+      if (prevData) {
+        return { ...prevData, item };
+      }
+      return prevData;
+    });
+  }, []); // 🎯 移除contentData依赖，避免无限循环
 
   // 切换右侧面板显示
   const toggleRightPanel = useCallback(() => {

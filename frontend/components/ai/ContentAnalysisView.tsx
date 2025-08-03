@@ -5,12 +5,29 @@ import { useMemoryManager, useSmartState } from "@/lib/utils/memory-manager";
 import { Library, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedModernAnalysisInterface } from "./EnhancedModernAnalysisInterface";
+import { StaticPreviewInterface } from "./StaticPreviewInterface";
 import { ReferenceManagerProvider } from "@/components/ui/ReferenceManager";
 import { useI18nSafe } from "@/lib/i18n-fallback";
 import type { ContentItemPublic } from "@/lib/api/content";
 import { AIResult, ConversationListResponse } from "@/lib/api/content";
 import { contentDataManager, ContentData } from "@/lib/services/content-data-manager";
 import { useAuth } from "@/lib/client-auth";
+
+/**
+ * 分析场景类型定义
+ * 
+ * 🎯 核心问题解决：不同使用场景需要独立的状态空间
+ * 
+ * - preview: 内容库预览面板 (/content-library)
+ *   特点：快速切换，轻量级展示，需要独立状态避免串扰
+ * 
+ * - reader: 阅读器页面 (/content-library/reader/[id])  
+ *   特点：完整功能，长时间使用，需要持久化状态
+ * 
+ * - standalone: 独立测试页面或其他场景
+ *   特点：隔离环境，不与其他场景共享状态
+ */
+export type AnalysisScene = "preview" | "reader" | "standalone";
 
 export interface ContentAnalysisViewProps {
   /** 内容项 */
@@ -25,6 +42,11 @@ export interface ContentAnalysisViewProps {
   className?: string;
   /** 显示模式 */
   variant?: "preview" | "sidebar" | "fullscreen";
+  /** 
+   * 🎯 新增：分析场景标识
+   * 用于创建独立的状态空间，解决不同场景间的状态串扰问题
+   */
+  scene?: AnalysisScene;
   /** 是否隐藏头部 */
   hideHeader?: boolean;
   /** 头部标题 */
@@ -50,6 +72,7 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
   isLoading = false,
   className = "",
   variant = "preview",
+  scene: explicitScene,
   hideHeader = false,
   headerTitle,
   emptyStateText,
@@ -61,6 +84,73 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
 }) => {
   const { t } = useI18nSafe();
   const memoryManager = useMemoryManager();
+  
+  // 🔍 渲染追踪日志 - 分析重新渲染原因
+  const renderCount = React.useRef(0);
+  const prevProps = React.useRef<any>({});
+  
+  renderCount.current += 1;
+  
+  React.useEffect(() => {
+    const currentProps = {
+      itemId: item?.id,
+      variant,
+      scene: explicitScene,
+      isLoading,
+      conversationsLength: externalConversations.length,
+      hasAnalysisResult: !!externalAnalysisResult,
+    };
+    
+    const changes = Object.keys(currentProps).filter(
+      key => prevProps.current[key] !== currentProps[key]
+    );
+    
+    console.log(`🔄 ContentAnalysisView [${variant}] render #${renderCount.current}:`, {
+      ...currentProps,
+      changes: changes.length > 0 ? changes : 'no prop changes',
+      timestamp: new Date().toISOString().split('T')[1],
+      stack: new Error().stack?.split('\n').slice(2, 5).map(line => 
+        line.replace(/^\s+at\s+/, '').split('(')[0]
+      )
+    });
+    
+    prevProps.current = currentProps;
+  });
+  
+  // 🎯 场景自动检测和状态隔离逻辑
+  const currentScene = useMemo((): AnalysisScene => {
+    // 优先使用显式指定的场景
+    if (explicitScene) {
+      return explicitScene;
+    }
+    
+    // 根据当前环境自动检测场景
+    if (typeof window !== 'undefined') {
+      const pathname = window.location.pathname;
+      
+      if (pathname.includes('/content-library/reader/')) {
+        return 'reader';
+      } else if (pathname.includes('/content-library')) {
+        return 'preview';
+      }
+    }
+    
+    // 默认为独立场景
+    return 'standalone';
+  }, [explicitScene]);
+
+  // 🎯 重新设计：AI分析状态基于内容共享，UI状态可以场景隔离
+  // 解决用户期望：同一文章的AI分析在Preview和Reader页面应该一致
+  const sharedContentId = useMemo(() => {
+    // AI分析状态跨场景共享，确保用户体验一致性
+    return item?.id || null;
+  }, [item?.id]);
+
+  const sceneSpecificId = useMemo(() => {
+    // UI状态（如卡片折叠状态）可以场景隔离
+    if (!item?.id) return null;
+    return `${currentScene}_${item.id}`;
+  }, [currentScene, item?.id]);
   
   // 使用翻译的默认值
   const defaultHeaderTitle = headerTitle || t('analysis.contentAnalysis');
@@ -90,27 +180,30 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
   const finalShowHeaderBorder = showHeaderBorder && !seamless;
   const finalShowHeaderTitle = showHeaderTitle && !seamless;
 
-  // 内容切换逻辑 - 使用内存管理器
+  // 🎯 内容切换逻辑 - 确保状态完全隔离，但移除视觉过渡避免闪烁
   useEffect(() => {
     if (item?.id === currentItem?.id) {
       return;
     }
 
-    setIsTransitioning(true);
+    // 🎯 修复闪烁：直接切换状态，不使用过渡动画
+    setInternalAnalysisResult(null);
+    setInternalConversations([]);
+    setAiStatus('idle');
+    setHasAnyConversations(false);
+    setHistoryCount(0);
+    setCurrentItem(item);
     
-    Promise.resolve().then(() => {
-      setCurrentItem(item);
-      
-      const timer = memoryManager.setTimeout(() => {
-        setIsTransitioning(false);
-      }, 200);
-      
-      // 返回清理函数
-      return () => memoryManager.clearTimeout(timer);
-    });
-  }, [item?.id, currentItem?.id, memoryManager]);
+    // 🎯 减少过渡时间，避免用户察觉到闪烁
+    setIsTransitioning(true);
+    const timer = memoryManager.setTimeout(() => {
+      setIsTransitioning(false);
+    }, 50); // 从200ms减少到50ms
+    
+    return () => memoryManager.clearTimeout(timer);
+  }, [item?.id, currentItem?.id, memoryManager, setInternalAnalysisResult, setInternalConversations, setAiStatus]);
 
-  // 优化的数据获取逻辑 - 使用智能数据管理器
+  // 优化的数据获取逻辑 - 使用智能数据管理器，避免重复请求导致闪烁
   useEffect(() => {
     let isMounted = true;
 
@@ -121,12 +214,20 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
       const hasExternalAnalysis = externalAnalysisResult !== null;
       const hasExternalConversations = externalConversations.length > 0;
       
+      // 🎯 Preview模式优化：如果已有外部数据，直接使用，避免重复请求
+      if (variant === "preview" && hasExternalAnalysis) {
+        return;
+      }
+      
       if (hasExternalAnalysis && (variant === "preview" || hasExternalConversations)) {
         return;
       }
 
       try {
-        setDataLoading(true);
+        // 🎯 Preview模式不显示内部loading状态，避免闪烁
+        if (variant !== "preview") {
+          setDataLoading(true);
+        }
         
         // 使用智能数据管理器获取数据
         const data = variant === "preview" 
@@ -147,13 +248,23 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
       } catch (error) {
         console.error('获取分析数据失败:', error);
       } finally {
-        if (isMounted) {
+        if (isMounted && variant !== "preview") {
           setDataLoading(false);
         }
       }
     }
 
-    fetchMissingData();
+    // 🎯 Preview模式减少延迟，立即获取数据
+    if (variant === "preview") {
+      fetchMissingData();
+    } else {
+      // 其他模式保持轻微延迟
+      const timer = setTimeout(fetchMissingData, 100);
+      return () => {
+        isMounted = false;
+        clearTimeout(timer);
+      };
+    }
 
     return () => {
       isMounted = false;
@@ -237,7 +348,7 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
   const finalConversations = externalConversations.length > 0 ? externalConversations : internalConversations;
   const finalIsLoading = isLoading || dataLoading;
 
-  // 分析界面Props
+  // 🎯 分析界面Props - AI分析状态共享，UI状态场景隔离
   const analysisProps = useMemo(() => ({
     content: currentItem,
     conversations: finalConversations,
@@ -247,12 +358,14 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
     hideHeader: true, // 由ContentAnalysisView统一管理头部
     onHistoryCountChange: handleHistoryCountChange,
     showHistory,
+    sharedContentId,    // 🎯 AI分析状态：跨场景共享
+    sceneSpecificId,    // 🎯 UI状态：场景隔离
     onStatusChange: (status: string, hasConversations: boolean) => {
       window.dispatchEvent(new CustomEvent('aiStatusUpdate', {
         detail: { status, hasConversations }
       }));
     },
-  }), [currentItem?.id, finalConversations, finalAnalysisResult, finalIsLoading, variant, handleHistoryCountChange, showHistory]);
+  }), [currentItem?.id, sharedContentId, sceneSpecificId, finalConversations, finalAnalysisResult, finalIsLoading, variant, handleHistoryCountChange, showHistory]);
 
   // 空状态渲染
   if (!currentItem) {
@@ -297,11 +410,7 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
     <ReferenceManagerProvider contentId={currentItem?.id}>
       <div 
         ref={containerRef}
-        className={`
-          ${containerClasses}
-          transition-opacity duration-200 ease-out
-          ${isTransitioning ? 'opacity-70' : 'opacity-100'}
-        `}
+        className={containerClasses}
         style={{
           contain: 'layout style paint',
           willChange: 'auto',
@@ -344,7 +453,8 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
         )}
 
         {/* 分析界面内容 */}
-        <div className="flex-1 overflow-hidden relative min-h-0">
+        <div className={`flex-1 relative min-h-0 ${variant === "preview" ? "overflow-auto" : "overflow-hidden"}`}>
+          {/* 🎯 所有模式都使用交互式组件，通过variant控制行为差异 */}
           <EnhancedModernAnalysisInterface {...analysisProps} />
         </div>
       </div>

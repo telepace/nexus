@@ -143,10 +143,15 @@ export function useUnifiedVisibility(config: VisibilityConfig = {}) {
     };
   }, []);
 
-  // 生成优化的样式类
+  // 🎯 修复动态类名生成 - 使用预定义的Tailwind类名
   const getVisibilityClasses = useCallback((id: string, baseClasses: string = '') => {
     const visible = isVisible(id);
-    return `${baseClasses} transition-opacity duration-${fadeDuration} ${
+    // 使用预定义的duration类名，避免动态生成
+    const durationClass = fadeDuration <= 150 ? 'duration-150' : 
+                         fadeDuration <= 200 ? 'duration-200' :
+                         fadeDuration <= 300 ? 'duration-300' : 'duration-500';
+    
+    return `${baseClasses} transition-opacity ${durationClass} ${
       visible ? 'opacity-100' : 'opacity-0 pointer-events-none'
     }`.trim();
   }, [isVisible, fadeDuration]);

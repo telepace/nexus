@@ -11,21 +11,29 @@ interface ConversationGroup {
 }
 
 interface UseStreamingConversationOptions {
-  contentId: string;
+  contentId: string; // API调用使用的原始ID 
+  storageId?: string; // 可选的存储ID，用于状态隔离
   onConversationUpdate?: (conversation: ConversationGroup) => void;
   onError?: (error: string) => void;
 }
 
+/**
+ * 🎯 支持分离的API ID和存储ID：
+ * - contentId: 用于API调用（如 "73ab44c4-b007-4990-9680-bbdfc1a8db10"）
+ * - storageId: 用于状态存储（如 "reader_73ab44c4-b007-4990-9680-bbdfc1a8db10"）
+ */
 export function useStreamingConversation({
   contentId,
+  storageId,
   onConversationUpdate,
   onError,
 }: UseStreamingConversationOptions) {
   const [conversations, setConversations] = useState<ConversationGroup[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
   
-  // 存储键，每个内容页面独立存储
-  const STORAGE_KEY = `streaming_conversations_${contentId}`;
+  // 🎯 存储键使用storageId（如果提供）或回退到contentId
+  const effectiveStorageId = storageId || contentId;
+  const STORAGE_KEY = `streaming_conversations_${effectiveStorageId}`;
   
   // 页面加载时恢复对话状态
   useEffect(() => {
@@ -178,18 +186,28 @@ export function useStreamingConversation({
   // 更新消息内容
   const updateMessageContent = useCallback(
     (conversationId: string, messageId: string, content: string) => {
-      setConversations(prev =>
-        prev.map(conv =>
-          conv.id === conversationId
-            ? {
-                ...conv,
-                messages: conv.messages.map(msg =>
-                  msg.id === messageId ? { ...msg, content } : msg
-                ),
-              }
-            : conv
-        )
-      );
+      // 🎯 添加参数验证和错误处理
+      if (!conversationId || !messageId) {
+        console.error("❌ updateMessageContent: 无效的参数", { conversationId, messageId });
+        return;
+      }
+      
+      try {
+        setConversations(prev =>
+          prev.map(conv =>
+            conv.id === conversationId
+              ? {
+                  ...conv,
+                  messages: conv.messages.map(msg =>
+                    msg.id === messageId ? { ...msg, content } : msg
+                  ),
+                }
+              : conv
+          )
+        );
+      } catch (error) {
+        console.error("❌ updateMessageContent: 状态更新失败", error, { conversationId, messageId });
+      }
     },
     []
   );
@@ -247,31 +265,49 @@ export function useStreamingConversation({
           throw new Error("未找到访问令牌，请重新登录");
         }
 
-        const requestBody = {
-          analysis_instruction: actualContent, // 🎯 使用实际内容发送请求
-          template_name: promptTemplate,
-        };
+        // 🎯 根据是否有contentId选择不同的API端点
+        let requestUrl: string;
+        let requestBody: any;
+
+        if (contentId && contentId.trim() !== '') {
+          // 有contentId：使用内容分析API
+          requestUrl = `${apiUrl}/api/v1/content/${contentId}/completion-updated`;
+          requestBody = {
+            analysis_instruction: actualContent,
+            template_name: promptTemplate,
+          };
+        } else {
+          // 无contentId：使用通用聊天API
+          requestUrl = `${apiUrl}/api/v1/chat/completions`;
+          requestBody = {
+            messages: [
+              { role: "user", content: actualContent }
+            ],
+            model: process.env.NEXT_PUBLIC_AI_MODEL_CHAT || "gemini-flash-lite", // 使用环境变量配置的模型
+            stream: true,
+            temperature: 0.7,
+            max_tokens: 8000,
+          };
+        }
 
         console.log("📤 API请求参数:", {
-          url: `${apiUrl}/api/v1/content/${contentId}/completion-updated`,
+          url: requestUrl,
           body: requestBody,
-          hasToken: !!token
+          hasToken: !!token,
+          isContentAnalysis: !!(contentId && contentId.trim() !== '')
         });
 
         console.log("🌐 即将发送 fetch 请求...");
 
-        const response = await fetch(
-          `${apiUrl}/api/v1/content/${contentId}/completion-updated`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(requestBody),
-            signal: conversationAbortController.signal,
-          }
-        );
+        const response = await fetch(requestUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestBody),
+          signal: conversationAbortController.signal,
+        });
 
         console.log("📥 API响应状态:", response.status, response.statusText);
         console.log("📥 收到响应，开始处理流式数据...");
@@ -291,6 +327,7 @@ export function useStreamingConversation({
         const decoder = new TextDecoder();
         let accumulatedContent = "";
         let hasStartedStreaming = false;
+        const isContentAnalysis = !!(contentId && contentId.trim() !== '');
 
         while (true) {
           const { done, value } = await reader.read();
@@ -301,16 +338,38 @@ export function useStreamingConversation({
 
           for (const line of lines) {
             if (line.startsWith("0:")) {
+              // Vercel AI SDK Data Stream Protocol 格式
               // 第一次接收到内容时，切换到 streaming 状态
               if (!hasStartedStreaming) {
                 updateMessageStatus(conversationId, assistantMessageId, "streaming");
                 hasStartedStreaming = true;
               }
 
-              const jsonlLine = line.slice(2);
-              if (jsonlLine.trim()) {
-                accumulatedContent += jsonlLine + "\n";
-                updateMessageContent(conversationId, assistantMessageId, accumulatedContent);
+              try {
+                if (isContentAnalysis) {
+                  // 内容分析：JSONL格式
+                  const jsonlLine = line.slice(2);
+                  if (jsonlLine.trim()) {
+                    accumulatedContent += jsonlLine + "\n";
+                    updateMessageContent(conversationId, assistantMessageId, accumulatedContent);
+                  }
+                } else {
+                  // 通用聊天：普通文本格式
+                  const textContent = line.slice(2);
+                  if (textContent.trim()) {
+                    // 移除引号（因为是JSON字符串格式）
+                    const cleanText = textContent.replace(/^"(.*)"$/, '$1');
+                    accumulatedContent += cleanText;
+                    updateMessageContent(conversationId, assistantMessageId, accumulatedContent);
+                  }
+                }
+              } catch (contentError) {
+                console.error("❌ 流式内容处理错误:", contentError, { 
+                  line, 
+                  isContentAnalysis, 
+                  conversationId, 
+                  assistantMessageId 
+                });
               }
             } else if (line.startsWith("8:")) {
               // 完成信号

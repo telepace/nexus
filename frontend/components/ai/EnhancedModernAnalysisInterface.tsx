@@ -40,6 +40,9 @@ interface EnhancedModernAnalysisInterfaceProps {
   showHistory?: boolean;
   // 新增AI状态变化回调
   onStatusChange?: (status: 'idle' | 'processing' | 'completed', hasConversations: boolean) => void;
+  // 🎯 重新设计：分离共享状态和场景状态
+  sharedContentId?: string;    // AI分析状态：跨场景共享
+  sceneSpecificId?: string;    // UI状态：场景隔离
 }
 
 interface AnalysisCard {
@@ -66,10 +69,46 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
   onHistoryCountChange,
   showHistory: showHistoryProp,
   onStatusChange,
+  sharedContentId,
+  sceneSpecificId,
 }) => {
   const { toast } = useToast();
   const { t } = useI18nSafe();
   const pathname = usePathname(); // 🎯 获取当前路由
+  
+  // 🔍 渲染追踪日志 - 分析重新渲染原因
+  const renderCount = React.useRef(0);
+  const prevProps = React.useRef<any>({});
+  
+  renderCount.current += 1;
+  
+  React.useEffect(() => {
+    const currentProps = {
+      contentId: content?.id,
+      variant,
+      isLoading,
+      conversationsLength: conversations?.length || 0,
+      hasAnalysisResult: !!analysisResult,
+      sharedContentId,
+      sceneSpecificId,
+      pathname,
+    };
+    
+    const changes = Object.keys(currentProps).filter(
+      key => prevProps.current[key] !== currentProps[key]
+    );
+    
+    console.log(`📊 EnhancedModernAnalysisInterface [${variant}] render #${renderCount.current}:`, {
+      ...currentProps,
+      changes: changes.length > 0 ? changes : 'no prop changes',
+      timestamp: new Date().toISOString().split('T')[1],
+      stack: new Error().stack?.split('\n').slice(2, 5).map(line => 
+        line.replace(/^\s+at\s+/, '').split('(')[0]
+      )
+    });
+    
+    prevProps.current = currentProps;
+  });
 
   // 早期返回检查 - 防止 content 为空导致的错误 
   if (!content) {
@@ -83,39 +122,56 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     );
   }
 
-  // 内存优化：preview模式下限制功能，减少组件复杂度
+  // 内存优化：preview模式下优化性能，但保留核心交互功能
   const isPreviewMode = variant === "preview";
-  const shouldLimitFeatures = isPreviewMode;
   
-  // Preview模式下的功能限制（使用useMemo避免对象重新创建）
+  // 模式优化配置（使用useMemo避免对象重新创建）
   const previewOptimizations = useMemo(() => ({
-    disableStreamingConversations: isPreviewMode, // 禁用流式对话
-    disablePromptLoading: isPreviewMode, // 禁用prompt加载
-    disableHistoryLoading: isPreviewMode, // 禁用历史记录
+    disableStreamingConversations: false, // 🎯 保留流式对话功能
+    disablePromptLoading: false, // 🎯 保留prompt加载功能  
+    disableHistoryLoading: isPreviewMode, // 预览模式可以禁用历史记录以提升性能
     reduceEventListeners: isPreviewMode, // 减少事件监听器
-  }), [isPreviewMode]);
+    disableInteraction: false, // 🎯 保留所有交互功能
+    optimizeRendering: isPreviewMode, // 🎯 预览模式优化渲染
+    // 🚨 临时禁用卡片高度管理以解决无限循环问题
+    disableCardHeight: variant === "sidebar" || isPreviewMode,
+  }), [isPreviewMode, variant]);
 
-  // 状态管理
-  const [inputValue, setInputValue] = useState("");
-  const [inputFocused, setInputFocused] = useState(false);
+  // 🎯 状态下沉完成：移除inputValue状态，由AIAssistantPanel内部管理
+  // inputValue 和 setInputValue 已移动到 AIAssistantPanel 内部
   const showHistory = showHistoryProp;
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [prompts, setPrompts] = useState<PromptData[]>([]);
-  const [loadingPrompts, setLoadingPrompts] = useState(true);
+  const [loadingPrompts, setLoadingPrompts] = useState(true); // 🎯 所有模式都支持prompt加载
   
-  // 稳定的contentId，避免Hook频繁重新初始化
-  const stableContentId = useMemo(() => {
-    return previewOptimizations.disableHistoryLoading ? '' : (content?.id || '');
-  }, [previewOptimizations.disableHistoryLoading, content?.id]);
+  // 🎯 状态下沉后的文本设置机制
+  const inputPanelRef = useRef<{ setText: (text: string) => void }>(null);
   
-  // 使用统一的历史记录管理hook - 在preview模式下禁用以节省资源
+  // 🎯 重新设计：区分API调用、共享状态存储和场景特定存储
+  const originalContentId = useMemo(() => {
+    // API调用始终使用原始的content.id
+    return content?.id || '';
+  }, [content?.id]);
+
+  const aiAnalysisStorageId = useMemo(() => {
+    // AI分析状态：跨场景共享，让用户在Preview和Reader看到一致的结果
+    return sharedContentId || content?.id || '';
+  }, [sharedContentId, content?.id]);
+
+  const uiStateStorageId = useMemo(() => {
+    // UI状态：场景隔离，避免不同使用场景的UI冲突
+    return sceneSpecificId || content?.id || '';
+  }, [sceneSpecificId, content?.id]);
+  
+  // 🎯 重新设计：AI分析历史跨场景共享
   const {
     historyRecords,
     isLoadingHistory: loadingHistory,
     refreshHistory,
     addHistoryRecord
   } = useConversationHistory({
-    contentId: stableContentId,
+    contentId: originalContentId,    // API调用使用原始ID
+    storageId: aiAnalysisStorageId,  // AI分析历史：跨场景共享
     onError: (error) => {
       if (!previewOptimizations.disableHistoryLoading) {
         console.error('历史记录加载失败:', error);
@@ -160,30 +216,28 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     }
   }, []);
 
-  // 稳定的流式对话contentId
+  // 🎯 重新设计：流式对话AI分析跨场景共享
   const stableStreamingContentId = useMemo(() => {
-    return previewOptimizations.disableStreamingConversations ? '' : (content?.id || '');
-  }, [previewOptimizations.disableStreamingConversations, content?.id]);
+    // 🎯 流式对话AI分析：跨场景共享，确保用户体验一致性
+    // 让用户在Preview和Reader页面看到相同的AI分析对话
+    return aiAnalysisStorageId;
+  }, [aiAnalysisStorageId]);
 
   // 稳定的回调函数，避免重新创建
   const handleConversationUpdate = useCallback((conversation: any) => {
-    // 只在非preview模式下处理对话更新
-    if (!previewOptimizations.disableStreamingConversations) {
-      // 可以在这里添加额外的处理逻辑
-    }
-  }, [previewOptimizations.disableStreamingConversations]);
+    // 🎯 所有模式都处理对话更新
+    // 可以在这里添加额外的处理逻辑
+  }, []);
 
   const handleStreamingError = useCallback((error: any) => {
-    if (!previewOptimizations.disableStreamingConversations) {
-      toast({
-        title: "处理失败",
-        description: error,
-        variant: "destructive",
-      });
-    }
-  }, [previewOptimizations.disableStreamingConversations, toast]);
+    toast({
+      title: "处理失败",
+      description: error,
+      variant: "destructive",
+    });
+  }, [toast]);
 
-  // 新的对话管理 - 在preview模式下禁用以节省资源  
+  // 🎯 新的对话管理 - 使用分离的API调用ID和存储ID
   const {
     conversations: streamingConversations,
     sendMessage,
@@ -191,26 +245,30 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     deleteConversation,
     cancelCurrentProcessing,
   } = useStreamingConversation({
-    contentId: stableStreamingContentId,
+    contentId: originalContentId,        // API调用使用原始UUID
+    storageId: stableStreamingContentId, // 存储使用场景感知ID
     onConversationUpdate: handleConversationUpdate,
     onError: handleStreamingError,
   });
 
-  // 🎯 监听路由变化，重置折叠状态
+  // 🎯 监听路由变化，重置折叠状态 - 优化：避免Preview模式下的频繁重置
   useEffect(() => {
+    // Preview模式下不需要根据路由变化重置折叠状态，避免闪烁
+    if (variant === "preview") {
+      return;
+    }
+    
     setCollapsedCards(getInitialCollapsedCards());
-  }, [pathname, getInitialCollapsedCards]);
+  }, [pathname, getInitialCollapsedCards, variant]);
 
   // 组件卸载时的清理机制
   useEffect(() => {
     return () => {
-      // 取消正在进行的请求
-      if (!shouldLimitFeatures) {
-        cancelCurrentProcessing();
-      }
+      // 🎯 所有模式都需要取消正在进行的请求
+      cancelCurrentProcessing();
       // 清理定时器和事件监听器在各自的useEffect中已经处理
     };
-  }, [cancelCurrentProcessing, shouldLimitFeatures]);
+  }, [cancelCurrentProcessing]);
 
   // 🎯 监听新对话出现，优化自动滚动
   useEffect(() => {
@@ -266,14 +324,8 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     onStatusChange?.(aiStatusInfo.status, aiStatusInfo.hasConversations);
   }, [aiStatusInfo.status, aiStatusInfo.hasConversations, onStatusChange]);
 
-  // 获取prompts - preview模式下跳过
+  // 获取prompts - 所有模式都支持
   useEffect(() => {
-    if (previewOptimizations.disablePromptLoading) {
-      setPrompts([]);
-      setLoadingPrompts(false);
-      return;
-    }
-
     const loadPrompts = async () => {
       try {
         setLoadingPrompts(true);
@@ -305,7 +357,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     };
 
     loadPrompts();
-  }, [previewOptimizations.disablePromptLoading]);
+  }, []); // 🎯 只在组件挂载时加载一次
 
   // 监听历史记录数量变化
   useEffect(() => {
@@ -321,7 +373,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     const handleTextSelectionAction = (event: CustomEvent) => {
       const { action, selectedText } = event.detail;
       const prompt = `${action.prompt}\n\n${selectedText}`;
-      setInputValue(prompt);
+      inputPanelRef.current?.setText(prompt);
     };
 
     window.addEventListener(
@@ -386,9 +438,6 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
           actualPromptContent: promptContent, // 实际发送给AI的完整prompt内容
         });
 
-        // 清空输入框
-        setInputValue("");
-
         toast({
           title: "开始分析",
           description: `正在使用 "${prompt.name}" 模板进行分析`,
@@ -405,34 +454,32 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     [content, sendMessage, toast]
   );
 
-  // 处理历史记录点击
+  // 处理历史记录点击 - 状态下沉后通过ref设置输入值
   const handleHistoryClick = useCallback((conversation: ConversationPublic) => {
+    let text: string;
     if (conversation.summary) {
-      setInputValue(
-        `继续关于"${conversation.title}"的对话：${conversation.summary}`
-      );
+      text = `继续关于"${conversation.title}"的对话：${conversation.summary}`;
     } else {
-      setInputValue(`继续关于"${conversation.title}"的对话`);
+      text = `继续关于"${conversation.title}"的对话`;
     }
+    inputPanelRef.current?.setText(text);
   }, []);
 
-  // 处理手动输入的分析
-  const handleAnalysis = useCallback(async () => {
+  // 处理手动输入的分析 - 状态下沉后通过参数接收输入值
+  const handleAnalysis = useCallback(async (inputText: string) => {
     try {
       console.log("🔘 手动输入分析事件");
-      if (!inputValue.trim()) {
+      if (!inputText.trim()) {
         console.warn("⚠️ 输入值为空，跳过分析");
         return;
       }
 
-      console.log("📝 手动输入内容:", inputValue);
+      console.log("📝 手动输入内容:", inputText);
 
-      await sendMessage(inputValue, "simple_chat.j2", {
+      await sendMessage(inputText, "simple_chat.j2", {
         type: "manual_input",
-        originalUserInput: inputValue, // 手动输入直接显示用户输入的内容
+        originalUserInput: inputText, // 手动输入直接显示用户输入的内容
       });
-
-      setInputValue("");
 
       toast({
         title: "开始分析",
@@ -446,7 +493,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
         variant: "destructive",
       });
     }
-  }, [inputValue, sendMessage, toast]);
+  }, [sendMessage, toast]);
 
   // 处理JSON行展开请求
   const handleJsonLineExpand = useCallback(
@@ -474,13 +521,18 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     [sendMessage, toast]
   );
 
-  // 构建分析卡片数据
+  // 构建分析卡片数据 - 优化依赖项稳定性
+  const stableAnalysisResult = useMemo(() => analysisResult, [analysisResult]);
+  const stableMetaInfo = useMemo(() => 
+    content.meta_info ? JSON.parse(content.meta_info) : null, 
+    [content.meta_info]
+  );
+  
   const buildAnalysisCards = useCallback((): AnalysisCard[] => {
-    if (!analysisResult) return [];
+    if (!stableAnalysisResult) return [];
 
     const cards: AnalysisCard[] = [];
-    const metaInfo = content.meta_info ? JSON.parse(content.meta_info) : null;
-    const adaptedData = adaptAnalysisData(analysisResult, metaInfo);
+    const adaptedData = adaptAnalysisData(stableAnalysisResult, stableMetaInfo);
 
     // 只有在显示预处理内容时才添加这些卡片
     if (showPreprocessedContent) {
@@ -513,15 +565,12 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
       }
     }
 
-    // 🎯 移除历史对话卡片显示 - 过时的呈现方式，与下方模块化展示产生冗余
-    // 历史对话现在通过底部的历史记录面板和新的实时对话卡片来处理
-
     return cards;
   }, [
-    analysisResult,
-    content.meta_info,
+    stableAnalysisResult,
+    stableMetaInfo,
     showPreprocessedContent,
-    // 移除 conversations 依赖，因为不再显示历史对话卡片
+    t, // 添加 t 函数依赖，确保完整性
   ]);
 
   const cards = buildAnalysisCards();
@@ -639,13 +688,11 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
         </div>
       </div>
 
-      {/* 固定底部AI助手 - 使用新的组件 */}
+      {/* 固定底部AI助手 - 状态下沉后的新接口 */}
       <AIAssistantPanel
-        inputValue={inputValue}
-        setInputValue={setInputValue}
-        inputFocused={inputFocused}
-        setInputFocused={setInputFocused}
+        ref={inputPanelRef}
         onAnalysis={handleAnalysis}
+        onTextSelection={undefined} // 这里用ref方式处理
         showHistory={showHistory}
         historyRecords={historyRecords}
         loadingHistory={loadingHistory}

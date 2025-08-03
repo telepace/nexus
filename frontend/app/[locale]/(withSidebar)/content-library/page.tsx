@@ -214,12 +214,29 @@ export default function ContentLibraryPage() {
   );
 
   // 🚀 优化预览项目选择逻辑 - 添加稳定性检查
+  // 🎯 添加防抖，减少预览卡片的频繁更新
+  const [debouncedHoveredItem, setDebouncedHoveredItem] = useState<ContentItemPublic | null>(hoveredItem);
+  
+  useEffect(() => {
+    // 只有在没有选中项目时才应用防抖
+    if (selectedItem) {
+      setDebouncedHoveredItem(null);
+      return;
+    }
+    
+    const timer = setTimeout(() => {
+      setDebouncedHoveredItem(hoveredItem);
+    }, 300); // 300ms防抖延迟
+    
+    return () => clearTimeout(timer);
+  }, [hoveredItem, selectedItem]);
+
   const previewItem = useMemo(() => {
     if (selectedItem) {
       return selectedItem;
     }
-    return hoveredItem;
-  }, [selectedItem, hoveredItem]);
+    return debouncedHoveredItem;
+  }, [selectedItem, debouncedHoveredItem]);
 
   if (authLoading || loading) {
     return <Loading />;

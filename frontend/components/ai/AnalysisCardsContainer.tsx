@@ -8,7 +8,7 @@ import { CollapsibleButton } from "@/components/ui/CollapsibleButton";
 import { FavoriteButton } from "@/components/actions/FavoriteButton";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 import { useCardHeight } from "@/hooks/use-card-height";
-import { useUnifiedVisibility, visibilityPresets } from "@/hooks/use-unified-visibility";
+// 移除复杂的可见性管理hook，改用简单CSS hover
 import type { ContentItemPublic } from "@/lib/api/content";
 
 interface AnalysisCard {
@@ -49,21 +49,16 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [isScrolling, setIsScrolling] = useState(false);
   
-  // 使用统一的可见性管理替代单独的悬浮状态
-  // 针对preview模式，使用更保守的可见性配置 - useMemo避免重新创建
-  const visibilityConfig = useMemo(() => ({
-    ...visibilityPresets.hover,
-    fadeDuration: variant === "preview" ? 100 : 200, // 预览模式下更快的动画
-    autoHideDelay: variant === "preview" ? 0 : 2000, // 预览模式下禁用自动隐藏
-  }), [variant]);
-  
-  const hoverVisibility = useUnifiedVisibility(visibilityConfig);
+  // 🎯 简化悬浮状态管理 - 移除复杂的useUnifiedVisibility，使用简单的CSS hover
+  // 避免JavaScript状态管理与CSS transition冲突导致的闪烁
   
   // 使用外部传入的选中状态，如果没有传入则使用内部状态
   const selectedBlock = externalSelectedBlock;
 
-  // 动态高度管理
-  const { registerElement, getCardHeight } = useCardHeight();
+  // 🎯 移除不必要的高度管理 - 所有模式都使用auto高度
+  // 避免复杂的动态高度计算，简化为自适应高度
+  const registerElement = () => {}; // 不再需要高度注册
+  const getCardHeight = () => "auto"; // 返回auto高度标识
 
   // 稳定化 content.id，避免重复传递
   const stableContentId = useMemo(() => content.id, [content.id]);
@@ -160,36 +155,50 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
     return null;
   }, [selectedBlock, onExpandLine, onBlockSelect, stableContentId]);
 
-  // 主卡片组件 - 使用统一可见性管理
+  // 主卡片组件 - 简化悬浮状态管理
   const CardComponent = React.memo(({ card }: { card: AnalysisCard }) => {
     const isSelected = selectedCard === card.id;
-    const hoverButtonsId = `card-hover-${card.id}`;
     const isCollapsed = collapsedCards.has(card.id);
+    
+    // 🔍 卡片渲染追踪日志
+    const cardRenderCount = React.useRef(0);
+    const prevCardState = React.useRef<any>({});
+    
+    cardRenderCount.current += 1;
+    
+    React.useEffect(() => {
+      const currentState = {
+        cardId: card.id,
+        isSelected,
+        isCollapsed,
+        variant,
+        cardTitle: card.title,
+        hasContent: !!card.content?.data,
+      };
+      
+      const changes = Object.keys(currentState).filter(
+        key => prevCardState.current[key] !== currentState[key]
+      );
+      
+      console.log(`📦 CardComponent [${card.id}] render #${cardRenderCount.current}:`, {
+        ...currentState,
+        changes: changes.length > 0 ? changes : 'no state changes',
+        timestamp: new Date().toISOString().split('T')[1],
+        // 检查是否是折叠状态变化导致的渲染
+        collapseChange: prevCardState.current.isCollapsed !== isCollapsed ? 
+          `${prevCardState.current.isCollapsed} → ${isCollapsed}` : null,
+      });
+      
+      prevCardState.current = currentState;
+    });
     
     // 在Preview模式下完全禁用hover效果，避免状态管理开销
     const shouldShowHoverButtons = variant !== "preview";
 
-    // 稳定的ref回调，避免重复注册 - Preview模式下禁用以提升性能
+    // 🚨 临时禁用ref回调以解决无限循环
     const elementRef = useCallback((el: HTMLElement | null) => {
-      if (variant !== "preview") {
-        registerElement(card.id, el);
-      }
-    }, [card.id, registerElement, variant]);
-
-    // 优化悬浮状态处理，使用统一可见性管理
-    const handleMouseEnter = useCallback(() => {
-      // 只在非Preview模式下处理hover状态
-      if (shouldShowHoverButtons) {
-        hoverVisibility.setVisible(hoverButtonsId, true, 1);
-      }
-    }, [card.id, hoverButtonsId, hoverVisibility, shouldShowHoverButtons]);
-
-    const handleMouseLeave = useCallback(() => {
-      // 只在非Preview模式下处理hover状态
-      if (shouldShowHoverButtons) {
-        hoverVisibility.setVisible(hoverButtonsId, false);
-      }
-    }, [hoverButtonsId, hoverVisibility, shouldShowHoverButtons]);
+      // 临时禁用以解决问题
+    }, [card.id, variant]);
 
     const handleClick = useCallback(() => {
       setSelectedCard(isSelected ? null : card.id);
@@ -198,8 +207,6 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
     return (
       <div
         className="group relative cursor-pointer"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
         onClick={handleClick}
         data-exclude-selection
       >
@@ -238,12 +245,12 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
                   className="text-neutral-400 hover:text-neutral-600 relative z-10"
                 />
 
-                {/* 优化悬浮操作按钮显示 - Preview模式下完全禁用 */}
+                {/* 🎯 简化悬浮操作按钮 - 使用纯CSS group hover，避免JS状态冲突 */}
                 {shouldShowHoverButtons && (
                   <div 
                     className={`
                       flex items-center gap-1 mr-1 relative z-10
-                      transition-opacity duration-100
+                      transition-opacity duration-200 ease-out
                       group-hover:opacity-100 opacity-0
                     `}
                   >
@@ -270,24 +277,24 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
               </div>
             </div>
 
-            {/* 卡片内容 - 使用稳定的高度过渡 */}
+            {/* 🎯 卡片内容 - Preview模式禁用过渡动画，避免闪烁 */}
             <div
               className={`
-              card-height-stable overflow-hidden transition-all duration-300
-              ${isCollapsed ? "opacity-0" : "opacity-100"}
+              card-height-stable ${variant === "preview" ? "" : "transition-all duration-300"}
+              ${isCollapsed ? "opacity-0 overflow-hidden" : "opacity-100"}
             `}
               data-transitioning={isCollapsed ? "true" : "false"}
-              style={
-                variant === "preview" 
-                  ? {
-                      // Preview模式下使用auto高度，避免动态计算导致的闪烁
-                      maxHeight: isCollapsed ? 0 : "none",
-                      height: isCollapsed ? 0 : "auto"
-                    }
-                  : {
-                      maxHeight: isCollapsed ? 0 : `${getCardHeight(card.id, isCollapsed)}px`,
-                    }
-              }
+              style={{
+                // Preview模式直接显示/隐藏，不使用高度动画
+                maxHeight: variant === "preview" 
+                  ? (isCollapsed ? 0 : "none")
+                  : (isCollapsed ? 0 : "none"),
+                height: variant === "preview"
+                  ? (isCollapsed ? 0 : "auto") 
+                  : (isCollapsed ? 0 : "auto"),
+                // Preview模式下移除过渡延迟
+                transitionDelay: variant === "preview" ? "0ms" : "0ms"
+              }}
             >
               <div
                 ref={elementRef}
@@ -337,13 +344,26 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
           backdrop-filter: blur(8px);
         }
 
-        /* 核心过渡系统 - 只动画必要的属性 */
+        /* 🎯 优化核心过渡系统 - Preview模式禁用动画，避免闪烁 */
         .jobs-card-transition {
           transition: 
-            transform 420ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-            box-shadow 380ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-            background-color 320ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+            box-shadow 280ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
           transform-origin: center center;
+          /* 移除background-color动画，避免与其他元素的opacity动画冲突 */
+        }
+        
+        /* Preview模式下禁用所有过渡动画，防止输入时的闪烁 */
+        .preview-mode .jobs-card-transition {
+          transition: none !important;
+        }
+        
+        .preview-mode .jobs-card-idle,
+        .preview-mode .jobs-card-selected {
+          transform: none !important;
+          box-shadow: 
+            0 1px 3px rgba(0, 0, 0, 0.12),
+            0 1px 2px rgba(0, 0, 0, 0.08) !important;
         }
 
         /* 静息状态 - 优雅的基础阴影 */
@@ -425,18 +445,19 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
           background: rgba(23, 23, 23, 0.85);
         }
 
-        /* 滚动时禁用动画，防止抖动 */
+        /* 🎯 滚动时禁用动画，防止抖动 */
         .scrolling .jobs-card-transition {
           transition: none !important;
         }
 
-        /* 性能优化 */
-        .jobs-card-transition:hover {
-          will-change: transform, box-shadow;
-        }
-
-        .jobs-card-transition:not(:hover) {
+        /* 🎯 优化性能 - 保守使用will-change，避免过度重绘 */
+        .jobs-card-transition {
           will-change: auto;
+        }
+        
+        /* 只在真正需要时启用硬件加速 */
+        .group:hover .jobs-card-transition {
+          will-change: transform, box-shadow;
         }
       `}</style>
       

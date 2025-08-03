@@ -83,7 +83,11 @@
       "Bash(node:*)",
       "Bash(diff:*)",
       "Bash(/dev/null)",
-      "Bash(pnpm run:*)"
+      "Bash(pnpm run:*)",
+      "Bash(gtimeout 60 npm run build)",
+      "Bash(npx next lint:*)",
+      "Bash(yarn tsc:*)",
+      "Bash(npx next build:*)"
     ]
   },
   "enableAllProjectMcpServers": false
