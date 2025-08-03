@@ -5,6 +5,7 @@ import type { ContentItemPublic } from "@/lib/api/content";
 import { ContentAnalysisView } from "@/components/ai/ContentAnalysisView";
 import { contentDataManager, ContentData } from "@/lib/services/content-data-manager";
 import { useAuth } from "@/lib/client-auth";
+import { ReferenceManagerProvider } from "@/components/ui/ReferenceManager";
 
 interface Props {
   item: ContentItemPublic | null;
@@ -109,19 +110,21 @@ export const ContentPreview = ({ item }: Props) => {
 
   return (
     <div className="relative z-20 h-full shadow-macos-window linear-bg-1 rounded-sm flex flex-col overflow-hidden">
-      <ContentAnalysisView
-        key={item?.id} // 🎯 关键修复：强制重新挂载，彻底隔离不同文章的状态
-        item={item}
-        analysisResult={contentData?.analysisResult}
-        conversations={[]} // Preview模式不显示对话历史
-        isLoading={loading}
-        variant="preview"
-        scene="preview" // 🎯 明确指定为预览场景，确保状态隔离
-        hideHeader={false}
-        headerTitle="Preview"
-        emptyStateText="点击内容卡片查看预览"
-        className="rounded-sm"
-      />
+      <ReferenceManagerProvider contentId={item?.id}>
+        <ContentAnalysisView
+          key={item?.id} // 🎯 关键修复：强制重新挂载，彻底隔离不同文章的状态
+          item={item}
+          analysisResult={contentData?.analysisResult}
+          conversations={contentData?.conversations || []} // 🎯 修复：包含对话历史以支持引用功能
+          isLoading={loading}
+          variant="preview"
+          scene="preview" // 🎯 明确指定为预览场景，确保状态隔离
+          hideHeader={false}
+          headerTitle="Preview"
+          emptyStateText="点击内容卡片查看预览"
+          className="rounded-sm"
+        />
+      </ReferenceManagerProvider>
     </div>
   );
 };

@@ -50,7 +50,7 @@ export function JsonlRenderer({
   enableHoverEffects = true,
   onExpandLine,
   styleName = "notebook",
-  showReferenceIndicators = false,
+  showReferenceIndicators = true, // 🎯 修复：默认启用引用指示器，确保悬浮卡片正常显示
   enableDelayedRendering = false,
   renderDelay = 400,
   contentId,

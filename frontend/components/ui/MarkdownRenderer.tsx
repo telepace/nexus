@@ -14,6 +14,7 @@ import copy from "copy-to-clipboard";
 import { cn, normalizeImageUrl } from "@/lib/utils";
 import { OptimizedImage } from "./OptimizedImage";
 import { ReferenceHyperlinkRenderer } from "./ReferenceHyperlinkRenderer";
+import { processInlineReferences } from "./InlineReferenceRenderer";
 
 // Import highlight.js styles
 import "highlight.js/styles/github-dark.css";
@@ -111,9 +112,10 @@ export function MarkdownRenderer({
 
   const Root: React.ElementType = inline ? "span" : "div";
 
-  // 渲染引用链接
+  // 渲染引用链接（仅在非内联模式下显示，因为我们现在使用内联引用）
   const renderReferences = () => {
-    if (!refString) return null;
+    // 🎯 如果启用了内联引用处理，就不在末尾显示引用
+    if (!refString || !inline) return null;
     
     return (
       <ReferenceHyperlinkRenderer
@@ -208,11 +210,31 @@ export function MarkdownRenderer({
               {children}
             </h4>
           ),
-          p: ({ children, ...props }) => (
-            <p className="leading-6 mt-3" {...props}>
-              {children}
-            </p>
-          ),
+          p: ({ children, ...props }) => {
+            // 🎯 处理段落中的内联引用
+            if (typeof children === 'string') {
+              const processedChildren = processInlineReferences(children, contentId, 'elegant');
+              return (
+                <p className="leading-6 mt-3" {...props}>
+                  {processedChildren}
+                </p>
+              );
+            }
+            
+            // 处理复杂子元素中的引用
+            const processedChildren = React.Children.map(children, (child) => {
+              if (typeof child === 'string') {
+                return processInlineReferences(child, contentId, 'elegant');
+              }
+              return child;
+            });
+            
+            return (
+              <p className="leading-6 mt-3" {...props}>
+                {processedChildren}
+              </p>
+            );
+          },
           blockquote: ({ children, ...props }) => (
             <blockquote className="mt-4 border-l-2 pl-4 italic" {...props}>
               {children}

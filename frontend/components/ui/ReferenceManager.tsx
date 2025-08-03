@@ -119,7 +119,14 @@ export const useReferenceManagerSafe = () => {
             .map((ref) => parseInt(ref.trim(), 10))
             .filter((num) => !isNaN(num));
         },
-        getReferenceInfo: () => undefined,
+        getReferenceInfo: (refId: number): ReferenceInfo | undefined => {
+          // 🎯 修复：提供基本的引用信息，确保悬浮卡片能正常显示
+          return {
+            refId,
+            paragraphId: `fallback-para-${refId}`,
+            snippet: `第${refId}段内容摘要...`,
+          };
+        },
         getEnhancedReferenceInfo: async (refId: number): Promise<EnhancedReferenceInfo | null> => {
           // 降级的模拟数据
           return {

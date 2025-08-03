@@ -75,7 +75,7 @@ export function OptimizedReferenceIndicator({
   maxPreviewLength = 120,
   maxPreviewItems = 3,
   onReferenceClick,
-  autoLoad = false,
+  autoLoad = true, // 🎯 修复：默认启用自动加载，确保预览场景正常工作
 }: OptimizedReferenceIndicatorProps) {
   const [state, setState] = useState<ReferenceState>({
     segments: [],

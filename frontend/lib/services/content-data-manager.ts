@@ -65,12 +65,24 @@ class ContentDataManager {
   }
 
   /**
-   * Preview模式专用 - 只获取基本数据，不加载对话历史
+   * Preview模式专用 - 获取基本数据和必要的引用信息
    */
   async getPreviewData(contentId: string): Promise<ContentData | null> {
     return this.getContentData(contentId, {
       includeAnalysis: true,
-      includeConversations: false, // Preview模式不加载对话历史
+      includeConversations: true, // 🎯 修复：Preview模式也需要对话历史以支持引用功能
+      mode: 'preview'
+    });
+  }
+
+  /**
+   * 轻量Preview模式 - 只获取基本数据，完全不加载对话历史
+   * 用于快速预览场景，不需要引用功能
+   */
+  async getLightPreviewData(contentId: string): Promise<ContentData | null> {
+    return this.getContentData(contentId, {
+      includeAnalysis: true,
+      includeConversations: false, // 轻量模式不加载对话历史
       mode: 'preview'
     });
   }
@@ -214,7 +226,7 @@ class ContentDataManager {
     promises.push(contentApi.getContentItem(contentId));
     
     // 根据选项决定是否获取对话历史
-    if (options.includeConversations && options.mode !== 'preview') {
+    if (options.includeConversations) {
       promises.push(contentApi.getContentConversations(contentId, false));
     }
 

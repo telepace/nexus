@@ -241,7 +241,8 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
           setInternalAnalysisResult(data.analysisResult || null);
         }
         
-        if (!hasExternalConversations && variant !== "preview") {
+        // 🎯 修复：Preview模式也需要对话历史以支持引用功能
+        if (!hasExternalConversations) {
           setInternalConversations(data.conversations || []);
         }
         

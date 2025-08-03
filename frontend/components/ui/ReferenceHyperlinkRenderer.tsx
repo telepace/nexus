@@ -10,6 +10,7 @@ import {
 } from "@/lib/utils/reference-parser";
 import { useReferenceManagerSafe } from "./ReferenceManager";
 import { OptimizedReferenceTooltip, CompactReferenceTooltip } from "./EnhancedReferenceTooltip";
+import { ElegantReferenceTooltip } from "./ElegantReferenceTooltip";
 
 interface ReferenceHyperlinkRendererProps {
   refString?: string;
@@ -92,7 +93,7 @@ export const ReferenceHyperlinkRenderer: React.FC<ReferenceHyperlinkRendererProp
       case 'badge':
         return {
           container: "inline-flex items-center gap-1 ml-2",
-          link: "inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-full text-xs font-medium bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 transform hover:scale-110",
+          link: "inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-110 shadow-lg hover:shadow-xl cursor-pointer",
           separator: "text-muted-foreground text-xs"
         };
       case 'inline':
@@ -159,20 +160,17 @@ export const ReferenceHyperlinkRenderer: React.FC<ReferenceHyperlinkRendererProp
     // 决定使用哪种tooltip
     if (showTooltip && variant !== 'minimal') {
       if (enableEnhancedTooltip && contentId) {
-        // 使用增强的tooltip
-        const TooltipComponent = variant === 'inline' ? CompactReferenceTooltip : OptimizedReferenceTooltip;
-        
+        // 🎨 使用新的优雅悬浮卡片设计
         return (
-          <TooltipComponent
+          <ElegantReferenceTooltip
             key={index}
             refId={primaryId}
             contentId={contentId}
             delay={tooltipDelay}
-            showContext={showTooltipContext}
-            maxLength={variant === 'badge' ? 150 : 200}
+            maxLength={variant === 'badge' ? 180 : 220}
           >
             {linkElement}
-          </TooltipComponent>
+          </ElegantReferenceTooltip>
         );
       } else {
         // 使用原来的简单tooltip
