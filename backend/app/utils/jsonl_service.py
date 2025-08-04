@@ -33,9 +33,11 @@ from .jsonl_parser import (
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class ProcessingStats:
     """处理统计信息"""
+
     total_lines: int = 0
     processed_lines: int = 0
     successful_blocks: int = 0
@@ -68,9 +70,11 @@ class ProcessingStats:
             return 0.0
         return self.cache_hits / total_requests
 
+
 @dataclass
 class ServiceConfig:
     """服务配置"""
+
     enable_caching: bool = True
     cache_size: int = 1000
     enable_stats: bool = True
@@ -79,6 +83,7 @@ class ServiceConfig:
     timeout_seconds: float = 30.0
     enable_preprocessing: bool = True
     enable_validation: bool = True
+
 
 class JsonlService:
     """高级 JSONL 处理服务"""
@@ -89,17 +94,24 @@ class JsonlService:
         self.compact_formatter = create_compact_formatter()
         self.pretty_formatter = create_pretty_formatter()
         self.stats = ProcessingStats()
-        self._cache = {} if self.config.enable_caching else None
+        self._cache: dict[str, dict[str, Any]] | None = (
+            {} if self.config.enable_caching else None
+        )
         self._custom_processors: list[Callable] = []
 
-    def register_custom_processor(self, processor: Callable[[list[ParsedBlock]], list[ParsedBlock]]):
+    def register_custom_processor(
+        self, processor: Callable[[list[ParsedBlock]], list[ParsedBlock]]
+    ):
         """注册自定义后处理器"""
         self._custom_processors.append(processor)
         logger.info("Registered custom processor")
 
-    async def process_content(self, content: str,
-                            parse_options: ParseOptions | None = None,
-                            format_type: str = "compact") -> dict[str, Any]:
+    async def process_content(
+        self,
+        content: str,
+        parse_options: ParseOptions | None = None,
+        format_type: str = "compact",
+    ) -> dict[str, Any]:
         """
         处理 JSONL 内容的主要接口
 
@@ -152,15 +164,17 @@ class JsonlService:
                     "successful_blocks": len(parse_result.blocks),
                     "error_count": len(parse_result.errors),
                     "warning_count": len(parse_result.warnings),
-                    "processing_time": time.time() - start_time
+                    "processing_time": time.time() - start_time,
                 },
                 "errors": [self._error_to_dict(error) for error in parse_result.errors],
-                "warnings": [self._warning_to_dict(warning) for warning in parse_result.warnings],
+                "warnings": [
+                    self._warning_to_dict(warning) for warning in parse_result.warnings
+                ],
                 "metadata": {
                     "cache_used": False,
                     "input_hash": hashlib.md5(content.encode()).hexdigest()[:8],
-                    "timestamp": time.time()
-                }
+                    "timestamp": time.time(),
+                },
             }
 
             # 缓存结果
@@ -174,9 +188,12 @@ class JsonlService:
             logger.error(f"Processing failed: {str(e)}")
             return self._create_error_result(f"Processing error: {str(e)}", start_time)
 
-    def process_content_sync(self, content: str,
-                           parse_options: ParseOptions | None = None,
-                           format_type: str = "compact") -> dict[str, Any]:
+    def process_content_sync(
+        self,
+        content: str,
+        parse_options: ParseOptions | None = None,
+        format_type: str = "compact",
+    ) -> dict[str, Any]:
         """同步处理接口"""
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -184,7 +201,7 @@ class JsonlService:
             return loop.run_until_complete(
                 asyncio.wait_for(
                     self.process_content(content, parse_options, format_type),
-                    timeout=self.config.timeout_seconds
+                    timeout=self.config.timeout_seconds,
                 )
             )
         finally:
@@ -202,12 +219,12 @@ class JsonlService:
             "block_count": len(result["blocks"]),
             "errors": result["errors"],
             "warnings": result["warnings"],
-            "summary": self._generate_validation_summary(result)
+            "summary": self._generate_validation_summary(result),
         }
 
-    async def convert_format(self, content: str,
-                           from_format: str = "auto",
-                           to_format: str = "compact") -> dict[str, Any]:
+    async def convert_format(
+        self, content: str, from_format: str = "auto", to_format: str = "compact"
+    ) -> dict[str, Any]:
         """格式转换"""
         # 如果输入已经是 JSONL，直接重新格式化
         if from_format == "jsonl" or self._is_jsonl_content(content):
@@ -231,7 +248,7 @@ class JsonlService:
             "error_rate": self.stats.error_rate,
             "cache_hits": self.stats.cache_hits,
             "cache_misses": self.stats.cache_misses,
-            "cache_hit_rate": self.stats.cache_hit_rate
+            "cache_hit_rate": self.stats.cache_hit_rate,
         }
 
     def reset_stats(self):
@@ -244,8 +261,9 @@ class JsonlService:
             self._cache.clear()
             logger.info("Cache cleared")
 
-    async def _parse_with_retry(self, content: str,
-                              parse_options: ParseOptions | None) -> ParseResult:
+    async def _parse_with_retry(
+        self, content: str, parse_options: ParseOptions | None
+    ) -> ParseResult:
         """带重试的解析"""
         last_exception = None
 
@@ -255,7 +273,9 @@ class JsonlService:
 
                 # 如果启用了自动恢复且有错误，尝试修复
                 if self.config.auto_recovery and result.has_errors:
-                    result = await self._attempt_auto_recovery(content, result, parse_options)
+                    result = await self._attempt_auto_recovery(
+                        content, result, parse_options
+                    )
 
                 return result
 
@@ -267,10 +287,17 @@ class JsonlService:
                     await asyncio.sleep(0.1 * (attempt + 1))  # 指数退避
 
         # 所有重试都失败，返回错误结果
-        raise last_exception
+        if last_exception is not None:
+            raise last_exception
+        else:
+            raise RuntimeError("Parsing failed with no specific error")
 
-    async def _attempt_auto_recovery(self, content: str, failed_result: ParseResult,
-                                   parse_options: ParseOptions | None) -> ParseResult:
+    async def _attempt_auto_recovery(
+        self,
+        content: str,
+        failed_result: ParseResult,
+        parse_options: ParseOptions | None,
+    ) -> ParseResult:
         """尝试自动恢复错误"""
         logger.info(f"Attempting auto recovery for {len(failed_result.errors)} errors")
 
@@ -300,7 +327,7 @@ class JsonlService:
 
     async def _fix_json_errors(self, content: str, errors: list) -> str:
         """修复 JSON 语法错误"""
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         for error in errors:
             line_idx = error.line_number - 1
@@ -313,15 +340,15 @@ class JsonlService:
                     lines[line_idx] = fixed_line
                     logger.debug(f"Fixed JSON error at line {error.line_number}")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def _fix_json_line(self, line: str) -> str:
         """修复单行 JSON 错误"""
         # 添加缺失的引号
-        line = re.sub(r'\b(\w+):', r'"\1":', line)
+        line = re.sub(r"\b(\w+):", r'"\1":', line)
 
         # 移除多余的逗号
-        line = re.sub(r',\s*([}\]])', r'\1', line)
+        line = re.sub(r",\s*([}\]])", r"\1", line)
 
         # 修复单引号
         line = line.replace("'", '"')
@@ -337,7 +364,7 @@ class JsonlService:
         """修复编码错误"""
         try:
             # 尝试重新编码
-            return content.encode('utf-8', errors='replace').decode('utf-8')
+            return content.encode("utf-8", errors="replace").decode("utf-8")
         except Exception:
             return content
 
@@ -367,9 +394,9 @@ class JsonlService:
         """检测输入格式"""
         if self._is_jsonl_content(content):
             return "jsonl"
-        elif content.strip().startswith('#') or content.strip().startswith('##'):
+        elif content.strip().startswith("#") or content.strip().startswith("##"):
             return "markdown"
-        elif content.strip().startswith('<'):
+        elif content.strip().startswith("<"):
             return "html"
         else:
             return "text"
@@ -379,7 +406,7 @@ class JsonlService:
         if not content or not content.strip():
             return False
 
-        lines = [line.strip() for line in content.strip().split('\n') if line.strip()]
+        lines = [line.strip() for line in content.strip().split("\n") if line.strip()]
         if not lines:
             return False
 
@@ -387,18 +414,23 @@ class JsonlService:
             first_line = lines[0]
             parsed = json.loads(first_line)
             return (
-                isinstance(parsed, dict) and
-                ("type" in parsed or "t" in parsed) and
-                ("content" in parsed or "c" in parsed)
+                isinstance(parsed, dict)
+                and ("type" in parsed or "t" in parsed)
+                and ("content" in parsed or "c" in parsed)
             )
-        except:
+        except json.JSONDecodeError:
             return False
 
-    def _generate_cache_key(self, content: str, parse_options: ParseOptions | None,
-                          format_type: str) -> str:
+    def _generate_cache_key(
+        self, content: str, parse_options: ParseOptions | None, format_type: str
+    ) -> str:
         """生成缓存键"""
         content_hash = hashlib.md5(content.encode()).hexdigest()
-        options_hash = hashlib.md5(str(parse_options).encode()).hexdigest() if parse_options else "default"
+        options_hash = (
+            hashlib.md5(str(parse_options).encode()).hexdigest()
+            if parse_options
+            else "default"
+        )
         return f"{content_hash}_{options_hash}_{format_type}"
 
     def _get_from_cache(self, cache_key: str) -> dict[str, Any] | None:
@@ -435,22 +467,19 @@ class JsonlService:
         self.stats.warning_count += len(parse_result.warnings)
         self.stats.processing_time += processing_time
 
-    def _create_error_result(self, error_message: str, start_time: float) -> dict[str, Any]:
+    def _create_error_result(
+        self, error_message: str, start_time: float
+    ) -> dict[str, Any]:
         """创建错误结果"""
         return {
             "success": False,
             "error": error_message,
             "content": "",
             "blocks": [],
-            "stats": {
-                "processing_time": time.time() - start_time,
-                "error_count": 1
-            },
+            "stats": {"processing_time": time.time() - start_time, "error_count": 1},
             "errors": [{"message": error_message, "type": "system_error"}],
             "warnings": [],
-            "metadata": {
-                "timestamp": time.time()
-            }
+            "metadata": {"timestamp": time.time()},
         }
 
     def _block_to_dict(self, block: ParsedBlock) -> dict[str, Any]:
@@ -460,7 +489,7 @@ class JsonlService:
             "content": block.content,
             "attributes": block.attributes,
             "line_number": block.line_number,
-            "is_valid": block.is_valid
+            "is_valid": block.is_valid,
         }
 
     def _error_to_dict(self, error) -> dict[str, Any]:
@@ -477,7 +506,7 @@ class JsonlService:
         return {
             "message": warning.message,
             "line_number": warning.line_number,
-            "context": warning.context
+            "context": warning.context,
         }
 
     def _generate_validation_summary(self, result: dict[str, Any]) -> str:
@@ -487,29 +516,35 @@ class JsonlService:
         else:
             return f"Invalid JSONL: {len(result['errors'])} errors, {len(result['warnings'])} warnings"
 
+
 # 便捷函数
 def create_service(config: ServiceConfig | None = None) -> JsonlService:
     """创建服务实例"""
     return JsonlService(config)
 
-async def process_jsonl_content(content: str,
-                              format_type: str = "compact") -> dict[str, Any]:
+
+async def process_jsonl_content(
+    content: str, format_type: str = "compact"
+) -> dict[str, Any]:
     """便捷的异步处理函数"""
     service = create_service()
     return await service.process_content(content, format_type=format_type)
 
-def process_jsonl_content_sync(content: str,
-                             format_type: str = "compact") -> dict[str, Any]:
+
+def process_jsonl_content_sync(
+    content: str, format_type: str = "compact"
+) -> dict[str, Any]:
     """便捷的同步处理函数"""
     service = create_service()
     return service.process_content_sync(content, format_type=format_type)
 
+
 # 导出的公共接口
 __all__ = [
-    'JsonlService',
-    'ServiceConfig',
-    'ProcessingStats',
-    'create_service',
-    'process_jsonl_content',
-    'process_jsonl_content_sync'
+    "JsonlService",
+    "ServiceConfig",
+    "ProcessingStats",
+    "create_service",
+    "process_jsonl_content",
+    "process_jsonl_content_sync",
 ]

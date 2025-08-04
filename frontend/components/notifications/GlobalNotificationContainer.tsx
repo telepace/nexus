@@ -66,7 +66,7 @@ const GlobalNotificationContainer: React.FC<
       {/* 如果有更多通知未显示，显示提示 */}
       {notifications.length > maxVisible && (
         <div className="pointer-events-auto">
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 text-center">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-border rounded-lg shadow-lg p-3 text-center">
             <p className="text-sm text-muted-foreground">
               还有 {notifications.length - maxVisible} 条通知...
             </p>

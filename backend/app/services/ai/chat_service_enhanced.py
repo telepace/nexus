@@ -40,50 +40,63 @@ class EnhancedChatService:
             enable_stats=True,
             auto_recovery=True,
             max_retry_attempts=3,
-            timeout_seconds=30.0
+            timeout_seconds=30.0,
         )
         self.jsonl_service = JsonlService(service_config)
 
         # 注册自定义处理器
         self._setup_custom_processors()
-    
+
     def get_model_for_template(self, template_name: str) -> str:
         """
         根据模板名称获取对应的模型
-        
+
         Args:
             template_name: 模板文件名，如 "summary.j2"
-            
+
         Returns:
             str: 模型名称
         """
         # 从模板名称映射到任务名称
         template_to_task = {
             "summary.j2": "summary",
-            "key_points.j2": "key_points", 
+            "key_points.j2": "key_points",
             "labels.j2": "labels",
             "segment_aware_chat.j2": "chat",
+            "simple_chat.j2": "chat",  # 🎯 新增：简单聊天模板使用chat任务
             "user_analysis.j2": "analysis",
-            "jsonl_output_rules.j2": "analysis",  # 使用通用分析模型
+            "expand_discussion.j2": "analysis",  # 使用analysis任务的模型配置
+
+            # 🎯 新增：支持常见的prompt名称映射到chat任务
+            "提取要点": "chat",
+            "总结内容": "chat",
+            "关键信息": "chat",
+            "深度分析": "analysis",
+            "详细解读": "analysis",
         }
-        
+
         # 获取任务名称
         task_name = template_to_task.get(template_name)
-        
+
         # 从配置中获取模型
         resolved_models = settings.resolved_ai_task_models
-        
+
         if task_name and task_name in resolved_models:
             model = resolved_models[task_name]
-            logger.info(f"Enhanced model for template '{template_name}' (task: {task_name}): {model}")
+            logger.info(
+                f"Enhanced model for template '{template_name}' (task: {task_name}): {model}"
+            )
             return model
         else:
             # 回退到全局默认
-            logger.info(f"Using default model for template '{template_name}': {settings.DEFAULT_LLM_MODEL}")
+            logger.info(
+                f"Using default model for template '{template_name}': {settings.DEFAULT_LLM_MODEL}"
+            )
             return settings.DEFAULT_LLM_MODEL
 
     def _setup_custom_processors(self):
         """设置自定义处理器"""
+
         def content_enhancer(blocks):
             """内容增强处理器"""
             for block in blocks:
@@ -106,7 +119,7 @@ class EnhancedChatService:
         template_name: str,
         context: dict[str, Any],
         model: str | None = None,
-        output_format: str = "auto"
+        output_format: str = "auto",
     ) -> dict[str, Any]:
         """
         使用模板生成AI响应（增强版）
@@ -123,10 +136,14 @@ class EnhancedChatService:
         try:
             # 为 labels.j2 模板添加预设标签
             if template_name == "labels.j2":
-                preset_tag_names = tag_manager.get_preset_tag_names()
+                # 根据输出语言选择合适的标签语言
+                output_language = context.get("output_language", "zh")
+                preset_tag_names = tag_manager.get_preset_tag_names_by_language(output_language)
                 context = context.copy()
                 context["existing_tags"] = preset_tag_names
-                logger.info(f"为 labels.j2 模板添加了 {len(preset_tag_names)} 个预设标签")
+                logger.info(
+                    f"为 labels.j2 模板添加了 {len(preset_tag_names)} 个预设标签 (语言: {output_language})"
+                )
 
             # 加载模板
             template = self.template_env.get_template(template_name)
@@ -136,7 +153,9 @@ class EnhancedChatService:
             formatted_content = context.get("content_with_segment_numbers")
             if formatted_content:
                 system_content = formatted_content
-                logger.info(f"✅ 使用带段落标号的格式化内容，长度: {len(system_content)}")
+                logger.info(
+                    f"✅ 使用带段落标号的格式化内容，长度: {len(system_content)}"
+                )
             else:
                 system_content = context.get("content", "")
                 logger.info(f"⚠️ 回退到原始内容，长度: {len(system_content)}")
@@ -148,10 +167,7 @@ class EnhancedChatService:
             )
 
             # 选择模型
-            selected_model = (
-                model
-                or self.get_model_for_template(template_name)
-            )
+            selected_model = model or self.get_model_for_template(template_name)
 
             logger.info(f"使用模型 '{selected_model}' 处理模板 '{template_name}'")
 
@@ -166,13 +182,15 @@ class EnhancedChatService:
             )
 
             # 添加元数据
-            result.update({
-                "template_name": template_name,
-                "model_used": selected_model,
-                "system_content_length": len(system_content),
-                "prompt_length": len(prompt),
-                "raw_ai_output": ai_content
-            })
+            result.update(
+                {
+                    "template_name": template_name,
+                    "model_used": selected_model,
+                    "system_content_length": len(system_content),
+                    "prompt_length": len(prompt),
+                    "raw_ai_output": ai_content,
+                }
+            )
 
             return result
 
@@ -181,10 +199,7 @@ class EnhancedChatService:
             return self._create_error_response(str(e), template_name)
 
     async def _process_ai_output(
-        self,
-        ai_content: str,
-        template_name: str,
-        output_format: str = "auto"
+        self, ai_content: str, template_name: str, output_format: str = "auto"
     ) -> dict[str, Any]:
         """
         处理 AI 输出内容
@@ -215,14 +230,12 @@ class EnhancedChatService:
                     preprocessor=PreprocessorConfig(
                         remove_code_blocks=True,
                         fix_common_errors=True,
-                        normalize_quotes=True
-                    )
+                        normalize_quotes=True,
+                    ),
                 )
 
                 result = await self.jsonl_service.process_content(
-                    ai_content,
-                    parse_options=parse_options,
-                    format_type=output_format
+                    ai_content, parse_options=parse_options, format_type=output_format
                 )
 
                 # 增强结果信息
@@ -244,8 +257,8 @@ class EnhancedChatService:
                         "processing_info": {
                             "input_format": result["input_format"],
                             "output_format": result["output_format"],
-                            "cache_used": result["metadata"].get("cache_used", False)
-                        }
+                            "cache_used": result["metadata"].get("cache_used", False),
+                        },
                     }
                 else:
                     logger.warning(
@@ -261,21 +274,20 @@ class EnhancedChatService:
                         "content": result["content"],
                         "errors": result["errors"],
                         "warnings": result["warnings"],
-                        "raw_content": ai_content
+                        "raw_content": ai_content,
                     }
 
             # 其他格式的处理逻辑
-            return await self._process_other_formats(ai_content, template_name, output_format)
+            return await self._process_other_formats(
+                ai_content, template_name, output_format
+            )
 
         except Exception as e:
             logger.error(f"AI 输出处理失败 {template_name}: {str(e)}")
             return self._create_error_response(f"输出处理失败: {str(e)}", template_name)
 
     async def _process_other_formats(
-        self,
-        ai_content: str,
-        template_name: str,
-        output_format: str
+        self, ai_content: str, template_name: str, output_format: str
     ) -> dict[str, Any]:
         """处理其他格式的输出"""
 
@@ -287,7 +299,7 @@ class EnhancedChatService:
                     "format": "json",
                     "success": True,
                     "data": parsed_json,
-                    "text": ai_content
+                    "text": ai_content,
                 }
             except json.JSONDecodeError as e:
                 logger.error(f"JSON 解析失败 {template_name}: {e}")
@@ -295,33 +307,27 @@ class EnhancedChatService:
                     "format": "text",
                     "success": False,
                     "text": ai_content,
-                    "error": f"JSON 解析失败: {str(e)}"
+                    "error": f"JSON 解析失败: {str(e)}",
                 }
 
         # 默认返回文本格式
-        return {
-            "format": "text",
-            "success": True,
-            "text": ai_content
-        }
+        return {"format": "text", "success": True, "text": ai_content}
 
     def _is_jsonl_template(self, template_name: str) -> bool:
         """检查是否为 JSONL 输出模板"""
-        jsonl_templates = {
-            "jsonl_output_rules.j2",
-            "summary.j2",
-            "key_points.j2"
-        }
+        jsonl_templates = {"jsonl_output_rules.j2", "summary.j2", "key_points.j2"}
         return template_name in jsonl_templates
 
-    def _create_error_response(self, error_message: str, template_name: str) -> dict[str, Any]:
+    def _create_error_response(
+        self, error_message: str, template_name: str
+    ) -> dict[str, Any]:
         """创建错误响应"""
         return {
             "format": "error",
             "success": False,
             "error": error_message,
             "template_name": template_name,
-            "text": ""
+            "text": "",
         }
 
     async def _call_litellm_proxy(
@@ -330,10 +336,10 @@ class EnhancedChatService:
         """调用 LiteLLM 代理"""
         # 这里应该实现实际的 LLM 调用逻辑
         # 为了演示，返回一个模拟的 JSONL 响应
-        return '''{"t": "h1", "c": "AI 分析结果"}
+        return """{"t": "h1", "c": "AI 分析结果"}
 {"t": "p", "c": "这是一个基于用户输入生成的分析结果。"}
 {"t": "insight", "c": "重要发现：用户的需求很明确", "expandable": "详细分析用户意图"}
-{"t": "action", "c": "建议采取相应的处理措施"}'''
+{"t": "action", "c": "建议采取相应的处理措施"}"""
 
     async def get_processing_stats(self) -> dict[str, Any]:
         """获取处理统计信息"""
@@ -353,6 +359,4 @@ class EnhancedChatService:
 
 
 # 导出的公共接口
-__all__ = [
-    'EnhancedChatService'
-]
+__all__ = ["EnhancedChatService"]

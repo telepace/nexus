@@ -23,13 +23,13 @@ class TestAIModelSelection:
         """测试模板-模型映射配置"""
         # 验证解析的模型配置存在且正确
         resolved_models = settings.resolved_ai_task_models
-        
+
         assert "summary" in resolved_models
         assert "key_points" in resolved_models
         assert "labels" in resolved_models
 
         # 验证映射的模型名称（基于你的 .env 配置）
-        assert resolved_models["summary"] == "or-gemini-2.5-flash-preview-05-20"
+        assert resolved_models["summary"] == "or-gemini-2.5-flash-05-20"
         assert resolved_models["key_points"] == "or-deepseek-r1"
         assert resolved_models["labels"] == "deepseek-v3-ensemble"
 
@@ -53,7 +53,7 @@ class TestAIModelSelection:
                     "summary.j2", {"content": "test"}
                 )
                 mock_call.assert_called_with(
-                    "test", "mocked prompt", "or-gemini-2.5-flash-preview-05-20"
+                    "test", "mocked prompt", "or-gemini-2.5-flash-05-20"
                 )
 
                 # 重置mock
@@ -63,9 +63,7 @@ class TestAIModelSelection:
                 await chat_service.generate_with_template(
                     "key_points.j2", {"content": "test"}
                 )
-                mock_call.assert_called_with(
-                    "test", "mocked prompt", "or-deepseek-r1"
-                )
+                mock_call.assert_called_with("test", "mocked prompt", "or-deepseek-r1")
 
                 # 重置mock
                 mock_call.reset_mock()
@@ -74,9 +72,7 @@ class TestAIModelSelection:
                 await chat_service.generate_with_template(
                     "summary.j2", {"content": "test"}, model="custom-model"
                 )
-                mock_call.assert_called_with(
-                    "test", "mocked prompt", "custom-model"
-                )
+                mock_call.assert_called_with("test", "mocked prompt", "custom-model")
 
                 # 重置mock
                 mock_call.reset_mock()
@@ -92,13 +88,10 @@ class TestAIModelSelection:
     def test_model_selection_priority(self):
         """测试模型选择优先级逻辑"""
         chat_service = ChatService()
-        
+
         # 测试选择逻辑函数（模拟ChatService内部逻辑）
         def select_model(template_name: str, explicit_model: str = None):
-            return (
-                explicit_model
-                or chat_service.get_model_for_template(template_name)
-            )
+            return explicit_model or chat_service.get_model_for_template(template_name)
 
         # 测试各种情况的优先级
         resolved_models = settings.resolved_ai_task_models

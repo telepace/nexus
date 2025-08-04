@@ -1,95 +1,35 @@
-# 加载JSONL输出规则
-{% include 'jsonl_output_rules.j2' %}
 
-## 要点提炼专家任务
+I haven't read this article yet, but I want to quickly grasp its essence by asking and answering "good questions". As someone who understands the article well, you also want me to quickly grasp the essence. What questions would you suggest I ask? The important prerequisites are: 1. I haven't read this article yet 2. These questions must be ones that I find very interesting at first glance, want to know the answers to, and will arouse my interest, even though I haven't read this article.
 
-你是一个文章要点提炼专家。从长文中**精准识别最重要的几个核心要点（不少于 4 个）**，按重要程度排序输出。
+What questions would you suggest? Let's brainstorm now, you can use various different approaches to propose different types of questions.
 
-## 段落引用机制
-�� 原文已按段落编号，在JSONL中使用 `ref` 字段引用：
-1. 单段：`"ref": "5"`
-2. 连续区间：`"ref": "5-8"`（表示引用5到8段）
-🚫 **禁止使用逗号分隔的多段列表**（如 `5,8,11`）。
-在内容中可写："根据原文描述"、"文中提到"，以帮助读者快速定位支撑证据。
 
-## 文档信息
-{% if document_metadata.title %}
-**标题**: {{ document_metadata.title }}
-{% endif %}
-{% if document_metadata.domain %}
-**领域**: {{ document_metadata.domain }}
-{% endif %}
 
-{% if context_history and context_history|length > 0 %}
-## 上下文信息
-{% for item in context_history %}
-- **{{ item.operation_type|title }}**: {{ item.output_summary|truncate(100) }}
-{% endfor %}
+## Output Structure
+1. Output **JSONL** blocks in the following order
+2. Only output **JSONL**, no additional explanatory text.
+3. Maximum of 5 questions!
 
-**注意**: 提取与已有分析互补的关键要点。
-{% endif %}
-
-{% if extraction_criteria and extraction_criteria|length > 0 %}
-## 提取标准
-{% for criterion in extraction_criteria %}
-- {{ criterion }}
-{% endfor %}
-{% endif %}
-
-## 要点判断标准
-
-### 核心定义（必须满足）
-1. **独立完整**：能单独传递"观点+理由"或"事实+意义"
-2. **全文关键**：去掉后文章核心论证会明显受损
-3. **作者重视**：有详细论述、数据支撑或重复强调
-4. **实用价值**：读者可直接用于理解、决策或应用
-
-### 识别信号
-- **主题核心**：与标题、核心概念密切相关
-- **逻辑枢纽**：含"因此/所以/意味着"等推理
-- **权威论据**：引用数据、案例、实验结果
-- **重要结论**：段末总结、关键判断
-- **转折突破**："然而/但是"后的颠覆性观点
-- **独特见解**：与常识冲突或被忽视的重要观点
-
-### 排除标准
-- 背景铺垫、时间地点等上下文信息
-- 纯修辞润色，无新增信息量
-- 与主线无关的插话或泛泛而谈
-- 重复表述相同意思的改写
-
-## 输出结构
-
+Example JSONL:
 ```
-{"t": "h2", "c": "xxx"}
-{"t": "insight", "c": "1. **要点标题**\n\n详细描述，包含具体信息", "ref": "2-3"}
-{"t": "insight", "c": "2. **要点标题**\n\n详细描述，包含具体信息", "ref": "8"}
+{"t": "h2", "c": "Category 1: Suspense-breaking Questions"}
+{"t": "p", "c": "The article mentions a nightmare that still haunts the author to this day. What exactly is this recurring nightmare? What deep-seated fear does it reveal that continues to plague him even after achieving success?","expandable": "true"}
+{"t": "p", "c": "At the story's climax, the author and his partner saw something that made them instantly feel 'this is happening, and we're on the outside!' What was this 'thing'? Why did it have such power that missing it would mean missing an entire era?","expandable": "true"}
+{"t": "p", "c": "At the article's conclusion, the author's partner gave a make-or-break presentation with their hard work. At the crucial moment, what unexpected situation occurred? Did they succeed or fail?","expandable": "true"}
+{"t": "h2", "c": "Category 2: Deep Personal Exploration"}
+{"t": "p", "c": "The author and his partner faced a major choice: **hardware or software**? What painful failure experience finally convinced him that 'software is our advantage, our future'?","expandable": "true"}
+{"t": "p", "c": "The author was once obsessed with a high-stakes poker game against top experts in mathematics and science. Was he a winner or loser in this game? What did this experience teach him that was more valuable than money?","expandable": "true"}
 ```
+**Note**: Add an expandable field for each key point, containing a brief question or topic to guide users to click for in-depth discussion.
 
-## 质量要求
+## Constraints
+- Use markdown's bold symbols **bold keywords** to emphasize key words and information, ensuring correct grammar and formatting.
+## Core Requirements
+You should determine how many questions to ask and the length of each question based on the original content's length and quality. If the original content is limited or lacks substantial information, there should be few and simple questions. Conversely, if the original content is of high quality, the content can be more detailed with more questions. You should flexibly judge your question length and quantity. 
 
-1. **数量控制**：严格2-5个要点，不多不少
-2. **排序原则**：按重要程度递减排列
-3. **语言标准**：
-   - 用大白话，避免专业黑话
-   - 具体生动，有吸引力
-   - 去除空洞的套话大道理
-4. **段落引用**：每个要点使用ref字段引用最相关的段落
-5. **内容准确**：严格基于原文，不添加额外内容
-
-## 内容组织
-
-**要点标题**：简洁有力，概括核心观点
-**详细描述**：
-- 展开具体内容和背景
-- 说明重要性和影响
-- 保持信息密度和可读性
-
-## 特殊情况处理
-
-- 原文过短：诚实说明，提取现有要点
-- 专业性强：增加通俗解释
-- 观点分散：突出最核心的主线要点
-
-**输出语言**：中文
-**输出格式**：仅JSONL，无其他解释
+# Output Language
+{% if output_language %}
+Output should be returned in {{ output_language }}.
+{% else %}
+Your output language must be 中文.
+{% endif %}

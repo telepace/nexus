@@ -1,0 +1,50 @@
+# Railway Configuration for Docker Compose Deployment
+# This file configures Railway to deploy the entire Nexus application using Docker Compose
+
+[build]
+# Use single Dockerfile for monorepo deployment with all services
+builder = "dockerfile"
+dockerfilePath = "Dockerfile.railway"
+
+[deploy]
+# Single container with all services managed by supervisord
+restartPolicyType = "always"
+healthcheckPath = "/api/v1/utils/health-check/"
+healthcheckTimeout = 100
+startCommand = "/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"
+
+# Environment variables for production deployment
+[environments.production]
+# Railway will automatically provide RAILWAY_PUBLIC_DOMAIN
+DOMAIN = "${{ RAILWAY_PUBLIC_DOMAIN }}"
+ENVIRONMENT = "production"
+
+# Database configuration
+POSTGRES_SERVER = "db"
+POSTGRES_PORT = "5432"
+POSTGRES_DB = "app"
+POSTGRES_USER = "postgres"
+POSTGRES_PASSWORD = "${{ POSTGRES_PASSWORD }}"
+
+# Redis configuration  
+REDIS_HOST = "redis"
+REDIS_PORT = "6379"
+REDIS_DB = "0"
+REDIS_ENABLED = "true"
+
+# Application secrets (set these in Railway dashboard)
+SECRET_KEY = "${{ SECRET_KEY }}"
+FIRST_SUPERUSER = "${{ FIRST_SUPERUSER }}"
+FIRST_SUPERUSER_PASSWORD = "${{ FIRST_SUPERUSER_PASSWORD }}"
+
+# API keys (set these in Railway dashboard)
+OPENAI_API_KEY = "${{ OPENAI_API_KEY }}"
+SUPABASE_URL = "${{ SUPABASE_URL }}"
+SUPABASE_ANON_KEY = "${{ SUPABASE_ANON_KEY }}"
+
+# Optional services
+SENTRY_DSN = "${{ SENTRY_DSN }}"
+
+[environments.staging]
+DOMAIN = "${{ RAILWAY_PUBLIC_DOMAIN }}"
+ENVIRONMENT = "staging"

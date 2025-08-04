@@ -1,12 +1,13 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, UniqueConstraint, Column, String, Text, DateTime, Enum, Boolean, Integer, ForeignKey, Index
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    UniqueConstraint,
+)
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import JSON, Field, Relationship, SQLModel
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-import enum
 
 from app.utils.timezone import now_utc
 
@@ -228,7 +229,9 @@ class SegmentBase(SQLModel):
     """Base model for content segments, storing segmented content for efficient rendering."""
 
     content_item_id: uuid.UUID = Field(foreign_key="contentitem.id", index=True)
-    segment_index: int = Field(index=True)  # Order of the segment in the content (0-based)
+    segment_index: int = Field(
+        index=True
+    )  # Order of the segment in the content (0-based)
     display_number: int = Field(index=True)  # Human-friendly display number (1-based)
     content: str = Field()  # The actual content segment
     content_vector: list[float] | None = Field(

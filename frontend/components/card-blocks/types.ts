@@ -2,17 +2,22 @@
  * 卡片块界面的TypeScript类型定义
  */
 
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon } from "lucide-react";
 
 /**
  * 块的类型定义
  */
-export type BlockType = 'h2' | 'h3' | 'p' | 'quote';
+export type BlockType = "h2" | "h3" | "p" | "quote";
 
 /**
  * AI能力类型定义
  */
-export type CapabilityType = 'explain' | 'search' | 'discuss' | 'method' | 'connect';
+export type CapabilityType =
+  | "explain"
+  | "search"
+  | "discuss"
+  | "method"
+  | "connect";
 
 /**
  * AI能力配置接口
@@ -179,7 +184,7 @@ export interface ThemeConfig {
  */
 export interface AIAction {
   /** 操作类型 */
-  type: 'analyze' | 'explain' | 'search' | 'relate' | 'summarize';
+  type: "analyze" | "explain" | "search" | "relate" | "summarize";
   /** 操作名称 */
   name: string;
   /** 操作描述 */
@@ -187,7 +192,7 @@ export interface AIAction {
   /** 图标 */
   icon: LucideIcon;
   /** 执行函数 */
-  execute: (block: Block) => Promise<any>;
+  execute: (block: Block) => Promise<unknown>;
 }
 
 /**
@@ -195,7 +200,7 @@ export interface AIAction {
  */
 export interface ExportConfig {
   /** 导出格式 */
-  format: 'markdown' | 'html' | 'pdf' | 'json';
+  format: "markdown" | "html" | "pdf" | "json";
   /** 是否包含样式 */
   includeStyles: boolean;
   /** 是否包含元数据 */

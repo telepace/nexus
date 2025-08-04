@@ -1,0 +1,79 @@
+# Dockerfile for Playwright testing
+FROM mcr.microsoft.com/playwright:v1.53.0-jammy
+
+WORKDIR /app
+
+# Install Node.js and pnpm
+RUN apt-get update && apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g pnpm
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PLAYWRIGHT_HTML_HOST=0.0.0.0
+
+# Declare build arguments
+ARG VITE_API_URL
+ARG NODE_ENV
+
+ENV VITE_API_URL=$VITE_API_URL
+
+# Create a basic package.json for testing
+RUN echo '{ \
+  "name": "nexus-admin-e2e", \
+  "version": "1.0.0", \
+  "scripts": { \
+    "test": "playwright test", \
+    "test:ui": "playwright test --ui-host=0.0.0.0", \
+    "test:debug": "playwright test --debug", \
+    "show-report": "playwright show-report --host 0.0.0.0" \
+  }, \
+  "dependencies": { \
+    "@playwright/test": "^1.53.0" \
+  } \
+}' > package.json
+
+# Install dependencies
+RUN pnpm install
+
+# Create basic test structure
+RUN mkdir -p tests && \
+    echo 'import { test, expect } from "@playwright/test"; \
+\
+test("admin page loads", async ({ page }) => { \
+  await page.goto(process.env.VITE_API_URL || "http://localhost:5173"); \
+  await expect(page).toHaveTitle(/Admin Dashboard/); \
+});' > tests/admin.spec.ts
+
+# Create playwright config
+RUN echo 'import { defineConfig } from "@playwright/test"; \
+\
+export default defineConfig({ \
+  testDir: "./tests", \
+  fullyParallel: true, \
+  forbidOnly: !!process.env.CI, \
+  retries: process.env.CI ? 2 : 0, \
+  workers: process.env.CI ? 1 : undefined, \
+  reporter: [ \
+    ["html", { host: "0.0.0.0", port: 9323 }], \
+    ["blob"] \
+  ], \
+  use: { \
+    baseURL: process.env.VITE_API_URL || "http://localhost:5173", \
+    trace: "on-first-retry", \
+  }, \
+  webServer: { \
+    command: "echo \"Using external server\"", \
+    port: 5173, \
+    reuseExistingServer: true, \
+  }, \
+});' > playwright.config.ts
+
+# Create directories for reports
+RUN mkdir -p blob-report test-results
+
+EXPOSE 9323
+
+# Default command to show report server
+CMD ["pnpm", "show-report"] 

@@ -136,7 +136,110 @@ class Settings(BaseSettings):
     LITELLM_MASTER_KEY: str | None = None
 
     # LLM 配置
-    DEFAULT_LLM_MODEL: str = "or-deepseek-r1"
+    DEFAULT_LLM_MODEL: str = "deepseek-v3-ensemble"
+
+    # Token 配置系统 - 简化版本，只使用最大Token限制
+    DEFAULT_MAX_TOKENS: int = Field(
+        default=20000,
+        ge=100,
+        le=100000,
+        description="默认最大token数"
+    )
+
+    # 不同任务类型的token配置（简化版）
+    TOKEN_LIMITS: dict[str, int] = Field(
+        default={
+            "chat": 20000,              # 对话聊天
+            "summary": 20000,           # 摘要生成
+            "key_points": 20000,        # 要点提取
+            "labels": 20000,            # 标签生成
+            "analysis": 20000,          # 深度分析
+            "extension": 20000,         # 浏览器扩展
+            "conversation": 20000,      # 对话系统
+            "completion": 20000,        # 通用补全
+            "research": 20000,          # 深度研究
+            "segmentation": 20000,      # 文本分段
+            "embedding": 20000,         # 嵌入生成
+        },
+        description="不同任务类型的token限制配置"
+    )
+
+    # 环境变量覆盖的单独token配置
+    TOKEN_LIMIT_CHAT: int | None = Field(default=None, description="对话token限制")
+    TOKEN_LIMIT_SUMMARY: int | None = Field(default=None, description="摘要token限制")
+    TOKEN_LIMIT_KEY_POINTS: int | None = Field(default=None, description="要点token限制")
+    TOKEN_LIMIT_LABELS: int | None = Field(default=None, description="标签token限制")
+    TOKEN_LIMIT_ANALYSIS: int | None = Field(default=None, description="分析token限制")
+    TOKEN_LIMIT_EXTENSION: int | None = Field(default=None, description="扩展token限制")
+    TOKEN_LIMIT_CONVERSATION: int | None = Field(default=None, description="对话系统token限制")
+    TOKEN_LIMIT_COMPLETION: int | None = Field(default=None, description="补全token限制")
+    TOKEN_LIMIT_RESEARCH: int | None = Field(default=None, description="研究token限制")
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def resolved_token_limits(self) -> dict[str, int]:
+        """
+        解析最终的token限制配置
+
+        优先级：
+        1. 环境变量中的具体任务token配置 (TOKEN_LIMIT_CHAT等)
+        2. TOKEN_LIMITS 配置
+        3. DEFAULT_MAX_TOKENS 全局默认
+
+        Returns:
+            dict: 最终的任务->token限制映射
+        """
+        resolved = self.TOKEN_LIMITS.copy()
+
+        # 环境变量覆盖具体任务token限制
+        env_overrides = {
+            "chat": self.TOKEN_LIMIT_CHAT,
+            "summary": self.TOKEN_LIMIT_SUMMARY,
+            "key_points": self.TOKEN_LIMIT_KEY_POINTS,
+            "labels": self.TOKEN_LIMIT_LABELS,
+            "analysis": self.TOKEN_LIMIT_ANALYSIS,
+            "extension": self.TOKEN_LIMIT_EXTENSION,
+            "conversation": self.TOKEN_LIMIT_CONVERSATION,
+            "completion": self.TOKEN_LIMIT_COMPLETION,
+            "research": self.TOKEN_LIMIT_RESEARCH,
+        }
+
+        for task, token_limit in env_overrides.items():
+            if token_limit is not None:  # 如果环境变量设置了具体token限制
+                resolved[task] = token_limit
+
+        # 确保所有值都有回退到默认token数
+        for task in resolved:
+            if not resolved[task] or resolved[task] <= 0:
+                resolved[task] = self.DEFAULT_MAX_TOKENS
+
+        return resolved
+
+    def get_token_limit(self, task_type: str = "default", base_tokens: int | None = None) -> int:
+        """
+        获取任务类型对应的token限制
+
+        Args:
+            task_type: 任务类型
+            base_tokens: 基础token数（覆盖配置）
+
+        Returns:
+            int: token限制
+        """
+        if base_tokens is not None:
+            return base_tokens
+
+        # 更保守的token限制，避免超出OpenRouter账户余额
+        task_limits = {
+            "chat": 12000,      # 降低聊天token限制
+            "summary": 10000,   # 降低摘要token限制
+            "key_points": 8000, # 降低关键点token限制
+            "labels": 6000,     # 降低标签token限制
+            "analysis": 15000,  # 分析任务稍高
+            "default": 10000,   # 默认更保守
+        }
+
+        return task_limits.get(task_type, task_limits["default"])
 
     # AI任务模型配置 - 支持为不同任务指定不同模型，可通过环境变量覆盖
     AI_TASK_MODELS: dict[str, str] = Field(
@@ -149,10 +252,14 @@ class Settings(BaseSettings):
         },
         description="AI任务模型映射配置，可通过环境变量覆盖，如：AI_MODEL_SUMMARY=gpt-4",
     )
-    
+
     # 单独的模板模型配置，方便精细控制
-    AI_MODEL_SUMMARY: str | None = Field(default=None, description="Summary模板专用模型")
-    AI_MODEL_KEY_POINTS: str | None = Field(default=None, description="KeyPoints模板专用模型")
+    AI_MODEL_SUMMARY: str | None = Field(
+        default=None, description="Summary模板专用模型"
+    )
+    AI_MODEL_KEY_POINTS: str | None = Field(
+        default=None, description="KeyPoints模板专用模型"
+    )
     AI_MODEL_LABELS: str | None = Field(default=None, description="Labels模板专用模型")
     AI_MODEL_CHAT: str | None = Field(default=None, description="Chat对话专用模型")
     AI_MODEL_ANALYSIS: str | None = Field(default=None, description="通用分析专用模型")
@@ -162,17 +269,17 @@ class Settings(BaseSettings):
     def resolved_ai_task_models(self) -> dict[str, str]:
         """
         解析最终的AI任务模型配置
-        
+
         优先级：
         1. 环境变量中的具体模型配置 (AI_MODEL_SUMMARY等)
         2. AI_TASK_MODELS 配置
         3. DEFAULT_LLM_MODEL 全局默认
-        
+
         Returns:
             dict: 最终的任务->模型映射
         """
         resolved = self.AI_TASK_MODELS.copy()
-        
+
         # 环境变量覆盖具体任务模型
         env_overrides = {
             "summary": self.AI_MODEL_SUMMARY,
@@ -181,16 +288,16 @@ class Settings(BaseSettings):
             "chat": self.AI_MODEL_CHAT,
             "analysis": self.AI_MODEL_ANALYSIS,
         }
-        
+
         for task, model in env_overrides.items():
             if model:  # 如果环境变量设置了具体模型
                 resolved[task] = model
-                
+
         # 确保所有值都有回退到默认模型
         for task in resolved:
             if not resolved[task]:
                 resolved[task] = self.DEFAULT_LLM_MODEL
-                
+
         return resolved
 
     # OpenAI / ChatAnywhere 配置

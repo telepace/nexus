@@ -3,7 +3,7 @@
 import { FC } from "react";
 import { ContentItemPublic } from "@/lib/api/content";
 import { AIResult, ConversationListResponse } from "@/lib/api/content";
-import { ModernAnalysisInterface } from "./ModernAnalysisInterface";
+import { ContentAnalysisView } from "./ContentAnalysisView";
 
 interface ContentAnalysisSidebarProps {
   content: ContentItemPublic;
@@ -23,26 +23,17 @@ export const ContentAnalysisSidebar: FC<ContentAnalysisSidebarProps> = ({
   hideHeader = false,
 }) => {
   return (
-    <div className={`flex flex-col h-full bg-background ${className}`} data-exclude-selection>
-      {/* Header - 可选显示 */}
-      {!hideHeader && (
-        <div className="flex items-center justify-between px-4 border-b h-header" data-exclude-selection>
-          <div className="flex items-center space-x-4 flex-1 min-w-0">
-            <h2 className="text-sm font-medium truncate">AI分析</h2>
-          </div>
-        </div>
-      )}
-
-      {/* Modern Analysis Interface */}
-      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
-        <ModernAnalysisInterface
-          content={content}
-          conversations={conversations}
-          analysisResult={analysisResult}
-          isLoading={isLoading}
-          className="h-full"
-        />
-      </div>
-    </div>
+    <ContentAnalysisView
+      key={content?.id} // 🎯 关键修复：强制重新挂载，彻底隔离不同文章的状态
+      item={content}
+      conversations={conversations}
+      analysisResult={analysisResult}
+      isLoading={isLoading}
+      className={className}
+      variant="sidebar"
+      scene="reader" // 🎯 明确指定为阅读器场景，确保与预览场景状态隔离
+      hideHeader={hideHeader}
+      headerTitle="AI分析"
+    />
   );
 };

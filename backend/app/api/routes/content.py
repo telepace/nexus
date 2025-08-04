@@ -4,29 +4,38 @@ import logging
 import uuid
 from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
-from typing import Any  # Added Optional and Literal
-from typing import Annotated
+from typing import (
+    Annotated,
+    Any,  # Added Optional and Literal
+)
 
+import aiohttp
 from fastapi import (
     APIRouter,
     BackgroundTasks,
     Body,
+    Depends,
     HTTPException,
     Path,  # Added Path
     Query,
     status,
-    Depends,
 )
 from fastapi.responses import StreamingResponse
-from sqlmodel import Session, select
+from jinja2 import Environment, FileSystemLoader
+from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, or_, desc, func
-from typing import List, Optional
+from sqlmodel import Session, select
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentUser, SessionDep, get_async_db
 from app.core.config import settings
 from app.core.db_factory import engine  # 修复导入路径：从db_factory导入engine
 from app.core.security import verify_password
+
+# 🎯 导入统一的AI对话CRUD操作
+from app.crud.crud_ai_conversation import (
+    create_ai_conversation_for_analysis,
+    update_ai_conversation_response,
+)
 from app.crud.crud_content import (
     create_content_item_sync,
     create_content_share,
@@ -47,34 +56,30 @@ from app.models import (
     AIConversation,
     AIResult,  # Added for AIResult storage
     ContentItem,  # For converting ContentItemCreate to ContentItem model for CRUD
-    Segment,  # Added for chunks summary endpoint
     ContentSegment,  # 新增
-)
-from app.models.segments import ContentSegment  # 新增
-from app.models.content import (
-    ContentItem,
+    Segment,  # Added for chunks summary endpoint
 )
 from app.schemas.content import (  # Re-using ContentItemBaseSchema if public is just base + id and audit fields
     AIResultPublic,
     ContentAnalysisRequest,
     ContentItemCreate,
     ContentItemPublic,
+    ContentSegmentBulkResponse,  # 新增
+    ContentSegmentOut,
     ContentShareCreate,
     ContentSharePublic,
-    ContentItemUpdate, 
-    ContentSegmentOut,
-    ContentSegmentBulkResponse,  # 新增
 )
+from app.services.ai.chat_service import ChatService
 from app.utils.background_tasks import background_task_manager
 from app.utils.content_processors import ProcessingPipeline
 from app.utils.events import content_event_manager, create_sse_generator
-from app.utils.streaming_jsonl_extractor import create_streaming_jsonl_extractor
 from app.utils.prompt_helpers import render_user_analysis_prompt
 from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
-from app.services.ai.chat_service import ChatService
-from app.api.deps import get_current_user, get_db, get_async_db
 
 # from app.utils.cache import warm_article_cache  # 暂时注释掉避免redis依赖
+from app.utils.token_manager import (
+    get_token_limit,
+)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -109,126 +114,6 @@ def _extract_title_from_content(content_text: str | None) -> str:
         return title if title else "新内容"
 
     return "新内容"
-
-
-def create_ai_conversation(
-    session: Session,
-    user_id: uuid.UUID,
-    content_item_id: uuid.UUID,
-    content_item_title: str,
-    analysis_instruction: str,
-    content_to_analyze: str,
-    model: str,
-    temperature: float,
-    max_tokens: int,
-) -> AIConversation:
-    """
-    创建AIConversation记录来存储AI分析对话
-
-    Args:
-        session: 数据库会话
-        user_id: 用户ID
-        content_item_id: 内容项ID
-        content_item_title: 内容项标题
-        analysis_instruction: 分析指令
-        content_to_analyze: 要分析的内容
-        model: AI模型名称（使用配置的模型名称，不是LiteLLM返回的实际模型名称）
-        temperature: 温度参数
-        max_tokens: 最大token数
-
-    Returns:
-        AIConversation: 创建的对话记录
-    """
-    from app.utils.prompt_helpers import render_user_analysis_prompt
-    
-    # 使用用户分析模板渲染prompt
-    user_prompt = render_user_analysis_prompt(analysis_instruction)
-    
-    # 准备对话消息
-    conversation_messages = [
-        {"role": "system", "content": content_to_analyze},
-        {"role": "user", "content": user_prompt},  # 使用渲染后的prompt
-    ]
-
-    # 创建AIConversation记录 - 使用配置的模型名称而不是LiteLLM响应的实际模型
-    ai_conversation = AIConversation(
-        user_id=user_id,
-        content_item_id=content_item_id,
-        title=f"AI分析: {content_item_title or '内容分析'}",
-        ai_model_name=model,  # 保持使用传入的配置模型名称
-        messages=json.dumps(conversation_messages),
-        summary=analysis_instruction[:200] + "..."
-        if len(analysis_instruction) > 200
-        else analysis_instruction,
-        meta_info=json.dumps(
-            {
-                "temperature": temperature,
-                "max_tokens": max_tokens,
-                "analysis_type": "content_analysis",
-                "content_length": len(content_to_analyze),
-                "configured_model": model,  # 记录配置的模型名称
-                "note": "模型名称为配置值，实际调用可能通过LiteLLM路由到不同后端"
-            }
-        ),
-    )
-
-    # 保存到数据库
-    session.add(ai_conversation)
-    session.commit()
-
-    # 重新获取ai_conversation以确保session绑定，避免refresh错误
-    refreshed_ai_conversation = session.get(AIConversation, ai_conversation.id)
-    if refreshed_ai_conversation:
-        ai_conversation = refreshed_ai_conversation
-
-    return ai_conversation
-
-
-def update_ai_conversation_response(
-    session: Session,
-    ai_conversation: AIConversation,
-    ai_response: str,
-    status: str = "completed",
-    error: str | None = None,
-) -> None:
-    """
-    更新AIConversation记录，添加AI响应
-    """
-    try:
-        # To avoid "Instance <...> is not bound to a Session" error, we must fetch
-        # a "live" version of the object from the session we're about to use,
-        # instead of trying to merge the detached instance from a closed session.
-        live_conversation = session.get(AIConversation, ai_conversation.id)
-
-        if not live_conversation:
-            logger.error(
-                f"Failed to find AIConversation {ai_conversation.id} for update."
-            )
-            return
-
-        # 获取现有消息
-        conversation_messages = json.loads(live_conversation.messages)
-
-        # 添加AI响应
-        conversation_messages.append({"role": "assistant", "content": ai_response})
-
-        # 更新记录
-        live_conversation.messages = json.dumps(conversation_messages)
-
-        # 更新元信息
-        meta_info = json.loads(live_conversation.meta_info)
-        meta_info.update({"status": status, "response_length": len(ai_response)})
-
-        if error:
-            meta_info["error"] = error
-
-        live_conversation.meta_info = json.dumps(meta_info)
-
-        session.add(live_conversation)
-        session.commit()
-    except Exception as e:
-        logger.error(f"Failed to update AIConversation {ai_conversation.id}: {e}")
-        session.rollback()
 
 
 @router.get(
@@ -416,13 +301,13 @@ async def process_content_item_endpoint(
 
 
 async def process_content_background_async(
-    pipeline, content_item_id: uuid.UUID, session_config
+    pipeline, content_item_id: uuid.UUID, _session_config
 ):
     """异步后台任务处理内容，支持AI分析"""
     # 创建新的session以避免绑定问题
     from sqlmodel import Session
 
-    from app.core.database import engine
+    from app.core.db_factory import engine
 
     try:
         with Session(engine) as session:
@@ -850,10 +735,12 @@ async def analyze_content_stream_endpoint(
 
     # 使用配置的模型，支持任务特定的模型选择
     # 对于内容分析，使用 analysis 任务对应的模型
-    resolved_model = settings.resolved_ai_task_models.get("analysis", settings.DEFAULT_LLM_MODEL)
+    resolved_model = settings.resolved_ai_task_models.get(
+        "analysis", settings.DEFAULT_LLM_MODEL
+    )
 
     # 创建AIConversation记录
-    ai_conversation = create_ai_conversation(
+    ai_conversation = create_ai_conversation_for_analysis(
         session=session,
         user_id=current_user.id,
         content_item_id=content_item.id,
@@ -872,6 +759,7 @@ async def analyze_content_stream_endpoint(
             content_text=content_item.content_text,  # 传递内容文本
             request=request,
             ai_conversation_id=ai_conversation.id,  # 传递 conversation ID 而不是对象
+            user_id=current_user.id,  # Add user_id parameter
             resolved_model=resolved_model,
         ),
         media_type="text/plain",
@@ -890,6 +778,7 @@ async def _stream_content_analysis(
     content_text: str,  # 直接传递内容文本
     request: ContentAnalysisRequest,
     ai_conversation_id: uuid.UUID,  # 使用 ID 而不是对象
+    user_id: uuid.UUID,  # Add user_id parameter
     resolved_model: str | None = None,
 ) -> AsyncGenerator[str, None]:
     """
@@ -901,10 +790,35 @@ async def _stream_content_analysis(
         from app.api.deps import get_db
 
         # 准备系统消息和用户消息
+        # 根据输出语言调整系统消息
+        # 优先使用请求中的语言，否则从用户设置获取
+        output_language = request.output_language
+        if not output_language:
+            try:
+                from app.api.deps import get_db
+                from app.services.user_settings_service import UserSettingsService
+
+                # 创建数据库会话来获取用户语言偏好
+                with next(get_db()) as db_session:
+                    output_language = UserSettingsService.get_user_ai_language(
+                        db_session, user_id
+                    )
+                logger.info(f"🌐 从用户设置获取语言偏好: {output_language}")
+            except Exception as e:
+                logger.warning(f"获取用户语言偏好失败，使用默认值: {e}")
+                output_language = "English"
+
+        logger.info(f"🌐 _stream_content_analysis 使用语言: {output_language}")
+
+        if output_language.lower() in ["english", "en"]:
+            system_message = f"You are a professional content analysis assistant. Please analyze the following content according to the user's requirements:\n\n{content_text}"
+        else:
+            system_message = f"你是一个专业的内容分析助手。请根据用户的要求分析以下内容：\n\n{content_text}"
+
         messages = [
             {
                 "role": "system",
-                "content": f"你是一个专业的内容分析助手。请根据用户的要求分析以下内容：\n\n{content_text}",
+                "content": system_message,
             },
             {"role": "user", "content": request.analysis_instruction},
         ]
@@ -958,15 +872,14 @@ async def _stream_content_analysis(
                                 if accumulated_content:
                                     try:
                                         with next(get_db()) as new_session:
-                                            conversation = new_session.get(
-                                                AIConversation, ai_conversation_id
+                                            # 🎯 使用新的CRUD接口
+                                            success = update_ai_conversation_response(
+                                                new_session,
+                                                ai_conversation_id,
+                                                accumulated_content,
                                             )
-                                            if conversation is not None:
-                                                update_ai_conversation_response(
-                                                    new_session,
-                                                    conversation,
-                                                    accumulated_content,
-                                                )
+                                            if not success:
+                                                logger.error(f"Failed to save AI response for conversation {ai_conversation_id}")
                                     except Exception as e:
                                         logger.error(f"Failed to save AI response: {e}")
 
@@ -984,17 +897,16 @@ async def _stream_content_analysis(
                                     # 保存错误
                                     try:
                                         with next(get_db()) as new_session:
-                                            conversation = new_session.get(
-                                                AIConversation, ai_conversation_id
+                                            # 🎯 使用新的CRUD接口
+                                            success = update_ai_conversation_response(
+                                                new_session,
+                                                ai_conversation_id,
+                                                accumulated_content,
+                                                "failed",
+                                                error_msg,
                                             )
-                                            if conversation is not None:
-                                                update_ai_conversation_response(
-                                                    new_session,
-                                                    conversation,
-                                                    accumulated_content,
-                                                    "failed",
-                                                    error_msg,
-                                                )
+                                            if not success:
+                                                logger.error(f"Failed to save error for conversation {ai_conversation_id}")
                                     except Exception as e:
                                         logger.error(f"Failed to save error: {e}")
 
@@ -1025,11 +937,12 @@ async def _stream_content_analysis(
         if accumulated_content:
             try:
                 with next(get_db()) as new_session:
-                    conversation = new_session.get(AIConversation, ai_conversation_id)
-                    if conversation is not None:
-                        update_ai_conversation_response(
-                            new_session, conversation, accumulated_content
-                        )
+                    # 🎯 使用新的CRUD接口
+                    success = update_ai_conversation_response(
+                        new_session, ai_conversation_id, accumulated_content
+                    )
+                    if not success:
+                        logger.error(f"Failed to save final response for conversation {ai_conversation_id}")
             except Exception as e:
                 logger.error(f"Failed to save final response: {e}")
             yield '8:[{"finishReason":"stop"}]\n'
@@ -1038,11 +951,12 @@ async def _stream_content_analysis(
         # 在新的数据库会话中保存错误
         try:
             with next(get_db()) as new_session:
-                conversation = new_session.get(AIConversation, ai_conversation_id)
-                if conversation is not None:
-                    update_ai_conversation_response(
-                        new_session, conversation, "", "failed", str(e)
-                    )
+                # 🎯 使用新的CRUD接口
+                success = update_ai_conversation_response(
+                    new_session, ai_conversation_id, "", "failed", str(e)
+                )
+                if not success:
+                    logger.error(f"Failed to save stream error for conversation {ai_conversation_id}")
         except Exception as save_error:
             logger.error(f"Failed to save stream error: {save_error}")
 
@@ -1092,14 +1006,14 @@ async def analyze_ai_sdk_updated_endpoint(
     content_title = content_item.title or "Untitled Content"
 
     # Create AI conversation record
-    ai_conversation = create_ai_conversation(
+    ai_conversation = create_ai_conversation_for_analysis(
         session=session,
         user_id=current_user.id,
         content_item_id=content_item_id,
         content_item_title=content_title,
         analysis_instruction=request.analysis_instruction,
         content_to_analyze=content_text,
-        model="or-gemini-2.5-flash-preview-05-20",
+        model=settings.DEFAULT_LLM_MODEL,
         temperature=request.temperature,
         max_tokens=request.max_tokens,
     )
@@ -1107,10 +1021,11 @@ async def analyze_ai_sdk_updated_endpoint(
     async def stream_analysis():
         try:
             async for chunk in _stream_content_analysis_ai_sdk(
-                content_item_id=content_item_id,  # 使用提前提取的ID
+                _content_item_id=content_item_id,  # 修复参数名匹配
                 content_text=content_text,  # 使用提前提取的内容文本
                 request=request,
                 ai_conversation_id=ai_conversation.id,
+                user_id=current_user.id,  # Add user_id parameter
             ):
                 yield chunk
         except Exception as e:
@@ -1134,22 +1049,40 @@ async def analyze_ai_sdk_updated_endpoint(
 
 
 async def _stream_content_analysis_ai_sdk(
-    content_item_id: uuid.UUID,  # 使用ID而不是对象
+    _content_item_id: uuid.UUID,  # 使用ID而不是对象
     content_text: str,  # 直接传递内容文本
     request: ContentAnalysisRequest,
-    ai_conversation_id: uuid.UUID,
+    _ai_conversation_id: uuid.UUID,  # Unused but kept for interface compatibility
+    user_id: uuid.UUID,  # Add user_id parameter
 ) -> AsyncGenerator[str, None]:
     """Stream AI SDK analysis with updated prompt structure."""
     import aiohttp
-    from app.utils.prompt_helpers import render_user_analysis_prompt
-    from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
 
     try:
-        # 创建实时JSONL处理器
-        jsonl_processor = create_realtime_jsonl_processor()
-
         # 使用新的用户分析模板渲染prompt
-        user_prompt = render_user_analysis_prompt(request.analysis_instruction)
+        # 优先使用请求中的语言，否则从用户设置获取
+        output_language = request.output_language
+        if not output_language:
+            try:
+                from app.api.deps import get_db
+                from app.services.user_settings_service import UserSettingsService
+
+                # 创建数据库会话来获取用户语言偏好
+                with next(get_db()) as db_session:
+                    output_language = UserSettingsService.get_user_ai_language(
+                        db_session, user_id
+                    )
+                logger.info(f"🌐 从用户设置获取语言偏好: {output_language}")
+            except Exception as e:
+                logger.warning(f"获取用户语言偏好失败，使用默认值: {e}")
+                output_language = "English"
+
+        logger.info(f"🌐 _stream_content_analysis_ai_sdk 使用语言: {output_language}")
+
+        user_prompt = render_user_analysis_prompt(
+            request.analysis_instruction,
+            output_language
+        )
 
         # Prepare messages with updated structure
         messages = [
@@ -1157,16 +1090,28 @@ async def _stream_content_analysis_ai_sdk(
             {"role": "user", "content": user_prompt},  # 使用渲染后的用户prompt
         ]
 
+        # 使用配置的模型，支持任务特定的模型选择
+        # 对于内容分析，使用 analysis 任务对应的模型
+        resolved_model = settings.resolved_ai_task_models.get(
+            "analysis", settings.DEFAULT_LLM_MODEL
+        )
+
+        # 🎯 简化token处理：直接使用请求的max_tokens或默认值
+        final_max_tokens = request.max_tokens or get_token_limit(task_type="analysis")
+
+        logger.info(f"🎯 内容分析token设置: 请求={request.max_tokens}, "
+                   f"最终使用={final_max_tokens}")
+
         payload = {
-            "model": "or-gemini-2.5-flash-preview-05-20",
+            "model": resolved_model,
             "messages": messages,
             "temperature": request.temperature,
-            "max_tokens": request.max_tokens,
+            "max_tokens": final_max_tokens,  # 使用简化后的token数
             "stream": True,
         }
 
         url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
-        
+
         # 添加认证头部设置
         headers = {"Content-Type": "application/json"}
         if settings.LITELLM_MASTER_KEY:
@@ -1181,71 +1126,43 @@ async def _stream_content_analysis_ai_sdk(
                     )
 
                 full_response = ""
+                async for line in response.content:
+                    line_str = line.decode("utf-8").strip()
 
-                async for chunk in response.content.iter_chunked(1024):
-                    chunk_str = chunk.decode("utf-8")
-                    lines = chunk_str.strip().split("\n")
+                    if line_str.startswith("data: "):
+                        data_str = line_str[6:]
 
-                    for line in lines:
-                        if line.startswith("data: "):
-                            data_part = line[6:].strip()
-                            if data_part == "[DONE]":
-                                # 处理剩余内容
-                                final_increment = jsonl_processor.finalize()
-                                if final_increment:
-                                    # 直接传输JSONL对象，不进行额外转义
-                                    final_lines = final_increment.strip().split('\n')
-                                    for jsonl_line in final_lines:
-                                        if jsonl_line.strip():
-                                            # 直接传输JSONL对象 (类型0)
-                                            yield f"0:{jsonl_line}\n"
+                        if data_str == "[DONE]":
+                            break
 
-                                # 发送完成信号 (类型8)
-                                # yield f'8:[{{"finishReason":"stop"}}]\n'
+                        try:
+                            data = json.loads(data_str)
+                            if "choices" in data and data["choices"]:
+                                delta = data["choices"][0].get("delta", {})
+                                if "content" in delta:
+                                    content = delta["content"]
+                                    full_response += content
 
-                                # Update AI conversation with response using new session
-                                try:
-                                    with Session(engine) as db_session:
-                                        ai_conversation = db_session.get(
-                                            AIConversation, ai_conversation_id
-                                        )
-                                        if ai_conversation:
-                                            final_content = jsonl_processor.get_current_jsonl()
-                                            update_ai_conversation_response(
-                                                db_session,
-                                                ai_conversation,
-                                                final_content,
-                                            )
-                                except Exception as e:
-                                    logger.error(f"Failed to save AI response: {e}")
-                                return
+                                    # 发送数据流
+                                    formatted_data = f"0:{json.dumps({'text': content})}\n"
+                                    yield formatted_data
 
-                            try:
-                                chunk_data = json.loads(data_part)
-                                if "choices" in chunk_data and chunk_data["choices"]:
-                                    delta = chunk_data["choices"][0].get("delta", {})
-                                    if "content" in delta:
-                                        content = delta["content"]
-                                        full_response += content
+                        except json.JSONDecodeError:
+                            continue
 
-                                        # 使用实时JSONL处理器检测完整的JSONL行
-                                        jsonl_increment, has_new_jsonl = jsonl_processor.process_chunk(content)
+                # 发送完成信号
+                completion_data = f"d:{json.dumps({'finishReason': 'stop', 'usage': {'totalTokens': len(full_response)}})}\n"
+                yield completion_data
 
-                                        if has_new_jsonl and jsonl_increment:
-                                            # 直接传输JSONL对象，不进行额外转义
-                                            jsonl_lines = jsonl_increment.strip().split('\n')
-                                            for jsonl_line in jsonl_lines:
-                                                if jsonl_line.strip():
-                                                    # 直接传输JSONL对象 (类型0)
-                                                    yield f"0:{jsonl_line}\n"
-                                        
-                            except json.JSONDecodeError:
-                                continue
+                # 记录最终结果
+                logger.info(f"📊 分析完成: 输出长度={len(full_response)}, "
+                           f"估算输出token={len(full_response)//3}, "
+                           f"token限制={final_max_tokens}")
 
     except Exception as e:
-        # 发送错误信息 (类型9)
-        error_msg = str(e).replace('"', '\\"')
-        yield f'{{"t":"error","c":"Analysis failed: {error_msg}"}}]\n'
+        logger.error(f"Stream analysis failed: {str(e)}")
+        error_data = f"e:{json.dumps({'error': str(e)})}\n"
+        yield error_data
 
 
 @router.post(
@@ -1288,66 +1205,88 @@ async def completion_updated_endpoint(
     content_text = content_item.content_text
     content_title = content_item.title or "Untitled Content"
 
+    # 🎯 优化模型选择逻辑：根据template_name动态选择模型
+    chat_service = ChatService()
+    if request.template_name:
+        # 如果指定了模板名称，使用模板映射选择模型
+        resolved_model = chat_service.get_model_for_template(request.template_name)
+        logger.info(f"使用模板 '{request.template_name}' 对应的模型: {resolved_model}")
+    else:
+        # 如果没有指定模板，这是用户的自由对话，使用聊天模型
+        resolved_model = settings.resolved_ai_task_models.get(
+            "chat", settings.DEFAULT_LLM_MODEL
+        )
+        logger.info(f"使用默认聊天模型: {resolved_model}")
+
     # Create AI conversation record
-    ai_conversation = create_ai_conversation(
+    ai_conversation = create_ai_conversation_for_analysis(
         session=session,
         user_id=current_user.id,
         content_item_id=content_item_id,
         content_item_title=content_title,
         analysis_instruction=request.analysis_instruction,
         content_to_analyze=content_text,
-        model="or-gemini-2.5-flash-preview-05-20",
+        model=resolved_model,
         temperature=request.temperature,
         max_tokens=request.max_tokens,
     )
 
-    async def stream_completion():
-        try:
-            async for chunk in _stream_content_completion_updated(
-                content_item_id=content_item_id,  # 使用提前提取的ID
-                content_text=content_text,  # 使用提前提取的内容文本
-                request=request,
-                ai_conversation_id=ai_conversation.id,
-            ):
-                yield chunk
-        except Exception as e:
-            logger.error(f"Error in completion streaming: {e}")
-            error_response = {
-                "type": "error",
-                "content": f"Completion failed: {str(e)}",
-                "finished": True,
-            }
-            yield f"data: {json.dumps(error_response)}\n\n"
-
+    # Return streaming response
     return StreamingResponse(
-        stream_completion(),
-        media_type="text/plain",
+        _stream_content_completion_updated(
+            content_item_id,
+            content_text,
+            content_title,
+            request,
+            ai_conversation.id,
+            resolved_model,
+        ),
+        media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "Access-Control-Allow-Origin": "*",
-            "X-Vercel-AI-Data-Stream": "v1",  # Vercel AI SDK Data Stream Protocol 标识
+            "Access-Control-Allow-Headers": "Cache-Control",
         },
     )
 
 
 async def _stream_content_completion_updated(
-    content_item_id: uuid.UUID,  # 使用ID而不是对象
+    _content_item_id: uuid.UUID,  # 使用ID而不是对象
     content_text: str,  # 直接传递内容文本
+    content_title: str,  # 内容标题
     request: ContentAnalysisRequest,
     ai_conversation_id: uuid.UUID,
+    resolved_model: str,  # 🎯 新增：接收预选择的模型
 ) -> AsyncGenerator[str, None]:
     """Stream content completion with updated prompt structure."""
     import aiohttp
-    from app.utils.prompt_helpers import render_user_analysis_prompt
-    from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
+
+    from app.utils.prompt_helpers import render_template_prompt
+
+    # 创建实时JSONL处理器
+    jsonl_processor = create_realtime_jsonl_processor()
 
     try:
-        # 创建实时JSONL处理器
-        jsonl_processor = create_realtime_jsonl_processor()
 
-        # 使用新的用户分析模板渲染prompt
-        user_prompt = render_user_analysis_prompt(request.analysis_instruction)
+        # 根据请求的模板选择渲染方式
+        template_name = request.template_name or "user_analysis.j2"
+
+        if template_name == "expand_discussion.j2":
+            # 为expand_discussion模板准备特殊的上下文
+            user_prompt = render_template_prompt(
+                template_name,
+                selected_point=request.selected_point or request.analysis_instruction,
+                content=content_text,
+                document_metadata={
+                    "title": content_title,
+                    "author": "Unknown",
+                    "source_url": None,
+                },
+            )
+        else:
+            # 使用原有的用户分析模板渲染
+            user_prompt = render_user_analysis_prompt(request.analysis_instruction)
 
         # Prepare messages with updated structure
         messages = [
@@ -1355,8 +1294,11 @@ async def _stream_content_completion_updated(
             {"role": "user", "content": user_prompt},  # 使用渲染后的用户prompt
         ]
 
+        # 🎯 使用传入的预选择模型
+        logger.info(f"流式处理使用模型: {resolved_model}")
+
         payload = {
-            "model": "or-gemini-2.5-flash-preview-05-20",
+            "model": resolved_model,  # 使用传入的模型
             "messages": messages,
             "temperature": request.temperature,
             "max_tokens": request.max_tokens,
@@ -1364,7 +1306,7 @@ async def _stream_content_completion_updated(
         }
 
         url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
-        
+
         # 添加认证头部设置
         headers = {"Content-Type": "application/json"}
         if settings.LITELLM_MASTER_KEY:
@@ -1380,9 +1322,9 @@ async def _stream_content_completion_updated(
 
                 full_response = ""
 
-                async for chunk in response.content.iter_chunked(1024):
-                    chunk_str = chunk.decode("utf-8")
-                    lines = chunk_str.strip().split("\n")
+                async for line in response.content.iter_chunked(1024):
+                    line_str = line.decode("utf-8")
+                    lines = line_str.strip().split("\n")
 
                     for line in lines:
                         if line.startswith("data: "):
@@ -1392,7 +1334,7 @@ async def _stream_content_completion_updated(
                                 final_increment = jsonl_processor.finalize()
                                 if final_increment:
                                     # 直接传输JSONL对象，不进行额外转义
-                                    final_lines = final_increment.strip().split('\n')
+                                    final_lines = final_increment.strip().split("\n")
                                     for jsonl_line in final_lines:
                                         if jsonl_line.strip():
                                             # 直接传输JSONL对象 (类型0)
@@ -1404,18 +1346,21 @@ async def _stream_content_completion_updated(
                                 # Update AI conversation with response using new session
                                 try:
                                     with Session(engine) as db_session:
-                                        ai_conversation = db_session.get(
-                                            AIConversation, ai_conversation_id
+                                        final_content = (
+                                            jsonl_processor.get_current_jsonl()
                                         )
-                                        if ai_conversation:
-                                            final_content = jsonl_processor.get_current_jsonl()
-                                            update_ai_conversation_response(
-                                                db_session,
-                                                ai_conversation,
-                                                final_content,
-                                            )
+                                        # 🎯 使用新的CRUD接口
+                                        success = update_ai_conversation_response(
+                                            db_session,
+                                            ai_conversation_id,
+                                            final_content,
+                                        )
+                                        if not success:
+                                            logger.error(f"Failed to save AI completion response for conversation {ai_conversation_id}")
                                 except Exception as e:
-                                    logger.error(f"Failed to save AI completion response: {e}")
+                                    logger.error(
+                                        f"Failed to save AI completion response: {e}"
+                                    )
                                 return
 
                             try:
@@ -1427,11 +1372,15 @@ async def _stream_content_completion_updated(
                                         full_response += content
 
                                         # 使用实时JSONL处理器检测完整的JSONL行
-                                        jsonl_increment, has_new_jsonl = jsonl_processor.process_chunk(content)
+                                        jsonl_increment, has_new_jsonl = (
+                                            jsonl_processor.process_chunk(content)
+                                        )
 
                                         if has_new_jsonl and jsonl_increment:
                                             # 直接传输JSONL对象，不进行额外转义
-                                            jsonl_lines = jsonl_increment.strip().split('\n')
+                                            jsonl_lines = jsonl_increment.strip().split(
+                                                "\n"
+                                            )
                                             for jsonl_line in jsonl_lines:
                                                 if jsonl_line.strip():
                                                     # 直接传输JSONL对象 (类型0)
@@ -1512,7 +1461,7 @@ def convert_conversation_to_public(conversation: AIConversation) -> dict:
                 "created_at": getattr(conversation, 'created_at', '').isoformat() if hasattr(getattr(conversation, 'created_at', ''), 'isoformat') else str(getattr(conversation, 'created_at', '')),
                 "updated_at": getattr(conversation, 'updated_at', '').isoformat() if hasattr(getattr(conversation, 'updated_at', ''), 'isoformat') else str(getattr(conversation, 'updated_at', '')),
             }
-        
+
         messages_data = (
             json.loads(conversation.messages) if conversation.messages else []
         )
@@ -1602,10 +1551,11 @@ def get_content_conversations(
         )
 
         if not include_inactive:
-            query = query.where(AIConversation.is_active == True)
+            query = query.where(AIConversation.is_active)
 
+        # 使用 scalars() 方法确保返回模型对象而不是 Row 对象
         conversations = session.exec(query.order_by(AIConversation.created_at)).all()
-        
+
         logger.info(f"Found {len(conversations)} conversations for content {content_id}")
 
         # 转换为public schema - 添加额外的错误处理
@@ -1635,7 +1585,7 @@ def get_content_conversations(
             "total": len(public_conversations),
             "has_auto_analysis": has_auto_analysis,
         }
-        
+
     except Exception as e:
         logger.error(f"Error in get_content_conversations: {e}")
         logger.error(f"Content ID: {content_id}, User ID: {current_user.id}")
@@ -1723,6 +1673,9 @@ async def analyze_content_stream_with_template_endpoint(
     analysis_type: str = Query(
         ..., description="Analysis type: 'summary' or 'key_points'"
     ),
+    language: str = Query(
+        "Chinese", description="Output language: 'Chinese', 'English', etc."
+    ),
 ) -> StreamingResponse:
     """
     使用预定义模板进行流式内容分析
@@ -1757,12 +1710,18 @@ async def analyze_content_stream_with_template_endpoint(
     # 使用配置的模型，支持任务特定的模型选择
     # 根据 analysis_type 参数选择对应的模型
     if analysis_type == "summary":
-        resolved_model = settings.resolved_ai_task_models.get("summary", settings.DEFAULT_LLM_MODEL)
+        resolved_model = settings.resolved_ai_task_models.get(
+            "summary", settings.DEFAULT_LLM_MODEL
+        )
     elif analysis_type == "key_points":
-        resolved_model = settings.resolved_ai_task_models.get("key_points", settings.DEFAULT_LLM_MODEL)
+        resolved_model = settings.resolved_ai_task_models.get(
+            "key_points", settings.DEFAULT_LLM_MODEL
+        )
     else:
         # 对于其他分析类型，使用通用分析模型
-        resolved_model = settings.resolved_ai_task_models.get("analysis", settings.DEFAULT_LLM_MODEL)
+        resolved_model = settings.resolved_ai_task_models.get(
+            "analysis", settings.DEFAULT_LLM_MODEL
+        )
 
     # 提取ContentItem的必要属性，避免传递ORM对象到异步函数
     content_title = content_item.title
@@ -1775,10 +1734,11 @@ async def analyze_content_stream_with_template_endpoint(
             content_item_id=id,
             content_text=content_text,
             content_title=content_title,
-            source_uri=source_uri,
+            _source_uri=source_uri,
             analysis_type=analysis_type,
             user_id=current_user.id,
-            model=resolved_model,
+            _model=resolved_model,
+            language=language,
         ),
         media_type="text/event-stream",
         headers={
@@ -1794,208 +1754,148 @@ async def _stream_template_analysis(
     content_item_id: uuid.UUID,
     content_text: str,
     content_title: str | None,
-    source_uri: str | None,
+    _source_uri: str | None,
     analysis_type: str,
     user_id: uuid.UUID,
-    model: str,
+    _model: str,
+    language: str = "English",
 ) -> AsyncGenerator[str, None]:
     """
-    Stream analysis using template-based AI processing
+    流式模板分析，支持动态token调整
     """
-    import aiohttp
-    import json
-    from datetime import datetime, timezone
-    from app.core.db_factory import engine
-    from app.services.ai.chat_service import ChatService
-    from app.utils.streaming_jsonl_extractor import create_streaming_jsonl_extractor
-
-    # 使用 ChatService 来获取正确的模型名称
-    chat_service = ChatService()
-    
-    # 根据分析类型确定模板名称
-    template_name = f"{analysis_type}.j2"
-    
-    # 获取该模板对应的正确模型
-    resolved_model = chat_service.get_model_for_template(template_name)
-    
-    logger.info(f"Using resolved model '{resolved_model}' for analysis type '{analysis_type}' (template: {template_name})")
-
-    # 创建JSONL提取器（用于summary和key_points类型）
-    jsonl_extractor = None
-    if analysis_type in ["summary", "key_points"]:
-        jsonl_extractor = create_streaming_jsonl_extractor()
-
-    # 分析类型到指令的映射
-    analysis_instructions = {
-        "summary": "请对这篇内容进行总结，提取其主要观点和关键信息。",
-        "key_points": "请提取这篇内容的关键要点，以清晰、结构化的方式呈现。",
-        "labels": "请为这篇内容生成合适的标签，帮助分类和检索。",
-        "insights": "请分析这篇内容并提供深入的洞察和见解。",
-    }
-
-    analysis_instruction = analysis_instructions.get(
-        analysis_type, "请分析这篇内容并提供相关信息。"
-    )
-
-    # 准备消息
-    messages = [
-        {"role": "system", "content": content_text},
-        {"role": "user", "content": analysis_instruction},
-    ]
-
-    # 为当前分析创建对话记录
-    ai_conversation = None
     try:
-        with Session(engine) as db_session:
-            ai_conversation = create_ai_conversation(
-                session=db_session,
-                user_id=user_id,
-                content_item_id=content_item_id,
-                content_item_title=content_title or "Untitled",
-                analysis_instruction=analysis_instruction,
-                content_to_analyze=content_text,
-                model=resolved_model,  # 使用解析后的正确模型
-                temperature=0.3,
-                max_tokens=2000,
-            )
-    except Exception as e:
-        logger.error(f"Failed to create AI conversation: {e}")
-        # 如果创建对话失败，继续处理，但记录错误
+        # 根据分析类型映射到任务类型
+        task_type_mapping = {
+            "summary": "summary",
+            "key_points": "key_points",
+            "labels": "labels",
+            "analysis": "analysis"
+        }
+        task_type = task_type_mapping.get(analysis_type, "analysis")
 
-    # LiteLLM 代理配置
-    litellm_url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
-    headers = {"Content-Type": "application/json"}
+        # 🎯 简化设置：直接使用默认token限制
+        max_tokens = get_token_limit(task_type=task_type)
 
-    if settings.LITELLM_MASTER_KEY:
-        headers["Authorization"] = f"Bearer {settings.LITELLM_MASTER_KEY}"
+        logger.info(f"🎯 模板分析设置: 类型={analysis_type}, 任务={task_type}, "
+                   f"token限制={max_tokens}")
 
-    payload = {
-        "model": resolved_model,  # 使用解析后的正确模型
-        "messages": messages,
-        "stream": True,
-        "temperature": 0.3,
-        "max_tokens": 2000,
-    }
+        # 渲染分析指令模板
+        template_env = Environment(
+            loader=FileSystemLoader("app/prompt_templates"), trim_blocks=True
+        )
 
-    try:
+        # 根据分析类型选择模板
+        template_map = {
+            "summary": "summary.j2",
+            "key_points": "key_points.j2",
+            "labels": "labels.j2",
+        }
+
+        template_name = template_map.get(analysis_type, "summary.j2")
+        template = template_env.get_template(template_name)
+
+        logger.info(f"🌐 _stream_template_analysis 接收到的语言参数: {language}")
+
+        analysis_instruction = template.render(
+            content_title=content_title or "无标题",
+            content_text=content_text[:2000],  # 限制模板中的内容长度
+            content_type="文档",
+            output_language=language,
+        )
+
+        # 构建消息
+        messages = [
+            {"role": "system", "content": content_text},
+            {"role": "user", "content": analysis_instruction},
+        ]
+
+        # 获取解析后的模型
+        resolved_model = settings.resolved_ai_task_models.get(
+            task_type, settings.DEFAULT_LLM_MODEL
+        )
+
+        # 创建AI对话记录
+        try:
+            with Session(engine) as db_session:
+                # ai_conversation = create_ai_conversation_for_analysis(  # Unused variable
+                create_ai_conversation_for_analysis(
+                    session=db_session,
+                    user_id=user_id,
+                    content_item_id=content_item_id,
+                    content_item_title=content_title or "Untitled",
+                    analysis_instruction=analysis_instruction,
+                    content_to_analyze=content_text,
+                    model=resolved_model,
+                    temperature=0.7,  # 使用固定的温度值
+                    max_tokens=max_tokens,
+                )
+        except Exception as e:
+            logger.error(f"Failed to create AI conversation: {e}")
+
+        # LiteLLM 代理配置
+        litellm_url = f"{settings.LITELLM_PROXY_URL}/v1/chat/completions"
+        headers = {"Content-Type": "application/json"}
+
+        if settings.LITELLM_MASTER_KEY:
+            headers["Authorization"] = f"Bearer {settings.LITELLM_MASTER_KEY}"
+
+        payload = {
+            "model": resolved_model,
+            "messages": messages,
+            "stream": True,
+            "temperature": 0.7,  # 使用固定的温度值
+            "max_tokens": max_tokens,
+        }
+
+        logger.info(f"🚀 开始模板分析: 模型={resolved_model}, "
+                   f"max_tokens={max_tokens}, temperature=0.7")
+
         timeout = aiohttp.ClientTimeout(total=120.0)
-        accumulated_content = ""
-        pure_jsonl_response = ""  # 存储提取的纯净JSONL内容
-
-        async with aiohttp.ClientSession(timeout=timeout) as session_client:
-            async with session_client.post(
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.post(
                 litellm_url, json=payload, headers=headers
             ) as response:
                 if response.status != 200:
-                    error_msg = f"LiteLLM error: HTTP {response.status}"
-                    try:
-                        error_text = await response.text()
-                        error_msg += f" - {error_text}"
-                    except Exception:
-                        pass
+                    error_text = await response.text()
+                    raise HTTPException(
+                        status_code=response.status,
+                        detail=f"LiteLLM error: {error_text}",
+                    )
 
-                    # 发送错误事件
-                    yield f"data: {json.dumps({'type': 'error', 'content': error_msg, 'finished': True})}\n\n"
-                    return
+                accumulated_content = ""
+                async for line in response.content:
+                    line_str = line.decode("utf-8").strip()
 
-                # 处理流式响应
-                async for chunk_bytes in response.content.iter_chunked(1024):
-                    if not chunk_bytes:
-                        continue
+                    if line_str.startswith("data: "):
+                        data_str = line_str[6:]
 
-                    chunk_str = chunk_bytes.decode("utf-8", errors="ignore")
-                    lines = chunk_str.split("\n")
+                        if data_str == "[DONE]":
+                            logger.info(f"📊 模板分析完成: 输出长度={len(accumulated_content)}")
+                            break
 
-                    for line in lines:
-                        if line.startswith("data: "):
-                            data = line[6:].strip()
+                        try:
+                            data = json.loads(data_str)
+                            if "choices" in data and data["choices"]:
+                                delta = data["choices"][0].get("delta", {})
+                                if "content" in delta:
+                                    content = delta["content"]
+                                    accumulated_content += content
 
-                            if data == "[DONE]":
-                                # 使用纯净的JSONL内容或原始内容
-                                final_content = pure_jsonl_response if jsonl_extractor and jsonl_extractor.has_jsonl_content() else accumulated_content
+                                    # AI SDK Data Stream Protocol format
+                                    formatted_data = f"0:{json.dumps({'text': content})}\n"
+                                    yield formatted_data
 
-                                # 保存完整的AI响应
-                                if final_content and ai_conversation:
-                                    try:
-                                        with Session(engine) as db_session:
-                                            # 重新查询conversation以确保正确的session绑定
-                                            conversation = db_session.get(AIConversation, ai_conversation.id)
-                                            if conversation:
-                                                # 更新对话内容
-                                                messages_list = json.loads(conversation.messages or "[]")
-                                                messages_list.append({
-                                                    "role": "assistant",
-                                                    "content": final_content,
-                                                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                                                })
-                                                conversation.messages = json.dumps(messages_list)
-                                                db_session.add(conversation)
-                                                db_session.commit()
-                                    except Exception as e:
-                                        logger.error(f"Failed to save AI response: {e}")
+                        except json.JSONDecodeError:
+                            continue
 
-                                # 发送完成事件
-                                yield f"data: {json.dumps({'type': analysis_type, 'content': '', 'finished': True})}\n\n"
-                                return
-
-                            try:
-                                parsed = json.loads(data)
-
-                                # 检查错误
-                                if "error" in parsed:
-                                    error_msg = parsed.get("message", "Unknown error")
-
-                                    # 保存错误
-                                    if ai_conversation:
-                                        try:
-                                            with Session(engine) as db_session:
-                                                conversation = db_session.get(AIConversation, ai_conversation.id)
-                                                if conversation:
-                                                    conversation.summary = f"分析失败: {error_msg}"
-                                                    db_session.add(conversation)
-                                                    db_session.commit()
-                                        except Exception as e:
-                                            logger.error(f"Failed to save error: {e}")
-
-                                    yield f"data: {json.dumps({'type': 'error', 'content': error_msg, 'finished': True})}\n\n"
-                                    return
-
-                                # 提取内容
-                                if (
-                                    parsed.get("choices")
-                                    and len(parsed["choices"]) > 0
-                                    and "delta" in parsed["choices"][0]
-                                    and "content" in parsed["choices"][0]["delta"]
-                                ):
-                                    content = parsed["choices"][0]["delta"]["content"]
-                                    if content:
-                                        accumulated_content += content
-
-                                        # 如果是JSONL模板，尝试提取JSONL内容
-                                        if jsonl_extractor:
-                                            jsonl_increment, has_new_jsonl = jsonl_extractor.process_chunk(content)
-
-                                            if has_new_jsonl:
-                                                # 有新的JSONL内容，发送纯净的增量内容
-                                                pure_jsonl_response = jsonl_extractor.get_current_jsonl()
-                                                yield f"data: {json.dumps({'type': analysis_type, 'content': jsonl_increment, 'finished': False})}\n\n"
-                                            elif jsonl_extractor.has_jsonl_content():
-                                                # 已经在提取JSONL，跳过非JSONL内容
-                                                continue
-                                            else:
-                                                # 还没开始提取，发送原始内容
-                                                yield f"data: {json.dumps({'type': analysis_type, 'content': content, 'finished': False})}\n\n"
-                                        else:
-                                            # 非JSONL模板，直接发送内容
-                                            yield f"data: {json.dumps({'type': analysis_type, 'content': content, 'finished': False})}\n\n"
-
-                            except json.JSONDecodeError:
-                                # 忽略无法解析的数据
-                                continue
+                # 发送完成信号
+                completion_data = f"d:{json.dumps({'finishReason': 'stop'})}\n"
+                yield completion_data
 
     except Exception as e:
-        logger.error(f"Template analysis error: {e}")
-        yield f"data: {json.dumps({'type': 'error', 'content': f'分析过程中发生错误: {str(e)}', 'finished': True})}\n\n"
+        logger.error(f"模板分析失败: {str(e)}")
+        error_data = f"e:{json.dumps({'error': str(e)})}\n"
+        yield error_data
 
 
 @router.delete(
@@ -2067,15 +1967,19 @@ def delete_content_item_endpoint(
     "/{id}/favorite",
     status_code=status.HTTP_201_CREATED,
     summary="Add Content to Favorites",
-    description="Add a content item to the user's favorites list.",
+    description="Add a content item or specific block to the user's favorites list.",
 )
 def add_to_favorites_endpoint(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     id: uuid.UUID = Path(..., description="Content item ID to add to favorites"),
+    favorite_data: dict = Body(
+        default={},
+        description="Optional block data for block-level favorites"
+    ),
 ) -> dict[str, str]:
-    """Add content item to favorites."""
+    """Add content item or block to favorites."""
     from app.crud.crud_favorite import create_favorite, get_favorite
 
     # Verify content item exists and belongs to user
@@ -2091,18 +1995,45 @@ def add_to_favorites_endpoint(
             detail="You don't have permission to access this content item",
         )
 
+    # Extract block information if provided
+    block_id = favorite_data.get("block_id")
+    block_type = favorite_data.get("block_type")
+    block_content = favorite_data.get("block_content")
+    title = favorite_data.get("title")
+    description = favorite_data.get("description")
+    tags = favorite_data.get("tags")
+
     # Check if already favorited
     existing_favorite = get_favorite(
-        session=session, user_id=current_user.id, content_item_id=id
+        session=session,
+        user_id=current_user.id,
+        content_item_id=id,
+        block_id=block_id
     )
     if existing_favorite:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Content item is already in favorites",
-        )
+        if block_id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This block is already in favorites",
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Content item is already in favorites",
+            )
 
     # Create favorite
-    create_favorite(session=session, user_id=current_user.id, content_item_id=id)
+    create_favorite(
+        session=session,
+        user_id=current_user.id,
+        content_item_id=id,
+        block_id=block_id,
+        block_type=block_type,
+        block_content=block_content,
+        title=title,
+        description=description,
+        tags=tags
+    )
 
     return {"status": "ok"}
 
@@ -2111,15 +2042,16 @@ def add_to_favorites_endpoint(
     "/{id}/favorite",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Remove Content from Favorites",
-    description="Remove a content item from the user's favorites list.",
+    description="Remove a content item or specific block from the user's favorites list.",
 )
 def remove_from_favorites_endpoint(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     id: uuid.UUID = Path(..., description="Content item ID to remove from favorites"),
+    block_id: str | None = Query(None, description="Block ID to remove from favorites"),
 ) -> None:
-    """Remove content item from favorites."""
+    """Remove content item or block from favorites."""
     from app.crud.crud_favorite import delete_favorite
 
     # Verify content item exists and belongs to user
@@ -2137,27 +2069,37 @@ def remove_from_favorites_endpoint(
 
     # Remove from favorites
     success = delete_favorite(
-        session=session, user_id=current_user.id, content_item_id=id
+        session=session,
+        user_id=current_user.id,
+        content_item_id=id,
+        block_id=block_id
     )
     if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content item is not in favorites",
-        )
+        if block_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="This block is not in favorites",
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Content item is not in favorites",
+            )
 
 
 @router.get(
     "/{id}/favorite/status",
     summary="Check Favorite Status",
-    description="Check if a content item is in the user's favorites.",
+    description="Check if a content item or specific block is in the user's favorites.",
 )
 def check_favorite_status_endpoint(
     *,
     session: SessionDep,
     current_user: CurrentUser,
     id: uuid.UUID = Path(..., description="Content item ID to check"),
+    block_id: str | None = Query(None, description="Block ID to check"),
 ) -> dict[str, bool]:
-    """Check if content item is in favorites."""
+    """Check if content item or block is in favorites."""
     from app.crud.crud_favorite import get_favorite
 
     # Verify content item exists and belongs to user
@@ -2175,7 +2117,10 @@ def check_favorite_status_endpoint(
 
     # Check favorite status
     favorite = get_favorite(
-        session=session, user_id=current_user.id, content_item_id=id
+        session=session,
+        user_id=current_user.id,
+        content_item_id=id,
+        block_id=block_id
     )
 
     return {"is_favorite": favorite is not None}
@@ -2446,11 +2391,13 @@ def regenerate_ai_analysis_endpoint(
     *,
     session: SessionDep,
     current_user: CurrentUser,
-    id: uuid.UUID = Path(..., description="ID of the content item to regenerate AI analysis for"),
+    id: uuid.UUID = Path(
+        ..., description="ID of the content item to regenerate AI analysis for"
+    ),
 ) -> dict[str, Any]:
     """
     Regenerate AI analysis for a content item.
-    
+
     This endpoint:
     1. Validates user permissions
     2. Triggers AI preprocessing pipeline
@@ -2470,32 +2417,31 @@ def regenerate_ai_analysis_endpoint(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have permission to regenerate AI analysis for this content",
         )
-    
+
     # Check if content has been processed (has content_text)
     if not content_item.content_text or len(content_item.content_text.strip()) == 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Content must be processed before AI analysis can be regenerated",
         )
-    
+
     # Update status to indicate AI regeneration is starting
     content_item.processing_status = "processing"
     session.add(content_item)
     session.commit()
-    
+
     # Start AI regeneration task using the global instance
     background_task_manager.start_ai_regeneration(
-        content_id=str(content_item.id),
-        user_id=str(current_user.id)
+        content_id=str(content_item.id), user_id=str(current_user.id)
     )
-    
+
     logger.info(f"Started AI regeneration for content {content_item.id}")
-    
+
     return {
         "message": "AI analysis regeneration started",
         "content_id": str(content_item.id),
         "status": "processing",
-        "note": "Check SSE events for real-time progress updates"
+        "note": "Check SSE events for real-time progress updates",
     }
 
 @router.get("/{content_id}/segments/{segment_number}", response_model=ContentSegmentOut)
@@ -2506,7 +2452,7 @@ async def get_content_segment(
     db: AsyncSessionDep
 ):
     """获取指定内容的特定段落"""
-    
+
     # 验证内容项存在且用户有权限访问
     content_item = await db.scalar(
         select(ContentItem).where(
@@ -2516,10 +2462,10 @@ async def get_content_segment(
             )
         )
     )
-    
+
     if not content_item:
         raise HTTPException(status_code=404, detail="Content not found")
-    
+
     # 获取指定段落
     segment = await db.scalar(
         select(ContentSegment).where(
@@ -2529,10 +2475,10 @@ async def get_content_segment(
             )
         )
     )
-    
+
     if not segment:
         raise HTTPException(status_code=404, detail=f"Segment {segment_number} not found")
-    
+
     return segment
 
 @router.get("/{content_id}/segments", response_model=ContentSegmentBulkResponse)
@@ -2540,71 +2486,86 @@ async def get_content_segments(
     content_id: uuid.UUID,
     current_user: CurrentUser,
     db: AsyncSessionDep,
-    numbers: Optional[str] = Query(None, description="逗号分隔的段落号列表，如 '1,3,5'"),
-    from_number: Optional[int] = Query(None, description="起始段落号（包含）"),
-    to_number: Optional[int] = Query(None, description="结束段落号（包含）")
+    numbers: str | None = Query(None, description="逗号分隔的段落号列表，如 '1,3,5'"),
+    from_number: int | None = Query(None, description="起始段落号（包含）"),
+    to_number: int | None = Query(None, description="结束段落号（包含）")
 ):
     """批量获取内容段落
-    
     支持三种查询模式：
     1. 指定段落号列表：?numbers=1,3,5
     2. 段落区间：?from_number=6&to_number=24
     3. 全部段落：不传任何参数
     """
-    
-    # 验证内容项存在且用户有权限访问
-    content_item = await db.scalar(
-        select(ContentItem).where(
-            and_(
-                ContentItem.id == content_id,
-                ContentItem.user_id == current_user.id
+
+    try:
+        # 验证内容项存在且用户有权限访问
+        content_item = await db.scalar(
+            select(ContentItem).where(
+                and_(
+                    ContentItem.id == content_id,
+                    ContentItem.user_id == current_user.id
+                )
             )
         )
-    )
-    
-    if not content_item:
-        raise HTTPException(status_code=404, detail="Content not found")
-    
-    # 构建查询条件
-    query = select(ContentSegment).where(ContentSegment.content_item_id == content_id)
-    requested_numbers = []
-    
-    if numbers:
-        # 指定段落号列表模式
-        try:
-            requested_numbers = [int(n.strip()) for n in numbers.split(',') if n.strip()]
-            query = query.where(ContentSegment.display_number.in_(requested_numbers))
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid numbers format")
-    
-    elif from_number is not None and to_number is not None:
-        # 区间模式
-        if from_number > to_number:
-            from_number, to_number = to_number, from_number
-        query = query.where(
-            and_(
-                ContentSegment.display_number >= from_number,
-                ContentSegment.display_number <= to_number
+
+        if not content_item:
+            raise HTTPException(status_code=404, detail="Content not found")
+
+        # 构建查询条件
+        query = select(ContentSegment).where(ContentSegment.content_item_id == content_id)
+        requested_numbers = []
+
+        if numbers:
+            # 指定段落号列表模式
+            try:
+                requested_numbers = [int(n.strip()) for n in numbers.split(',') if n.strip()]
+                query = query.where(ContentSegment.display_number.in_(requested_numbers))
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid numbers format")
+
+        elif from_number is not None and to_number is not None:
+            # 区间模式
+            if from_number > to_number:
+                from_number, to_number = to_number, from_number
+            query = query.where(
+                and_(
+                    ContentSegment.display_number >= from_number,
+                    ContentSegment.display_number <= to_number
+                )
             )
+            requested_numbers = list(range(from_number, to_number + 1))
+
+        elif from_number is not None or to_number is not None:
+            raise HTTPException(status_code=400, detail="Both from_number and to_number are required for range query")
+
+        # 执行查询
+        query = query.order_by(ContentSegment.display_number)
+        result = await db.execute(query)
+        segments = result.scalars().all()
+
+        # 计算缺失的段落号
+        missing_numbers = []
+        if requested_numbers:
+            found_numbers = {seg.display_number for seg in segments}
+            missing_numbers = [num for num in requested_numbers if num not in found_numbers]
+
+        return ContentSegmentBulkResponse(
+            segments=segments,
+            total=len(segments),
+            missing_numbers=missing_numbers
         )
-        requested_numbers = list(range(from_number, to_number + 1))
-    
-    elif from_number is not None or to_number is not None:
-        raise HTTPException(status_code=400, detail="Both from_number and to_number are required for range query")
-    
-    # 执行查询
-    query = query.order_by(ContentSegment.display_number)
-    result = await db.execute(query)
-    segments = result.scalars().all()
-    
-    # 计算缺失的段落号
-    missing_numbers = []
-    if requested_numbers:
-        found_numbers = {seg.display_number for seg in segments}
-        missing_numbers = [num for num in requested_numbers if num not in found_numbers]
-    
-    return ContentSegmentBulkResponse(
-        segments=segments,
-        total=len(segments),
-        missing_numbers=missing_numbers
-    )
+
+    except HTTPException:
+        # 重新抛出HTTP异常
+        raise
+    except Exception as e:
+        # 记录详细错误信息
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"获取内容段落时发生错误 - content_id: {content_id}, error: {str(e)}", exc_info=True)
+
+        # 返回通用500错误，避免暴露内部错误信息
+        raise HTTPException(
+            status_code=500,
+            detail="Internal server error while retrieving content segments"
+        )

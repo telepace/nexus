@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import {
-  Send,
+  ArrowUpRight,
   Bot,
   User,
   Loader2,
@@ -315,26 +315,37 @@ export function AIChat({
           </div>
         )}
 
-        <div className="p-4 border-t">
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <Input
-              value={input}
-              onChange={handleInputChange}
-              placeholder={placeholder}
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button
-              type="submit"
-              disabled={!input.trim() || isLoading}
-              size="sm"
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
+        <div className="p-1 border-t">
+          <form onSubmit={handleSubmit} className="relative">
+            {/* 现代化聊天输入框容器 */}
+            <div className="relative bg-white dark:bg-zinc-800 shadow-md rounded-3xl focus-within:ring-1 focus-within:ring-foreground transition-all duration-300">
+              <div className="flex items-center gap-3 pl-6 pr-3 py-1">
+                <div className="relative flex-1">
+                  <Input
+                    value={input}
+                    onChange={handleInputChange}
+                    placeholder={placeholder}
+                    disabled={isLoading}
+                    className="border-0 bg-transparent px-0 py-2 h-auto text-base focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+                    autoComplete="off"
+                  />
+                </div>
+
+                {/* 现代化发送按钮 */}
+                <Button
+                  type="submit"
+                  disabled={!input.trim() || isLoading}
+                  size="icon"
+                  className="rounded-full h-6 w-6 shadow-md text-foreground hover:text-foreground bg-neutral-100 hover:bg-neutral-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 cursor-pointer"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ArrowUpRight className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
           </form>
         </div>
       </CardContent>

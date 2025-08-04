@@ -18,7 +18,7 @@ class AIConversationCreate(SQLModel):
 
     content_item_id: uuid.UUID | None = None
     title: str | None = None
-    ai_model_name: str = Field(default="gemini-2.5-flash-preview-05-20")
+    ai_model_name: str = Field(default="gemini-2.5-flash-05-20")
     # The first batch of messages that kick-off the conversation.
     # Stored exactly as a list of dicts compatible with OpenAI format, e.g.
     # [{"role": "user", "content": "Hello"}]

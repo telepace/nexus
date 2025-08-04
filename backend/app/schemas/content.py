@@ -1,10 +1,10 @@
 import uuid
 from datetime import datetime
-from typing import Optional, List, Dict, Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, ConfigDict
-from sqlmodel import Field, SQLModel
+from pydantic import BaseModel, ConfigDict, Field
+from sqlmodel import SQLModel
+
 from app.schemas.base import TimestampMixin
 
 
@@ -104,19 +104,31 @@ class ContentAnalysisRequest(BaseModel):
 
     analysis_instruction: str = Field(..., description="用户的分析指令")
     model: str | None = Field(
-        default="or-gemini-2.5-flash-preview-05-20",
+        default=None,
         description="要使用的AI模型（可选，后端会自动选择默认模型）",
     )
+    template_name: str | None = Field(
+        default="user_analysis.j2",
+        description="要使用的分析模板（可选，默认为user_analysis.j2）",
+    )
+    selected_point: str | None = Field(
+        default=None,
+        description="选中的要点内容（用于expand_discussion模板）",
+    )
+    output_language: str | None = Field(
+        default="English",
+        description="输出语言（可选，如Chinese, English, Japanese等）",
+    )
     temperature: float = Field(default=0.7, description="温度参数")
-    max_tokens: int = Field(default=2000, description="最大token数")
+    max_tokens: int = Field(default=15000, description="最大token数")
 
 
 class ContentSegmentBase(BaseModel):
     """段落基础模型"""
     display_number: int = Field(..., description="段落显示序号（1-based）")
     content: str = Field(..., description="段落内容")
-    start_offset: Optional[int] = Field(None, description="在原文中的起始字符位置")
-    end_offset: Optional[int] = Field(None, description="在原文中的结束字符位置")
+    start_offset: int | None = Field(None, description="在原文中的起始字符位置")
+    end_offset: int | None = Field(None, description="在原文中的结束字符位置")
 
 class ContentSegmentCreate(ContentSegmentBase):
     """创建段落请求模型"""
@@ -124,9 +136,9 @@ class ContentSegmentCreate(ContentSegmentBase):
 
 class ContentSegmentUpdate(BaseModel):
     """更新段落请求模型"""
-    content: Optional[str] = Field(None, description="段落内容")
-    start_offset: Optional[int] = Field(None, description="在原文中的起始字符位置")
-    end_offset: Optional[int] = Field(None, description="在原文中的结束字符位置")
+    content: str | None = Field(None, description="段落内容")
+    start_offset: int | None = Field(None, description="在原文中的起始字符位置")
+    end_offset: int | None = Field(None, description="在原文中的结束字符位置")
 
 class ContentSegmentOut(ContentSegmentBase, TimestampMixin):
     """段落输出模型"""
@@ -137,6 +149,6 @@ class ContentSegmentOut(ContentSegmentBase, TimestampMixin):
 
 class ContentSegmentBulkResponse(BaseModel):
     """批量获取段落响应模型"""
-    segments: List[ContentSegmentOut] = Field(..., description="段落列表")
+    segments: list[ContentSegmentOut] = Field(..., description="段落列表")
     total: int = Field(..., description="总数量")
-    missing_numbers: List[int] = Field(default_factory=list, description="未找到的段落号")
+    missing_numbers: list[int] = Field(default_factory=list, description="未找到的段落号")

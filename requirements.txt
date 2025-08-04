@@ -1,2 +1,0 @@
-# Root level dependencies for project scripts
-PyYAML>=6.0.0,<7.0.0

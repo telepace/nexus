@@ -18,14 +18,14 @@ def test_configuration():
     """测试配置"""
     print("🔧 当前配置:")
     print(f"   DEFAULT_LLM_MODEL: {settings.DEFAULT_LLM_MODEL}")
-    print(f"   基础AI任务模型配置:")
+    print("   基础AI任务模型配置:")
     for task, model in settings.AI_TASK_MODELS.items():
         print(f"     {task:15} -> {model}")
-    print(f"   最终解析的模型配置:")
+    print("   最终解析的模型配置:")
     for task, model in settings.resolved_ai_task_models.items():
         print(f"     {task:15} -> {model}")
-    
-    print(f"   环境变量覆盖:")
+
+    print("   环境变量覆盖:")
     env_vars = {
         "AI_MODEL_SUMMARY": settings.AI_MODEL_SUMMARY,
         "AI_MODEL_KEY_POINTS": settings.AI_MODEL_KEY_POINTS,
@@ -42,18 +42,23 @@ def test_configuration():
 async def test_model_usage():
     """测试实际模型使用"""
     from app.services.ai.chat_service import ChatService
-    
+
     chat_service = ChatService()
-    
+
     print("🧪 测试模板->模型映射:")
-    
+
     # 测试不同模板的模型选择
-    test_templates = ["summary.j2", "key_points.j2", "labels.j2", "segment_aware_chat.j2"]
-    
+    test_templates = [
+        "summary.j2",
+        "key_points.j2",
+        "labels.j2",
+        "segment_aware_chat.j2",
+    ]
+
     for template_name in test_templates:
         selected_model = chat_service.get_model_for_template(template_name)
         print(f"   {template_name:20} -> {selected_model}")
-    
+
     print()
 
 
@@ -62,13 +67,13 @@ def main():
     print("=" * 80)
     print("🔄 基于环境变量的模型切换验证测试")
     print("=" * 80)
-    
+
     # 测试配置
     test_configuration()
-    
+
     # 测试模型使用
     asyncio.run(test_model_usage())
-    
+
     print("=" * 80)
     print("✅ 测试完成")
     print()
@@ -86,4 +91,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()

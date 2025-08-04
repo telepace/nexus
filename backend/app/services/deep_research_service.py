@@ -164,8 +164,10 @@ class DeepResearchService:
             os.environ.pop("LITELLM_PROXY_URL", None)
 
             # 2. 强制设置 ChatAnywhere API Key & Base URL
-            os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
-            os.environ["OPENAI_API_BASE"] = settings.OPENAI_BASE_URL  # https://api.chatanywhere.cn
+            os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY or ""
+            os.environ["OPENAI_API_BASE"] = (
+                settings.OPENAI_BASE_URL or "https://api.openai.com"
+            )  # https://api.chatanywhere.cn
 
             # 3. 明确指定 embedding 模型
             os.environ["EMBEDDING"] = "openai:text-embedding-3-small"

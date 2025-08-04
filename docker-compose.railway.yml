@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:17
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-app}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    volumes:
+      - db-data:/var/lib/postgresql/data/pgdata
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-app}
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Database Migration and Setup
+  prestart:
+    build:
+      context: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    command: bash scripts/prestart.sh
+    environment:
+      - DOMAIN=${RAILWAY_PUBLIC_DOMAIN:-localhost}
+      - ENVIRONMENT=production
+      - SECRET_KEY=${SECRET_KEY:-changeme}
+      - FIRST_SUPERUSER=${FIRST_SUPERUSER:-admin@example.com}
+      - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD:-changeme}
+      - POSTGRES_SERVER=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-app}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_ENABLED=true
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      prestart:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - DOMAIN=${RAILWAY_PUBLIC_DOMAIN:-localhost}
+      - ENVIRONMENT=production
+      - BACKEND_CORS_ORIGINS=https://${RAILWAY_PUBLIC_DOMAIN:-localhost}
+      - SECRET_KEY=${SECRET_KEY:-changeme}
+      - FIRST_SUPERUSER=${FIRST_SUPERUSER:-admin@example.com}
+      - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD:-changeme}
+      - POSTGRES_SERVER=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-app}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_ENABLED=true
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+
+  # Frontend Web App
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - NEXT_PUBLIC_API_URL=https://${RAILWAY_PUBLIC_DOMAIN:-localhost}/api
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=https://${RAILWAY_PUBLIC_DOMAIN:-localhost}/api
+      - NODE_ENV=production
+
+  # Admin Dashboard
+  admin:
+    build:
+      context: ./admin
+      args:
+        - VITE_API_URL=https://${RAILWAY_PUBLIC_DOMAIN:-localhost}/api
+        - VITE_ADMIN_API_URL=https://${RAILWAY_PUBLIC_DOMAIN:-localhost}/api
+        - NODE_ENV=production
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=https://${RAILWAY_PUBLIC_DOMAIN:-localhost}/api
+      - VITE_ADMIN_API_URL=https://${RAILWAY_PUBLIC_DOMAIN:-localhost}/api
+      - VITE_ENVIRONMENT=production
+
+volumes:
+  db-data:
+  redis-data:

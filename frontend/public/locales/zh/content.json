@@ -1,0 +1,68 @@
+{
+  "library": {
+    "title": "内容库",
+    "addContent": "添加内容",
+    "addFromUrl": "从URL添加",
+    "addFromFile": "从文件添加",
+    "addFromText": "从文本添加",
+    "noContent": "暂无内容",
+    "contentAdded": "内容添加成功",
+    "contentError": "内容添加失败",
+    "searchPlaceholder": "搜索内容...",
+    "filterByType": "按类型筛选",
+    "sortBy": "排序方式",
+    "lastModified": "最后修改",
+    "dateAdded": "添加日期",
+    "title": "标题",
+    "type": "类型"
+  },
+  "types": {
+    "webpage": "网页",
+    "document": "文档",
+    "text": "文本",
+    "pdf": "PDF",
+    "image": "图片",
+    "video": "视频",
+    "audio": "音频",
+    "unknown": "未知"
+  },
+  "preview": {
+    "title": "内容预览",
+    "originalUrl": "原始链接",
+    "dateAdded": "添加日期",
+    "lastAnalyzed": "最后分析",
+    "wordCount": "字数",
+    "readingTime": "阅读时间",
+    "minutes": "分钟",
+    "tags": "标签",
+    "noPreview": "无法预览",
+    "loadingPreview": "加载预览中...",
+    "previewError": "预览加载失败"
+  },
+  "actions": {
+    "viewContent": "查看内容",
+    "analyzeContent": "分析内容",
+    "shareContent": "分享内容",
+    "deleteContent": "删除内容",
+    "editContent": "编辑内容",
+    "copyLink": "复制链接",
+    "downloadContent": "下载内容",
+    "addToFavorites": "添加到收藏",
+    "removeFromFavorites": "从收藏移除"
+  },
+  "sharing": {
+    "title": "分享内容",
+    "publicLink": "公开链接",
+    "generateLink": "生成链接",
+    "copyLink": "复制链接",
+    "linkCopied": "链接已复制到剪贴板",
+    "shareSettings": "分享设置",
+    "allowAnalysis": "允许查看者进行AI分析",
+    "expirationDate": "过期日期",
+    "noExpiration": "永不过期",
+    "accessCount": "访问次数",
+    "unlimited": "不限制",
+    "linkExpired": "此链接已过期",
+    "linkNotFound": "未找到内容或访问被拒绝"
+  }
+}

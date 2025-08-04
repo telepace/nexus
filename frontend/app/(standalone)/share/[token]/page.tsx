@@ -59,7 +59,10 @@ const SharedContentPage = () => {
       setPasswordRequired(false);
 
       try {
-        const response = await contentApi.getSharedContent(token, accessPassword);
+        const response = await contentApi.getSharedContent(
+          token,
+          accessPassword,
+        );
         setContentItem(response);
       } catch (error: unknown) {
         console.error("Failed to fetch shared content:", error);
@@ -70,8 +73,7 @@ const SharedContentPage = () => {
           return { status, data, message };
         };
         const { status, data, message } = handleError(error);
-        const errorDetail =
-          data?.detail || message || "无法加载分享内容";
+        const errorDetail = data?.detail || message || "无法加载分享内容";
 
         if (status === 401 && errorDetail === "Password required") {
           setPasswordRequired(true);
@@ -113,12 +115,15 @@ const SharedContentPage = () => {
       setError(null);
     } catch (err: unknown) {
       console.error("Failed to fetch shared content with password:", err);
-      const errObj = err as { status?: number; response?: { status?: number }; data?: { detail?: string }; message?: string };
+      const errObj = err as {
+        status?: number;
+        response?: { status?: number };
+        data?: { detail?: string };
+        message?: string;
+      };
       const status = errObj.status || errObj.response?.status;
       const errorDetail =
-        errObj.data?.detail ||
-        errObj.message ||
-        "无法加载分享内容";
+        errObj.data?.detail || errObj.message || "无法加载分享内容";
 
       setPasswordRequired(true);
       if (status === 403 && errorDetail === "Incorrect password") {
@@ -213,10 +218,13 @@ const SharedContentPage = () => {
                   </p>
                 </div>
               </div>
-              
+
               <form onSubmit={handlePasswordSubmit} className="space-y-6">
                 <div className="space-y-3">
-                  <label htmlFor="password" className="text-sm font-medium text-neutral-900 dark:text-neutral-100 block">
+                  <label
+                    htmlFor="password"
+                    className="text-sm font-medium text-neutral-900 dark:text-neutral-100 block"
+                  >
                     访问密码
                   </label>
                   <div className="relative group">
@@ -237,20 +245,24 @@ const SharedContentPage = () => {
                       className="absolute inset-y-0 right-0 pr-4 flex items-center text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors duration-200"
                       aria-label={showPassword ? "隐藏密码" : "显示密码"}
                     >
-                      <EyeIcon className={`w-5 h-5 transition-colors duration-200 ${showPassword ? "text-neutral-700 dark:text-neutral-300" : ""}`} />
+                      <EyeIcon
+                        className={`w-5 h-5 transition-colors duration-200 ${showPassword ? "text-neutral-700 dark:text-neutral-300" : ""}`}
+                      />
                     </button>
                   </div>
                   {error && (
                     <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                       <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400 flex-shrink-0" />
-                      <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
+                      <p className="text-red-700 dark:text-red-400 text-sm">
+                        {error}
+                      </p>
                     </div>
                   )}
                 </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full h-12 rounded-xl bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 focus:bg-neutral-800 dark:focus:bg-neutral-200 transition-all duration-200 font-medium shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98]" 
+
+                <Button
+                  type="submit"
+                  className="w-full h-12 rounded-xl bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 focus:bg-neutral-800 dark:focus:bg-neutral-200 transition-all duration-200 font-medium shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98]"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -263,9 +275,13 @@ const SharedContentPage = () => {
                   )}
                 </Button>
               </form>
-              
+
               <div className="text-center pt-4">
-                <Button variant="ghost" asChild className="text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 rounded-lg transition-colors duration-200">
+                <Button
+                  variant="ghost"
+                  asChild
+                  className="text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 rounded-lg transition-colors duration-200"
+                >
                   <Link href="/" className="flex items-center gap-2">
                     <ArrowLeft className="w-4 h-4" />
                     返回首页
@@ -318,14 +334,19 @@ const SharedContentPage = () => {
       <div className="sticky top-0 z-50 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl border-b border-neutral-100/50 dark:border-neutral-800/50 shadow-sm animate-in fade-in duration-300">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <Button asChild variant="ghost" size="sm" className="rounded-xl text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all duration-200">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="rounded-xl text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all duration-200"
+            >
               <Link href="/" className="flex items-center gap-2">
                 <ArrowLeft className="w-4 h-4" />
                 <span className="hidden sm:inline">返回首页</span>
                 <span className="sm:hidden">返回</span>
               </Link>
             </Button>
-            
+
             <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 font-medium">
               <div className="w-1.5 h-1.5 bg-neutral-300 dark:bg-neutral-600 rounded-full animate-pulse" />
               <span className="hidden sm:inline">通过 Nexus 分享</span>
@@ -344,7 +365,7 @@ const SharedContentPage = () => {
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 dark:text-neutral-100 leading-[1.1] mb-6 sm:mb-8 tracking-tight max-w-4xl animate-in slide-in-from-bottom-2 duration-700 delay-100">
                 {contentItem.title || "无标题文档"}
               </h1>
-              
+
               {/* 元信息 */}
               <div className="flex flex-wrap items-center gap-4 sm:gap-6 lg:gap-8 text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 animate-in slide-in-from-bottom-2 duration-700 delay-200">
                 {contentItem.type && (
@@ -352,25 +373,30 @@ const SharedContentPage = () => {
                     <div className="w-4 h-4 sm:w-5 sm:h-5 bg-neutral-100 dark:bg-neutral-800 rounded-md flex items-center justify-center group-hover:bg-neutral-200 dark:group-hover:bg-neutral-700 transition-colors duration-200">
                       <FileText className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                     </div>
-                    <span className="capitalize font-medium">{contentItem.type}</span>
+                    <span className="capitalize font-medium">
+                      {contentItem.type}
+                    </span>
                   </div>
                 )}
-                
+
                 {contentItem.created_at && (
                   <div className="flex items-center gap-2 sm:gap-2.5 group">
                     <div className="w-4 h-4 sm:w-5 sm:h-5 bg-neutral-100 dark:bg-neutral-800 rounded-md flex items-center justify-center group-hover:bg-neutral-200 dark:group-hover:bg-neutral-700 transition-colors duration-200">
                       <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                     </div>
                     <span className="font-medium">
-                      {new Date(contentItem.created_at).toLocaleDateString("zh-CN", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
+                      {new Date(contentItem.created_at).toLocaleDateString(
+                        "zh-CN",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        },
+                      )}
                     </span>
                   </div>
                 )}
-                
+
                 {contentItem.source_uri && (
                   <div className="flex items-center gap-2 sm:gap-2.5 group">
                     <div className="w-4 h-4 sm:w-5 sm:h-5 bg-neutral-100 dark:bg-neutral-800 rounded-md flex items-center justify-center group-hover:bg-neutral-200 dark:group-hover:bg-neutral-700 transition-colors duration-200">
@@ -394,7 +420,7 @@ const SharedContentPage = () => {
           <div className="mb-24 sm:mb-32 animate-in slide-in-from-bottom-4 duration-700 delay-500">
             {contentItem.content_text ? (
               <div className="bg-white dark:bg-neutral-900/50 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-800 p-8 sm:p-12 lg:p-16">
-                <ShareMarkdownRenderer 
+                <ShareMarkdownRenderer
                   content={contentItem.content_text}
                   className="
                     selection:bg-blue-100 dark:selection:bg-blue-900/30
@@ -433,7 +459,11 @@ const SharedContentPage = () => {
                   </p>
                 </div>
               </div>
-              <Button asChild variant="outline" className="rounded-xl px-6 py-2.5 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all duration-200">
+              <Button
+                asChild
+                variant="outline"
+                className="rounded-xl px-6 py-2.5 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all duration-200"
+              >
                 <Link href="/" className="font-medium">
                   探索 Nexus
                 </Link>

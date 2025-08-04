@@ -1,5 +1,33 @@
 /* stylelint-disable at-rule-no-unknown */
 @import "tailwindcss";
+@import "../styles/components.css";
+
+/* 优雅滚动条样式 */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgb(209 213 219 / 0.6);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgb(156 163 175 / 0.8);
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgb(75 85 99 / 0.6);
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgb(107 114 128 / 0.8);
+}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -23,6 +51,9 @@
   --neutral-800: oklch(0.269 0 0);
   --neutral-900: oklch(0.205 0 0);
   --neutral-950: oklch(0.145 0 0);
+
+  /* Border radius */
+  --radius: 0.5rem;
 
   /* Light‑mode semantic colors */
   --background: var(--color-linear-bg-1);
@@ -75,8 +106,8 @@
   --size-library-lg: 40rem;
   --size-library-card: 28.75rem; /* 460px - card width */
   --size-card-title: 25rem; /* 400px - card text width */
-  --size-body: 28rem; /* 448px - body content width */
-  --size-body-lg: 36rem; /* 512px - large body content width */
+  --size-body: 42rem; /* 672px - body content width */
+  --size-body-lg: 48rem; /* 768px - large body content width */
 
   /* === Custom Color Palettes (Tailwind v4 tokens) === */
   /* -------------------------------------------------
@@ -153,7 +184,7 @@
 
   /* Neutrals */
   --color-linear-bg-0: #f3f3f3; /* 侧边栏 / 主背景 */
-  --color-linear-bg-1: #f9f9f9; /* 主页面背景 */
+  --color-linear-bg-1: #f5f5f5; /* 主页面背景 */
   --color-linear-bg-2: #ffffff; /* 卡片 / 列 */
   --color-linear-border: #e5e6ea; /* Divider */
 
@@ -994,7 +1025,8 @@
 }
 
 @keyframes gentle-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.4;
   }
   50% {
@@ -1137,6 +1169,81 @@
   transform: translateZ(0);
 }
 
+/* 🎯 AI分析界面性能优化 */
+.ai-analysis-panel {
+  contain: layout style paint;
+  will-change: auto;
+}
+
+.ai-analysis-panel .analysis-card {
+  contain: layout style paint;
+  transform: translateZ(0);
+}
+
+.ai-analysis-panel .analysis-card:hover {
+  will-change: box-shadow, transform;
+}
+
+.ai-analysis-panel .analysis-card:not(:hover) {
+  will-change: auto;
+}
+
+/* 优化滚动容器 */
+.scroll-container-optimized {
+  contain: layout style paint;
+  will-change: scroll-position;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 优化悬浮块性能 */
+.hoverable-block {
+  contain: layout style;
+  transform: translateZ(0);
+}
+
+.hoverable-block:hover {
+  will-change: background-color, box-shadow;
+}
+
+.hoverable-block:not(:hover) {
+  will-change: auto;
+}
+
+/* 🎯 HoverableBlock 悬浮效果样式 */
+.hover-optimized {
+  transition: all 0.2s ease-out;
+  transform: translateZ(0);
+}
+
+.hover-subtle {
+  @apply hover:bg-muted/20 hover:border-border/40;
+}
+
+.hover-medium {
+  @apply hover:bg-muted/30 hover:border-border/60 hover:shadow-sm;
+}
+
+.hover-strong {
+  @apply hover:bg-muted/40 hover:border-border/80 hover:shadow-md;
+}
+
+/* JSONL 块悬浮效果增强 */
+.jsonl-block-hover {
+  @apply transition-all duration-200 ease-out rounded-lg px-3 py-2 -mx-3 -my-1;
+  @apply hover:bg-muted/20 hover:border-border/30;
+  contain: layout style;
+  transform: translateZ(0);
+}
+
+.jsonl-block-hover:hover {
+  will-change: background-color, border-color;
+}
+
+.jsonl-block-hover:not(:hover) {
+  will-change: auto;
+}
+
 /* 优化文本渲染 */
 .text-optimized {
   text-rendering: optimizeSpeed;
@@ -1161,6 +1268,58 @@
   display: none;
 }
 
+/* 🎯 优化滚动条样式 */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-track-transparent {
+  scrollbar-color: transparent transparent;
+}
+
+.scrollbar-thumb-neutral-300 {
+  scrollbar-color: rgb(212 212 212) transparent;
+}
+
+.hover\:scrollbar-thumb-neutral-400:hover {
+  scrollbar-color: rgb(163 163 163) transparent;
+}
+
+.dark .scrollbar-thumb-neutral-600 {
+  scrollbar-color: rgb(82 82 82) transparent;
+}
+
+.dark .hover\:scrollbar-thumb-neutral-500:hover {
+  scrollbar-color: rgb(115 115 115) transparent;
+}
+
+/* Webkit scrollbar styles */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thumb-neutral-300::-webkit-scrollbar-thumb {
+  background: rgb(212 212 212);
+  border-radius: 3px;
+}
+
+.hover\:scrollbar-thumb-neutral-400:hover::-webkit-scrollbar-thumb {
+  background: rgb(163 163 163);
+}
+
+.dark .scrollbar-thumb-neutral-600::-webkit-scrollbar-thumb {
+  background: rgb(82 82 82);
+}
+
+.dark .hover\:scrollbar-thumb-neutral-500:hover::-webkit-scrollbar-thumb {
+  background: rgb(115 115 115);
+}
+
 /* Custom animations for modern interface */
 @keyframes float {
   0%,
@@ -1173,11 +1332,18 @@
 }
 
 .analysis-card {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  contain: layout style paint;
 }
 
+/* Hover style: keep position, only enhance shadow */
 .analysis-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(0);
+  will-change: box-shadow;
+}
+
+.analysis-card:not(:hover) {
+  will-change: auto;
 }
 
 /* Enhanced focus styles */
@@ -1551,4 +1717,3 @@
 /* =============================================================================
  * Shadcn/ui Component Animation Overrides
  * ============================================================================= */
-

@@ -24,10 +24,7 @@ class TestStreamingJSONLExtractor:
         extractor = StreamingJSONLExtractor()
 
         # 模拟接收到的数据块
-        chunks = [
-            '{"t": "h2", "c": "标题"}',
-            '\n{"t": "p", "c": "段落内容"}'
-        ]
+        chunks = ['{"t": "h2", "c": "标题"}', '\n{"t": "p", "c": "段落内容"}']
 
         for chunk in chunks:
             increment, has_new = extractor.process_chunk(chunk)
@@ -47,7 +44,7 @@ class TestStreamingJSONLExtractor:
             "```jsonl\n",
             '{"t": "h2", "c": "核心观点"}\n',
             '{"t": "insight", "c": "重要观点", "ref": "1"}\n',
-            "```"
+            "```",
         ]
 
         all_content = ""
@@ -72,7 +69,7 @@ class TestStreamingJSONLExtractor:
             '{"t": "h2", "c": "标题"}\n',
             '{"t": "p", "c": "内容"}\n',
             "```\n",
-            "还有一些结束文字"
+            "还有一些结束文字",
         ]
 
         for chunk in chunks:
@@ -91,7 +88,7 @@ class TestStreamingJSONLExtractor:
         chunks = [
             '{"t": "h2", "c": "valid"}',
             '\n{"invalid": json}',  # 无效JSON
-            '\n{"t": "p", "c": "valid again"}'
+            '\n{"t": "p", "c": "valid again"}',
         ]
 
         for chunk in chunks:
@@ -118,7 +115,7 @@ class TestStreamingJSONLExtractor:
 
         # 完整内容应该包含两个JSON对象
         result = extractor.get_current_jsonl()
-        lines = result.strip().split('\n')
+        lines = result.strip().split("\n")
         assert len(lines) == 2
 
     def test_state_transitions(self):
@@ -133,7 +130,7 @@ class TestStreamingJSONLExtractor:
         assert extractor.state == ExtractionState.EXTRACTING_JSON
 
         # 接收结束标记后应该完成
-        extractor.process_chunk('\n```')
+        extractor.process_chunk("\n```")
         assert extractor.state == ExtractionState.COMPLETED
 
     def test_reset_functionality(self):
@@ -169,7 +166,7 @@ class TestStreamingJSONLExtractor:
             '{"t": "h2", "c": "主要内容"}\n',
             '{"t": "p", "c": "详细说明内容"}\n',
             "```\n",
-            "分析完成。"
+            "分析完成。",
         ]
 
         accumulated_jsonl = ""
@@ -207,11 +204,7 @@ class TestStreamingJSONLExtractor:
         extractor = StreamingJSONLExtractor()
 
         # 纯文本内容，不包含JSON
-        chunks = [
-            "这是普通的文本内容\n",
-            "没有任何JSON结构\n",
-            "只是普通的说明文字"
-        ]
+        chunks = ["这是普通的文本内容\n", "没有任何JSON结构\n", "只是普通的说明文字"]
 
         for chunk in chunks:
             increment, has_new = extractor.process_chunk(chunk)

@@ -4,14 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "next-themes";
 import { useTimeZone } from "@/lib/time-zone-context";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TimeZoneSelector } from "@/components/ui/TimeZoneSelector";
 import { toast } from "@/components/ui/use-toast";
+import Image from "next/image";
 import {
   Loader2,
   User as UserIcon,
@@ -28,16 +24,10 @@ import {
   Eye,
   Trash2,
   Upload,
-  RotateCcw,
   X,
   Edit2,
   ChevronRight,
 } from "lucide-react";
-import { UserAvatar } from "@/components/ui/user-avatar";
-import {
-  resetDeleteConfirmSetting,
-  shouldSkipDeleteConfirm,
-} from "@/app/(withSidebar)/content-library/components/DeleteConfirmDialog";
 import { getCookie } from "cookies-next";
 
 /**
@@ -91,9 +81,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     profileVisibility: "public" as "public" | "private" | "friends",
   });
 
-  // 删除确认设置状态
-  const [hasSkipDeleteConfirm, setHasSkipDeleteConfirm] = useState(false);
-
   // 头像上传相关状态
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null);
@@ -110,7 +97,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   // 避免 hydration 不匹配
   useEffect(() => {
     setMounted(true);
-    setHasSkipDeleteConfirm(shouldSkipDeleteConfirm());
     if (user) {
       setFormData({
         name: user.full_name || "",
@@ -259,15 +245,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const handleDeleteAccount = async () => {
     // 实现删除账户逻辑
     console.log("Delete account");
-  };
-
-  const handleResetDeleteConfirm = () => {
-    resetDeleteConfirmSetting();
-    setHasSkipDeleteConfirm(false);
-    toast({
-      title: "设置已重置",
-      description: "删除确认对话框已恢复显示。",
-    });
   };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -464,9 +441,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   <div className="relative group cursor-pointer">
                     <div className="w-24 h-24 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center shadow-lg shadow-blue-500/25 transition-all duration-500 group-hover:shadow-xl group-hover:shadow-blue-500/30 group-hover:scale-105">
                       {localAvatarUrl || user.avatar_url ? (
-                        <img
+                        <Image
                           src={localAvatarUrl || user.avatar_url}
                           alt="Avatar"
+                          width={96}
+                          height={96}
                           className="w-full h-full rounded-3xl object-cover"
                         />
                       ) : (
@@ -520,7 +499,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                           setFormData({ ...formData, name: e.target.value })
                         }
                         placeholder="请输入您的姓名"
-                        className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
+                        className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-border focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
                       />
                       <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <Edit2 className="w-4 h-4 text-gray-400" />
@@ -539,7 +518,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         onChange={(e) =>
                           setFormData({ ...formData, email: e.target.value })
                         }
-                        className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light transition-all duration-300"
+                        className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-border focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light transition-all duration-300"
                       />
                       <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <Edit2 className="w-4 h-4 text-gray-400" />
@@ -609,7 +588,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         }))
                       }
                       placeholder="请输入当前密码"
-                      className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
+                      className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-border focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
                     />
                   </div>
 
@@ -627,7 +606,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         }))
                       }
                       placeholder="请输入新密码（至少8个字符）"
-                      className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
+                      className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-border focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
                     />
                   </div>
 
@@ -645,7 +624,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         }))
                       }
                       placeholder="请再次输入新密码"
-                      className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
+                      className="w-full px-0 py-4 bg-transparent border-0 border-b-2 border-gray-200 dark:border-border focus:border-gray-900 dark:focus:border-white focus:outline-none text-lg font-light placeholder-gray-400 transition-all duration-300"
                     />
                   </div>
 
@@ -713,7 +692,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                             className={`group p-6 rounded-2xl border-2 transition-all duration-300 hover:scale-105 ${
                               theme === themeOption.value
                                 ? "border-gray-900 dark:border-white"
-                                : "border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500"
+                                : "border-gray-200 dark:border-border hover:border-gray-400 dark:hover:border-gray-500"
                             }`}
                           >
                             <div
@@ -974,7 +953,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                             className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all duration-300 ${
                               privacySettings.profileVisibility === option.value
                                 ? "border-gray-900 dark:border-white bg-gray-50/50 dark:bg-gray-800/50"
-                                : "border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500"
+                                : "border-gray-200 dark:border-border hover:border-gray-400 dark:hover:border-gray-500"
                             }`}
                           >
                             <div className="w-8 h-8 bg-gray-100/50 dark:bg-gray-800/50 rounded-lg flex items-center justify-center">

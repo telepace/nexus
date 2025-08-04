@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { SimpleContentRenderer } from "@/components/ui/SimpleContentRenderer";
-import { SeamlessContentRenderer } from "@/components/ui/SeamlessContentRenderer";
+// import { SeamlessContentRenderer } from "@/components/ui/SeamlessContentRenderer"; // Commented out unused import
 import { Button } from "@/components/ui/button";
 
 const testContent = `# Argo CD GitOps 实践指南：从入门到生产部署与优化
@@ -286,7 +286,7 @@ export default function TestSimpleRendererPage() {
               Seamless Renderer
             </Button>
           </div>
-          
+
           <div className="flex gap-2">
             <Button
               variant={contentSize === "small" ? "default" : "outline"}
@@ -328,7 +328,8 @@ export default function TestSimpleRendererPage() {
         ) : (
           <div className="h-full p-4 text-center">
             <p className="text-muted-foreground">
-              SeamlessContentRenderer 需要真实的 contentId，在此测试页面中不可用。
+              SeamlessContentRenderer 需要真实的
+              contentId，在此测试页面中不可用。
             </p>
             <p className="text-sm text-muted-foreground mt-2">
               请在实际的内容阅读页面中测试虚拟滚动渲染器。
@@ -338,4 +339,4 @@ export default function TestSimpleRendererPage() {
       </div>
     </div>
   );
-} 
+}

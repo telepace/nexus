@@ -3,11 +3,29 @@ from .ai_conversations import (
     AIConversationDetail,
     AIConversationPublic,
 )
+from .collected_block import (
+    CollectedBlockBase,
+    CollectedBlockCreate,
+    CollectedBlockPublic,
+    CollectedBlocksPublic,
+)
 from .deep_research import (
     DeepResearchJobCreate,
     DeepResearchJobPublic,
     DeepResearchJobResponse,
     DeepResearchJobResult,
+)
+from .favorite import (
+    FavoriteBase,
+    FavoriteBlockCreate,
+    FavoriteBlockListResponse,
+    FavoriteBlockPublic,
+    FavoriteBlockWithContent,
+    FavoriteCreate,
+    FavoriteListResponse,
+    FavoritePublic,
+    FavoriteUpdate,
+    FavoriteWithContent,
 )
 from .image import (
     ImageBase,
@@ -36,5 +54,19 @@ __all__ = [
     "DeepResearchJobPublic",
     "DeepResearchJobResponse",
     "DeepResearchJobResult",
+    "CollectedBlockBase",
+    "CollectedBlockCreate",
+    "CollectedBlockPublic",
+    "CollectedBlocksPublic",
+    "FavoriteBase",
+    "FavoriteCreate",
+    "FavoriteUpdate",
+    "FavoritePublic",
+    "FavoriteWithContent",
+    "FavoriteListResponse",
+    "FavoriteBlockCreate",
+    "FavoriteBlockPublic",
+    "FavoriteBlockWithContent",
+    "FavoriteBlockListResponse",
     # Add other schema names here as you create/import them
 ]

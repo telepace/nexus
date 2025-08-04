@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +21,13 @@ import { toast } from "sonner";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 import { JsonlRenderer } from "@/components/ui/JsonlRenderer";
 import { StreamingJsonlRenderer } from "@/components/ui/StreamingJsonlRenderer";
-import { useAIAnalysis, isJsonlContent, extractJsonlFromDataStream, AIAnalysisConfig } from "@/hooks/use-ai-analysis";
+import {
+  useAIAnalysis,
+  isJsonlContent,
+  extractJsonlFromDataStream,
+  AIAnalysisConfig,
+} from "@/hooks/use-ai-analysis";
+import { useTranslationUtils } from "@/lib/i18n-utils";
 
 export interface UnifiedAIAnalysisCardProps {
   /** 分析标题 */
@@ -46,6 +52,8 @@ export interface UnifiedAIAnalysisCardProps {
   onError?: (error: Error) => void;
   /** 开始回调 */
   onStart?: () => void;
+  /** 内容ID，用于引用tooltip功能 */
+  contentId?: string;
 }
 
 export function UnifiedAIAnalysisCard({
@@ -60,9 +68,11 @@ export function UnifiedAIAnalysisCard({
   onComplete,
   onError,
   onStart,
+  contentId,
 }: UnifiedAIAnalysisCardProps) {
   const { state, actions } = useAIAnalysis(config);
   const [hasAutoStarted, setHasAutoStarted] = useState(false);
+  const { t } = useTranslationUtils();
 
   // 处理初始内容设置（只读模式）
   useEffect(() => {
@@ -71,25 +81,36 @@ export function UnifiedAIAnalysisCard({
     }
   }, [config.mode, initialContent, actions]);
 
-  // 自动开始分析
-  useEffect(() => {
-    if (autoStart && !hasAutoStarted && instruction && config.mode !== "display") {
-      setHasAutoStarted(true);
-      handleStartAnalysis();
-    }
-  }, [autoStart, hasAutoStarted, instruction, config.mode]);
-
   // 开始分析
-  const handleStartAnalysis = async () => {
+  const handleStartAnalysis = useCallback(async () => {
     try {
       onStart?.();
       await actions.startAnalysis(instruction);
     } catch (error) {
-      const err = error instanceof Error ? error : new Error("分析失败");
+      const err = error instanceof Error ? error : new Error(t("analysis.analysisFailed"));
       onError?.(err);
-      toast.error(`分析失败: ${err.message}`);
+      toast.error(`${t("analysis.analysisFailed")}: ${err.message}`);
     }
-  };
+  }, [actions, instruction, onError, onStart, t]);
+
+  // 自动开始分析
+  useEffect(() => {
+    if (
+      autoStart &&
+      !hasAutoStarted &&
+      instruction &&
+      config.mode !== "display"
+    ) {
+      setHasAutoStarted(true);
+      handleStartAnalysis();
+    }
+  }, [
+    autoStart,
+    hasAutoStarted,
+    instruction,
+    config.mode,
+    handleStartAnalysis,
+  ]);
 
   // 停止分析
   const handleStopAnalysis = () => {
@@ -101,9 +122,9 @@ export function UnifiedAIAnalysisCard({
     try {
       await actions.retryAnalysis();
     } catch (error) {
-      const err = error instanceof Error ? error : new Error("重试失败");
+      const err = error instanceof Error ? error : new Error(t("analysis.retryFailed"));
       onError?.(err);
-      toast.error(`重试失败: ${err.message}`);
+      toast.error(`${t("analysis.retryFailed")}: ${err.message}`);
     }
   };
 
@@ -111,9 +132,9 @@ export function UnifiedAIAnalysisCard({
   const handleCopyResult = async () => {
     const success = await actions.copyResult();
     if (success) {
-      toast.success("分析结果已复制到剪贴板");
+      toast.success(t("analysis.resultCopied"));
     } else {
-      toast.error("无法复制内容到剪贴板");
+      toast.error(t("analysis.cannotCopyContent"));
     }
   };
 
@@ -126,17 +147,17 @@ export function UnifiedAIAnalysisCard({
   const renderContent = (content: string, streaming: boolean = false) => {
     if (!content) return null;
 
-    console.log("🎨 渲染内容:", { 
-      content: content.substring(0, 100), 
-      streaming, 
+    console.log("🎨 渲染内容:", {
+      content: content.substring(0, 100),
+      streaming,
       isJsonl: isJsonlContent(content),
       contentLength: content.length,
-      lineCount: content.split('\n').filter(Boolean).length
+      lineCount: content.split("\n").filter(Boolean).length,
     });
 
     // 如果是 Data Stream Protocol 格式，先提取纯 JSONL
     let processedContent = content;
-    if (content.includes('0:') && isJsonlContent(content)) {
+    if (content.includes("0:") && isJsonlContent(content)) {
       processedContent = extractJsonlFromDataStream(content);
       console.log("📦 提取的 JSONL 内容:", processedContent.substring(0, 100));
     }
@@ -146,33 +167,58 @@ export function UnifiedAIAnalysisCard({
       case "markdown":
         return (
           <div className="prose prose-sm max-w-none dark:prose-invert">
-            <MarkdownRenderer content={processedContent} />
+            <MarkdownRenderer 
+              content={processedContent}
+              contentId={contentId}
+              enableEnhancedTooltip={!!contentId}
+            />
           </div>
         );
-      
+
       case "jsonl":
         return streaming ? (
-          <StreamingJsonlRenderer content={processedContent} isLoading={streaming} />
+          <StreamingJsonlRenderer
+            content={processedContent}
+            isLoading={streaming}
+            contentId={contentId}
+          />
         ) : (
-          <JsonlRenderer content={processedContent} />
+          <JsonlRenderer 
+            content={processedContent}
+            contentId={contentId}
+          />
         );
-      
+
       case "universal":
-        return <UniversalContentRenderer content={processedContent} />;
-      
+        return <UniversalContentRenderer 
+          content={processedContent}
+          contentId={contentId}
+        />;
+
       case "auto":
       default:
         // 自动检测内容类型
         if (isJsonlContent(content)) {
           return streaming ? (
-            <StreamingJsonlRenderer content={processedContent} isLoading={streaming} />
+            <StreamingJsonlRenderer
+              content={processedContent}
+              isLoading={streaming}
+              contentId={contentId}
+            />
           ) : (
-            <JsonlRenderer content={processedContent} />
+            <JsonlRenderer 
+            content={processedContent}
+            contentId={contentId}
+          />
           );
         } else {
           return (
             <div className="prose prose-sm max-w-none dark:prose-invert">
-              <MarkdownRenderer content={processedContent} />
+              <MarkdownRenderer 
+                content={processedContent}
+                contentId={contentId}
+                enableEnhancedTooltip={!!contentId}
+              />
             </div>
           );
         }
@@ -194,7 +240,7 @@ export function UnifiedAIAnalysisCard({
           <div className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
             <CardTitle className="text-base">{title}</CardTitle>
-            
+
             {/* 状态指示器 */}
             {state.isLoading && (
               <Badge variant="outline" className="text-xs">
@@ -203,13 +249,13 @@ export function UnifiedAIAnalysisCard({
               </Badge>
             )}
             {state.isCompleted && (
-              <Badge variant="outline" className="text-xs text-green-600">
+              <Badge variant="outline" className="text-xs text-muted-foreground">
                 <Sparkles className="h-3 w-3 mr-1" />
                 已完成
               </Badge>
             )}
             {state.retryCount > 0 && (
-              <Badge variant="outline" className="text-xs text-orange-600">
+              <Badge variant="outline" className="text-xs text-muted-foreground">
                 重试 {state.retryCount}
               </Badge>
             )}
@@ -311,16 +357,19 @@ export function UnifiedAIAnalysisCard({
         )}
 
         {/* 空状态 */}
-        {!state.hasStarted && !state.content && !state.error && config.mode !== "display" && (
-          <div className="flex items-center justify-center h-32 text-muted-foreground">
-            <div className="text-center">
-              <Brain className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">
-                点击&ldquo;开始分析&rdquo;来生成 AI 分析
-              </p>
+        {!state.hasStarted &&
+          !state.content &&
+          !state.error &&
+          config.mode !== "display" && (
+            <div className="flex items-center justify-center h-32 text-muted-foreground">
+              <div className="text-center">
+                <Brain className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">
+                  点击&ldquo;开始分析&rdquo;来生成 AI 分析
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* 加载状态 */}
         {state.isLoading && (

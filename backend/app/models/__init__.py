@@ -27,6 +27,8 @@ from app.models.prompt import (
     Visibility,
 )
 
+from .collected_block import CollectedBlock
+
 # Import content aggregation models
 from .content import (
     AIConversation,
@@ -38,9 +40,6 @@ from .content import (
     MessageSegmentReference,
     Segment,
 )
-
-# Import segment models
-from .segments import ContentSegment, ContentSegmentBase
 
 # Import favorite model
 from .favorite import Favorite
@@ -63,6 +62,9 @@ from .project import (
     SmartRoutingRequest,
     SmartRoutingResponse,
 )
+
+# Import segment models
+from .segments import ContentSegment, ContentSegmentBase  # noqa: F401
 
 # 定义__all__列表，包含所有导入的模型
 __all__ = [
@@ -124,4 +126,5 @@ __all__ = [
     "QueryRoutePublic",
     "SmartRoutingRequest",
     "SmartRoutingResponse",
+    "CollectedBlock",
 ]

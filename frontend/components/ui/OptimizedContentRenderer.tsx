@@ -1,191 +1,426 @@
 "use client";
 
-import React, { useCallback, useEffect, useState, useRef } from "react";
-import { ChevronDown, CheckCircle, Loader2 } from "lucide-react";
-import { contentApi } from "@/lib/api/content";
-import type {
-  ContentChunk,
-  ContentChunksResponse,
-} from "@/lib/api/content";
-import { ChunkItem } from "./ChunkItem";
-import { Loading } from "@/components/ui/loading";
-import { TextSelectionFloater } from "@/components/ui/text-selection-floater";
+import React, { useMemo, useState, useCallback, memo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { MarkdownRenderer } from "./MarkdownRenderer";
+import { EnhancedReferenceIndicator } from "./ReferenceManager";
+import { Badge } from "./badge";
+import { Button } from "./button";
+import { Copy, ChevronDown, ChevronUp } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useTranslationUtils } from "@/lib/i18n-utils";
 
-interface OptimizedContentRendererProps {
-  contentId: string;
-  className?: string;
-  initialChunkSize?: number;
-  showProgressIndicator?: boolean;
-  /** 是否启用文本选择浮层 */
-  enableTextSelection?: boolean;
-  /** 文本选择回调 */
-  onTextAction?: (action: { id: string; label: string; prompt: string }, selectedText: string) => void;
+// 内容块类型定义
+export interface ContentBlock {
+  t: string; // 类型：h1, h2, h3, h4, h5, h6, p, quote, list, insight, concept等
+  c: string; // 内容
+  ref?: string; // 引用
+  lead?: string; // 前导文本
+  expandable?: string; // 可展开内容
+  meta?: Record<string, unknown>; // 元数据
 }
 
-/**
- * OptimizedContentRenderer 提供最佳用户体验：
- * 1. 首屏快速加载（300ms内）
- * 2. 后台预取全部内容  
- * 3. 无感知内容替换
- * 4. 没有"正在加载"和"End of content"提示
- * 5. 不删除已渲染的内容
- */
-export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> = ({
-  contentId,
-  className = "",
-  initialChunkSize = 5,
-  showProgressIndicator = false,
-  enableTextSelection = true,
-  onTextAction,
-}) => {
-  const [chunks, setChunks] = useState<ContentChunk[]>([]);
-  const [totalChunks, setTotalChunks] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isFullContentLoaded, setIsFullContentLoaded] = useState(false);
-  const [showProgressIndicator, setShowProgressIndicator] = useState(false);
+// 渲染器配置
+export interface RendererConfig {
+  theme?: 'default' | 'notebook' | 'headspace' | 'neumorphism';
+  enableAnimations?: boolean;
+  enableHoverEffects?: boolean;
+  enableCopyButton?: boolean;
+  enableCollapse?: boolean;
+  showReferences?: boolean;
+  contentId?: string;
+}
+
+// 组件属性
+export interface OptimizedContentRendererProps {
+  content: string | ContentBlock[];
+  config?: RendererConfig;
+  className?: string;
+  onReferenceClick?: (refId: number) => void;
+  onBlockClick?: (block: ContentBlock, index: number) => void;
+}
+
+// 解析JSONL内容
+const parseContent = (content: string | ContentBlock[]): ContentBlock[] => {
+  if (Array.isArray(content)) return content;
   
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // 阶段1：快速加载首屏内容
-  const loadInitialContent = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response: ContentChunksResponse = await contentApi.getContentChunks(
-        contentId,
-        1,
-        initialChunkSize,
-        false // 使用分页获取首屏
-      );
-
-      setChunks(response.chunks);
-      setTotalChunks(response.pagination?.total_chunks || 0);
-      setLoading(false);
-      
-      // 如果还有更多内容，显示加载进度指示器
-      if (response.pagination?.has_next) {
-        setShowProgressIndicator(true);
-      } else {
-        setIsFullContentLoaded(true);
+  if (!content || typeof content !== 'string') return [];
+  
+  try {
+    const lines = content.split('\n').filter(line => line.trim());
+    return lines.map(line => {
+      try {
+        return JSON.parse(line) as ContentBlock;
+      } catch {
+        // 如果解析失败，创建一个段落块
+        return { t: 'p', c: line };
       }
-      
-    } catch (err) {
-      console.error("Error loading initial content:", err);
-      setError(err instanceof Error ? err.message : "Failed to load content");
-      setLoading(false);
-    }
-  }, [contentId, initialChunkSize]);
+    });
+  } catch {
+    // 如果整体解析失败，将整个内容作为一个段落
+    return [{ t: 'p', c: content }];
+  }
+};
 
-  // 阶段2：后台加载完整内容
-  const loadFullContent = useCallback(async () => {
+// 解析引用
+const parseReferences = (ref?: string): number[] => {
+  if (!ref) return [];
+  return ref.split(',').map(r => parseInt(r.trim())).filter(n => !isNaN(n));
+};
+
+// 标题组件
+const HeadingBlock = memo<{
+  block: ContentBlock;
+  config: RendererConfig;
+  index: number;
+  onCopy?: (content: string) => void;
+  onReferenceClick?: (refId: number) => void;
+}>(({ block, config, index, onCopy, onReferenceClick }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const references = parseReferences(block.ref);
+  
+  const getHeadingClass = (type: string, theme: string = 'default') => {
+    const baseClasses = "select-text tracking-tight scroll-m-16";
+    
+    switch (theme) {
+      case 'notebook':
+        return cn(baseClasses, {
+          'text-2xl font-bold text-gray-800 mt-6 mb-4': type === 'h1',
+          'text-xl font-bold text-gray-700 mt-5 mb-3 border-b border-gray-200 pb-2': type === 'h2',
+          'text-lg font-bold text-gray-700 mt-4 mb-2': type === 'h3',
+          'text-base font-bold text-gray-600 mt-3 mb-2': type === 'h4',
+          'text-sm font-bold text-gray-600 mt-2 mb-1 uppercase tracking-wide': type === 'h5',
+          'text-xs font-bold text-gray-500 mt-2 mb-1 uppercase tracking-wider': type === 'h6',
+        });
+      
+      case 'headspace':
+        return cn(baseClasses, "text-white font-medium leading-tight");
+      
+      case 'neumorphism':
+        return cn(baseClasses, {
+          'text-2xl font-bold text-gray-700 my-4 text-center': type === 'h1',
+          'text-lg font-bold text-gray-600 mt-6 mb-2 border-b-2 border-gray-200 pb-1': type === 'h2',
+          'text-base font-semibold text-gray-600 mt-4 mb-1': type === 'h3',
+          'text-sm font-semibold text-gray-600 mt-3 mb-1': type === 'h4',
+          'text-xs font-semibold text-gray-500 mt-2 mb-1 uppercase tracking-wide': type === 'h5',
+          'text-xs font-medium text-gray-400 mt-2 mb-1 uppercase tracking-wider': type === 'h6',
+        });
+      
+      default:
+        return cn(baseClasses, {
+          'text-2xl font-bold lg:text-3xl mt-6 mb-4': type === 'h1',
+          'text-xl font-semibold border-b pb-1.5 first:mt-0 mt-5 mb-3': type === 'h2',
+          'text-lg font-semibold mt-4 mb-2': type === 'h3',
+          'text-base font-semibold mt-3 mb-2': type === 'h4',
+          'text-sm font-semibold mt-2 mb-1 uppercase tracking-wide': type === 'h5',
+          'text-xs font-medium mt-2 mb-1 uppercase tracking-wider text-muted-foreground': type === 'h6',
+        });
+    }
+  };
+  
+  const HeadingTag = block.t as keyof JSX.IntrinsicElements;
+  const className = getHeadingClass(block.t, config.theme);
+  
+  return (
+    <motion.div
+      className="group relative"
+      initial={config.enableAnimations ? { opacity: 0, y: 10 } : false}
+      animate={config.enableAnimations ? { opacity: 1, y: 0 } : false}
+      transition={{ delay: index * 0.05, duration: 0.3 }}
+      onMouseEnter={() => config.enableHoverEffects && setIsHovered(true)}
+      onMouseLeave={() => config.enableHoverEffects && setIsHovered(false)}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <HeadingTag className={className}>
+          <MarkdownRenderer content={block.c} inline={true} />
+        </HeadingTag>
+        
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {references.length > 0 && config.showReferences && (
+            <EnhancedReferenceIndicator
+              references={references}
+              contentId={config.contentId}
+              onReferenceClick={onReferenceClick}
+              className="text-xs"
+            />
+          )}
+          
+          {config.enableCopyButton && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => onCopy?.(block.c)}
+            >
+              <Copy className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+});
+
+HeadingBlock.displayName = 'HeadingBlock';
+
+// 段落组件
+const ParagraphBlock = memo<{
+  block: ContentBlock;
+  config: RendererConfig;
+  index: number;
+  onCopy?: (content: string) => void;
+  onReferenceClick?: (refId: number) => void;
+}>(({ block, config, index, onCopy, onReferenceClick }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const references = parseReferences(block.ref);
+  
+  return (
+    <motion.div
+      className="group relative"
+      initial={config.enableAnimations ? { opacity: 0, y: 5 } : false}
+      animate={config.enableAnimations ? { opacity: 1, y: 0 } : false}
+      transition={{ delay: index * 0.03, duration: 0.2 }}
+      onMouseEnter={() => config.enableHoverEffects && setIsHovered(true)}
+      onMouseLeave={() => config.enableHoverEffects && setIsHovered(false)}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 leading-relaxed text-foreground my-2">
+          {block.lead && (
+            <span className="font-semibold text-primary">
+              {block.lead}:{" "}
+            </span>
+          )}
+          <MarkdownRenderer content={block.c} inline={true} />
+        </div>
+        
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {references.length > 0 && config.showReferences && (
+            <EnhancedReferenceIndicator
+              references={references}
+              contentId={config.contentId}
+              onReferenceClick={onReferenceClick}
+              className="text-xs"
+            />
+          )}
+          
+          {config.enableCopyButton && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => onCopy?.(block.c)}
+            >
+              <Copy className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+});
+
+ParagraphBlock.displayName = 'ParagraphBlock';
+
+// 引用组件
+const QuoteBlock = memo<{
+  block: ContentBlock;
+  config: RendererConfig;
+  index: number;
+  onCopy?: (content: string) => void;
+  onReferenceClick?: (refId: number) => void;
+}>(({ block, config, index, onCopy, onReferenceClick }) => {
+  const references = parseReferences(block.ref);
+  
+  return (
+    <motion.div
+      className="group relative"
+      initial={config.enableAnimations ? { opacity: 0, x: -10 } : false}
+      animate={config.enableAnimations ? { opacity: 1, x: 0 } : false}
+      transition={{ delay: index * 0.03, duration: 0.3 }}
+    >
+      <blockquote className="border-l-4 border-primary/30 pl-4 py-2 my-3 italic text-muted-foreground bg-muted/20 rounded-r-lg">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1">
+            <MarkdownRenderer content={block.c} inline={true} />
+            {block.ref && (
+              <cite className="block mt-2 text-xs not-italic text-muted-foreground">
+                — {block.ref}
+              </cite>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {references.length > 0 && config.showReferences && (
+              <EnhancedReferenceIndicator
+                references={references}
+                contentId={config.contentId}
+                onReferenceClick={onReferenceClick}
+                className="text-xs"
+              />
+            )}
+            
+            {config.enableCopyButton && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+                onClick={() => onCopy?.(block.c)}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </blockquote>
+    </motion.div>
+  );
+});
+
+QuoteBlock.displayName = 'QuoteBlock';
+
+// 列表组件
+const ListBlock = memo<{
+  block: ContentBlock;
+  config: RendererConfig;
+  index: number;
+  onCopy?: (content: string) => void;
+  onReferenceClick?: (refId: number) => void;
+}>(({ block, config, index, onCopy, onReferenceClick }) => {
+  const references = parseReferences(block.ref);
+  const items = block.c.split(/[\n,；;]/).map(s => s.trim()).filter(Boolean);
+  
+  return (
+    <motion.div
+      className="group relative"
+      initial={config.enableAnimations ? { opacity: 0, y: 5 } : false}
+      animate={config.enableAnimations ? { opacity: 1, y: 0 } : false}
+      transition={{ delay: index * 0.03, duration: 0.2 }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <ul className="list-disc ml-4 space-y-1 my-2 flex-1">
+          {items.map((item, i) => (
+            <li key={i} className="text-foreground leading-relaxed">
+              <MarkdownRenderer content={item} inline={true} />
+            </li>
+          ))}
+        </ul>
+        
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {references.length > 0 && config.showReferences && (
+            <EnhancedReferenceIndicator
+              references={references}
+              contentId={config.contentId}
+              onReferenceClick={onReferenceClick}
+              className="text-xs"
+            />
+          )}
+          
+          {config.enableCopyButton && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => onCopy?.(block.c)}
+            >
+              <Copy className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+});
+
+ListBlock.displayName = 'ListBlock';
+
+// 主渲染器组件
+export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> = ({
+  content,
+  config = {},
+  className,
+  onReferenceClick,
+  onBlockClick,
+}) => {
+  const { toast } = useToast();
+  const { t } = useTranslationUtils();
+  
+  // 默认配置
+  const mergedConfig: RendererConfig = {
+    theme: 'default',
+    enableAnimations: true,
+    enableHoverEffects: true,
+    enableCopyButton: true,
+    enableCollapse: false,
+    showReferences: true,
+    ...config,
+  };
+  
+  // 解析内容
+  const blocks = useMemo(() => parseContent(content), [content]);
+  
+  // 复制处理
+  const handleCopy = useCallback(async (content: string) => {
     try {
-      const response: ContentChunksResponse = await contentApi.getAllContentChunks(contentId);
-      
-      // 无缝替换为完整内容
-      setChunks(response.chunks);
-      setTotalChunks(response.chunks.length);
-      setIsFullContentLoaded(true);
-      setShowProgressIndicator(false);
-      
-    } catch (err) {
-      console.error("Error loading full content:", err);
-      // 后台加载失败不影响用户，首屏内容仍然可用
-      setShowProgressIndicator(false);
+      await navigator.clipboard.writeText(content);
+      toast({ title: t("messages.copySuccess"), description: t("messages.copySuccess") });
+    } catch {
+      toast({ title: t("messages.copyError"), description: t("messages.copyError"), variant: "destructive" });
     }
-  }, [contentId]);
-
-  // 智能加载策略
-  useEffect(() => {
-    const executeLoadingStrategy = async () => {
-      // 步骤1：立即加载首屏内容
-      await loadInitialContent();
-      
-      // 步骤2：首屏加载完成后，在下一个事件循环中开始后台加载
-      // 这确保首屏渲染不被阻塞
-      setTimeout(() => {
-        loadFullContent();
-      }, 0);
+  }, [toast, t]);
+  
+  // 渲染单个块
+  const renderBlock = useCallback((block: ContentBlock, index: number) => {
+    const commonProps = {
+      block,
+      config: mergedConfig,
+      index,
+      onCopy: handleCopy,
+      onReferenceClick,
     };
     
-    executeLoadingStrategy();
-  }, [loadInitialContent, loadFullContent]);
-
-  // 重试处理
-  const retryLoad = useCallback(() => {
-    setError(null);
-    loadInitialContent();
-  }, [loadInitialContent]);
-
-  if (loading && chunks.length === 0) {
-    return <Loading />;
-  }
-
-  if (error && chunks.length === 0) {
+    switch (block.t) {
+      case 'h1':
+      case 'h2':
+      case 'h3':
+      case 'h4':
+      case 'h5':
+      case 'h6':
+        return <HeadingBlock key={`${block.t}-${index}`} {...commonProps} />;
+      
+      case 'quote':
+        return <QuoteBlock key={`quote-${index}`} {...commonProps} />;
+      
+      case 'list':
+        return <ListBlock key={`list-${index}`} {...commonProps} />;
+      
+      case 'p':
+      default:
+        return <ParagraphBlock key={`p-${index}`} {...commonProps} />;
+    }
+  }, [mergedConfig, handleCopy, onReferenceClick]);
+  
+  if (blocks.length === 0) {
     return (
-      <div className="flex justify-center items-center h-full">
-        <div className="text-center">
-          <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-2" />
-          <p className="text-destructive mb-4">{error}</p>
-          <button
-            onClick={retryLoad}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
-          >
-            重试
-          </button>
-        </div>
+      <div className={cn("text-center py-8 text-muted-foreground", className)}>
+        {t("status.noContent")}
       </div>
     );
   }
-
+  
   return (
-    <div
-      ref={containerRef}
-      className={`relative ${className}`}
-      style={{ minHeight: "100%" }}
-    >
-      {/* 顶部进度指示器 - 非常不显眼 */}
-      {showProgressIndicator && (
-        <div className="absolute top-0 left-0 right-0 z-10">
-          <div className="h-0.5 bg-primary/20">
-            <div className="h-full bg-primary animate-pulse" style={{ width: "60%" }} />
+    <div className={cn("space-y-1", className)}>
+      <AnimatePresence mode="popLayout">
+        {blocks.map((block, index) => (
+          <div
+            key={`block-${index}`}
+            onClick={() => onBlockClick?.(block, index)}
+            className="cursor-pointer"
+          >
+            {renderBlock(block, index)}
           </div>
-        </div>
-      )}
-
-      {/* 内容区域 */}
-      <div className="space-y-0 content-area" data-testid="optimized-content-renderer">
-        {chunks.map((chunk, index) => (
-          <ChunkItem key={`${chunk.id}-${index}`} chunk={chunk} />
         ))}
-      </div>
-
-      {/* 底部状态指示器 - 位置固定，不影响滚动 */}
-      <div className="mt-8 p-4 text-center">
-        {isFullContentLoaded ? (
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <CheckCircle className="h-3 w-3 text-green-500" />
-            <span>已加载全部 {totalChunks} 个段落</span>
-          </div>
-        ) : showProgressIndicator ? (
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            <span>正在加载完整内容...</span>
-          </div>
-        ) : null}
-      </div>
-      
-      {/* 文本选择浮层 */}
-      {enableTextSelection && (
-        <TextSelectionFloater
-          enabled={true}
-          containerSelector=".content-area"
-          excludeSelector=".sidebar, .panel, .analysis-card, .llm-analysis-card, .ai-analysis-card, .content-analysis-sidebar, [data-exclude-selection]"
-          onAction={onTextAction}
-          zIndex={1050}
-        />
-      )}
+      </AnimatePresence>
     </div>
   );
-}; 
+};

@@ -13,7 +13,7 @@ class ExtensionStreamRequest(BaseModel):
         default="auto", description="内容语言，auto为自动检测"
     )
     max_tokens: int | None = Field(
-        default=1024, ge=50, le=4096, description="最大生成token数"
+        default=20000, ge=50, le=50000, description="最大生成token数"
     )
 
     @field_validator("text")

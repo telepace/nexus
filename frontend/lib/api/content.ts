@@ -168,14 +168,14 @@ export const contentApi = {
     all: boolean = false,
   ): Promise<ContentChunksResponse> {
     const params = new URLSearchParams();
-    
+
     if (all) {
-      params.append('all', 'true');
+      params.append("all", "true");
     } else {
-      params.append('page', page.toString());
-      params.append('size', size.toString());
+      params.append("page", page.toString());
+      params.append("size", size.toString());
     }
-    
+
     const response = await client.get<ContentChunksResponse>(
       `/api/v1/content/${id}/chunks?${params.toString()}`,
     );
@@ -283,10 +283,14 @@ export const contentApi = {
   /**
    * Regenerate AI analysis for a content item
    */
-  async regenerateAIAnalysis(id: string): Promise<{ message: string; content_id: string; status: string }> {
-    const response = await client.post<{ message: string; content_id: string; status: string }>(
-      `/api/v1/content/${id}/regenerate-ai`
-    );
+  async regenerateAIAnalysis(
+    id: string,
+  ): Promise<{ message: string; content_id: string; status: string }> {
+    const response = await client.post<{
+      message: string;
+      content_id: string;
+      status: string;
+    }>(`/api/v1/content/${id}/regenerate-ai`);
     return response;
   },
 
@@ -324,13 +328,16 @@ export const contentApi = {
   /**
    * Get shared content by token
    */
-  async getSharedContent(token: string, password?: string): Promise<ContentItemPublic> {
+  async getSharedContent(
+    token: string,
+    password?: string,
+  ): Promise<ContentItemPublic> {
     const params = new URLSearchParams();
     if (password) {
-      params.append('password', password);
+      params.append("password", password);
     }
-    
-    const url = `/api/v1/content/share/${token}${params.toString() ? `?${params.toString()}` : ''}`;
+
+    const url = `/api/v1/content/share/${token}${params.toString() ? `?${params.toString()}` : ""}`;
     const response = await client.get<ContentItemPublic>(url);
     return response;
   },

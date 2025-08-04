@@ -83,5 +83,5 @@ USER node
 
 EXPOSE 3000
 
-# 修改启动命令，适应standalone输出
-CMD ["node", ".next/standalone/server.js"]
+# Use pnpm start for production
+CMD ["pnpm", "start"]

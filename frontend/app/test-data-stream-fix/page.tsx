@@ -30,11 +30,12 @@ export default function TestDataStreamFixPage() {
 
   const handleAnalysisComplete = (result: string) => {
     console.log("�� 分析完成，结果:", result);
-    
+
     // 检查是否包含 JSONL 结构
-    const hasJsonlStructure = result.includes('{"t":') || result.includes('{"type":');
-    
-    setTestResults(prev => ({
+    const hasJsonlStructure =
+      result.includes('{"t":') || result.includes('{"type":');
+
+    setTestResults((prev) => ({
       ...prev,
       completed: true,
       hasJsonl: hasJsonlStructure,
@@ -43,7 +44,7 @@ export default function TestDataStreamFixPage() {
 
   const handleAnalysisError = (error: Error) => {
     console.error("❌ 分析失败:", error);
-    setTestResults(prev => ({
+    setTestResults((prev) => ({
       ...prev,
       error: error.message,
       completed: false,
@@ -60,25 +61,29 @@ export default function TestDataStreamFixPage() {
         <p className="text-muted-foreground">
           测试 JSONL 内容的正确渲染（修复 Data Stream Protocol 处理）
         </p>
-        
+
         {/* 测试状态指示器 */}
         <div className="flex items-center justify-center gap-2 mt-4">
           <Badge variant={testResults.started ? "default" : "outline"}>
-            {testResults.started ? <CheckCircle className="h-3 w-3 mr-1" /> : null}
+            {testResults.started ? (
+              <CheckCircle className="h-3 w-3 mr-1" />
+            ) : null}
             测试开始
           </Badge>
           <Badge variant={testResults.completed ? "default" : "outline"}>
-            {testResults.completed ? <CheckCircle className="h-3 w-3 mr-1" /> : null}
+            {testResults.completed ? (
+              <CheckCircle className="h-3 w-3 mr-1" />
+            ) : null}
             分析完成
           </Badge>
           <Badge variant={testResults.hasJsonl ? "default" : "outline"}>
-            {testResults.hasJsonl ? <CheckCircle className="h-3 w-3 mr-1" /> : null}
+            {testResults.hasJsonl ? (
+              <CheckCircle className="h-3 w-3 mr-1" />
+            ) : null}
             JSONL 渲染
           </Badge>
           {testResults.error && (
-            <Badge variant="destructive">
-              错误: {testResults.error}
-            </Badge>
+            <Badge variant="destructive">错误: {testResults.error}</Badge>
           )}
         </div>
       </div>
@@ -149,7 +154,7 @@ export default function TestDataStreamFixPage() {
             <div>
               <strong>预期 LLM 输出格式:</strong>
               <pre className="mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs">
-{`0:{"t":"h1","c":"标题内容"}
+                {`0:{"t":"h1","c":"标题内容"}
 0:{"t":"p","c":"段落内容"}  
 0:{"t":"insight","c":"洞察内容"}
 8:[{"finishReason":"stop"}]`}
@@ -170,7 +175,9 @@ export default function TestDataStreamFixPage() {
                 <div>开始: {testResults.started ? "✅" : "⏳"}</div>
                 <div>完成: {testResults.completed ? "✅" : "⏳"}</div>
                 <div>JSONL: {testResults.hasJsonl ? "✅" : "❌"}</div>
-                {testResults.error && <div className="text-red-500">错误: {testResults.error}</div>}
+                {testResults.error && (
+                  <div className="text-red-500">错误: {testResults.error}</div>
+                )}
               </div>
             </div>
           </div>

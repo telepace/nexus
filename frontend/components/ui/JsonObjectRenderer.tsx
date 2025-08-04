@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 interface JsonObjectRendererProps {
   /** JSON object or JSON string to render */
-  data: any;
+  data: unknown;
   /** Additional class names for the container */
   className?: string;
   /** Maximum depth to expand by default */
@@ -17,23 +17,23 @@ interface JsonObjectRendererProps {
 }
 
 interface JsonNodeProps {
-  data: any;
+  data: unknown;
   keyName?: string;
   level: number;
   maxExpandDepth: number;
   isLast?: boolean;
 }
 
-const JsonNode: React.FC<JsonNodeProps> = ({ 
-  data, 
-  keyName, 
-  level, 
-  maxExpandDepth, 
-  isLast = false 
+const JsonNode: React.FC<JsonNodeProps> = ({
+  data,
+  keyName,
+  level,
+  maxExpandDepth,
+  isLast = false,
 }) => {
   const [isExpanded, setIsExpanded] = useState(level < maxExpandDepth);
-  
-  const getDataType = (value: any): string => {
+
+  const getDataType = (value: unknown): string => {
     if (value === null) return "null";
     if (Array.isArray(value)) return "array";
     return typeof value;
@@ -41,33 +41,37 @@ const JsonNode: React.FC<JsonNodeProps> = ({
 
   const getValueColor = (type: string): string => {
     switch (type) {
-      case "string": return "text-green-600 dark:text-green-400";
-      case "number": return "text-blue-600 dark:text-blue-400";
-      case "boolean": return "text-purple-600 dark:text-purple-400";
-      case "null": return "text-gray-500 dark:text-gray-400";
-      default: return "text-gray-700 dark:text-gray-300";
+      case "string":
+        return "text-green-600 dark:text-green-400";
+      case "number":
+        return "text-blue-600 dark:text-blue-400";
+      case "boolean":
+        return "text-purple-600 dark:text-purple-400";
+      case "null":
+        return "text-gray-500 dark:text-gray-400";
+      default:
+        return "text-gray-700 dark:text-gray-300";
     }
   };
 
-  const renderValue = (value: any) => {
+  const renderValue = (value: unknown) => {
     const type = getDataType(value);
-    
     if (type === "string") {
-      return <span className={getValueColor(type)}>"{value}"</span>;
+      return (
+        <span className={getValueColor(type)}>&quot;{String(value)}&quot;</span>
+      );
     }
-    
     if (type === "number" || type === "boolean") {
       return <span className={getValueColor(type)}>{String(value)}</span>;
     }
-    
     if (type === "null") {
       return <span className={getValueColor(type)}>null</span>;
     }
-    
+    // 其它类型直接安全字符串化
     return <span className={getValueColor(type)}>{String(value)}</span>;
   };
 
-  const isPrimitive = (value: any) => {
+  const isPrimitive = (value: unknown) => {
     const type = getDataType(value);
     return ["string", "number", "boolean", "null"].includes(type);
   };
@@ -78,13 +82,13 @@ const JsonNode: React.FC<JsonNodeProps> = ({
 
   if (isPrimitive(data)) {
     return (
-      <div 
+      <div
         className="flex items-center py-1"
         style={{ paddingLeft: `${getIndentation(level)}px` }}
       >
         {keyName && (
           <span className="text-gray-700 dark:text-gray-300 mr-2">
-            "{keyName}":
+            &quot;{keyName}&quot;:
           </span>
         )}
         {renderValue(data)}
@@ -95,16 +99,16 @@ const JsonNode: React.FC<JsonNodeProps> = ({
 
   const isArray = Array.isArray(data);
   const isObject = !isArray && typeof data === "object" && data !== null;
-  
+
   if (!isArray && !isObject) {
     return (
-      <div 
+      <div
         className="flex items-center py-1"
         style={{ paddingLeft: `${getIndentation(level)}px` }}
       >
         {keyName && (
           <span className="text-gray-700 dark:text-gray-300 mr-2">
-            "{keyName}":
+            &quot;{keyName}&quot;:
           </span>
         )}
         {renderValue(data)}
@@ -113,10 +117,13 @@ const JsonNode: React.FC<JsonNodeProps> = ({
     );
   }
 
-  const entries = isArray 
-    ? data.map((item: any, index: number) => [index, item])
-    : Object.entries(data);
-    
+  // 修正entries赋值和后续操作，避免对unknown直接用length/map：
+  let entries: [string | number, unknown][] = [];
+  if (isArray) {
+    entries = (data as unknown[]).map((item, index) => [index, item]);
+  } else if (isObject) {
+    entries = Object.entries(data as Record<string, unknown>);
+  }
   const isEmpty = entries.length === 0;
   const openBracket = isArray ? "[" : "{";
   const closeBracket = isArray ? "]" : "}";
@@ -124,7 +131,7 @@ const JsonNode: React.FC<JsonNodeProps> = ({
   return (
     <div>
       {/* Header with key name and open bracket */}
-      <div 
+      <div
         className="flex items-center py-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded"
         style={{ paddingLeft: `${getIndentation(level)}px` }}
         onClick={() => !isEmpty && setIsExpanded(!isExpanded)}
@@ -139,35 +146,33 @@ const JsonNode: React.FC<JsonNodeProps> = ({
           </span>
         )}
         {isEmpty && <span className="w-4" />}
-        
+
         {keyName && (
           <span className="text-gray-700 dark:text-gray-300 mr-2">
-            "{keyName}":
+            &quot;{keyName}&quot;:
           </span>
         )}
-        
-        <span className="text-gray-500 dark:text-gray-400">
-          {openBracket}
-        </span>
-        
+
+        <span className="text-gray-500 dark:text-gray-400">{openBracket}</span>
+
         {!isExpanded && !isEmpty && (
           <span className="text-gray-400 text-sm ml-1">
             {isArray ? `${entries.length} items` : `${entries.length} keys`}
           </span>
         )}
-        
+
         {isEmpty && (
           <span className="text-gray-500 dark:text-gray-400 ml-0">
             {closeBracket}
           </span>
         )}
-        
+
         {!isEmpty && !isExpanded && (
           <span className="text-gray-500 dark:text-gray-400 ml-1">
             {closeBracket}
           </span>
         )}
-        
+
         {(isEmpty || !isExpanded) && !isLast && (
           <span className="text-gray-400 ml-1">,</span>
         )}
@@ -178,7 +183,7 @@ const JsonNode: React.FC<JsonNodeProps> = ({
         <>
           {entries.map(([key, value], index) => (
             <JsonNode
-              key={`${keyName || 'root'}-${key}`}
+              key={`${keyName || "root"}-${key}`}
               data={value}
               keyName={isArray ? undefined : String(key)}
               level={level + 1}
@@ -186,9 +191,9 @@ const JsonNode: React.FC<JsonNodeProps> = ({
               isLast={index === entries.length - 1}
             />
           ))}
-          
+
           {/* Closing bracket */}
-          <div 
+          <div
             className="flex items-center py-1"
             style={{ paddingLeft: `${getIndentation(level)}px` }}
           >
@@ -206,18 +211,19 @@ const JsonNode: React.FC<JsonNodeProps> = ({
 /**
  * JSON Object Renderer with syntax highlighting and collapsible tree structure
  */
-export function JsonObjectRenderer({ 
-  data, 
+export function JsonObjectRenderer({
+  data,
   className,
   defaultExpandDepth = 2,
-  showCopyButton = true
+  showCopyButton = true,
 }: JsonObjectRendererProps) {
   const handleCopy = async () => {
     try {
-      const jsonString = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+      const jsonString =
+        typeof data === "string" ? data : JSON.stringify(data, null, 2);
       await navigator.clipboard.writeText(jsonString);
       toast.success("已复制JSON内容");
-    } catch (error) {
+    } catch {
       toast.error("复制失败");
     }
   };
@@ -227,10 +233,12 @@ export function JsonObjectRenderer({
   if (typeof data === "string") {
     try {
       parsedData = JSON.parse(data);
-    } catch (error) {
+    } catch {
       // If parsing fails, treat as plain text
       return (
-        <div className={cn("text-sm text-gray-600 dark:text-gray-400", className)}>
+        <div
+          className={cn("text-sm text-gray-600 dark:text-gray-400", className)}
+        >
           {data}
         </div>
       );
@@ -249,16 +257,16 @@ export function JsonObjectRenderer({
           <Copy className="h-3.5 w-3.5" />
         </button>
       )}
-      
+
       {/* JSON tree */}
-      <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 font-mono text-sm overflow-auto max-h-96 border border-gray-200 dark:border-gray-700">
-        <JsonNode 
-          data={parsedData} 
-          level={0} 
+      <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 font-mono text-sm overflow-auto max-h-96 border border-gray-200 dark:border-border">
+        <JsonNode
+          data={parsedData}
+          level={0}
           maxExpandDepth={defaultExpandDepth}
           isLast={true}
         />
       </div>
     </div>
   );
-} 
+}

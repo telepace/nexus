@@ -22,6 +22,7 @@ from sqlmodel import Session
 
 from app.core.config import settings
 from app.models.content import ContentItem
+from app.utils.token_manager import get_token_limit
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +182,7 @@ class StreamingAIProcessor:
                     ],
                     "stream": True,
                     "temperature": 0.7,
-                    "max_tokens": 2000,
+                    "max_tokens": get_token_limit(task_type="analysis"),
                 }
 
                 # 发送流式请求

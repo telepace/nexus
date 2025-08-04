@@ -212,9 +212,7 @@ export function EnhancedLLMAnalysisCard({
   }
 
   return (
-    <Card 
-      className={cn("w-full transition-all duration-200", className)}
-    >
+    <Card className={cn("w-full transition-all duration-200", className)}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -284,10 +282,12 @@ export function EnhancedLLMAnalysisCard({
               </>
             )}
 
+            {/* 展開/收起始終放在最右 */}
             <Button
               size="sm"
               variant="ghost"
               onClick={() => onToggleExpanded?.(analysis.id)}
+              className="order-last flex-shrink-0"
             >
               {isExpanded ? (
                 <ChevronUp className="h-3 w-3" />

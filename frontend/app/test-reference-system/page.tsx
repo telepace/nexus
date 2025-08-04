@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReferenceManagerProvider } from "@/components/ui/ReferenceManager";
@@ -15,8 +15,8 @@ import { AlertCircle } from "lucide-react";
 // 分离的组件，使用 useSearchParams
 function TestReferenceSystemContent() {
   const searchParams = useSearchParams();
-  const contentId = searchParams?.get('contentId') || 'test-content-123';
-  
+  const contentId = searchParams?.get("contentId") || "test-content-123";
+
   const [chunks, setChunks] = useState<ContentChunk[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,59 +53,58 @@ function TestReferenceSystemContent() {
     id: `chunk-${index + 1}`,
     index: index + 1, // 从1开始，匹配引用编号
     content: content.trim(),
-    type: 'paragraph',
+    type: "paragraph",
   }));
 
   // 加载真实的 API 数据
   const loadRealData = async () => {
-    if (!contentId || contentId === 'test-content-123') {
-      setError('请提供有效的 contentId（通过 URL 参数 ?contentId=xxx）');
+    if (!contentId || contentId === "test-content-123") {
+      setError("请提供有效的 contentId（通过 URL 参数 ?contentId=xxx）");
       return;
     }
 
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await contentApi.getAllContentChunks(contentId);
-      
+
       // 转换 API 数据：index 从 0 开始转换为从 1 开始
       const convertedChunks = response.chunks.map((chunk, idx) => ({
         ...chunk,
         index: idx + 1, // 将 0-based index 转换为 1-based
       }));
-      
+
       setChunks(convertedChunks);
       setUseRealData(true);
-      
-      console.log('✅ 成功加载真实数据:', {
+
+      console.log("✅ 成功加载真实数据:", {
         originalChunks: response.chunks.length,
         convertedChunks: convertedChunks.length,
         firstChunkIndex: convertedChunks[0]?.index,
-        lastChunkIndex: convertedChunks[convertedChunks.length - 1]?.index
+        lastChunkIndex: convertedChunks[convertedChunks.length - 1]?.index,
       });
-      
     } catch (err) {
-      console.error('❌ 加载真实数据失败:', err);
-      setError(err instanceof Error ? err.message : '加载数据失败');
+      console.error("❌ 加载真实数据失败:", err);
+      setError(err instanceof Error ? err.message : "加载数据失败");
     } finally {
       setLoading(false);
     }
   };
 
   // 使用模拟数据
-  const useMockData = () => {
+  const loadMockData = useCallback(() => {
     setChunks(mockChunks);
     setUseRealData(false);
     setError(null);
-  };
+  }, [mockChunks]);
 
   // 默认使用模拟数据
   useEffect(() => {
     if (chunks.length === 0) {
-      useMockData();
+      loadMockData();
     }
-  }, []);
+  }, [chunks.length, loadMockData]);
 
   const displayedChunks = chunks.length > 0 ? chunks : mockChunks;
 
@@ -116,14 +115,14 @@ function TestReferenceSystemContent() {
           引用系统测试
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          测试 ref 参数的解析、跳转和高亮功能 
-          {useRealData ? '（使用真实API数据）' : '（使用模拟数据）'}
+          测试 ref 参数的解析、跳转和高亮功能
+          {useRealData ? "（使用真实API数据）" : "（使用模拟数据）"}
         </p>
-        
+
         {/* 数据源切换 */}
         <div className="flex justify-center gap-4 mt-4">
           <Button
-            onClick={useMockData}
+            onClick={loadMockData}
             variant={!useRealData ? "default" : "outline"}
             disabled={loading}
           >
@@ -134,10 +133,10 @@ function TestReferenceSystemContent() {
             variant={useRealData ? "default" : "outline"}
             disabled={loading}
           >
-            {loading ? '加载中...' : '加载真实数据'}
+            {loading ? "加载中..." : "加载真实数据"}
           </Button>
         </div>
-        
+
         {/* 错误提示 */}
         {error && (
           <div className="mt-4 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -145,21 +144,31 @@ function TestReferenceSystemContent() {
               <AlertCircle className="h-4 w-4" />
               <span className="font-medium">加载失败</span>
             </div>
-            <p className="text-red-700 dark:text-red-300 text-sm mt-1">{error}</p>
+            <p className="text-red-700 dark:text-red-300 text-sm mt-1">
+              {error}
+            </p>
             <p className="text-red-600 dark:text-red-400 text-xs mt-2">
               当前 contentId: {contentId}
             </p>
           </div>
         )}
-        
+
         {/* 数据状态显示 */}
         <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <div className="text-sm text-blue-800 dark:text-blue-200">
-            <div>Content ID: <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">{contentId}</code></div>
-            <div>数据源: {useRealData ? 'API数据' : '模拟数据'}</div>
+            <div>
+              Content ID:{" "}
+              <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">
+                {contentId}
+              </code>
+            </div>
+            <div>数据源: {useRealData ? "API数据" : "模拟数据"}</div>
             <div>段落数量: {displayedChunks.length}</div>
             {displayedChunks.length > 0 && (
-              <div>索引范围: {displayedChunks[0].index} - {displayedChunks[displayedChunks.length - 1].index}</div>
+              <div>
+                索引范围: {displayedChunks[0].index} -{" "}
+                {displayedChunks[displayedChunks.length - 1].index}
+              </div>
             )}
           </div>
         </div>
@@ -178,8 +187,8 @@ function TestReferenceSystemContent() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <JsonlRenderer 
-                  content={testJsonlContent} 
+                <JsonlRenderer
+                  content={testJsonlContent}
                   contentId={contentId}
                 />
               </CardContent>
@@ -212,7 +221,7 @@ function TestReferenceSystemContent() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <StreamingJsonlRenderer 
+              <StreamingJsonlRenderer
                 content={testJsonlContent}
                 contentId={contentId}
                 isLoading={false}
@@ -232,7 +241,7 @@ function TestReferenceSystemContent() {
                     功能特性
                   </h4>
                   <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                    <li>• 自动解析 ref 参数（如："1,2"）</li>
+                    <li>• 自动解析 ref 参数（如：&quot;1,2&quot;）</li>
                     <li>• 点击引用数字跳转到原文段落</li>
                     <li>• 自动高亮相关段落</li>
                     <li>• 支持 Tooltip 预览引用内容</li>
@@ -240,7 +249,7 @@ function TestReferenceSystemContent() {
                     <li>• 兼容 API 数据（index从0开始）和模拟数据</li>
                   </ul>
                 </div>
-                
+
                 <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
                   <h4 className="font-semibold text-green-800 dark:text-green-200 mb-2">
                     操作方式
@@ -259,14 +268,23 @@ function TestReferenceSystemContent() {
               <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
                 <h4 className="font-semibold mb-2">技术实现</h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  系统通过 <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">ReferenceManager</code> 
-                  管理引用状态，使用 <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">CustomEvent</code> 
-                  实现组件间通信，通过 CSS 类和 
-                  <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">scrollIntoView</code> 
-                  实现平滑跳转和高亮效果。自动处理 API 数据的索引转换（0-based → 1-based），确保引用匹配正确。
+                  系统通过{" "}
+                  <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">
+                    ReferenceManager
+                  </code>
+                  管理引用状态，使用{" "}
+                  <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">
+                    CustomEvent
+                  </code>
+                  实现组件间通信，通过 CSS 类和
+                  <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">
+                    scrollIntoView
+                  </code>
+                  实现平滑跳转和高亮效果。自动处理 API 数据的索引转换（0-based →
+                  1-based），确保引用匹配正确。
                 </p>
               </div>
-              
+
               {/* API 测试说明 */}
               <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg">
                 <h4 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
@@ -277,32 +295,32 @@ function TestReferenceSystemContent() {
                   <code className="bg-yellow-100 dark:bg-yellow-900 px-2 py-1 rounded block">
                     /test-reference-system?contentId=9bef3699-5f9c-406d-b039-e91dfae4f09b
                   </code>
-                  
+
                   <div className="mt-3 text-xs">
                     <div className="font-medium mb-1">测试步骤：</div>
                     <ol className="list-decimal list-inside space-y-1">
                       <li>确保后端API服务运行在 http://127.0.0.1:8000</li>
-                      <li>点击"加载真实数据"按钮</li>
+                      <li>点击&quot;加载真实数据&quot;按钮</li>
                       <li>观察数据状态面板中的索引信息</li>
                       <li>点击右侧AI分析结果中的引用数字（如 ①、②、③）</li>
                       <li>左侧原文应该自动跳转并高亮对应段落</li>
                       <li>检查浏览器控制台的详细调试日志</li>
                     </ol>
                   </div>
-                  
+
                   <div className="mt-3 text-xs">
                     <div className="font-medium mb-1">索引匹配逻辑：</div>
                     <ul className="list-disc list-inside space-y-1">
                       <li>API 数据：index 从 0 开始 → 自动转换为从 1 开始</li>
-                      <li>引用编号：始终从 1 开始（ref="1,2,3"）</li>
+                      <li>引用编号：始终从 1 开始（ref=&quot;1,2,3&quot;）</li>
                       <li>系统支持三种匹配方式确保兼容性</li>
                     </ul>
                   </div>
                 </div>
               </div>
-              
+
               {/* Debug 信息 */}
-              {process.env.NODE_ENV === 'development' && (
+              {process.env.NODE_ENV === "development" && (
                 <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
                   <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
                     🔧 Debug 信息 (开发环境)
@@ -330,4 +348,4 @@ export default function TestReferenceSystemPage() {
       <TestReferenceSystemContent />
     </Suspense>
   );
-} 
+}

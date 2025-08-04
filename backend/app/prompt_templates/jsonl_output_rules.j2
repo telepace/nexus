@@ -34,3 +34,10 @@
 - 使用我们定义的格式输出，不要使用任何的其他的语法。比如说 markdown 的语法或者格式，保证正确的渲染。
 - 不要输出任何解释文字或注释
 - 保留所有必要的空格、标点、换行信息到对应字段内
+
+# Output Language
+{% if output_language %}
+Output should be returned in {{ output_language }}.
+{% else %}
+Your output language must be 中文.
+{% endif %}

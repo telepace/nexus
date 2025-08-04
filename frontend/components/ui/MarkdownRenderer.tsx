@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
@@ -13,6 +13,8 @@ import mediumZoom from "medium-zoom";
 import copy from "copy-to-clipboard";
 import { cn, normalizeImageUrl } from "@/lib/utils";
 import { OptimizedImage } from "./OptimizedImage";
+import { ReferenceHyperlinkRenderer } from "./ReferenceHyperlinkRenderer";
+import { processInlineReferences } from "./InlineReferenceRenderer";
 
 // Import highlight.js styles
 import "highlight.js/styles/github-dark.css";
@@ -22,11 +24,32 @@ import "katex/dist/katex.min.css"; // KaTeX CSS
 interface MarkdownRendererProps {
   content: string | null;
   className?: string;
+  /** 当为 true 时，以行内方式渲染，根元素为 <span>，且 p/h 标签映射为 span */
+  inline?: boolean;
+  /** 引用字符串，用于在内容后显示引用链接 */
+  ref?: string;
+  /** 引用链接的显示变体 */
+  refVariant?: 'default' | 'minimal' | 'badge' | 'inline';
+  /** 引用点击回调 */
+  onReferenceClick?: (refId: number) => void;
+  /** 内容ID，用于获取真实的引用数据 */
+  contentId?: string;
+  /** 是否启用增强的tooltip功能 */
+  enableEnhancedTooltip?: boolean;
+  /** 🎯 禁用内联引用自动处理（用于JsonlRenderer环境） */
+  disableInlineReferences?: boolean;
 }
 
 export function MarkdownRenderer({
   content,
   className,
+  inline = false,
+  ref: refString,
+  refVariant = 'default',
+  onReferenceClick,
+  contentId,
+  enableEnhancedTooltip = true,
+  disableInlineReferences = false,
 }: MarkdownRendererProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -47,14 +70,32 @@ export function MarkdownRenderer({
   }, [content]); // Re-apply zoom when content changes
 
   if (!content) {
+    const Wrapper = inline ? "span" : "div";
     return (
-      <div
+      <Wrapper
         data-testid="markdown-renderer"
         className={cn(
-          "prose prose-slate dark:prose-invert max-w-none",
+          inline ? "" : "prose prose-slate dark:prose-invert max-w-none",
           className,
         )}
       />
+    );
+  }
+
+  // 确保content是字符串类型
+  if (typeof content !== 'string') {
+    console.warn('MarkdownRenderer: content is not a string', { content, type: typeof content });
+    const Wrapper = inline ? "span" : "div";
+    return (
+      <Wrapper
+        data-testid="markdown-renderer"
+        className={cn(
+          inline ? "" : "prose prose-slate dark:prose-invert max-w-none",
+          className,
+        )}
+      >
+        <p className="text-muted-foreground">内容格式错误，无法渲染</p>
+      </Wrapper>
     );
   }
 
@@ -69,34 +110,60 @@ export function MarkdownRenderer({
       "&lt;/$1&gt;",
     );
 
+  // 直接使用处理后的内容
+  const processedContent = sanitizedContent;
+
+  const Root: React.ElementType = inline ? "span" : "div";
+
+  // 渲染引用链接（仅在非内联模式下显示，因为我们现在使用内联引用）
+  const renderReferences = () => {
+    // 🎯 如果启用了内联引用处理，就不在末尾显示引用
+    if (!refString || !inline) return null;
+    
+    return (
+      <ReferenceHyperlinkRenderer
+        refString={refString}
+        variant={refVariant}
+        onReferenceClick={onReferenceClick}
+        className={inline ? "ml-1" : "ml-2"}
+        animated={!inline}
+        showTooltip={!inline && enableEnhancedTooltip}
+        contentId={contentId}
+        enableEnhancedTooltip={enableEnhancedTooltip}
+      />
+    );
+  };
+
   return (
-    <div
+    <Root
       ref={contentRef}
       data-testid="markdown-renderer"
       className={cn(
-        "prose prose-slate dark:prose-invert max-w-none",
+        inline ? "inline-flex items-baseline flex-wrap gap-1" : "prose prose-slate dark:prose-invert max-w-none",
         // 自定义样式
-        "prose-headings:scroll-m-16 prose-headings:tracking-tight",
-        "prose-h1:text-2xl prose-h1:font-bold prose-h1:lg:text-4xl",
-        "prose-h2:border-b prose-h2:pb-1.5 prose-h2:text-xl prose-h2:font-semibold prose-h2:tracking-tight prose-h2:first:mt-0",
-        "prose-h3:text-lg prose-h3:font-semibold prose-h3:tracking-tight",
-        "prose-h4:text-base prose-h4:font-semibold prose-h4:tracking-tight",
-        "prose-p:leading-[1.5] prose-p:[&:not(:first-child)]:mb-3 prose-p:mb-3",
-        "prose-blockquote:mt-4 prose-blockquote:border-l-2 prose-blockquote:pl-4 prose-blockquote:italic",
-        "prose-ul:my-4 prose-ul:ml-4 prose-ul:list-disc prose-ul:[&>li]:mt-1",
-        "prose-ol:my-4 prose-ol:ml-4 prose-ol:list-decimal prose-ol:[&>li]:mt-1",
-        "prose-li:mt-1",
-        "prose-table:my-6 prose-table:w-full prose-table:overflow-y-auto",
-        "prose-thead:border-b",
-        "prose-th:border prose-th:px-4 prose-th:py-2 prose-th:text-left prose-th:font-bold prose-th:[&[align=center]]:text-center prose-th:[&[align=right]]:text-right",
-        "prose-td:border prose-td:px-4 prose-td:py-2 prose-td:[&[align=center]]:text-center prose-td:[&[align=right]]:text-right",
-        "prose-tr:m-0 prose-tr:border-t prose-tr:p-0 prose-tr:even:bg-muted",
-        "prose-code:relative prose-code:rounded prose-code:bg-muted prose-code:px-[0.3rem] prose-code:py-[0.2rem] prose-code:font-mono prose-code:text-sm prose-code:font-semibold",
-        "prose-pre:mt-6 prose-pre:mb-4 prose-pre:overflow-x-auto prose-pre:rounded-lg prose-pre:bg-muted prose-pre:p-4",
-        "prose-pre:code:bg-transparent prose-pre:code:p-0",
-        "prose-a:font-medium prose-a:underline prose-a:underline-offset-4",
-        "prose-img:rounded-md prose-img:border prose-img:mx-auto prose-img:object-contain prose-img:max-h-[80vh] prose-img:w-auto prose-img:h-auto",
-        "prose-hr:my-4 prose-hr:md:my-8",
+        !inline && [
+          "prose-headings:scroll-m-16 prose-headings:tracking-tight",
+          "prose-h1:text-2xl prose-h1:font-bold prose-h1:lg:text-4xl",
+          "prose-h2:border-b prose-h2:pb-1.5 prose-h2:text-xl prose-h2:font-semibold prose-h2:tracking-tight prose-h2:first:mt-0",
+          "prose-h3:text-lg prose-h3:font-semibold prose-h3:tracking-tight",
+          "prose-h4:text-base prose-h4:font-semibold prose-h4:tracking-tight",
+          "prose-p:leading-[1.5] prose-p:[&:not(:first-child)]:mb-3 prose-p:mb-3",
+          "prose-blockquote:mt-4 prose-blockquote:border-l-2 prose-blockquote:pl-4 prose-blockquote:italic",
+          "prose-ul:my-4 prose-ul:ml-4 prose-ul:list-disc prose-ul:[&>li]:mt-1",
+          "prose-ol:my-4 prose-ol:ml-4 prose-ol:list-decimal prose-ol:[&>li]:mt-1",
+          "prose-li:mt-1",
+          "prose-table:my-6 prose-table:w-full prose-table:overflow-y-auto",
+          "prose-thead:border-b",
+          "prose-th:border prose-th:px-4 prose-th:py-2 prose-th:text-left prose-th:font-bold prose-th:[&[align=center]]:text-center prose-th:[&[align=right]]:text-right",
+          "prose-td:border prose-td:px-4 prose-td:py-2 prose-td:[&[align=center]]:text-center prose-td:[&[align=right]]:text-right",
+          "prose-tr:m-0 prose-tr:border-t prose-tr:p-0 prose-tr:even:bg-muted",
+          "prose-code:relative prose-code:rounded prose-code:bg-muted prose-code:px-[0.3rem] prose-code:py-[0.2rem] prose-code:font-mono prose-code:text-sm prose-code:font-semibold",
+          "prose-pre:mt-6 prose-pre:mb-4 prose-pre:overflow-x-auto prose-pre:rounded-lg prose-pre:bg-muted prose-pre:p-4",
+          "prose-pre:code:bg-transparent prose-pre:code:p-0",
+          "prose-a:font-medium prose-a:underline prose-a:underline-offset-4",
+          "prose-img:rounded-md prose-img:border prose-img:mx-auto prose-img:object-contain prose-img:max-h-[80vh] prose-img:w-auto prose-img:h-auto",
+          "prose-hr:my-4 prose-hr:md:my-8",
+        ],
         className,
       )}
     >
@@ -113,7 +180,7 @@ export function MarkdownRenderer({
           [rehypeAutolinkHeadings, { behavior: "wrap" }],
         ]}
         components={{
-          // 自定义组件渲染
+          // 自定义组件渲染（原有）
           h1: ({ children, ...props }) => (
             <h1
               className="scroll-m-16 text-xl font-bold tracking-tight lg:text-2xl"
@@ -146,11 +213,40 @@ export function MarkdownRenderer({
               {children}
             </h4>
           ),
-          p: ({ children, ...props }) => (
-            <p className="leading-6 mt-3" {...props}>
-              {children}
-            </p>
-          ),
+          p: ({ children, ...props }) => {
+            // 🎯 处理段落中的内联引用（如果未禁用）
+            if (!disableInlineReferences) {
+              if (typeof children === 'string') {
+                const processedChildren = processInlineReferences(children, contentId, 'elegant');
+                return (
+                  <p className="leading-6 mt-3" {...props}>
+                    {processedChildren}
+                  </p>
+                );
+              }
+              
+              // 处理复杂子元素中的引用
+              const processedChildren = React.Children.map(children, (child) => {
+                if (typeof child === 'string') {
+                  return processInlineReferences(child, contentId, 'elegant');
+                }
+                return child;
+              });
+              
+              return (
+                <p className="leading-6 mt-3" {...props}>
+                  {processedChildren}
+                </p>
+              );
+            }
+            
+            // 🎯 禁用内联引用处理时，直接渲染原始内容
+            return (
+              <p className="leading-6 mt-3" {...props}>
+                {children}
+              </p>
+            );
+          },
           blockquote: ({ children, ...props }) => (
             <blockquote className="mt-4 border-l-2 pl-4 italic" {...props}>
               {children}
@@ -358,10 +454,24 @@ export function MarkdownRenderer({
             return <OptimizedImage {...optimizedImageProps} />;
           },
           hr: ({ ...props }) => <hr className="my-4 md:my-8" {...props} />,
+
+          // Inline mode overrides - must come last to override regular components
+          ...(inline && {
+            p: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h1: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h2: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h3: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h4: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h5: ({ children, ...props }) => <span {...props}>{children}</span>,
+            h6: ({ children, ...props }) => <span {...props}>{children}</span>,
+          }),
         }}
       >
-        {sanitizedContent}
+        {processedContent}
       </ReactMarkdown>
-    </div>
+      
+      {/* 渲染引用链接 */}
+      {renderReferences()}
+    </Root>
   );
 }

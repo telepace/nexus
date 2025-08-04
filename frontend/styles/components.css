@@ -1,0 +1,298 @@
+/* 通用组件样式 - 优化后的全局样式 */
+
+/* 滚动条隐藏样式 */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* 自定义滚动条样式 */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-track-transparent {
+  scrollbar-color: transparent transparent;
+}
+
+.scrollbar-thumb-neutral-300 {
+  scrollbar-color: rgb(212 212 212) transparent;
+}
+
+.scrollbar-thumb-neutral-400:hover {
+  scrollbar-color: rgb(163 163 163) transparent;
+}
+
+/* 暗色主题滚动条 */
+.dark .scrollbar-thumb-neutral-600 {
+  scrollbar-color: rgb(82 82 82) transparent;
+}
+
+.dark .scrollbar-thumb-neutral-500:hover {
+  scrollbar-color: rgb(115 115 115) transparent;
+}
+
+/* 内容玻璃效果 */
+.content-glass {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.content-section {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.9) 100%);
+  border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+/* 标签悬浮发光效果 */
+.tag-glow:hover {
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.1);
+}
+
+/* 性能优化样式 */
+.analysis-card {
+  contain: layout style paint;
+}
+
+.analysis-card:hover {
+  will-change: box-shadow;
+}
+
+.analysis-card:not(:hover) {
+  will-change: auto;
+}
+
+/* 动画优化类 */
+.transform-gpu {
+  transform: translateZ(0);
+}
+
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-scroll {
+  will-change: scroll-position;
+}
+
+/* 防止不必要的重排和重绘 */
+.contain-layout {
+  contain: layout;
+}
+
+.contain-style {
+  contain: style;
+}
+
+.contain-paint {
+  contain: paint;
+}
+
+.contain-all {
+  contain: layout style paint;
+}
+
+/* 过度滚动行为控制 */
+.overscroll-contain {
+  overscroll-behavior: contain;
+}
+
+/* 平滑动画类 */
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Preview 专用样式优化 */
+.preview-panel {
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity;
+  contain: layout style paint;
+}
+
+.preview-panel:not(.active) {
+  opacity: 0.7;
+}
+
+.preview-panel.active {
+  opacity: 1;
+}
+
+/* 预防ResizeObserver抖动的关键样式 */
+.preview-stable {
+  min-height: 0;
+  flex-shrink: 0;
+  contain: layout style paint;
+  isolation: isolate;
+}
+
+/* 卡片高度稳定性样式 */
+.card-height-stable {
+  transition: max-height 0.2s ease-out;
+}
+
+.card-height-stable[data-transitioning="true"] {
+  pointer-events: none;
+}
+
+/* 卡片悬浮效果优化 */
+.card-hover-effect {
+  transition: box-shadow 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.card-hover-effect:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+}
+
+/* HoverableBlock 悬浮效果样式 */
+.hoverable-block {
+  contain: layout style paint;
+  transition: all 0.15s ease-out;
+}
+
+/* 悬浮效果基础样式 */
+.hover-optimized {
+  transition: background-color 0.15s ease-out, border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+  will-change: background-color, border-color, box-shadow;
+}
+
+.hover-optimized:not(:hover) {
+  will-change: auto;
+}
+
+/* 轻微悬浮效果 */
+.hover-subtle:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.dark .hover-subtle:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 中等悬浮效果 */
+.hover-medium:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.dark .hover-medium:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+}
+
+/* 强烈悬浮效果 */
+.hover-strong:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.16);
+  box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.dark .hover-strong:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px);
+}
+
+/* JSONL 行特定的悬浮效果 */
+.jsonl-line-hover {
+  transition: all 0.15s ease-out;
+  border-radius: 8px;
+  margin: -4px 0;
+  padding: 4px 0;
+}
+
+.jsonl-line-hover:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+  border-left: 3px solid rgba(59, 130, 246, 0.3);
+  padding-left: 8px;
+  margin-left: -8px;
+}
+
+.dark .jsonl-line-hover:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-left: 3px solid rgba(59, 130, 246, 0.4);
+}
+
+/* 选中状态样式 */
+.jsonl-line-selected {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-left: 3px solid rgba(59, 130, 246, 0.5);
+  padding-left: 8px;
+  margin-left: -8px;
+}
+
+.dark .jsonl-line-selected {
+  background-color: rgba(59, 130, 246, 0.15);
+  border-left: 3px solid rgba(59, 130, 246, 0.6);
+}
+
+/* 文本选择优化 */
+.select-text {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+.select-none {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* 响应式文本截断 */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}

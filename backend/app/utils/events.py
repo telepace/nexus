@@ -91,6 +91,18 @@ class ContentEventManager:
         }
         await self.broadcast_to_user(user_id, event_data)
 
+    async def notify_content_deleted(
+        self,
+        user_id: str,
+        content_id: str,
+    ):
+        """通知内容已删除"""
+        event_data = {
+            "type": "content_deleted",
+            "content_id": content_id,
+        }
+        await self.broadcast_to_user(user_id, event_data)
+
 
 # 全局事件管理器实例
 content_event_manager = ContentEventManager()

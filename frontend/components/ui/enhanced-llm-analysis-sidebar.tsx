@@ -367,7 +367,10 @@ export const EnhancedLLMAnalysisSidebar: FC<
   }
 
   return (
-    <div className={`flex flex-col h-full bg-transparent ${className}`} data-exclude-selection>
+    <div
+      className={`flex flex-col h-full bg-transparent ${className}`}
+      data-exclude-selection
+    >
       {/* Content Body */}
       <div className="flex-1 overflow-y-auto px-1">
         <Tabs value={activeTab} className="h-full">
@@ -462,8 +465,8 @@ export const EnhancedLLMAnalysisSidebar: FC<
       </div>
 
       {/* Footer */}
-      <div className="shrink-0 p-4 bg-muted/20">
-        <div className="space-y-3">
+      <div className="shrink-0 p-2 bg-muted/20">
+        <div className="space-y-2">
           {/* 推荐提示 */}
           {!isLoadingPrompts && getAvailablePrompts().length > 0 && (
             <PromptRecommendations

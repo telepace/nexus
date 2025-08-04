@@ -13,6 +13,7 @@ import { AIResult } from "@/lib/api/content";
 import { UniversalContentRenderer } from "@/components/ui/UniversalContentRenderer";
 // 引入 AnalysisCard
 import { AnalysisCard, ContentBlock } from "@/components/ui/analysis-card";
+import { useI18nSafe } from "@/lib/i18n-fallback";
 
 // 统一的分析数据接口
 interface UnifiedAnalysisData {
@@ -130,11 +131,9 @@ function getVariantStyles(
 // 内容摘要卡片
 export const SummaryCard = ({
   summary,
-  variant = "default",
-}: {
-  summary: Record<string, unknown> | string | null;
-  variant?: CardProps["variant"];
-}) => {
+}: { summary: Record<string, unknown> | string | null }) => {
+  const { t } = useI18nSafe();
+  
   if (!summary) return null;
 
   let summaryText = "";
@@ -166,7 +165,7 @@ export const SummaryCard = ({
 
   return (
     <AnalysisCard
-      title="内容摘要"
+      title={t('analysis.contentSummary')}
       emoji="📝"
       contentBlocks={contentBlocks}
       variant="compact"
@@ -178,11 +177,9 @@ export const SummaryCard = ({
 // 关键要点卡片
 export const KeyPointsCard = ({
   keyPoints,
-  variant = "default",
-}: {
-  keyPoints: Record<string, unknown> | string | null;
-  variant?: CardProps["variant"];
-}) => {
+}: { keyPoints: Record<string, unknown> | string | null }) => {
+  const { t } = useI18nSafe();
+  
   if (!keyPoints) return null;
 
   let points: string[] = [];
@@ -248,7 +245,7 @@ export const KeyPointsCard = ({
         <ul className="space-y-2">
           {points.map((p, idx) => (
             <li key={idx} className="flex items-start gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 shrink-0" />
               <span>{p}</span>
             </li>
           ))}
@@ -259,7 +256,7 @@ export const KeyPointsCard = ({
 
   return (
     <AnalysisCard
-      title="关键要点"
+      title={t('analysis.keyPoints')}
       emoji="🎯"
       contentBlocks={contentBlocks}
       variant="compact"
@@ -276,6 +273,8 @@ export const MetadataCard = ({
   metadata: UnifiedAnalysisData["metadata"];
   variant?: CardProps["variant"];
 }) => {
+  const { t } = useI18nSafe();
+  
   if (!metadata) return null;
 
   const { readingTime, difficulty, qualityScore, labels } = metadata;
@@ -291,7 +290,7 @@ export const MetadataCard = ({
       <CardHeader className={styles.header}>
         <CardTitle className={styles.title}>
           <BarChart3 className={styles.icon} />
-          内容分析
+          {t('analysis.contentAnalysis')}
         </CardTitle>
       </CardHeader>
       <CardContent
@@ -300,7 +299,7 @@ export const MetadataCard = ({
         {readingTime && (
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
-              预计阅读时间: {readingTime} 分钟
+              {t('analysis.readingTime')}: {readingTime} {t('analysis.minutes')}
             </span>
           </div>
         )}
@@ -308,7 +307,7 @@ export const MetadataCard = ({
         {difficulty && (
           <div className="flex items-center gap-2">
             {variant === "sidebar" && (
-              <span className="text-sm text-muted-foreground">难度等级:</span>
+              <span className="text-sm text-muted-foreground">{t('analysis.difficultyLevel')}:</span>
             )}
             <Badge
               variant={
@@ -320,17 +319,17 @@ export const MetadataCard = ({
               }
             >
               {difficulty === "beginner"
-                ? "初级"
+                ? t('analysis.beginner')
                 : difficulty === "intermediate"
-                  ? "中级"
-                  : "高级"}
+                  ? t('analysis.intermediate')
+                  : t('analysis.advanced')}
             </Badge>
           </div>
         )}
 
         {qualityScore && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">内容质量评分:</span>
+            <span className="text-sm text-muted-foreground">{t('analysis.qualityScore')}:</span>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="inline-flex items-center gap-1">
@@ -354,7 +353,7 @@ export const MetadataCard = ({
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>内容质量评分</p>
+                <p>{t('analysis.qualityScore')}</p>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -363,7 +362,7 @@ export const MetadataCard = ({
         {labels && labels.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">标签:</span>
+              <span className="text-sm text-muted-foreground">{t('analysis.tags')}:</span>
             </div>
             <div className="flex flex-wrap gap-1">
               {labels.map((label, index) => (
@@ -416,6 +415,8 @@ export const AnalysisCards = ({
   layout = "grid",
   variant = "default",
 }: AnalysisCardsProps) => {
+  const { t } = useI18nSafe();
+  
   // 如果传入了新的data，使用data；否则适配旧的analysisResult
   const unifiedData =
     data || (analysisResult ? adaptAnalysisData(analysisResult) : null);
@@ -430,7 +431,7 @@ export const AnalysisCards = ({
         <CardContent>
           <div className="text-center text-muted-foreground">
             <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">暂无AI分析结果</p>
+            <p className="text-sm">{t('analysis.noAnalysisResult')}</p>
           </div>
         </CardContent>
       </Card>
@@ -441,23 +442,13 @@ export const AnalysisCards = ({
 
   // Summary 卡片
   if (unifiedData.summary) {
-    cards.push(
-      <SummaryCard
-        key="summary"
-        summary={unifiedData.summary}
-        variant={variant}
-      />,
-    );
+    cards.push(<SummaryCard key="summary" summary={unifiedData.summary} />);
   }
 
   // Key Points 卡片
   if (unifiedData.keyPoints) {
     cards.push(
-      <KeyPointsCard
-        key="key-points"
-        keyPoints={unifiedData.keyPoints}
-        variant={variant}
-      />,
+      <KeyPointsCard key="key-points" keyPoints={unifiedData.keyPoints} />,
     );
   }
 
@@ -478,7 +469,7 @@ export const AnalysisCards = ({
         <CardContent>
           <div className="text-center text-muted-foreground">
             <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">AI分析结果为空</p>
+            <p className="text-sm">{t('analysis.analysisResultEmpty')}</p>
           </div>
         </CardContent>
       </Card>

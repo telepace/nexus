@@ -25,7 +25,7 @@ class CompletionRequest(BaseModel):
         default=0.7, ge=0.0, le=2.0, description="Sampling temperature"
     )
     max_tokens: int = Field(
-        default=2000, gt=0, description="Maximum tokens to generate"
+        default=8000, gt=0, description="Maximum tokens to generate"
     )
     top_p: float | None = Field(
         default=None, ge=0.0, le=1.0, description="Top-p sampling"

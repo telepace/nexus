@@ -15,6 +15,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from app.core.config import settings
 from app.utils.tag_manager import tag_manager
+from app.utils.token_manager import get_token_limit
 
 logger = logging.getLogger(__name__)
 
@@ -29,39 +30,52 @@ class ChatService:
         self.template_env = Environment(
             loader=FileSystemLoader(str(template_dir)), autoescape=False
         )
-    
+
     def get_model_for_template(self, template_name: str) -> str:
         """
         根据模板名称获取对应的模型
-        
+
         Args:
             template_name: 模板文件名，如 "summary.j2"
-            
+
         Returns:
             str: 模型名称
         """
         # 从模板名称映射到任务名称
         template_to_task = {
             "summary.j2": "summary",
-            "key_points.j2": "key_points", 
+            "key_points.j2": "key_points",
             "labels.j2": "labels",
             "segment_aware_chat.j2": "chat",
+            "simple_chat.j2": "chat",  # 🎯 新增：简单聊天模板使用chat任务
             "user_analysis.j2": "analysis",
+            "expand_discussion.j2": "analysis",  # 使用analysis任务的模型配置
+
+            # 🎯 新增：支持常见的prompt名称映射到chat任务
+            "提取要点": "chat",
+            "总结内容": "chat",
+            "关键信息": "chat",
+            "深度分析": "analysis",
+            "详细解读": "analysis",
         }
-        
+
         # 获取任务名称
         task_name = template_to_task.get(template_name)
-        
+
         # 从配置中获取模型
         resolved_models = settings.resolved_ai_task_models
-        
+
         if task_name and task_name in resolved_models:
             model = resolved_models[task_name]
-            logger.info(f"Model for template '{template_name}' (task: {task_name}): {model}")
+            logger.info(
+                f"Model for template '{template_name}' (task: {task_name}): {model}"
+            )
             return model
         else:
             # 回退到全局默认
-            logger.info(f"Using default model for template '{template_name}': {settings.DEFAULT_LLM_MODEL}")
+            logger.info(
+                f"Using default model for template '{template_name}': {settings.DEFAULT_LLM_MODEL}"
+            )
             return settings.DEFAULT_LLM_MODEL
 
     def _is_jsonl_content(self, content: str) -> bool:
@@ -81,24 +95,26 @@ class ChatService:
         cleaned_content = content.strip()
 
         # 检查是否是被代码块包裹的内容
-        if cleaned_content.startswith('```'):
+        if cleaned_content.startswith("```"):
             # 匹配 ```jsonl、```json 或者 ``` 开头，``` 结尾的代码块
             # 注意：jsonl 必须在 json 前面，避免 jsonl 被误匹配为 json
             import re
-            code_block_pattern = r'^```(?:jsonl|json)?\s*\n?(.*?)\n?```$'
+
+            code_block_pattern = r"^```(?:jsonl|json)?\s*\n?(.*?)\n?```$"
             match = re.match(code_block_pattern, cleaned_content, re.DOTALL)
             if match:
                 cleaned_content = match.group(1).strip()
         else:
             # 改进：检查内容中是否包含被代码块包裹的JSONL
             import re
+
             # 查找任何位置的代码块，而不只是开头
-            code_block_pattern = r'```(?:jsonl|json)?\s*\n?(.*?)\n?```'
+            code_block_pattern = r"```(?:jsonl|json)?\s*\n?(.*?)\n?```"
             match = re.search(code_block_pattern, cleaned_content, re.DOTALL)
             if match:
                 cleaned_content = match.group(1).strip()
 
-        lines = [line.strip() for line in cleaned_content.split('\n') if line.strip()]
+        lines = [line.strip() for line in cleaned_content.split("\n") if line.strip()]
         if not lines:
             return False
 
@@ -108,9 +124,9 @@ class ChatService:
             parsed = json.loads(first_line)
             # 检查是否包含JSONL块的基本字段
             return (
-                isinstance(parsed, dict) and
-                ("type" in parsed or "t" in parsed) and
-                ("content" in parsed or "c" in parsed)
+                isinstance(parsed, dict)
+                and ("type" in parsed or "t" in parsed)
+                and ("content" in parsed or "c" in parsed)
             )
         except (json.JSONDecodeError, TypeError):
             return False
@@ -135,25 +151,27 @@ class ChatService:
         cleaned_content = content.strip()
 
         # 检查是否是被代码块包裹的内容
-        if cleaned_content.startswith('```'):
+        if cleaned_content.startswith("```"):
             # 匹配 ```jsonl、```json 或者 ``` 开头，``` 结尾的代码块
             # 注意：jsonl 必须在 json 前面，避免 jsonl 被误匹配为 json
             import re
-            code_block_pattern = r'^```(?:jsonl|json)?\s*\n?(.*?)\n?```$'
+
+            code_block_pattern = r"^```(?:jsonl|json)?\s*\n?(.*?)\n?```$"
             match = re.match(code_block_pattern, cleaned_content, re.DOTALL)
             if match:
                 cleaned_content = match.group(1).strip()
         else:
             # 改进：检查内容中是否包含被代码块包裹的JSONL
             import re
+
             # 查找任何位置的代码块，而不只是开头
-            code_block_pattern = r'```(?:jsonl|json)?\s*\n?(.*?)\n?```'
+            code_block_pattern = r"```(?:jsonl|json)?\s*\n?(.*?)\n?```"
             match = re.search(code_block_pattern, cleaned_content, re.DOTALL)
             if match:
                 cleaned_content = match.group(1).strip()
 
         blocks = []
-        lines = cleaned_content.split('\n')
+        lines = cleaned_content.split("\n")
 
         for line_num, line in enumerate(lines, 1):
             line = line.strip()
@@ -165,7 +183,11 @@ class ChatService:
                 if not isinstance(block, dict):
                     logger.warning(f"JSONL line {line_num} is not a dictionary: {line}")
                     # 将非字典内容包装为段落块
-                    block = {"type": "p", "content": str(block), "mapping": f"auto_{line_num}"}
+                    block = {
+                        "type": "p",
+                        "content": str(block),
+                        "mapping": f"auto_{line_num}",
+                    }
 
                 # 确保基本字段存在
                 if "type" not in block and "t" not in block:
@@ -180,11 +202,9 @@ class ChatService:
             except json.JSONDecodeError as e:
                 logger.warning(f"Invalid JSON at line {line_num}: {line}, error: {e}")
                 # 将无效JSON行包装为段落块
-                blocks.append({
-                    "type": "p",
-                    "content": line,
-                    "mapping": f"error_{line_num}"
-                })
+                blocks.append(
+                    {"type": "p", "content": line, "mapping": f"error_{line_num}"}
+                )
 
         return blocks
 
@@ -204,7 +224,7 @@ class ChatService:
         lines = []
         for block in blocks:
             try:
-                line = json.dumps(block, ensure_ascii=False, separators=(',', ':'))
+                line = json.dumps(block, ensure_ascii=False, separators=(",", ":"))
                 lines.append(line)
             except (TypeError, ValueError) as e:
                 logger.error(f"Failed to serialize block to JSON: {block}, error: {e}")
@@ -212,11 +232,15 @@ class ChatService:
                 fallback_block = {
                     "type": "p",
                     "content": str(block.get("content", "")),
-                    "mapping": block.get("mapping", "fallback")
+                    "mapping": block.get("mapping", "fallback"),
                 }
-                lines.append(json.dumps(fallback_block, ensure_ascii=False, separators=(',', ':')))
+                lines.append(
+                    json.dumps(
+                        fallback_block, ensure_ascii=False, separators=(",", ":")
+                    )
+                )
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     async def generate_with_template(
         self, template_name: str, context: dict[str, Any], model: str | None = None
@@ -235,11 +259,13 @@ class ChatService:
         try:
             # 为 labels.j2 模板添加预设标签
             if template_name == "labels.j2":
-                preset_tag_names = tag_manager.get_preset_tag_names()
+                # 根据输出语言选择合适的标签语言
+                output_language = context.get("output_language", "zh")
+                preset_tag_names = tag_manager.get_preset_tag_names_by_language(output_language)
                 context = context.copy()  # 避免修改原始context
                 context["existing_tags"] = preset_tag_names
                 logger.info(
-                    f"为 labels.j2 模板添加了 {len(preset_tag_names)} 个预设标签"
+                    f"为 labels.j2 模板添加了 {len(preset_tag_names)} 个预设标签 (语言: {output_language})"
                 )
 
             # 加载模板
@@ -252,7 +278,9 @@ class ChatService:
             formatted_content = context.get("content_with_segment_numbers")
             if formatted_content:
                 system_content = formatted_content
-                logger.info(f"✅ 使用带段落标号的格式化内容，长度: {len(system_content)}")
+                logger.info(
+                    f"✅ 使用带段落标号的格式化内容，长度: {len(system_content)}"
+                )
             else:
                 system_content = context.get("content", "")
                 logger.info(f"⚠️ 回退到原始内容，长度: {len(system_content)}")
@@ -264,10 +292,7 @@ class ChatService:
             # ---- 使用 LiteLLM 代理调用 LLM ----
             try:
                 # 选择模型：优先级为 传入的model > 模板映射 > 全局默认
-                selected_model = (
-                    model
-                    or self.get_model_for_template(template_name)
-                )
+                selected_model = model or self.get_model_for_template(template_name)
 
                 logger.info(
                     f"Using model '{selected_model}' for template '{template_name}' "
@@ -287,7 +312,9 @@ class ChatService:
                     try:
                         # 处理被markdown代码块包裹的JSON
                         json_content = ai_content.strip()
-                        if json_content.startswith("```jsonl") or json_content.startswith("```json"):
+                        if json_content.startswith(
+                            "```jsonl"
+                        ) or json_content.startswith("```json"):
                             # 提取```json/```jsonl和```之间的内容
                             # 注意：必须先检查jsonl，因为```jsonl也会匹配```json
                             if json_content.startswith("```jsonl"):
@@ -306,9 +333,12 @@ class ChatService:
                         else:
                             # 改进：检查内容中是否包含被代码块包裹的JSONL
                             import re
+
                             # 查找任何位置的代码块，而不只是开头
-                            code_block_pattern = r'```(?:jsonl|json)?\s*\n?(.*?)\n?```'
-                            match = re.search(code_block_pattern, json_content, re.DOTALL)
+                            code_block_pattern = r"```(?:jsonl|json)?\s*\n?(.*?)\n?```"
+                            match = re.search(
+                                code_block_pattern, json_content, re.DOTALL
+                            )
                             if match:
                                 json_content = match.group(1).strip()
 
@@ -318,9 +348,11 @@ class ChatService:
                         if template_name == "labels.j2" and "tags" in parsed:
                             ai_generated_tags = parsed["tags"]
                             if isinstance(ai_generated_tags, list):
+                                # 从context中获取output_language参数，确保标签语言一致性
+                                output_language = context.get("output_language", "zh")
                                 # 使用标签管理器进行匹配和过滤
                                 matched_tags = tag_manager.filter_and_match_preset_tags(
-                                    ai_generated_tags
+                                    ai_generated_tags, output_language
                                 )
                                 parsed["tags"] = matched_tags
                                 logger.info(
@@ -345,9 +377,11 @@ class ChatService:
                     try:
                         # 先尝试处理被 markdown 代码块包裹的内容
                         extracted_content = ai_content.strip()
-                        
+
                         # 统一的代码块提取逻辑
-                        if extracted_content.startswith("```jsonl") or extracted_content.startswith("```json"):
+                        if extracted_content.startswith(
+                            "```jsonl"
+                        ) or extracted_content.startswith("```json"):
                             # 提取```json/```jsonl和```之间的内容
                             # 注意：必须先检查jsonl，因为```jsonl也会匹配```json
                             if extracted_content.startswith("```jsonl"):
@@ -356,37 +390,50 @@ class ChatService:
                                 start_idx = extracted_content.find("```json") + 7
                             end_idx = extracted_content.rfind("```")
                             if end_idx > start_idx:
-                                extracted_content = extracted_content[start_idx:end_idx].strip()
+                                extracted_content = extracted_content[
+                                    start_idx:end_idx
+                                ].strip()
                         elif extracted_content.startswith("```"):
                             # 处理普通代码块
                             start_idx = extracted_content.find("```") + 3
                             end_idx = extracted_content.rfind("```")
                             if end_idx > start_idx:
-                                extracted_content = extracted_content[start_idx:end_idx].strip()
+                                extracted_content = extracted_content[
+                                    start_idx:end_idx
+                                ].strip()
                         else:
                             # 检查内容中是否包含被代码块包裹的JSONL
                             import re
+
                             # 查找任何位置的代码块，而不只是开头
-                            code_block_pattern = r'```(?:jsonl|json)?\s*\n?(.*?)\n?```'
-                            match = re.search(code_block_pattern, extracted_content, re.DOTALL)
+                            code_block_pattern = r"```(?:jsonl|json)?\s*\n?(.*?)\n?```"
+                            match = re.search(
+                                code_block_pattern, extracted_content, re.DOTALL
+                            )
                             if match:
                                 extracted_content = match.group(1).strip()
 
                         # 尝试解析提取的内容为 JSONL
                         if self._is_jsonl_content(extracted_content):
-                            logger.info(f"✅ Detected JSONL content for {template_name}")
+                            logger.info(
+                                f"✅ Detected JSONL content for {template_name}"
+                            )
                             try:
                                 blocks = self._parse_jsonl_content(extracted_content)
-                                logger.info(f"✅ Parsed {len(blocks)} JSONL blocks for {template_name}")
+                                logger.info(
+                                    f"✅ Parsed {len(blocks)} JSONL blocks for {template_name}"
+                                )
 
                                 return {
                                     "format": "jsonl",
                                     "blocks": blocks,
                                     "raw_content": extracted_content,
-                                    "text": extracted_content
+                                    "text": extracted_content,
                                 }
                             except Exception as jsonl_err:
-                                logger.warning(f"JSONL parsing failed for {template_name}: {jsonl_err}")
+                                logger.warning(
+                                    f"JSONL parsing failed for {template_name}: {jsonl_err}"
+                                )
                                 # 继续到文本包装处理
 
                         # 如果不是JSONL或解析失败，回退到原有逻辑
@@ -397,7 +444,9 @@ class ChatService:
                         return result
 
                     except Exception as e:
-                        logger.warning(f"Code block extraction failed for {template_name}: {e}")
+                        logger.warning(
+                            f"Code block extraction failed for {template_name}: {e}"
+                        )
                         # 回退到原有逻辑
                         result = {"summary": {"text": ai_content}}
                         logger.info(
@@ -410,9 +459,11 @@ class ChatService:
                     try:
                         # 先尝试处理被 markdown 代码块包裹的内容
                         extracted_content = ai_content.strip()
-                        
+
                         # 统一的代码块提取逻辑
-                        if extracted_content.startswith("```jsonl") or extracted_content.startswith("```json"):
+                        if extracted_content.startswith(
+                            "```jsonl"
+                        ) or extracted_content.startswith("```json"):
                             # 提取```json/```jsonl和```之间的内容
                             # 注意：必须先检查jsonl，因为```jsonl也会匹配```json
                             if extracted_content.startswith("```jsonl"):
@@ -421,37 +472,50 @@ class ChatService:
                                 start_idx = extracted_content.find("```json") + 7
                             end_idx = extracted_content.rfind("```")
                             if end_idx > start_idx:
-                                extracted_content = extracted_content[start_idx:end_idx].strip()
+                                extracted_content = extracted_content[
+                                    start_idx:end_idx
+                                ].strip()
                         elif extracted_content.startswith("```"):
                             # 处理普通代码块
                             start_idx = extracted_content.find("```") + 3
                             end_idx = extracted_content.rfind("```")
                             if end_idx > start_idx:
-                                extracted_content = extracted_content[start_idx:end_idx].strip()
+                                extracted_content = extracted_content[
+                                    start_idx:end_idx
+                                ].strip()
                         else:
                             # 检查内容中是否包含被代码块包裹的JSONL
                             import re
+
                             # 查找任何位置的代码块，而不只是开头
-                            code_block_pattern = r'```(?:jsonl|json)?\s*\n?(.*?)\n?```'
-                            match = re.search(code_block_pattern, extracted_content, re.DOTALL)
+                            code_block_pattern = r"```(?:jsonl|json)?\s*\n?(.*?)\n?```"
+                            match = re.search(
+                                code_block_pattern, extracted_content, re.DOTALL
+                            )
                             if match:
                                 extracted_content = match.group(1).strip()
 
                         # 尝试解析提取的内容为 JSONL
                         if self._is_jsonl_content(extracted_content):
-                            logger.info(f"✅ Detected JSONL content for {template_name}")
+                            logger.info(
+                                f"✅ Detected JSONL content for {template_name}"
+                            )
                             try:
                                 blocks = self._parse_jsonl_content(extracted_content)
-                                logger.info(f"✅ Parsed {len(blocks)} JSONL blocks for {template_name}")
+                                logger.info(
+                                    f"✅ Parsed {len(blocks)} JSONL blocks for {template_name}"
+                                )
 
                                 return {
                                     "format": "jsonl",
                                     "blocks": blocks,
                                     "raw_content": extracted_content,
-                                    "text": extracted_content
+                                    "text": extracted_content,
                                 }
                             except Exception as jsonl_err:
-                                logger.warning(f"JSONL parsing failed for {template_name}: {jsonl_err}")
+                                logger.warning(
+                                    f"JSONL parsing failed for {template_name}: {jsonl_err}"
+                                )
                                 # 继续到文本包装处理
 
                         # 如果不是JSONL或解析失败，回退到原有逻辑
@@ -462,7 +526,9 @@ class ChatService:
                         return result
 
                     except Exception as e:
-                        logger.warning(f"Code block extraction failed for {template_name}: {e}")
+                        logger.warning(
+                            f"Code block extraction failed for {template_name}: {e}"
+                        )
                         # 回退到原有逻辑
                         result = {"key_points": {"text": ai_content}}
                         logger.info(
@@ -476,29 +542,34 @@ class ChatService:
                         try:
                             # 解析JSONL内容
                             blocks = self._parse_jsonl_content(ai_content)
-                            logger.info(f"✅ Parsed {len(blocks)} JSONL blocks for {template_name}")
+                            logger.info(
+                                f"✅ Parsed {len(blocks)} JSONL blocks for {template_name}"
+                            )
 
                             # 返回结构化结果
                             return {
                                 "format": "jsonl",
                                 "blocks": blocks,
                                 "raw_content": ai_content,
-                                "text": ai_content  # 保持向后兼容
+                                "text": ai_content,  # 保持向后兼容
                             }
                         except Exception as jsonl_err:
-                            logger.warning(f"JSONL parsing failed for {template_name}: {jsonl_err}")
+                            logger.warning(
+                                f"JSONL parsing failed for {template_name}: {jsonl_err}"
+                            )
                             # 如果JSONL解析失败，回退到原始内容处理
-                    
+
                     # 默认处理
                     result = {"text": ai_content}  # type: ignore[dict-item]
                     logger.info(f"✅ {template_name} processing successful (default)")
                     return result
             except Exception as lite_err:
                 logger.error(
-                    f"LiteLLM proxy call failed: {lite_err}; falling back to mock"
+                    f"💥 LiteLLM proxy调用失败: {lite_err}; 回退到Mock数据"
                 )
 
             # --- fallback mock ---
+            logger.warning(f"🔄 启用Mock数据回退机制 for template: {template_name}")
             if template_name == "summary.j2":
                 return await self._generate_mock_summary(context)
             elif template_name == "key_points.j2":
@@ -506,21 +577,28 @@ class ChatService:
             elif template_name == "labels.j2":
                 return await self._generate_mock_labels(context)
             else:
+                logger.warning(f"⚠️ 未知模板 {template_name}，返回通用Mock响应")
                 return {"result": "mock response"}
 
         except Exception as e:
-            logger.error(f"模板生成失败: {template_name}, 错误: {str(e)}")
+            logger.error(f"💥 模板生成完全失败: {template_name}, 错误: {str(e)}")
             return {}
 
     async def _call_litellm_proxy(
         self, system_content: str, user_prompt: str, model: str | None = None
     ) -> str:
-        """通过LiteLLM代理调用LLM"""
+        """通过LiteLLM代理调用LLM，增强错误处理和重试机制"""
+        import time
 
         def sync_request():
-            """同步的requests调用"""
+            """同步的requests调用，带重试机制"""
             # 选择模型：使用传入的model参数或全局默认
             selected_model = model or settings.DEFAULT_LLM_MODEL
+
+            # 🔧 简化token限制策略 - 使用配置的默认值
+            max_tokens = get_token_limit(task_type="chat")
+
+            logger.info(f"🎯 使用配置的token限制: {max_tokens} (模型: {selected_model})")
 
             # 构建请求数据
             request_data = {
@@ -530,7 +608,7 @@ class ChatService:
                     {"role": "user", "content": user_prompt},
                 ],
                 "temperature": 0.3,
-                "max_tokens": 2000,
+                "max_tokens": max_tokens,  # 使用动态调整的值
             }
 
             # 准备请求头，包含认证信息
@@ -544,52 +622,95 @@ class ChatService:
 
             logger.debug(f"Calling LiteLLM proxy: {url} with model: {selected_model}")
 
-            response = requests.post(
-                url,
-                json=request_data,
-                headers=headers,
-                timeout=60.0,
-            )
+            # 重试机制
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    logger.info(f"🚀 LiteLLM API调用 (尝试 {attempt + 1}/{max_retries}): {selected_model}")
 
-            response.raise_for_status()
-            response_data = response.json()
+                    response = requests.post(
+                        url,
+                        json=request_data,
+                        headers=headers,
+                        timeout=60.0,
+                    )
 
-            # 提取LLM响应内容
-            if "choices" not in response_data or not response_data["choices"]:
-                raise ValueError("Invalid LLM response: missing choices")
+                    # 详细记录响应状态
+                    logger.info(f"📡 LiteLLM API响应: HTTP {response.status_code}")
 
-            content = response_data["choices"][0]["message"]["content"]
-            logger.info(f"✅ LLM response received, content length: {len(content)}")
-            logger.debug(f"🔍 LLM response content preview: {content[:200]}")
-            return content.strip()
+                    if response.status_code == 200:
+                        response_data = response.json()
+
+                        # 提取LLM响应内容
+                        if "choices" not in response_data or not response_data["choices"]:
+                            raise ValueError("Invalid LLM response: missing choices")
+
+                        content = response_data["choices"][0]["message"]["content"]
+                        logger.info(f"✅ LLM response received successfully, content length: {len(content)}")
+                        logger.debug(f"🔍 LLM response content preview: {content[:200]}")
+                        return content.strip()
+                    else:
+                        # 记录详细的错误信息
+                        error_text = response.text
+                        logger.error(f"❌ LiteLLM API HTTP {response.status_code}: {error_text}")
+
+                        if attempt < max_retries - 1:
+                            wait_time = 2 ** attempt  # 指数退避
+                            logger.info(f"⏳ 等待 {wait_time}s 后重试...")
+                            time.sleep(wait_time)
+                            continue
+                        else:
+                            response.raise_for_status()
+
+                except requests.exceptions.Timeout as e:
+                    logger.error(f"⏰ LiteLLM API超时 (尝试 {attempt + 1}): {e}")
+                    if attempt < max_retries - 1:
+                        wait_time = 2 ** attempt
+                        logger.info(f"⏳ 超时重试，等待 {wait_time}s...")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        raise Exception(f"LLM API timeout after {max_retries} attempts: {e}")
+
+                except requests.exceptions.ConnectionError as e:
+                    logger.error(f"🔌 LiteLLM API连接错误 (尝试 {attempt + 1}): {e}")
+                    if attempt < max_retries - 1:
+                        wait_time = 2 ** attempt
+                        logger.info(f"⏳ 连接错误重试，等待 {wait_time}s...")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        raise Exception(f"LLM API connection error after {max_retries} attempts: {e}")
+
+                except Exception as e:
+                    logger.error(f"💥 LiteLLM API未知错误 (尝试 {attempt + 1}): {e}")
+                    if attempt < max_retries - 1:
+                        wait_time = 2 ** attempt
+                        logger.info(f"⏳ 未知错误重试，等待 {wait_time}s...")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        raise Exception(f"LLM API unknown error after {max_retries} attempts: {e}")
+
+            # 如果所有重试都失败了，抛出异常
+            raise Exception(f"LLM API failed after {max_retries} attempts")
 
         try:
             # 在线程池中运行同步请求，避免阻塞异步事件循环
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(None, sync_request)
 
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 401:
-                logger.error(
-                    "LLM API authentication failed. Check LITELLM_MASTER_KEY configuration."
-                )
-                raise Exception(f"LLM API authentication failed: {e}")
-            else:
-                logger.error(f"LLM API HTTP error {e.response.status_code}: {e}")
-                raise Exception(f"LLM API error: {e}")
-        except requests.exceptions.RequestException as e:
-            logger.error(f"LLM API request failed: {e}")
-            raise Exception(f"LLM API request failed: {e}")
         except Exception as e:
-            logger.error(f"LLM API call failed: {str(e)}")
+            logger.error(f"💥 LiteLLM proxy call completely failed: {e}")
             raise
 
     async def _generate_mock_summary(self, context: dict[str, Any]) -> dict[str, Any]:
         """生成模拟摘要"""
+        logger.warning("🤖 使用Mock数据生成摘要 - LLM API不可用，回退到模拟数据")
         content = context.get("content", "")
         sentences = content.split("。")[:3]
 
-        return {
+        mock_data = {
             "summary": {
                 "main_thesis": sentences[0] if sentences else "主要观点",
                 "key_arguments": sentences[1:3]
@@ -598,12 +719,15 @@ class ChatService:
                 "word_count": len(" ".join(sentences).split()),
             }
         }
+        logger.info("📝 Mock摘要数据已生成")
+        return mock_data
 
     async def _generate_mock_key_points(
         self, context: dict[str, Any]
     ) -> dict[str, Any]:
         """生成模拟关键点"""
-        return {
+        logger.warning("🤖 使用Mock数据生成关键点 - LLM API不可用，回退到模拟数据")
+        mock_data = {
             "key_points": {
                 "core_concepts": [
                     {"point": "关键概念1", "category": "main", "priority": "high"},
@@ -616,9 +740,12 @@ class ChatService:
                 "total_points": 2,
             }
         }
+        logger.info("💡 Mock关键点数据已生成")
+        return mock_data
 
     async def _generate_mock_labels(self, context: dict[str, Any]) -> dict[str, Any]:
         """生成模拟标签、评分和阅读时间（适配新版标签Prompt）"""
+        logger.warning("🤖 使用Mock数据生成标签 - LLM API不可用，回退到模拟数据")
         content = context.get("content", "")
 
         # 从预设标签中随机选择一些作为mock结果

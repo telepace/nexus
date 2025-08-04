@@ -1,0 +1,68 @@
+{
+  "library": {
+    "title": "Content Library",
+    "addContent": "Add Content",
+    "addFromUrl": "Add from URL",
+    "addFromFile": "Add from File",
+    "addFromText": "Add from Text",
+    "noContent": "No content available",
+    "contentAdded": "Content added successfully",
+    "contentError": "Failed to add content",
+    "searchPlaceholder": "Search content...",
+    "filterByType": "Filter by type",
+    "sortBy": "Sort by",
+    "lastModified": "Last modified",
+    "dateAdded": "Date added",
+    "title": "Title",
+    "type": "Type"
+  },
+  "types": {
+    "webpage": "Webpage",
+    "document": "Document",
+    "text": "Text",
+    "pdf": "PDF",
+    "image": "Image",
+    "video": "Video",
+    "audio": "Audio",
+    "unknown": "Unknown"
+  },
+  "preview": {
+    "title": "Content Preview",
+    "originalUrl": "Original URL",
+    "dateAdded": "Date Added",
+    "lastAnalyzed": "Last Analyzed",
+    "wordCount": "Word Count",
+    "readingTime": "Reading Time",
+    "minutes": "minutes",
+    "tags": "Tags",
+    "noPreview": "Preview not available",
+    "loadingPreview": "Loading preview...",
+    "previewError": "Failed to load preview"
+  },
+  "actions": {
+    "viewContent": "View Content",
+    "analyzeContent": "Analyze Content",
+    "shareContent": "Share Content",
+    "deleteContent": "Delete Content",
+    "editContent": "Edit Content",
+    "copyLink": "Copy Link",
+    "downloadContent": "Download Content",
+    "addToFavorites": "Add to Favorites",
+    "removeFromFavorites": "Remove from Favorites"
+  },
+  "sharing": {
+    "title": "Share Content",
+    "publicLink": "Public Link",
+    "generateLink": "Generate Link",
+    "copyLink": "Copy Link",
+    "linkCopied": "Link copied to clipboard",
+    "shareSettings": "Share Settings",
+    "allowAnalysis": "Allow AI analysis for viewers",
+    "expirationDate": "Expiration Date",
+    "noExpiration": "No expiration",
+    "accessCount": "Access count",
+    "unlimited": "Unlimited",
+    "linkExpired": "This link has expired",
+    "linkNotFound": "Content not found or access denied"
+  }
+}

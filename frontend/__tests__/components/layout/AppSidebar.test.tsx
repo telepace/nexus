@@ -45,14 +45,16 @@ const renderSidebar = (mockOnAddContentClick?: jest.Mock) => {
 describe("AppSidebar", () => {
   it("renders the sidebar", () => {
     renderSidebar();
-    expect(screen.getByRole("link", { name: "Telepace" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Logo Telepace" }),
+    ).toBeInTheDocument();
   });
 
   it("renders all navigation links", () => {
     renderSidebar();
 
+    expect(screen.getByText("Library")).toBeInTheDocument();
     expect(screen.getByText("Home")).toBeInTheDocument();
-    expect(screen.getByText("Content Library")).toBeInTheDocument();
     expect(screen.getByText("Favorites")).toBeInTheDocument();
     expect(screen.getByText("Prompts")).toBeInTheDocument();
   });
@@ -67,7 +69,7 @@ describe("AppSidebar", () => {
   it("renders the logo div", () => {
     renderSidebar();
 
-    const logoLink = screen.getByRole("link", { name: "Telepace" });
+    const logoLink = screen.getByRole("link", { name: "Logo Telepace" });
     expect(logoLink).toBeInTheDocument();
     expect(logoLink).toHaveAttribute("href", "/home");
   });

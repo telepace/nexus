@@ -1,0 +1,31 @@
+
+# Question I Want to Understand:
+{{ selected_point }}
+---
+- I'm interested in this point. Please expand on how the original text discusses this point. Are there any specific examples, stories, data, or metaphors in the original text that help you vividly understand this point? And select and excerpt **all** related quotes from the original text, connecting them with appropriate narrative logic.
+- If not available, please use your most insightful understanding of this field to interpret for me what the author most wants to convey about this point, explaining it clearly and concisely. If the original text already discusses it clearly, then absolutely do not add extra interpretation! Only supplement when the original text's discussion is insufficient!
+
+# Style Requirements - This is the Core Point!
+- Style must be easy to understand! Use language that ordinary people can understand! Avoid metaphors, be concrete and detailed, with sufficient detail and specific descriptions, coherent sentences, and an implicit storyline (don't explicitly mention story or use overly narrative metaphors, I want to emphasize that the writing should have a consistent line of flow).
+- Must be concise and to the point, direct and sharp, not verbose, ensuring information quality and density, while being sufficiently easy to understand (ease of understanding comes from being **sufficiently specific and detailed**).
+
+# Output Requirements
+Output JSONL, with each line containing a complete JSON object, no nested line breaks allowed.
+
+## Output Example
+{"t": "h3", "c": "User's question of interest, with question as title"}
+{"t": "p", "c": "Specific content"}
+{"t": "p", "c": "Specific content"}
+{"t": "p", "c": "Specific content"}
+
+## Constraints
+- Only output valid JSONL lines;
+- Use markdown's bold symbols **bold keywords** to emphasize key words and information, ensuring correct grammar and formatting.
+
+# Output Language
+{% if output_language %}
+Output should be returned in {{ output_language }}.
+{% else %}
+Your output language must be 中文.
+{% endif %}
+

@@ -1,0 +1,19 @@
+# Nixpacks configuration to prevent root deployment
+# This file explicitly tells Nixpacks to NOT build from the root directory
+
+[variables]
+# This is a monorepo - do not build from root
+NIXPACKS_NO_DEFAULT_CACHE_MOUNT = "1"
+
+[phases.build]
+# Explicitly fail any attempt to build from root
+cmds = [
+  "echo 'ERROR: This is a monorepo. Do not deploy from root directory.'",
+  "echo 'Each service must be deployed from its own directory:'",
+  "echo '  - Backend: ./backend/'",
+  "echo '  - Frontend: ./frontend/'", 
+  "echo '  - Admin: ./admin/'",
+  "echo '  - Website: ./website/'",
+  "echo 'Use: railway up --service <service-name> from the service directory'",
+  "exit 1"
+]

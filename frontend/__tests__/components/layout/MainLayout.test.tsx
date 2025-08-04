@@ -57,7 +57,9 @@ describe("MainLayout", () => {
     );
 
     // 检查sidebar是否渲染
-    expect(screen.getByRole("link", { name: "Telepace" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Logo Telepace" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Home")).toBeInTheDocument();
 
     // 检查页面内容
@@ -72,7 +74,9 @@ describe("MainLayout", () => {
     );
 
     // 检查sidebar仍然存在
-    expect(screen.getByRole("link", { name: "Telepace" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Logo Telepace" }),
+    ).toBeInTheDocument();
 
     // 检查内容直接渲染，没有容器包装
     expect(screen.getByTestId("fullscreen-content")).toBeInTheDocument();

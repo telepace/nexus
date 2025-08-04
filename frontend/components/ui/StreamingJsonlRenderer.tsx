@@ -1,11 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
+import { HoverableBlock } from "./HoverableBlock";
+import { Badge } from "@/components/ui/badge";
 
-import { EnhancedReferenceIndicator, useReferenceManagerSafe } from "./ReferenceManager";
+import {
+  EnhancedReferenceIndicator,
+  useReferenceManagerSafe,
+} from "./ReferenceManager";
 
 interface StreamingJsonlRendererProps {
   /** 流式 JSONL 内容 */
@@ -33,7 +38,7 @@ interface JsonlBlock {
 
 /**
  * 流式 JSONL 渲染器 - 支持实时块级渲染
- * 
+ *
  * 特点：
  * 1. 实时解析每个完整的 JSON 行
  * 2. 即时渲染完整的块，无需等待防抖
@@ -48,16 +53,14 @@ export function StreamingJsonlRenderer({
   showStreamingIndicator = true,
   contentId,
 }: StreamingJsonlRendererProps) {
-  const [hoveredBlock, setHoveredBlock] = useState<number | null>(null);
-  
   // 使用安全的 ReferenceManager
   const { actions } = useReferenceManagerSafe();
 
   // 解析 JSONL 内容为可渲染的块
   const blocks = useMemo(() => {
-    if (!content) return [];
+    if (!content || typeof content !== 'string') return [];
 
-    const lines = content.split('\n');
+    const lines = content.split("\n");
     const parsedBlocks: JsonlBlock[] = [];
 
     lines.forEach((line, index) => {
@@ -67,10 +70,10 @@ export function StreamingJsonlRenderer({
       try {
         // 尝试解析完整的 JSON 行
         const parsed = JSON.parse(trimmedLine);
-        const type = parsed.type || parsed.t || 'p';
-        const blockContent = parsed.content || parsed.c || '';
-        const lead = parsed.lead; // 提取 lead 字段
-        const ref = parsed.ref; // 提取 ref 字段
+        const type = String(parsed.type || parsed.t || "p");
+        const blockContent = String(parsed.content || parsed.c || "");
+        const lead = parsed.lead ? String(parsed.lead) : undefined; // 提取 lead 字段
+        const ref = parsed.ref ? String(parsed.ref) : undefined; // 提取 ref 字段
 
         parsedBlocks.push({
           type,
@@ -81,12 +84,12 @@ export function StreamingJsonlRenderer({
           index,
           isComplete: true,
         });
-      } catch (error) {
+      } catch {
         // 如果解析失败，可能是不完整的行（流式传输中）
         // 只在非加载状态或者看起来是完整行时显示错误行
-        if (!isLoading || trimmedLine.includes('}')) {
+        if (!isLoading || trimmedLine.includes("}")) {
           parsedBlocks.push({
-            type: 'p',
+            type: "p",
             content: trimmedLine,
             raw: trimmedLine,
             index,
@@ -99,268 +102,137 @@ export function StreamingJsonlRenderer({
     return parsedBlocks;
   }, [content, isLoading]);
 
-  const handleCopyBlock = async (blockContent: string, blockType: string) => {
+  // 复制功能
+  const handleCopyBlock = async (content: string) => {
     try {
-      await navigator.clipboard.writeText(blockContent);
-      toast.success(`已复制${getBlockTypeLabel(blockType)}内容`);
-    } catch (error) {
+      await navigator.clipboard.writeText(content);
+      toast.success("已复制到剪贴板");
+    } catch {
       toast.error("复制失败");
     }
   };
 
-  const getBlockTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      h1: "一级标题",
-      h2: "二级标题", 
-      h3: "三级标题",
-      p: "段落",
-      quote: "引用",
-      list: "列表",
-      insight: "洞察",
-      concept: "概念",
-      qa: "问答",
-      action: "行动",
+  // 渲染单个块
+  const renderBlock = (block: JsonlBlock) => {
+    const { type, content: blockContent, lead, ref, isComplete } = block;
+
+    // 解析引用
+    const references = actions?.parseReferences ? actions.parseReferences(ref) : [];
+
+    // 根据类型选择样式
+    const getBlockStyles = () => {
+      switch (type) {
+        case "h1":
+          return "text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4";
+        case "h2":
+          return "text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3 border-b border-gray-200 dark:border-border pb-2";
+        case "h3":
+          return "text-lg font-medium text-gray-800 dark:text-gray-200 mb-2";
+        case "insight":
+          return "text-sm leading-relaxed text-gray-700 dark:text-gray-300 bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border-l-4 border-blue-400 dark:border-blue-500";
+        case "summary":
+          return "text-sm leading-relaxed text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg";
+        case "list":
+          return "text-sm leading-relaxed text-gray-700 dark:text-gray-300";
+        case "code":
+          return "text-sm font-mono bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-border";
+        default:
+          return "text-sm leading-relaxed text-gray-700 dark:text-gray-300";
+      }
     };
-    return labels[type] || "内容";
-  };
 
-  const BlockWrapper: React.FC<{
-    children: React.ReactNode;
-    blockIndex: number;
-    blockType: string;
-    blockContent: string;
-    isComplete: boolean;
-  }> = ({ children, blockIndex, blockType, blockContent, isComplete }) => {
-    if (!enableHoverEffects) {
-      return <div className={cn(!isComplete && "opacity-60")}>{children}</div>;
-    }
+    // 🎯 右侧操作按钮
+    const rightActions = enableHoverEffects ? (
+      <div className="flex items-center gap-2">
+        {/* 复制按钮 */}
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(blockContent || "");
+          }}
+          className="w-6 h-6 rounded-md bg-background/80 backdrop-blur-sm border border-border/50 flex items-center justify-center hover:bg-background hover:border-border hover:shadow-sm transition-all duration-200"
+          title="复制内容"
+        >
+          <Copy className="w-3 h-3 text-muted-foreground" />
+        </button>
 
-    const isHovered = hoveredBlock === blockIndex;
-
-    return (
-      <div
-        className={cn(
-          "group relative rounded-lg transition-all duration-200 ease-out",
-          "hover:bg-slate-50/60 dark:hover:bg-slate-800/40",
-          "hover:shadow-sm hover:border-slate-200/60 dark:hover:border-slate-700/60",
-          "px-3 py-2 -mx-3 -my-2",
-          "border border-transparent",
-          isHovered && "bg-slate-50/60 dark:bg-slate-800/40 shadow-sm border-slate-200/60 dark:border-slate-700/60",
-          !isComplete && "opacity-60 border-dashed border-gray-300 dark:border-gray-600"
-        )}
-        onMouseEnter={() => setHoveredBlock(blockIndex)}
-        onMouseLeave={() => setHoveredBlock(null)}
-      >
-        {/* 主要内容 */}
-        <div className="relative">
-          {children}
-        </div>
-
-        {/* 悬停时显示的操作按钮 */}
-        {isComplete && (
-          <div className={cn(
-            "absolute top-2 right-2 flex items-center gap-1",
-            "opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-          )}>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleCopyBlock(blockContent, blockType);
-              }}
-              className={cn(
-                "p-1.5 rounded-md text-slate-500 hover:text-slate-700",
-                "hover:bg-white dark:hover:bg-slate-700 transition-colors duration-150",
-                "shadow-sm border border-slate-200/60 dark:border-slate-600/60",
-                "backdrop-blur-sm bg-white/80 dark:bg-slate-800/80"
-              )}
-              title={`复制${getBlockTypeLabel(blockType)}`}
-            >
-              <Copy className="h-3 w-3" />
-            </button>
+        {/* 引用指示器 */}
+        {(references || []).length > 0 && (
+          <div className="flex gap-1">
+            {(references || []).slice(0, 3).map((refNum) => (
+              <EnhancedReferenceIndicator
+                key={refNum}
+                referenceNumber={refNum}
+                contentId={contentId}
+                className="w-5 h-5 text-xs"
+              />
+            ))}
+            {(references || []).length > 3 && (
+              <Badge variant="outline" className="h-5 px-1.5 text-xs">
+                +{(references || []).length - 3}
+              </Badge>
+            )}
           </div>
         )}
       </div>
-    );
-  };
-
-  const renderBlock = (block: JsonlBlock) => {
-    const { type, content, lead, ref, index, isComplete } = block;
-
-    const blockElement = (() => {
-      switch (type) {
-        case "h1":
-          return (
-            <h1 className="scroll-m-16 text-2xl font-bold tracking-tight lg:text-3xl select-text">
-              {content}
-            </h1>
-          );
-        case "h2":
-          return (
-            <h2 className="scroll-m-16 border-b pb-1.5 text-xl font-semibold tracking-tight first:mt-0 select-text">
-              {content}
-            </h2>
-          );
-        case "h3":
-          return (
-            <h3 className="scroll-m-16 text-lg font-medium tracking-tight select-text">
-              {content}
-            </h3>
-          );
-        case "quote":
-          return (
-            <blockquote className="italic border-l-2 pl-4 my-2 select-text">
-              <div className="mb-1">{content}</div>
-              {ref && (
-                <cite className="text-xs text-muted-foreground not-italic">
-                  — {ref}
-                </cite>
-              )}
-            </blockquote>
-          );
-        case "list": {
-          // 处理列表内容
-          const items = Array.isArray(content) 
-            ? content 
-            : typeof content === "string"
-              ? content.split(/[\n,；;]/).map((s) => s.trim()).filter(Boolean)
-              : [];
-          return (
-            <ul className="list-disc ml-4 space-y-1 my-2 select-text">
-              {items.map((item, i) => (
-                <li key={i} className="select-text">{item}</li>
-              ))}
-            </ul>
-          );
-        }
-        case "insight": {
-          return (
-            <div className="my-3 rounded-md border-l-4 border-blue-500 bg-blue-50 p-3 dark:bg-blue-900/20 select-text">
-              <div className="flex items-start gap-2">
-                <span className="text-blue-600 dark:text-blue-400 text-sm font-medium">💡 洞察</span>
-                <span className="flex-1">{content}</span>
-              </div>
-              {ref && (
-                <div className="text-xs text-muted-foreground mt-2">
-                  参考: {ref}
-                </div>
-              )}
-            </div>
-          );
-        }
-        case "concept": {
-          return (
-            <div className="my-3 rounded-md border-l-4 border-purple-500 bg-purple-50 p-3 dark:bg-purple-900/20 select-text">
-              <div className="flex items-start gap-2">
-                <span className="text-purple-600 dark:text-purple-400 text-sm font-medium">🎯 概念</span>
-                <span className="flex-1">{content}</span>
-              </div>
-            </div>
-          );
-        }
-        case "qa": {
-          // 如果内容包含 Q: 和 A:，则分别处理
-          if (typeof content === "string" && content.includes("Q:") && content.includes("A:")) {
-            const parts = content.split("A:");
-            const question = parts[0].replace("Q:", "").trim();
-            const answer = parts[1]?.trim() || "";
-            return (
-              <div className="my-3 space-y-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-md select-text">
-                <div className="font-semibold text-gray-900 dark:text-gray-100">
-                  ❓ {question}
-                </div>
-                <div className="text-gray-700 dark:text-gray-300 ml-4">
-                  💬 {answer}
-                </div>
-              </div>
-            );
-          }
-          return (
-            <div className="my-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-md select-text">
-              {content}
-            </div>
-          );
-        }
-        case "action":
-          return (
-            <div className="my-3 rounded-md border-l-4 border-green-500 bg-green-50 p-3 dark:bg-green-900/20 select-text">
-              <div className="flex items-start gap-2">
-                <span className="text-green-600 dark:text-green-400 text-sm font-medium">⚡ 行动</span>
-                <span className="flex-1">{content}</span>
-              </div>
-            </div>
-          );
-        default:
-          // 默认段落 - 处理 lead 字段和 ref 字段
-          const references = actions.parseReferences(ref);
-          const hasReferences = references.length > 0;
-          
-          return (
-            <div className="leading-6 my-2 select-text text-foreground">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  {lead && (
-                    <span className="font-semibold text-foreground">
-                      {lead}:{" "}
-                    </span>
-                  )}
-                  <span>{content}</span>
-                </div>
-                {hasReferences && (
-                  <EnhancedReferenceIndicator
-                    references={references}
-                    className="shrink-0"
-                  />
-                )}
-              </div>
-            </div>
-          );
-      }
-    })();
+    ) : undefined;
 
     return (
-      <BlockWrapper
-        key={`${index}-${type}`}
-        blockIndex={index}
-        blockType={type}
-        blockContent={content}
-        isComplete={isComplete}
+      <HoverableBlock
+        key={block.index}
+        enableHover={enableHoverEffects}
+        hoverIntensity="subtle"
+        showRightActions={!!rightActions}
+        rightActions={rightActions}
+        className={cn(
+          "my-1",
+          !isComplete && "opacity-70"
+        )}
       >
-        {blockElement}
-      </BlockWrapper>
+        <div className={cn(getBlockStyles(), "relative")}>
+          {/* Lead 文本（如果存在） */}
+          {lead && (
+            <div className="text-xs text-muted-foreground mb-2 font-medium">
+              {lead}
+            </div>
+          )}
+          
+          {/* 主要内容 */}
+          {type === "list" ? (
+            <div className="space-y-2">
+              {(blockContent || "").split("\n").map((listItem, idx) => (
+                <div key={idx} className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0" />
+                  <span className="whitespace-pre-wrap">{(listItem || "").trim()}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="whitespace-pre-wrap">{blockContent || ""}</div>
+          )}
+        </div>
+      </HoverableBlock>
     );
   };
 
   if (!content && !isLoading) {
     return (
-      <div
-        data-testid="streaming-jsonl-renderer"
-        className={cn("text-muted-foreground text-sm", className)}
-      >
+      <div className={cn("text-sm text-muted-foreground", className)}>
         暂无内容
       </div>
     );
   }
 
   return (
-    <div
-      data-testid="streaming-jsonl-renderer"
-      className={cn(
-        "prose prose-slate dark:prose-invert max-w-none space-y-1",
-        "select-text",
-        className
-      )}
-    >
+    <div className={cn("space-y-1", className)}>
       {blocks.map(renderBlock)}
       
       {/* 流式指示器 */}
       {isLoading && showStreamingIndicator && (
-        <div className="flex items-center gap-2 mt-4 text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <span className="inline-block w-2 h-4 bg-primary animate-pulse rounded-sm" />
-            <span className="text-xs">正在生成内容...</span>
-          </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+          <span>AI 正在分析中...</span>
         </div>
       )}
     </div>
   );
-} 
+}

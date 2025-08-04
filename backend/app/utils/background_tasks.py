@@ -3,7 +3,7 @@ import json
 import logging
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from sqlmodel import Session, delete
 
@@ -324,9 +324,11 @@ class BackgroundTaskManager:
                                 content_item.processing_status = "completed"
                                 session.add(content_item)
                                 session.commit()  # 立即提交，确保用户可以看到内容
-                                
-                                logger.info(f"✅ 基础内容处理完成 {content_id}, 状态已设置为completed")
-                                
+
+                                logger.info(
+                                    f"✅ 基础内容处理完成 {content_id}, 状态已设置为completed"
+                                )
+
                                 # 通知基础处理完成 - 进度65%
                                 await content_event_manager.notify_content_status(
                                     user_id=user_id,
@@ -379,8 +381,9 @@ class BackgroundTaskManager:
                                     )
 
                                     # 执行AI预处理（只执行AI初始化层，不重复做存储）
+                                    # TODO: 从用户偏好或系统设置中获取语言，目前使用默认英文
                                     preprocessing_result = await preprocessing_pipeline._ai_initialization_layer(
-                                        cleaned_content, metadata, user_preferences=None
+                                        cleaned_content, metadata, user_preferences=None, output_language="English"
                                     )
 
                                     # AI分析完成 - 进度85%
@@ -552,7 +555,9 @@ class BackgroundTaskManager:
                                     )
 
                                     # AI处理也完成了，内容状态已经是completed，无需再次设置
-                                    logger.info(f"✅ AI processing completed for content {content_id}")
+                                    logger.info(
+                                        f"✅ AI processing completed for content {content_id}"
+                                    )
                                     # 注意：content_item.processing_status 已经在基础处理完成时设置为 "completed"
 
                                 except Exception as preprocessing_err:
@@ -632,7 +637,9 @@ class BackgroundTaskManager:
 
                                     # 不让AI分析失败影响整体处理状态，但要记录错误
                                     # 注意：processing_status 已经在基础处理完成时设置为 "completed"，无需再次设置
-                                    logger.info(f"✅ Basic content processing was already completed for {content_id} (AI processing failed but content remains usable)")
+                                    logger.info(
+                                        f"✅ Basic content processing was already completed for {content_id} (AI processing failed but content remains usable)"
+                                    )
 
                                 logger.info(
                                     f"Replaced segments for {content_id} (total {len(chunks)})"
@@ -644,17 +651,23 @@ class BackgroundTaskManager:
                                 )
                                 # 分段失败，设置基础状态为完成（因为内容本身处理成功了）
                                 content_item.processing_status = "completed"
-                                content_item.error_message = f"内容分段失败: {str(chunk_error)}"
+                                content_item.error_message = (
+                                    f"内容分段失败: {str(chunk_error)}"
+                                )
                                 session.add(content_item)
                                 session.commit()
-                                logger.info(f"✅ Basic processing completed for content {content_id} (chunking failed but content marked as completed)")
+                                logger.info(
+                                    f"✅ Basic processing completed for content {content_id} (chunking failed but content marked as completed)"
+                                )
 
                         else:
                             # 没有内容可分段，但基本处理已完成
                             content_item.processing_status = "completed"
                             session.add(content_item)
                             session.commit()
-                            logger.info(f"✅ Basic processing completed for content {content_id} (no content to chunk)")
+                            logger.info(
+                                f"✅ Basic processing completed for content {content_id} (no content to chunk)"
+                            )
 
                         logger.info(f"Successfully processed content {content_id}")
                     else:
@@ -807,7 +820,7 @@ class BackgroundTaskManager:
 
     def start_ai_regeneration(self, content_id: str, user_id: str):
         """启动AI分析重新生成任务"""
-        
+
         # 检查是否已有相同任务在运行
         if content_id in self._tasks:
             existing_task = self._tasks[content_id]
@@ -825,7 +838,9 @@ class BackgroundTaskManager:
                     self._regenerate_ai_analysis_async(content_id, user_id)
                 )
             except Exception as e:
-                logger.error(f"AI regeneration task execution failed for {content_id}: {e}")
+                logger.error(
+                    f"AI regeneration task execution failed for {content_id}: {e}"
+                )
             finally:
                 loop.close()
 
@@ -848,39 +863,41 @@ class BackgroundTaskManager:
     async def _regenerate_ai_analysis_async(self, content_id: str, user_id: str):
         """异步重新生成AI分析"""
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info(f"Starting AI regeneration for content {content_id}")
-        
+
         try:
             from sqlmodel import Session, select
+
             from app.core.db_factory import engine
-            from app.models.content import ContentItem, AIResult
-            from app.utils.events import content_event_manager
-            from app.utils.timezone import now_utc
             from app.core.dependencies import get_chat_service_instance
+            from app.models.content import AIResult, ContentItem
             from app.services.preprocessing_pipeline import (
                 ContentType,
                 DocumentMetadata,
                 PreprocessingPipeline,
             )
             from app.utils.content_processors import clean_content_for_db
+            from app.utils.events import content_event_manager
+            from app.utils.timezone import now_utc
         except ImportError as e:
             logger.error(f"Import error in AI regeneration: {e}")
             raise Exception(f"Failed to import required modules: {e}")
-        
+
         try:
             with Session(engine) as session:
                 # 获取内容项
                 content_item = session.exec(
                     select(ContentItem).where(ContentItem.id == uuid.UUID(content_id))
                 ).first()
-                
+
                 if not content_item:
                     raise Exception(f"Content item {content_id} not found")
-                
+
                 if not content_item.content_text:
                     raise Exception(f"Content item {content_id} has no processed text")
-                
+
                 # 通知开始AI重新生成
                 await content_event_manager.notify_content_status(
                     user_id=user_id,
@@ -888,19 +905,19 @@ class BackgroundTaskManager:
                     status="processing",
                     progress=10,
                     title=content_item.title or "重新生成AI分析",
-                    message="开始重新生成AI分析..."
+                    message="开始重新生成AI分析...",
                 )
-                
+
                 # 删除现有的AI结果（如果存在）
                 existing_ai_result = session.exec(
                     select(AIResult).where(AIResult.content_item_id == content_item.id)
                 ).first()
-                
+
                 if existing_ai_result:
                     session.delete(existing_ai_result)
                     session.commit()
                     logger.info(f"Deleted existing AI result for content {content_id}")
-                
+
                 # 通知准备运行AI分析
                 await content_event_manager.notify_content_status(
                     user_id=user_id,
@@ -908,28 +925,30 @@ class BackgroundTaskManager:
                     status="processing",
                     progress=30,
                     title=content_item.title or "重新生成AI分析",
-                    message="正在运行AI分析..."
+                    message="正在运行AI分析...",
                 )
-                
+
                 # 重新运行AI预处理管道
                 try:
                     # 清理内容
                     cleaned_content = clean_content_for_db(content_item.content_text)
-                    
+
                     # 获取ChatService实例
                     chat_service = get_chat_service_instance()
                     preprocessing_pipeline = PreprocessingPipeline(chat_service)
-                    
+
                     # 构建文档元数据
                     metadata = DocumentMetadata(
                         title=content_item.title or "重新生成分析",
                         author=None,
-                        source_url=content_item.source_uri if content_item.type == "url" else None,
+                        source_url=content_item.source_uri
+                        if content_item.type == "url"
+                        else None,
                         content_type=ContentType.ARTICLE,
                         language="auto",
                         domain="general",
                     )
-                    
+
                     # 通知AI分析进行中
                     await content_event_manager.notify_content_status(
                         user_id=user_id,
@@ -937,16 +956,18 @@ class BackgroundTaskManager:
                         status="processing",
                         progress=60,
                         title=content_item.title or "重新生成AI分析",
-                        message="AI分析进行中..."
+                        message="AI分析进行中...",
                     )
-                    
+
                     # 执行AI预处理
-                    preprocessing_result = await preprocessing_pipeline._ai_initialization_layer(
-                        cleaned_content, metadata, user_preferences=None
+                    preprocessing_result = (
+                        await preprocessing_pipeline._ai_initialization_layer(
+                            cleaned_content, metadata, user_preferences=None
+                        )
                     )
-                    
+
                     ai_results, ai_stats = preprocessing_result
-                    
+
                     # 通知AI分析完成，保存结果
                     await content_event_manager.notify_content_status(
                         user_id=user_id,
@@ -954,35 +975,47 @@ class BackgroundTaskManager:
                         status="processing",
                         progress=85,
                         title=content_item.title or "重新生成AI分析",
-                        message="保存AI分析结果..."
+                        message="保存AI分析结果...",
                     )
-                    
+
                     # 计算阅读时间
                     ai_reading_time = None
                     content_analysis = ai_results.get("content_analysis", {})
                     if "reading_time_minutes" in content_analysis:
                         ai_reading_time = content_analysis.get("reading_time_minutes")
-                    
-                    if (not ai_reading_time or not isinstance(ai_reading_time, int) or ai_reading_time <= 0):
+
+                    if (
+                        not ai_reading_time
+                        or not isinstance(ai_reading_time, int)
+                        or ai_reading_time <= 0
+                    ):
                         ai_reading_time = max(1, len(cleaned_content.split()) // 200)
-                    
+
                     # 获取AI优化的标题和描述
                     optimized_title = ai_results.get("optimized_title")
                     brief_description = ai_results.get("brief_description")
-                    
+
                     # 如果有AI优化的标题，更新ContentItem的标题
-                    if optimized_title and isinstance(optimized_title, str) and len(optimized_title.strip()) > 0:
+                    if (
+                        optimized_title
+                        and isinstance(optimized_title, str)
+                        and len(optimized_title.strip()) > 0
+                    ):
                         content_item.title = optimized_title.strip()
-                    
+
                     # 优先使用LLM返回的评分，否则使用算法计算
                     llm_score = ai_results.get("content_quality_score")
-                    if (llm_score is not None and isinstance(llm_score, (int, float)) and 0 <= llm_score <= 1):
+                    if (
+                        llm_score is not None
+                        and isinstance(llm_score, int | float)
+                        and 0 <= llm_score <= 1
+                    ):
                         quality_score = float(llm_score)
                     else:
                         quality_score = preprocessing_pipeline._calculate_quality_score(
                             cleaned_content, ai_results, metadata
                         )
-                    
+
                     # 创建新的AI结果
                     new_ai_result = AIResult(
                         content_item_id=content_item.id,
@@ -993,18 +1026,20 @@ class BackgroundTaskManager:
                         labels=ai_results.get("labels", []),
                         content_analysis=ai_results.get("content_analysis", {}),
                         reading_time_minutes=ai_reading_time,
-                        difficulty_level=ai_results.get("content_analysis", {}).get("difficulty_level", "intermediate"),
+                        difficulty_level=ai_results.get("content_analysis", {}).get(
+                            "difficulty_level", "intermediate"
+                        ),
                         content_quality_score=quality_score,
                     )
-                    
+
                     session.add(new_ai_result)
-                    
+
                     # AI重新生成完成，设置状态为完成
                     content_item.processing_status = "completed"
                     content_item.updated_at = now_utc()
                     session.add(content_item)
                     session.commit()
-                    
+
                     # 通知完成
                     await content_event_manager.notify_content_status(
                         user_id=user_id,
@@ -1012,21 +1047,26 @@ class BackgroundTaskManager:
                         status="completed",
                         progress=100,
                         title=content_item.title or "重新生成AI分析",
-                        message="AI分析重新生成完成"
+                        message="AI分析重新生成完成",
                     )
-                    
-                    logger.info(f"✅ AI regeneration completed successfully for content {content_id}")
-                    
+
+                    logger.info(
+                        f"✅ AI regeneration completed successfully for content {content_id}"
+                    )
+
                 except Exception as ai_error:
-                    logger.error(f"❌ AI regeneration failed for {content_id}: {ai_error}", exc_info=True)
-                    
+                    logger.error(
+                        f"❌ AI regeneration failed for {content_id}: {ai_error}",
+                        exc_info=True,
+                    )
+
                     # AI重新生成失败，但不影响内容状态
                     content_item.processing_status = "completed"
                     content_item.error_message = f"AI重新生成失败: {str(ai_error)}"
                     content_item.updated_at = now_utc()
                     session.add(content_item)
                     session.commit()
-                    
+
                     # 通知失败
                     await content_event_manager.notify_content_status(
                         user_id=user_id,
@@ -1034,12 +1074,15 @@ class BackgroundTaskManager:
                         status="completed",
                         progress=100,
                         title=content_item.title or "重新生成AI分析",
-                        error=f"AI重新生成失败: {str(ai_error)}"
+                        error=f"AI重新生成失败: {str(ai_error)}",
                     )
-                    
+
         except Exception as e:
-            logger.error(f"AI regeneration task failed for content {content_id}: {e}", exc_info=True)
-            
+            logger.error(
+                f"AI regeneration task failed for content {content_id}: {e}",
+                exc_info=True,
+            )
+
             # 通知失败状态
             try:
                 await content_event_manager.notify_content_status(
@@ -1049,8 +1092,10 @@ class BackgroundTaskManager:
                     error_message=f"AI重新生成任务失败: {str(e)}",
                 )
             except Exception as notify_error:
-                logger.error(f"Failed to notify AI regeneration failure: {notify_error}")
-                
+                logger.error(
+                    f"Failed to notify AI regeneration failure: {notify_error}"
+                )
+
         finally:
             # 清理任务记录
             if content_id in self._tasks:
@@ -1065,7 +1110,9 @@ class BackgroundTaskManager:
                     self._cleanup_tasks.add(cleanup_task)
                     cleanup_task.add_done_callback(self._cleanup_tasks.discard)
                 except Exception as e:
-                    logger.warning(f"Failed to create cleanup task for {content_id}: {e}")
+                    logger.warning(
+                        f"Failed to create cleanup task for {content_id}: {e}"
+                    )
                     if content_id in self._tasks:
                         del self._tasks[content_id]
 

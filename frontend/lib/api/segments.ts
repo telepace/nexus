@@ -25,7 +25,7 @@ export async function getContentSegment(
   segmentNumber: number
 ): Promise<ContentSegment> {
   const response = await client.get<ContentSegment>(
-    `/v1/content/${contentId}/segments/${segmentNumber}`
+    `/api/v1/content/${contentId}/segments/${segmentNumber}`
   );
   return response.data;
 }
@@ -39,7 +39,7 @@ export async function getContentSegmentsByNumbers(
 ): Promise<ContentSegmentBulkResponse> {
   const numbersStr = numbers.join(',');
   const response = await client.get<ContentSegmentBulkResponse>(
-    `/v1/content/${contentId}/segments?numbers=${numbersStr}`
+    `/api/v1/content/${contentId}/segments?numbers=${numbersStr}`
   );
   return response.data;
 }
@@ -53,7 +53,7 @@ export async function getContentSegmentsByRange(
   toNumber: number
 ): Promise<ContentSegmentBulkResponse> {
   const response = await client.get<ContentSegmentBulkResponse>(
-    `/v1/content/${contentId}/segments?from_number=${fromNumber}&to_number=${toNumber}`
+    `/api/v1/content/${contentId}/segments?from_number=${fromNumber}&to_number=${toNumber}`
   );
   return response.data;
 }
@@ -65,7 +65,7 @@ export async function getAllContentSegments(
   contentId: string
 ): Promise<ContentSegmentBulkResponse> {
   const response = await client.get<ContentSegmentBulkResponse>(
-    `/v1/content/${contentId}/segments`
+    `/api/v1/content/${contentId}/segments`
   );
   return response.data;
 }
@@ -251,19 +251,30 @@ export async function getCachedSegmentsByRef(
     };
   }
 
-  // 获取缺失的段落
-  const response = await getContentSegmentsByNumbers(contentId, missingNumbers);
-  
-  // 更新缓存
-  segmentCache.setMultiple(response.segments);
-  
-  // 合并缓存和新获取的段落
-  const allSegments = [...cachedSegments, ...response.segments]
-    .sort((a, b) => a.display_number - b.display_number);
+  try {
+    // 获取缺失的段落
+    const response = await getContentSegmentsByNumbers(contentId, missingNumbers);
+    
+    // 更新缓存
+    segmentCache.setMultiple(response.segments);
+    
+    // 合并缓存和新获取的段落
+    const allSegments = [...cachedSegments, ...response.segments]
+      .sort((a, b) => a.display_number - b.display_number);
 
-  return {
-    segments: allSegments,
-    total: allSegments.length,
-    missing_numbers: response.missing_numbers
-  };
+    return {
+      segments: allSegments,
+      total: allSegments.length,
+      missing_numbers: response.missing_numbers
+    };
+  } catch (error) {
+    // 如果 API 调用失败（比如认证问题），返回缓存的段落
+    console.warn('Failed to fetch segments from API, returning cached data only:', error);
+    
+    return {
+      segments: cachedSegments.sort((a, b) => a.display_number - b.display_number),
+      total: cachedSegments.length,
+      missing_numbers: missingNumbers // 标记未能获取的段落
+    };
+  }
 } 

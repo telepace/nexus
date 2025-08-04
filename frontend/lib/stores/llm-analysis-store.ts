@@ -3,6 +3,8 @@ import { devtools } from "zustand/middleware";
 import { promptsApi, Prompt } from "@/lib/api/services/prompts";
 import { getCookie } from "@/lib/auth";
 import { convertPromptToRecommendation } from "@/lib/utils/prompt-utils";
+import { generateFriendlyTitle, isQuestion, formatQuestionTitle } from "@/lib/utils/title-utils";
+import { detectLocale } from "@/lib/i18n";
 
 export interface LLMAnalysis {
   id: string;
@@ -156,6 +158,10 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
       },
 
       loadPrompts: async () => {
+        const state = get();
+        if (state.enabledPrompts.length > 0 || state.isLoadingPrompts) {
+          return;
+        }
         set({ isLoadingPrompts: true, error: null });
 
         try {
@@ -199,6 +205,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
           setGenerating,
           setError,
           markPromptAsUsed,
+          enabledPrompts,
         } = get();
 
         // 如果有promptId，标记为已使用
@@ -206,10 +213,23 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
           markPromptAsUsed(promptId);
         }
 
+        // 智能生成用户友好的标题
+        const promptName = promptId 
+          ? enabledPrompts.find(p => p.id === promptId)?.name 
+          : undefined;
+        
+        const friendlyTitle = generateFriendlyTitle({
+          userInput: analysisInstruction,
+          promptName: promptName,
+          promptId: promptId,
+          originalTitle: title,
+          analysisType: promptId ? 'prompt' : 'manual'
+        });
+
         // 创建一个loading状态的分析
         const loadingAnalysis = {
           type: "custom" as const,
-          title: title || "AI 分析",
+          title: friendlyTitle,
           content: "",
           prompt: analysisInstruction,
           promptId,
@@ -243,6 +263,25 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
               },
               body: JSON.stringify({
                 analysis_instruction: analysisInstruction, // 用户的分析指令
+                // 移除硬编码的语言检测，让后端从用户设置获取
+                // output_language 参数现在是可选的，后端会自动从用户设置获取
+                // 如果前端需要覆盖用户设置，可以传递这个参数
+                // output_language: (() => {
+                //   try {
+                //     const locale = detectLocale();
+                //     const outputLang = locale === 'en' ? 'English' : 'Chinese';
+                //     console.log('🌐 语言检测详情:', { 
+                //       locale, 
+                //       outputLang,
+                //       navigatorLanguage: typeof navigator !== 'undefined' ? navigator.language : 'N/A',
+                //       storedLanguage: typeof localStorage !== 'undefined' ? localStorage.getItem('preferred-language') : 'N/A'
+                //     });
+                //     return outputLang;
+                //   } catch (error) {
+                //     console.error('❌ 语言检测失败，使用默认值 English:', error);
+                //     return 'English'; // 出错时使用英文作为默认值
+                //   }
+                // })(),
               }),
             },
           );
@@ -279,27 +318,32 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
             if (updateTimer) {
               clearTimeout(updateTimer);
             }
-            
+
             // 检查是否是 JSONL 格式
-            const isJsonlContent = content.trim().split('\n').some(line => {
-              const trimmed = line.trim();
-              if (!trimmed) return false;
-              try {
-                const parsed = JSON.parse(trimmed);
-                return (parsed.t || parsed.type) && (parsed.c || parsed.content);
-              } catch {
-                return false;
-              }
-            });
+            const isJsonlContent = content
+              .trim()
+              .split("\n")
+              .some((line) => {
+                const trimmed = line.trim();
+                if (!trimmed) return false;
+                try {
+                  const parsed = JSON.parse(trimmed);
+                  return (
+                    (parsed.t || parsed.type) && (parsed.c || parsed.content)
+                  );
+                } catch {
+                  return false;
+                }
+              });
 
             if (isJsonlContent) {
               // 对于 JSONL 内容，检查是否有完整的新行
-              const lines = content.trim().split('\n');
+              const lines = content.trim().split("\n");
               const lastLine = lines[lines.length - 1]?.trim();
-              
+
               try {
                 // 如果最后一行是完整的 JSON，立即更新
-                if (lastLine && lastLine.endsWith('}')) {
+                if (lastLine && lastLine.endsWith("}")) {
                   JSON.parse(lastLine);
                   // 立即更新，无防抖
                   updateAnalysis(targetAnalysis.id, { content });
@@ -308,7 +352,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
               } catch {
                 // 最后一行不是完整的 JSON，使用短防抖
               }
-              
+
               // 使用短防抖（10ms）用于 JSONL
               updateTimer = setTimeout(() => {
                 updateAnalysis(targetAnalysis.id, { content });
@@ -476,20 +520,27 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
         const { generateAnalysis } = get();
 
         if (selectedPrompt) {
-          // 使用选择的prompt
+          // 使用选择的prompt - 标题显示prompt名称
           await generateAnalysis(
             contentId,
             selectedPrompt.content, // 分析指令
             selectedPrompt.id,
-            selectedPrompt.name,
+            selectedPrompt.name, // 传入prompt名称作为title
           );
         } else {
-          // 直接使用内容作为自由对话
+          // 直接使用内容作为自由对话 - 智能生成标题
+          const smartTitle = isQuestion(content) 
+            ? formatQuestionTitle(content)
+            : generateFriendlyTitle({
+                userInput: content,
+                analysisType: 'manual'
+              });
+
           await generateAnalysis(
             contentId,
             content, // 用户输入的内容作为分析指令
             undefined,
-            content, // 标题显示用户问题
+            smartTitle, // 使用智能生成的标题
           );
         }
       },
@@ -535,15 +586,27 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
           setGenerating,
           setError,
           markPromptAsUsed,
+          enabledPrompts,
         } = get();
 
         // 标记prompt为已使用
         markPromptAsUsed(promptId);
 
+        // 智能生成用户友好的标题
+        const promptName = enabledPrompts.find(p => p.id === promptId)?.name;
+        
+        const friendlyTitle = generateFriendlyTitle({
+          userInput: analysisInstruction,
+          promptName: promptName,
+          promptId: promptId,
+          originalTitle: title,
+          analysisType: 'prompt'
+        });
+
         // 创建一个loading状态的分析
         const loadingAnalysis = {
           type: "custom" as const,
-          title: title || "AI 分析",
+          title: friendlyTitle,
           content: "",
           prompt: analysisInstruction,
           promptId,
@@ -614,27 +677,32 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
             if (updateTimer) {
               clearTimeout(updateTimer);
             }
-            
+
             // 检查是否是 JSONL 格式
-            const isJsonlContent = content.trim().split('\n').some(line => {
-              const trimmed = line.trim();
-              if (!trimmed) return false;
-              try {
-                const parsed = JSON.parse(trimmed);
-                return (parsed.t || parsed.type) && (parsed.c || parsed.content);
-              } catch {
-                return false;
-              }
-            });
+            const isJsonlContent = content
+              .trim()
+              .split("\n")
+              .some((line) => {
+                const trimmed = line.trim();
+                if (!trimmed) return false;
+                try {
+                  const parsed = JSON.parse(trimmed);
+                  return (
+                    (parsed.t || parsed.type) && (parsed.c || parsed.content)
+                  );
+                } catch {
+                  return false;
+                }
+              });
 
             if (isJsonlContent) {
               // 对于 JSONL 内容，检查是否有完整的新行
-              const lines = content.trim().split('\n');
+              const lines = content.trim().split("\n");
               const lastLine = lines[lines.length - 1]?.trim();
-              
+
               try {
                 // 如果最后一行是完整的 JSON，立即更新
-                if (lastLine && lastLine.endsWith('}')) {
+                if (lastLine && lastLine.endsWith("}")) {
                   JSON.parse(lastLine);
                   // 立即更新，无防抖
                   updateAnalysis(targetAnalysis.id, { content });
@@ -643,7 +711,7 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
               } catch {
                 // 最后一行不是完整的 JSON，使用短防抖
               }
-              
+
               // 使用短防抖（10ms）用于 JSONL
               updateTimer = setTimeout(() => {
                 updateAnalysis(targetAnalysis.id, { content });

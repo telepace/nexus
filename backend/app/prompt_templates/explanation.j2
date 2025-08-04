@@ -141,3 +141,10 @@ Provide your explanation in the following JSON structure:
 {% if selected_text %}
 - Give special attention to explaining the selected text in detail
 {% endif %}
+
+# Output Language
+{% if output_language %}
+Output should be returned in {{ output_language }}.
+{% else %}
+Your output language must be English.
+{% endif %}

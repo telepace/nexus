@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { useRouter } from "next/navigation";
-import ContentLibraryPage from "@/app/content-library/page";
+import ContentLibraryPage from "@/app/[locale]/(withSidebar)/content-library/page";
 import { useAuth } from "@/lib/client-auth";
 
 // Mock dependencies
@@ -15,20 +15,22 @@ jest.mock("@/lib/client-auth", () => ({
 // Mock the scrollTo function for JSDOM
 HTMLDivElement.prototype.scrollTo = jest.fn();
 
-// Mock MainLayout
-jest.mock("@/components/layout/MainLayout", () => {
-  return function MockMainLayout({
-    children,
-    pageTitle,
-  }: { children: React.ReactNode; pageTitle?: string }) {
-    return (
-      <div data-testid="main-layout" data-page-title={pageTitle}>
-        <div data-testid="sidebar">Sidebar</div>
-        {children}
-      </div>
-    );
-  };
-});
+// Mock WithSidebar layout
+jest.mock("@/components/layout/AppSidebar", () => ({
+  AppSidebar: ({ onSettingsClick, onAddContentClick }: any) => (
+    <div data-testid="sidebar">Sidebar</div>
+  ),
+}));
+
+// Mock SidebarProvider and SidebarInset
+jest.mock("@/components/ui/sidebar", () => ({
+  SidebarProvider: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="sidebar-provider">{children}</div>
+  ),
+  SidebarInset: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="sidebar-inset">{children}</div>
+  ),
+}));
 
 // Mock useContentEvents hook
 jest.mock("@/hooks/useContentEvents", () => ({
@@ -105,12 +107,14 @@ describe("ContentLibraryPage", () => {
     jest.clearAllMocks();
   });
 
-  it("should render with MainLayout and sidebar", async () => {
+  it("should render content library page", async () => {
     render(<ContentLibraryPage />);
 
     await waitFor(() => {
-      expect(screen.getByTestId("main-layout")).toBeInTheDocument();
-      expect(screen.getByTestId("sidebar")).toBeInTheDocument();
+      // Check that the page header with "Library" is rendered
+      expect(screen.getByText("Library")).toBeInTheDocument();
+      // Check that the main content area is rendered
+      expect(screen.getByText("Test Document")).toBeInTheDocument();
     });
   });
 

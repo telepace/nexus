@@ -102,10 +102,14 @@ def test_tag_matching():
 
     print("\n=== 标签匹配测试 ===")
     for i, ai_tags in enumerate(test_cases, 1):
-        matched = tag_manager.filter_and_match_preset_tags(ai_tags)
+        # 测试中文输出（默认）
+        matched_zh = tag_manager.filter_and_match_preset_tags(ai_tags, "zh")
+        # 测试英文输出
+        matched_en = tag_manager.filter_and_match_preset_tags(ai_tags, "en")
         print(f"\n测试 {i}:")
         print(f"  输入: {ai_tags}")
-        print(f"  匹配: {matched}")
+        print(f"  中文匹配: {matched_zh}")
+        print(f"  英文匹配: {matched_en}")
 
 
 def main():

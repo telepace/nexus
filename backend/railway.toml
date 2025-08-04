@@ -1,0 +1,50 @@
+# Railway Backend Service Configuration
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+restartPolicyType = "always"
+healthcheckPath = "/api/v1/utils/health-check/"
+healthcheckTimeout = 100
+startCommand = "uv run fastapi run --host 0.0.0.0 --port $PORT --workers 4 app/main.py"
+
+# Backend specific environment variables
+[env]
+# FastAPI settings
+ENVIRONMENT = "production"
+BACKEND_CORS_ORIGINS = "https://${{ frontend.RAILWAY_PUBLIC_DOMAIN }},https://${{ admin.RAILWAY_PUBLIC_DOMAIN }}"
+
+# Database connection (Railway PostgreSQL)
+POSTGRES_SERVER = "${{ POSTGRES.RAILWAY_PRIVATE_DOMAIN }}"
+POSTGRES_PORT = "${{ POSTGRES.RAILWAY_PORT }}"
+POSTGRES_DB = "${{ POSTGRES.PGDATABASE }}"
+POSTGRES_USER = "${{ POSTGRES.PGUSER }}"
+POSTGRES_PASSWORD = "${{ POSTGRES.PGPASSWORD }}"
+
+# Redis connection (Railway Redis)
+REDIS_HOST = "${{ REDIS.RAILWAY_PRIVATE_DOMAIN }}"
+REDIS_PORT = "${{ REDIS.RAILWAY_PORT }}"
+REDIS_DB = "0"
+REDIS_PASSWORD = "${{ REDIS.REDIS_PASSWORD }}"
+REDIS_TTL_SECONDS = "86400"
+REDIS_ENABLED = "true"
+
+# Application secrets
+SECRET_KEY = "${{ SECRET_KEY }}"
+FIRST_SUPERUSER = "${{ FIRST_SUPERUSER }}"
+FIRST_SUPERUSER_PASSWORD = "${{ FIRST_SUPERUSER_PASSWORD }}"
+
+# External services
+OPENAI_API_KEY = "${{ OPENAI_API_KEY }}"
+OPENAI_BASE_URL = "${{ OPENAI_BASE_URL }}"
+SUPABASE_URL = "${{ SUPABASE_URL }}"
+SUPABASE_ANON_KEY = "${{ SUPABASE_ANON_KEY }}"
+SENTRY_DSN = "${{ SENTRY_DSN }}"
+
+# Email configuration
+SMTP_HOST = "${{ SMTP_HOST }}"
+SMTP_USER = "${{ SMTP_USER }}"
+SMTP_PASSWORD = "${{ SMTP_PASSWORD }}"
+EMAILS_FROM_EMAIL = "${{ EMAILS_FROM_EMAIL }}"

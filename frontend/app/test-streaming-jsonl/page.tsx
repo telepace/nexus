@@ -4,20 +4,24 @@ import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { StreamingJsonlRenderer } from "@/components/ui/StreamingJsonlRenderer";
-import { JsonlRenderer } from "@/components/ui/JsonlRenderer";
 import { Separator } from "@/components/ui/separator";
 import { Play, Pause, RotateCcw, Zap } from "lucide-react";
 
-export default function TestStreamingJsonlPage() {
-  const [streamingContent, setStreamingContent] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamSpeed, setStreamSpeed] = useState(100); // ms per character
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const contentIndexRef = useRef(0);
+// 动态导入组件，避免预渲染问题
+import dynamic from "next/dynamic";
 
-  // 模拟的 JSONL 数据
-  const sampleJsonlData = `{"t":"h2","c":"核心观点"}
+const StreamingJsonlRenderer = dynamic(
+  () => import("@/components/ui/StreamingJsonlRenderer").then(mod => ({ default: mod.StreamingJsonlRenderer })),
+  { ssr: false }
+);
+
+const JsonlRenderer = dynamic(
+  () => import("@/components/ui/JsonlRenderer").then(mod => ({ default: mod.JsonlRenderer })),
+  { ssr: false }
+);
+
+// 将组件数据移到组件外部，避免预渲染时的状态问题
+const sampleJsonlData = `{"t":"h2","c":"核心观点"}
 {"t":"insight","c":"类似NotebookLM的RAG系统通过文档解析、文本分块和来源映射技术，实现从多样化文档中提取信息并确保答案可追溯","ref":"2,3,4"}
 {"t":"insight","c":"开源替代方案在文档处理流程上各有侧重，但与商业产品在成熟度上仍有差距","ref":"18,20,29"}
 {"t":"h2","c":"主要内容"}
@@ -30,25 +34,58 @@ export default function TestStreamingJsonlPage() {
 {"t":"list","c":"多种分块策略：Token级分块、句子级分块、语义分块、递归分块、混合分块、自适应分块"}
 {"t":"action","c":"建议开发者评估不同开源方案的成熟度和维护状态，选择最适合自己需求的技术栈"}`;
 
+export default function TestStreamingJsonlPage() {
+  const [streamingContent, setStreamingContent] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamSpeed, setStreamSpeed] = useState(100); // ms per character
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const contentIndexRef = useRef(0);
+  const [currentIndex, setCurrentIndex] = useState(0); // 添加状态来跟踪进度
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div className="container mx-auto p-6 space-y-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            流式 JSONL 渲染器测试
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            加载中...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const startStreaming = () => {
     if (isStreaming) return;
-    
+
     setIsStreaming(true);
     contentIndexRef.current = 0;
+    setCurrentIndex(0);
     setStreamingContent("");
 
     intervalRef.current = setInterval(() => {
-      const currentIndex = contentIndexRef.current;
-      if (currentIndex >= sampleJsonlData.length) {
+      const currentIdx = contentIndexRef.current;
+      if (currentIdx >= sampleJsonlData.length) {
         stopStreaming();
         return;
       }
 
       // 模拟流式传输：每次添加几个字符
-      const nextIndex = Math.min(currentIndex + Math.random() * 10 + 1, sampleJsonlData.length);
+      const nextIndex = Math.min(
+        currentIdx + Math.random() * 10 + 1,
+        sampleJsonlData.length,
+      );
       const newContent = sampleJsonlData.slice(0, nextIndex);
       setStreamingContent(newContent);
       contentIndexRef.current = nextIndex;
+      setCurrentIndex(nextIndex);
     }, streamSpeed);
   };
 
@@ -64,12 +101,14 @@ export default function TestStreamingJsonlPage() {
     stopStreaming();
     setStreamingContent("");
     contentIndexRef.current = 0;
+    setCurrentIndex(0);
   };
 
   const fastStream = () => {
     stopStreaming();
     setStreamingContent(sampleJsonlData);
     contentIndexRef.current = sampleJsonlData.length;
+    setCurrentIndex(sampleJsonlData.length);
   };
 
   useEffect(() => {
@@ -79,6 +118,15 @@ export default function TestStreamingJsonlPage() {
       }
     };
   }, []);
+
+  // 安全获取当前进度，避免预渲染时的错误
+  const getCurrentProgress = () => {
+    return typeof window !== 'undefined' ? currentIndex : 0;
+  };
+
+  const getTotalLength = () => {
+    return sampleJsonlData?.length || 0;
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-8">
@@ -94,9 +142,7 @@ export default function TestStreamingJsonlPage() {
       {/* 控制面板 */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            🎮 控制面板
-          </CardTitle>
+          <CardTitle className="flex items-center gap-2">🎮 控制面板</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
@@ -109,7 +155,7 @@ export default function TestStreamingJsonlPage() {
               <Play className="h-4 w-4 mr-2" />
               开始流式传输
             </Button>
-            
+
             <Button
               onClick={stopStreaming}
               disabled={!isStreaming}
@@ -120,20 +166,12 @@ export default function TestStreamingJsonlPage() {
               暂停
             </Button>
 
-            <Button
-              onClick={resetStream}
-              variant="outline"
-              size="sm"
-            >
+            <Button onClick={resetStream} variant="outline" size="sm">
               <RotateCcw className="h-4 w-4 mr-2" />
               重置
             </Button>
 
-            <Button
-              onClick={fastStream}
-              variant="secondary"
-              size="sm"
-            >
+            <Button onClick={fastStream} variant="secondary" size="sm">
               <Zap className="h-4 w-4 mr-2" />
               立即完成
             </Button>
@@ -156,7 +194,7 @@ export default function TestStreamingJsonlPage() {
           </div>
 
           <div className="text-sm text-muted-foreground">
-            进度: {contentIndexRef.current} / {sampleJsonlData.length} 字符
+            进度: {getCurrentProgress()} / {getTotalLength()} 字符
             {isStreaming && " (正在传输...)"}
           </div>
         </CardContent>
@@ -179,6 +217,7 @@ export default function TestStreamingJsonlPage() {
                 isLoading={isStreaming}
                 showStreamingIndicator={true}
                 enableHoverEffects={true}
+                contentId="test-streaming-jsonl"
               />
             </div>
           </CardContent>
@@ -197,6 +236,7 @@ export default function TestStreamingJsonlPage() {
               <JsonlRenderer
                 content={streamingContent}
                 enableHoverEffects={true}
+                showReferenceIndicators={false}
               />
             </div>
           </CardContent>
@@ -217,6 +257,7 @@ export default function TestStreamingJsonlPage() {
               isLoading={false}
               showStreamingIndicator={false}
               enableHoverEffects={true}
+              contentId="test-streaming-jsonl-complete"
             />
           </div>
         </CardContent>
@@ -235,4 +276,4 @@ export default function TestStreamingJsonlPage() {
       </Card>
     </div>
   );
-} 
+}

@@ -1,0 +1,51 @@
+{
+  "analysis": {
+    "title": "AI 分析",
+    "analyzing": "正在分析内容...",
+    "summary": "总结",
+    "keyPoints": "要点",
+    "insights": "洞察",
+    "regenerate": "重新生成分析",
+    "expand": "展开讨论",
+    "noAnalysis": "暂无分析结果", 
+    "analysisError": "分析生成失败",
+    "analysisComplete": "分析完成"
+  },
+  "chat": {
+    "placeholder": "针对此内容提问...",
+    "send": "发送",
+    "thinking": "AI 正在思考中...",
+    "noMessages": "暂无消息",
+    "startConversation": "开始对话",
+    "conversationHistory": "对话历史",
+    "newConversation": "新对话"
+  },
+  "prompts": {
+    "title": "AI 提示词",
+    "custom": "自定义提示词",
+    "preset": "预设提示词",
+    "favorite": "收藏的提示词",
+    "createPrompt": "创建提示词",
+    "editPrompt": "编辑提示词",
+    "deletePrompt": "删除提示词",
+    "promptName": "提示词名称",
+    "promptContent": "提示词内容",
+    "promptDescription": "描述",
+    "savePrompt": "保存提示词",
+    "usePrompt": "使用提示词"
+  },
+  "processing": {
+    "queued": "排队处理中",
+    "inProgress": "处理中",
+    "completed": "处理完成",
+    "failed": "处理失败",
+    "retrying": "重试中...",
+    "estimatedTime": "预计时间"
+  },
+  "models": {
+    "selectModel": "选择 AI 模型",
+    "currentModel": "当前模型",
+    "switchModel": "切换模型",
+    "modelSettings": "模型设置"
+  }
+}

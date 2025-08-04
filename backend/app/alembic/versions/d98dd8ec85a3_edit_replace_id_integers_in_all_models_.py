@@ -10,13 +10,11 @@ import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
 from sqlalchemy.dialects import postgresql
 
-
 # revision identifiers, used by Alembic.
 revision = 'd98dd8ec85a3'
 down_revision = '9c0a54914c78'
 branch_labels = None
 depends_on = None
-
 
 def upgrade():
     # Ensure uuid-ossp extension is available

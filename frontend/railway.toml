@@ -1,0 +1,16 @@
+# Railway Frontend Service Configuration
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+restartPolicyType = "always"
+startCommand = "pnpm start"
+
+# Frontend specific environment variables
+[env]
+# API connection
+VITE_API_URL = "https://${{ backend.RAILWAY_PUBLIC_DOMAIN }}"
+NODE_ENV = "production"
+ENVIRONMENT = "production"

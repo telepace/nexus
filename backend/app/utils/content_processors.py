@@ -1005,7 +1005,7 @@ class FirecrawlProcessor(ProcessingStep):
         """恢复原始环境变量"""
         import os
 
-        if hasattr(self, '_original_env'):
+        if hasattr(self, "_original_env"):
             # 恢复原始环境变量
             for var, value in self._original_env.items():
                 os.environ[var] = value
@@ -1039,11 +1039,16 @@ class FirecrawlProcessor(ProcessingStep):
                 try:
                     if attempt > 0:
                         import time
-                        delay = min(2 ** attempt, 10)  # 指数退避，最大10秒
-                        logger.info(f"🔄 Firecrawl 重试第 {attempt + 1} 次，等待 {delay} 秒...")
+
+                        delay = min(2**attempt, 10)  # 指数退避，最大10秒
+                        logger.info(
+                            f"🔄 Firecrawl 重试第 {attempt + 1} 次，等待 {delay} 秒..."
+                        )
                         time.sleep(delay)
 
-                    response = app.scrape_url(url=content_item.source_uri, params=params)
+                    response = app.scrape_url(
+                        url=content_item.source_uri, params=params
+                    )
 
                     # 如果成功，跳出重试循环
                     if response and isinstance(response, dict):
@@ -1054,11 +1059,21 @@ class FirecrawlProcessor(ProcessingStep):
                     error_str = str(e)
 
                     # 检查是否是网络连接问题
-                    if any(keyword in error_str.lower() for keyword in [
-                        "connection reset", "connection aborted", "connection refused",
-                        "timeout", "network", "proxy", "ssl"
-                    ]):
-                        logger.warning(f"🔧 Firecrawl 网络错误 (尝试 {attempt + 1}/{self.max_retries}): {error_str}")
+                    if any(
+                        keyword in error_str.lower()
+                        for keyword in [
+                            "connection reset",
+                            "connection aborted",
+                            "connection refused",
+                            "timeout",
+                            "network",
+                            "proxy",
+                            "ssl",
+                        ]
+                    ):
+                        logger.warning(
+                            f"🔧 Firecrawl 网络错误 (尝试 {attempt + 1}/{self.max_retries}): {error_str}"
+                        )
                         if attempt < self.max_retries - 1:
                             continue
                     else:
@@ -1155,8 +1170,13 @@ class FirecrawlProcessor(ProcessingStep):
             result.success = False
 
             # 分析错误类型并提供具体建议
-            if "connection reset" in error_str.lower() or "connection aborted" in error_str.lower():
-                result.error_message = f"Firecrawl 网络连接被重置，可能是代理或网络配置问题: {error_str}"
+            if (
+                "connection reset" in error_str.lower()
+                or "connection aborted" in error_str.lower()
+            ):
+                result.error_message = (
+                    f"Firecrawl 网络连接被重置，可能是代理或网络配置问题: {error_str}"
+                )
                 result.metadata = {
                     "processor": "firecrawl",
                     "error_type": "connection_reset",
@@ -1165,8 +1185,8 @@ class FirecrawlProcessor(ProcessingStep):
                     "suggestions": [
                         "检查网络代理配置",
                         "验证 Firecrawl API 服务状态",
-                        "尝试使用其他处理器作为备用方案"
-                    ]
+                        "尝试使用其他处理器作为备用方案",
+                    ],
                 }
             elif "timeout" in error_str.lower():
                 result.error_message = f"Firecrawl API 请求超时: {error_str}"
@@ -1756,7 +1776,9 @@ class ProcessingPipeline:
                 logger.warning(f"⚠️  首选处理器 {preferred_processor} 初始化失败: {e}")
 
         # 无论如何，都要确保有MarkItDown处理器来处理通用内容
-        markitdown_exists = any(isinstance(step, MarkItDownProcessor) for step in self.steps)
+        markitdown_exists = any(
+            isinstance(step, MarkItDownProcessor) for step in self.steps
+        )
         if not markitdown_exists:
             try:
                 logger.info("📝 添加 MarkItDownProcessor 作为通用处理器")
@@ -1970,8 +1992,10 @@ class ProcessingPipeline:
             # 这里使用通用分析模型作为自动分析的默认模型
             chat_service = ChatService()
             analysis_model = chat_service.get_model_for_template("user_analysis.j2")
-            
-            logger.info(f"Using model '{analysis_model}' for auto analysis conversation")
+
+            logger.info(
+                f"Using model '{analysis_model}' for auto analysis conversation"
+            )
 
             # 创建自动分析对话
             conversation = AIConversation(

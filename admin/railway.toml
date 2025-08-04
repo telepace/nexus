@@ -1,0 +1,19 @@
+# Railway Admin Service Configuration
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+restartPolicyType = "always"
+startCommand = "nginx -g 'daemon off;'"
+
+# Admin specific environment variables
+[env]
+# API connection
+VITE_API_URL = "https://${{ backend.RAILWAY_PUBLIC_DOMAIN }}"
+VITE_ADMIN_API_URL = "https://${{ backend.RAILWAY_PUBLIC_DOMAIN }}"
+VITE_DOMAIN = "${{ RAILWAY_PUBLIC_DOMAIN }}"
+VITE_PROJECT_NAME = "nexus"
+VITE_ENVIRONMENT = "production"
+NODE_ENV = "production"

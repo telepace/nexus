@@ -520,7 +520,7 @@ frontend: check-pnpm frontend-install check-frontend-env
 frontend-build: check-pnpm frontend-install
 	@echo "===========> Building frontend for production"
 	@if [ -d "$(FRONTEND_DIR)" ] && [ -f "$(FRONTEND_DIR)/package.json" ]; then \
-		cd $(FRONTEND_DIR) && npm run build; \
+		cd $(FRONTEND_DIR) && $(PNPM) run build; \
 	else \
 		echo "Warning: Frontend directory or package.json not found at $(FRONTEND_DIR)"; \
 	fi

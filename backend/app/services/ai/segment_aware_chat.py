@@ -157,8 +157,12 @@ class SegmentAwareChatService:
         self, references: list[dict[str, Any]], available_segments: list[Segment]
     ) -> list[dict[str, Any]]:
         """Validate and clean segment references."""
-        available_segment_numbers = {segment.display_number for segment in available_segments}
-        segment_number_to_id = {segment.display_number: str(segment.id) for segment in available_segments}
+        available_segment_numbers = {
+            segment.display_number for segment in available_segments
+        }
+        segment_number_to_id = {
+            segment.display_number: str(segment.id) for segment in available_segments
+        }
         validated_references = []
 
         for ref in references:
@@ -180,8 +184,7 @@ class SegmentAwareChatService:
 
             if isinstance(segment_numbers, list):
                 valid_segment_numbers = [
-                    num for num in segment_numbers
-                    if num in available_segment_numbers
+                    num for num in segment_numbers if num in available_segment_numbers
                 ]
 
                 if valid_segment_numbers:  # Only include if has valid segments
@@ -189,7 +192,10 @@ class SegmentAwareChatService:
                         {
                             "sentence_index": ref.get("sentence_index", 0),
                             "segment_numbers": valid_segment_numbers,
-                            "segment_ids": [segment_number_to_id[num] for num in valid_segment_numbers],
+                            "segment_ids": [
+                                segment_number_to_id[num]
+                                for num in valid_segment_numbers
+                            ],
                             "relevance_score": ref.get("relevance_score", 0.5),
                         }
                     )
