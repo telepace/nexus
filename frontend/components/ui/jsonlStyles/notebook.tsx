@@ -14,6 +14,7 @@ interface ActionCardProps {
   MarkdownRenderer: typeof MarkdownRenderer;
   EnhancedReferenceIndicator: typeof EnhancedReferenceIndicator;
   contentId?: string;
+  disableInlineReferences?: boolean;
 }
 
 const ActionCard: React.FC<ActionCardProps> = ({
@@ -25,6 +26,7 @@ const ActionCard: React.FC<ActionCardProps> = ({
   MarkdownRenderer,
   EnhancedReferenceIndicator,
   contentId,
+  disableInlineReferences = false,
 }) => {
   const [isCardHovered, setIsCardHovered] = useState(false);
 
@@ -51,10 +53,9 @@ const ActionCard: React.FC<ActionCardProps> = ({
         <MarkdownRenderer 
           content={String(c)} 
           inline={true} 
-          ref={hasReferences ? references.join(',') : undefined}
-          refVariant="badge"
           contentId={contentId}
           enableEnhancedTooltip={!!contentId}
+          disableInlineReferences={disableInlineReferences}
         />
       </div>
     </div>
@@ -71,6 +72,7 @@ interface ParagraphCardProps {
   MarkdownRenderer: typeof MarkdownRenderer;
   EnhancedReferenceIndicator: typeof EnhancedReferenceIndicator;
   contentId?: string;
+  disableInlineReferences?: boolean;
 }
 
 const ParagraphCard: React.FC<ParagraphCardProps> = ({
@@ -82,6 +84,7 @@ const ParagraphCard: React.FC<ParagraphCardProps> = ({
   MarkdownRenderer,
   EnhancedReferenceIndicator,
   contentId,
+  disableInlineReferences = false,
 }) => {
   const [isCardHovered, setIsCardHovered] = useState(false);
 
@@ -108,8 +111,6 @@ const ParagraphCard: React.FC<ParagraphCardProps> = ({
         <MarkdownRenderer 
           content={finalContent} 
           inline={true}
-          ref={hasReferences ? references.join(',') : undefined}
-          refVariant="minimal"
           className="text-sm text-neutral-800 [&_strong]:text-neutral-800 [&_strong]:font-black leading-relaxed"
           contentId={contentId}
           enableEnhancedTooltip={!!contentId}
@@ -127,6 +128,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
   EnhancedReferenceIndicator,
   onExpand,
   contentId,
+  disableInlineReferences = false,
 }) => {
   const type = (block["type"] || block["t"]) as string | undefined;
   const c = (block["content"] ?? block["c"]) as React.ReactNode;
@@ -145,12 +147,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
             <MarkdownRenderer 
               content={String(c)} 
               inline={true} 
-              ref={hasReferences ? references.join(',') : undefined}
-              refVariant="inline"
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
-              contentId={contentId}
-              enableEnhancedTooltip={!!contentId}
+              disableInlineReferences={disableInlineReferences}
             />
           </span>
         </div>
@@ -173,12 +172,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
             <MarkdownRenderer 
               content={String(c)} 
               inline={true} 
-              ref={hasReferences ? references.join(',') : undefined}
-              refVariant="inline"
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
-              contentId={contentId}
-              enableEnhancedTooltip={!!contentId}
+              disableInlineReferences={disableInlineReferences}
             />
           </span>
         </div>
@@ -201,12 +197,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
             <MarkdownRenderer 
               content={String(c)} 
               inline={true} 
-              ref={hasReferences ? references.join(',') : undefined}
-              refVariant="inline"
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
-              contentId={contentId}
-              enableEnhancedTooltip={!!contentId}
+              disableInlineReferences={disableInlineReferences}
             />
           </span>
         </div>
@@ -229,12 +222,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
             <MarkdownRenderer 
               content={String(c)} 
               inline={true} 
-              ref={hasReferences ? references.join(',') : undefined}
-              refVariant="inline"
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
-              contentId={contentId}
-              enableEnhancedTooltip={!!contentId}
+              disableInlineReferences={disableInlineReferences}
             />
           </span>
         </div>
@@ -257,12 +247,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
             <MarkdownRenderer 
               content={String(c)} 
               inline={true} 
-              ref={hasReferences ? references.join(',') : undefined}
-              refVariant="inline"
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
-              contentId={contentId}
-              enableEnhancedTooltip={!!contentId}
+              disableInlineReferences={disableInlineReferences}
             />
           </span>
         </div>
@@ -285,12 +272,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
             <MarkdownRenderer 
               content={String(c)} 
               inline={true} 
-              ref={hasReferences ? references.join(',') : undefined}
-              refVariant="inline"
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
-              contentId={contentId}
-              enableEnhancedTooltip={!!contentId}
+              disableInlineReferences={disableInlineReferences}
             />
           </span>
         </div>
@@ -316,11 +300,10 @@ export const notebookStyleRenderer: StyleRenderer = ({
             <div className="italic text-neutral-700 text-base" style={{ lineHeight: '1.5' }}>
               <MarkdownRenderer 
                 content={String(c)} 
-                inline={true} 
-                ref={hasReferences ? references.join(',') : undefined}
-                refVariant="minimal"
+                inline={true}
                 contentId={contentId}
                 enableEnhancedTooltip={!!contentId}
+                disableInlineReferences={disableInlineReferences}
               />
             </div>
             {ref && (
@@ -367,6 +350,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
                     inline={true}
                     contentId={contentId}
                     enableEnhancedTooltip={!!contentId}
+                    disableInlineReferences={disableInlineReferences}
                   />
                 </span>
               </li>
@@ -377,10 +361,6 @@ export const notebookStyleRenderer: StyleRenderer = ({
               <MarkdownRenderer 
                 content=""
                 inline={true}
-                ref={references.join(',')}
-                refVariant="minimal"
-                contentId={contentId}
-                enableEnhancedTooltip={!!contentId}
               />
             </div>
           )}
@@ -424,13 +404,10 @@ export const notebookStyleRenderer: StyleRenderer = ({
             <span className="text-base" style={{ lineHeight: '1.5' }}>
               <MarkdownRenderer 
                 content={String(c)} 
-                inline={true} 
-                ref={hasReferences ? references.join(',') : undefined}
-                refVariant="badge"
+                inline={true}
                 contentId={contentId}
                 enableEnhancedTooltip={!!contentId}
-                contentId={contentId}
-                enableEnhancedTooltip={!!contentId}
+                disableInlineReferences={disableInlineReferences}
               />
             </span>
           </div>
@@ -454,13 +431,10 @@ export const notebookStyleRenderer: StyleRenderer = ({
             <span className="text-base leading-loose">
               <MarkdownRenderer 
                 content={String(c)} 
-                inline={true} 
-                ref={hasReferences ? references.join(',') : undefined}
-                refVariant="badge"
+                inline={true}
                 contentId={contentId}
                 enableEnhancedTooltip={!!contentId}
-                contentId={contentId}
-                enableEnhancedTooltip={!!contentId}
+                disableInlineReferences={disableInlineReferences}
               />
             </span>
           </div>
@@ -516,10 +490,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
                   <MarkdownRenderer 
                     content=""
                     inline={true}
-                    ref={references.join(',')}
-                    refVariant="minimal"
                     contentId={contentId}
                     enableEnhancedTooltip={!!contentId}
+                    disableInlineReferences={disableInlineReferences}
                   />
                 </div>
               )}
@@ -547,6 +520,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
           MarkdownRenderer={MarkdownRenderer}
           EnhancedReferenceIndicator={EnhancedReferenceIndicator}
           contentId={contentId}
+          disableInlineReferences={disableInlineReferences}
         />
       );
 
@@ -571,6 +545,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
           MarkdownRenderer={MarkdownRenderer}
           EnhancedReferenceIndicator={EnhancedReferenceIndicator}
           contentId={contentId}
+          disableInlineReferences={disableInlineReferences}
         />
       );
 

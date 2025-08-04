@@ -87,7 +87,9 @@
       "Bash(gtimeout 60 npm run build)",
       "Bash(npx next lint:*)",
       "Bash(yarn tsc:*)",
-      "Bash(npx next build:*)"
+      "Bash(npx next build:*)",
+      "WebFetch(domain:localhost)",
+      "Bash(pnpm install:*)"
     ]
   },
   "enableAllProjectMcpServers": false

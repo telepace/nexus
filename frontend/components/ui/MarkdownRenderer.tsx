@@ -36,6 +36,8 @@ interface MarkdownRendererProps {
   contentId?: string;
   /** 是否启用增强的tooltip功能 */
   enableEnhancedTooltip?: boolean;
+  /** 🎯 禁用内联引用自动处理（用于JsonlRenderer环境） */
+  disableInlineReferences?: boolean;
 }
 
 export function MarkdownRenderer({
@@ -47,6 +49,7 @@ export function MarkdownRenderer({
   onReferenceClick,
   contentId,
   enableEnhancedTooltip = true,
+  disableInlineReferences = false,
 }: MarkdownRendererProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -211,9 +214,25 @@ export function MarkdownRenderer({
             </h4>
           ),
           p: ({ children, ...props }) => {
-            // 🎯 处理段落中的内联引用
-            if (typeof children === 'string') {
-              const processedChildren = processInlineReferences(children, contentId, 'elegant');
+            // 🎯 处理段落中的内联引用（如果未禁用）
+            if (!disableInlineReferences) {
+              if (typeof children === 'string') {
+                const processedChildren = processInlineReferences(children, contentId, 'elegant');
+                return (
+                  <p className="leading-6 mt-3" {...props}>
+                    {processedChildren}
+                  </p>
+                );
+              }
+              
+              // 处理复杂子元素中的引用
+              const processedChildren = React.Children.map(children, (child) => {
+                if (typeof child === 'string') {
+                  return processInlineReferences(child, contentId, 'elegant');
+                }
+                return child;
+              });
+              
               return (
                 <p className="leading-6 mt-3" {...props}>
                   {processedChildren}
@@ -221,17 +240,10 @@ export function MarkdownRenderer({
               );
             }
             
-            // 处理复杂子元素中的引用
-            const processedChildren = React.Children.map(children, (child) => {
-              if (typeof child === 'string') {
-                return processInlineReferences(child, contentId, 'elegant');
-              }
-              return child;
-            });
-            
+            // 🎯 禁用内联引用处理时，直接渲染原始内容
             return (
               <p className="leading-6 mt-3" {...props}>
-                {processedChildren}
+                {children}
               </p>
             );
           },

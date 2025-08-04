@@ -8,6 +8,7 @@ import {
   EnhancedReferenceIndicator,
   useReferenceManagerSafe,
 } from "./ReferenceManager";
+import { ModernReferenceIndicator } from "./ModernReferenceIndicator";
 import { jsonlStyles } from "./jsonlStyles";
 import { ContentSkeleton } from "./ContentSkeleton";
 import { HoverableBlock } from "./HoverableBlock";
@@ -216,9 +217,10 @@ export function JsonlRenderer({
       EnhancedReferenceIndicator: ReferenceIndicatorComponent,
       onExpand: onExpandLine,
       contentId,
+      disableInlineReferences: true, // 🎯 禁用MarkdownRenderer的内联引用处理，因为JsonlRenderer统一管理引用
     });
 
-    // 🎯 使用优化的HoverableBlock组件，提供右侧操作按钮
+    // 🎯 修复：只保留展开按钮在rightActions中，移除引用指示器
     const rightActions = enableHoverEffects ? (
       <div className="flex items-center gap-2">
         {/* 展开按钮 */}
@@ -234,24 +236,6 @@ export function JsonlRenderer({
             <span className="text-xs">💭</span>
           </button>
         )}
-        
-        {/* 引用指示器 */}
-        {(references || []).length > 0 && (
-          <div className="flex gap-1">
-            {(references || []).slice(0, 3).map((refNum) => (
-              <ReferenceIndicatorComponent
-                key={refNum}
-                references={[refNum]}
-                className="w-5 h-5 text-xs"
-              />
-            ))}
-            {(references || []).length > 3 && (
-              <div className="w-5 h-5 rounded-full bg-muted text-xs flex items-center justify-center">
-                +{(references || []).length - 3}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     ) : undefined;
 
@@ -265,7 +249,22 @@ export function JsonlRenderer({
         className="my-0.5"
       >
         <div className="relative">
-          {renderResult.element}
+          {/* 🎯 修复：将引用指示器直接嵌入内容中，而不是放在rightActions */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              {renderResult.element}
+            </div>
+            
+            {/* 🎯 现代化引用指示器：点击触发，不自动悬浮 */}
+            {(references || []).length > 0 && showReferenceIndicators && (
+              <ModernReferenceIndicator
+                references={references}
+                className="ml-2 flex-shrink-0"
+                contentId={contentId}
+                onReferenceClick={onReferenceClick}
+              />
+            )}
+          </div>
         </div>
       </HoverableBlock>
     );

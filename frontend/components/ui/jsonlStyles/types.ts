@@ -20,6 +20,8 @@ export interface StyleRenderParams {
   onExpand?: (jsonContent: Record<string, unknown>) => void;
   /** 内容ID，用于增强的引用tooltip功能 */
   contentId?: string;
+  /** 🎯 禁用MarkdownRenderer的内联引用处理 */
+  disableInlineReferences?: boolean;
 }
 
 export type StyleRenderer = (params: StyleRenderParams) => StyleRenderResult;

@@ -591,16 +591,8 @@ export const EnhancedReferenceIndicator: React.FC<
               {refId}
             </button>
 
-            {/* Tooltip */}
-            {showTooltip && refInfo && (
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 w-64">
-                <div className="font-medium mb-1">引用 #{refId}</div>
-                <div className="text-gray-300 dark:text-gray-600 line-clamp-2">
-                  {refInfo.snippet}
-                </div>
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-100"></div>
-              </div>
-            )}
+            {/* 🎯 移除自动悬浮Tooltip，改为点击触发模式 */}
+            {/* 如需显示引用详情，请使用ModernReferenceIndicator组件 */}
           </div>
         );
       })}
