@@ -128,7 +128,7 @@ const PromptCard = memo(
                 className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-100 rounded-lg transition-opacity duration-200"
                 onClick={handleFavoriteClick}
               >
-                <Heart className={`h-4 w-4 ${isFavorited ? text-red-500 : text-slate-500}`} />
+                <Heart className={`h-4 w-4 ${isFavorited ? "text-red-500" : "text-slate-500"}`} />
               </button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
