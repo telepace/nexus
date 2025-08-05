@@ -89,7 +89,8 @@
       "Bash(yarn tsc:*)",
       "Bash(npx next build:*)",
       "WebFetch(domain:localhost)",
-      "Bash(pnpm install:*)"
+      "Bash(pnpm install:*)",
+      "Bash(git push:*)"
     ]
   },
   "enableAllProjectMcpServers": false
