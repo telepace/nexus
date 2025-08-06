@@ -1801,6 +1801,11 @@ async def _stream_template_analysis(
             content_text=content_text[:2000],  # 限制模板中的内容长度
             content_type="文档",
             output_language=language,
+            document_metadata={
+                "title": content_title,
+                "author": None,
+                "source_url": _source_uri,
+            },
         )
 
         # 构建消息

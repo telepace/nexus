@@ -66,6 +66,7 @@ def sample_segments(db_session, sample_content_item):
             id=uuid.uuid4(),
             content_item_id=sample_content_item.id,
             segment_index=i,
+            display_number=i + 1,  # 添加 display_number (1-based)
             content=content,
             segment_type="paragraph",
             word_count=len(content.split()),
@@ -113,9 +114,9 @@ class TestSegmentAwareChatService:
             "segment_references": [
                 {
                     "sentence_index": 0,
-                    "segment_ids": [
-                        str(sample_segments[0].id),
-                        str(sample_segments[1].id),
+                    "segment_numbers": [
+                        sample_segments[0].display_number,
+                        sample_segments[1].display_number if len(sample_segments) > 1 else sample_segments[0].display_number,
                     ],
                     "relevance_score": 0.9,
                 }
@@ -127,23 +128,31 @@ class TestSegmentAwareChatService:
 
         mock_response = json.dumps(mock_response_dict, ensure_ascii=False)
 
+        # Mock the segment retrieval to return our test segments with scores
+        mock_segments_with_scores = [(segment, 0.8) for segment in sample_segments]
+
         with patch.object(
-            service.chat_service, "generate_with_template", new_callable=AsyncMock
-        ) as mock_chat:
-            mock_chat.return_value = mock_response
+            service.retrieval_service, "retrieve_segments", new_callable=AsyncMock
+        ) as mock_retrieval:
+            mock_retrieval.return_value = mock_segments_with_scores
 
-            result = await service.chat_with_segments(
-                user_message="什么是人工智能？",
-                conversation_id=sample_conversation.id,
-                content_item_id=sample_conversation.content_item_id,
-            )
+            with patch.object(
+                service.chat_service, "generate_with_template", new_callable=AsyncMock
+            ) as mock_chat:
+                mock_chat.return_value = mock_response
 
-            # Verify response structure
-            assert "response" in result
-            assert "segment_references" in result
-            assert "segments_used" in result
-            assert len(result["segment_references"]) > 0
-            assert len(result["segments_used"]) > 0
+                result = await service.chat_with_segments(
+                    user_message="什么是人工智能？",
+                    conversation_id=sample_conversation.id,
+                    content_item_id=sample_conversation.content_item_id,
+                )
+
+                # Verify response structure
+                assert "response" in result
+                assert "segment_references" in result
+                assert "segments_used" in result
+                assert len(result["segment_references"]) > 0
+                assert len(result["segments_used"]) > 0
 
     @pytest.mark.asyncio
     async def test_segment_retrieval(self, db_session, sample_segments):

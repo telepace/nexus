@@ -127,15 +127,25 @@ async def test_analyze_stream_summary_success(
         "data: [DONE]\n",
     ]
 
-    async def mock_iter_chunked(_size):
-        """Mock async generator for iter_chunked"""
-        for chunk in mock_response_data:
-            yield chunk.encode("utf-8")
+    class MockAsyncIterator:
+        def __init__(self, data):
+            self.data = data
+            self.index = 0
+        
+        def __aiter__(self):
+            return self
+        
+        async def __anext__(self):
+            if self.index >= len(self.data):
+                raise StopAsyncIteration
+            item = self.data[self.index].encode("utf-8")
+            self.index += 1
+            return item
 
     with patch("aiohttp.ClientSession.post") as mock_post:
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.content.iter_chunked = mock_iter_chunked
+        mock_response.content = MockAsyncIterator(mock_response_data)
         mock_post.return_value.__aenter__.return_value = mock_response
 
         # 发送请求
@@ -147,11 +157,10 @@ async def test_analyze_stream_summary_success(
         assert response.status_code == 200
         assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
 
-        # 验证流式响应内容
+        # 验证流式响应内容 - 使用 AI SDK Data Stream Protocol format
         content = response.content.decode("utf-8")
-        assert 'data: {"type": "summary"' in content
-        assert '"finished": false' in content
-        assert '"finished": true' in content
+        assert '0:{"text":' in content  # AI SDK format for streaming text
+        assert 'd:{"finishReason": "stop"}' in content  # AI SDK format for completion
 
 
 @pytest.mark.asyncio
@@ -178,15 +187,25 @@ async def test_analyze_stream_key_points_success(
         "data: [DONE]\n",
     ]
 
-    async def mock_iter_chunked(_size):
-        """Mock async generator for iter_chunked"""
-        for chunk in mock_response_data:
-            yield chunk.encode("utf-8")
+    class MockAsyncIterator:
+        def __init__(self, data):
+            self.data = data
+            self.index = 0
+        
+        def __aiter__(self):
+            return self
+        
+        async def __anext__(self):
+            if self.index >= len(self.data):
+                raise StopAsyncIteration
+            item = self.data[self.index].encode("utf-8")
+            self.index += 1
+            return item
 
     with patch("aiohttp.ClientSession.post") as mock_post:
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.content.iter_chunked = mock_iter_chunked
+        mock_response.content = MockAsyncIterator(mock_response_data)
         mock_post.return_value.__aenter__.return_value = mock_response
 
         # 发送请求
@@ -198,11 +217,10 @@ async def test_analyze_stream_key_points_success(
         assert response.status_code == 200
         assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
 
-        # 验证流式响应内容
+        # 验证流式响应内容 - 使用 AI SDK Data Stream Protocol format
         content = response.content.decode("utf-8")
-        assert 'data: {"type": "key_points"' in content
-        assert '"finished": false' in content
-        assert '"finished": true' in content
+        assert '0:{"text":' in content  # AI SDK format for streaming text
+        assert 'd:{"finishReason": "stop"}' in content  # AI SDK format for completion
 
 
 @pytest.mark.asyncio
@@ -234,12 +252,10 @@ async def test_analyze_stream_litellm_error(
             headers=normal_user_token_headers,
         )
 
-        assert response.status_code == 200  # 流式响应本身成功
-
-        # 验证错误内容
+        # The response should be 200 but contain an error in the stream
+        assert response.status_code == 200
         content = response.content.decode("utf-8")
-        assert 'data: {"type": "error"' in content
-        assert "LiteLLM error: HTTP 500" in content
+        assert 'e:{"error":' in content  # Error in AI SDK format
 
 
 def test_analyze_stream_template_loading(
@@ -258,19 +274,30 @@ def test_analyze_stream_template_loading(
     db.commit()
 
     # 测试summary模板
-    async def mock_iter_chunked(_size):
-        """Mock async generator for iter_chunked"""
-        chunks = [
-            b'data: {"choices":[{"delta":{"content":"test"}}]}\n',
-            b"data: [DONE]\n",
-        ]
-        for chunk in chunks:
-            yield chunk
+    mock_response_data = [
+        'data: {"choices":[{"delta":{"content":"test"}}]}\n',
+        "data: [DONE]\n",
+    ]
+    
+    class MockAsyncIterator:
+        def __init__(self, data):
+            self.data = data
+            self.index = 0
+        
+        def __aiter__(self):
+            return self
+        
+        async def __anext__(self):
+            if self.index >= len(self.data):
+                raise StopAsyncIteration
+            item = self.data[self.index].encode("utf-8")
+            self.index += 1
+            return item
 
     with patch("aiohttp.ClientSession.post") as mock_post:
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.content.iter_chunked = mock_iter_chunked
+        mock_response.content = MockAsyncIterator(mock_response_data)
         mock_post.return_value.__aenter__.return_value = mock_response
 
         response = client.get(
@@ -290,7 +317,8 @@ def test_analyze_stream_template_loading(
         assert len(payload["messages"]) == 2
         assert payload["messages"][0]["role"] == "system"
         assert payload["messages"][1]["role"] == "user"
-        assert (
-            payload["messages"][1]["content"]
-            == "请对这篇内容进行总结，提取其主要观点和关键信息。"
-        )  # summary分析实际prompt
+        # 验证模板被正确渲染 - 应该包含summary.j2模板的内容
+        user_content = payload["messages"][1]["content"]
+        assert "Role and Task" in user_content  # 来自summary.j2模板
+        assert "content summarization" in user_content  # 来自summary.j2模板
+        assert "Output Structure" in user_content  # 来自summary.j2模板

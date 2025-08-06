@@ -63,7 +63,7 @@ def test_create_content_item_api(
     )
 
     mocker.patch(
-        "app.api.routes.content.crud_create_content_item",
+        "app.api.routes.content.create_content_item_sync",
         return_value=mock_created_item,
     )
 
@@ -87,7 +87,7 @@ def test_create_content_item_api(
 def test_get_content_items_api_empty(
     client: TestClient, mocker, normal_user_token_headers
 ):
-    mocker.patch("app.api.routes.content.crud_get_content_items", return_value=[])
+    mocker.patch("app.api.routes.content.get_content_items_sync", return_value=[])
 
     response = client.get("/api/v1/content", headers=normal_user_token_headers)
 
@@ -105,7 +105,7 @@ def test_get_content_items_api_with_data(
         create_mock_content_item_public(uuid.uuid4(), user_id_for_test, "Item 2"),
     ]
     mocker.patch(
-        "app.api.routes.content.crud_get_content_items", return_value=mock_items_list
+        "app.api.routes.content.get_content_items_sync", return_value=mock_items_list
     )
 
     response = client.get("/api/v1/content", headers=normal_user_token_headers)

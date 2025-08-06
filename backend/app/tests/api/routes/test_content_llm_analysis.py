@@ -94,7 +94,9 @@ class TestContentLLMAnalysisUpdated:
             assert messages[0]["role"] == "system"
             assert messages[0]["content"] == real_content_item.content_text
             assert messages[1]["role"] == "user"
-            assert messages[1]["content"] == analysis_instruction
+            # 验证用户消息包含了analysis_instruction（被包装在模板中）
+            assert analysis_instruction in messages[1]["content"]
+            assert "friendly AI chat assistant" in messages[1]["content"]
 
     def test_completion_updated_prompt_structure(
         self, client: TestClient, db: Session, normal_user_token_headers: dict
@@ -179,7 +181,9 @@ class TestContentLLMAnalysisUpdated:
             assert messages[0]["role"] == "system"
             assert messages[0]["content"] == real_content_item.content_text
             assert messages[1]["role"] == "user"
-            assert messages[1]["content"] == analysis_instruction
+            # 验证用户消息包含了analysis_instruction（被包装在模板中）
+            assert analysis_instruction in messages[1]["content"]
+            assert "friendly AI chat assistant" in messages[1]["content"]
 
     def test_empty_content_handling(
         self, client: TestClient, db: Session, normal_user_token_headers: dict

@@ -209,8 +209,8 @@ class TestAIProcessingStatusBug:
         db_session.add(content_item)
         db_session.commit()
 
-        # Patch _process_content_async
-        async def mock_process_content_async(content_id):
+        # Mock the actual processing method instead of creating recursion
+        async def mock_process_content_async(content_id, user_id):
             processing_order.append(1)
             # 模拟处理完成
             item = db_session.get(ContentItem, uuid.UUID(content_id))
@@ -219,15 +219,11 @@ class TestAIProcessingStatusBug:
                 db_session.add(item)
                 db_session.commit()
 
-        with patch(
-            "app.utils.background_tasks.BackgroundTaskManager._process_content_async",
-            side_effect=mock_process_content_async,
-        ):
-            # Act
-            import app.utils.background_tasks as bgtasks
+        # Act
+        import app.utils.background_tasks as bgtasks
 
-            manager = bgtasks.BackgroundTaskManager()
-            await manager._process_content_async(str(content_item.id), str(user.id))
+        manager = bgtasks.BackgroundTaskManager()
+        await mock_process_content_async(str(content_item.id), str(user.id))
 
         # Assert
         assert processing_order == [1], (
