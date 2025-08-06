@@ -630,7 +630,11 @@ admin-restart:
 .PHONY: admin-install
 admin-install: check-pnpm
 	@echo "===========> Installing admin dependencies"
-	@cd $(ADMIN_DIR) && $(PNPM) install
+	@if [ -f "$(ADMIN_DIR)/package.json" ]; then \
+		cd $(ADMIN_DIR) && $(PNPM) install; \
+	else \
+		echo "Admin package.json not found, skipping install"; \
+	fi
 
 ## admin-preview: Preview production build
 .PHONY: admin-preview
@@ -658,7 +662,11 @@ admin-test-ui: admin-install
 .PHONY: admin-lint
 admin-lint: admin-install
 	@echo "===========> Running admin linters"
-	@cd $(ADMIN_DIR) && $(PNPM) run lint || true
+	@if [ -f "$(ADMIN_DIR)/package.json" ]; then \
+		cd $(ADMIN_DIR) && $(PNPM) run lint || true; \
+	else \
+		echo "Admin package.json not found, skipping lint"; \
+	fi
 
 ## admin-format: Format admin code
 .PHONY: admin-format

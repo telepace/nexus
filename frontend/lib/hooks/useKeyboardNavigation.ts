@@ -208,6 +208,7 @@ export const useKeyboardNavigation = (
       openModal,
       closeModal,
       log,
+      handleArrowNavigation,
     ],
   );
 

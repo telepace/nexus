@@ -216,7 +216,7 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
         (el: HTMLElement | null) => {
           // 临时禁用以解决问题
         },
-        [card.id, variant],
+        [], // Remove unnecessary dependencies
       );
 
       const handleClick = useCallback(() => {

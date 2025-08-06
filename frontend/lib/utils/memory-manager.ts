@@ -218,7 +218,7 @@ export function useThrottle<T extends (...args: any[]) => any>(
         callbackRef.current(...args);
       }
     }) as T,
-    [delay, memoryManager],
+    [delay],
   );
 }
 

@@ -2,6 +2,8 @@
  * Safe I18n hook with fallback for components that might not be wrapped in I18nProvider
  */
 
+import React from "react";
+
 // Fallback translations
 const fallbackTranslations: Record<string, string> = {
   // Content related
@@ -76,23 +78,21 @@ const fallbackTranslations: Record<string, string> = {
   "messages.loading": "Loading...",
 };
 
+// Create a non-hook fallback function for when the context is not available
+export const getFallbackTranslations = () => ({
+  t: (key: string, fallback?: string) => {
+    return (
+      fallbackTranslations[key] || fallback || key.split(".").pop() || key
+    );
+  },
+  locale: "en" as const,
+  setLocale: () => {},
+  translations: {},
+});
+
 export const useI18nSafe = () => {
-  try {
-    // Try to use the proper I18n context
-    const { useI18n } = require("@/components/providers/I18nProvider");
-    const context = useI18n();
-    return context;
-  } catch (e) {
-    // Fallback when I18n context is not available
-    return {
-      t: (key: string, fallback?: string) => {
-        return (
-          fallbackTranslations[key] || fallback || key.split(".").pop() || key
-        );
-      },
-      locale: "en",
-      setLocale: () => {},
-      translations: {},
-    };
-  }
+  // Always use fallback context to avoid conditional hook calling
+  // Components that need full i18n should use useI18n directly from I18nProvider
+  const fallbackContext = React.useMemo(getFallbackTranslations, []);
+  return fallbackContext;
 };

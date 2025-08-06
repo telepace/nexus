@@ -226,7 +226,8 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
 
     return () => memoryManager.clearTimeout(timer);
   }, [
-    item?.id,
+    item,
+    setCurrentItem,
     currentItem?.id,
     memoryManager,
     setInternalAnalysisResult,
@@ -310,6 +311,8 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
     externalAnalysisResult,
     externalConversations.length,
     variant,
+    setInternalAnalysisResult,
+    setInternalConversations,
   ]);
 
   // 滚动到顶部 - 使用内存管理器优化
@@ -321,7 +324,7 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
 
       return () => memoryManager.clearTimeout(timer);
     }
-  }, [currentItem?.id, memoryManager]);
+  }, [currentItem, memoryManager]);
 
   // 监听AI状态变化 - 使用内存管理器
   useEffect(() => {
@@ -419,7 +422,7 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
       },
     }),
     [
-      currentItem?.id,
+      currentItem,
       sharedContentId,
       sceneSpecificId,
       finalConversations,

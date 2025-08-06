@@ -355,7 +355,7 @@ export const OptimizedContentRenderer: React.FC<
   const { t } = useTranslationUtils();
 
   // 默认配置
-  const mergedConfig: RendererConfig = {
+  const mergedConfig: RendererConfig = useMemo(() => ({
     theme: "default",
     enableAnimations: true,
     enableHoverEffects: true,
@@ -363,7 +363,7 @@ export const OptimizedContentRenderer: React.FC<
     enableCollapse: false,
     showReferences: true,
     ...config,
-  };
+  }), [config]);
 
   // 解析内容
   const blocks = useMemo(() => parseContent(content), [content]);

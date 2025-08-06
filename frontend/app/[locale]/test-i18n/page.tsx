@@ -5,6 +5,8 @@ import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 export default function TestI18nPage() {
   const { t, locale } = useTranslation("common");
+  const { t: tAI } = useTranslation("ai");
+  const { t: tContent } = useTranslation("content");
 
   return (
     <div className="min-h-screen p-8">
@@ -108,29 +110,22 @@ export default function TestI18nPage() {
           <div className="border border-gray-200 rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">AI Translations</h2>
             <div className="grid grid-cols-2 gap-4">
-              {(() => {
-                const { t: tAI } = useTranslation("ai");
-                return (
-                  <>
-                    <div>
-                      <span className="font-medium">Analysis:</span>{" "}
-                      {tAI("analysis.title")}
-                    </div>
-                    <div>
-                      <span className="font-medium">Summary:</span>{" "}
-                      {tAI("analysis.summary")}
-                    </div>
-                    <div>
-                      <span className="font-medium">Key Points:</span>{" "}
-                      {tAI("analysis.keyPoints")}
-                    </div>
-                    <div>
-                      <span className="font-medium">Chat Placeholder:</span>{" "}
-                      {tAI("chat.placeholder")}
-                    </div>
-                  </>
-                );
-              })()}
+              <div>
+                <span className="font-medium">Analysis:</span>{" "}
+                {tAI("analysis.title")}
+              </div>
+              <div>
+                <span className="font-medium">Summary:</span>{" "}
+                {tAI("analysis.summary")}
+              </div>
+              <div>
+                <span className="font-medium">Key Points:</span>{" "}
+                {tAI("analysis.keyPoints")}
+              </div>
+              <div>
+                <span className="font-medium">Chat Placeholder:</span>{" "}
+                {tAI("chat.placeholder")}
+              </div>
             </div>
           </div>
 
@@ -138,29 +133,22 @@ export default function TestI18nPage() {
           <div className="border border-gray-200 rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Content Translations</h2>
             <div className="grid grid-cols-2 gap-4">
-              {(() => {
-                const { t: tContent } = useTranslation("content");
-                return (
-                  <>
-                    <div>
-                      <span className="font-medium">Add Content:</span>{" "}
-                      {tContent("library.addContent")}
-                    </div>
-                    <div>
-                      <span className="font-medium">Search Placeholder:</span>{" "}
-                      {tContent("library.searchPlaceholder")}
-                    </div>
-                    <div>
-                      <span className="font-medium">View Content:</span>{" "}
-                      {tContent("actions.viewContent")}
-                    </div>
-                    <div>
-                      <span className="font-medium">Share Content:</span>{" "}
-                      {tContent("actions.shareContent")}
-                    </div>
-                  </>
-                );
-              })()}
+              <div>
+                <span className="font-medium">Add Content:</span>{" "}
+                {tContent("library.addContent")}
+              </div>
+              <div>
+                <span className="font-medium">Search Placeholder:</span>{" "}
+                {tContent("library.searchPlaceholder")}
+              </div>
+              <div>
+                <span className="font-medium">View Content:</span>{" "}
+                {tContent("actions.viewContent")}
+              </div>
+              <div>
+                <span className="font-medium">Share Content:</span>{" "}
+                {tContent("actions.shareContent")}
+              </div>
             </div>
           </div>
         </div>

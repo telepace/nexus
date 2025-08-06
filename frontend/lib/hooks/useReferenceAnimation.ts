@@ -166,7 +166,7 @@ export const useReferenceAnimation = (
 
   // 合并配置
   const baseConfig = animationPresets[type];
-  const mergedConfig: AnimationConfig = {
+  const mergedConfig: AnimationConfig = useMemo(() => ({
     ...baseConfig,
     ...customConfig,
     // 性能优化配置
@@ -178,7 +178,7 @@ export const useReferenceAnimation = (
       : (customConfig.useGPU ??
         baseConfig.useGPU ??
         storeConfig.useGPUAcceleration),
-  };
+  }), [baseConfig, customConfig, isLowPerformanceDevice, storeConfig.useGPUAcceleration]);
 
   // 调试日志
   const log = useCallback(

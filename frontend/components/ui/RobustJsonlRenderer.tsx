@@ -103,7 +103,7 @@ export function RobustJsonlRenderer({
   const { actions } = useReferenceManagerSafe();
 
   // 高级JSON清理和修复函数
-  const smartJsonFixer = {
+  const smartJsonFixer = useMemo(() => ({
     // 修复不完整的JSON
     fixIncompleteJson: (line: string): string | null => {
       const trimmed = line.trim();
@@ -207,7 +207,7 @@ export function RobustJsonlRenderer({
 
       return fixed;
     },
-  };
+  }), []);
 
   // 解析JSONL内容
   const parseJsonlContent = useMemo((): ParseResult => {
@@ -382,7 +382,7 @@ export function RobustJsonlRenderer({
     }
 
     return { blocks, errors, warnings, stats };
-  }, [content, autoRecover, onError, onRecover]);
+  }, [content, autoRecover, onError, onRecover, smartJsonFixer]);
 
   // 检查是否为有效的JSONL块
   function isValidJsonlBlock(obj: any): boolean {

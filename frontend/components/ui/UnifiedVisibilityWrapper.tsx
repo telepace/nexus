@@ -44,7 +44,7 @@ const UnifiedVisibilityWrapper = memo<UnifiedVisibilityWrapperProps>(
     // 当可见性改变时更新状态
     React.useEffect(() => {
       visibility.setVisible(wrapperId, visible, priority);
-    }, [visible, priority, wrapperId, visibility.setVisible]);
+    }, [visible, priority, wrapperId, visibility]);
 
     const isVisible = visibility.isVisible(wrapperId);
 

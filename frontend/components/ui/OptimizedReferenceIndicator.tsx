@@ -98,11 +98,6 @@ export function OptimizedReferenceIndicator({
     return [];
   }, [propReferences, refString]);
 
-  // 如果没有引用，不渲染
-  if (references.length === 0) {
-    return null;
-  }
-
   // 生成显示标签
   const getDisplayLabel = useCallback(() => {
     if (references.length === 1) return String(references[0]);
@@ -236,7 +231,7 @@ export function OptimizedReferenceIndicator({
     if (autoLoad && references.length > 0) {
       loadSegments();
     }
-  }, [autoLoad, loadSegments]);
+  }, [autoLoad, loadSegments, references.length]);
 
   // Tooltip 打开/关闭时的处理
   const handleTooltipOpenChange = useCallback(
@@ -255,7 +250,7 @@ export function OptimizedReferenceIndicator({
         }
       }
     },
-    [disabled, contentId, loadSegments, references, actions],
+    [disabled, loadSegments, references, actions],
   );
 
   // 处理弹窗打开
@@ -385,6 +380,11 @@ export function OptimizedReferenceIndicator({
       </div>
     );
   }, [state, maxPreviewItems, maxPreviewLength, handleClick, handleRetry]);
+
+  // 如果没有引用，不渲染
+  if (references.length === 0) {
+    return null;
+  }
 
   const displayLabel = getDisplayLabel();
 

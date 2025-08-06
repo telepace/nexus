@@ -53,6 +53,14 @@ export default function TestStreamingJsonlPage() {
     setIsClient(true);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
+
   if (!isClient) {
     return (
       <div className="container mx-auto p-6 space-y-8">
@@ -114,14 +122,6 @@ export default function TestStreamingJsonlPage() {
     contentIndexRef.current = sampleJsonlData.length;
     setCurrentIndex(sampleJsonlData.length);
   };
-
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
 
   // 安全获取当前进度，避免预渲染时的错误
   const getCurrentProgress = () => {

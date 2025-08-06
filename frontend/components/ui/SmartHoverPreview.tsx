@@ -125,7 +125,7 @@ const calculateOptimalPosition = (
   }
 
   // 如果都不合适，使用底部并调整到视口内
-  let finalPos = positions.bottom;
+  const finalPos = positions.bottom;
   finalPos.x = Math.max(
     16,
     Math.min(finalPos.x, viewport.width - previewRect.width - 16),

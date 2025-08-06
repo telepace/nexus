@@ -84,15 +84,6 @@ export function JsonlRenderer({
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const contentRef = useRef<string>("");
 
-  if (!content) {
-    return (
-      <div
-        data-testid="jsonl-renderer"
-        className={cn("space-y-1", className)}
-      />
-    );
-  }
-
   // 统一的内容处理逻辑 - 消除状态冲突
   useEffect(() => {
     // 避免重复处理相同内容
@@ -107,7 +98,7 @@ export function JsonlRenderer({
     }
 
     // 如果内容为空，直接设为就绪状态
-    if (!content.trim()) {
+    if (!content || !content.trim()) {
       setRenderState({
         isReady: true,
         isLoading: false,
@@ -188,6 +179,16 @@ export function JsonlRenderer({
       }
     };
   }, [content, enableDelayedRendering, renderDelay]);
+
+  // Early return for empty content
+  if (!content) {
+    return (
+      <div
+        data-testid="jsonl-renderer"
+        className={cn("space-y-1", className)}
+      />
+    );
+  }
 
   // 如果启用延迟渲染且内容未准备好，显示骨架屏
   if (enableDelayedRendering && !renderState.isReady) {

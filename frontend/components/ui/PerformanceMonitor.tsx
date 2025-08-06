@@ -50,7 +50,7 @@ const usePerformanceMonitor = (blockCount: number = 0) => {
   };
 
   // 结束测量并更新指标
-  const endMeasure = () => {
+  const endMeasure = useCallback(() => {
     if (renderStartTime.current > 0) {
       const renderTime = performance.now() - renderStartTime.current;
       reRenderCountRef.current += 1;
@@ -65,7 +65,7 @@ const usePerformanceMonitor = (blockCount: number = 0) => {
 
       renderStartTime.current = 0;
     }
-  };
+  }, [blockCount]);
 
   // 重置计数器
   const reset = () => {
@@ -80,7 +80,7 @@ const usePerformanceMonitor = (blockCount: number = 0) => {
   useEffect(() => {
     startMeasure();
     endMeasure();
-  }, [blockCount]);
+  }, [blockCount, endMeasure]);
 
   return { metrics, startMeasure, endMeasure, reset };
 };

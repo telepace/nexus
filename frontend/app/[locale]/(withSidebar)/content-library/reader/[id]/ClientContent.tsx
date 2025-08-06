@@ -472,7 +472,7 @@ export const ClientContent = ({
       };
       onContentItemUpdate(contentItem);
     }
-  }, [content?.id, content?.title, content?.processing_status]); // 🎯 只依赖关键字段，避免函数依赖
+  }, [content, onContentItemUpdate]); // Include all dependencies
 
   // 获取内容详情和markdown
   useEffect(() => {

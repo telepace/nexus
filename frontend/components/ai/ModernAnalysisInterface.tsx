@@ -600,6 +600,7 @@ const ModernAnalysisInterface: React.FC<ModernAnalysisInterfaceProps> = ({
   }, [
     analysisResult,
     content.meta_info,
+    content.id,
     streamingResponse,
     isAnalyzing,
     showPreprocessedContent,

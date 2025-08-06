@@ -141,7 +141,7 @@ export const AIAssistantPanel = React.forwardRef<
           handleAnalysis();
         }
       },
-      [inputValue, onAnalysis],
+      [handleAnalysis],
     );
 
     // 处理分析提交

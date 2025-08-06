@@ -88,7 +88,7 @@ const TestContentInner = ({
     } else {
       console.warn("⚠️ TestContentInner: setTestSourceParagraphs 方法不可用");
     }
-  }, [testChunks, testContentId, actions, state.sourceParagraphs.length]);
+  }, [testChunks, testContentId, actions, state.sourceParagraphs.length, state.currentContentId]);
 
   // 测试按钮，手动触发高亮
   const testHighlight = () => {

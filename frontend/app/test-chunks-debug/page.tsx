@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,7 @@ export default function TestChunksDebugPage() {
   const [apiResponse, setApiResponse] = useState<any>(null);
 
   // 测试chunks API
-  const testChunksAPI = async () => {
+  const testChunksAPI = useCallback(async () => {
     if (!contentId.trim()) {
       setError("请输入Content ID");
       return;
@@ -66,14 +66,14 @@ export default function TestChunksDebugPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [contentId]);
 
   // 页面加载时自动测试
   useEffect(() => {
     if (contentId) {
       testChunksAPI();
     }
-  }, []);
+  }, [contentId, testChunksAPI]);
 
   return (
     <div className="container mx-auto p-6 space-y-6">

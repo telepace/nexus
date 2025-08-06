@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,7 +45,7 @@ export function AILanguageSettings({ className }: AILanguageSettingsProps) {
   const { toast } = useToast();
 
   // 获取用户设置
-  const fetchUserSettings = async () => {
+  const fetchUserSettings = useCallback(async () => {
     try {
       const token = getCookie("accessToken");
       if (!token) {
@@ -75,7 +75,7 @@ export function AILanguageSettings({ className }: AILanguageSettingsProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   // 更新 AI 输出语言
   const updateAILanguage = async (language: string) => {
@@ -169,7 +169,7 @@ export function AILanguageSettings({ className }: AILanguageSettingsProps) {
 
   useEffect(() => {
     fetchUserSettings();
-  }, []);
+  }, [fetchUserSettings]);
 
   if (loading) {
     return (
