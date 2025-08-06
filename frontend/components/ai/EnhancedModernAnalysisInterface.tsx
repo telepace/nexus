@@ -173,9 +173,8 @@ const EnhancedModernAnalysisInterface: React.FC<
     onError: handleStreamingError,
   });
 
-  const { historyRecords, refreshHistory, addHistoryRecord } = useConversationHistory({
-    contentId: uiStateStorageId,
-    disabled: previewOptimizations.disableHistoryLoading,
+  const { historyRecords, isLoadingHistory, refreshHistory, addHistoryRecord } = useConversationHistory({
+    contentId: stableStreamingContentId, // 使用与streaming相同的contentId确保一致性
   });
 
   // Effects
@@ -242,10 +241,25 @@ const EnhancedModernAnalysisInterface: React.FC<
   useEffect(() => {
     const loadPrompts = async () => {
       try {
-        const data = await fetchPrompts();
-        setPrompts(data);
+        const data = await fetchPrompts({
+          user_enabled: true, // 只获取用户启用的 prompts
+          sort: "updated_at",
+          order: "desc"
+        });
+        
+        // 检查返回的数据是否是错误对象
+        if (Array.isArray(data)) {
+          setPrompts(data as PromptData[]);
+        } else if (data && 'error' in data) {
+          console.error("Failed to load prompts:", data.error);
+          setPrompts([]);
+        } else {
+          console.error("Unexpected prompts data format:", data);
+          setPrompts([]);
+        }
       } catch (error) {
         console.error("Failed to load prompts:", error);
+        setPrompts([]);
       } finally {
         setLoadingPrompts(false);
       }
@@ -277,27 +291,86 @@ const EnhancedModernAnalysisInterface: React.FC<
   const handlePromptClick = useCallback(
     async (prompt: PromptData) => {
       try {
-        // Handle prompt click
+        // 替换prompt模板中的变量
+        let promptContent = prompt.content;
+        if (promptContent.includes("{content}")) {
+          promptContent = promptContent.replace(
+            "{content}",
+            content.content_text || content.title || "内容",
+          );
+        }
+
+        // 使用流式对话发送消息
+        await sendMessage(
+          promptContent,
+          prompt.name, // 这是promptTemplate参数
+          {
+            promptName: prompt.name,
+            promptId: prompt.id,
+            isPromptBased: true,
+            originalUserInput: `使用模板：${prompt.name}`,
+            actualPromptContent: promptContent,
+          }
+        );
+
+        console.log("Prompt clicked and message sent:", {
+          promptName: prompt.name,
+          content: promptContent.substring(0, 100) + "..."
+        });
       } catch (error) {
         console.error("Prompt click error:", error);
       }
     },
-    [],
+    [content, sendMessage],
   );
 
-  const handleHistoryClick = useCallback((conversation: ConversationPublic) => {
-    // Handle history click
-  }, []);
+  const handleHistoryClick = useCallback(
+    async (conversation: ConversationPublic) => {
+      try {
+        const historyContent = conversation.summary
+          ? `继续关于"${conversation.title}"的对话：${conversation.summary}`
+          : `继续关于"${conversation.title}"的对话`;
+
+        // 发送历史对话相关的消息
+        await sendMessage(
+          historyContent,
+          undefined, // 没有模板
+          {
+            isHistoryBased: true,
+            conversationId: conversation.id,
+            originalUserInput: historyContent,
+          }
+        );
+
+        console.log("History conversation continued:", conversation.title);
+      } catch (error) {
+        console.error("History click error:", error);
+      }
+    },
+    [sendMessage],
+  );
 
   const handleAnalysis = useCallback(
     async (inputText: string) => {
       try {
-        // Handle analysis
+        if (!inputText.trim()) return;
+
+        // 使用流式对话发送用户输入的消息
+        await sendMessage(
+          inputText.trim(),
+          undefined, // 没有模板
+          {
+            isPromptBased: false,
+            originalUserInput: inputText.trim(),
+          }
+        );
+
+        console.log("User message sent:", inputText.trim());
       } catch (error) {
         console.error("Analysis error:", error);
       }
     },
-    [],
+    [sendMessage],
   );
 
   const handleJsonLineExpand = useCallback(
@@ -314,9 +387,106 @@ const EnhancedModernAnalysisInterface: React.FC<
   );
 
   const buildAnalysisCards = useCallback((): AnalysisCard[] => {
-    if (!stableAnalysisResult) return [];
-    return [];
-  }, [stableAnalysisResult]);
+    if (
+      !stableAnalysisResult &&
+      !streamingConversations.length &&
+      (!conversations || conversations.length === 0)
+    )
+      return [];
+
+    const cards: AnalysisCard[] = [];
+    const adaptedData = adaptAnalysisData(stableAnalysisResult, stableMetaInfo);
+
+    // 只有在显示预处理内容时才添加这些卡片
+    if (showPreprocessedContent) {
+      // 内容摘要卡片
+      if (adaptedData.summary) {
+        cards.push({
+          id: `summary-${content.id}`,
+          title: "内容摘要",
+          subtitle: "",
+          emoji: "📄",
+          content: {
+            type: "summary",
+            data: adaptedData.summary,
+          },
+        });
+      }
+
+      // 关键要点卡片
+      if (adaptedData.keyPoints) {
+        cards.push({
+          id: `keyPoints-${content.id}`,
+          title: "提问清单",
+          subtitle: "",
+          emoji: "🤔",
+          content: {
+            type: "keyPoints",
+            data: adaptedData.keyPoints,
+          },
+        });
+      }
+    }
+
+    // 历史对话卡片 - 每个对话作为独立卡片显示
+    if (conversations && conversations.length > 0) {
+      const conversationsWithMessages = conversations.filter(
+        (conv) => conv.messages && conv.messages.length > 0,
+      );
+
+      // 为每个历史对话创建独立卡片 
+      conversationsWithMessages.forEach((conversation, index) => {
+        const userMessages =
+          conversation.messages?.filter((msg: any) => msg.role !== "system") ||
+          [];
+        const messageCount = userMessages.length;
+
+        // 获取对话标题
+        const conversationTitle =
+          conversation.title ||
+          (conversation.messages && conversation.messages.length > 0 
+            ? conversation.messages[0].content?.substring(0, 25) + "..." 
+            : "历史对话");
+
+        cards.push({
+          id: `conversation-${conversation.id}`,
+          title: conversationTitle,
+          subtitle: `对话 · ${messageCount} 条消息`,
+          emoji: "💬",
+          content: {
+            type: "custom",
+            data: conversation,
+          },
+        });
+      });
+    }
+
+    // 流式对话卡片
+    if (streamingConversations.length > 0) {
+      streamingConversations.forEach((conversation, index) => {
+        cards.push({
+          id: `streaming-${conversation.id}-${index}`,
+          title: conversation.title || "AI 对话",
+          subtitle: isStreaming ? "正在生成回复..." : "回复完成",
+          emoji: "🤖",
+          content: {
+            type: "custom",
+            data: conversation,
+          },
+        });
+      });
+    }
+
+    return cards;
+  }, [
+    stableAnalysisResult,
+    stableMetaInfo,
+    content.id,
+    streamingConversations,
+    isStreaming,
+    showPreprocessedContent,
+    conversations,
+  ]);
 
   const toggleCardCollapse = useCallback((cardId: string) => {
     setCollapsedCards((prev) => {
@@ -365,20 +535,81 @@ const EnhancedModernAnalysisInterface: React.FC<
     );
   }
 
-  // Simple return for now to fix hooks issues
+  // 构建分析卡片
+  const cards = buildAnalysisCards();
+
+  // 主内容渲染
   return (
-    <div className={containerClasses}>
-      <div className="text-center p-4">
-        <p>Component temporarily simplified to fix React hooks issues</p>
-        <AIAssistantPanel
-          onAnalysis={handleAnalysis}
-          showHistory={showHistory}
-          historyRecords={historyRecords}
-          prompts={prompts}
-          loadingPrompts={loadingPrompts}
-          onPromptClick={handlePromptClick}
-          variant={variant}
-        />
+    <div className={containerClasses} data-exclude-selection>
+      {/* 可滚动的主内容区域 */}
+      <div
+        ref={scrollContainerRef}
+        className={scrollAreaClasses}
+        style={scrollContainerStyle}
+      >
+        {/* 页面标题 - 根据配置条件渲染 */}
+        {!hideHeader && (
+          <div className={headerClasses} data-exclude-selection>
+            <h1 className="text-xl font-medium text-neutral-900 dark:text-neutral-100 line-clamp-2">
+              {content.title || "内容分析"}
+            </h1>
+          </div>
+        )}
+
+        {/* 卡片列表 */}
+        <div className="px-8 pt-4 pb-6">
+          <div
+            className={`space-y-6 ${
+              variant === "preview" ? "max-w-2xl mx-auto" : ""
+            }`}
+          >
+            {cards.length > 0 ? (
+              <AnalysisCardsContainer
+                cards={cards}
+                content={content}
+                collapsedCards={collapsedCards}
+                onToggleCardCollapse={toggleCardCollapse}
+                onExpandLine={handleJsonLineExpand}
+                selectedBlock={selectedBlock}
+                isAnalyzing={false}
+                variant={variant}
+              />
+            ) : (
+              <div className="flex items-center justify-center p-8 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50/30 dark:bg-neutral-900/30">
+                <div className="text-center space-y-2">
+                  <Loader2 className="h-8 w-8 text-neutral-400 mx-auto" />
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                    暂无分析结果，使用下方AI助手开始分析
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 固定底部AI助手 */}
+      <div
+        className={`flex-shrink-0 backdrop-blur-md border-t ${
+          variant === "preview"
+            ? "linear-bg-1 border-border"
+            : "linear-bg-1 border-border dark:border-neutral-800"
+        }`}
+        data-exclude-selection
+      >
+        <div className="px-6 py-3">
+          <AIAssistantPanel
+            onAnalysis={handleAnalysis}
+            showHistory={showHistory}
+            historyRecords={historyRecords}
+            loadingHistory={isLoadingHistory}
+            onHistoryClick={handleHistoryClick}
+            prompts={prompts}
+            loadingPrompts={loadingPrompts}
+            onPromptClick={handlePromptClick}
+            variant={variant}
+          />
+        </div>
       </div>
     </div>
   );

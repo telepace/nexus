@@ -128,10 +128,20 @@ export const AIAssistantPanel = React.forwardRef<
         return {
           ...record,
           userIntentSummary: getUserIntentSummary(),
+          // 如果title为空，使用用户意图作为title
+          title: record.title || getUserIntentSummary(),
           index,
         };
       });
     }, [historyRecords]);
+
+    // 处理分析提交
+    const handleAnalysis = useCallback(() => {
+      if (!inputValue.trim()) return;
+
+      onAnalysis(inputValue.trim()); // 通过回调传递输入值
+      setInputValue(""); // 清空输入框
+    }, [inputValue, onAnalysis]);
 
     // 优化的输入处理 - 状态下沉后的回调处理
     const handleKeyDown = useCallback(
@@ -143,14 +153,6 @@ export const AIAssistantPanel = React.forwardRef<
       },
       [handleAnalysis],
     );
-
-    // 处理分析提交
-    const handleAnalysis = useCallback(() => {
-      if (!inputValue.trim()) return;
-
-      onAnalysis(inputValue.trim()); // 通过回调传递输入值
-      setInputValue(""); // 清空输入框
-    }, [inputValue, onAnalysis]);
 
     // 处理 Prompt 点击
     const handlePromptClick = useCallback(

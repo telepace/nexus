@@ -23,6 +23,7 @@ export interface ConversationMessage {
 
 interface StreamingConversationCardProps {
   conversation: ConversationMessage[];
+  conversationTitle?: string; // 添加对话标题属性
   onExpandLine?: (jsonContent: Record<string, unknown>) => void;
   onRetry?: (messageId: string) => void;
   onDelete?: (conversationId: string) => void;
@@ -33,6 +34,7 @@ interface StreamingConversationCardProps {
 export const StreamingConversationCard = React.memo(
   function StreamingConversationCard({
     conversation,
+    conversationTitle,
     onExpandLine,
     onRetry,
     onDelete,
@@ -55,8 +57,18 @@ export const StreamingConversationCard = React.memo(
       return null;
     }
 
-    // 确定卡片标题 - 使用用户消息内容
-    const cardTitle = userMessage.content;
+    // 确定卡片标题 - 优先显示原始用户输入或 Prompt 名称
+    const getCardTitle = () => {
+      if (userMessage.metadata?.originalUserInput) {
+        return userMessage.metadata.originalUserInput;
+      }
+      if (userMessage.metadata?.promptName) {
+        return `📝 ${userMessage.metadata.promptName}`;
+      }
+      return userMessage.content;
+    };
+    
+    const cardTitle = getCardTitle();
 
     // 确定显示的内容
     const displayContent = assistantMessage.content;
@@ -70,18 +82,22 @@ export const StreamingConversationCard = React.memo(
       <div className="group relative">
         <Card className="transition-all duration-300 ease-in-out relative border-0 analysis-card shadow-sm linear-bg-1 group-hover:shadow-lg">
           <CardContent className="px-12 py-4">
-            {/* 卡片头部 - 简化设计 */}
+            {/* 卡片头部 - 改进用户问题显示 */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <span className="text-lg">🤖</span>
+                <span className="text-lg">💬</span>
                 <div>
                   <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                    {cardTitle.length > 30
-                      ? `${cardTitle.substring(0, 30)}...`
+                    {cardTitle.length > 50
+                      ? `${cardTitle.substring(0, 50)}...`
                       : cardTitle}
                   </h3>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    AI 回复
+                    {conversationTitle 
+                      ? `${conversationTitle} · AI 回复`
+                      : userMessage.metadata?.isPromptBased 
+                        ? "使用 AI 模板 · AI 回复"
+                        : "你的问题 · AI 回复"}
                   </p>
                 </div>
               </div>

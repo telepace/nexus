@@ -115,7 +115,11 @@
       "Bash(TESTING=true TEST_MODE=true python -m pytest app/tests/ -v --tb=short --maxfail=5)",
       "Bash(TESTING=true TEST_MODE=true python -m pytest backend/app/tests/api/test_content_processing.py backend/app/tests/test_ai_processing_status_bug.py -v)",
       "Bash(TESTING=true TEST_MODE=true python -m pytest backend/app/tests/test_ai_processing_status_bug.py -v)",
-      "Bash(tail:*)"
+      "Bash(tail:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gtimeout 15 npm run dev)",
+      "Bash(true)",
+      "Bash(gh pr diff:*)"
     ]
   },
   "enableAllProjectMcpServers": false

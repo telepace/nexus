@@ -117,6 +117,7 @@ export const fetchPrompts = async (options?: {
   tag_ids?: string[];
   sort?: string;
   order?: "asc" | "desc";
+  user_enabled?: boolean;
 }): Promise<FetchPromptsReturn> => {
   const now = Date.now();
   const requestId = `fetchPrompts-${Math.random().toString(36).substring(7)}`;
@@ -160,6 +161,7 @@ export const fetchPrompts = async (options?: {
         tag_ids: options?.tag_ids,
         sort: options?.sort,
         order: options?.order || "desc",
+        user_enabled: options?.user_enabled,
       },
     });
 

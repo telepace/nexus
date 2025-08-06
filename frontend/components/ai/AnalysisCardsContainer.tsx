@@ -61,7 +61,7 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
   const getCardHeight = () => "auto"; // 返回auto高度标识
 
   // 稳定化 content.id，避免重复传递
-  const stableContentId = useMemo(() => content.id, [content.id]);
+  const stableContentId = useMemo(() => content?.id || "", [content?.id]);
 
   // 滚动检测 - Jobs式的细致体验优化（preview模式下禁用）
   useEffect(() => {
@@ -274,7 +274,7 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
                     `}
                     >
                       <FavoriteButton
-                        itemId={content.id}
+                        itemId={content?.id || ""}
                         size="sm"
                         variant="ghost"
                         className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"

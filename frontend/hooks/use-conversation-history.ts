@@ -127,6 +127,13 @@ export function useConversationHistory({
         return;
       }
 
+      // 验证contentId是否为有效的UUID格式
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(contentId)) {
+        console.log("⚠️ contentId不是有效的UUID格式，跳过API加载", { contentId });
+        return;
+      }
+
       setIsLoadingHistory(true);
       try {
         console.log("🔄 从API加载对话历史...", {
@@ -220,6 +227,13 @@ export function useConversationHistory({
       // 如果contentId为空，直接返回
       if (!contentId || contentId.trim() === "") {
         console.log("⏭️ contentId为空，跳过初始化历史记录");
+        return;
+      }
+
+      // 验证contentId是否为有效的UUID格式
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(contentId)) {
+        console.log("⚠️ contentId不是有效的UUID格式，跳过初始化历史记录", { contentId });
         return;
       }
 
