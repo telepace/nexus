@@ -1,24 +1,38 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
 export interface SliderProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
-  value?: number[]
-  onValueChange?: (value: number[]) => void
-  min?: number
-  max?: number
-  step?: number
-  className?: string
+  extends Omit<
+    React.InputHTMLAttributes<HTMLInputElement>,
+    "value" | "onChange"
+  > {
+  value?: number[];
+  onValueChange?: (value: number[]) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  className?: string;
 }
 
 const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
-  ({ className, value = [0], onValueChange, min = 0, max = 100, step = 1, ...props }, ref) => {
+  (
+    {
+      className,
+      value = [0],
+      onValueChange,
+      min = 0,
+      max = 100,
+      step = 1,
+      ...props
+    },
+    ref,
+  ) => {
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      const newValue = [Number(event.target.value)]
-      onValueChange?.(newValue)
-    }
+      const newValue = [Number(event.target.value)];
+      onValueChange?.(newValue);
+    };
 
     return (
       <div className={cn("relative flex items-center w-full", className)}>
@@ -51,14 +65,14 @@ const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
             "[&::-moz-range-thumb]:hover:scale-110",
             "[&::-moz-range-track]:bg-secondary",
             "[&::-moz-range-track]:rounded-lg",
-            "[&::-moz-range-track]:h-2"
+            "[&::-moz-range-track]:h-2",
           )}
           {...props}
         />
       </div>
-    )
-  }
-)
-Slider.displayName = "Slider"
+    );
+  },
+);
+Slider.displayName = "Slider";
 
-export { Slider }
+export { Slider };

@@ -6,12 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowLeft, Loader2, AlertCircle, ExternalLink } from "lucide-react";
 import { useAuth, getCookie } from "@/lib/client-auth";
-import { SeamlessContentRenderer } from "@/components/ui/SeamlessContentRenderer";
-import { EnhancedContentReaderWithProvider } from "@/components/ui/EnhancedContentReader";
 import { contentCache } from "@/lib/services/content-cache";
 import { navigationState } from "@/lib/services/navigation-state";
 import { useReaderContext } from "@/components/layout/ReaderLayout";
-import { ContentItemPublic } from "@/app/openapi-client/types.gen";
 import { PageHeader } from "@/components/layout/PageHeader";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -66,15 +63,10 @@ const ProcessedContentRenderer = memo(
     content,
     markdownContent,
     contentId,
-    onTextAction,
   }: {
     content: ContentDetail;
     markdownContent?: string | null;
     contentId: string;
-    onTextAction?: (
-      action: { id: string; label: string; prompt: string },
-      selectedText: string,
-    ) => void;
   }) => {
     const router = useRouter();
 
@@ -97,7 +89,7 @@ const ProcessedContentRenderer = memo(
       shouldUseVirtualScroll,
       hasMarkdownContent: !!markdownContent,
       hasProcessedContent: !!content.processed_content,
-      hasContentText: !!content.content_text
+      hasContentText: !!content.content_text,
     });
 
     // 完整内容可用且需要虚拟滚动时，使用 SeamlessContentRenderer
@@ -134,28 +126,52 @@ const ProcessedContentRenderer = memo(
                   remarkPlugins={[remarkGfm, remarkBreaks]}
                   components={{
                     // 自定义组件样式，而不是使用className
-                    h1: ({node, ...props}) => <h1 className="text-2xl font-bold mb-4" {...props} />,
-                    h2: ({node, ...props}) => <h2 className="text-xl font-semibold mb-3" {...props} />,
-                    h3: ({node, ...props}) => <h3 className="text-lg font-semibold mb-2" {...props} />,
-                    p: ({node, ...props}) => <p className="mb-3 leading-relaxed" {...props} />,
-                    blockquote: ({node, ...props}) => (
-                      <blockquote className="border-l-4 border-primary/30 pl-4 italic text-muted-foreground" {...props} />
+                    h1: ({ ...props }) => (
+                      <h1 className="text-2xl font-bold mb-4" {...props} />
                     ),
-                    code: ({node, className, children, ...props}) => {
-                      const isInline = !className || !className.includes('language-');
+                    h2: ({ ...props }) => (
+                      <h2 className="text-xl font-semibold mb-3" {...props} />
+                    ),
+                    h3: ({ ...props }) => (
+                      <h3 className="text-lg font-semibold mb-2" {...props} />
+                    ),
+                    p: ({ ...props }) => (
+                      <p className="mb-3 leading-relaxed" {...props} />
+                    ),
+                    blockquote: ({ ...props }) => (
+                      <blockquote
+                        className="border-l-4 border-primary/30 pl-4 italic text-muted-foreground"
+                        {...props}
+                      />
+                    ),
+                    code: ({ className, children, ...props }) => {
+                      const isInline =
+                        !className || !className.includes("language-");
                       return isInline ? (
-                        <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+                        <code
+                          className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono"
+                          {...props}
+                        >
                           {children}
                         </code>
                       ) : (
-                        <code className="block bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono" {...props}>
+                        <code
+                          className="block bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono"
+                          {...props}
+                        >
                           {children}
                         </code>
                       );
                     },
-                    ul: ({node, ...props}) => <ul className="list-disc ml-6 mb-4" {...props} />,
-                    ol: ({node, ...props}) => <ol className="list-decimal ml-6 mb-4" {...props} />,
-                    li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                    ul: ({ ...props }) => (
+                      <ul className="list-disc ml-6 mb-4" {...props} />
+                    ),
+                    ol: ({ ...props }) => (
+                      <ol className="list-decimal ml-6 mb-4" {...props} />
+                    ),
+                    li: ({ ...props }) => (
+                      <li className="mb-1" {...props} />
+                    ),
                   }}
                 >
                   {contentText}
@@ -441,7 +457,7 @@ export const ClientContent = ({
   useEffect(() => {
     if (content && onContentItemUpdate) {
       // 将 ContentDetail 转换为 ContentItemPublic 格式
-      const contentItem: any = {
+      const contentItem = {
         id: content.id,
         type: content.type,
         title: content.title || "Untitled", // 确保title不为null

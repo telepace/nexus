@@ -3,35 +3,46 @@
  * 演示如何使用新的多语言分析API
  */
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
-import { analyzeContentWithTemplate, parseStreamingResponse } from '@/lib/api/content-analysis';
-import { useAuth } from '@/lib/client-auth';
-import { detectLocale } from '@/lib/i18n';
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
+import {
+  analyzeContentWithTemplate,
+  parseStreamingResponse,
+} from "@/lib/api/content-analysis";
+import { useAuth } from "@/lib/client-auth";
+import { detectLocale } from "@/lib/i18n";
 
 interface MultilingualAnalysisProps {
   contentId: string;
 }
 
 export function MultilingualAnalysis({ contentId }: MultilingualAnalysisProps) {
-  const [analysisType, setAnalysisType] = useState<'summary' | 'key_points'>('summary');
+  const [analysisType, setAnalysisType] = useState<"summary" | "key_points">(
+    "summary",
+  );
   const [outputLanguage, setOutputLanguage] = useState<string>(() => {
     // 自动检测用户语言
     const locale = detectLocale();
-    return locale === 'en' ? 'English' : 'Chinese';
+    return locale === "en" ? "English" : "Chinese";
   });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [results, setResults] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
-  
+
   const { user } = useAuth();
 
   const handleAnalyze = async () => {
     if (!user?.token) {
-      setError('请先登录');
+      setError("请先登录");
       return;
     }
 
@@ -43,12 +54,12 @@ export function MultilingualAnalysis({ contentId }: MultilingualAnalysisProps) {
       const stream = await analyzeContentWithTemplate({
         contentId,
         analysisType,
-        language: outputLanguage === 'English' ? 'en' : 'zh',
+        language: outputLanguage === "English" ? "en" : "zh",
         token: user.token,
       });
 
       if (!stream) {
-        throw new Error('无法启动内容分析');
+        throw new Error("无法启动内容分析");
       }
 
       // 处理流式响应
@@ -57,9 +68,8 @@ export function MultilingualAnalysis({ contentId }: MultilingualAnalysisProps) {
         analysisResults.push(data);
         setResults([...analysisResults]); // 实时更新结果
       }
-
     } catch (err) {
-      setError(err instanceof Error ? err.message : '分析失败');
+      setError(err instanceof Error ? err.message : "分析失败");
     } finally {
       setIsAnalyzing(false);
     }
@@ -74,7 +84,12 @@ export function MultilingualAnalysis({ contentId }: MultilingualAnalysisProps) {
         {/* 分析类型选择 */}
         <div className="space-y-2">
           <label className="text-sm font-medium">分析类型:</label>
-          <Select value={analysisType} onValueChange={(value: 'summary' | 'key_points') => setAnalysisType(value)}>
+          <Select
+            value={analysisType}
+            onValueChange={(value: "summary" | "key_points") =>
+              setAnalysisType(value)
+            }
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -105,8 +120,8 @@ export function MultilingualAnalysis({ contentId }: MultilingualAnalysisProps) {
         </div>
 
         {/* 开始分析按钮 */}
-        <Button 
-          onClick={handleAnalyze} 
+        <Button
+          onClick={handleAnalyze}
           disabled={isAnalyzing}
           className="w-full"
         >
@@ -116,7 +131,7 @@ export function MultilingualAnalysis({ contentId }: MultilingualAnalysisProps) {
               分析中...
             </>
           ) : (
-            '开始分析'
+            "开始分析"
           )}
         </Button>
 
@@ -133,7 +148,10 @@ export function MultilingualAnalysis({ contentId }: MultilingualAnalysisProps) {
             <h3 className="font-medium">分析结果:</h3>
             <div className="p-4 bg-gray-50 rounded-md max-h-96 overflow-y-auto">
               {results.map((result, index) => (
-                <div key={index} className="mb-2 p-2 bg-white rounded border text-sm">
+                <div
+                  key={index}
+                  className="mb-2 p-2 bg-white rounded border text-sm"
+                >
                   <pre className="whitespace-pre-wrap font-mono text-xs">
                     {JSON.stringify(result, null, 2)}
                   </pre>
@@ -145,7 +163,9 @@ export function MultilingualAnalysis({ contentId }: MultilingualAnalysisProps) {
 
         {/* 使用说明 */}
         <div className="text-xs text-gray-500 space-y-1">
-          <p><strong>说明:</strong></p>
+          <p>
+            <strong>说明:</strong>
+          </p>
           <p>• 这个组件演示了如何使用新的多语言内容分析API</p>
           <p>• 系统会自动检测浏览器语言，但你可以手动选择输出语言</p>
           <p>• API使用英文提示词，但会根据选择的语言输出结果</p>
@@ -158,7 +178,7 @@ export function MultilingualAnalysis({ contentId }: MultilingualAnalysisProps) {
 
 // 使用示例页面组件
 export function MultilingualAnalysisExample() {
-  const [contentId, setContentId] = useState('');
+  const [contentId, setContentId] = useState("");
 
   return (
     <div className="container mx-auto p-4 space-y-6">

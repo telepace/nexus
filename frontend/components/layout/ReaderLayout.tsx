@@ -16,7 +16,10 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import { type ContentItemPublic } from "@/app/[locale]/(withSidebar)/content-library/types";
-import { contentDataManager, ContentData } from "@/lib/services/content-data-manager";
+import {
+  contentDataManager,
+  ContentData,
+} from "@/lib/services/content-data-manager";
 import { useAuth } from "@/lib/client-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -77,11 +80,10 @@ export default function ReaderLayout({
 
       try {
         setLoading(true);
-        
+
         // 使用智能数据管理器获取完整数据
         const data = await contentDataManager.getFullData(contentId);
         setContentData(data);
-        
       } catch (error) {
         console.error("Failed to fetch content data:", error);
         setContentData(null);
@@ -100,7 +102,7 @@ export default function ReaderLayout({
 
   // 更新内容项 - 🎯 修复循环依赖，使用函数形式避免依赖contentData
   const handleContentItemUpdate = useCallback((item: ContentItemPublic) => {
-    setContentData(prevData => {
+    setContentData((prevData) => {
       if (prevData) {
         return { ...prevData, item };
       }
@@ -144,7 +146,9 @@ export default function ReaderLayout({
                   className="flex items-center justify-between px-6 border-b border-muted/40 linear-bg-1/95 backdrop-blur supports-[backdrop-filter]:linear-bg-1/80 shadow-sm h-header"
                   data-exclude-selection
                 >
-                  <h2 className="font-semibold text-base">{t('content.aiAnalysis')}</h2>
+                  <h2 className="font-semibold text-base">
+                    {t("content.aiAnalysis")}
+                  </h2>
                   <Button
                     onClick={toggleRightPanel}
                     size="sm"
@@ -169,7 +173,7 @@ export default function ReaderLayout({
                       data-exclude-selection
                     >
                       <div className="text-center text-muted-foreground">
-                        {t('messages.loading')}
+                        {t("messages.loading")}
                       </div>
                     </div>
                   )}
@@ -210,7 +214,7 @@ export default function ReaderLayout({
                   markLeftReady,
                 }}
               >
-                <div 
+                <div
                   className="flex-1 flex flex-col bg-background overflow-auto"
                   style={{
                     contain: "layout style paint",
@@ -264,7 +268,7 @@ export default function ReaderLayout({
                     </div>
 
                     {/* Content Body Skeleton - 简化骨架屏 */}
-                    <div 
+                    <div
                       className="flex-1 min-h-0 overflow-auto px-6 space-y-6"
                       style={{
                         contain: "layout style paint",

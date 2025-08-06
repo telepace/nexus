@@ -26,16 +26,18 @@ export default function TestOptimizedRendererPage() {
 {"t": "p", "c": "需要避免过度技术化，保持人性化的温度。"}
 {"t": "quote", "c": "好的设计不仅仅是功能的实现，更是情感的传达。", "ref": "设计哲学"}`;
 
-  const [selectedTheme, setSelectedTheme] = useState<'default' | 'notebook' | 'headspace' | 'neumorphism'>('default');
+  const [selectedTheme, setSelectedTheme] = useState<
+    "default" | "notebook" | "headspace" | "neumorphism"
+  >("default");
   const [enableAnimations, setEnableAnimations] = useState(true);
   const [enableHoverEffects, setEnableHoverEffects] = useState(true);
   const [showReferences, setShowReferences] = useState(true);
 
   const themes = [
-    { id: 'default', name: '默认', description: '简洁现代的设计风格' },
-    { id: 'notebook', name: '笔记本', description: '手写笔记风格' },
-    { id: 'headspace', name: '冥想', description: '渐变色彩风格' },
-    { id: 'neumorphism', name: '新拟态', description: '立体阴影效果' },
+    { id: "default", name: "默认", description: "简洁现代的设计风格" },
+    { id: "notebook", name: "笔记本", description: "手写笔记风格" },
+    { id: "headspace", name: "冥想", description: "渐变色彩风格" },
+    { id: "neumorphism", name: "新拟态", description: "立体阴影效果" },
   ];
 
   const rendererConfig = {
@@ -44,11 +46,13 @@ export default function TestOptimizedRendererPage() {
     enableHoverEffects,
     enableCopyButton: true,
     showReferences,
-    contentId: 'test-content',
+    contentId: "test-content",
   };
 
   // 计算内容块数量
-  const blockCount = testContent.split('\n').filter(line => line.trim()).length;
+  const blockCount = testContent
+    .split("\n")
+    .filter((line) => line.trim()).length;
 
   return (
     <div className="container mx-auto py-8 space-y-8">
@@ -130,7 +134,7 @@ export default function TestOptimizedRendererPage() {
       </Card>
 
       {/* 性能监控面板 */}
-      <PerformanceMonitor 
+      <PerformanceMonitor
         blockCount={blockCount}
         contentLength={testContent.length}
         className="mb-6"
@@ -231,22 +235,30 @@ export default function TestOptimizedRendererPage() {
         <CardContent className="space-y-4">
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-medium text-foreground mb-2">
-                完整标题支持
-              </h3>
+              <h3 className="font-medium text-foreground mb-2">完整标题支持</h3>
               <div className="space-y-1 text-sm text-muted-foreground">
-                <div>• <code>h1</code> - 主标题 (最大)</div>
-                <div>• <code>h2</code> - 章节标题 (带下划线)</div>
-                <div>• <code>h3</code> - 子章节标题</div>
-                <div>• <code>h4</code> - 小节标题</div>
-                <div>• <code>h5</code> - 子小节标题 (大写)</div>
-                <div>• <code>h6</code> - 最小标题 (灰色大写)</div>
+                <div>
+                  • <code>h1</code> - 主标题 (最大)
+                </div>
+                <div>
+                  • <code>h2</code> - 章节标题 (带下划线)
+                </div>
+                <div>
+                  • <code>h3</code> - 子章节标题
+                </div>
+                <div>
+                  • <code>h4</code> - 小节标题
+                </div>
+                <div>
+                  • <code>h5</code> - 子小节标题 (大写)
+                </div>
+                <div>
+                  • <code>h6</code> - 最小标题 (灰色大写)
+                </div>
               </div>
             </div>
             <div>
-              <h3 className="font-medium text-foreground mb-2">
-                性能优化
-              </h3>
+              <h3 className="font-medium text-foreground mb-2">性能优化</h3>
               <div className="space-y-1 text-sm text-muted-foreground">
                 <div>• React.memo 防止不必要重渲染</div>
                 <div>• useMemo 缓存解析结果</div>
@@ -256,11 +268,9 @@ export default function TestOptimizedRendererPage() {
               </div>
             </div>
           </div>
-          
+
           <div>
-            <h3 className="font-medium text-foreground mb-2">
-              JSONL 格式示例
-            </h3>
+            <h3 className="font-medium text-foreground mb-2">JSONL 格式示例</h3>
             <div className="bg-muted rounded p-3 text-xs font-mono">
               {`{"t":"h2","c":"主要章节标题"}
 {"t":"h3","c":"子章节标题"}
@@ -274,4 +284,4 @@ export default function TestOptimizedRendererPage() {
       </Card>
     </div>
   );
-} 
+}

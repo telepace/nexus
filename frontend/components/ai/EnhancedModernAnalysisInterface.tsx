@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { usePathname } from "next/navigation"; // 🎯 添加路由检测
-import {
-  Brain,
-  Loader2,
-  Bot,
-  User,
-} from "lucide-react";
+import { Brain, Loader2, Bot, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useI18nSafe } from "@/lib/i18n-fallback";
 import {
@@ -39,10 +40,13 @@ interface EnhancedModernAnalysisInterfaceProps {
   onHistoryCountChange?: (count: number) => void;
   showHistory?: boolean;
   // 新增AI状态变化回调
-  onStatusChange?: (status: 'idle' | 'processing' | 'completed', hasConversations: boolean) => void;
+  onStatusChange?: (
+    status: "idle" | "processing" | "completed",
+    hasConversations: boolean,
+  ) => void;
   // 🎯 重新设计：分离共享状态和场景状态
-  sharedContentId?: string;    // AI分析状态：跨场景共享
-  sceneSpecificId?: string;    // UI状态：场景隔离
+  sharedContentId?: string; // AI分析状态：跨场景共享
+  sceneSpecificId?: string; // UI状态：场景隔离
 }
 
 interface AnalysisCard {
@@ -51,12 +55,14 @@ interface AnalysisCard {
   subtitle?: string;
   emoji: string;
   content: {
-    type: "summary" | "keyPoints" | "custom";  // 🎯 移除 "conversations" | "historyConversation" 类型
+    type: "summary" | "keyPoints" | "custom"; // 🎯 移除 "conversations" | "historyConversation" 类型
     data: any;
   };
 }
 
-const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceProps> = ({
+const EnhancedModernAnalysisInterface: React.FC<
+  EnhancedModernAnalysisInterfaceProps
+> = ({
   content,
   conversations,
   analysisResult = null,
@@ -75,13 +81,13 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
   const { toast } = useToast();
   const { t } = useI18nSafe();
   const pathname = usePathname(); // 🎯 获取当前路由
-  
+
   // 🔍 渲染追踪日志 - 分析重新渲染原因
   const renderCount = React.useRef(0);
   const prevProps = React.useRef<any>({});
-  
+
   renderCount.current += 1;
-  
+
   React.useEffect(() => {
     const currentProps = {
       contentId: content?.id,
@@ -93,24 +99,28 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
       sceneSpecificId,
       pathname,
     };
-    
+
     const changes = Object.keys(currentProps).filter(
-      key => prevProps.current[key] !== currentProps[key]
+      (key) => prevProps.current[key] !== currentProps[key],
     );
-    
-    console.log(`📊 EnhancedModernAnalysisInterface [${variant}] render #${renderCount.current}:`, {
-      ...currentProps,
-      changes: changes.length > 0 ? changes : 'no prop changes',
-      timestamp: new Date().toISOString().split('T')[1],
-      stack: new Error().stack?.split('\n').slice(2, 5).map(line => 
-        line.replace(/^\s+at\s+/, '').split('(')[0]
-      )
-    });
-    
+
+    console.log(
+      `📊 EnhancedModernAnalysisInterface [${variant}] render #${renderCount.current}:`,
+      {
+        ...currentProps,
+        changes: changes.length > 0 ? changes : "no prop changes",
+        timestamp: new Date().toISOString().split("T")[1],
+        stack: new Error().stack
+          ?.split("\n")
+          .slice(2, 5)
+          .map((line) => line.replace(/^\s+at\s+/, "").split("(")[0]),
+      },
+    );
+
     prevProps.current = currentProps;
   });
 
-  // 早期返回检查 - 防止 content 为空导致的错误 
+  // 早期返回检查 - 防止 content 为空导致的错误
   if (!content) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -124,18 +134,21 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
 
   // 内存优化：preview模式下优化性能，但保留核心交互功能
   const isPreviewMode = variant === "preview";
-  
+
   // 模式优化配置（使用useMemo避免对象重新创建）
-  const previewOptimizations = useMemo(() => ({
-    disableStreamingConversations: false, // 🎯 保留流式对话功能
-    disablePromptLoading: false, // 🎯 保留prompt加载功能  
-    disableHistoryLoading: isPreviewMode, // 预览模式可以禁用历史记录以提升性能
-    reduceEventListeners: isPreviewMode, // 减少事件监听器
-    disableInteraction: false, // 🎯 保留所有交互功能
-    optimizeRendering: isPreviewMode, // 🎯 预览模式优化渲染
-    // 🚨 临时禁用卡片高度管理以解决无限循环问题
-    disableCardHeight: variant === "sidebar" || isPreviewMode,
-  }), [isPreviewMode, variant]);
+  const previewOptimizations = useMemo(
+    () => ({
+      disableStreamingConversations: false, // 🎯 保留流式对话功能
+      disablePromptLoading: false, // 🎯 保留prompt加载功能
+      disableHistoryLoading: isPreviewMode, // 预览模式可以禁用历史记录以提升性能
+      reduceEventListeners: isPreviewMode, // 减少事件监听器
+      disableInteraction: false, // 🎯 保留所有交互功能
+      optimizeRendering: isPreviewMode, // 🎯 预览模式优化渲染
+      // 🚨 临时禁用卡片高度管理以解决无限循环问题
+      disableCardHeight: variant === "sidebar" || isPreviewMode,
+    }),
+    [isPreviewMode, variant],
+  );
 
   // 🎯 状态下沉完成：移除inputValue状态，由AIAssistantPanel内部管理
   // inputValue 和 setInputValue 已移动到 AIAssistantPanel 内部
@@ -143,61 +156,63 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [prompts, setPrompts] = useState<PromptData[]>([]);
   const [loadingPrompts, setLoadingPrompts] = useState(true); // 🎯 所有模式都支持prompt加载
-  
+
   // 🎯 状态下沉后的文本设置机制
   const inputPanelRef = useRef<{ setText: (text: string) => void }>(null);
-  
+
   // 🎯 重新设计：区分API调用、共享状态存储和场景特定存储
   const originalContentId = useMemo(() => {
     // API调用始终使用原始的content.id
-    return content?.id || '';
+    return content?.id || "";
   }, [content?.id]);
 
   const aiAnalysisStorageId = useMemo(() => {
     // AI分析状态：跨场景共享，让用户在Preview和Reader看到一致的结果
-    return sharedContentId || content?.id || '';
+    return sharedContentId || content?.id || "";
   }, [sharedContentId, content?.id]);
 
   const uiStateStorageId = useMemo(() => {
     // UI状态：场景隔离，避免不同使用场景的UI冲突
-    return sceneSpecificId || content?.id || '';
+    return sceneSpecificId || content?.id || "";
   }, [sceneSpecificId, content?.id]);
-  
+
   // 🎯 重新设计：AI分析历史跨场景共享
   const {
     historyRecords,
     isLoadingHistory: loadingHistory,
     refreshHistory,
-    addHistoryRecord
+    addHistoryRecord,
   } = useConversationHistory({
-    contentId: originalContentId,    // API调用使用原始ID
-    storageId: aiAnalysisStorageId,  // AI分析历史：跨场景共享
+    contentId: originalContentId, // API调用使用原始ID
+    storageId: aiAnalysisStorageId, // AI分析历史：跨场景共享
     onError: (error) => {
       if (!previewOptimizations.disableHistoryLoading) {
-        console.error('历史记录加载失败:', error);
+        console.error("历史记录加载失败:", error);
         toast({
           title: "加载失败",
           description: error,
           variant: "destructive",
         });
       }
-    }
+    },
   });
-  
+
   // 🎯 在/reader/页面为非核心卡片设置默认折叠状态
   const getInitialCollapsedCards = useCallback(() => {
     const initialCollapsed = new Set<string>();
-    
+
     // 如果是在/reader/页面，除了"内容摘要"和"提问清单"外，其他卡片默认折叠
     if (pathname.includes("/reader/")) {
       // 这里暂时为空，因为我们主要控制的是StreamingConversationCard
       // 静态分析卡片（summary, keyPoints）应该保持展开
     }
-    
+
     return initialCollapsed;
   }, [pathname]);
-  
-  const [collapsedCards, setCollapsedCards] = useState<Set<string>>(getInitialCollapsedCards);
+
+  const [collapsedCards, setCollapsedCards] = useState<Set<string>>(
+    getInitialCollapsedCards,
+  );
 
   // 🎯 添加滚动容器引用
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -209,7 +224,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
         if (scrollContainerRef.current) {
           scrollContainerRef.current.scrollTo({
             top: scrollContainerRef.current.scrollHeight,
-            behavior: 'smooth'
+            behavior: "smooth",
           });
         }
       });
@@ -229,13 +244,16 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     // 可以在这里添加额外的处理逻辑
   }, []);
 
-  const handleStreamingError = useCallback((error: any) => {
-    toast({
-      title: "处理失败",
-      description: error,
-      variant: "destructive",
-    });
-  }, [toast]);
+  const handleStreamingError = useCallback(
+    (error: any) => {
+      toast({
+        title: "处理失败",
+        description: error,
+        variant: "destructive",
+      });
+    },
+    [toast],
+  );
 
   // 🎯 新的对话管理 - 使用分离的API调用ID和存储ID
   const {
@@ -245,7 +263,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     deleteConversation,
     cancelCurrentProcessing,
   } = useStreamingConversation({
-    contentId: originalContentId,        // API调用使用原始UUID
+    contentId: originalContentId, // API调用使用原始UUID
     storageId: stableStreamingContentId, // 存储使用场景感知ID
     onConversationUpdate: handleConversationUpdate,
     onError: handleStreamingError,
@@ -257,7 +275,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     if (variant === "preview") {
       return;
     }
-    
+
     setCollapsedCards(getInitialCollapsedCards());
   }, [pathname, getInitialCollapsedCards, variant]);
 
@@ -277,7 +295,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
       const timeoutId = setTimeout(() => {
         scrollToBottom();
       }, 150);
-      
+
       return () => clearTimeout(timeoutId);
     }
   }, [streamingConversations.length, scrollToBottom]);
@@ -285,10 +303,10 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
   // 🎯 优化AI处理状态变化监听 - 使用memo避免重复计算
   const aiStatusInfo = useMemo(() => {
     const hasConversations = streamingConversations.length > 0;
-    
+
     // 如果没有对话，直接返回idle状态
     if (!hasConversations) {
-      return { status: 'idle' as const, hasConversations: false };
+      return { status: "idle" as const, hasConversations: false };
     }
 
     // 使用标志位避免重复遍历
@@ -300,7 +318,11 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
       for (const msg of conv.messages) {
         if (msg.role === "assistant") {
           const status = msg.status;
-          if (status === "pending" || status === "thinking" || status === "streaming") {
+          if (
+            status === "pending" ||
+            status === "thinking" ||
+            status === "streaming"
+          ) {
             hasProcessing = true;
             break; // 找到processing状态就可以跳出
           } else if (status === "completed") {
@@ -308,14 +330,17 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
           }
         }
       }
-      
+
       // 如果已经找到processing状态，可以提前结束外层循环
       if (hasProcessing) break;
     }
 
-    const status = hasProcessing ? 'processing' : 
-                   (hasCompleted || hasConversations) ? 'completed' : 'idle';
-    
+    const status = hasProcessing
+      ? "processing"
+      : hasCompleted || hasConversations
+        ? "completed"
+        : "idle";
+
     return { status, hasConversations };
   }, [streamingConversations]);
 
@@ -378,13 +403,13 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
 
     window.addEventListener(
       "textSelectionAction" as keyof WindowEventMap,
-      handleTextSelectionAction
+      handleTextSelectionAction,
     );
 
     return () => {
       window.removeEventListener(
         "textSelectionAction" as keyof WindowEventMap,
-        handleTextSelectionAction
+        handleTextSelectionAction,
       );
     };
   }, [previewOptimizations.reduceEventListeners]);
@@ -398,7 +423,10 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     const handleClickOutside = (event: MouseEvent) => {
       // 如果点击的不是可选择的文本区域，清除选择
       const target = event.target as HTMLElement;
-      if (!target.closest('.select-text') && !target.closest('.jsonl-line-hover')) {
+      if (
+        !target.closest(".select-text") &&
+        !target.closest(".jsonl-line-hover")
+      ) {
         setSelectedBlock(null);
       }
     };
@@ -420,14 +448,14 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
         if (promptContent.includes("{content}")) {
           promptContent = promptContent.replace(
             "{content}",
-            content.content_text || content.title || "内容"
+            content.content_text || content.title || "内容",
           );
         }
 
         console.log("📝 处理后的 prompt 内容:", {
           originalContent: prompt.content,
           processedContent: promptContent,
-          promptName: prompt.name
+          promptName: prompt.name,
         });
 
         // 🎯 修复：用户消息显示prompt名称，但实际发送的是完整内容
@@ -451,7 +479,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
         });
       }
     },
-    [content, sendMessage, toast]
+    [content, sendMessage, toast],
   );
 
   // 处理历史记录点击 - 状态下沉后通过ref设置输入值
@@ -466,46 +494,52 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
   }, []);
 
   // 处理手动输入的分析 - 状态下沉后通过参数接收输入值
-  const handleAnalysis = useCallback(async (inputText: string) => {
-    try {
-      console.log("🔘 手动输入分析事件");
-      if (!inputText.trim()) {
-        console.warn("⚠️ 输入值为空，跳过分析");
-        return;
+  const handleAnalysis = useCallback(
+    async (inputText: string) => {
+      try {
+        console.log("🔘 手动输入分析事件");
+        if (!inputText.trim()) {
+          console.warn("⚠️ 输入值为空，跳过分析");
+          return;
+        }
+
+        console.log("📝 手动输入内容:", inputText);
+
+        await sendMessage(inputText, "simple_chat.j2", {
+          type: "manual_input",
+          originalUserInput: inputText, // 手动输入直接显示用户输入的内容
+        });
+
+        toast({
+          title: "开始分析",
+          description: "正在处理您的问题",
+        });
+      } catch (error) {
+        console.error("❌ handleAnalysis 错误:", error);
+        toast({
+          title: "处理失败",
+          description: error instanceof Error ? error.message : "未知错误",
+          variant: "destructive",
+        });
       }
-
-      console.log("📝 手动输入内容:", inputText);
-
-      await sendMessage(inputText, "simple_chat.j2", {
-        type: "manual_input",
-        originalUserInput: inputText, // 手动输入直接显示用户输入的内容
-      });
-
-      toast({
-        title: "开始分析",
-        description: "正在处理您的问题",
-      });
-    } catch (error) {
-      console.error("❌ handleAnalysis 错误:", error);
-      toast({
-        title: "处理失败",
-        description: error instanceof Error ? error.message : "未知错误",
-        variant: "destructive",
-      });
-    }
-  }, [sendMessage, toast]);
+    },
+    [sendMessage, toast],
+  );
 
   // 处理JSON行展开请求
   const handleJsonLineExpand = useCallback(
     async (jsonContent: Record<string, unknown>) => {
-      console.log("[EnhancedModernAnalysisInterface] JSON line expand requested:", jsonContent);
+      console.log(
+        "[EnhancedModernAnalysisInterface] JSON line expand requested:",
+        jsonContent,
+      );
 
       const selectedPoint =
         jsonContent.c || jsonContent.content || JSON.stringify(jsonContent);
       const instruction = `请对以下要点进行深度展开讨论：${selectedPoint}`;
 
       const displayText = `展开讨论: ${selectedPoint}`;
-      
+
       await sendMessage(instruction, "expand_discussion.j2", {
         type: "expand_discussion",
         selectedPoint,
@@ -518,16 +552,16 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
         description: "正在深度分析选中的要点",
       });
     },
-    [sendMessage, toast]
+    [sendMessage, toast],
   );
 
   // 构建分析卡片数据 - 优化依赖项稳定性
   const stableAnalysisResult = useMemo(() => analysisResult, [analysisResult]);
-  const stableMetaInfo = useMemo(() => 
-    content.meta_info ? JSON.parse(content.meta_info) : null, 
-    [content.meta_info]
+  const stableMetaInfo = useMemo(
+    () => (content.meta_info ? JSON.parse(content.meta_info) : null),
+    [content.meta_info],
   );
-  
+
   const buildAnalysisCards = useCallback((): AnalysisCard[] => {
     if (!stableAnalysisResult) return [];
 
@@ -540,7 +574,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
       if (adaptedData.summary) {
         cards.push({
           id: "summary",
-          title: t('analysis.contentSummary'),
+          title: t("analysis.contentSummary"),
           subtitle: "核心内容提炼",
           emoji: "📝",
           content: {
@@ -554,7 +588,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
       if (adaptedData.keyPoints) {
         cards.push({
           id: "keyPoints",
-          title: t('analysis.questionList'),
+          title: t("analysis.questionList"),
           subtitle: "",
           emoji: "🤔",
           content: {
@@ -604,35 +638,40 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
     const baseClasses = "flex flex-col";
     const heightClass = height === "fixed" ? "h-80" : "h-full";
     const previewClass = variant === "preview" ? "linear-bg-1" : "";
-    
+
     return `${baseClasses} ${heightClass} ${previewClass} ${className}`.trim();
   }, [variant, height, className]);
 
   const scrollAreaClasses = useMemo(() => {
-    const baseClasses = "flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-300 hover:scrollbar-thumb-neutral-400 dark:scrollbar-thumb-neutral-600 dark:hover:scrollbar-thumb-neutral-500";
-    const previewBg = variant === "preview" ? "bg-[var(--color-linear-bg-1)]" : "";
-    
+    const baseClasses =
+      "flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-300 hover:scrollbar-thumb-neutral-400 dark:scrollbar-thumb-neutral-600 dark:hover:scrollbar-thumb-neutral-500";
+    const previewBg =
+      variant === "preview" ? "bg-[var(--color-linear-bg-1)]" : "";
+
     return `${baseClasses} ${previewBg}`.trim();
   }, [variant]);
 
   // 稳定的内联样式，避免对象重新创建
-  const scrollContainerStyle = useMemo(() => ({
-    contain: "layout style paint" as const,
-    overscrollBehavior: "contain" as const,
-    // 移除willChange以避免与其他变化冲突
-  }), []);
+  const scrollContainerStyle = useMemo(
+    () => ({
+      contain: "layout style paint" as const,
+      overscrollBehavior: "contain" as const,
+      // 移除willChange以避免与其他变化冲突
+    }),
+    [],
+  );
 
   // 稳定的标题样式
   const headerClasses = useMemo(() => {
     const baseClasses = "px-6 py-4";
-    const previewBg = variant === "preview" ? "bg-[var(--color-linear-bg-1)]" : "";
-    
+    const previewBg =
+      variant === "preview" ? "bg-[var(--color-linear-bg-1)]" : "";
+
     return `${baseClasses} ${previewBg}`.trim();
   }, [variant]);
 
   return (
     <div className={containerClasses} data-exclude-selection>
-
       {/* 可滚动的主内容区域 - 优化滚动性能 */}
       <div
         className={scrollAreaClasses}
@@ -642,10 +681,7 @@ const EnhancedModernAnalysisInterface: React.FC<EnhancedModernAnalysisInterfaceP
       >
         {/* 页面标题 */}
         {!hideHeader && (
-          <div
-            className={headerClasses}
-            data-exclude-selection
-          >
+          <div className={headerClasses} data-exclude-selection>
             <h1 className="text-xl font-medium text-neutral-900 dark:text-neutral-100 line-clamp-2">
               {content.title || "内容分析"}
             </h1>

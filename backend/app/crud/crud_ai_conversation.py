@@ -120,6 +120,7 @@ def update_ai_conversation_response(
         bool: 更新是否成功
     """
     import logging
+
     logger = logging.getLogger(__name__)
 
     try:
@@ -131,33 +132,45 @@ def update_ai_conversation_response(
 
         # 获取现有消息
         try:
-            conversation_messages = json.loads(conversation.messages) if conversation.messages else []
+            conversation_messages = (
+                json.loads(conversation.messages) if conversation.messages else []
+            )
         except (json.JSONDecodeError, TypeError):
-            logger.warning(f"Failed to parse messages for conversation {conversation_id}, using empty list")
+            logger.warning(
+                f"Failed to parse messages for conversation {conversation_id}, using empty list"
+            )
             conversation_messages = []
 
         # 添加AI响应
-        conversation_messages.append({
-            "role": "assistant",
-            "content": ai_response,
-            "timestamp": now_utc().isoformat()
-        })
+        conversation_messages.append(
+            {
+                "role": "assistant",
+                "content": ai_response,
+                "timestamp": now_utc().isoformat(),
+            }
+        )
 
         # 更新记录
         conversation.messages = json.dumps(conversation_messages)
 
         # 更新元信息
         try:
-            meta_info = json.loads(conversation.meta_info) if conversation.meta_info else {}
+            meta_info = (
+                json.loads(conversation.meta_info) if conversation.meta_info else {}
+            )
         except (json.JSONDecodeError, TypeError):
-            logger.warning(f"Failed to parse meta_info for conversation {conversation_id}, using empty dict")
+            logger.warning(
+                f"Failed to parse meta_info for conversation {conversation_id}, using empty dict"
+            )
             meta_info = {}
 
-        meta_info.update({
-            "status": status,
-            "response_length": len(ai_response),
-            "updated_at": now_utc().isoformat()
-        })
+        meta_info.update(
+            {
+                "status": status,
+                "response_length": len(ai_response),
+                "updated_at": now_utc().isoformat(),
+            }
+        )
 
         if error:
             meta_info["error"] = error
@@ -168,7 +181,9 @@ def update_ai_conversation_response(
         session.add(conversation)
         session.commit()
 
-        logger.info(f"Successfully updated AIConversation {conversation_id} with response length {len(ai_response)}")
+        logger.info(
+            f"Successfully updated AIConversation {conversation_id} with response length {len(ai_response)}"
+        )
         return True
 
     except Exception as e:

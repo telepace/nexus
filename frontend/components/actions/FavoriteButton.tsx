@@ -48,7 +48,7 @@ export function FavoriteButton({
   const [isLoading, setIsLoading] = useState(false);
   const { t } = useTranslationUtils();
   const { user } = useAuth();
-  
+
   // 对于块级收藏，需要检查特定的块是否被收藏
   // 这里简化处理，实际应该有专门的hook来检查块级收藏状态
   // const isFavorited = favoriteIds.includes(itemId); // This line is now redundant
@@ -68,11 +68,11 @@ export function FavoriteButton({
           "Content-Type": "application/json",
         },
       };
-      
+
       if (body) {
         options.body = JSON.stringify(body);
       }
-      
+
       const response = await fetch(url, options);
       return response;
     } catch (error) {
@@ -201,7 +201,7 @@ export function FavoriteButton({
       mutate();
     } catch (error) {
       console.error("收藏操作失败:", error);
-      
+
       if (error instanceof Error) {
         if (error.message.includes("401")) {
           toast.error(t("auth.sessionExpired"));
@@ -264,9 +264,13 @@ export function FavoriteButton({
         className,
       )}
       aria-label={
-        blockId 
-          ? (isFavorited ? t("favorites.unfavoriteBlock") : t("favorites.favoriteBlock"))
-          : (isFavorited ? t("favorites.removeFromFavorites") : t("favorites.addToFavorites"))
+        blockId
+          ? isFavorited
+            ? t("favorites.unfavoriteBlock")
+            : t("favorites.favoriteBlock")
+          : isFavorited
+            ? t("favorites.removeFromFavorites")
+            : t("favorites.addToFavorites")
       }
       tabIndex={0}
     >

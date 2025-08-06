@@ -34,7 +34,7 @@ class AsyncContentParser {
   async parseJsonlContent(content: string): Promise<JsonlBlock[]> {
     return new Promise((resolve, reject) => {
       const taskId = `parse-${Date.now()}-${Math.random()}`;
-      
+
       this.parseQueue.push({
         id: taskId,
         content,
@@ -76,13 +76,13 @@ class AsyncContentParser {
    * 分块解析内容 - 使用requestIdleCallback避免阻塞
    */
   private async parseContentInChunks(content: string): Promise<JsonlBlock[]> {
-    if (!content || typeof content !== 'string') {
+    if (!content || typeof content !== "string") {
       return [];
     }
 
     const lines = content
-      .split('\n')
-      .map(line => line.trim())
+      .split("\n")
+      .map((line) => line.trim())
       .filter(Boolean);
 
     if (lines.length === 0) {
@@ -95,11 +95,11 @@ class AsyncContentParser {
     // 分批处理，避免一次性解析太多内容
     while (currentIndex < lines.length) {
       const chunk = lines.slice(currentIndex, currentIndex + this.BATCH_SIZE);
-      
+
       // 在空闲时间处理这一批
       const chunkBlocks = await this.processChunk(chunk);
       blocks.push(...chunkBlocks);
-      
+
       currentIndex += this.BATCH_SIZE;
 
       // 如果还有更多内容要处理，让出控制权
@@ -121,25 +121,28 @@ class AsyncContentParser {
         const blocks: JsonlBlock[] = [];
         let i = 0;
 
-        while (i < lines.length && (!deadline || deadline.timeRemaining() > 1)) {
+        while (
+          i < lines.length &&
+          (!deadline || deadline.timeRemaining() > 1)
+        ) {
           const line = lines[i];
           try {
             const sanitized = this.sanitizeJsonLine(line);
             const parsed = JSON.parse(sanitized);
-            
+
             // 标准化字段名
             const block: JsonlBlock = {
-              type: parsed.type || parsed.t || 'p',
+              type: parsed.type || parsed.t || "p",
               content: parsed.content || parsed.c || line,
               ref: parsed.ref,
-              ...parsed
+              ...parsed,
             };
-            
+
             blocks.push(block);
           } catch {
             // 解析失败时创建段落块
             blocks.push({
-              type: 'p',
+              type: "p",
               content: line,
             });
           }
@@ -149,7 +152,7 @@ class AsyncContentParser {
         if (i < lines.length) {
           // 还有内容没处理完，继续
           const remainingLines = lines.slice(i);
-          if (typeof requestIdleCallback !== 'undefined') {
+          if (typeof requestIdleCallback !== "undefined") {
             requestIdleCallback((newDeadline) => {
               processLines(newDeadline);
             });
@@ -164,7 +167,7 @@ class AsyncContentParser {
       };
 
       // 开始处理
-      if (typeof requestIdleCallback !== 'undefined') {
+      if (typeof requestIdleCallback !== "undefined") {
         requestIdleCallback(processLines);
       } else {
         // 降级到setTimeout
@@ -177,8 +180,8 @@ class AsyncContentParser {
    * 让出主线程控制权
    */
   private async yieldToMainThread(): Promise<void> {
-    return new Promise(resolve => {
-      if (typeof requestIdleCallback !== 'undefined') {
+    return new Promise((resolve) => {
+      if (typeof requestIdleCallback !== "undefined") {
         requestIdleCallback(() => resolve());
       } else {
         setTimeout(resolve, this.CHUNK_DELAY);
@@ -196,13 +199,13 @@ class AsyncContentParser {
 
     // 简化版清理，避免复杂正则表达式
     let sanitized = line.trim();
-    
+
     // 基本修复：确保有开闭括号
-    if (!sanitized.startsWith('{')) {
-      sanitized = '{' + sanitized;
+    if (!sanitized.startsWith("{")) {
+      sanitized = "{" + sanitized;
     }
-    if (!sanitized.endsWith('}')) {
-      sanitized = sanitized + '}';
+    if (!sanitized.endsWith("}")) {
+      sanitized = sanitized + "}";
     }
 
     // 快速检查是否为有效JSON
@@ -219,17 +222,17 @@ class AsyncContentParser {
    * 同步快速检测内容格式 - 只检查第一行
    */
   isJsonlContent(content: string): boolean {
-    if (!content || typeof content !== 'string') {
+    if (!content || typeof content !== "string") {
       return false;
     }
 
     try {
-      const firstLine = content.trim().split('\n')[0];
+      const firstLine = content.trim().split("\n")[0];
       if (!firstLine) return false;
-      
+
       const parsed = JSON.parse(firstLine);
       return (
-        typeof parsed === 'object' &&
+        typeof parsed === "object" &&
         parsed !== null &&
         (parsed.type || parsed.t) &&
         (parsed.content || parsed.c)
@@ -243,7 +246,7 @@ class AsyncContentParser {
    * 同步快速检测JSON对象格式
    */
   isJsonObject(content: string): boolean {
-    if (!content || typeof content !== 'string') {
+    if (!content || typeof content !== "string") {
       return false;
     }
 
@@ -251,8 +254,8 @@ class AsyncContentParser {
     if (trimmed.length < 2) return false;
 
     return (
-      (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
-      (trimmed.startsWith('[') && trimmed.endsWith(']'))
+      (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+      (trimmed.startsWith("[") && trimmed.endsWith("]"))
     );
   }
 
@@ -260,8 +263,8 @@ class AsyncContentParser {
    * 清理解析队列
    */
   clearQueue(): void {
-    this.parseQueue.forEach(task => {
-      task.reject(new Error('Parser queue cleared'));
+    this.parseQueue.forEach((task) => {
+      task.reject(new Error("Parser queue cleared"));
     });
     this.parseQueue = [];
     this.isProcessing = false;
@@ -274,7 +277,8 @@ export const asyncContentParser = new AsyncContentParser();
 // React Hook
 export function useAsyncContentParser() {
   return {
-    parseJsonlContent: asyncContentParser.parseJsonlContent.bind(asyncContentParser),
+    parseJsonlContent:
+      asyncContentParser.parseJsonlContent.bind(asyncContentParser),
     isJsonlContent: asyncContentParser.isJsonlContent.bind(asyncContentParser),
     isJsonObject: asyncContentParser.isJsonObject.bind(asyncContentParser),
     clearQueue: asyncContentParser.clearQueue.bind(asyncContentParser),

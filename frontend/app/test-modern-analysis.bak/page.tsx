@@ -3,7 +3,7 @@
 import React from "react";
 
 // 防止预渲染
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 import { ModernAnalysisInterface } from "@/components/ai/ModernAnalysisInterface";
 import { ContentItemPublic } from "@/app/content-library/types";
 import { AIResult } from "@/lib/api/content";

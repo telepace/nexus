@@ -48,10 +48,10 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
 }) => {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [isScrolling, setIsScrolling] = useState(false);
-  
+
   // 🎯 简化悬浮状态管理 - 移除复杂的useUnifiedVisibility，使用简单的CSS hover
   // 避免JavaScript状态管理与CSS transition冲突导致的闪烁
-  
+
   // 使用外部传入的选中状态，如果没有传入则使用内部状态
   const selectedBlock = externalSelectedBlock;
 
@@ -71,15 +71,15 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
     }
 
     let scrollTimeout: NodeJS.Timeout;
-    
+
     const handleScroll = () => {
       setIsScrolling(true);
-      
+
       // 清除之前的超时
       if (scrollTimeout) {
         clearTimeout(scrollTimeout);
       }
-      
+
       // 滚动停止150ms后重新启用动画
       scrollTimeout = setTimeout(() => {
         setIsScrolling(false);
@@ -87,16 +87,16 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
     };
 
     // 监听全局滚动和容器滚动
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    const containers = document.querySelectorAll('[data-scrollable]');
-    containers.forEach(container => {
-      container.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    const containers = document.querySelectorAll("[data-scrollable]");
+    containers.forEach((container) => {
+      container.addEventListener("scroll", handleScroll, { passive: true });
     });
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      containers.forEach(container => {
-        container.removeEventListener('scroll', handleScroll);
+      window.removeEventListener("scroll", handleScroll);
+      containers.forEach((container) => {
+        container.removeEventListener("scroll", handleScroll);
       });
       if (scrollTimeout) {
         clearTimeout(scrollTimeout);
@@ -105,27 +105,28 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
   }, [variant]);
 
   // 渲染卡片内容
-  const renderCardContent = useCallback((card: AnalysisCard) => {
-    const { content: cardContent } = card;
+  const renderCardContent = useCallback(
+    (card: AnalysisCard) => {
+      const { content: cardContent } = card;
 
-    if (cardContent.type === "summary" || cardContent.type === "keyPoints") {
-      let textContent = "";
+      if (cardContent.type === "summary" || cardContent.type === "keyPoints") {
+        let textContent = "";
 
-      if (typeof cardContent.data === "string") {
-        textContent = cardContent.data;
-      } else if (cardContent.data && typeof cardContent.data === "object") {
-        textContent =
-          cardContent.data.text ||
-          cardContent.data.content ||
-          cardContent.data.summary ||
-          JSON.stringify(cardContent.data);
-      }
+        if (typeof cardContent.data === "string") {
+          textContent = cardContent.data;
+        } else if (cardContent.data && typeof cardContent.data === "object") {
+          textContent =
+            cardContent.data.text ||
+            cardContent.data.content ||
+            cardContent.data.summary ||
+            JSON.stringify(cardContent.data);
+        }
 
-      if (!textContent) return null;
+        if (!textContent) return null;
 
-      return (
-        <div
-          className={`
+        return (
+          <div
+            className={`
             px-6 py-4 rounded-lg transition-all duration-200
             ${
               selectedBlock === `${card.id}-main`
@@ -133,188 +134,218 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
                 : "hover:linear-bg-1"
             }
           `}
-          onClick={(e) => {
-            // 如果点击的是文本内容区域，处理块选择
-            if (e.target instanceof HTMLElement && e.target.closest('.select-text')) {
-              onBlockSelect?.(selectedBlock === `${card.id}-main` ? null : `${card.id}-main`);
-            }
-          }}
-        >
-          <div className="select-text prose prose-sm max-w-none dark:prose-invert">
-            <UniversalContentRenderer
-              content={textContent}
-              onExpandLine={onExpandLine}
-              contentId={stableContentId}
-              enableDelayedRendering={false}
-            />
+            onClick={(e) => {
+              // 如果点击的是文本内容区域，处理块选择
+              if (
+                e.target instanceof HTMLElement &&
+                e.target.closest(".select-text")
+              ) {
+                onBlockSelect?.(
+                  selectedBlock === `${card.id}-main`
+                    ? null
+                    : `${card.id}-main`,
+                );
+              }
+            }}
+          >
+            <div className="select-text prose prose-sm max-w-none dark:prose-invert">
+              <UniversalContentRenderer
+                content={textContent}
+                onExpandLine={onExpandLine}
+                contentId={stableContentId}
+                enableDelayedRendering={false}
+              />
+            </div>
           </div>
-        </div>
-      );
-    }
+        );
+      }
 
-    return null;
-  }, [selectedBlock, onExpandLine, onBlockSelect, stableContentId]);
+      return null;
+    },
+    [selectedBlock, onExpandLine, onBlockSelect, stableContentId],
+  );
 
   // 主卡片组件 - 简化悬浮状态管理
-  const CardComponent = React.memo(({ card }: { card: AnalysisCard }) => {
-    const isSelected = selectedCard === card.id;
-    const isCollapsed = collapsedCards.has(card.id);
-    
-    // 🔍 卡片渲染追踪日志
-    const cardRenderCount = React.useRef(0);
-    const prevCardState = React.useRef<any>({});
-    
-    cardRenderCount.current += 1;
-    
-    React.useEffect(() => {
-      const currentState = {
-        cardId: card.id,
-        isSelected,
-        isCollapsed,
-        variant,
-        cardTitle: card.title,
-        hasContent: !!card.content?.data,
-      };
-      
-      const changes = Object.keys(currentState).filter(
-        key => prevCardState.current[key] !== currentState[key]
-      );
-      
-      console.log(`📦 CardComponent [${card.id}] render #${cardRenderCount.current}:`, {
-        ...currentState,
-        changes: changes.length > 0 ? changes : 'no state changes',
-        timestamp: new Date().toISOString().split('T')[1],
-        // 检查是否是折叠状态变化导致的渲染
-        collapseChange: prevCardState.current.isCollapsed !== isCollapsed ? 
-          `${prevCardState.current.isCollapsed} → ${isCollapsed}` : null,
+  const CardComponent = React.memo(
+    ({ card }: { card: AnalysisCard }) => {
+      const isSelected = selectedCard === card.id;
+      const isCollapsed = collapsedCards.has(card.id);
+
+      // 🔍 卡片渲染追踪日志
+      const cardRenderCount = React.useRef(0);
+      const prevCardState = React.useRef<any>({});
+
+      cardRenderCount.current += 1;
+
+      React.useEffect(() => {
+        const currentState = {
+          cardId: card.id,
+          isSelected,
+          isCollapsed,
+          variant,
+          cardTitle: card.title,
+          hasContent: !!card.content?.data,
+        };
+
+        const changes = Object.keys(currentState).filter(
+          (key) => prevCardState.current[key] !== currentState[key],
+        );
+
+        console.log(
+          `📦 CardComponent [${card.id}] render #${cardRenderCount.current}:`,
+          {
+            ...currentState,
+            changes: changes.length > 0 ? changes : "no state changes",
+            timestamp: new Date().toISOString().split("T")[1],
+            // 检查是否是折叠状态变化导致的渲染
+            collapseChange:
+              prevCardState.current.isCollapsed !== isCollapsed
+                ? `${prevCardState.current.isCollapsed} → ${isCollapsed}`
+                : null,
+          },
+        );
+
+        prevCardState.current = currentState;
       });
-      
-      prevCardState.current = currentState;
-    });
-    
-    // 在Preview模式下完全禁用hover效果，避免状态管理开销
-    const shouldShowHoverButtons = variant !== "preview";
 
-    // 🚨 临时禁用ref回调以解决无限循环
-    const elementRef = useCallback((el: HTMLElement | null) => {
-      // 临时禁用以解决问题
-    }, [card.id, variant]);
+      // 在Preview模式下完全禁用hover效果，避免状态管理开销
+      const shouldShowHoverButtons = variant !== "preview";
 
-    const handleClick = useCallback(() => {
-      setSelectedCard(isSelected ? null : card.id);
-    }, [isSelected, card.id]);
+      // 🚨 临时禁用ref回调以解决无限循环
+      const elementRef = useCallback(
+        (el: HTMLElement | null) => {
+          // 临时禁用以解决问题
+        },
+        [card.id, variant],
+      );
 
-    return (
-      <div
-        className="group relative cursor-pointer"
-        onClick={handleClick}
-        data-exclude-selection
-      >
-        <Card
-          className={`
+      const handleClick = useCallback(() => {
+        setSelectedCard(isSelected ? null : card.id);
+      }, [isSelected, card.id]);
+
+      return (
+        <div
+          className="group relative cursor-pointer"
+          onClick={handleClick}
+          data-exclude-selection
+        >
+          <Card
+            className={`
           jobs-card-transition
           relative border-0 analysis-card
           ${isSelected ? "jobs-card-selected" : "jobs-card-idle"}
           ${variant === "preview" ? "jobs-card-preview" : ""}
         `}
-        >
-          <CardContent className="px-12 py-4">
-            {/* 卡片头部 */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">{card.emoji}</span>
-                <div>
-                  <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                    {card.title}
-                  </h3>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    {card.subtitle}
-                  </p>
+          >
+            <CardContent className="px-12 py-4">
+              {/* 卡片头部 */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{card.emoji}</span>
+                  <div>
+                    <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                      {card.title}
+                    </h3>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                      {card.subtitle}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-1 flex-row-reverse relative z-10">
-                <CollapsibleButton
-                  isCollapsed={isCollapsed}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    onToggleCardCollapse(card.id);
-                  }}
-                  size="md"
-                  className="text-neutral-400 hover:text-neutral-600 relative z-10"
-                />
+                <div className="flex items-center gap-1 flex-row-reverse relative z-10">
+                  <CollapsibleButton
+                    isCollapsed={isCollapsed}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      onToggleCardCollapse(card.id);
+                    }}
+                    size="md"
+                    className="text-neutral-400 hover:text-neutral-600 relative z-10"
+                  />
 
-                {/* 🎯 简化悬浮操作按钮 - 使用纯CSS group hover，避免JS状态冲突 */}
-                {shouldShowHoverButtons && (
-                  <div 
-                    className={`
+                  {/* 🎯 简化悬浮操作按钮 - 使用纯CSS group hover，避免JS状态冲突 */}
+                  {shouldShowHoverButtons && (
+                    <div
+                      className={`
                       flex items-center gap-1 mr-1 relative z-10
                       transition-opacity duration-200 ease-out
                       group-hover:opacity-100 opacity-0
                     `}
-                  >
-                    <FavoriteButton
-                      itemId={content.id}
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        console.log("分享");
-                      }}
                     >
-                      <Share className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                )}
+                      <FavoriteButton
+                        itemId={content.id}
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-neutral-400 hover:text-neutral-600 relative z-10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          console.log("分享");
+                        }}
+                      >
+                        <Share className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* 🎯 卡片内容 - Preview模式禁用过渡动画，避免闪烁 */}
-            <div
-              className={`
+              {/* 🎯 卡片内容 - Preview模式禁用过渡动画，避免闪烁 */}
+              <div
+                className={`
               card-height-stable ${variant === "preview" ? "" : "transition-all duration-300"}
               ${isCollapsed ? "opacity-0 overflow-hidden" : "opacity-100"}
             `}
-              data-transitioning={isCollapsed ? "true" : "false"}
-              style={{
-                // Preview模式直接显示/隐藏，不使用高度动画
-                maxHeight: variant === "preview" 
-                  ? (isCollapsed ? 0 : "none")
-                  : (isCollapsed ? 0 : "none"),
-                height: variant === "preview"
-                  ? (isCollapsed ? 0 : "auto") 
-                  : (isCollapsed ? 0 : "auto"),
-                // Preview模式下移除过渡延迟
-                transitionDelay: variant === "preview" ? "0ms" : "0ms"
-              }}
-            >
-              <div
-                ref={elementRef}
-                className="card-content-inner preview-stable"
+                data-transitioning={isCollapsed ? "true" : "false"}
+                style={{
+                  // Preview模式直接显示/隐藏，不使用高度动画
+                  maxHeight:
+                    variant === "preview"
+                      ? isCollapsed
+                        ? 0
+                        : "none"
+                      : isCollapsed
+                        ? 0
+                        : "none",
+                  height:
+                    variant === "preview"
+                      ? isCollapsed
+                        ? 0
+                        : "auto"
+                      : isCollapsed
+                        ? 0
+                        : "auto",
+                  // Preview模式下移除过渡延迟
+                  transitionDelay: variant === "preview" ? "0ms" : "0ms",
+                }}
               >
-                {renderCardContent(card)}
+                <div
+                  ref={elementRef}
+                  className="card-content-inner preview-stable"
+                >
+                  {renderCardContent(card)}
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }, (prevProps, nextProps) => {
-    // 自定义比较函数，避免不必要的重新渲染
-    return (
-      prevProps.card.id === nextProps.card.id &&
-      prevProps.card.title === nextProps.card.title &&
-      prevProps.card.content === nextProps.card.content
-    );
-  });
+            </CardContent>
+          </Card>
+        </div>
+      );
+    },
+    (prevProps, nextProps) => {
+      // 自定义比较函数，避免不必要的重新渲染
+      return (
+        prevProps.card.id === nextProps.card.id &&
+        prevProps.card.title === nextProps.card.title &&
+        prevProps.card.content === nextProps.card.content
+      );
+    },
+  );
 
   // 只有在没有卡片且没有活跃对话时才显示空状态
   if (cards.length === 0 && !hasActiveConversations) {
@@ -460,7 +491,7 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
           will-change: transform, box-shadow;
         }
       `}</style>
-      
+
       <div
         className={`space-y-6 ${
           variant === "preview" ? "max-w-2xl mx-auto preview-mode" : ""

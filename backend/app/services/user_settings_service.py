@@ -20,7 +20,9 @@ class UserSettingsService:
         return session.exec(statement).first()
 
     @staticmethod
-    def get_or_create_user_settings(session: Session, user_id: uuid.UUID) -> UserSettings:
+    def get_or_create_user_settings(
+        session: Session, user_id: uuid.UUID
+    ) -> UserSettings:
         """获取或创建用户设置"""
         user_settings = UserSettingsService.get_user_settings(session, user_id)
 
@@ -32,7 +34,7 @@ class UserSettingsService:
                 auto_generate_summary=True,
                 auto_generate_key_points=True,
                 auto_generate_labels=True,
-                max_summary_length=500
+                max_summary_length=500,
             )
             session.add(user_settings)
             session.commit()
@@ -42,15 +44,10 @@ class UserSettingsService:
 
     @staticmethod
     def create_user_settings(
-        session: Session,
-        user_id: uuid.UUID,
-        settings_data: UserSettingsCreate
+        session: Session, user_id: uuid.UUID, settings_data: UserSettingsCreate
     ) -> UserSettings:
         """创建用户设置"""
-        user_settings = UserSettings(
-            user_id=user_id,
-            **settings_data.dict()
-        )
+        user_settings = UserSettings(user_id=user_id, **settings_data.dict())
         session.add(user_settings)
         session.commit()
         session.refresh(user_settings)
@@ -58,9 +55,7 @@ class UserSettingsService:
 
     @staticmethod
     def update_user_settings(
-        session: Session,
-        user_id: uuid.UUID,
-        settings_update: UserSettingsUpdate
+        session: Session, user_id: uuid.UUID, settings_update: UserSettingsUpdate
     ) -> UserSettings | None:
         """更新用户设置"""
         user_settings = UserSettingsService.get_user_settings(session, user_id)
@@ -92,9 +87,13 @@ class UserSettingsService:
         return "English"
 
     @staticmethod
-    def set_user_ai_language(session: Session, user_id: uuid.UUID, language: str) -> UserSettings:
+    def set_user_ai_language(
+        session: Session, user_id: uuid.UUID, language: str
+    ) -> UserSettings:
         """设置用户的 AI 输出语言偏好"""
-        user_settings = UserSettingsService.get_or_create_user_settings(session, user_id)
+        user_settings = UserSettingsService.get_or_create_user_settings(
+            session, user_id
+        )
         user_settings.ai_output_language = language
         user_settings.updated_at = now_utc()
 

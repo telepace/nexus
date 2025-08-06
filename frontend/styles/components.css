@@ -44,7 +44,11 @@
 }
 
 .content-section {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.9) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(248, 250, 252, 0.9) 100%
+  );
   border: 1px solid rgba(203, 213, 225, 0.3);
 }
 
@@ -168,7 +172,8 @@
 }
 
 .card-hover-effect:hover {
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px
+    rgba(0, 0, 0, 0.04);
   transform: translateY(-2px);
 }
 
@@ -180,7 +185,8 @@
 
 /* 悬浮效果基础样式 */
 .hover-optimized {
-  transition: background-color 0.15s ease-out, border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+  transition: background-color 0.15s ease-out, border-color 0.15s ease-out,
+    box-shadow 0.15s ease-out;
   will-change: background-color, border-color, box-shadow;
 }
 

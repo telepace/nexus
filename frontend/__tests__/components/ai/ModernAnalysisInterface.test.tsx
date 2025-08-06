@@ -1,34 +1,34 @@
-import React from 'react';
-import { render, waitFor } from '@testing-library/react';
-import { ModernAnalysisInterface } from '@/components/ai/ModernAnalysisInterface';
-import * as promptsApi from '@/lib/api/services/prompts';
-import * as contentApi from '@/lib/api/content';
-import { ContentItemPublic } from '@/lib/api/content';
+import React from "react";
+import { render, waitFor } from "@testing-library/react";
+import { ModernAnalysisInterface } from "@/components/ai/ModernAnalysisInterface";
+import * as promptsApi from "@/lib/api/services/prompts";
+import * as contentApi from "@/lib/api/content";
+import { ContentItemPublic } from "@/lib/api/content";
 
 // Mock promptsApi
-jest.mock('@/lib/api/services/prompts', () => ({
+jest.mock("@/lib/api/services/prompts", () => ({
   getEnabledPrompts: jest.fn().mockResolvedValue([]),
   getDisabledPrompts: jest.fn().mockResolvedValue([]),
 }));
-jest.mock('@/lib/api/content', () => ({
+jest.mock("@/lib/api/content", () => ({
   getContentConversations: jest.fn().mockResolvedValue({ conversations: [] }),
 }));
 
 const mockContent: ContentItemPublic = {
-  id: '1',
-  title: 'Test Content',
+  id: "1",
+  title: "Test Content",
   summary: null,
-  content_text: 'Test text',
-  meta_info: '{}',
+  content_text: "Test text",
+  meta_info: "{}",
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
-  user_id: 'user1',
-  processing_status: 'active',
+  user_id: "user1",
+  processing_status: "active",
   source_uri: null,
-  type: 'text',
+  type: "text",
 };
 
-describe('ModernAnalysisInterface - Prompts Loading', () => {
+describe("ModernAnalysisInterface - Prompts Loading", () => {
   beforeEach(() => {
     // Remove the mockClear lines, as spyOn already handles it
     // (promptsApi.getEnabledPrompts as jest.Mock).mockClear();
@@ -42,9 +42,11 @@ describe('ModernAnalysisInterface - Prompts Loading', () => {
     (contentApi.getContentConversations as jest.Mock).mockClear();
   });
 
-  it('should load prompts only once across multiple instances', async () => {
+  it("should load prompts only once across multiple instances", async () => {
     // Render first instance
-    const { unmount } = render(<ModernAnalysisInterface content={mockContent} variant="preview" />);
+    const { unmount } = render(
+      <ModernAnalysisInterface content={mockContent} variant="preview" />,
+    );
 
     await waitFor(() => {
       // @ts-expect-error - Mocked function
@@ -61,4 +63,4 @@ describe('ModernAnalysisInterface - Prompts Loading', () => {
       expect(promptsApi.getEnabledPrompts).toHaveBeenCalledTimes(1);
     });
   });
-}); 
+});

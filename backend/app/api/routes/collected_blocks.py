@@ -21,7 +21,9 @@ def create_collected_block(
     current_user: CurrentUser,
 ) -> Any:
     """Create new collected block."""
-    collected_block = CollectedBlock(**collected_block_in.model_dump(), user_id=current_user.id)
+    collected_block = CollectedBlock(
+        **collected_block_in.model_dump(), user_id=current_user.id
+    )
     session.add(collected_block)
     session.commit()
     session.refresh(collected_block)
@@ -36,7 +38,9 @@ def read_collected_blocks(
     limit: int = 100,
 ) -> Any:
     """Retrieve collected blocks."""
-    count_statement = select(CollectedBlock).where(CollectedBlock.user_id == current_user.id)
+    count_statement = select(CollectedBlock).where(
+        CollectedBlock.user_id == current_user.id
+    )
     count = session.exec(count_statement).count()
 
     statement = (
@@ -65,4 +69,3 @@ def delete_collected_block(
     session.delete(collected_block)
     session.commit()
     return collected_block
-

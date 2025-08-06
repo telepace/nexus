@@ -108,8 +108,8 @@ export function UniversalContentRenderer({
   } else {
     return (
       <div data-testid="universal-content-renderer" className={className}>
-        <MarkdownRenderer 
-          content={content} 
+        <MarkdownRenderer
+          content={content}
           contentId={contentId}
           enableEnhancedTooltip={enableEnhancedTooltip}
           onReferenceClick={onReferenceClick}

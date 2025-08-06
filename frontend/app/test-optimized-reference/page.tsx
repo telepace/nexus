@@ -109,7 +109,9 @@ export default function TestOptimizedReferencePage() {
             {/* 简化版本示例 */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">简化版本示例（无内容ID）</CardTitle>
+                <CardTitle className="text-lg">
+                  简化版本示例（无内容ID）
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-foreground leading-relaxed">
@@ -167,4 +169,4 @@ export default function TestOptimizedReferencePage() {
       </div>
     </TooltipProvider>
   );
-} 
+}

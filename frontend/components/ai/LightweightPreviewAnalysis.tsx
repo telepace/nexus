@@ -35,7 +35,9 @@ interface LightweightPreviewAnalysisProps {
  * 专为Preview模式优化，避免加载完整的EnhancedModernAnalysisInterface
  * 不包含交互功能、动画效果和事件监听器
  */
-export const LightweightPreviewAnalysis: React.FC<LightweightPreviewAnalysisProps> = ({
+export const LightweightPreviewAnalysis: React.FC<
+  LightweightPreviewAnalysisProps
+> = ({
   item,
   analysisResult = null,
   isLoading = false,
@@ -47,10 +49,11 @@ export const LightweightPreviewAnalysis: React.FC<LightweightPreviewAnalysisProp
   showHeaderTitle = true,
 }) => {
   const { t } = useI18nSafe();
-  
+
   // 使用翻译的默认值
-  const defaultHeaderTitle = headerTitle || t('analysis.contentAnalysis');
-  const defaultEmptyStateText = emptyStateText || t('analysis.selectContentForPreview');
+  const defaultHeaderTitle = headerTitle || t("analysis.contentAnalysis");
+  const defaultEmptyStateText =
+    emptyStateText || t("analysis.selectContentForPreview");
 
   // 简化的分析数据适配
   const analysisData = useMemo(() => {
@@ -65,7 +68,9 @@ export const LightweightPreviewAnalysis: React.FC<LightweightPreviewAnalysisProp
     return (
       <div className={cn("flex flex-col h-full", className)}>
         {!hideHeader && (
-          <div className={`flex items-center h-header px-4 flex-shrink-0 ${showHeaderBorder ? 'border-b' : ''}`}>
+          <div
+            className={`flex items-center h-header px-4 flex-shrink-0 ${showHeaderBorder ? "border-b" : ""}`}
+          >
             <div className="flex items-center gap-2">
               <Library className="w-4 h-4 text-muted-foreground" />
               {showHeaderTitle && (
@@ -76,7 +81,7 @@ export const LightweightPreviewAnalysis: React.FC<LightweightPreviewAnalysisProp
             </div>
           </div>
         )}
-        
+
         <div className="flex-1 p-6 space-y-4">
           <div className="animate-pulse space-y-3">
             <div className="h-4 bg-muted rounded w-3/4"></div>
@@ -94,7 +99,9 @@ export const LightweightPreviewAnalysis: React.FC<LightweightPreviewAnalysisProp
     return (
       <div className={cn("flex flex-col h-full", className)}>
         {!hideHeader && (
-          <div className={`flex items-center h-header px-4 flex-shrink-0 ${showHeaderBorder ? 'border-b' : ''}`}>
+          <div
+            className={`flex items-center h-header px-4 flex-shrink-0 ${showHeaderBorder ? "border-b" : ""}`}
+          >
             <div className="flex items-center gap-2">
               <Library className="w-4 h-4 text-muted-foreground" />
               {showHeaderTitle && (
@@ -105,7 +112,7 @@ export const LightweightPreviewAnalysis: React.FC<LightweightPreviewAnalysisProp
             </div>
           </div>
         )}
-        
+
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="text-center space-y-4 max-w-md">
             <div className="w-16 h-16 bg-muted/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -130,12 +137,14 @@ export const LightweightPreviewAnalysis: React.FC<LightweightPreviewAnalysisProp
     <div className={cn("flex flex-col h-full", className)}>
       {/* 头部 */}
       {!hideHeader && (
-        <div className={`flex items-center justify-between h-header px-4 flex-shrink-0 ${showHeaderBorder ? 'border-b' : ''}`}>
+        <div
+          className={`flex items-center justify-between h-header px-4 flex-shrink-0 ${showHeaderBorder ? "border-b" : ""}`}
+        >
           <div className="flex items-center gap-2 min-w-0">
             <Library className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             {showHeaderTitle && (
               <span className="text-sm font-medium text-muted-foreground truncate">
-                预览: {item.title || '未知内容'}
+                预览: {item.title || "未知内容"}
               </span>
             )}
           </div>
@@ -167,7 +176,11 @@ export const LightweightPreviewAnalysis: React.FC<LightweightPreviewAnalysisProp
                 </h2>
                 <div className="bg-muted/20 rounded-lg p-4">
                   <OptimizedUniversalContentRenderer
-                    content={typeof analysisData.summary === 'string' ? analysisData.summary : JSON.stringify(analysisData.summary)}
+                    content={
+                      typeof analysisData.summary === "string"
+                        ? analysisData.summary
+                        : JSON.stringify(analysisData.summary)
+                    }
                     mode="preview"
                     enableHoverEffects={false}
                     className="text-sm"
@@ -184,7 +197,11 @@ export const LightweightPreviewAnalysis: React.FC<LightweightPreviewAnalysisProp
                 </h2>
                 <div className="bg-muted/20 rounded-lg p-4">
                   <OptimizedUniversalContentRenderer
-                    content={typeof analysisData.keyPoints === 'string' ? analysisData.keyPoints : JSON.stringify(analysisData.keyPoints)}
+                    content={
+                      typeof analysisData.keyPoints === "string"
+                        ? analysisData.keyPoints
+                        : JSON.stringify(analysisData.keyPoints)
+                    }
                     mode="preview"
                     enableHoverEffects={false}
                     className="text-sm"
@@ -203,36 +220,45 @@ export const LightweightPreviewAnalysis: React.FC<LightweightPreviewAnalysisProp
                   {analysisData.metadata.readingTime && (
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">阅读时间:</span>
-                      <span className="text-foreground">{analysisData.metadata.readingTime} 分钟</span>
+                      <span className="text-foreground">
+                        {analysisData.metadata.readingTime} 分钟
+                      </span>
                     </div>
                   )}
                   {analysisData.metadata.difficulty && (
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">难度等级:</span>
-                      <span className="text-foreground">{analysisData.metadata.difficulty}</span>
+                      <span className="text-foreground">
+                        {analysisData.metadata.difficulty}
+                      </span>
                     </div>
                   )}
                   {analysisData.metadata.qualityScore && (
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">质量评分:</span>
-                      <span className="text-foreground">{analysisData.metadata.qualityScore}/10</span>
+                      <span className="text-foreground">
+                        {analysisData.metadata.qualityScore}/10
+                      </span>
                     </div>
                   )}
-                  {analysisData.metadata.labels && analysisData.metadata.labels.length > 0 && (
-                    <div className="space-y-1">
-                      <span className="text-sm text-muted-foreground">标签:</span>
-                      <div className="flex flex-wrap gap-1">
-                        {analysisData.metadata.labels.map((label, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex px-2 py-1 text-xs bg-primary/10 text-primary rounded-md"
-                          >
-                            {label}
-                          </span>
-                        ))}
+                  {analysisData.metadata.labels &&
+                    analysisData.metadata.labels.length > 0 && (
+                      <div className="space-y-1">
+                        <span className="text-sm text-muted-foreground">
+                          标签:
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {analysisData.metadata.labels.map((label, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex px-2 py-1 text-xs bg-primary/10 text-primary rounded-md"
+                            >
+                              {label}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
               </div>
             )}

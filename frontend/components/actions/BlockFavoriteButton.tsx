@@ -43,7 +43,8 @@ export function BlockFavoriteButton({
     const checkFavoriteStatus = async () => {
       try {
         setIsCheckingStatus(true);
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const baseUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
         const token = getCookie("accessToken");
 
         if (!token) {
@@ -87,11 +88,11 @@ export function BlockFavoriteButton({
           "Content-Type": "application/json",
         },
       };
-      
+
       if (body) {
         options.body = JSON.stringify(body);
       }
-      
+
       const response = await fetch(url, options);
       return response;
     } catch (error) {
@@ -117,7 +118,8 @@ export function BlockFavoriteButton({
     try {
       setIsLoading(true);
 
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
       const token = getCookie("accessToken");
 
       if (!token) {
@@ -146,7 +148,10 @@ export function BlockFavoriteButton({
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`API request failed with status ${response.status}:`, errorText);
+        console.error(
+          `API request failed with status ${response.status}:`,
+          errorText,
+        );
 
         if (response.status === 401) {
           toast.error("登录已过期，请重新登录");
@@ -254,4 +259,4 @@ export function BlockFavoriteButton({
       )}
     </Button>
   );
-} 
+}

@@ -22,7 +22,7 @@ class TokenManager:
         content_length: int | None = None,
         content_text: str | None = None,
         base_tokens: int | None = None,
-        model_name: str | None = None
+        model_name: str | None = None,
     ) -> int:
         """
         获取token限制（简化版）
@@ -39,8 +39,7 @@ class TokenManager:
         """
         # 使用配置的方法获取token限制
         token_limit = settings.get_token_limit(
-            task_type=task_type,
-            base_tokens=base_tokens
+            task_type=task_type, base_tokens=base_tokens
         )
 
         logger.debug(f"Token限制: 任务={task_type}, 限制={token_limit}")
@@ -78,8 +77,10 @@ class TokenManager:
         input_tokens = TokenManager.estimate_input_tokens(input_content)
         total_tokens = input_tokens + max_output_tokens
 
-        logger.debug(f"Token估算: 输入={input_tokens}, 输出={max_output_tokens}, "
-                    f"总计={total_tokens}")
+        logger.debug(
+            f"Token估算: 输入={input_tokens}, 输出={max_output_tokens}, "
+            f"总计={total_tokens}"
+        )
 
         return total_tokens
 
@@ -87,7 +88,7 @@ class TokenManager:
     def get_recommended_settings(
         task_type: str,
         content_text: str,
-        target_quality: str = "balanced"  # "fast", "balanced", "high"
+        target_quality: str = "balanced",  # "fast", "balanced", "high"
     ) -> dict:
         """
         获取推荐的LLM调用设置（简化版）
@@ -121,26 +122,30 @@ class TokenManager:
             },
         }
 
-        settings_config = quality_settings.get(target_quality, quality_settings["balanced"])
+        settings_config = quality_settings.get(
+            target_quality, quality_settings["balanced"]
+        )
 
         recommended_settings = {
             "max_tokens": max_tokens,
             "temperature": settings_config["temperature"],
             "top_p": settings_config["top_p"],
             "estimated_input_tokens": TokenManager.estimate_input_tokens(content_text),
-            "estimated_total_tokens": TokenManager.estimate_total_tokens(content_text, max_tokens),
+            "estimated_total_tokens": TokenManager.estimate_total_tokens(
+                content_text, max_tokens
+            ),
         }
 
-        logger.info(f"推荐设置: 任务={task_type}, 质量={target_quality}, "
-                   f"内容长度={content_length}, 设置={recommended_settings}")
+        logger.info(
+            f"推荐设置: 任务={task_type}, 质量={target_quality}, "
+            f"内容长度={content_length}, 设置={recommended_settings}"
+        )
 
         return recommended_settings
 
     @staticmethod
     def validate_token_request(
-        input_content: str,
-        requested_max_tokens: int,
-        task_type: str = "default"
+        input_content: str, requested_max_tokens: int, task_type: str = "default"
     ) -> tuple[bool, str, int]:
         """
         验证token请求是否合理（简化版）
@@ -159,12 +164,20 @@ class TokenManager:
         # 检查是否超过系统最大限制
         system_max = 100000  # 系统绝对最大值
         if requested_max_tokens > system_max:
-            return False, f"请求的token数({requested_max_tokens})超过系统最大限制({system_max})", recommended_tokens
+            return (
+                False,
+                f"请求的token数({requested_max_tokens})超过系统最大限制({system_max})",
+                recommended_tokens,
+            )
 
         # 检查是否低于最小值
         system_min = 100  # 系统最小值
         if requested_max_tokens < system_min:
-            return False, f"请求的token数({requested_max_tokens})低于系统最小限制({system_min})", recommended_tokens
+            return (
+                False,
+                f"请求的token数({requested_max_tokens})低于系统最小限制({system_min})",
+                recommended_tokens,
+            )
 
         # 基本验证通过
         return True, "", requested_max_tokens
@@ -176,7 +189,7 @@ def get_token_limit(
     content_length: int | None = None,
     content_text: str | None = None,
     base_tokens: int | None = None,
-    model_name: str | None = None
+    model_name: str | None = None,
 ) -> int:
     """向后兼容的token限制获取函数"""
     return TokenManager.get_token_limit(
@@ -184,31 +197,25 @@ def get_token_limit(
         content_length=content_length,
         content_text=content_text,
         base_tokens=base_tokens,
-        model_name=model_name
+        model_name=model_name,
     )
 
 
 def get_recommended_settings(
-    task_type: str,
-    content_text: str,
-    target_quality: str = "balanced"
+    task_type: str, content_text: str, target_quality: str = "balanced"
 ) -> dict:
     """向后兼容的推荐设置获取函数"""
     return TokenManager.get_recommended_settings(
-        task_type=task_type,
-        content_text=content_text,
-        target_quality=target_quality
+        task_type=task_type, content_text=content_text, target_quality=target_quality
     )
 
 
 def validate_token_request(
-    input_content: str,
-    requested_max_tokens: int,
-    task_type: str = "default"
+    input_content: str, requested_max_tokens: int, task_type: str = "default"
 ) -> tuple[bool, str, int]:
     """向后兼容的token请求验证函数"""
     return TokenManager.validate_token_request(
         input_content=input_content,
         requested_max_tokens=requested_max_tokens,
-        task_type=task_type
+        task_type=task_type,
     )

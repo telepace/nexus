@@ -10,7 +10,9 @@ interface Props {
 
 export const ContentPreview = ({ item }: Props) => {
   // 提取AI结果（如果存在）
-  const aiResult = item ? (item as unknown as { ai_result?: unknown }).ai_result : null;
+  const aiResult = item
+    ? (item as unknown as { ai_result?: unknown }).ai_result
+    : null;
 
   return (
     <div className="relative z-20 h-full shadow-macos-window linear-bg-1 rounded-sm flex flex-col overflow-hidden">

@@ -26,8 +26,7 @@ from app.services.preprocessing_pipeline import (
 
 # 设置详细日志
 logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -54,7 +53,7 @@ class SummaryKeyPointsDebugger:
             response = await self.chat_service._call_litellm_proxy(
                 system_content=test_content,
                 user_prompt="请为以下内容生成一个简洁的摘要（200-300字）：",
-                model="or-gemini-2.5-pro"
+                model="or-gemini-2.5-pro",
             )
 
             logger.info("✅ 直接LLM调用成功")
@@ -82,17 +81,15 @@ class SummaryKeyPointsDebugger:
             "content_with_segment_numbers": test_content,
             "document_metadata": {
                 "title": "AI技术发展测试文档",
-                "content_type": "article"
-            }
+                "content_type": "article",
+            },
         }
 
         # 测试summary生成
         try:
             logger.info("📝 测试Summary模板...")
             summary_result = await self.chat_service.generate_with_template(
-                template_name="summary.j2",
-                context=context,
-                model="or-gemini-2.5-pro"
+                template_name="summary.j2", context=context, model="or-gemini-2.5-pro"
             )
             logger.info(f"✅ Summary生成成功: {type(summary_result)}")
             logger.info(f"📊 Summary结果: {summary_result}")
@@ -106,7 +103,7 @@ class SummaryKeyPointsDebugger:
             key_points_result = await self.chat_service.generate_with_template(
                 template_name="key_points.j2",
                 context=context,
-                model="or-gemini-2.5-pro"
+                model="or-gemini-2.5-pro",
             )
             logger.info(f"✅ Key Points生成成功: {type(key_points_result)}")
             logger.info(f"📊 Key Points结果: {key_points_result}")
@@ -123,7 +120,7 @@ class SummaryKeyPointsDebugger:
             metadata = DocumentMetadata(
                 title="AI技术发展测试文档",
                 content_type=ContentType.ARTICLE,
-                language="zh"
+                language="zh",
             )
 
             # 测试内容
@@ -152,20 +149,22 @@ class SummaryKeyPointsDebugger:
             # 执行预处理管道的AI初始化层
             logger.info("🚀 开始执行AI初始化层...")
             ai_results, ai_stats = await self.pipeline._ai_initialization_layer(
-                content=test_content,
-                metadata=metadata,
-                user_preferences={}
+                content=test_content, metadata=metadata, user_preferences={}
             )
 
             logger.info("✅ AI初始化层执行完成")
             logger.info(f"📊 AI统计: {ai_stats}")
-            logger.info(f"📝 Summary存在: {'summary' in ai_results and bool(ai_results['summary'])}")
-            logger.info(f"💡 Key Points存在: {'key_points' in ai_results and bool(ai_results['key_points'])}")
+            logger.info(
+                f"📝 Summary存在: {'summary' in ai_results and bool(ai_results['summary'])}"
+            )
+            logger.info(
+                f"💡 Key Points存在: {'key_points' in ai_results and bool(ai_results['key_points'])}"
+            )
 
-            if ai_results.get('summary'):
+            if ai_results.get("summary"):
                 logger.info(f"📄 Summary内容: {ai_results['summary']}")
 
-            if ai_results.get('key_points'):
+            if ai_results.get("key_points"):
                 logger.info(f"📄 Key Points内容: {ai_results['key_points']}")
 
         except Exception as e:
@@ -178,7 +177,9 @@ class SummaryKeyPointsDebugger:
         try:
             with Session(engine) as session:
                 # 查找最近的一个内容项
-                stmt = select(ContentItem).order_by(ContentItem.created_at.desc()).limit(1)
+                stmt = (
+                    select(ContentItem).order_by(ContentItem.created_at.desc()).limit(1)
+                )
                 content_item = session.exec(stmt).first()
 
                 if not content_item:
@@ -197,7 +198,7 @@ class SummaryKeyPointsDebugger:
                     title=content_item.title,
                     source_url=content_item.source_uri,
                     content_type=ContentType.WEB_PAGE,
-                    language="zh"
+                    language="zh",
                 )
 
                 # 执行AI初始化层
@@ -205,29 +206,29 @@ class SummaryKeyPointsDebugger:
                 ai_results, ai_stats = await self.pipeline._ai_initialization_layer(
                     content=content_item.content_text[:5000],  # 限制长度避免超时
                     metadata=metadata,
-                    user_preferences={}
+                    user_preferences={},
                 )
 
                 logger.info("✅ 真实内容AI处理完成")
                 logger.info(f"📊 处理统计: {ai_stats}")
 
                 # 检查结果
-                summary_exists = bool(ai_results.get('summary'))
-                key_points_exists = bool(ai_results.get('key_points'))
+                summary_exists = bool(ai_results.get("summary"))
+                key_points_exists = bool(ai_results.get("key_points"))
 
                 logger.info(f"📝 Summary生成: {'✅' if summary_exists else '❌'}")
                 logger.info(f"💡 Key Points生成: {'✅' if key_points_exists else '❌'}")
 
                 if summary_exists:
-                    summary = ai_results['summary']
-                    if isinstance(summary, dict) and 'summary' in summary:
+                    summary = ai_results["summary"]
+                    if isinstance(summary, dict) and "summary" in summary:
                         logger.info("📄 Summary是结构化数据（可能是Mock）")
                     else:
                         logger.info("📄 Summary是LLM生成的数据")
 
                 if key_points_exists:
-                    key_points = ai_results['key_points']
-                    if isinstance(key_points, dict) and 'key_points' in key_points:
+                    key_points = ai_results["key_points"]
+                    if isinstance(key_points, dict) and "key_points" in key_points:
                         logger.info("📄 Key Points是结构化数据（可能是Mock）")
                     else:
                         logger.info("📄 Key Points是LLM生成的数据")
@@ -242,7 +243,9 @@ class SummaryKeyPointsDebugger:
         # 显示配置信息
         logger.info(f"⚙️ LiteLLM代理: {settings.LITELLM_PROXY_URL}")
         logger.info(f"⚙️ 默认模型: {settings.DEFAULT_LLM_MODEL}")
-        logger.info(f"⚙️ 认证密钥: {'已配置' if settings.LITELLM_MASTER_KEY else '未配置'}")
+        logger.info(
+            f"⚙️ 认证密钥: {'已配置' if settings.LITELLM_MASTER_KEY else '未配置'}"
+        )
 
         # 运行各项测试
         await self.test_direct_llm_call()

@@ -21,7 +21,7 @@ interface CollapsibleButtonProps {
 
 const sizeClasses = {
   sm: "h-6 w-6",
-  md: "h-7 w-7", 
+  md: "h-7 w-7",
   lg: "h-8 w-8",
 };
 
@@ -46,7 +46,7 @@ export function CollapsibleButton({
         sizeClasses[size],
         "text-neutral-400 hover:text-neutral-600 relative z-10",
         "transition-colors duration-200",
-        className
+        className,
       )}
       onClick={onClick}
       disabled={disabled}
@@ -54,16 +54,16 @@ export function CollapsibleButton({
       <motion.div
         initial={false}
         animate={{ rotate: isCollapsed ? 180 : 0 }}
-        transition={{ 
-          duration: 0.3, 
+        transition={{
+          duration: 0.3,
           ease: "easeInOut",
           type: "spring",
           stiffness: 300,
-          damping: 25
+          damping: 25,
         }}
       >
         <ChevronDown className={iconSizes[size]} />
       </motion.div>
     </Button>
   );
-} 
+}

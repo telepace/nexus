@@ -116,7 +116,7 @@ export const useContentItems = () => {
       const toPrefetch = list
         .filter((i) => i.processing_status === "completed")
         .slice(0, 15);
-      
+
       setPrefetchStats({
         total: toPrefetch.length,
         cached: 0,
@@ -125,7 +125,7 @@ export const useContentItems = () => {
 
       // 🚀 优化：使用本地计数器，减少状态更新
       let cachedCount = 0;
-      
+
       const tasks = toPrefetch.map(async (i) => {
         if (contentCache.has(`content-detail-${i.id}`)) {
           cachedCount++;
@@ -263,9 +263,7 @@ export const useContentItems = () => {
           if (updatedItem) {
             // 一次性更新状态
             setItems((prev) =>
-              prev.map((i) =>
-                i.id === event.content_id ? updatedItem : i,
-              ),
+              prev.map((i) => (i.id === event.content_id ? updatedItem : i)),
             );
             toast.success(`内容处理完成: ${updatedItem.title || "未知内容"}`);
           } else {
@@ -351,7 +349,7 @@ export const useContentItems = () => {
           setItems(cached);
           setLoading(false);
           // 🚀 优化：延迟批量预加载，避免初始加载阻塞
-        setTimeout(() => batchPrefetchContent(cached), 2000);
+          setTimeout(() => batchPrefetchContent(cached), 2000);
           return;
         }
 

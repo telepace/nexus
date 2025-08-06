@@ -42,7 +42,8 @@ export function JsonLineWithExpandButton({
   // Check if this line should show expand button
   // Support both boolean true and string expandable values
   // But don't show if child component already has custom expand button
-  const shouldShowButton = !hasCustomExpandButton && (showExpandButton || !!jsonLine.expandable);
+  const shouldShowButton =
+    !hasCustomExpandButton && (showExpandButton || !!jsonLine.expandable);
 
   const handleExpandClick = (e: React.MouseEvent) => {
     e.preventDefault();

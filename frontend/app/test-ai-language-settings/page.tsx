@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { AILanguageSettings } from '@/components/settings/AILanguageSettings';
+import React from "react";
+import { AILanguageSettings } from "@/components/settings/AILanguageSettings";
 
 export default function TestAILanguageSettingsPage() {
   return (
@@ -13,9 +13,9 @@ export default function TestAILanguageSettingsPage() {
             测试用户 AI 输出语言偏好设置功能
           </p>
         </div>
-        
+
         <AILanguageSettings className="max-w-2xl" />
-        
+
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h3 className="font-semibold text-blue-900 mb-2">🧪 测试说明</h3>
           <ul className="text-sm text-blue-800 space-y-1">
@@ -25,7 +25,7 @@ export default function TestAILanguageSettingsPage() {
             <li>• 检查浏览器控制台和后端日志</li>
           </ul>
         </div>
-        
+
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <h3 className="font-semibold text-green-900 mb-2">✅ 预期行为</h3>
           <ul className="text-sm text-green-800 space-y-1">
@@ -38,4 +38,4 @@ export default function TestAILanguageSettingsPage() {
       </div>
     </div>
   );
-} 
+}

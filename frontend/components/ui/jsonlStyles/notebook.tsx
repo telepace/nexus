@@ -32,7 +32,7 @@ const ActionCard: React.FC<ActionCardProps> = ({
 
   return (
     <div
-      className={`my-2 relative group min-h-[140px] flex justify-between items-center rounded-2xl p-5 select-text transition-all duration-300 ease-in-out text-neutral-900 linear-bg-1 ${shouldShowExpandButton ? 'pl-20' : ''}`}
+      className={`my-2 relative group min-h-[140px] flex justify-between items-center rounded-2xl p-5 select-text transition-all duration-300 ease-in-out text-neutral-900 linear-bg-1 ${shouldShowExpandButton ? "pl-20" : ""}`}
       style={{
         boxShadow: "10px 10px 20px #c2c2c2, -10px -10px 20px #ffffff",
         fontFamily: '"Kalam", "Comic Sans MS", cursive',
@@ -48,11 +48,11 @@ const ActionCard: React.FC<ActionCardProps> = ({
           isHovered={isCardHovered}
         />
       )}
-      
+
       <div className="text-base leading-relaxed flex-1">
-        <MarkdownRenderer 
-          content={String(c)} 
-          inline={true} 
+        <MarkdownRenderer
+          content={String(c)}
+          inline={true}
           contentId={contentId}
           enableEnhancedTooltip={!!contentId}
           disableInlineReferences={disableInlineReferences}
@@ -90,7 +90,7 @@ const ParagraphCard: React.FC<ParagraphCardProps> = ({
 
   return (
     <div
-      className={`my-0 bg-neutral-50 rounded-lg shadow-sm border border-neutral-200 select-text relative group transition-all duration-300 ease-in-out ${shouldShowExpandButton ? 'pl-20 p-5' : 'p-3'}`}
+      className={`my-0 bg-neutral-50 rounded-lg shadow-sm border border-neutral-200 select-text relative group transition-all duration-300 ease-in-out ${shouldShowExpandButton ? "pl-20 p-5" : "p-3"}`}
       style={{
         background: "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)",
         fontFamily: '"Kalam", "Comic Sans MS", cursive',
@@ -106,10 +106,10 @@ const ParagraphCard: React.FC<ParagraphCardProps> = ({
           isHovered={isCardHovered}
         />
       )}
-      
+
       <div className="inline-flex items-baseline gap-1 flex-wrap">
-        <MarkdownRenderer 
-          content={finalContent} 
+        <MarkdownRenderer
+          content={finalContent}
           inline={true}
           className="text-sm text-neutral-800 [&_strong]:text-neutral-800 [&_strong]:font-black leading-relaxed"
           contentId={contentId}
@@ -144,9 +144,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
             className="text-xl font-bold text-gray-800 select-text leading-relaxed pl-4"
             style={{ fontFamily: '"Kalam", "Comic Sans MS", cursive' }}
           >
-            <MarkdownRenderer 
-              content={String(c)} 
-              inline={true} 
+            <MarkdownRenderer
+              content={String(c)}
+              inline={true}
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
               disableInlineReferences={disableInlineReferences}
@@ -164,14 +164,14 @@ export const notebookStyleRenderer: StyleRenderer = ({
         <div className="mt-4 mb-2 inline-flex items-baseline gap-1 flex-wrap">
           <span
             className="text-xl font-bold text-neutral-700 select-text"
-            style={{ 
-              lineHeight: '1.5',
-              fontFamily: '"Kalam", "Comic Sans MS", cursive'
+            style={{
+              lineHeight: "1.5",
+              fontFamily: '"Kalam", "Comic Sans MS", cursive',
             }}
           >
-            <MarkdownRenderer 
-              content={String(c)} 
-              inline={true} 
+            <MarkdownRenderer
+              content={String(c)}
+              inline={true}
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
               disableInlineReferences={disableInlineReferences}
@@ -189,14 +189,14 @@ export const notebookStyleRenderer: StyleRenderer = ({
         <div className="mt-4 mb-2 inline-flex items-baseline gap-1 flex-wrap">
           <span
             className="text-lg font-bold text-neutral-700 select-text"
-            style={{ 
-              lineHeight: '1.5',
-              fontFamily: '"Kalam", "Comic Sans MS", cursive'
+            style={{
+              lineHeight: "1.5",
+              fontFamily: '"Kalam", "Comic Sans MS", cursive',
             }}
           >
-            <MarkdownRenderer 
-              content={String(c)} 
-              inline={true} 
+            <MarkdownRenderer
+              content={String(c)}
+              inline={true}
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
               disableInlineReferences={disableInlineReferences}
@@ -214,14 +214,14 @@ export const notebookStyleRenderer: StyleRenderer = ({
         <div className="mt-3 mb-2 inline-flex items-baseline gap-1 flex-wrap">
           <span
             className="text-base font-bold text-neutral-600 select-text"
-            style={{ 
-              lineHeight: '1.4',
-              fontFamily: '"Kalam", "Comic Sans MS", cursive'
+            style={{
+              lineHeight: "1.4",
+              fontFamily: '"Kalam", "Comic Sans MS", cursive',
             }}
           >
-            <MarkdownRenderer 
-              content={String(c)} 
-              inline={true} 
+            <MarkdownRenderer
+              content={String(c)}
+              inline={true}
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
               disableInlineReferences={disableInlineReferences}
@@ -239,14 +239,14 @@ export const notebookStyleRenderer: StyleRenderer = ({
         <div className="mt-2 mb-1 inline-flex items-baseline gap-1 flex-wrap">
           <span
             className="text-sm font-bold text-neutral-600 select-text uppercase tracking-wide"
-            style={{ 
-              lineHeight: '1.4',
-              fontFamily: '"Kalam", "Comic Sans MS", cursive'
+            style={{
+              lineHeight: "1.4",
+              fontFamily: '"Kalam", "Comic Sans MS", cursive',
             }}
           >
-            <MarkdownRenderer 
-              content={String(c)} 
-              inline={true} 
+            <MarkdownRenderer
+              content={String(c)}
+              inline={true}
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
               disableInlineReferences={disableInlineReferences}
@@ -264,14 +264,14 @@ export const notebookStyleRenderer: StyleRenderer = ({
         <div className="mt-2 mb-1 inline-flex items-baseline gap-1 flex-wrap">
           <span
             className="text-xs font-bold text-neutral-500 select-text uppercase tracking-wider"
-            style={{ 
-              lineHeight: '1.4',
-              fontFamily: '"Kalam", "Comic Sans MS", cursive'
+            style={{
+              lineHeight: "1.4",
+              fontFamily: '"Kalam", "Comic Sans MS", cursive',
             }}
           >
-            <MarkdownRenderer 
-              content={String(c)} 
-              inline={true} 
+            <MarkdownRenderer
+              content={String(c)}
+              inline={true}
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
               disableInlineReferences={disableInlineReferences}
@@ -297,9 +297,12 @@ export const notebookStyleRenderer: StyleRenderer = ({
               fontFamily: '"Kalam", "Comic Sans MS", cursive',
             }}
           >
-            <div className="italic text-neutral-700 text-base" style={{ lineHeight: '1.5' }}>
-              <MarkdownRenderer 
-                content={String(c)} 
+            <div
+              className="italic text-neutral-700 text-base"
+              style={{ lineHeight: "1.5" }}
+            >
+              <MarkdownRenderer
+                content={String(c)}
                 inline={true}
                 contentId={contentId}
                 enableEnhancedTooltip={!!contentId}
@@ -340,13 +343,13 @@ export const notebookStyleRenderer: StyleRenderer = ({
                 <span className="flex-shrink-0 w-2 h-2 bg-yellow-500 rounded-full mt-2 shadow-sm" />
                 <span
                   className="text-base text-neutral-700"
-                  style={{ 
-                    lineHeight: '1.5',
-                    fontFamily: '"Kalam", "Comic Sans MS", cursive'
+                  style={{
+                    lineHeight: "1.5",
+                    fontFamily: '"Kalam", "Comic Sans MS", cursive',
                   }}
                 >
-                  <MarkdownRenderer 
-                    content={item} 
+                  <MarkdownRenderer
+                    content={item}
                     inline={true}
                     contentId={contentId}
                     enableEnhancedTooltip={!!contentId}
@@ -358,10 +361,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
           </ul>
           {hasReferences && (
             <div className="mt-2 flex justify-end">
-              <MarkdownRenderer 
-                content=""
-                inline={true}
-              />
+              <MarkdownRenderer content="" inline={true} />
             </div>
           )}
         </div>
@@ -401,9 +401,9 @@ export const notebookStyleRenderer: StyleRenderer = ({
           <div
             className={`inline-flex items-baseline gap-1 flex-wrap ${colors.text}`}
           >
-            <span className="text-base" style={{ lineHeight: '1.5' }}>
-              <MarkdownRenderer 
-                content={String(c)} 
+            <span className="text-base" style={{ lineHeight: "1.5" }}>
+              <MarkdownRenderer
+                content={String(c)}
                 inline={true}
                 contentId={contentId}
                 enableEnhancedTooltip={!!contentId}
@@ -429,8 +429,8 @@ export const notebookStyleRenderer: StyleRenderer = ({
         >
           <div className="inline-flex items-baseline gap-1 flex-wrap text-purple-700">
             <span className="text-base leading-loose">
-              <MarkdownRenderer 
-                content={String(c)} 
+              <MarkdownRenderer
+                content={String(c)}
                 inline={true}
                 contentId={contentId}
                 enableEnhancedTooltip={!!contentId}
@@ -463,9 +463,12 @@ export const notebookStyleRenderer: StyleRenderer = ({
                 <span className="flex-shrink-0 w-6 h-6 bg-emerald-400 rounded-full text-white text-sm font-bold flex items-center justify-center shadow-sm">
                   Q
                 </span>
-                <div className="text-emerald-800 font-medium flex-1 text-base" style={{ lineHeight: '1.5' }}>
-                  <MarkdownRenderer 
-                    content={String(q)} 
+                <div
+                  className="text-emerald-800 font-medium flex-1 text-base"
+                  style={{ lineHeight: "1.5" }}
+                >
+                  <MarkdownRenderer
+                    content={String(q)}
                     inline={true}
                     contentId={contentId}
                     enableEnhancedTooltip={!!contentId}
@@ -476,9 +479,12 @@ export const notebookStyleRenderer: StyleRenderer = ({
                 <span className="flex-shrink-0 w-6 h-6 bg-emerald-500 rounded-full text-white text-sm font-bold flex items-center justify-center shadow-sm">
                   A
                 </span>
-                <div className="text-emerald-700 flex-1 text-base" style={{ lineHeight: '1.5' }}>
-                  <MarkdownRenderer 
-                    content={String(a)} 
+                <div
+                  className="text-emerald-700 flex-1 text-base"
+                  style={{ lineHeight: "1.5" }}
+                >
+                  <MarkdownRenderer
+                    content={String(a)}
                     inline={true}
                     contentId={contentId}
                     enableEnhancedTooltip={!!contentId}
@@ -487,7 +493,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
               </div>
               {hasReferences && (
                 <div className="mt-2 flex justify-end">
-                  <MarkdownRenderer 
+                  <MarkdownRenderer
                     content=""
                     inline={true}
                     contentId={contentId}
@@ -509,7 +515,7 @@ export const notebookStyleRenderer: StyleRenderer = ({
     case "action": {
       // Check if this action should show expand button
       const shouldShowExpandButton = !!block.expandable && !!onExpand;
-      
+
       const element = (
         <ActionCard
           shouldShowExpandButton={shouldShowExpandButton}
@@ -531,10 +537,10 @@ export const notebookStyleRenderer: StyleRenderer = ({
     }
     default: {
       const finalContent = lead ? `**${lead}:** ${String(c)}` : String(c);
-      
+
       // Check if this paragraph should show expand button (same logic as action)
       const shouldShowExpandButton = !!block.expandable && !!onExpand;
-      
+
       const element = (
         <ParagraphCard
           shouldShowExpandButton={shouldShowExpandButton}

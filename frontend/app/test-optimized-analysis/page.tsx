@@ -3,21 +3,21 @@
 import React, { useState } from "react";
 
 // 防止预渲染
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 import { ModernAnalysisInterface } from "@/components/ai/ModernAnalysisInterface";
 import { ContentItemPublic } from "@/lib/api/content";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Brain, 
-  MessageSquare, 
-  Clock, 
-  CheckCircle, 
+import {
+  Brain,
+  MessageSquare,
+  Clock,
+  CheckCircle,
   Zap,
   RefreshCw,
   Eye,
-  EyeOff
+  EyeOff,
 } from "lucide-react";
 
 // 模拟内容数据
@@ -61,20 +61,21 @@ const mockContent: ContentItemPublic = {
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
   meta_info: JSON.stringify({
-    summary: "这是一个测试优化后AI分析界面交互效果的示例内容，重点测试立即响应、实时渲染等特性。",
+    summary:
+      "这是一个测试优化后AI分析界面交互效果的示例内容，重点测试立即响应、实时渲染等特性。",
     key_points: [
       "点击Prompt后立即显示分析卡片",
       "卡片内显示优雅的加载动画",
       "流式响应实时更新内容",
       "整个界面保持响应状态",
-      "提供良好的用户体验"
+      "提供良好的用户体验",
     ],
-    tags: ["交互优化", "实时渲染", "用户体验", "AI分析"]
+    tags: ["交互优化", "实时渲染", "用户体验", "AI分析"],
   }),
   source_uri: "https://example.com/test-optimized-analysis",
   type: "article",
   processing_status: "completed",
-  user_id: "test-user"
+  user_id: "test-user",
 };
 
 export default function TestOptimizedAnalysisPage() {
@@ -89,7 +90,7 @@ export default function TestOptimizedAnalysisPage() {
     promptClick: false,
     immediateCard: false,
     streamingUpdate: false,
-    noFreeze: false
+    noFreeze: false,
   });
 
   const handleHistoryCountChange = (count: number) => {
@@ -97,7 +98,7 @@ export default function TestOptimizedAnalysisPage() {
   };
 
   const updateTestResult = (key: keyof typeof testResults, value: boolean) => {
-    setTestResults(prev => ({ ...prev, [key]: value }));
+    setTestResults((prev) => ({ ...prev, [key]: value }));
   };
 
   return (
@@ -124,19 +125,27 @@ export default function TestOptimizedAnalysisPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${testResults.promptClick ? 'bg-green-500' : 'bg-gray-300'}`} />
+                <div
+                  className={`w-3 h-3 rounded-full ${testResults.promptClick ? "bg-green-500" : "bg-gray-300"}`}
+                />
                 <span className="text-sm">Prompt点击响应</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${testResults.immediateCard ? 'bg-green-500' : 'bg-gray-300'}`} />
+                <div
+                  className={`w-3 h-3 rounded-full ${testResults.immediateCard ? "bg-green-500" : "bg-gray-300"}`}
+                />
                 <span className="text-sm">立即显示卡片</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${testResults.streamingUpdate ? 'bg-green-500' : 'bg-gray-300'}`} />
+                <div
+                  className={`w-3 h-3 rounded-full ${testResults.streamingUpdate ? "bg-green-500" : "bg-gray-300"}`}
+                />
                 <span className="text-sm">实时流式更新</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${testResults.noFreeze ? 'bg-green-500' : 'bg-gray-300'}`} />
+                <div
+                  className={`w-3 h-3 rounded-full ${testResults.noFreeze ? "bg-green-500" : "bg-gray-300"}`}
+                />
                 <span className="text-sm">界面无冻结</span>
               </div>
             </div>
@@ -213,7 +222,11 @@ export default function TestOptimizedAnalysisPage() {
                 onClick={() => setShowHistory(!showHistory)}
                 className="flex items-center gap-2"
               >
-                {showHistory ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showHistory ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
                 历史记录 ({historyCount})
               </Button>
               <Badge variant="outline" className="flex items-center gap-2">
@@ -232,25 +245,33 @@ export default function TestOptimizedAnalysisPage() {
           <CardContent>
             <div className="space-y-4">
               <div className="border-l-4 border-blue-500 pl-4">
-                <h3 className="font-medium text-blue-700 dark:text-blue-300">步骤1：测试Prompt点击</h3>
+                <h3 className="font-medium text-blue-700 dark:text-blue-300">
+                  步骤1：测试Prompt点击
+                </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   点击下方界面中的"总结要点"、"深度分析"等标签，观察是否立即显示分析卡片
                 </p>
               </div>
               <div className="border-l-4 border-green-500 pl-4">
-                <h3 className="font-medium text-green-700 dark:text-green-300">步骤2：观察加载状态</h3>
+                <h3 className="font-medium text-green-700 dark:text-green-300">
+                  步骤2：观察加载状态
+                </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   注意卡片中是否显示简洁的Loader2加载动画
                 </p>
               </div>
               <div className="border-l-4 border-purple-500 pl-4">
-                <h3 className="font-medium text-purple-700 dark:text-purple-300">步骤3：验证实时更新</h3>
+                <h3 className="font-medium text-purple-700 dark:text-purple-300">
+                  步骤3：验证实时更新
+                </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   观察AI响应是否在卡片中实时显示，是否有打字机效果
                 </p>
               </div>
               <div className="border-l-4 border-orange-500 pl-4">
-                <h3 className="font-medium text-orange-700 dark:text-orange-300">步骤4：测试手动输入</h3>
+                <h3 className="font-medium text-orange-700 dark:text-orange-300">
+                  步骤4：测试手动输入
+                </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   在输入框中输入问题并发送，验证相同的优化效果
                 </p>
@@ -266,17 +287,21 @@ export default function TestOptimizedAnalysisPage() {
               content={mockContent}
               conversations={[]}
               analysisResult={{
-                summary: { text: "这是一个测试优化后AI分析界面交互效果的示例内容。" },
-                key_points: { 
+                summary: {
+                  text: "这是一个测试优化后AI分析界面交互效果的示例内容。",
+                },
+                key_points: {
                   points: [
                     "点击Prompt后立即显示分析卡片",
                     "卡片内显示简洁的加载动画",
                     "流式响应实时更新内容",
-                    "整个界面保持响应状态"
-                  ]
+                    "整个界面保持响应状态",
+                  ],
                 },
                 labels: ["交互优化", "实时渲染", "用户体验"],
-                content_analysis: { text: "通过立即响应和实时渲染，大大提升了用户的交互体验。" }
+                content_analysis: {
+                  text: "通过立即响应和实时渲染，大大提升了用户的交互体验。",
+                },
               }}
               variant="fullscreen"
               showPreprocessedContent={true}
@@ -295,16 +320,20 @@ export default function TestOptimizedAnalysisPage() {
           <CardContent>
             <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
               <p>
-                <strong>立即响应机制：</strong> 在 handlePromptClick 中直接调用 performCompletion，无需用户二次点击
+                <strong>立即响应机制：</strong> 在 handlePromptClick 中直接调用
+                performCompletion，无需用户二次点击
               </p>
               <p>
-                <strong>加载状态管理：</strong> 使用 LOADING_PLACEHOLDER_ 前缀标识加载状态，显示简洁的Loader2组件
+                <strong>加载状态管理：</strong> 使用 LOADING_PLACEHOLDER_
+                前缀标识加载状态，显示简洁的Loader2组件
               </p>
               <p>
-                <strong>流式响应处理：</strong> 检测到真实数据时清空占位符，开始实时更新内容
+                <strong>流式响应处理：</strong>{" "}
+                检测到真实数据时清空占位符，开始实时更新内容
               </p>
               <p>
-                <strong>错误处理优化：</strong> 发生错误时清空 streamingResponse，避免显示无效加载状态
+                <strong>错误处理优化：</strong> 发生错误时清空
+                streamingResponse，避免显示无效加载状态
               </p>
             </div>
           </CardContent>

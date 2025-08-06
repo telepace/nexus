@@ -17,7 +17,7 @@ export default function TestRefIntegration() {
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       <h1 className="text-3xl font-bold mb-6">Ref集成测试页面</h1>
-      
+
       <div className="space-y-8">
         {/* 测试说明 */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -29,7 +29,7 @@ export default function TestRefIntegration() {
             <li>• tooltip会显示缓存数据或模拟数据</li>
           </ul>
         </div>
-        
+
         {/* JSONL内容渲染测试 */}
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold">JSONL渲染测试</h2>
@@ -45,7 +45,7 @@ export default function TestRefIntegration() {
             </ReferenceManagerProvider>
           </div>
         </div>
-        
+
         {/* 功能状态 */}
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <h3 className="font-semibold text-green-800 mb-2">✅ 已修复的功能</h3>
@@ -57,14 +57,23 @@ export default function TestRefIntegration() {
             <li>• ✅ 所有渲染器组件已更新支持增强tooltip</li>
           </ul>
         </div>
-        
+
         {/* 架构说明 */}
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
           <h3 className="font-semibold mb-2">🏗️ 修复架构说明</h3>
           <div className="text-sm space-y-2">
-            <p><strong>数据流：</strong> ReferenceManagerProvider → UnifiedJsonlRenderer → 样式渲染器 → MarkdownRenderer</p>
-            <p><strong>参数传递：</strong> contentId → enableEnhancedTooltip → OptimizedReferenceTooltip</p>
-            <p><strong>包装层级：</strong> ContentPreview → ReferenceManagerProvider → EnhancedModernAnalysisInterface</p>
+            <p>
+              <strong>数据流：</strong> ReferenceManagerProvider →
+              UnifiedJsonlRenderer → 样式渲染器 → MarkdownRenderer
+            </p>
+            <p>
+              <strong>参数传递：</strong> contentId → enableEnhancedTooltip →
+              OptimizedReferenceTooltip
+            </p>
+            <p>
+              <strong>包装层级：</strong> ContentPreview →
+              ReferenceManagerProvider → EnhancedModernAnalysisInterface
+            </p>
           </div>
         </div>
       </div>

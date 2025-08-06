@@ -52,7 +52,9 @@ class AITagProcessor:
         logger.info(f"🔍 从AI结果中提取到 {len(tag_names)} 个原始标签: {tag_names}")
 
         # 过滤和匹配预设标签（传递语言参数确保标签语言一致性）
-        matched_tag_names = self.tag_manager.filter_and_match_preset_tags(tag_names, output_language)
+        matched_tag_names = self.tag_manager.filter_and_match_preset_tags(
+            tag_names, output_language
+        )
         logger.info(
             f"✅ 匹配预设标签后得到 {len(matched_tag_names)} 个标签: {matched_tag_names}"
         )

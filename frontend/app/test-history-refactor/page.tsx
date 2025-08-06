@@ -8,7 +8,8 @@ const mockHistoryData: ConversationPublic[] = [
   {
     id: "1",
     title: "网页内容摘要分析",
-    summary: "用户请求对一篇技术文章进行摘要分析，AI生成了结构化的要点和关键信息",
+    summary:
+      "用户请求对一篇技术文章进行摘要分析，AI生成了结构化的要点和关键信息",
     conversation_type: "auto_analysis",
     ai_model_name: "gpt-4o",
     created_at: "2024-01-15T10:30:00Z",
@@ -20,20 +21,20 @@ const mockHistoryData: ConversationPublic[] = [
         metadata: {
           isPromptBased: true,
           promptName: "网页内容摘要",
-          originalUserInput: "请帮我分析这篇关于React性能优化的文章"
-        }
+          originalUserInput: "请帮我分析这篇关于React性能优化的文章",
+        },
       },
       {
         role: "assistant",
         content: `{"type": "summary", "content": "本文详细介绍了React应用性能优化的几个关键策略"}
 {"type": "keypoint", "content": "1. 使用React.memo避免不必要的重渲染"}
 {"type": "keypoint", "content": "2. 合理使用useMemo和useCallback缓存计算结果"}
-{"type": "keypoint", "content": "3. 代码分割和懒加载优化首屏加载性能"}`
-      }
-    ]
+{"type": "keypoint", "content": "3. 代码分割和懒加载优化首屏加载性能"}`,
+      },
+    ],
   },
   {
-    id: "2", 
+    id: "2",
     title: "AI助手日常对话",
     summary: "用户与AI进行的日常问答交流，涉及技术问题讨论",
     conversation_type: "user_chat",
@@ -45,18 +46,19 @@ const mockHistoryData: ConversationPublic[] = [
         role: "user",
         content: "TypeScript中interface和type的区别是什么？",
         metadata: {
-          originalUserInput: "TypeScript中interface和type的区别是什么？"
-        }
+          originalUserInput: "TypeScript中interface和type的区别是什么？",
+        },
       },
       {
-        role: "assistant", 
-        content: "TypeScript中interface和type都可以用来定义类型，但有以下主要区别：\n\n1. 语法形式不同\n2. 扩展方式不同\n3. 合并行为不同\n\ninterface更适合定义对象结构，type更适合复杂类型操作。"
-      }
-    ]
+        role: "assistant",
+        content:
+          "TypeScript中interface和type都可以用来定义类型，但有以下主要区别：\n\n1. 语法形式不同\n2. 扩展方式不同\n3. 合并行为不同\n\ninterface更适合定义对象结构，type更适合复杂类型操作。",
+      },
+    ],
   },
   {
     id: "3",
-    title: "代码审查模板分析", 
+    title: "代码审查模板分析",
     summary: "使用代码审查模板对提交的代码进行静态分析和建议",
     conversation_type: "prompt_analysis",
     ai_model_name: "gpt-4o-mini",
@@ -69,18 +71,18 @@ const mockHistoryData: ConversationPublic[] = [
         metadata: {
           isPromptBased: true,
           promptName: "代码审查专家",
-          originalUserInput: "请审查这段代码"
-        }
+          originalUserInput: "请审查这段代码",
+        },
       },
       {
         role: "assistant",
         content: `{"type": "analysis", "content": "代码质量分析结果"}
 {"type": "issue", "content": "发现3个潜在问题需要修复"}
 {"type": "suggestion", "content": "建议添加错误处理机制"}
-{"type": "improvement", "content": "可以通过重构提升代码可读性"}`
-      }
-    ]
-  }
+{"type": "improvement", "content": "可以通过重构提升代码可读性"}`,
+      },
+    ],
+  },
 ];
 
 export default function TestHistoryRefactorPage() {
@@ -97,7 +99,7 @@ export default function TestHistoryRefactorPage() {
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-          <ConversationHistory 
+          <ConversationHistory
             conversations={mockHistoryData}
             loading={false}
             onRefresh={() => console.log("刷新历史记录")}
@@ -120,4 +122,4 @@ export default function TestHistoryRefactorPage() {
       </div>
     </div>
   );
-} 
+}

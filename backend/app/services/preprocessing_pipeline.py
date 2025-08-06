@@ -160,7 +160,10 @@ class PreprocessingPipeline:
             elif user_id and session:
                 try:
                     from app.services.user_settings_service import UserSettingsService
-                    output_language = UserSettingsService.get_user_ai_language(session, user_id)
+
+                    output_language = UserSettingsService.get_user_ai_language(
+                        session, user_id
+                    )
                     logger.info(f"🌐 从数据库获取用户语言偏好: {output_language}")
                 except Exception as e:
                     logger.warning(f"获取用户语言偏好失败，使用默认值: {e}")
@@ -175,7 +178,12 @@ class PreprocessingPipeline:
 
             # 5. 存储层
             storage_stats = await self._storage_layer(
-                content_id, markdown_content, segments, ai_results, metadata, output_language
+                content_id,
+                markdown_content,
+                segments,
+                ai_results,
+                metadata,
+                output_language,
             )
             processing_stats["storage_layer"] = storage_stats
 

@@ -181,7 +181,7 @@ const BlockComponent = ({ block, onCapabilityClick }) => {
     <div className="flex items-center gap-2">
       {/* 能力指示点 */}
       <div className="w-1 h-1 rounded-full bg-muted-foreground/30"></div>
-      
+
       {/* 能力按钮 */}
       <button
         onClick={() => onCapabilityClick(block, capability)}
@@ -189,7 +189,7 @@ const BlockComponent = ({ block, onCapabilityClick }) => {
       >
         <Icon className="w-3 h-3 text-muted-foreground" />
       </button>
-      
+
       {/* 能力名称提示 */}
       <div className="text-xs text-muted-foreground/60 whitespace-nowrap">
         {capability.name}

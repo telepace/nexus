@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { NewEnhancedReferenceIndicator } from '@/components/ui/ReferenceManager';
-import { Separator } from '@/components/ui/separator';
-import { RefreshCw, Eye, ArrowRight } from 'lucide-react';
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { NewEnhancedReferenceIndicator } from "@/components/ui/ReferenceManager";
+import { Separator } from "@/components/ui/separator";
+import { RefreshCw, Eye, ArrowRight } from "lucide-react";
 
 export default function TestEnhancedReferencePage() {
   const [selectedExample, setSelectedExample] = useState<string | null>(null);
@@ -14,48 +14,48 @@ export default function TestEnhancedReferencePage() {
   // 测试数据
   const examples = [
     {
-      id: 'single',
-      title: '单个引用',
-      description: '引用单个段落',
+      id: "single",
+      title: "单个引用",
+      description: "引用单个段落",
       references: [3],
-      contentId: 'test-content-1',
-      text: '这是一个测试段落，包含对某个特定概念的引用。'
+      contentId: "test-content-1",
+      text: "这是一个测试段落，包含对某个特定概念的引用。",
     },
     {
-      id: 'multiple',
-      title: '多个引用',
-      description: '引用多个不连续的段落',
+      id: "multiple",
+      title: "多个引用",
+      description: "引用多个不连续的段落",
       references: [1, 3, 7, 12],
-      contentId: 'test-content-2',
-      text: '这个段落引用了多个不同的来源和观点。'
+      contentId: "test-content-2",
+      text: "这个段落引用了多个不同的来源和观点。",
     },
     {
-      id: 'consecutive',
-      title: '连续引用',
-      description: '引用连续的段落范围',
+      id: "consecutive",
+      title: "连续引用",
+      description: "引用连续的段落范围",
       references: [5, 6, 7, 8, 9],
-      contentId: 'test-content-3',
-      text: '这里讨论了一个完整的概念，跨越多个连续段落。'
+      contentId: "test-content-3",
+      text: "这里讨论了一个完整的概念，跨越多个连续段落。",
     },
     {
-      id: 'many',
-      title: '大量引用',
-      description: '引用很多段落时的省略显示',
+      id: "many",
+      title: "大量引用",
+      description: "引用很多段落时的省略显示",
       references: [1, 3, 5, 8, 12, 15, 18, 22, 25],
-      contentId: 'test-content-4',
-      text: '这是一个综合性的分析，引用了大量的资料和数据。'
+      contentId: "test-content-4",
+      text: "这是一个综合性的分析，引用了大量的资料和数据。",
     },
     {
-      id: 'no-content',
-      title: '无内容ID',
-      description: '没有contentId时的简化显示',
+      id: "no-content",
+      title: "无内容ID",
+      description: "没有contentId时的简化显示",
       references: [2, 4, 6],
-      text: '这种情况下只显示引用编号，无法预览内容。'
-    }
+      text: "这种情况下只显示引用编号，无法预览内容。",
+    },
   ];
 
   const handleReferenceClick = (refId: number) => {
-    console.log('Reference clicked:', refId);
+    console.log("Reference clicked:", refId);
     alert(`跳转到段落 ${refId}`);
   };
 
@@ -113,10 +113,12 @@ export default function TestEnhancedReferencePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {examples.map((example) => (
-              <Card 
+              <Card
                 key={example.id}
                 className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
-                  selectedExample === example.id ? 'border-primary shadow-md' : ''
+                  selectedExample === example.id
+                    ? "border-primary shadow-md"
+                    : ""
                 }`}
                 onClick={() => setSelectedExample(example.id)}
               >
@@ -137,14 +139,18 @@ export default function TestEnhancedReferencePage() {
                       {example.text}
                       <NewEnhancedReferenceIndicator
                         references={example.references}
-                        contentId={example.id === 'no-content' ? undefined : example.contentId}
+                        contentId={
+                          example.id === "no-content"
+                            ? undefined
+                            : example.contentId
+                        }
                         onReferenceClick={handleReferenceClick}
                       />
                     </p>
                   </div>
-                  
+
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>引用段落: {example.references.join(', ')}</span>
+                    <span>引用段落: {example.references.join(", ")}</span>
                     <ArrowRight className="h-3 w-3" />
                   </div>
                 </CardContent>
@@ -155,13 +161,15 @@ export default function TestEnhancedReferencePage() {
 
         {/* 对比展示 */}
         <Separator />
-        
+
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold">新旧对比</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg text-destructive">旧版显示 ❌</CardTitle>
+                <CardTitle className="text-lg text-destructive">
+                  旧版显示 ❌
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="p-3 bg-muted/50 rounded-lg">
@@ -180,7 +188,9 @@ export default function TestEnhancedReferencePage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg text-green-600">新版显示 ✅</CardTitle>
+                <CardTitle className="text-lg text-green-600">
+                  新版显示 ✅
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="p-3 bg-muted/50 rounded-lg">
@@ -211,14 +221,26 @@ export default function TestEnhancedReferencePage() {
           </CardHeader>
           <CardContent className="text-blue-700 dark:text-blue-300">
             <div className="space-y-2 text-sm">
-              <p><strong>悬浮查看：</strong> 将鼠标悬浮在引用标签上可查看段落内容预览</p>
-              <p><strong>点击跳转：</strong> 点击引用标签或预览中的段落可跳转到原文对应位置</p>
-              <p><strong>多段落：</strong> 对于多个引用，预览框中会显示前几个段落，支持展开查看更多</p>
-              <p><strong>智能显示：</strong> 连续段落会自动显示为范围，非连续段落会显示为列表</p>
+              <p>
+                <strong>悬浮查看：</strong>{" "}
+                将鼠标悬浮在引用标签上可查看段落内容预览
+              </p>
+              <p>
+                <strong>点击跳转：</strong>{" "}
+                点击引用标签或预览中的段落可跳转到原文对应位置
+              </p>
+              <p>
+                <strong>多段落：</strong>{" "}
+                对于多个引用，预览框中会显示前几个段落，支持展开查看更多
+              </p>
+              <p>
+                <strong>智能显示：</strong>{" "}
+                连续段落会自动显示为范围，非连续段落会显示为列表
+              </p>
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
   );
-} 
+}

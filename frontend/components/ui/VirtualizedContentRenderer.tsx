@@ -1,13 +1,13 @@
 "use client";
 
-import React, { 
-  useMemo, 
-  useState, 
-  useCallback, 
-  memo, 
-  useRef, 
+import React, {
+  useMemo,
+  useState,
+  useCallback,
+  memo,
+  useRef,
   useLayoutEffect,
-  useEffect
+  useEffect,
 } from "react";
 import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "./MarkdownRenderer";
@@ -29,7 +29,7 @@ export interface ContentBlock {
 
 // 渲染器配置 - 优化版本，默认禁用动画
 export interface VirtualizedRendererConfig {
-  theme?: 'default' | 'notebook' | 'headspace' | 'neumorphism';
+  theme?: "default" | "notebook" | "headspace" | "neumorphism";
   enableAnimations?: boolean; // 默认false
   enableHoverEffects?: boolean; // 默认false
   enableCopyButton?: boolean;
@@ -58,27 +58,30 @@ const VIRTUAL_CONFIG = {
 // 解析JSONL内容 - 优化版本
 const parseContent = (content: string | ContentBlock[]): ContentBlock[] => {
   if (Array.isArray(content)) return content;
-  
-  if (!content || typeof content !== 'string') return [];
-  
+
+  if (!content || typeof content !== "string") return [];
+
   try {
-    const lines = content.split('\n').filter(line => line.trim());
-    return lines.map(line => {
+    const lines = content.split("\n").filter((line) => line.trim());
+    return lines.map((line) => {
       try {
         return JSON.parse(line) as ContentBlock;
       } catch {
-        return { t: 'p', c: line };
+        return { t: "p", c: line };
       }
     });
   } catch {
-    return [{ t: 'p', c: content }];
+    return [{ t: "p", c: content }];
   }
 };
 
 // 解析引用
 const parseReferences = (ref?: string): number[] => {
   if (!ref) return [];
-  return ref.split(',').map(r => parseInt(r.trim())).filter(n => !isNaN(n));
+  return ref
+    .split(",")
+    .map((r) => parseInt(r.trim()))
+    .filter((n) => !isNaN(n));
 };
 
 // 轻量级内容块组件 - 移除动画，优化性能
@@ -92,36 +95,39 @@ const ContentBlockItem = memo<{
 }>(({ block, config, index, onCopy, onReferenceClick, onClick }) => {
   const [isHovered, setIsHovered] = useState(false);
   const references = parseReferences(block.ref);
-  
-  const getBlockClass = (type: string, theme: string = 'default') => {
-    const baseClasses = "select-text cursor-pointer min-h-[60px] p-3 border-b border-border/10 transition-colors duration-150";
-    
+
+  const getBlockClass = (type: string, theme: string = "default") => {
+    const baseClasses =
+      "select-text cursor-pointer min-h-[60px] p-3 border-b border-border/10 transition-colors duration-150";
+
     switch (theme) {
-      case 'notebook':
+      case "notebook":
         return cn(baseClasses, {
-          'font-bold text-gray-800': type.startsWith('h'),
-          'text-gray-700': type === 'p',
-          'italic text-muted-foreground bg-muted/20 border-l-4 border-primary/30 pl-4': type === 'quote',
-          'ml-4': type === 'list',
+          "font-bold text-gray-800": type.startsWith("h"),
+          "text-gray-700": type === "p",
+          "italic text-muted-foreground bg-muted/20 border-l-4 border-primary/30 pl-4":
+            type === "quote",
+          "ml-4": type === "list",
         });
-      
-      case 'headspace':
+
+      case "headspace":
         return cn(baseClasses, "text-white font-medium");
-      
+
       default:
         return cn(baseClasses, {
-          'font-bold text-lg': type === 'h1',
-          'font-semibold text-base': type === 'h2',
-          'font-semibold text-sm': type === 'h3',
-          'text-foreground': type === 'p',
-          'italic text-muted-foreground bg-muted/20 border-l-4 border-primary/30 pl-4': type === 'quote',
-          'ml-4': type === 'list',
+          "font-bold text-lg": type === "h1",
+          "font-semibold text-base": type === "h2",
+          "font-semibold text-sm": type === "h3",
+          "text-foreground": type === "p",
+          "italic text-muted-foreground bg-muted/20 border-l-4 border-primary/30 pl-4":
+            type === "quote",
+          "ml-4": type === "list",
         });
     }
   };
-  
+
   const blockClass = getBlockClass(block.t, config.theme);
-  
+
   const handleClick = useCallback(() => {
     onClick?.(block, index);
   }, [block, index, onClick]);
@@ -137,14 +143,10 @@ const ContentBlockItem = memo<{
       setIsHovered(false);
     }
   }, [config.enableHoverEffects]);
-  
+
   return (
     <div
-      className={cn(
-        blockClass,
-        isHovered && "bg-muted/10",
-        "group relative"
-      )}
+      className={cn(blockClass, isHovered && "bg-muted/10", "group relative")}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -156,8 +158,8 @@ const ContentBlockItem = memo<{
               {block.lead}:
             </span>
           )}
-          
-          {block.t === 'list' ? (
+
+          {block.t === "list" ? (
             <ul className="list-disc ml-4 space-y-1">
               {block.c.split(/[\n,；;]/).map((item, i) => (
                 <li key={i} className="text-foreground leading-relaxed">
@@ -169,7 +171,7 @@ const ContentBlockItem = memo<{
             <MarkdownRenderer content={block.c} inline={true} />
           )}
         </div>
-        
+
         {(references.length > 0 || config.enableCopyButton) && (
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             {references.length > 0 && config.showReferences && (
@@ -179,7 +181,7 @@ const ContentBlockItem = memo<{
                 className="text-xs"
               />
             )}
-            
+
             {config.enableCopyButton && (
               <Button
                 variant="ghost"
@@ -200,7 +202,7 @@ const ContentBlockItem = memo<{
   );
 });
 
-ContentBlockItem.displayName = 'ContentBlockItem';
+ContentBlockItem.displayName = "ContentBlockItem";
 
 // 虚拟化容器组件
 const VirtualizedContainer = memo<{
@@ -210,105 +212,118 @@ const VirtualizedContainer = memo<{
   onCopy: (content: string) => void;
   onReferenceClick?: (refId: number) => void;
   onBlockClick?: (block: ContentBlock, index: number) => void;
-}>(({ blocks, config, containerHeight, onCopy, onReferenceClick, onBlockClick }) => {
-  const [scrollTop, setScrollTop] = useState(0);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
-  
-  // 计算可见范围
-  const visibleRange = useMemo(() => {
-    const startIndex = Math.max(0, Math.floor(scrollTop / VIRTUAL_CONFIG.ITEM_HEIGHT) - VIRTUAL_CONFIG.OVERSCAN);
-    const endIndex = Math.min(
-      blocks.length - 1,
-      Math.floor((scrollTop + containerHeight) / VIRTUAL_CONFIG.ITEM_HEIGHT) + VIRTUAL_CONFIG.OVERSCAN
-    );
-    
-    return { startIndex, endIndex };
-  }, [scrollTop, containerHeight, blocks.length]);
+}>(
+  ({
+    blocks,
+    config,
+    containerHeight,
+    onCopy,
+    onReferenceClick,
+    onBlockClick,
+  }) => {
+    const [scrollTop, setScrollTop] = useState(0);
+    const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // 滚动处理 - 添加防抖
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-    
-    scrollTimeoutRef.current = setTimeout(() => {
-      setScrollTop(e.currentTarget.scrollTop);
-    }, VIRTUAL_CONFIG.SCROLL_DEBOUNCE);
-  }, []);
+    // 计算可见范围
+    const visibleRange = useMemo(() => {
+      const startIndex = Math.max(
+        0,
+        Math.floor(scrollTop / VIRTUAL_CONFIG.ITEM_HEIGHT) -
+          VIRTUAL_CONFIG.OVERSCAN,
+      );
+      const endIndex = Math.min(
+        blocks.length - 1,
+        Math.floor((scrollTop + containerHeight) / VIRTUAL_CONFIG.ITEM_HEIGHT) +
+          VIRTUAL_CONFIG.OVERSCAN,
+      );
 
-  // 清理定时器
-  useEffect(() => {
-    return () => {
+      return { startIndex, endIndex };
+    }, [scrollTop, containerHeight, blocks.length]);
+
+    // 滚动处理 - 添加防抖
+    const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
-    };
-  }, []);
 
-  const totalHeight = blocks.length * VIRTUAL_CONFIG.ITEM_HEIGHT;
-  const offsetY = visibleRange.startIndex * VIRTUAL_CONFIG.ITEM_HEIGHT;
+      scrollTimeoutRef.current = setTimeout(() => {
+        setScrollTop(e.currentTarget.scrollTop);
+      }, VIRTUAL_CONFIG.SCROLL_DEBOUNCE);
+    }, []);
 
-  return (
-    <div
-      className="h-full overflow-auto"
-      onScroll={handleScroll}
-      style={{ contain: 'strict' }}
-    >
-      <div style={{ height: totalHeight, position: 'relative' }}>
-        <div style={{ transform: `translateY(${offsetY}px)` }}>
-          {blocks.slice(visibleRange.startIndex, visibleRange.endIndex + 1).map((block, i) => {
-            const actualIndex = visibleRange.startIndex + i;
-            return (
-              <ContentBlockItem
-                key={`${block.t}-${actualIndex}`}
-                block={block}
-                config={config}
-                index={actualIndex}
-                onCopy={onCopy}
-                onReferenceClick={onReferenceClick}
-                onClick={onBlockClick}
-              />
-            );
-          })}
+    // 清理定时器
+    useEffect(() => {
+      return () => {
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+      };
+    }, []);
+
+    const totalHeight = blocks.length * VIRTUAL_CONFIG.ITEM_HEIGHT;
+    const offsetY = visibleRange.startIndex * VIRTUAL_CONFIG.ITEM_HEIGHT;
+
+    return (
+      <div
+        className="h-full overflow-auto"
+        onScroll={handleScroll}
+        style={{ contain: "strict" }}
+      >
+        <div style={{ height: totalHeight, position: "relative" }}>
+          <div style={{ transform: `translateY(${offsetY}px)` }}>
+            {blocks
+              .slice(visibleRange.startIndex, visibleRange.endIndex + 1)
+              .map((block, i) => {
+                const actualIndex = visibleRange.startIndex + i;
+                return (
+                  <ContentBlockItem
+                    key={`${block.t}-${actualIndex}`}
+                    block={block}
+                    config={config}
+                    index={actualIndex}
+                    onCopy={onCopy}
+                    onReferenceClick={onReferenceClick}
+                    onClick={onBlockClick}
+                  />
+                );
+              })}
+          </div>
         </div>
       </div>
-    </div>
-  );
-});
+    );
+  },
+);
 
-VirtualizedContainer.displayName = 'VirtualizedContainer';
+VirtualizedContainer.displayName = "VirtualizedContainer";
 
 // 主渲染器组件
-export const VirtualizedContentRenderer: React.FC<VirtualizedContentRendererProps> = ({
-  content,
-  config = {},
-  className,
-  onReferenceClick,
-  onBlockClick,
-}) => {
+export const VirtualizedContentRenderer: React.FC<
+  VirtualizedContentRendererProps
+> = ({ content, config = {}, className, onReferenceClick, onBlockClick }) => {
   const { toast } = useToast();
   const { t } = useTranslationUtils();
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(400);
-  
+
   // 默认配置 - 性能优先
   const mergedConfig: VirtualizedRendererConfig = {
-    theme: 'default',
+    theme: "default",
     enableAnimations: false, // 默认禁用动画
-    enableHoverEffects: false, // 默认禁用悬停效果  
+    enableHoverEffects: false, // 默认禁用悬停效果
     enableCopyButton: true,
     enableCollapse: false,
     showReferences: true,
     virtualizeThreshold: 20, // 超过20个块启用虚拟化
     ...config,
   };
-  
+
   // 解析内容
   const blocks = useMemo(() => parseContent(content), [content]);
-  
+
   // 决定是否使用虚拟化
-  const shouldVirtualize = blocks.length > (mergedConfig.virtualizeThreshold || 20);
-  
+  const shouldVirtualize =
+    blocks.length > (mergedConfig.virtualizeThreshold || 20);
+
   // 测量容器高度
   useLayoutEffect(() => {
     if (containerRef.current) {
@@ -318,22 +333,32 @@ export const VirtualizedContentRenderer: React.FC<VirtualizedContentRendererProp
           setContainerHeight(entry.contentRect.height);
         }
       });
-      
+
       resizeObserver.observe(containerRef.current);
       return () => resizeObserver.disconnect();
     }
   }, []);
-  
+
   // 复制处理
-  const handleCopy = useCallback(async (content: string) => {
-    try {
-      await navigator.clipboard.writeText(content);
-      toast({ title: t("messages.copySuccess"), description: t("messages.copySuccess") });
-    } catch {
-      toast({ title: t("messages.copyError"), description: t("messages.copyError"), variant: "destructive" });
-    }
-  }, [toast, t]);
-  
+  const handleCopy = useCallback(
+    async (content: string) => {
+      try {
+        await navigator.clipboard.writeText(content);
+        toast({
+          title: t("messages.copySuccess"),
+          description: t("messages.copySuccess"),
+        });
+      } catch {
+        toast({
+          title: t("messages.copyError"),
+          description: t("messages.copyError"),
+          variant: "destructive",
+        });
+      }
+    },
+    [toast, t],
+  );
+
   if (blocks.length === 0) {
     return (
       <div className={cn("text-center py-8 text-muted-foreground", className)}>

@@ -51,7 +51,9 @@ class LLMService:
             if max_tokens is None:
                 # 使用任务类型的默认token限制
                 final_max_tokens = get_token_limit(task_type=task_type)
-                logger.info(f"🎯 使用默认token限制: 任务={task_type}, tokens={final_max_tokens}")
+                logger.info(
+                    f"🎯 使用默认token限制: 任务={task_type}, tokens={final_max_tokens}"
+                )
             else:
                 # 使用用户指定的max_tokens
                 final_max_tokens = max_tokens
@@ -108,10 +110,12 @@ class LLMService:
                 # 记录token使用情况
                 usage = response_data.get("usage", {})
                 if usage:
-                    logger.info(f"📊 Token使用: 输入={usage.get('prompt_tokens', 0)}, "
-                               f"输出={usage.get('completion_tokens', 0)}, "
-                               f"总计={usage.get('total_tokens', 0)}, "
-                               f"限制={final_max_tokens}")
+                    logger.info(
+                        f"📊 Token使用: 输入={usage.get('prompt_tokens', 0)}, "
+                        f"输出={usage.get('completion_tokens', 0)}, "
+                        f"总计={usage.get('total_tokens', 0)}, "
+                        f"限制={final_max_tokens}"
+                    )
 
                 logger.info(f"✅ LLM response received, content length: {len(content)}")
                 return content.strip()
@@ -168,17 +172,19 @@ class LLMService:
         # 计算总内容长度
         total_content = system_content + user_message + (context or "")
         if conversation_history:
-            total_content += "\n".join([msg.get("content", "") for msg in conversation_history])
+            total_content += "\n".join(
+                [msg.get("content", "") for msg in conversation_history]
+            )
 
         # 获取推荐设置
         recommended_settings = get_recommended_settings(
-            task_type=task_type,
-            content_text=total_content,
-            target_quality=quality
+            task_type=task_type, content_text=total_content, target_quality=quality
         )
 
-        logger.info(f"🎯 上下文感知回复: 内容长度={len(total_content)}, "
-                   f"推荐设置={recommended_settings}")
+        logger.info(
+            f"🎯 上下文感知回复: 内容长度={len(total_content)}, "
+            f"推荐设置={recommended_settings}"
+        )
 
         return await LLMService.chat_completion(
             messages=messages,

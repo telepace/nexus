@@ -129,15 +129,21 @@ function LoginContent() {
       if (response.ok) {
         const data = await response.json();
         console.log("[Login] Login successful, setting cookie...");
-        console.log("[Login] Access token:", data.access_token ? "存在" : "不存在");
+        console.log(
+          "[Login] Access token:",
+          data.access_token ? "存在" : "不存在",
+        );
         console.log("[Login] Current domain:", window.location.hostname);
-        
+
         setCookie("accessToken", data.access_token);
-        
+
         // 验证Cookie是否设置成功
         setTimeout(() => {
           const savedToken = document.cookie.includes("accessToken");
-          console.log("[Login] Cookie verification:", savedToken ? "成功" : "失败");
+          console.log(
+            "[Login] Cookie verification:",
+            savedToken ? "成功" : "失败",
+          );
           console.log("[Login] All cookies:", document.cookie);
         }, 100);
 

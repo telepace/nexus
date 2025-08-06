@@ -12,7 +12,7 @@ const testJsonlContent = `{"t":"h2","c":"测试标题"}
 {"t":"list","c":"项目1,项目2,项目3"}
 {"t":"p","c":"另一个段落，用于测试悬浮效果的一致性。","ref":"1,2"}`;
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default function TestJsonlHoverPage() {
   const handleExpandLine = (jsonContent: Record<string, unknown>) => {
@@ -105,9 +105,11 @@ export default function TestJsonlHoverPage() {
               <li>观察引用指示器是否正确显示</li>
             </ol>
           </div>
-          
+
           <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border-l-4 border-blue-400">
-            <h3 className="font-semibold mb-2 text-blue-800 dark:text-blue-200">预期效果：</h3>
+            <h3 className="font-semibold mb-2 text-blue-800 dark:text-blue-200">
+              预期效果：
+            </h3>
             <ul className="list-disc list-inside space-y-1 text-sm text-blue-700 dark:text-blue-300">
               <li>每个文本块都应该有subtle级别的悬浮效果</li>
               <li>悬浮时右侧显示操作按钮</li>

@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { cn } from "@/lib/utils";
 import { HoverableBlock } from "./HoverableBlock";
 import { MarkdownRenderer } from "./MarkdownRenderer";
@@ -67,7 +73,7 @@ export interface UnifiedJsonlRendererProps {
 
 /**
  * 统一的JSONL渲染器
- * 
+ *
  * 整合了多个渲染器的优点：
  * - JsonlRenderer: 基础JSONL解析和样式系统
  * - StreamingJsonlRenderer: 实时流式渲染
@@ -93,7 +99,7 @@ export function UnifiedJsonlRenderer({
   const [isContentReady, setIsContentReady] = useState(!enableDelayedRendering);
   const [showErrors, setShowErrors] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const { actions } = useReferenceManagerSafe();
 
   // 根据是否显示引用指示器，决定传递哪个组件
@@ -112,7 +118,7 @@ export function UnifiedJsonlRenderer({
       return;
     }
 
-    if (!content || typeof content !== 'string' || content.trim() === '') {
+    if (!content || typeof content !== "string" || content.trim() === "") {
       setIsContentReady(true);
       return;
     }
@@ -125,9 +131,12 @@ export function UnifiedJsonlRenderer({
       setIsContentReady(false);
     }
 
-    timeoutRef.current = setTimeout(() => {
-      setIsContentReady(true);
-    }, Math.min(renderDelay, 200));
+    timeoutRef.current = setTimeout(
+      () => {
+        setIsContentReady(true);
+      },
+      Math.min(renderDelay, 200),
+    );
 
     return () => {
       if (timeoutRef.current) {
@@ -139,32 +148,36 @@ export function UnifiedJsonlRenderer({
   // 智能JSON修复函数
   const fixJsonLine = (line: string): string => {
     let sanitized = line.trim();
-    
+
     // 修复单引号包围的字符串值
     sanitized = sanitized.replace(/:\s*'([^']*?)'/g, (match, content) => {
       const escaped = content.replace(/"/g, '\\"');
       return `: "${escaped}"`;
     });
-    
+
     // 处理截断的JSON
-    if (sanitized && !sanitized.endsWith('}')) {
+    if (sanitized && !sanitized.endsWith("}")) {
       const openBraceCount = (sanitized.match(/{/g) || []).length;
       const closeBraceCount = (sanitized.match(/}/g) || []).length;
       if (openBraceCount > closeBraceCount) {
         if (sanitized.includes('"') && !sanitized.trim().endsWith('"')) {
           sanitized = sanitized.trim() + '"}';
         } else {
-          sanitized = sanitized.trim() + '}';
+          sanitized = sanitized.trim() + "}";
         }
       }
     }
-    
+
     return sanitized;
   };
 
   // 解析JSONL内容
   const { blocks, stats } = useMemo(() => {
-    if (!content || typeof content !== 'string') return { blocks: [], stats: { totalLines: 0, validBlocks: 0, errorBlocks: 0, emptyLines: 0 } };
+    if (!content || typeof content !== "string")
+      return {
+        blocks: [],
+        stats: { totalLines: 0, validBlocks: 0, errorBlocks: 0, emptyLines: 0 },
+      };
 
     const lines = content.split("\n");
     const parsedBlocks: JsonlBlock[] = [];
@@ -175,7 +188,7 @@ export function UnifiedJsonlRenderer({
 
     lines.forEach((line, index) => {
       const trimmedLine = line.trim();
-      
+
       if (!trimmedLine) {
         emptyCount++;
         return;
@@ -218,9 +231,10 @@ export function UnifiedJsonlRenderer({
         validCount++;
       } catch (error) {
         errorCount++;
-        const errorMessage = error instanceof Error ? error.message : "解析错误";
+        const errorMessage =
+          error instanceof Error ? error.message : "解析错误";
         errors.push(`第${index + 1}行: ${errorMessage}`);
-        
+
         // 在流式模式下，只显示看起来完整的错误行
         if (!isStreaming || trimmedLine.includes("}")) {
           parsedBlocks.push({
@@ -266,7 +280,9 @@ export function UnifiedJsonlRenderer({
     const lead = block.lead;
 
     // 解析引用
-    const references = actions?.parseReferences ? actions.parseReferences(ref) : [];
+    const references = actions?.parseReferences
+      ? actions.parseReferences(ref)
+      : [];
 
     const renderResult = styleRenderer({
       block: { type, content: blockContent, lead, ref },
@@ -334,27 +350,23 @@ export function UnifiedJsonlRenderer({
         rightActions={rightActions}
         className="my-0.5"
       >
-        <div className="relative">
-          {renderResult.element}
-        </div>
+        <div className="relative">{renderResult.element}</div>
       </HoverableBlock>
     );
   };
 
   // 如果没有内容
   if (!content) {
-    return (
-      <div className={cn("space-y-1", className)} />
-    );
+    return <div className={cn("space-y-1", className)} />;
   }
 
   // 延迟渲染骨架屏
   if (enableDelayedRendering && !isContentReady) {
     return (
       <div className={cn("space-y-1", className)}>
-        <ContentSkeleton 
-          variant="simple" 
-          blocks={3} 
+        <ContentSkeleton
+          variant="simple"
+          blocks={3}
           animated={true}
           className="!p-0"
         />
@@ -363,7 +375,12 @@ export function UnifiedJsonlRenderer({
   }
 
   return (
-    <div className={cn("max-w-none space-y-0.5 overflow-visible select-text", className)}>
+    <div
+      className={cn(
+        "max-w-none space-y-0.5 overflow-visible select-text",
+        className,
+      )}
+    >
       {/* 错误统计 */}
       {stats.errorBlocks > 0 && showErrorDetails && (
         <Alert className="mb-4">
@@ -371,14 +388,20 @@ export function UnifiedJsonlRenderer({
           <AlertDescription>
             <div className="flex items-center justify-between">
               <span>
-                解析了 {stats.validBlocks} 个有效块，{stats.errorBlocks} 个错误块
+                解析了 {stats.validBlocks} 个有效块，{stats.errorBlocks}{" "}
+                个错误块
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowErrors(!showErrors)}
               >
-                <ChevronDown className={cn("h-3 w-3 mr-1 transition-transform", showErrors && "rotate-180")} />
+                <ChevronDown
+                  className={cn(
+                    "h-3 w-3 mr-1 transition-transform",
+                    showErrors && "rotate-180",
+                  )}
+                />
                 {showErrors ? "隐藏" : "显示"}详情
               </Button>
             </div>
@@ -388,7 +411,7 @@ export function UnifiedJsonlRenderer({
 
       {/* 渲染块 */}
       {blocks.map(renderBlock)}
-      
+
       {/* 流式指示器 */}
       {isLoading && isStreaming && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
@@ -400,4 +423,4 @@ export function UnifiedJsonlRenderer({
   );
 }
 
-export default UnifiedJsonlRenderer; 
+export default UnifiedJsonlRenderer;

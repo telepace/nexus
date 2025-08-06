@@ -18,11 +18,12 @@ export interface TitleGenerationParams {
   /** 原始标题 */
   originalTitle?: string;
   /** 分析类型 */
-  analysisType?: 'prompt' | 'manual' | 'expand' | 'custom';
+  analysisType?: "prompt" | "manual" | "expand" | "custom";
 }
 
 export function generateFriendlyTitle(params: TitleGenerationParams): string {
-  const { userInput, promptName, promptId, originalTitle, analysisType } = params;
+  const { userInput, promptName, promptId, originalTitle, analysisType } =
+    params;
 
   // 1. 如果有prompt名称，优先使用
   if (promptName && promptName.trim()) {
@@ -43,14 +44,14 @@ export function generateFriendlyTitle(params: TitleGenerationParams): string {
 
   // 4. 根据分析类型提供默认标题
   switch (analysisType) {
-    case 'prompt':
-      return '模板分析';
-    case 'manual':
-      return '自定义分析';
-    case 'expand':
-      return '深度展开';
+    case "prompt":
+      return "模板分析";
+    case "manual":
+      return "自定义分析";
+    case "expand":
+      return "深度展开";
     default:
-      return 'AI 分析';
+      return "AI 分析";
   }
 }
 
@@ -60,15 +61,17 @@ export function generateFriendlyTitle(params: TitleGenerationParams): string {
  * @returns 清理后的输入
  */
 function cleanUserInput(input: string): string {
-  return input
-    // 移除多余的空白和换行
-    .replace(/\s+/g, ' ')
-    // 移除开头和结尾的空白
-    .trim()
-    // 移除常见的prompt前缀
-    .replace(/^(请|帮我|能否|可以|分析|总结|解释|说明|介绍|描述)\s*/i, '')
-    // 移除问号和句号结尾（保持简洁）
-    .replace(/[。？?！!]+$/, '');
+  return (
+    input
+      // 移除多余的空白和换行
+      .replace(/\s+/g, " ")
+      // 移除开头和结尾的空白
+      .trim()
+      // 移除常见的prompt前缀
+      .replace(/^(请|帮我|能否|可以|分析|总结|解释|说明|介绍|描述)\s*/i, "")
+      // 移除问号和句号结尾（保持简洁）
+      .replace(/[。？?！!]+$/, "")
+  );
 }
 
 /**
@@ -90,13 +93,13 @@ export function truncateTitle(title: string, maxLength: number = 30): string {
 
   // 优先在词语边界截断
   const words = title.split(/\s+/);
-  let truncated = '';
-  
+  let truncated = "";
+
   for (const word of words) {
     if ((truncated + word).length > maxLength - 3) {
       break;
     }
-    truncated += (truncated ? ' ' : '') + word;
+    truncated += (truncated ? " " : "") + word;
   }
 
   // 如果截断后太短，直接按字符截断
@@ -104,7 +107,7 @@ export function truncateTitle(title: string, maxLength: number = 30): string {
     truncated = title.substring(0, maxLength - 3);
   }
 
-  return truncated + '...';
+  return truncated + "...";
 }
 
 /**
@@ -120,12 +123,31 @@ export function isQuestion(text: string): boolean {
 
   // 检查是否以疑问词开头
   const questionWords = [
-    '什么', '为什么', '怎么', '如何', '哪个', '哪些', '谁', '什么时候', '在哪里',
-    'what', 'why', 'how', 'which', 'who', 'when', 'where'
+    "什么",
+    "为什么",
+    "怎么",
+    "如何",
+    "哪个",
+    "哪些",
+    "谁",
+    "什么时候",
+    "在哪里",
+    "what",
+    "why",
+    "how",
+    "which",
+    "who",
+    "when",
+    "where",
   ];
 
-  const firstWords = text.trim().split(/\s+/).slice(0, 2).join(' ').toLowerCase();
-  return questionWords.some(word => firstWords.includes(word.toLowerCase()));
+  const firstWords = text
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .join(" ")
+    .toLowerCase();
+  return questionWords.some((word) => firstWords.includes(word.toLowerCase()));
 }
 
 /**
@@ -135,7 +157,7 @@ export function isQuestion(text: string): boolean {
  */
 export function formatQuestionTitle(question: string): string {
   const cleaned = cleanUserInput(question);
-  
+
   // 如果已经是简短的问题，直接返回
   if (cleaned.length <= 25 && isQuestion(cleaned)) {
     return cleaned;
@@ -154,7 +176,7 @@ export function formatQuestionTitle(question: string): string {
 function extractQuestionCore(question: string): string {
   // 移除常见的冗余表达
   return question
-    .replace(/^(请问|想知道|我想了解|能告诉我|可以说说|帮我解释一下)\s*/i, '')
-    .replace(/\s*(吗|呢|啊|呀)([？?]*)$/, '$2')
+    .replace(/^(请问|想知道|我想了解|能告诉我|可以说说|帮我解释一下)\s*/i, "")
+    .replace(/\s*(吗|呢|啊|呀)([？?]*)$/, "$2")
     .trim();
-} 
+}

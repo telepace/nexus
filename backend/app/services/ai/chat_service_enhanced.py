@@ -66,7 +66,6 @@ class EnhancedChatService:
             "simple_chat.j2": "chat",  # 🎯 新增：简单聊天模板使用chat任务
             "user_analysis.j2": "analysis",
             "expand_discussion.j2": "analysis",  # 使用analysis任务的模型配置
-
             # 🎯 新增：支持常见的prompt名称映射到chat任务
             "提取要点": "chat",
             "总结内容": "chat",
@@ -138,7 +137,9 @@ class EnhancedChatService:
             if template_name == "labels.j2":
                 # 根据输出语言选择合适的标签语言
                 output_language = context.get("output_language", "zh")
-                preset_tag_names = tag_manager.get_preset_tag_names_by_language(output_language)
+                preset_tag_names = tag_manager.get_preset_tag_names_by_language(
+                    output_language
+                )
                 context = context.copy()
                 context["existing_tags"] = preset_tag_names
                 logger.info(

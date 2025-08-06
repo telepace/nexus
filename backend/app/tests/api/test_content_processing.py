@@ -63,7 +63,7 @@ class TestContentProcessingAPI:
         import app.core.db_factory
         import app.models
 
-        def instant_complete(content_id, user_id):
+        def instant_complete(content_id, _user_id):
             # 直接将内容状态设为 completed
             from sqlmodel import Session
 
@@ -134,7 +134,7 @@ class TestContentProcessingAPI:
         import app.core.db_factory
         import app.models
 
-        def instant_complete(content_id, user_id):
+        def instant_complete(content_id, _user_id):
             from sqlmodel import Session
 
             with Session(app.core.db_factory.engine) as session:

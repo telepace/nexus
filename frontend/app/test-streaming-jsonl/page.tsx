@@ -11,13 +11,19 @@ import { Play, Pause, RotateCcw, Zap } from "lucide-react";
 import dynamic from "next/dynamic";
 
 const StreamingJsonlRenderer = dynamic(
-  () => import("@/components/ui/StreamingJsonlRenderer").then(mod => ({ default: mod.StreamingJsonlRenderer })),
-  { ssr: false }
+  () =>
+    import("@/components/ui/StreamingJsonlRenderer").then((mod) => ({
+      default: mod.StreamingJsonlRenderer,
+    })),
+  { ssr: false },
 );
 
 const JsonlRenderer = dynamic(
-  () => import("@/components/ui/JsonlRenderer").then(mod => ({ default: mod.JsonlRenderer })),
-  { ssr: false }
+  () =>
+    import("@/components/ui/JsonlRenderer").then((mod) => ({
+      default: mod.JsonlRenderer,
+    })),
+  { ssr: false },
 );
 
 // 将组件数据移到组件外部，避免预渲染时的状态问题
@@ -54,9 +60,7 @@ export default function TestStreamingJsonlPage() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             流式 JSONL 渲染器测试
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            加载中...
-          </p>
+          <p className="text-gray-600 dark:text-gray-400">加载中...</p>
         </div>
       </div>
     );
@@ -121,7 +125,7 @@ export default function TestStreamingJsonlPage() {
 
   // 安全获取当前进度，避免预渲染时的错误
   const getCurrentProgress = () => {
-    return typeof window !== 'undefined' ? currentIndex : 0;
+    return typeof window !== "undefined" ? currentIndex : 0;
   };
 
   const getTotalLength = () => {

@@ -13,15 +13,17 @@ const mockChunks = [
     type: "paragraph",
   },
   {
-    id: "chunk-2", 
+    id: "chunk-2",
     index: 2,
-    content: "第二段继续深入讨论相关主题。引用了多个研究来源，增强了论点的可信度。",
+    content:
+      "第二段继续深入讨论相关主题。引用了多个研究来源，增强了论点的可信度。",
     type: "paragraph",
   },
   {
     id: "chunk-3",
     index: 3,
-    content: "第三段提供了实际案例分析。通过具体例子展示了理论在实践中的应用效果。",
+    content:
+      "第三段提供了实际案例分析。通过具体例子展示了理论在实践中的应用效果。",
     type: "paragraph",
   },
   {
@@ -64,14 +66,14 @@ export default function TestRefOptimization() {
   return (
     <div className="container mx-auto p-6 space-y-8">
       <h1 className="text-3xl font-bold">Ref优化系统测试</h1>
-      
+
       {/* 测试分块模式 */}
       <section className="space-y-4">
         <h2 className="text-2xl font-semibold">分块模式测试</h2>
         <p className="text-muted-foreground">
           测试chunks模式下的ref tooltip和跳转功能
         </p>
-        
+
         <ReferenceManagerProvider contentId="test-chunks">
           <EnhancedContentReader
             chunks={mockChunks}
@@ -79,7 +81,7 @@ export default function TestRefOptimization() {
             className="border rounded-lg p-4"
           />
         </ReferenceManagerProvider>
-        
+
         {/* 测试引用渲染 */}
         <div className="mt-4 p-4 bg-muted rounded-lg">
           <h3 className="font-medium mb-2">AI分析结果 (带引用)</h3>
@@ -93,14 +95,14 @@ export default function TestRefOptimization() {
           </ReferenceManagerProvider>
         </div>
       </section>
-      
+
       {/* 测试Markdown模式 */}
       <section className="space-y-4">
         <h2 className="text-2xl font-semibold">Markdown模式测试</h2>
         <p className="text-muted-foreground">
           测试markdown模式下的ref tooltip和跳转功能
         </p>
-        
+
         <ReferenceManagerProvider contentId="test-markdown">
           <EnhancedContentReader
             content={markdownContent}
@@ -108,7 +110,7 @@ export default function TestRefOptimization() {
             className="border rounded-lg p-4"
           />
         </ReferenceManagerProvider>
-        
+
         {/* 测试引用渲染 */}
         <div className="mt-4 p-4 bg-muted rounded-lg">
           <h3 className="font-medium mb-2">AI分析结果 (带引用)</h3>
@@ -122,16 +124,29 @@ export default function TestRefOptimization() {
           </ReferenceManagerProvider>
         </div>
       </section>
-      
+
       {/* 使用说明 */}
       <section className="space-y-4">
         <h2 className="text-2xl font-semibold">测试说明</h2>
         <div className="space-y-2 text-sm text-muted-foreground">
-          <p>• <strong>悬浮测试：</strong> 将鼠标悬停在引用编号上，应该显示增强的tooltip</p>
-          <p>• <strong>点击测试：</strong> 点击引用编号，应该跳转到对应的段落并高亮显示</p>
-          <p>• <strong>自动清除：</strong> 高亮效果会在4秒后自动清除</p>
-          <p>• <strong>缓存测试：</strong> tooltip数据会被缓存，再次悬停应该更快显示</p>
-          <p>• <strong>错误处理：</strong> 无效的引用编号会显示适当的错误信息</p>
+          <p>
+            • <strong>悬浮测试：</strong>{" "}
+            将鼠标悬停在引用编号上，应该显示增强的tooltip
+          </p>
+          <p>
+            • <strong>点击测试：</strong>{" "}
+            点击引用编号，应该跳转到对应的段落并高亮显示
+          </p>
+          <p>
+            • <strong>自动清除：</strong> 高亮效果会在4秒后自动清除
+          </p>
+          <p>
+            • <strong>缓存测试：</strong>{" "}
+            tooltip数据会被缓存，再次悬停应该更快显示
+          </p>
+          <p>
+            • <strong>错误处理：</strong> 无效的引用编号会显示适当的错误信息
+          </p>
         </div>
       </section>
     </div>

@@ -12,7 +12,11 @@ import Link from "next/link";
 import { DateDisplay } from "@/components/ui/DateDisplay";
 import { PromptToggle } from "../promptToggle";
 import { DeleteButton } from "../deleteButton";
-import { PromptData, favoritePrompt, unfavoritePrompt } from "@/components/actions/prompts-action";
+import {
+  PromptData,
+  favoritePrompt,
+  unfavoritePrompt,
+} from "@/components/actions/prompts-action";
 import { memo, useCallback, useMemo, useState } from "react";
 
 interface PromptCardsProps {
@@ -128,7 +132,9 @@ const PromptCard = memo(
                 className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-100 rounded-lg transition-opacity duration-200"
                 onClick={handleFavoriteClick}
               >
-                <Heart className={`h-4 w-4 ${isFavorited ? "text-red-500" : "text-slate-500"}`} />
+                <Heart
+                  className={`h-4 w-4 ${isFavorited ? "text-red-500" : "text-slate-500"}`}
+                />
               </button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -252,4 +258,3 @@ export function PromptCards({ prompts, currentUser }: PromptCardsProps) {
     </div>
   );
 }
-

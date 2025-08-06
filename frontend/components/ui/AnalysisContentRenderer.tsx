@@ -200,16 +200,18 @@ const HeadingBlock: React.FC<{
             referenceData={referenceData}
             onReferenceClick={onReferenceClick}
           />
-          
+
           {/* 悬浮时显示收藏按钮 */}
           {contentId && (
-            <div className={cn(
-              "opacity-0 group-hover:opacity-100 transition-opacity duration-200",
-              isHovered && "opacity-100"
-            )}>
+            <div
+              className={cn(
+                "opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+                isHovered && "opacity-100",
+              )}
+            >
               <BlockFavoriteButton
                 contentId={contentId}
-                blockId={`heading-${block.c.substring(0, 50).replace(/\s+/g, '-')}`}
+                blockId={`heading-${block.c.substring(0, 50).replace(/\s+/g, "-")}`}
                 blockType={block.t}
                 blockContent={block}
                 title={block.c}
@@ -300,12 +302,12 @@ const InsightBlock: React.FC<{
             >
               <Copy className="h-3 w-3" />
             </Button>
-            
+
             {/* 收藏按钮 */}
             {contentId && (
               <BlockFavoriteButton
                 contentId={contentId}
-                blockId={`insight-${block.c.substring(0, 50).replace(/\s+/g, '-')}`}
+                blockId={`insight-${block.c.substring(0, 50).replace(/\s+/g, "-")}`}
                 blockType="insight"
                 blockContent={block}
                 title={`洞察：${block.c.substring(0, 100)}`}
@@ -370,16 +372,18 @@ const ConceptBlock: React.FC<{
                 referenceData={referenceData}
                 onReferenceClick={onReferenceClick}
               />
-              
+
               {/* 收藏按钮 */}
               {contentId && (
-                <div className={cn(
-                  "opacity-0 group-hover:opacity-100 transition-opacity duration-200",
-                  isHovered && "opacity-100"
-                )}>
+                <div
+                  className={cn(
+                    "opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+                    isHovered && "opacity-100",
+                  )}
+                >
                   <BlockFavoriteButton
                     contentId={contentId}
-                    blockId={`concept-${block.c.substring(0, 50).replace(/\s+/g, '-')}`}
+                    blockId={`concept-${block.c.substring(0, 50).replace(/\s+/g, "-")}`}
                     blockType="concept"
                     blockContent={block}
                     title={`概念：${block.c.substring(0, 100)}`}
@@ -391,7 +395,7 @@ const ConceptBlock: React.FC<{
                   />
                 </div>
               )}
-              
+
               <motion.div
                 animate={{ rotate: isExpanded ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
@@ -472,13 +476,15 @@ const ParagraphBlock: React.FC<{
 
           {/* 悬浮时显示收藏按钮 */}
           {contentId && (
-            <div className={cn(
-              "absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200",
-              isHovered && "opacity-100"
-            )}>
+            <div
+              className={cn(
+                "absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+                isHovered && "opacity-100",
+              )}
+            >
               <BlockFavoriteButton
                 contentId={contentId}
-                blockId={`paragraph-${block.c.substring(0, 50).replace(/\s+/g, '-')}`}
+                blockId={`paragraph-${block.c.substring(0, 50).replace(/\s+/g, "-")}`}
                 blockType="p"
                 blockContent={block}
                 title={block.c.substring(0, 100)}

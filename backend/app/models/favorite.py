@@ -17,14 +17,22 @@ class FavoriteBase(SQLModel):
     content_item_id: uuid.UUID = Field(foreign_key="contentitem.id", index=True)
 
     # 新增：支持块级收藏
-    block_id: str | None = Field(default=None, description="块ID，如果为空则表示收藏整个内容")
-    block_type: str | None = Field(default=None, description="块类型：h1, h2, h3, p, insight, concept, etc.")
-    block_content: dict | None = Field(default=None, sa_column=Column(JSON), description="块内容的JSON数据")
+    block_id: str | None = Field(
+        default=None, description="块ID，如果为空则表示收藏整个内容"
+    )
+    block_type: str | None = Field(
+        default=None, description="块类型：h1, h2, h3, p, insight, concept, etc."
+    )
+    block_content: dict | None = Field(
+        default=None, sa_column=Column(JSON), description="块内容的JSON数据"
+    )
 
     # 收藏元数据
     title: str | None = Field(default=None, description="收藏项的标题")
     description: str | None = Field(default=None, description="收藏项的描述")
-    tags: list[str] | None = Field(default=None, sa_column=Column(JSON), description="用户自定义标签")
+    tags: list[str] | None = Field(
+        default=None, sa_column=Column(JSON), description="用户自定义标签"
+    )
 
     created_at: datetime = Field(default_factory=now_utc, nullable=False)
 
@@ -39,7 +47,10 @@ class Favorite(FavoriteBase, table=True):
     # 添加唯一约束：用户不能重复收藏同一个内容项的同一个块
     __table_args__ = (
         UniqueConstraint(
-            "user_id", "content_item_id", "block_id", name="unique_user_content_block_favorite"
+            "user_id",
+            "content_item_id",
+            "block_id",
+            name="unique_user_content_block_favorite",
         ),
     )
 
@@ -72,7 +83,9 @@ class Favorite(FavoriteBase, table=True):
             # 从块内容中提取标题
             block_data = self.block_content
             if isinstance(block_data, dict):
-                return block_data.get('c', '')[:100] + ('...' if len(block_data.get('c', '')) > 100 else '')
+                return block_data.get("c", "")[:100] + (
+                    "..." if len(block_data.get("c", "")) > 100 else ""
+                )
         return self.content_item.title or "未命名收藏"
 
     def get_display_description(self) -> str:
@@ -83,6 +96,10 @@ class Favorite(FavoriteBase, table=True):
             # 从块内容中提取描述
             block_data = self.block_content
             if isinstance(block_data, dict):
-                content = block_data.get('c', '')
-                return content[:200] + ('...' if len(content) > 200 else '')
-        return self.content_item.content_text[:200] if self.content_item.content_text else ""
+                content = block_data.get("c", "")
+                return content[:200] + ("..." if len(content) > 200 else "")
+        return (
+            self.content_item.content_text[:200]
+            if self.content_item.content_text
+            else ""
+        )

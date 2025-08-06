@@ -18,22 +18,34 @@ class UserSettingsBase(SQLModel):
     auto_generate_labels: bool = Field(default=True, description="是否自动生成标签")
 
     # 偏好设置
-    preferred_analysis_model: str | None = Field(default=None, description="偏好的分析模型")
+    preferred_analysis_model: str | None = Field(
+        default=None, description="偏好的分析模型"
+    )
     max_summary_length: int = Field(default=500, description="摘要最大长度")
 
 
 class UserSettingsCreate(UserSettingsBase):
     """创建用户设置请求模型"""
+
     pass
 
 
 class UserSettingsUpdate(SQLModel):
     """更新用户设置请求模型"""
+
     ai_output_language: str | None = Field(default=None, description="AI 输出语言偏好")
-    auto_generate_summary: bool | None = Field(default=None, description="是否自动生成摘要")
-    auto_generate_key_points: bool | None = Field(default=None, description="是否自动生成要点")
-    auto_generate_labels: bool | None = Field(default=None, description="是否自动生成标签")
-    preferred_analysis_model: str | None = Field(default=None, description="偏好的分析模型")
+    auto_generate_summary: bool | None = Field(
+        default=None, description="是否自动生成摘要"
+    )
+    auto_generate_key_points: bool | None = Field(
+        default=None, description="是否自动生成要点"
+    )
+    auto_generate_labels: bool | None = Field(
+        default=None, description="是否自动生成标签"
+    )
+    preferred_analysis_model: str | None = Field(
+        default=None, description="偏好的分析模型"
+    )
     max_summary_length: int | None = Field(default=None, description="摘要最大长度")
 
 

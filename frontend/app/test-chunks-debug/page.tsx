@@ -12,7 +12,9 @@ import { getCookie } from "@/lib/client-auth";
 import type { ContentChunk, ContentChunksResponse } from "@/lib/api/content";
 
 export default function TestChunksDebugPage() {
-  const [contentId, setContentId] = useState("3ec1d1d9-e59c-4b9b-b161-915677b8c908");
+  const [contentId, setContentId] = useState(
+    "3ec1d1d9-e59c-4b9b-b161-915677b8c908",
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chunks, setChunks] = useState<ContentChunk[]>([]);
@@ -41,7 +43,7 @@ export default function TestChunksDebugPage() {
         contentId,
         1,
         5,
-        false
+        false,
       );
 
       console.log("✅ API响应:", response);
@@ -55,10 +57,9 @@ export default function TestChunksDebugPage() {
           index: response.chunks[0].index,
           type: response.chunks[0].type,
           content_preview: response.chunks[0].content.substring(0, 100),
-          content_length: response.chunks[0].content.length
+          content_length: response.chunks[0].content.length,
         });
       }
-
     } catch (err) {
       console.error("❌ API调用失败:", err);
       setError(err instanceof Error ? err.message : "API调用失败");
@@ -126,7 +127,8 @@ export default function TestChunksDebugPage() {
               {chunks.map((chunk, index) => (
                 <div key={chunk.id} className="border rounded p-4">
                   <div className="text-sm text-muted-foreground mb-2">
-                    Chunk {index + 1}: ID {chunk.id} | Index: {chunk.index} | Type: {chunk.type}
+                    Chunk {index + 1}: ID {chunk.id} | Index: {chunk.index} |
+                    Type: {chunk.type}
                   </div>
                   <div className="border-t pt-2">
                     <ChunkItem chunk={chunk} />
@@ -144,12 +146,20 @@ export default function TestChunksDebugPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2 text-sm">
-            <p><strong>当前Token:</strong> {getCookie("accessToken") ? "已存在" : "未找到"}</p>
-            <p><strong>API URL:</strong> {process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}</p>
-            <p><strong>测试Content ID:</strong> {contentId}</p>
+            <p>
+              <strong>当前Token:</strong>{" "}
+              {getCookie("accessToken") ? "已存在" : "未找到"}
+            </p>
+            <p>
+              <strong>API URL:</strong>{" "}
+              {process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}
+            </p>
+            <p>
+              <strong>测试Content ID:</strong> {contentId}
+            </p>
           </div>
         </CardContent>
       </Card>
     </div>
   );
-} 
+}

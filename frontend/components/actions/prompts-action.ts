@@ -986,7 +986,6 @@ export async function togglePromptEnabled(
   }
 }
 
-
 // Add a prompt to favorites
 export async function favoritePrompt(promptId: string) {
   const user = await requireAuth();
@@ -1025,8 +1024,6 @@ export async function favoritePrompt(promptId: string) {
     return { error: "Operation failed" };
   }
 }
-
-
 
 // Remove a prompt from favorites
 export async function unfavoritePrompt(favoriteId: string) {
@@ -1099,4 +1096,3 @@ export async function fetchFavoritePrompts() {
     return { error: "Operation failed" };
   }
 }
-

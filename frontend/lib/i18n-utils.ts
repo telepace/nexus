@@ -1,4 +1,4 @@
-import { useI18n } from '@/components/providers/I18nProvider';
+import { useI18n } from "@/components/providers/I18nProvider";
 
 /**
  * 翻译工具函数，支持复数形式和变量插值
@@ -14,30 +14,30 @@ export function useTranslationUtils() {
    * @param namespace 命名空间
    */
   const tPlural = (
-    key: string, 
-    count: number, 
-    variables?: Record<string, any>, 
-    namespace?: string
+    key: string,
+    count: number,
+    variables?: Record<string, any>,
+    namespace?: string,
   ): string => {
     // 根据数量决定使用单数还是复数形式
     const pluralKey = count === 1 ? key : `${key}_plural`;
     let translation = t(pluralKey, undefined, namespace);
-    
+
     // 如果复数形式不存在，回退到单数形式
     if (translation === pluralKey && pluralKey !== key) {
       translation = t(key, undefined, namespace);
     }
-    
+
     // 替换变量
     if (variables) {
       Object.entries(variables).forEach(([varKey, value]) => {
         translation = translation.replace(`{{${varKey}}}`, String(value));
       });
     }
-    
+
     // 替换 count 变量
     translation = translation.replace(/\{\{count\}\}/g, String(count));
-    
+
     return translation;
   };
 
@@ -48,24 +48,24 @@ export function useTranslationUtils() {
    * @param namespace 命名空间
    */
   const tVar = (
-    key: string, 
-    variables: Record<string, any>, 
-    namespace?: string
+    key: string,
+    variables: Record<string, any>,
+    namespace?: string,
   ): string => {
     let translation = t(key, undefined, namespace);
-    
+
     // 替换变量
     Object.entries(variables).forEach(([varKey, value]) => {
       translation = translation.replace(`{{${varKey}}}`, String(value));
     });
-    
+
     return translation;
   };
 
   return {
     t,
     tPlural,
-    tVar
+    tVar,
   };
 }
 
@@ -75,7 +75,13 @@ export function useTranslationUtils() {
 export class TranslationUtils {
   private t: (key: string, defaultValue?: string, namespace?: string) => string;
 
-  constructor(tFunction: (key: string, defaultValue?: string, namespace?: string) => string) {
+  constructor(
+    tFunction: (
+      key: string,
+      defaultValue?: string,
+      namespace?: string,
+    ) => string,
+  ) {
     this.t = tFunction;
   }
 
@@ -83,26 +89,26 @@ export class TranslationUtils {
    * 支持复数形式的翻译
    */
   tPlural(
-    key: string, 
-    count: number, 
-    variables?: Record<string, any>, 
-    namespace?: string
+    key: string,
+    count: number,
+    variables?: Record<string, any>,
+    namespace?: string,
   ): string {
     const pluralKey = count === 1 ? key : `${key}_plural`;
     let translation = this.t(pluralKey, undefined, namespace);
-    
+
     if (translation === pluralKey && pluralKey !== key) {
       translation = this.t(key, undefined, namespace);
     }
-    
+
     if (variables) {
       Object.entries(variables).forEach(([varKey, value]) => {
         translation = translation.replace(`{{${varKey}}}`, String(value));
       });
     }
-    
+
     translation = translation.replace(/\{\{count\}\}/g, String(count));
-    
+
     return translation;
   }
 
@@ -110,16 +116,16 @@ export class TranslationUtils {
    * 支持变量插值的翻译
    */
   tVar(
-    key: string, 
-    variables: Record<string, any>, 
-    namespace?: string
+    key: string,
+    variables: Record<string, any>,
+    namespace?: string,
   ): string {
     let translation = this.t(key, undefined, namespace);
-    
+
     Object.entries(variables).forEach(([varKey, value]) => {
       translation = translation.replace(`{{${varKey}}}`, String(value));
     });
-    
+
     return translation;
   }
 }
@@ -130,9 +136,9 @@ export class TranslationUtils {
  */
 export function generateLocalePath(locale: string, path: string): string {
   // 确保路径以 / 开头
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  
-  if (locale === 'en') {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  if (locale === "en") {
     // 英文使用根路径
     return normalizedPath;
   } else {
@@ -144,20 +150,27 @@ export function generateLocalePath(locale: string, path: string): string {
 /**
  * 从路径中提取语言和无语言路径
  */
-export function parseLocalePath(pathname: string): { locale: string; pathWithoutLocale: string } {
-  const segments = pathname.split('/').filter(Boolean);
-  const supportedLocales = ['en', 'zh'];
-  
-  if (segments.length > 0 && supportedLocales.includes(segments[0]) && segments[0] !== 'en') {
+export function parseLocalePath(pathname: string): {
+  locale: string;
+  pathWithoutLocale: string;
+} {
+  const segments = pathname.split("/").filter(Boolean);
+  const supportedLocales = ["en", "zh"];
+
+  if (
+    segments.length > 0 &&
+    supportedLocales.includes(segments[0]) &&
+    segments[0] !== "en"
+  ) {
     return {
       locale: segments[0],
-      pathWithoutLocale: '/' + segments.slice(1).join('/')
+      pathWithoutLocale: "/" + segments.slice(1).join("/"),
     };
   }
-  
+
   return {
-    locale: 'en',
-    pathWithoutLocale: pathname
+    locale: "en",
+    pathWithoutLocale: pathname,
   };
 }
 
@@ -167,4 +180,4 @@ export function parseLocalePath(pathname: string): { locale: string; pathWithout
 export function getCurrentLocale(pathname: string): string {
   const { locale } = parseLocalePath(pathname);
   return locale;
-} 
+}

@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Card, CardContent, CardHeader, CardTitle } from './card'
-import { Badge } from './badge'
-import { Progress } from './progress'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs'
-import { Button } from './button'
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Network, 
-  Eye, 
-  Clock, 
+import React, { useState, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "./card";
+import { Badge } from "./badge";
+import { Progress } from "./progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
+import { Button } from "./button";
+import {
+  BarChart3,
+  TrendingUp,
+  Network,
+  Eye,
+  Clock,
   Target,
   Zap,
   Users,
@@ -22,13 +22,17 @@ import {
   ArrowDownRight,
   Activity,
   Filter,
-  Search
-} from 'lucide-react'
-import { referenceGraphService, type ReferenceNode, type ReferenceCluster } from '@/lib/services/ReferenceGraphService'
+  Search,
+} from "lucide-react";
+import {
+  referenceGraphService,
+  type ReferenceNode,
+  type ReferenceCluster,
+} from "@/lib/services/ReferenceGraphService";
 
 /**
  * 📊 引用分析仪表盘
- * 
+ *
  * 设计理念：
  * - 数据驱动的洞察
  * - 交互式可视化
@@ -37,116 +41,120 @@ import { referenceGraphService, type ReferenceNode, type ReferenceCluster } from
  */
 
 export interface ReferenceAnalyticsDashboardProps {
-  contentId?: string
-  timeRange?: 'day' | 'week' | 'month' | 'year' | 'all'
-  showAdvancedMetrics?: boolean
-  onReferenceSelect?: (refId: number, contentId: string) => void
-  className?: string
+  contentId?: string;
+  timeRange?: "day" | "week" | "month" | "year" | "all";
+  showAdvancedMetrics?: boolean;
+  onReferenceSelect?: (refId: number, contentId: string) => void;
+  className?: string;
 }
 
 interface AnalyticsData {
-  totalReferences: number
-  averageImportance: number
-  topCategories: Array<{category: string, count: number}>
-  mostImportantReferences: ReferenceNode[]
-  recentlyAccessed: ReferenceNode[]
-  clusters: ReferenceCluster[]
-  trendData: Array<{date: string, references: number, importance: number}>
-  heatmapData: Array<{hour: number, day: number, activity: number}>
+  totalReferences: number;
+  averageImportance: number;
+  topCategories: Array<{ category: string; count: number }>;
+  mostImportantReferences: ReferenceNode[];
+  recentlyAccessed: ReferenceNode[];
+  clusters: ReferenceCluster[];
+  trendData: Array<{ date: string; references: number; importance: number }>;
+  heatmapData: Array<{ hour: number; day: number; activity: number }>;
 }
 
-const ReferenceAnalyticsDashboard: React.FC<ReferenceAnalyticsDashboardProps> = ({
+const ReferenceAnalyticsDashboard: React.FC<
+  ReferenceAnalyticsDashboardProps
+> = ({
   contentId,
-  timeRange = 'week',
+  timeRange = "week",
   showAdvancedMetrics = true,
   onReferenceSelect,
   className,
 }) => {
   // 状态管理
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('overview')
-  const [selectedCluster, setSelectedCluster] = useState<string | null>(null)
-  
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
+    null,
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
+
   // 模拟数据生成（实际应用中应从服务获取）
   const generateMockAnalytics = useMemo((): AnalyticsData => {
-    const baseStats = referenceGraphService.getReferenceStats(contentId)
-    
+    const baseStats = referenceGraphService.getReferenceStats(contentId);
+
     // 生成趋势数据
     const trendData = Array.from({ length: 30 }, (_, i) => {
-      const date = new Date()
-      date.setDate(date.getDate() - (29 - i))
+      const date = new Date();
+      date.setDate(date.getDate() - (29 - i));
       return {
-        date: date.toISOString().split('T')[0],
+        date: date.toISOString().split("T")[0],
         references: Math.floor(Math.random() * 20) + 5,
-        importance: Math.random() * 0.8 + 0.2
-      }
-    })
-    
+        importance: Math.random() * 0.8 + 0.2,
+      };
+    });
+
     // 生成热力图数据
     const heatmapData = Array.from({ length: 7 * 24 }, (_, i) => ({
       day: Math.floor(i / 24),
       hour: i % 24,
-      activity: Math.random() * 100
-    }))
-    
+      activity: Math.random() * 100,
+    }));
+
     return {
       ...baseStats,
       trendData,
-      heatmapData
-    }
-  }, [contentId])
+      heatmapData,
+    };
+  }, [contentId]);
 
   // 加载分析数据
   useEffect(() => {
-    setIsLoading(true)
-    
+    setIsLoading(true);
+
     // 模拟异步加载
     setTimeout(() => {
-      setAnalyticsData(generateMockAnalytics)
-      setIsLoading(false)
-    }, 1000)
-  }, [contentId, timeRange, generateMockAnalytics])
+      setAnalyticsData(generateMockAnalytics);
+      setIsLoading(false);
+    }, 1000);
+  }, [contentId, timeRange, generateMockAnalytics]);
 
   // 渲染概览卡片
   const renderOverviewCards = () => {
-    if (!analyticsData) return null
-    
+    if (!analyticsData) return null;
+
     const cards = [
       {
-        title: '总引用数',
+        title: "总引用数",
         value: analyticsData.totalReferences,
         icon: BookOpen,
-        change: '+12%',
+        change: "+12%",
         isPositive: true,
-        description: '比上周增加'
+        description: "比上周增加",
       },
       {
-        title: '平均重要性',
-        value: (analyticsData.averageImportance * 100).toFixed(1) + '%',
+        title: "平均重要性",
+        value: (analyticsData.averageImportance * 100).toFixed(1) + "%",
         icon: Star,
-        change: '+5%',
+        change: "+5%",
         isPositive: true,
-        description: '质量提升'
+        description: "质量提升",
       },
       {
-        title: '活跃引用',
+        title: "活跃引用",
         value: analyticsData.recentlyAccessed.length,
         icon: Activity,
-        change: '+8%',
+        change: "+8%",
         isPositive: true,
-        description: '最近访问'
+        description: "最近访问",
       },
       {
-        title: '知识聚类',
+        title: "知识聚类",
         value: analyticsData.clusters.length,
         icon: Network,
-        change: '持平',
+        change: "持平",
         isPositive: null,
-        description: '主题分组'
-      }
-    ]
-    
+        description: "主题分组",
+      },
+    ];
+
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {cards.map((card, index) => (
@@ -172,9 +180,13 @@ const ReferenceAnalyticsDashboard: React.FC<ReferenceAnalyticsDashboardProps> = 
                           ) : (
                             <ArrowDownRight className="w-4 h-4 text-red-500 mr-1" />
                           )}
-                          <span className={`text-sm ${
-                            card.isPositive ? 'text-green-600' : 'text-red-600'
-                          }`}>
+                          <span
+                            className={`text-sm ${
+                              card.isPositive
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
                             {card.change}
                           </span>
                         </>
@@ -189,22 +201,24 @@ const ReferenceAnalyticsDashboard: React.FC<ReferenceAnalyticsDashboardProps> = 
                   </div>
                 </div>
               </CardContent>
-              
+
               {/* 装饰性渐变 */}
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 opacity-50" />
             </Card>
           </motion.div>
         ))}
       </div>
-    )
-  }
+    );
+  };
 
   // 渲染分类分布
   const renderCategoryDistribution = () => {
-    if (!analyticsData) return null
-    
-    const maxCount = Math.max(...analyticsData.topCategories.map(c => c.count))
-    
+    if (!analyticsData) return null;
+
+    const maxCount = Math.max(
+      ...analyticsData.topCategories.map((c) => c.count),
+    );
+
     return (
       <Card>
         <CardHeader>
@@ -227,8 +241,8 @@ const ReferenceAnalyticsDashboard: React.FC<ReferenceAnalyticsDashboardProps> = 
                   <Badge variant="outline" className="capitalize">
                     {category.category}
                   </Badge>
-                  <Progress 
-                    value={(category.count / maxCount) * 100} 
+                  <Progress
+                    value={(category.count / maxCount) * 100}
                     className="flex-1 max-w-40"
                   />
                 </div>
@@ -240,13 +254,13 @@ const ReferenceAnalyticsDashboard: React.FC<ReferenceAnalyticsDashboardProps> = 
           </div>
         </CardContent>
       </Card>
-    )
-  }
+    );
+  };
 
   // 渲染重要引用排行
   const renderTopReferences = () => {
-    if (!analyticsData) return null
-    
+    if (!analyticsData) return null;
+
     return (
       <Card>
         <CardHeader>
@@ -284,8 +298,8 @@ const ReferenceAnalyticsDashboard: React.FC<ReferenceAnalyticsDashboardProps> = 
                   </div>
                 </div>
                 <div className="text-right">
-                  <Progress 
-                    value={ref.importance * 100} 
+                  <Progress
+                    value={ref.importance * 100}
                     className="w-16 mb-1"
                   />
                   <span className="text-xs text-muted-foreground">
@@ -297,13 +311,13 @@ const ReferenceAnalyticsDashboard: React.FC<ReferenceAnalyticsDashboardProps> = 
           </div>
         </CardContent>
       </Card>
-    )
-  }
+    );
+  };
 
   // 渲染知识聚类
   const renderKnowledgeClusters = () => {
-    if (!analyticsData) return null
-    
+    if (!analyticsData) return null;
+
     return (
       <Card>
         <CardHeader>
@@ -321,34 +335,41 @@ const ReferenceAnalyticsDashboard: React.FC<ReferenceAnalyticsDashboardProps> = 
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.1 }}
                 className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                  selectedCluster === cluster.id 
-                    ? 'border-primary bg-primary/5' 
-                    : 'border-border hover:border-primary/50'
+                  selectedCluster === cluster.id
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/50"
                 }`}
-                onClick={() => setSelectedCluster(
-                  selectedCluster === cluster.id ? null : cluster.id
-                )}
+                onClick={() =>
+                  setSelectedCluster(
+                    selectedCluster === cluster.id ? null : cluster.id,
+                  )
+                }
               >
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-semibold">{cluster.name}</h4>
                   <Badge variant="outline">{cluster.size} 个引用</Badge>
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">一致性:</span>
-                    <Progress value={cluster.coherence * 100} className="flex-1" />
+                    <span className="text-sm text-muted-foreground">
+                      一致性:
+                    </span>
+                    <Progress
+                      value={cluster.coherence * 100}
+                      className="flex-1"
+                    />
                     <span className="text-sm font-medium">
                       {(cluster.coherence * 100).toFixed(0)}%
                     </span>
                   </div>
-                  
+
                   <p className="text-sm text-muted-foreground">
                     核心内容: {cluster.centroid.snippet.slice(0, 60)}...
                   </p>
-                  
+
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {cluster.centroid.tags.slice(0, 3).map(tag => (
+                    {cluster.centroid.tags.slice(0, 3).map((tag) => (
                       <Badge key={tag} variant="secondary" className="text-xs">
                         {tag}
                       </Badge>
@@ -360,15 +381,17 @@ const ReferenceAnalyticsDashboard: React.FC<ReferenceAnalyticsDashboardProps> = 
           </div>
         </CardContent>
       </Card>
-    )
-  }
+    );
+  };
 
   // 渲染趋势图表
   const renderTrendChart = () => {
-    if (!analyticsData) return null
-    
-    const maxRefs = Math.max(...analyticsData.trendData.map(d => d.references))
-    
+    if (!analyticsData) return null;
+
+    const maxRefs = Math.max(
+      ...analyticsData.trendData.map((d) => d.references),
+    );
+
     return (
       <Card>
         <CardHeader>
@@ -390,22 +413,31 @@ const ReferenceAnalyticsDashboard: React.FC<ReferenceAnalyticsDashboardProps> = 
               />
             ))}
           </div>
-          
+
           <div className="flex justify-between mt-4 text-sm text-muted-foreground">
             <span>30天前</span>
             <span>今天</span>
           </div>
-          
+
           <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t">
             <div className="text-center">
               <p className="text-2xl font-bold text-green-600">
-                {analyticsData.trendData.slice(-7).reduce((sum, d) => sum + d.references, 0)}
+                {analyticsData.trendData
+                  .slice(-7)
+                  .reduce((sum, d) => sum + d.references, 0)}
               </p>
               <p className="text-sm text-muted-foreground">本周引用</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-blue-600">
-                {(analyticsData.trendData.slice(-7).reduce((sum, d) => sum + d.importance, 0) / 7 * 100).toFixed(1)}%
+                {(
+                  (analyticsData.trendData
+                    .slice(-7)
+                    .reduce((sum, d) => sum + d.importance, 0) /
+                    7) *
+                  100
+                ).toFixed(1)}
+                %
               </p>
               <p className="text-sm text-muted-foreground">平均质量</p>
             </div>
@@ -418,16 +450,18 @@ const ReferenceAnalyticsDashboard: React.FC<ReferenceAnalyticsDashboardProps> = 
           </div>
         </CardContent>
       </Card>
-    )
-  }
+    );
+  };
 
   // 渲染活动热力图
   const renderActivityHeatmap = () => {
-    if (!analyticsData) return null
-    
-    const days = ['日', '一', '二', '三', '四', '五', '六']
-    const maxActivity = Math.max(...analyticsData.heatmapData.map(d => d.activity))
-    
+    if (!analyticsData) return null;
+
+    const days = ["日", "一", "二", "三", "四", "五", "六"];
+    const maxActivity = Math.max(
+      ...analyticsData.heatmapData.map((d) => d.activity),
+    );
+
     return (
       <Card>
         <CardHeader>
@@ -444,10 +478,10 @@ const ReferenceAnalyticsDashboard: React.FC<ReferenceAnalyticsDashboardProps> = 
                 <div className="flex gap-1">
                   {Array.from({ length: 24 }, (_, hour) => {
                     const data = analyticsData.heatmapData.find(
-                      d => d.day === dayIndex && d.hour === hour
-                    )
-                    const intensity = data ? data.activity / maxActivity : 0
-                    
+                      (d) => d.day === dayIndex && d.hour === hour,
+                    );
+                    const intensity = data ? data.activity / maxActivity : 0;
+
                     return (
                       <motion.div
                         key={hour}
@@ -457,17 +491,17 @@ const ReferenceAnalyticsDashboard: React.FC<ReferenceAnalyticsDashboardProps> = 
                         className="w-3 h-3 rounded-sm cursor-pointer transition-all hover:scale-110"
                         style={{
                           backgroundColor: `rgba(59, 130, 246, ${intensity})`,
-                          border: '1px solid rgba(59, 130, 246, 0.2)'
+                          border: "1px solid rgba(59, 130, 246, 0.2)",
                         }}
                         title={`${day} ${hour}:00 - 活动度: ${Math.round(intensity * 100)}%`}
                       />
-                    )
+                    );
                   })}
                 </div>
               </div>
             ))}
           </div>
-          
+
           <div className="flex items-center justify-between mt-4 pt-4 border-t">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">活动强度:</span>
@@ -487,8 +521,8 @@ const ReferenceAnalyticsDashboard: React.FC<ReferenceAnalyticsDashboardProps> = 
           </div>
         </CardContent>
       </Card>
-    )
-  }
+    );
+  };
 
   if (isLoading) {
     return (
@@ -505,7 +539,7 @@ const ReferenceAnalyticsDashboard: React.FC<ReferenceAnalyticsDashboardProps> = 
           </Card>
         ))}
       </div>
-    )
+    );
   }
 
   return (
@@ -561,7 +595,7 @@ const ReferenceAnalyticsDashboard: React.FC<ReferenceAnalyticsDashboardProps> = 
         </TabsContent>
       </Tabs>
     </div>
-  )
-}
+  );
+};
 
-export default ReferenceAnalyticsDashboard
+export default ReferenceAnalyticsDashboard;

@@ -4,7 +4,12 @@ import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
   Tooltip,
@@ -28,7 +33,7 @@ interface SidebarToggleButtonProps {
 
 const sizeClasses = {
   sm: "h-6 w-6",
-  md: "h-7 w-7", 
+  md: "h-7 w-7",
   lg: "h-8 w-8",
 };
 
@@ -62,7 +67,7 @@ export function SidebarToggleButton({
         <PanelLeftClose className={iconSizes[size]} />
       );
     }
-    
+
     return isCollapsed ? (
       <ChevronRight className={iconSizes[size]} />
     ) : (
@@ -88,18 +93,18 @@ export function SidebarToggleButton({
               "rounded-md",
             ],
         "transition-all duration-200",
-        className
+        className,
       )}
       onClick={handleToggle}
     >
       <motion.div
         initial={false}
-        animate={{ 
+        animate={{
           scale: [1, 0.9, 1],
         }}
-        transition={{ 
+        transition={{
           duration: 0.15,
-          ease: "easeInOut"
+          ease: "easeInOut",
         }}
         key={isCollapsed ? "collapsed" : "expanded"}
       >
@@ -115,7 +120,7 @@ export function SidebarToggleButton({
         className={cn(
           "absolute -right-3 top-4 z-30",
           "opacity-0 group-hover:opacity-100 transition-opacity duration-200",
-          className
+          className,
         )}
       >
         {buttonContent}
@@ -125,28 +130,28 @@ export function SidebarToggleButton({
     return showTooltip ? (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger asChild>
-            {edgeContent}
-          </TooltipTrigger>
+          <TooltipTrigger asChild>{edgeContent}</TooltipTrigger>
           <TooltipContent side="right">
             <p>{tooltipText}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-    ) : edgeContent;
+    ) : (
+      edgeContent
+    );
   }
 
   // 显示在侧边栏内部的版本
   return showTooltip ? (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
-          {buttonContent}
-        </TooltipTrigger>
+        <TooltipTrigger asChild>{buttonContent}</TooltipTrigger>
         <TooltipContent side="bottom">
           <p>{tooltipText}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
-  ) : buttonContent;
-} 
+  ) : (
+    buttonContent
+  );
+}

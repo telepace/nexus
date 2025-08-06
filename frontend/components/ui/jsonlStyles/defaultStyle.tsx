@@ -31,7 +31,7 @@ export const defaultStyleRenderer: StyleRenderer = ({
               className="ml-2"
             />
           )}
-        </h1>
+        </h1>,
       );
     case "h2":
       return wrapElement(
@@ -43,7 +43,7 @@ export const defaultStyleRenderer: StyleRenderer = ({
               className="ml-2"
             />
           )}
-        </h2>
+        </h2>,
       );
     case "h3":
       return wrapElement(
@@ -55,7 +55,7 @@ export const defaultStyleRenderer: StyleRenderer = ({
               className="ml-2"
             />
           )}
-        </h3>
+        </h3>,
       );
     case "h4":
       return wrapElement(
@@ -67,7 +67,7 @@ export const defaultStyleRenderer: StyleRenderer = ({
               className="ml-2"
             />
           )}
-        </h4>
+        </h4>,
       );
     case "h5":
       return wrapElement(
@@ -79,7 +79,7 @@ export const defaultStyleRenderer: StyleRenderer = ({
               className="ml-2"
             />
           )}
-        </h5>
+        </h5>,
       );
     case "h6":
       return wrapElement(
@@ -91,7 +91,7 @@ export const defaultStyleRenderer: StyleRenderer = ({
               className="ml-2"
             />
           )}
-        </h6>
+        </h6>,
       );
     case "quote":
       return wrapElement(
@@ -104,7 +104,7 @@ export const defaultStyleRenderer: StyleRenderer = ({
               className="ml-2"
             />
           )}
-        </blockquote>
+        </blockquote>,
       );
     case "list": {
       let items: string[] = [];
@@ -126,7 +126,7 @@ export const defaultStyleRenderer: StyleRenderer = ({
               <EnhancedReferenceIndicator references={references} />
             </li>
           )}
-        </ul>
+        </ul>,
       );
     }
     case "insight":
@@ -142,7 +142,7 @@ export const defaultStyleRenderer: StyleRenderer = ({
               className="ml-2"
             />
           )}
-        </div>
+        </div>,
       );
     case "concept":
       return wrapElement(
@@ -157,7 +157,7 @@ export const defaultStyleRenderer: StyleRenderer = ({
               className="ml-2"
             />
           )}
-        </div>
+        </div>,
       );
     case "qa": {
       if (typeof c === "object" && c !== null) {
@@ -177,7 +177,7 @@ export const defaultStyleRenderer: StyleRenderer = ({
                 <EnhancedReferenceIndicator references={references} />
               </div>
             )}
-          </div>
+          </div>,
         );
       }
       break;
@@ -195,7 +195,7 @@ export const defaultStyleRenderer: StyleRenderer = ({
               className="ml-2"
             />
           )}
-        </div>
+        </div>,
       );
     default: {
       const finalContent = lead ? `**${lead}:** ${String(c)}` : String(c);
@@ -208,7 +208,7 @@ export const defaultStyleRenderer: StyleRenderer = ({
               className="ml-2"
             />
           )}
-        </p>
+        </p>,
       );
     }
   }

@@ -6,16 +6,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Copy, 
-  MoreVertical, 
-  ThumbsUp, 
-  ThumbsDown, 
+import {
+  Copy,
+  MoreVertical,
+  ThumbsUp,
+  ThumbsDown,
   RefreshCw,
   Bot,
   User,
   Sparkles,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -79,7 +79,9 @@ export function EnhancedMessageCard({
   contentId,
 }: EnhancedMessageCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [feedback, setFeedback] = useState<"positive" | "negative" | null>(null);
+  const [feedback, setFeedback] = useState<"positive" | "negative" | null>(
+    null,
+  );
   const cardRef = useRef<HTMLDivElement>(null);
 
   const isUser = message.role === "user";
@@ -89,9 +91,9 @@ export function EnhancedMessageCard({
   // 自动滚动到新消息
   useEffect(() => {
     if (message.isStreaming && cardRef.current) {
-      cardRef.current.scrollIntoView({ 
-        behavior: "smooth", 
-        block: "nearest" 
+      cardRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
       });
     }
   }, [message.content, message.isStreaming]);
@@ -123,9 +125,7 @@ export function EnhancedMessageCard({
             <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
             <span className="text-sm font-medium">发送失败</span>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {message.error}
-          </p>
+          <p className="text-sm text-muted-foreground">{message.error}</p>
           {onRetry && (
             <Button
               size="sm"
@@ -200,16 +200,13 @@ export function EnhancedMessageCard({
       className={cn(
         "group relative transition-all duration-200",
         isUser ? "ml-auto max-w-[85%]" : "mr-auto max-w-[85%]",
-        className
+        className,
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={cn(
-          "flex gap-3",
-          isUser ? "flex-row-reverse" : "flex-row"
-        )}
+        className={cn("flex gap-3", isUser ? "flex-row-reverse" : "flex-row")}
       >
         {/* 头像 */}
         {showAvatar && (
@@ -217,9 +214,11 @@ export function EnhancedMessageCard({
             {(isUser ? userAvatar : assistantAvatar) && (
               <AvatarImage src={isUser ? userAvatar : assistantAvatar} />
             )}
-            <AvatarFallback className={cn(
-              isUser ? "bg-primary text-primary-foreground" : "bg-muted"
-            )}>
+            <AvatarFallback
+              className={cn(
+                isUser ? "bg-primary text-primary-foreground" : "bg-muted",
+              )}
+            >
               {isUser ? (
                 <User className="h-4 w-4" />
               ) : (
@@ -233,9 +232,7 @@ export function EnhancedMessageCard({
         <div className={cn("flex-1 space-y-2", isUser && "text-right")}>
           {/* 头部信息 */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="font-medium">
-              {isUser ? "你" : "AI助手"}
-            </span>
+            <span className="font-medium">{isUser ? "你" : "AI助手"}</span>
             {showTimestamp && (
               <span>
                 {formatDistanceToNow(message.timestamp, {
@@ -258,17 +255,17 @@ export function EnhancedMessageCard({
           </div>
 
           {/* 消息卡片 */}
-          <Card className={cn(
-            "overflow-hidden transition-all duration-200",
-            isUser 
-              ? "bg-primary text-primary-foreground border-primary/20" 
-              : "bg-card hover:shadow-md",
-            message.error && "border-destructive bg-destructive/5",
-            message.isStreaming && "border-primary/40 shadow-sm"
-          )}>
-            <CardContent className="p-4">
-              {renderContent()}
-            </CardContent>
+          <Card
+            className={cn(
+              "overflow-hidden transition-all duration-200",
+              isUser
+                ? "bg-primary text-primary-foreground border-primary/20"
+                : "bg-card hover:shadow-md",
+              message.error && "border-destructive bg-destructive/5",
+              message.isStreaming && "border-primary/40 shadow-sm",
+            )}
+          >
+            <CardContent className="p-4">{renderContent()}</CardContent>
           </Card>
 
           {/* 操作按钮 */}
@@ -277,7 +274,7 @@ export function EnhancedMessageCard({
               className={cn(
                 "flex items-center gap-1 transition-all duration-200",
                 isUser ? "justify-end" : "justify-start",
-                isHovered ? "opacity-100" : "opacity-0"
+                isHovered ? "opacity-100" : "opacity-0",
               )}
             >
               {/* 复制按钮 */}
@@ -299,7 +296,7 @@ export function EnhancedMessageCard({
                     onClick={() => handleFeedback("positive")}
                     className={cn(
                       "h-7 px-2",
-                      feedback === "positive" && "text-green-600 bg-green-50"
+                      feedback === "positive" && "text-green-600 bg-green-50",
                     )}
                   >
                     <ThumbsUp className="h-3 w-3" />
@@ -310,7 +307,7 @@ export function EnhancedMessageCard({
                     onClick={() => handleFeedback("negative")}
                     className={cn(
                       "h-7 px-2",
-                      feedback === "negative" && "text-red-600 bg-red-50"
+                      feedback === "negative" && "text-red-600 bg-red-50",
                     )}
                   >
                     <ThumbsDown className="h-3 w-3" />
@@ -319,11 +316,7 @@ export function EnhancedMessageCard({
               )}
 
               {/* 更多操作 */}
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 px-2"
-              >
+              <Button size="sm" variant="ghost" className="h-7 px-2">
                 <MoreVertical className="h-3 w-3" />
               </Button>
             </div>
@@ -339,4 +332,4 @@ export function EnhancedMessageCard({
       </div>
     </div>
   );
-} 
+}

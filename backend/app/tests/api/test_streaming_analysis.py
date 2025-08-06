@@ -131,10 +131,10 @@ async def test_analyze_stream_summary_success(
         def __init__(self, data):
             self.data = data
             self.index = 0
-        
+
         def __aiter__(self):
             return self
-        
+
         async def __anext__(self):
             if self.index >= len(self.data):
                 raise StopAsyncIteration
@@ -191,10 +191,10 @@ async def test_analyze_stream_key_points_success(
         def __init__(self, data):
             self.data = data
             self.index = 0
-        
+
         def __aiter__(self):
             return self
-        
+
         async def __anext__(self):
             if self.index >= len(self.data):
                 raise StopAsyncIteration
@@ -278,15 +278,15 @@ def test_analyze_stream_template_loading(
         'data: {"choices":[{"delta":{"content":"test"}}]}\n',
         "data: [DONE]\n",
     ]
-    
+
     class MockAsyncIterator:
         def __init__(self, data):
             self.data = data
             self.index = 0
-        
+
         def __aiter__(self):
             return self
-        
+
         async def __anext__(self):
             if self.index >= len(self.data):
                 raise StopAsyncIteration

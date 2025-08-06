@@ -50,7 +50,6 @@ class ChatService:
             "simple_chat.j2": "chat",  # 🎯 新增：简单聊天模板使用chat任务
             "user_analysis.j2": "analysis",
             "expand_discussion.j2": "analysis",  # 使用analysis任务的模型配置
-
             # 🎯 新增：支持常见的prompt名称映射到chat任务
             "提取要点": "chat",
             "总结内容": "chat",
@@ -261,7 +260,9 @@ class ChatService:
             if template_name == "labels.j2":
                 # 根据输出语言选择合适的标签语言
                 output_language = context.get("output_language", "zh")
-                preset_tag_names = tag_manager.get_preset_tag_names_by_language(output_language)
+                preset_tag_names = tag_manager.get_preset_tag_names_by_language(
+                    output_language
+                )
                 context = context.copy()  # 避免修改原始context
                 context["existing_tags"] = preset_tag_names
                 logger.info(
@@ -564,9 +565,7 @@ class ChatService:
                     logger.info(f"✅ {template_name} processing successful (default)")
                     return result
             except Exception as lite_err:
-                logger.error(
-                    f"💥 LiteLLM proxy调用失败: {lite_err}; 回退到Mock数据"
-                )
+                logger.error(f"💥 LiteLLM proxy调用失败: {lite_err}; 回退到Mock数据")
 
             # --- fallback mock ---
             logger.warning(f"🔄 启用Mock数据回退机制 for template: {template_name}")
@@ -598,7 +597,9 @@ class ChatService:
             # 🔧 简化token限制策略 - 使用配置的默认值
             max_tokens = get_token_limit(task_type="chat")
 
-            logger.info(f"🎯 使用配置的token限制: {max_tokens} (模型: {selected_model})")
+            logger.info(
+                f"🎯 使用配置的token限制: {max_tokens} (模型: {selected_model})"
+            )
 
             # 构建请求数据
             request_data = {
@@ -626,7 +627,9 @@ class ChatService:
             max_retries = 3
             for attempt in range(max_retries):
                 try:
-                    logger.info(f"🚀 LiteLLM API调用 (尝试 {attempt + 1}/{max_retries}): {selected_model}")
+                    logger.info(
+                        f"🚀 LiteLLM API调用 (尝试 {attempt + 1}/{max_retries}): {selected_model}"
+                    )
 
                     response = requests.post(
                         url,
@@ -642,20 +645,29 @@ class ChatService:
                         response_data = response.json()
 
                         # 提取LLM响应内容
-                        if "choices" not in response_data or not response_data["choices"]:
+                        if (
+                            "choices" not in response_data
+                            or not response_data["choices"]
+                        ):
                             raise ValueError("Invalid LLM response: missing choices")
 
                         content = response_data["choices"][0]["message"]["content"]
-                        logger.info(f"✅ LLM response received successfully, content length: {len(content)}")
-                        logger.debug(f"🔍 LLM response content preview: {content[:200]}")
+                        logger.info(
+                            f"✅ LLM response received successfully, content length: {len(content)}"
+                        )
+                        logger.debug(
+                            f"🔍 LLM response content preview: {content[:200]}"
+                        )
                         return content.strip()
                     else:
                         # 记录详细的错误信息
                         error_text = response.text
-                        logger.error(f"❌ LiteLLM API HTTP {response.status_code}: {error_text}")
+                        logger.error(
+                            f"❌ LiteLLM API HTTP {response.status_code}: {error_text}"
+                        )
 
                         if attempt < max_retries - 1:
-                            wait_time = 2 ** attempt  # 指数退避
+                            wait_time = 2**attempt  # 指数退避
                             logger.info(f"⏳ 等待 {wait_time}s 后重试...")
                             time.sleep(wait_time)
                             continue
@@ -665,32 +677,38 @@ class ChatService:
                 except requests.exceptions.Timeout as e:
                     logger.error(f"⏰ LiteLLM API超时 (尝试 {attempt + 1}): {e}")
                     if attempt < max_retries - 1:
-                        wait_time = 2 ** attempt
+                        wait_time = 2**attempt
                         logger.info(f"⏳ 超时重试，等待 {wait_time}s...")
                         time.sleep(wait_time)
                         continue
                     else:
-                        raise Exception(f"LLM API timeout after {max_retries} attempts: {e}")
+                        raise Exception(
+                            f"LLM API timeout after {max_retries} attempts: {e}"
+                        )
 
                 except requests.exceptions.ConnectionError as e:
                     logger.error(f"🔌 LiteLLM API连接错误 (尝试 {attempt + 1}): {e}")
                     if attempt < max_retries - 1:
-                        wait_time = 2 ** attempt
+                        wait_time = 2**attempt
                         logger.info(f"⏳ 连接错误重试，等待 {wait_time}s...")
                         time.sleep(wait_time)
                         continue
                     else:
-                        raise Exception(f"LLM API connection error after {max_retries} attempts: {e}")
+                        raise Exception(
+                            f"LLM API connection error after {max_retries} attempts: {e}"
+                        )
 
                 except Exception as e:
                     logger.error(f"💥 LiteLLM API未知错误 (尝试 {attempt + 1}): {e}")
                     if attempt < max_retries - 1:
-                        wait_time = 2 ** attempt
+                        wait_time = 2**attempt
                         logger.info(f"⏳ 未知错误重试，等待 {wait_time}s...")
                         time.sleep(wait_time)
                         continue
                     else:
-                        raise Exception(f"LLM API unknown error after {max_retries} attempts: {e}")
+                        raise Exception(
+                            f"LLM API unknown error after {max_retries} attempts: {e}"
+                        )
 
             # 如果所有重试都失败了，抛出异常
             raise Exception(f"LLM API failed after {max_retries} attempts")

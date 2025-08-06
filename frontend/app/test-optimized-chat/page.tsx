@@ -9,19 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OptimizedChatContainer } from "@/components/ui/optimized-chat-container";
 import { ChatMessage } from "@/components/ui/enhanced-message-card";
-import { 
-  MessageSquare, 
-  Sparkles, 
-  Settings, 
-  Play,
-  Zap
-} from "lucide-react";
+import { MessageSquare, Sparkles, Settings, Play, Zap } from "lucide-react";
 
 export default function TestOptimizedChatPage() {
   const [contentId, setContentId] = useState("");
   const [model, setModel] = useState("or-llama-3-1-8b-instruct");
   const [systemPrompt, setSystemPrompt] = useState(
-    "你是一个专业的AI助手，擅长分析内容并提供有见地的回答。请用中文回复，并尽量使用结构化的JSONL格式输出。"
+    "你是一个专业的AI助手，擅长分析内容并提供有见地的回答。请用中文回复，并尽量使用结构化的JSONL格式输出。",
   );
 
   // 模拟初始消息
@@ -37,8 +31,8 @@ export default function TestOptimizedChatPage() {
       metadata: {
         model: "or-llama-3-1-8b-instruct",
         tokens: 156,
-      }
-    }
+      },
+    },
   ];
 
   const handleMessageSent = (message: ChatMessage) => {
@@ -124,7 +118,7 @@ export default function TestOptimizedChatPage() {
                       <li>• 发送状态反馈</li>
                     </ul>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <h4 className="font-semibold">🎨 卡片显示</h4>
                     <ul className="text-muted-foreground space-y-1 text-xs">
@@ -308,14 +302,24 @@ export default function TestOptimizedChatPage() {
                   <div className="p-3 border rounded bg-muted/50">
                     <h4 className="font-semibold mb-2">当前配置</h4>
                     <div className="space-y-1 text-xs text-muted-foreground">
-                      <p><span className="font-medium">模型:</span> {model}</p>
-                      <p><span className="font-medium">系统提示:</span> {systemPrompt.slice(0, 50)}...</p>
-                      <p><span className="font-medium">内容ID:</span> {contentId || "未设置"}</p>
+                      <p>
+                        <span className="font-medium">模型:</span> {model}
+                      </p>
+                      <p>
+                        <span className="font-medium">系统提示:</span>{" "}
+                        {systemPrompt.slice(0, 50)}...
+                      </p>
+                      <p>
+                        <span className="font-medium">内容ID:</span>{" "}
+                        {contentId || "未设置"}
+                      </p>
                     </div>
                   </div>
-                  
+
                   <div className="p-3 border rounded bg-blue-50 dark:bg-blue-950/20">
-                    <h4 className="font-semibold mb-2 text-blue-900 dark:text-blue-100">优化效果</h4>
+                    <h4 className="font-semibold mb-2 text-blue-900 dark:text-blue-100">
+                      优化效果
+                    </h4>
                     <ul className="space-y-1 text-xs text-blue-700 dark:text-blue-300">
                       <li>✅ 智能输入框，支持多行和快捷键</li>
                       <li>✅ 实时流式JSONL渲染</li>
@@ -332,4 +336,4 @@ export default function TestOptimizedChatPage() {
       </Tabs>
     </div>
   );
-} 
+}

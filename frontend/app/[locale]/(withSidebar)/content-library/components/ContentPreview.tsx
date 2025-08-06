@@ -3,7 +3,10 @@
 import React, { useState, useEffect } from "react";
 import type { ContentItemPublic } from "@/lib/api/content";
 import { ContentAnalysisView } from "@/components/ai/ContentAnalysisView";
-import { contentDataManager, ContentData } from "@/lib/services/content-data-manager";
+import {
+  contentDataManager,
+  ContentData,
+} from "@/lib/services/content-data-manager";
 import { useAuth } from "@/lib/client-auth";
 import { ReferenceManagerProvider } from "@/components/ui/ReferenceManager";
 
@@ -15,13 +18,13 @@ export const ContentPreview = ({ item }: Props) => {
   const { user } = useAuth();
   const [contentData, setContentData] = useState<ContentData | null>(null);
   const [loading, setLoading] = useState(false);
-  
+
   // 🔍 ContentPreview 渲染追踪日志
   const previewRenderCount = React.useRef(0);
-  const prevPreviewState = React.useRef<any>({});
-  
+  const prevPreviewState = React.useRef<Record<string, unknown>>({});
+
   previewRenderCount.current += 1;
-  
+
   React.useEffect(() => {
     const currentState = {
       itemId: item?.id,
@@ -30,20 +33,22 @@ export const ContentPreview = ({ item }: Props) => {
       hasContentData: !!contentData,
       contentDataId: contentData?.item?.id,
     };
-    
+
     const changes = Object.keys(currentState).filter(
-      key => prevPreviewState.current[key] !== currentState[key]
+      (key) => prevPreviewState.current[key] !== currentState[key],
     );
-    
+
     console.log(`🖼️ ContentPreview render #${previewRenderCount.current}:`, {
       ...currentState,
-      changes: changes.length > 0 ? changes : 'no state changes',
-      timestamp: new Date().toISOString().split('T')[1],
+      changes: changes.length > 0 ? changes : "no state changes",
+      timestamp: new Date().toISOString().split("T")[1],
       // 特别关注loading状态变化
-      loadingChange: prevPreviewState.current.loading !== loading ? 
-        `${prevPreviewState.current.loading} → ${loading}` : null,
+      loadingChange:
+        prevPreviewState.current.loading !== loading
+          ? `${prevPreviewState.current.loading} → ${loading}`
+          : null,
     });
-    
+
     prevPreviewState.current = currentState;
   });
 
@@ -51,7 +56,7 @@ export const ContentPreview = ({ item }: Props) => {
   useEffect(() => {
     let cancelled = false;
     let fetchTimer: NodeJS.Timeout | null = null;
-    
+
     async function fetchPreviewData() {
       if (!item?.id || !user?.token) {
         if (!cancelled) {
@@ -64,13 +69,13 @@ export const ContentPreview = ({ item }: Props) => {
       try {
         // 🎯 关键修复：只有在数据获取超过500ms时才显示loading，避免闪烁
         const startTime = Date.now();
-        
+
         // 使用preview模式，只获取基本数据，不加载对话历史
         const data = await contentDataManager.getPreviewData(item.id);
-        
+
         if (!cancelled) {
           const elapsed = Date.now() - startTime;
-          
+
           // 如果数据获取很快（<300ms），不显示loading状态，直接设置数据
           if (elapsed < 300) {
             setContentData(data);
@@ -87,7 +92,6 @@ export const ContentPreview = ({ item }: Props) => {
             });
           }
         }
-        
       } catch (error) {
         if (!cancelled) {
           console.error("Failed to fetch preview data:", error);

@@ -116,7 +116,9 @@ class TestSegmentAwareChatService:
                     "sentence_index": 0,
                     "segment_numbers": [
                         sample_segments[0].display_number,
-                        sample_segments[1].display_number if len(sample_segments) > 1 else sample_segments[0].display_number,
+                        sample_segments[1].display_number
+                        if len(sample_segments) > 1
+                        else sample_segments[0].display_number,
                     ],
                     "relevance_score": 0.9,
                 }

@@ -87,7 +87,10 @@ export function UnifiedAIAnalysisCard({
       onStart?.();
       await actions.startAnalysis(instruction);
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(t("analysis.analysisFailed"));
+      const err =
+        error instanceof Error
+          ? error
+          : new Error(t("analysis.analysisFailed"));
       onError?.(err);
       toast.error(`${t("analysis.analysisFailed")}: ${err.message}`);
     }
@@ -122,7 +125,8 @@ export function UnifiedAIAnalysisCard({
     try {
       await actions.retryAnalysis();
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(t("analysis.retryFailed"));
+      const err =
+        error instanceof Error ? error : new Error(t("analysis.retryFailed"));
       onError?.(err);
       toast.error(`${t("analysis.retryFailed")}: ${err.message}`);
     }
@@ -167,7 +171,7 @@ export function UnifiedAIAnalysisCard({
       case "markdown":
         return (
           <div className="prose prose-sm max-w-none dark:prose-invert">
-            <MarkdownRenderer 
+            <MarkdownRenderer
               content={processedContent}
               contentId={contentId}
               enableEnhancedTooltip={!!contentId}
@@ -183,17 +187,16 @@ export function UnifiedAIAnalysisCard({
             contentId={contentId}
           />
         ) : (
-          <JsonlRenderer 
+          <JsonlRenderer content={processedContent} contentId={contentId} />
+        );
+
+      case "universal":
+        return (
+          <UniversalContentRenderer
             content={processedContent}
             contentId={contentId}
           />
         );
-
-      case "universal":
-        return <UniversalContentRenderer 
-          content={processedContent}
-          contentId={contentId}
-        />;
 
       case "auto":
       default:
@@ -206,15 +209,12 @@ export function UnifiedAIAnalysisCard({
               contentId={contentId}
             />
           ) : (
-            <JsonlRenderer 
-            content={processedContent}
-            contentId={contentId}
-          />
+            <JsonlRenderer content={processedContent} contentId={contentId} />
           );
         } else {
           return (
             <div className="prose prose-sm max-w-none dark:prose-invert">
-              <MarkdownRenderer 
+              <MarkdownRenderer
                 content={processedContent}
                 contentId={contentId}
                 enableEnhancedTooltip={!!contentId}
@@ -249,13 +249,19 @@ export function UnifiedAIAnalysisCard({
               </Badge>
             )}
             {state.isCompleted && (
-              <Badge variant="outline" className="text-xs text-muted-foreground">
+              <Badge
+                variant="outline"
+                className="text-xs text-muted-foreground"
+              >
                 <Sparkles className="h-3 w-3 mr-1" />
                 已完成
               </Badge>
             )}
             {state.retryCount > 0 && (
-              <Badge variant="outline" className="text-xs text-muted-foreground">
+              <Badge
+                variant="outline"
+                className="text-xs text-muted-foreground"
+              >
                 重试 {state.retryCount}
               </Badge>
             )}

@@ -29,7 +29,7 @@ interface MarkdownRendererProps {
   /** 引用字符串，用于在内容后显示引用链接 */
   ref?: string;
   /** 引用链接的显示变体 */
-  refVariant?: 'default' | 'minimal' | 'badge' | 'inline';
+  refVariant?: "default" | "minimal" | "badge" | "inline";
   /** 引用点击回调 */
   onReferenceClick?: (refId: number) => void;
   /** 内容ID，用于获取真实的引用数据 */
@@ -45,7 +45,7 @@ export function MarkdownRenderer({
   className,
   inline = false,
   ref: refString,
-  refVariant = 'default',
+  refVariant = "default",
   onReferenceClick,
   contentId,
   enableEnhancedTooltip = true,
@@ -83,8 +83,11 @@ export function MarkdownRenderer({
   }
 
   // 确保content是字符串类型
-  if (typeof content !== 'string') {
-    console.warn('MarkdownRenderer: content is not a string', { content, type: typeof content });
+  if (typeof content !== "string") {
+    console.warn("MarkdownRenderer: content is not a string", {
+      content,
+      type: typeof content,
+    });
     const Wrapper = inline ? "span" : "div";
     return (
       <Wrapper
@@ -119,7 +122,7 @@ export function MarkdownRenderer({
   const renderReferences = () => {
     // 🎯 如果启用了内联引用处理，就不在末尾显示引用
     if (!refString || !inline) return null;
-    
+
     return (
       <ReferenceHyperlinkRenderer
         refString={refString}
@@ -139,7 +142,9 @@ export function MarkdownRenderer({
       ref={contentRef}
       data-testid="markdown-renderer"
       className={cn(
-        inline ? "inline-flex items-baseline flex-wrap gap-1" : "prose prose-slate dark:prose-invert max-w-none",
+        inline
+          ? "inline-flex items-baseline flex-wrap gap-1"
+          : "prose prose-slate dark:prose-invert max-w-none",
         // 自定义样式
         !inline && [
           "prose-headings:scroll-m-16 prose-headings:tracking-tight",
@@ -216,30 +221,37 @@ export function MarkdownRenderer({
           p: ({ children, ...props }) => {
             // 🎯 处理段落中的内联引用（如果未禁用）
             if (!disableInlineReferences) {
-              if (typeof children === 'string') {
-                const processedChildren = processInlineReferences(children, contentId, 'elegant');
+              if (typeof children === "string") {
+                const processedChildren = processInlineReferences(
+                  children,
+                  contentId,
+                  "elegant",
+                );
                 return (
                   <p className="leading-6 mt-3" {...props}>
                     {processedChildren}
                   </p>
                 );
               }
-              
+
               // 处理复杂子元素中的引用
-              const processedChildren = React.Children.map(children, (child) => {
-                if (typeof child === 'string') {
-                  return processInlineReferences(child, contentId, 'elegant');
-                }
-                return child;
-              });
-              
+              const processedChildren = React.Children.map(
+                children,
+                (child) => {
+                  if (typeof child === "string") {
+                    return processInlineReferences(child, contentId, "elegant");
+                  }
+                  return child;
+                },
+              );
+
               return (
                 <p className="leading-6 mt-3" {...props}>
                   {processedChildren}
                 </p>
               );
             }
-            
+
             // 🎯 禁用内联引用处理时，直接渲染原始内容
             return (
               <p className="leading-6 mt-3" {...props}>
@@ -469,7 +481,7 @@ export function MarkdownRenderer({
       >
         {processedContent}
       </ReactMarkdown>
-      
+
       {/* 渲染引用链接 */}
       {renderReferences()}
     </Root>

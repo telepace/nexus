@@ -54,7 +54,7 @@ def test_create_content_item(db_session_mock: MagicMock):
     # Configure the mock session's methods that will be called by the CRUD function
     # create_content_item does not return the object from add/refresh, it returns the input obj after validation + commit
     # The actual db_content_item is modified in place by SQLModel.model_validate and by session.refresh if it had defaults
-    
+
     # Mock session.get to return the same object
     db_session_mock.get.return_value = mock_item_data
 

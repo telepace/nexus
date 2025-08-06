@@ -26,7 +26,7 @@ export class LRUCache<K, V> {
    */
   get(key: K): V | undefined {
     this.totalRequests++;
-    
+
     const value = this.cache.get(key);
     if (value !== undefined) {
       this.hits++;
@@ -34,7 +34,7 @@ export class LRUCache<K, V> {
       this.cache.delete(key);
       this.cache.set(key, value);
     }
-    
+
     return value;
   }
 
@@ -56,7 +56,7 @@ export class LRUCache<K, V> {
       const firstKey = this.cache.keys().next().value;
       this.cache.delete(firstKey);
     }
-    
+
     this.cache.set(key, value);
   }
 

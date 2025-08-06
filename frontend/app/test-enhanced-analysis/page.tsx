@@ -7,16 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Brain, 
-  MessageSquare, 
-  Clock, 
-  CheckCircle, 
+import {
+  Brain,
+  MessageSquare,
+  Clock,
+  CheckCircle,
   XCircle,
   RefreshCw,
   Settings,
   Eye,
-  EyeOff
+  EyeOff,
 } from "lucide-react";
 
 // 模拟内容数据
@@ -62,15 +62,16 @@ const mockContent: ContentItemPublic = {
   updated_at: new Date().toISOString(),
   is_public: true,
   meta_info: JSON.stringify({
-    summary: "本文探讨了人工智能在教育领域的应用和影响，分析了个性化学习、智能辅导系统等创新技术，以及面临的挑战和未来发展趋势。",
+    summary:
+      "本文探讨了人工智能在教育领域的应用和影响，分析了个性化学习、智能辅导系统等创新技术，以及面临的挑战和未来发展趋势。",
     key_points: [
       "AI技术实现个性化学习，为每个学生定制专属学习路径",
       "智能辅导系统提供24/7学习支持，即时回答问题和反馈",
       "自动评估技术提高效率，提供客观一致的评价标准",
       "数据隐私、数字鸿沟和教师角色转变是主要挑战",
-      "未来将实现虚拟教师、VR学习环境和终身学习支持"
+      "未来将实现虚拟教师、VR学习环境和终身学习支持",
     ],
-    tags: ["人工智能", "教育科技", "个性化学习", "智能辅导", "教育创新"]
+    tags: ["人工智能", "教育科技", "个性化学习", "智能辅导", "教育创新"],
   }),
   tags: ["AI", "教育", "技术", "创新"],
   source_type: "article",
@@ -79,7 +80,7 @@ const mockContent: ContentItemPublic = {
   language: "zh-CN",
   ai_processing_status: "completed",
   created_by: "test-user",
-  owner_id: "test-user"
+  owner_id: "test-user",
 };
 
 // 模拟对话数据
@@ -100,10 +101,11 @@ const mockConversations = [
       {
         id: "msg-002",
         role: "assistant",
-        content: "AI通过以下方式实现个性化学习：1. 学习行为分析 2. 能力评估 3. 兴趣偏好识别 4. 动态调整学习路径",
+        content:
+          "AI通过以下方式实现个性化学习：1. 学习行为分析 2. 能力评估 3. 兴趣偏好识别 4. 动态调整学习路径",
         timestamp: new Date(Date.now() - 3500000).toISOString(),
-      }
-    ]
+      },
+    ],
   },
   {
     id: "conv-002",
@@ -121,16 +123,19 @@ const mockConversations = [
       {
         id: "msg-004",
         role: "assistant",
-        content: "主要的伦理问题包括：数据隐私保护、算法偏见、决策透明度、教育公平性等。",
+        content:
+          "主要的伦理问题包括：数据隐私保护、算法偏见、决策透明度、教育公平性等。",
         timestamp: new Date(Date.now() - 7100000).toISOString(),
-      }
-    ]
-  }
+      },
+    ],
+  },
 ];
 
 export default function TestEnhancedAnalysisPage() {
   const [showHistory, setShowHistory] = useState(false);
-  const [variant, setVariant] = useState<"preview" | "sidebar" | "fullscreen">("fullscreen");
+  const [variant, setVariant] = useState<"preview" | "sidebar" | "fullscreen">(
+    "fullscreen",
+  );
   const [showPreprocessedContent, setShowPreprocessedContent] = useState(true);
   const [historyCount, setHistoryCount] = useState(0);
 
@@ -163,8 +168,13 @@ export default function TestEnhancedAnalysisPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* 变体选择 */}
               <div>
-                <label className="block text-sm font-medium mb-2">显示变体</label>
-                <Tabs value={variant} onValueChange={(value) => setVariant(value as any)}>
+                <label className="block text-sm font-medium mb-2">
+                  显示变体
+                </label>
+                <Tabs
+                  value={variant}
+                  onValueChange={(value) => setVariant(value as any)}
+                >
                   <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="fullscreen">全屏</TabsTrigger>
                     <TabsTrigger value="sidebar">侧边栏</TabsTrigger>
@@ -175,33 +185,49 @@ export default function TestEnhancedAnalysisPage() {
 
               {/* 历史记录显示 */}
               <div>
-                <label className="block text-sm font-medium mb-2">历史记录</label>
+                <label className="block text-sm font-medium mb-2">
+                  历史记录
+                </label>
                 <Button
                   variant={showHistory ? "default" : "outline"}
                   onClick={() => setShowHistory(!showHistory)}
                   className="w-full"
                 >
-                  {showHistory ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
+                  {showHistory ? (
+                    <EyeOff className="h-4 w-4 mr-2" />
+                  ) : (
+                    <Eye className="h-4 w-4 mr-2" />
+                  )}
                   {showHistory ? "隐藏" : "显示"} ({historyCount})
                 </Button>
               </div>
 
               {/* 预处理内容 */}
               <div>
-                <label className="block text-sm font-medium mb-2">预处理内容</label>
+                <label className="block text-sm font-medium mb-2">
+                  预处理内容
+                </label>
                 <Button
                   variant={showPreprocessedContent ? "default" : "outline"}
-                  onClick={() => setShowPreprocessedContent(!showPreprocessedContent)}
+                  onClick={() =>
+                    setShowPreprocessedContent(!showPreprocessedContent)
+                  }
                   className="w-full"
                 >
-                  {showPreprocessedContent ? <CheckCircle className="h-4 w-4 mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
+                  {showPreprocessedContent ? (
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                  ) : (
+                    <XCircle className="h-4 w-4 mr-2" />
+                  )}
                   {showPreprocessedContent ? "显示" : "隐藏"}
                 </Button>
               </div>
 
               {/* 状态指示 */}
               <div>
-                <label className="block text-sm font-medium mb-2">系统状态</label>
+                <label className="block text-sm font-medium mb-2">
+                  系统状态
+                </label>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="text-green-600">
                     <CheckCircle className="h-3 w-3 mr-1" />
@@ -228,7 +254,9 @@ export default function TestEnhancedAnalysisPage() {
                   <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900 dark:text-gray-100">立即响应</h3>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                    立即响应
+                  </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     点击Prompt后立即显示对话卡片，无需等待
                   </p>
@@ -240,7 +268,9 @@ export default function TestEnhancedAnalysisPage() {
                   <RefreshCw className="h-4 w-4 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900 dark:text-gray-100">实时渲染</h3>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                    实时渲染
+                  </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     流式响应直接在卡片中实时显示
                   </p>
@@ -252,7 +282,9 @@ export default function TestEnhancedAnalysisPage() {
                   <Clock className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900 dark:text-gray-100">优雅等待</h3>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                    优雅等待
+                  </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     显示AI思考状态，避免界面冻结
                   </p>
@@ -269,15 +301,16 @@ export default function TestEnhancedAnalysisPage() {
               content={mockContent}
               conversations={mockConversations}
               analysisResult={{
-                summary: "本文全面探讨了人工智能在教育领域的应用现状和未来发展趋势。",
+                summary:
+                  "本文全面探讨了人工智能在教育领域的应用现状和未来发展趋势。",
                 key_points: [
                   "AI技术推动个性化学习革命",
                   "智能辅导系统提供全天候支持",
                   "自动评估提高教育效率",
-                  "数据隐私等挑战需要重视"
+                  "数据隐私等挑战需要重视",
                 ],
                 tags: ["AI", "教育", "个性化学习", "智能辅导"],
-                insights: "人工智能将深刻改变教育模式，实现真正的个性化学习。"
+                insights: "人工智能将深刻改变教育模式，实现真正的个性化学习。",
               }}
               variant={variant}
               showPreprocessedContent={showPreprocessedContent}

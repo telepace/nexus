@@ -3,12 +3,12 @@
 
 export async function GET() {
   return Response.json(
-    { 
-      status: 'healthy',
+    {
+      status: "healthy",
       timestamp: new Date().toISOString(),
-      service: 'frontend',
-      uptime: process.uptime()
+      service: "frontend",
+      uptime: process.uptime(),
     },
-    { status: 200 }
+    { status: 200 },
   );
 }

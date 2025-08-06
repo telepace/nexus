@@ -383,7 +383,10 @@ class BackgroundTaskManager:
                                     # 执行AI预处理（只执行AI初始化层，不重复做存储）
                                     # TODO: 从用户偏好或系统设置中获取语言，目前使用默认英文
                                     preprocessing_result = await preprocessing_pipeline._ai_initialization_layer(
-                                        cleaned_content, metadata, user_preferences=None, output_language="English"
+                                        cleaned_content,
+                                        metadata,
+                                        user_preferences=None,
+                                        output_language="English",
                                     )
 
                                     # AI分析完成 - 进度85%

@@ -64,17 +64,20 @@ export const LibraryHeader = ({
   }, [items]);
 
   // 🚀 优化：使用 useMemo 缓存排序选项
-  const sortOptions = useMemo(() => [
-    { value: "time" as const, label: "最新" },
-    { value: "rating" as const, label: "评分" },
-    { value: "title" as const, label: "标题" },
-    { value: "views" as const, label: "热度" },
-  ], []);
+  const sortOptions = useMemo(
+    () => [
+      { value: "time" as const, label: "最新" },
+      { value: "rating" as const, label: "评分" },
+      { value: "title" as const, label: "标题" },
+      { value: "views" as const, label: "热度" },
+    ],
+    [],
+  );
 
   // 🚀 优化：使用 useMemo 缓存过滤状态
-  const isFiltered = useMemo(() => 
-    selectedTags.length > 0 || sortBy !== "time",
-    [selectedTags.length, sortBy]
+  const isFiltered = useMemo(
+    () => selectedTags.length > 0 || sortBy !== "time",
+    [selectedTags.length, sortBy],
   );
 
   const handleSearchClick = () => {

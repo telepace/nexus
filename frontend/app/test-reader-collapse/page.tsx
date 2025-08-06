@@ -7,7 +7,8 @@ import { ContentItemPublic, AIResult } from "@/lib/api/content";
 const mockContent: ContentItemPublic = {
   id: "test-content-id",
   title: "测试内容 - Reader页面默认折叠",
-  content_text: "这是一个测试内容，用于验证在reader页面中，除了内容摘要和提问清单外，其他卡片是否默认折叠。",
+  content_text:
+    "这是一个测试内容，用于验证在reader页面中，除了内容摘要和提问清单外，其他卡片是否默认折叠。",
   summary: null,
   source_uri: null,
   type: "text",
@@ -50,16 +51,24 @@ export default function TestReaderCollapsePage() {
               测试说明
             </h2>
             <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
-              <li>• 当前路径：/test-reader-collapse（模拟包含 "reader" 的路径）</li>
+              <li>
+                • 当前路径：/test-reader-collapse（模拟包含 "reader" 的路径）
+              </li>
               <li>• "内容摘要" 和 "提问清单" 卡片应该保持展开</li>
               <li>• 用户交互产生的AI对话卡片应该默认折叠</li>
               <li>• 可以手动点击展开/折叠按钮来切换状态</li>
-              <li>• 注意：由于路径不包含 "reader"，需要修改为 "/reader-test" 来测试</li>
+              <li>
+                • 注意：由于路径不包含 "reader"，需要修改为 "/reader-test"
+                来测试
+              </li>
             </ul>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg" style={{ height: "600px" }}>
+        <div
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg"
+          style={{ height: "600px" }}
+        >
           <EnhancedModernAnalysisInterface
             content={mockContent}
             analysisResult={mockAnalysisResult}
@@ -85,4 +94,4 @@ export default function TestReaderCollapsePage() {
       </div>
     </div>
   );
-} 
+}

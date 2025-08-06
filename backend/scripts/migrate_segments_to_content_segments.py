@@ -34,7 +34,7 @@ def migrate_segments_to_content_segments():
         if existing_count > 0:
             print(f"⚠️  content_segments 表中已有 {existing_count} 条数据")
             response = input("是否继续迁移？这将跳过重复数据 (y/N): ")
-            if response.lower() not in ['y', 'yes']:
+            if response.lower() not in ["y", "yes"]:
                 print("❌ 迁移已取消")
                 return
 
@@ -52,21 +52,23 @@ def migrate_segments_to_content_segments():
             batch_size = 100
 
             for i in range(0, len(segments), batch_size):
-                batch = segments[i:i + batch_size]
+                batch = segments[i : i + batch_size]
 
                 # 准备批量插入的数据
                 values_list = []
                 for segment in batch:
-                    values_list.append({
-                        'id': uuid.uuid4(),
-                        'content_item_id': segment.content_item_id,
-                        'display_number': segment.display_number,
-                        'content': segment.content,
-                        'start_offset': None,
-                        'end_offset': None,
-                        'created_at': segment.created_at,
-                        'updated_at': segment.created_at,
-                    })
+                    values_list.append(
+                        {
+                            "id": uuid.uuid4(),
+                            "content_item_id": segment.content_item_id,
+                            "display_number": segment.display_number,
+                            "content": segment.content,
+                            "start_offset": None,
+                            "end_offset": None,
+                            "created_at": segment.created_at,
+                            "updated_at": segment.created_at,
+                        }
+                    )
 
                 # 使用原生SQL执行批量插入
                 insert_stmt = text("""
@@ -169,6 +171,7 @@ def main():
     except Exception as e:
         print(f"❌ 迁移失败: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

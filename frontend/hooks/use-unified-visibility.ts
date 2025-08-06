@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect } from "react";
 
 export interface VisibilityItem {
   id: string;
@@ -25,7 +25,7 @@ export function useUnifiedVisibility(config: VisibilityConfig = {}) {
     defaultVisible = false,
     maxVisible = Infinity,
     fadeDuration = 200,
-    autoHideDelay = 0
+    autoHideDelay = 0,
   } = config;
 
   const [items, setItems] = useState<Map<string, VisibilityItem>>(new Map());
@@ -41,137 +41,173 @@ export function useUnifiedVisibility(config: VisibilityConfig = {}) {
   }, []);
 
   // 设置可见性
-  const setVisible = useCallback((id: string, visible: boolean, priority: number = 0) => {
-    setItems(prev => {
-      const newMap = new Map(prev);
-      const now = Date.now();
+  const setVisible = useCallback(
+    (id: string, visible: boolean, priority: number = 0) => {
+      setItems((prev) => {
+        const newMap = new Map(prev);
+        const now = Date.now();
 
-      if (visible) {
-        // 如果设置为可见，先清理自动隐藏定时器
-        clearItemTimeout(id);
-        
-        // 检查是否超过最大可见数量
-        const visibleItems = Array.from(newMap.values()).filter(item => item.visible);
-        if (visibleItems.length >= maxVisible && maxVisible !== Infinity) {
-          // 找到优先级最低的项目并隐藏
-          const lowestPriority = Math.min(...visibleItems.map(item => item.priority));
-          const itemToHide = visibleItems.find(item => item.priority === lowestPriority);
-          if (itemToHide && itemToHide.priority < priority) {
-            newMap.set(itemToHide.id, { ...itemToHide, visible: false, lastUpdated: now });
+        if (visible) {
+          // 如果设置为可见，先清理自动隐藏定时器
+          clearItemTimeout(id);
+
+          // 检查是否超过最大可见数量
+          const visibleItems = Array.from(newMap.values()).filter(
+            (item) => item.visible,
+          );
+          if (visibleItems.length >= maxVisible && maxVisible !== Infinity) {
+            // 找到优先级最低的项目并隐藏
+            const lowestPriority = Math.min(
+              ...visibleItems.map((item) => item.priority),
+            );
+            const itemToHide = visibleItems.find(
+              (item) => item.priority === lowestPriority,
+            );
+            if (itemToHide && itemToHide.priority < priority) {
+              newMap.set(itemToHide.id, {
+                ...itemToHide,
+                visible: false,
+                lastUpdated: now,
+              });
+            }
           }
+
+          newMap.set(id, { id, visible: true, priority, lastUpdated: now });
+
+          // 设置自动隐藏
+          if (autoHideDelay > 0) {
+            const timer = setTimeout(() => {
+              setVisible(id, false, priority);
+            }, autoHideDelay);
+            timeoutRefs.current.set(id, timer);
+          }
+        } else {
+          // 设置为不可见
+          clearItemTimeout(id);
+          newMap.set(id, { id, visible: false, priority, lastUpdated: now });
         }
 
-        newMap.set(id, { id, visible: true, priority, lastUpdated: now });
-
-        // 设置自动隐藏
-        if (autoHideDelay > 0) {
-          const timer = setTimeout(() => {
-            setVisible(id, false, priority);
-          }, autoHideDelay);
-          timeoutRefs.current.set(id, timer);
-        }
-      } else {
-        // 设置为不可见
-        clearItemTimeout(id);
-        newMap.set(id, { id, visible: false, priority, lastUpdated: now });
-      }
-
-      return newMap;
-    });
-  }, [maxVisible, autoHideDelay, clearItemTimeout]);
+        return newMap;
+      });
+    },
+    [maxVisible, autoHideDelay, clearItemTimeout],
+  );
 
   // 切换可见性
-  const toggleVisible = useCallback((id: string, priority: number = 0) => {
-    const item = items.get(id);
-    setVisible(id, !item?.visible, priority);
-  }, [items, setVisible]);
+  const toggleVisible = useCallback(
+    (id: string, priority: number = 0) => {
+      const item = items.get(id);
+      setVisible(id, !item?.visible, priority);
+    },
+    [items, setVisible],
+  );
 
   // 隐藏所有
   const hideAll = useCallback(() => {
-    setItems(prev => {
+    setItems((prev) => {
       const newMap = new Map();
       const now = Date.now();
-      
+
       prev.forEach((item, id) => {
         clearItemTimeout(id);
         newMap.set(id, { ...item, visible: false, lastUpdated: now });
       });
-      
+
       return newMap;
     });
   }, [clearItemTimeout]);
 
   // 批量设置可见性
-  const setBatchVisible = useCallback((updates: Array<{id: string, visible: boolean, priority?: number}>) => {
-    setItems(prev => {
-      const newMap = new Map(prev);
-      const now = Date.now();
+  const setBatchVisible = useCallback(
+    (updates: Array<{ id: string; visible: boolean; priority?: number }>) => {
+      setItems((prev) => {
+        const newMap = new Map(prev);
+        const now = Date.now();
 
-      updates.forEach(({ id, visible, priority = 0 }) => {
-        if (visible) {
-          clearItemTimeout(id);
-        }
-        newMap.set(id, { id, visible, priority, lastUpdated: now });
+        updates.forEach(({ id, visible, priority = 0 }) => {
+          if (visible) {
+            clearItemTimeout(id);
+          }
+          newMap.set(id, { id, visible, priority, lastUpdated: now });
+        });
+
+        return newMap;
       });
-
-      return newMap;
-    });
-  }, [clearItemTimeout]);
+    },
+    [clearItemTimeout],
+  );
 
   // 获取可见项目
   const getVisibleItems = useCallback(() => {
     return Array.from(items.values())
-      .filter(item => item.visible)
+      .filter((item) => item.visible)
       .sort((a, b) => b.priority - a.priority);
   }, [items]);
 
   // 检查特定项目是否可见
-  const isVisible = useCallback((id: string) => {
-    return items.get(id)?.visible ?? defaultVisible;
-  }, [items, defaultVisible]);
+  const isVisible = useCallback(
+    (id: string) => {
+      return items.get(id)?.visible ?? defaultVisible;
+    },
+    [items, defaultVisible],
+  );
 
   // 获取项目信息
-  const getItem = useCallback((id: string) => {
-    return items.get(id);
-  }, [items]);
+  const getItem = useCallback(
+    (id: string) => {
+      return items.get(id);
+    },
+    [items],
+  );
 
   // 清理钩子
   useEffect(() => {
     return () => {
-      timeoutRefs.current.forEach(timer => global.clearTimeout(timer));
+      timeoutRefs.current.forEach((timer) => global.clearTimeout(timer));
       timeoutRefs.current.clear();
     };
   }, []);
 
   // 🎯 修复动态类名生成 - 使用预定义的Tailwind类名
-  const getVisibilityClasses = useCallback((id: string, baseClasses: string = '') => {
-    const visible = isVisible(id);
-    // 使用预定义的duration类名，避免动态生成
-    const durationClass = fadeDuration <= 150 ? 'duration-150' : 
-                         fadeDuration <= 200 ? 'duration-200' :
-                         fadeDuration <= 300 ? 'duration-300' : 'duration-500';
-    
-    return `${baseClasses} transition-opacity ${durationClass} ${
-      visible ? 'opacity-100' : 'opacity-0 pointer-events-none'
-    }`.trim();
-  }, [isVisible, fadeDuration]);
+  const getVisibilityClasses = useCallback(
+    (id: string, baseClasses: string = "") => {
+      const visible = isVisible(id);
+      // 使用预定义的duration类名，避免动态生成
+      const durationClass =
+        fadeDuration <= 150
+          ? "duration-150"
+          : fadeDuration <= 200
+            ? "duration-200"
+            : fadeDuration <= 300
+              ? "duration-300"
+              : "duration-500";
+
+      return `${baseClasses} transition-opacity ${durationClass} ${
+        visible ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`.trim();
+    },
+    [isVisible, fadeDuration],
+  );
 
   // 生成内联样式（用于更精细的控制）
-  const getVisibilityStyles = useCallback((id: string, additionalStyles: React.CSSProperties = {}) => {
-    const visible = isVisible(id);
-    return {
-      ...additionalStyles,
-      opacity: visible ? 1 : 0,
-      pointerEvents: visible ? 'auto' : 'none',
-      transition: `opacity ${fadeDuration}ms ease-out`,
-    } as React.CSSProperties;
-  }, [isVisible, fadeDuration]);
+  const getVisibilityStyles = useCallback(
+    (id: string, additionalStyles: React.CSSProperties = {}) => {
+      const visible = isVisible(id);
+      return {
+        ...additionalStyles,
+        opacity: visible ? 1 : 0,
+        pointerEvents: visible ? "auto" : "none",
+        transition: `opacity ${fadeDuration}ms ease-out`,
+      } as React.CSSProperties;
+    },
+    [isVisible, fadeDuration],
+  );
 
   return {
     // 状态
     items: Array.from(items.values()),
     visibleItems: getVisibleItems(),
-    
+
     // 方法
     setVisible,
     toggleVisible,
@@ -179,13 +215,13 @@ export function useUnifiedVisibility(config: VisibilityConfig = {}) {
     setBatchVisible,
     isVisible,
     getItem,
-    
+
     // 样式辅助
     getVisibilityClasses,
     getVisibilityStyles,
-    
+
     // 配置
-    config: { defaultVisible, maxVisible, fadeDuration, autoHideDelay }
+    config: { defaultVisible, maxVisible, fadeDuration, autoHideDelay },
   };
 }
 
@@ -198,30 +234,30 @@ export const visibilityPresets = {
     defaultVisible: false,
     maxVisible: 1,
     fadeDuration: 150,
-    autoHideDelay: 0
+    autoHideDelay: 0,
   },
-  
+
   // 预览面板配置
   preview: {
     defaultVisible: true,
     maxVisible: 2,
     fadeDuration: 200,
-    autoHideDelay: 0
+    autoHideDelay: 0,
   },
-  
+
   // 悬浮面板配置
   hover: {
     defaultVisible: false,
     maxVisible: 3,
     fadeDuration: 100,
-    autoHideDelay: 2000
+    autoHideDelay: 2000,
   },
-  
+
   // 模态框配置
   modal: {
     defaultVisible: false,
     maxVisible: 1,
     fadeDuration: 300,
-    autoHideDelay: 0
-  }
+    autoHideDelay: 0,
+  },
 } as const;

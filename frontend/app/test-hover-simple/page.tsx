@@ -2,7 +2,10 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { HoverableBlock, NotionStyleBlock } from "@/components/ui/HoverableBlock";
+import {
+  HoverableBlock,
+  NotionStyleBlock,
+} from "@/components/ui/HoverableBlock";
 import { GripVertical, Copy, Lightbulb } from "lucide-react";
 
 export default function TestHoverSimplePage() {
@@ -141,11 +144,17 @@ export default function TestHoverSimplePage() {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <div className="p-2 bg-muted rounded">--muted</div>
-                <div className="p-2 bg-muted-foreground text-muted rounded mt-2">--muted-foreground</div>
+                <div className="p-2 bg-muted-foreground text-muted rounded mt-2">
+                  --muted-foreground
+                </div>
               </div>
               <div>
-                <div className="p-2 bg-background border rounded">--background</div>
-                <div className="p-2 bg-foreground text-background rounded mt-2">--foreground</div>
+                <div className="p-2 bg-background border rounded">
+                  --background
+                </div>
+                <div className="p-2 bg-foreground text-background rounded mt-2">
+                  --foreground
+                </div>
               </div>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
@@ -169,7 +178,7 @@ export default function TestHoverSimplePage() {
                 <li>轻微的缩放效果（强烈）</li>
                 <li>Notion风格块的操作按钮出现</li>
               </ul>
-              
+
               <p className="mt-4">❌ 如果没有效果，可能的问题：</p>
               <ul className="list-disc list-inside space-y-1 ml-4">
                 <li>CSS变量未正确定义</li>
@@ -182,4 +191,4 @@ export default function TestHoverSimplePage() {
       </div>
     </div>
   );
-} 
+}

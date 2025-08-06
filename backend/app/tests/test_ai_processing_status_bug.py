@@ -210,7 +210,7 @@ class TestAIProcessingStatusBug:
         db_session.commit()
 
         # Mock the actual processing method instead of creating recursion
-        async def mock_process_content_async(content_id, user_id):
+        async def mock_process_content_async(content_id, _user_id):
             processing_order.append(1)
             # 模拟处理完成
             item = db_session.get(ContentItem, uuid.UUID(content_id))
@@ -220,9 +220,6 @@ class TestAIProcessingStatusBug:
                 db_session.commit()
 
         # Act
-        import app.utils.background_tasks as bgtasks
-
-        manager = bgtasks.BackgroundTaskManager()
         await mock_process_content_async(str(content_item.id), str(user.id))
 
         # Assert

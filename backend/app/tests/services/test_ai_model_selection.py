@@ -31,7 +31,7 @@ class TestAIModelSelection:
         # 验证映射的模型名称（基于实际环境配置）
         # 注意：这些值由环境变量决定，测试应验证配置是否存在而不是硬编码特定值
         assert isinstance(resolved_models["summary"], str)
-        assert isinstance(resolved_models["key_points"], str) 
+        assert isinstance(resolved_models["key_points"], str)
         assert isinstance(resolved_models["labels"], str)
 
     @pytest.mark.asyncio
@@ -55,9 +55,7 @@ class TestAIModelSelection:
                 )
                 # 获取实际配置的模型
                 expected_model = settings.resolved_ai_task_models["summary"]
-                mock_call.assert_called_with(
-                    "test", "mocked prompt", expected_model
-                )
+                mock_call.assert_called_with("test", "mocked prompt", expected_model)
 
                 # 重置mock
                 mock_call.reset_mock()

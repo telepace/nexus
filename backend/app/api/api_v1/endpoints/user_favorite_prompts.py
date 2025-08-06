@@ -1,4 +1,3 @@
-
 import uuid
 from typing import Any
 
@@ -51,13 +50,10 @@ def delete_user_favorite_prompt(
     """
     Delete a user favorite prompt.
     """
-    user_favorite_prompt = crud.user_favorite_prompt.get(
-        db=db, id=id
-    )
+    user_favorite_prompt = crud.user_favorite_prompt.get(db=db, id=id)
     if not user_favorite_prompt:
         raise HTTPException(status_code=404, detail="User favorite prompt not found")
     if user_favorite_prompt.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     user_favorite_prompt = crud.user_favorite_prompt.remove(db=db, id=id)
     return user_favorite_prompt
-

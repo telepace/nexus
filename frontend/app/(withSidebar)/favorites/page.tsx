@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useMemo } from "react";
+import Link from "next/link";
 import { Heart, BookOpen } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -200,10 +201,10 @@ export default function FavoritesPage() {
                       开始收藏你感兴趣的内容吧
                     </p>
                     <Button asChild>
-                      <a href="/content-library">
+                      <Link href="/content-library">
                         <BookOpen className="mr-2 h-4 w-4" />
                         浏览内容库
-                      </a>
+                      </Link>
                     </Button>
                   </CardContent>
                 </Card>
