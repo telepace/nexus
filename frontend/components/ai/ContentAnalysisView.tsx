@@ -493,7 +493,7 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
         <div
           className={`flex-1 relative min-h-0 ${variant === "preview" ? "overflow-auto" : "overflow-hidden"}`}
         >
-          {/* 🎯 所有模式都使用交互式组件，通过variant控制行为差异 */}
+          {/* 🎯 暂时所有模式都使用增强版组件，待静态组件修复后再启用 */}
           <EnhancedModernAnalysisInterface {...analysisProps} />
         </div>
       </div>

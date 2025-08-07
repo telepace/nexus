@@ -280,12 +280,16 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
       );
 
       const handleClick = useCallback(() => {
+        // 🎯 临时修复：Preview模式下禁用卡片点击选中功能，避免闪烁
+        if (variant === "preview") {
+          return;
+        }
         setSelectedCard(isSelected ? null : card.id);
-      }, [isSelected, card.id]);
+      }, [isSelected, card.id, variant]);
 
       return (
         <div
-          className="group relative cursor-pointer"
+          className={`group relative ${variant === "preview" ? "cursor-default" : "cursor-pointer"}`}
           onClick={handleClick}
           data-exclude-selection
         >
@@ -293,8 +297,7 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
             className={`
           jobs-card-transition
           relative border-0 analysis-card
-          ${isSelected ? "jobs-card-selected" : "jobs-card-idle"}
-          ${variant === "preview" ? "jobs-card-preview" : ""}
+          ${variant === "preview" ? "jobs-card-preview" : (isSelected ? "jobs-card-selected" : "jobs-card-idle")}
         `}
           >
             <CardContent className="px-12 py-4">
@@ -491,13 +494,21 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
             0 0 0 1px rgba(255, 255, 255, 0.1);
         }
 
-        /* 预览模式专属 - 更细腻的背景变化 */
-        .jobs-card-preview.jobs-card-idle {
+        /* 🎯 预览模式专属 - 静态展示，无动画效果 */
+        .jobs-card-preview {
           background: rgba(255, 255, 255, 0.6);
+          transform: none !important;
+          box-shadow: 
+            0 1px 3px rgba(0, 0, 0, 0.12),
+            0 1px 2px rgba(0, 0, 0, 0.08) !important;
         }
 
-        .group:hover .jobs-card-preview.jobs-card-idle {
+        .group:hover .jobs-card-preview {
           background: rgba(255, 255, 255, 0.85);
+          transform: none !important;
+          box-shadow: 
+            0 1px 3px rgba(0, 0, 0, 0.12),
+            0 1px 2px rgba(0, 0, 0, 0.08) !important;
         }
 
         /* 暗色模式优化 */
@@ -528,12 +539,20 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
             0 0 0 1px rgba(255, 255, 255, 0.15);
         }
 
-        .dark .jobs-card-preview.jobs-card-idle {
+        .dark .jobs-card-preview {
           background: rgba(23, 23, 23, 0.6);
+          transform: none !important;
+          box-shadow: 
+            0 1px 3px rgba(0, 0, 0, 0.3),
+            0 1px 2px rgba(0, 0, 0, 0.2) !important;
         }
 
-        .dark .group:hover .jobs-card-preview.jobs-card-idle {
+        .dark .group:hover .jobs-card-preview {
           background: rgba(23, 23, 23, 0.85);
+          transform: none !important;
+          box-shadow: 
+            0 1px 3px rgba(0, 0, 0, 0.3),
+            0 1px 2px rgba(0, 0, 0, 0.2) !important;
         }
 
         /* 🎯 滚动时禁用动画，防止抖动 */
