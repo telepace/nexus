@@ -50,45 +50,7 @@ export const AIAssistantPanel = React.forwardRef<
     // 🎯 状态下沉：将输入状态移到组件内部管理
     const [inputValue, setInputValue] = useState("");
     const [inputFocused, setInputFocused] = useState(false);
-    // 🔍 AIAssistantPanel 输入状态追踪日志
-    const inputRenderCount = React.useRef(0);
-    const prevInputState = React.useRef<any>({});
-
-    inputRenderCount.current += 1;
-
-    React.useEffect(() => {
-      const currentState = {
-        inputLength: inputValue.length,
-        inputFocused,
-        showHistory,
-        historyCount: historyRecords.length,
-        promptsCount: prompts.length,
-        variant,
-      };
-
-      const changes = Object.keys(currentState).filter(
-        (key) => prevInputState.current[key] !== currentState[key],
-      );
-
-      // 只在有变化时记录日志，避免输入时的日志洪水
-      if (changes.length > 0) {
-        console.log(
-          `⌨️ AIAssistantPanel [${variant}] render #${inputRenderCount.current}:`,
-          {
-            ...currentState,
-            changes,
-            timestamp: new Date().toISOString().split("T")[1],
-            // 特别关注输入值变化
-            inputChange:
-              prevInputState.current.inputLength !== inputValue.length
-                ? `${prevInputState.current.inputLength} → ${inputValue.length} chars`
-                : null,
-          },
-        );
-      }
-
-      prevInputState.current = currentState;
-    });
+    // Performance optimization: Remove debug logging
     // 优化的历史记录渲染
     const historyItems = useMemo(() => {
       return historyRecords.map((record, index) => {

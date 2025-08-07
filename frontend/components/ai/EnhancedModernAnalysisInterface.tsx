@@ -177,36 +177,7 @@ const EnhancedModernAnalysisInterface: React.FC<
     contentId: stableStreamingContentId, // 使用与streaming相同的contentId确保一致性
   });
 
-  // Effects
-  renderCount.current += 1;
-
-  React.useEffect(() => {
-    const currentProps = {
-      contentId: content?.id,
-      variant,
-      isLoading,
-      conversationsLength: conversations?.length || 0,
-      hasAnalysisResult: !!analysisResult,
-      sharedContentId,
-      sceneSpecificId,
-      pathname,
-    };
-
-    const changes = Object.keys(currentProps).filter(
-      (key) => prevProps.current[key] !== currentProps[key],
-    );
-
-    console.log(
-      `📊 EnhancedModernAnalysisInterface [${variant}] render #${renderCount.current}:`,
-      {
-        ...currentProps,
-        changes: changes.length > 0 ? changes : "no prop changes",
-        timestamp: new Date().toISOString().split("T")[1],
-      },
-    );
-
-    prevProps.current = currentProps;
-  });
+  // Performance optimization: Remove debug logging
 
   useEffect(() => {
     if (variant === "preview") {
@@ -441,18 +412,46 @@ const EnhancedModernAnalysisInterface: React.FC<
           [];
         const messageCount = userMessages.length;
 
-        // 获取对话标题
-        const conversationTitle =
-          conversation.title ||
-          (conversation.messages && conversation.messages.length > 0 
-            ? conversation.messages[0].content?.substring(0, 25) + "..." 
-            : "历史对话");
+        // 获取对话标题 - 优化标题显示逻辑
+        const getConversationTitle = () => {
+          if (conversation.title && !conversation.title.startsWith("AI分析:")) {
+            return conversation.title;
+          }
+          
+          if (conversation.messages && conversation.messages.length > 0) {
+            // 查找第一条用户消息作为标题
+            const firstUserMessage = conversation.messages.find(
+              (msg: any) => msg.role === "user" && msg.content
+            );
+            if (firstUserMessage?.content) {
+              const content = String(firstUserMessage.content);
+              // 检查是否是prompt模板调用
+              const metadata = firstUserMessage.metadata || {};
+              if (metadata.isPromptBased && metadata.promptName) {
+                return metadata.promptName;
+              }
+              // 使用原始用户输入作为标题
+              if (metadata.originalUserInput) {
+                const originalInput = String(metadata.originalUserInput);
+                if (originalInput.startsWith("使用模板：")) {
+                  return originalInput.replace("使用模板：", "");
+                }
+                return originalInput.length > 30 ? `${originalInput.substring(0, 30)}...` : originalInput;
+              }
+              return content.length > 30 ? `${content.substring(0, 30)}...` : content;
+            }
+          }
+          
+          return "AI回复";
+        };
+        
+        const conversationTitle = getConversationTitle();
 
         cards.push({
           id: `conversation-${conversation.id}`,
           title: conversationTitle,
-          subtitle: `对话 · ${messageCount} 条消息`,
-          emoji: "💬",
+          subtitle: "AI分析结果",
+          emoji: "🤖",
           content: {
             type: "custom",
             data: conversation,
@@ -464,10 +463,43 @@ const EnhancedModernAnalysisInterface: React.FC<
     // 流式对话卡片
     if (streamingConversations.length > 0) {
       streamingConversations.forEach((conversation, index) => {
+        // 获取流式对话标题 - 优化标题显示逻辑
+        const getStreamingTitle = () => {
+          if (conversation.title && !conversation.title.startsWith("AI分析:")) {
+            return conversation.title;
+          }
+          
+          if (conversation.messages && conversation.messages.length > 0) {
+            // 查找第一条用户消息作为标题
+            const firstUserMessage = conversation.messages.find(
+              (msg: any) => msg.role === "user" && msg.content
+            );
+            if (firstUserMessage?.content) {
+              const content = String(firstUserMessage.content);
+              // 检查是否是prompt模板调用
+              const metadata = firstUserMessage.metadata || {};
+              if (metadata.isPromptBased && metadata.promptName) {
+                return metadata.promptName;
+              }
+              // 使用原始用户输入作为标题
+              if (metadata.originalUserInput) {
+                const originalInput = String(metadata.originalUserInput);
+                if (originalInput.startsWith("使用模板：")) {
+                  return originalInput.replace("使用模板：", "");
+                }
+                return originalInput.length > 30 ? `${originalInput.substring(0, 30)}...` : originalInput;
+              }
+              return content.length > 30 ? `${content.substring(0, 30)}...` : content;
+            }
+          }
+          
+          return "AI回复";
+        };
+
         cards.push({
           id: `streaming-${conversation.id}-${index}`,
-          title: conversation.title || "AI 对话",
-          subtitle: isStreaming ? "正在生成回复..." : "回复完成",
+          title: getStreamingTitle(),
+          subtitle: isStreaming ? "正在生成回复..." : "AI分析结果",
           emoji: "🤖",
           content: {
             type: "custom",

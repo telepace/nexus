@@ -94,41 +94,7 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
   const { t } = useI18nSafe();
   const memoryManager = useMemoryManager();
 
-  // 🔍 渲染追踪日志 - 分析重新渲染原因
-  const renderCount = React.useRef(0);
-  const prevProps = React.useRef<any>({});
-
-  renderCount.current += 1;
-
-  React.useEffect(() => {
-    const currentProps = {
-      itemId: item?.id,
-      variant,
-      scene: explicitScene,
-      isLoading,
-      conversationsLength: externalConversations.length,
-      hasAnalysisResult: !!externalAnalysisResult,
-    };
-
-    const changes = Object.keys(currentProps).filter(
-      (key) => prevProps.current[key] !== currentProps[key],
-    );
-
-    console.log(
-      `🔄 ContentAnalysisView [${variant}] render #${renderCount.current}:`,
-      {
-        ...currentProps,
-        changes: changes.length > 0 ? changes : "no prop changes",
-        timestamp: new Date().toISOString().split("T")[1],
-        stack: new Error().stack
-          ?.split("\n")
-          .slice(2, 5)
-          .map((line) => line.replace(/^\s+at\s+/, "").split("(")[0]),
-      },
-    );
-
-    prevProps.current = currentProps;
-  });
+  // Performance optimization: Remove debug logging
 
   // 🎯 场景自动检测和状态隔离逻辑
   const currentScene = useMemo((): AnalysisScene => {

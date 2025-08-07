@@ -1001,26 +1001,35 @@ export async function favoritePrompt(promptId: string) {
   }
 
   try {
-    const { data, error } = await createFavoritePrompt({
+    // TODO: 实现 prompt 收藏功能的后端 API
+    // 当前返回未实现的错误，避免编译失败
+    console.warn("Prompt favorite functionality not yet implemented in backend");
+    
+    return { 
+      error: "Prompt favorite functionality is not yet implemented. Please check with the backend team." 
+    };
+    
+    // 未来实现时的代码结构：
+    /*
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/prompts/${promptId}/favorite`, {
+      method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: {
-        prompt_id: promptId,
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
       },
     });
-
-    if (error) {
-      console.error("Favoriting prompt failed:", error);
-      return {
-        error: typeof error === "string" ? error : JSON.stringify(error),
-      };
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-
+    
+    const data = await response.json();
+    
     revalidatePath("/prompts");
     revalidatePath("/favorites");
-
+    
     return { success: true, data };
+    */
   } catch (error) {
     console.error("Favoriting prompt failed:", error);
     return { error: "Operation failed" };
@@ -1040,26 +1049,33 @@ export async function unfavoritePrompt(favoriteId: string) {
   }
 
   try {
-    const { data, error } = await deleteFavoritePrompt({
+    // TODO: 实现 prompt 取消收藏功能的后端 API
+    console.warn("Prompt unfavorite functionality not yet implemented in backend");
+    
+    return { 
+      error: "Prompt unfavorite functionality is not yet implemented. Please check with the backend team." 
+    };
+    
+    // 未来实现时的代码结构：
+    /*
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/prompts/favorites/${favoriteId}`, {
+      method: "DELETE",
       headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      path: {
-        id: favoriteId,
+        "Authorization": `Bearer ${token}`,
       },
     });
-
-    if (error) {
-      console.error("Unfavoriting prompt failed:", error);
-      return {
-        error: typeof error === "string" ? error : JSON.stringify(error),
-      };
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-
+    
+    const data = await response.json();
+    
     revalidatePath("/prompts");
     revalidatePath("/favorites");
-
+    
     return { success: true, data };
+    */
   } catch (error) {
     console.error("Unfavoriting prompt failed:", error);
     return { error: "Operation failed" };
@@ -1079,20 +1095,30 @@ export async function fetchFavoritePrompts() {
   }
 
   try {
-    const { data, error } = await readUserFavoritePrompts({
+    // TODO: 实现获取收藏 prompt 列表的后端 API
+    console.warn("Fetch favorite prompts functionality not yet implemented in backend");
+    
+    return { 
+      error: "Fetch favorite prompts functionality is not yet implemented. Please check with the backend team." 
+    };
+    
+    // 未来实现时的代码结构：
+    /*
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/prompts/favorites`, {
+      method: "GET",
       headers: {
-        Authorization: `Bearer ${token}`,
+        "Authorization": `Bearer ${token}`,
       },
     });
-
-    if (error) {
-      console.error("Fetching favorite prompts failed:", error);
-      return {
-        error: typeof error === "string" ? error : JSON.stringify(error),
-      };
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-
+    
+    const data = await response.json();
+    
     return data;
+    */
   } catch (error) {
     console.error("Fetching favorite prompts failed:", error);
     return { error: "Operation failed" };

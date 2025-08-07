@@ -160,6 +160,101 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
         );
       }
 
+      // 处理custom类型卡片（对话）
+      if (cardContent.type === "custom" && cardContent.data) {
+        const conversation = cardContent.data;
+        
+        // 如果是对话数据，只渲染AI的最后一条回复
+        if (conversation.messages && Array.isArray(conversation.messages)) {
+          // 获取最后一条AI消息
+          const aiMessages = conversation.messages.filter((msg: any) => 
+            msg.role === "assistant" && msg.content
+          );
+          
+          if (aiMessages.length > 0) {
+            const lastAiMessage = aiMessages[aiMessages.length - 1];
+            return (
+              <div
+                className={`
+                  px-6 py-4 rounded-lg transition-all duration-200
+                  ${
+                    selectedBlock === `${card.id}-main`
+                      ? "linear-bg-1 opacity-90"
+                      : "hover:linear-bg-1"
+                  }
+                `}
+                onClick={(e) => {
+                  // 如果点击的是文本内容区域，处理块选择
+                  if (
+                    e.target instanceof HTMLElement &&
+                    e.target.closest(".select-text")
+                  ) {
+                    onBlockSelect?.(
+                      selectedBlock === `${card.id}-main`
+                        ? null
+                        : `${card.id}-main`,
+                    );
+                  }
+                }}
+              >
+                <div className="select-text prose prose-sm max-w-none dark:prose-invert">
+                  <UniversalContentRenderer
+                    content={lastAiMessage.content || ""}
+                    onExpandLine={onExpandLine}
+                    contentId={stableContentId}
+                    enableDelayedRendering={false}
+                  />
+                </div>
+              </div>
+            );
+          }
+          
+          // 如果没有AI消息，显示提示
+          return (
+            <div className="px-6 py-4">
+              <div className="text-sm text-muted-foreground">正在等待AI回复...</div>
+            </div>
+          );
+        }
+        
+        // 如果有summary，作为备选渲染
+        if (conversation.summary) {
+          return (
+            <div
+              className={`
+                px-6 py-4 rounded-lg transition-all duration-200
+                ${
+                  selectedBlock === `${card.id}-main`
+                    ? "linear-bg-1 opacity-90"
+                    : "hover:linear-bg-1"
+                }
+              `}
+              onClick={(e) => {
+                if (
+                  e.target instanceof HTMLElement &&
+                  e.target.closest(".select-text")
+                ) {
+                  onBlockSelect?.(
+                    selectedBlock === `${card.id}-main`
+                      ? null
+                      : `${card.id}-main`,
+                  );
+                }
+              }}
+            >
+              <div className="select-text prose prose-sm max-w-none dark:prose-invert">
+                <UniversalContentRenderer
+                  content={conversation.summary}
+                  onExpandLine={onExpandLine}
+                  contentId={stableContentId}
+                  enableDelayedRendering={false}
+                />
+              </div>
+            </div>
+          );
+        }
+      }
+
       return null;
     },
     [selectedBlock, onExpandLine, onBlockSelect, stableContentId],
@@ -171,42 +266,7 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
       const isSelected = selectedCard === card.id;
       const isCollapsed = collapsedCards.has(card.id);
 
-      // 🔍 卡片渲染追踪日志
-      const cardRenderCount = React.useRef(0);
-      const prevCardState = React.useRef<any>({});
-
-      cardRenderCount.current += 1;
-
-      React.useEffect(() => {
-        const currentState = {
-          cardId: card.id,
-          isSelected,
-          isCollapsed,
-          variant,
-          cardTitle: card.title,
-          hasContent: !!card.content?.data,
-        };
-
-        const changes = Object.keys(currentState).filter(
-          (key) => prevCardState.current[key] !== currentState[key],
-        );
-
-        console.log(
-          `📦 CardComponent [${card.id}] render #${cardRenderCount.current}:`,
-          {
-            ...currentState,
-            changes: changes.length > 0 ? changes : "no state changes",
-            timestamp: new Date().toISOString().split("T")[1],
-            // 检查是否是折叠状态变化导致的渲染
-            collapseChange:
-              prevCardState.current.isCollapsed !== isCollapsed
-                ? `${prevCardState.current.isCollapsed} → ${isCollapsed}`
-                : null,
-          },
-        );
-
-        prevCardState.current = currentState;
-      });
+      // Performance optimization: Remove debug logging
 
       // 在Preview模式下完全禁用hover效果，避免状态管理开销
       const shouldShowHoverButtons = variant !== "preview";

@@ -79,11 +79,12 @@ class ContentDataManager {
   /**
    * Preview模式专用 - 获取基本数据和必要的引用信息
    */
-  async getPreviewData(contentId: string): Promise<ContentData | null> {
+  async getPreviewData(contentId: string, options: Partial<FetchOptions> = {}): Promise<ContentData | null> {
     return this.getContentData(contentId, {
       includeAnalysis: true,
-      includeConversations: true, // 🎯 修复：Preview模式也需要对话历史以支持引用功能
+      includeConversations: options.includeConversations ?? false, // 🎯 修复：尊重外部传入的includeConversations选项
       mode: "preview",
+      ...options, // 允许外部选项覆盖默认值
     });
   }
 
