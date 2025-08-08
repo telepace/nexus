@@ -74,12 +74,10 @@ from app.utils.background_tasks import background_task_manager
 from app.utils.content_processors import ProcessingPipeline
 from app.utils.events import content_event_manager, create_sse_generator
 from app.utils.prompt_helpers import render_user_analysis_prompt
+from app.utils.token_manager import get_token_limit
 from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
 
 # from app.utils.cache import warm_article_cache  # 暂时注释掉避免redis依赖
-from app.utils.token_manager import (
-    get_token_limit,
-)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -785,8 +783,6 @@ async def _stream_content_analysis(
     生成内容分析的流式响应，兼容 Vercel AI SDK Data Stream Protocol
     """
     try:
-        import aiohttp
-
         from app.api.deps import get_db
 
         # 准备系统消息和用户消息
@@ -1064,8 +1060,6 @@ async def _stream_content_analysis_ai_sdk(
     user_id: uuid.UUID,  # Add user_id parameter
 ) -> AsyncGenerator[str, None]:
     """Stream AI SDK analysis with updated prompt structure."""
-    import aiohttp
-
     try:
         # 使用新的用户分析模板渲染prompt
         # 优先使用请求中的语言，否则从用户设置获取
@@ -1273,8 +1267,6 @@ async def _stream_content_completion_updated(
     resolved_model: str,  # 🎯 新增：接收预选择的模型
 ) -> AsyncGenerator[str, None]:
     """Stream content completion with updated prompt structure."""
-    import aiohttp
-
     from app.utils.prompt_helpers import render_template_prompt
 
     # 创建实时JSONL处理器

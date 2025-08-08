@@ -58,7 +58,8 @@ class StreamingJSONLExtractor:
         if self.state == ExtractionState.WAITING_FOR_JSON:
             return self._try_start_extraction()
         elif self.state == ExtractionState.EXTRACTING_JSON:
-            return self._extract_jsonl_content()
+            # In extracting mode, check if we have a complete codeblock or continue extracting
+            return self._continue_extraction()
         else:
             return "", False
 
@@ -72,18 +73,22 @@ class StreamingJSONLExtractor:
         match = re.search(code_block_pattern, self.buffer, re.DOTALL)
 
         if match:
-            # 找到代码块，提取其中的内容
+            # 找到代码块，检查其中的内容
             jsonl_content = match.group(1).strip()
             lines = jsonl_content.split("\n")
 
-            # 检查第一行是否是有效的JSON
-            for line in lines:
-                line = line.strip()
-                if line and self._is_json_line_start(line):
-                    # 找到有效的JSON开始，切换状态
-                    self.state = ExtractionState.EXTRACTING_JSON
-                    self.buffer = jsonl_content  # 只保留代码块内的内容
-                    return self._extract_jsonl_content()
+            # 检查是否有任何有效的JSON行
+            has_valid_json = any(
+                line.strip() and self._is_json_line_start(line.strip())
+                for line in lines
+                if line.strip()
+            )
+            
+            if has_valid_json:
+                # 找到有效的JSON，切换状态但不修改buffer
+                self.state = ExtractionState.EXTRACTING_JSON
+                # 直接处理代码块内的内容而不修改buffer
+                return self._extract_jsonl_from_codeblock(jsonl_content)
         else:
             # 没有代码块，查找第一个JSON对象的开始位置
             lines = self.buffer.split("\n")
@@ -113,6 +118,56 @@ class StreamingJSONLExtractor:
 
         return "", False
 
+    def _continue_extraction(self) -> tuple[str, bool]:
+        """继续提取JSONL内容"""
+        # Check if we now have a complete codeblock
+        code_block_pattern = r"```(?:jsonl|json)?\s*\n?(.*?)(?:\n?```|$)"
+        match = re.search(code_block_pattern, self.buffer, re.DOTALL)
+
+        if match and "```" in self.buffer and self.buffer.rstrip().endswith("```"):
+            # We have a complete codeblock, extract from it and mark as completed
+            jsonl_content = match.group(1).strip()
+            result = self._extract_jsonl_from_codeblock(jsonl_content)
+            self.state = ExtractionState.COMPLETED
+            return result
+        elif match:
+            # We have a partial codeblock, extract from it
+            jsonl_content = match.group(1).strip()
+            return self._extract_jsonl_from_codeblock(jsonl_content)
+        else:
+            # No codeblock pattern, use the regular extraction
+            return self._extract_jsonl_content()
+
+    def _extract_jsonl_from_codeblock(self, codeblock_content: str) -> tuple[str, bool]:
+        """从代码块内容中提取JSONL"""
+        lines = codeblock_content.split("\n")
+        new_jsonl_lines = []
+
+        for line in lines:
+            line = line.strip()
+
+            # 跳过空行
+            if not line:
+                continue
+
+            # 检查是否是有效的JSON行
+            if self._is_valid_jsonl_line(line):
+                # 检查这行是否已经在pure_jsonl_content中
+                existing_lines = self.pure_jsonl_content.split("\n") if self.pure_jsonl_content else []
+                if line not in existing_lines:
+                    new_jsonl_lines.append(line)
+
+        if new_jsonl_lines:
+            new_content = "\n".join(new_jsonl_lines)
+            if self.pure_jsonl_content:
+                self.pure_jsonl_content += "\n" + new_content
+                return "\n" + new_content, True
+            else:
+                self.pure_jsonl_content = new_content
+                return new_content, True
+
+        return "", False
+
     def _extract_jsonl_content(self) -> tuple[str, bool]:
         """提取JSONL内容"""
         lines = self.buffer.split("\n")
@@ -134,8 +189,9 @@ class StreamingJSONLExtractor:
 
             # 检查是否是有效的JSON行
             if self._is_valid_jsonl_line(line):
-                # 检查这行是否已经在pure_jsonl_content中
-                if line not in self.pure_jsonl_content:
+                # 检查这行是否已经在pure_jsonl_content中 - 使用更精确的检查
+                existing_lines = self.pure_jsonl_content.split("\n") if self.pure_jsonl_content else []
+                if line not in existing_lines:
                     new_jsonl_lines.append(line)
 
         if new_jsonl_lines:

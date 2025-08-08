@@ -119,7 +119,23 @@
       "Bash(gh pr view:*)",
       "Bash(gtimeout 15 npm run dev)",
       "Bash(true)",
-      "Bash(gh pr diff:*)"
+      "Bash(gh pr diff:*)",
+      "Bash(TESTING=true TEST_MODE=true python -m pytest backend/app/tests/api/test_content_processing.py::TestContentProcessingAPI::test_process_content_item_text backend/app/tests/api/test_content_processing.py::TestContentProcessingAPI::test_process_content_item_url -v)",
+      "Bash(TESTING=true TEST_MODE=true python -m pytest backend/app/tests/api/routes/test_content_llm_analysis.py::TestContentLLMAnalysisUpdated::test_analyze_ai_sdk_updated_prompt_structure -v)",
+      "Bash(TESTING=true TEST_MODE=true python -m pytest backend/app/tests/services/test_segment_aware_chat.py::TestSegmentAwareChatService::test_segment_retrieval -v)",
+      "Bash(TESTING=true TEST_MODE=true python -m pytest backend/app/tests/services/test_segment_aware_chat.py::test_prompt_template_rendering -v)",
+      "Bash(TESTING=true TEST_MODE=true python -m pytest backend/app/tests/utils/test_streaming_jsonl_extractor.py::TestStreamingJSONLExtractor::test_code_block_extraction backend/app/tests/utils/test_streaming_jsonl_extractor.py::TestStreamingJSONLExtractor::test_mixed_content_extraction -v)",
+      "Bash(TESTING=true TEST_MODE=true python -m pytest backend/app/tests/utils/test_streaming_jsonl_extractor.py::TestStreamingJSONLExtractor::test_code_block_extraction -v)",
+      "Bash(TESTING=true TEST_MODE=true python -m pytest backend/app/tests/utils/test_streaming_jsonl_extractor.py::TestStreamingJSONLExtractor::test_mixed_content_extraction -v)",
+      "Bash(TESTING=true TEST_MODE=true python -m pytest backend/app/tests/api/test_content_processing.py::test_process_content_item_text backend/app/tests/api/test_content_processing.py::test_process_content_item_url backend/app/tests/services/test_ai_model_selection.py::TestAIModelSelection::test_analyze_ai_sdk_updated_prompt_structure backend/app/tests/services/test_segment_aware_chat.py::test_prompt_template_rendering backend/app/tests/services/test_segment_aware_chat.py::TestSegmentAwareChatService::test_segment_retrieval backend/app/tests/utils/test_streaming_jsonl_extractor.py::TestStreamingJSONLExtractor::test_code_block_extraction backend/app/tests/utils/test_streaming_jsonl_extractor.py::TestStreamingJSONLExtractor::test_mixed_content_extraction -v)",
+      "Bash(TESTING=true TEST_MODE=true python -m pytest backend/app/tests/ -x --tb=short)",
+      "Bash(TESTING=true TEST_MODE=true python -m pytest backend/app/tests/api/test_content_processing.py::TestContentProcessingBrowser::test_process_content_item_text backend/app/tests/api/test_content_processing.py::TestContentProcessingBrowser::test_process_content_item_url backend/app/tests/services/test_ai_model_selection.py::TestAIModelSelection::test_analyze_ai_sdk backend/app/tests/services/test_segment_aware_chat.py::TestSegmentAwareChatService::test_segment_retrieval backend/app/tests/services/test_segment_aware_chat.py::test_prompt_template_rendering backend/app/tests/utils/test_streaming_jsonl_extractor.py::TestStreamingJSONLExtractor::test_code_block_extraction backend/app/tests/utils/test_streaming_jsonl_extractor.py::TestStreamingJSONLExtractor::test_mixed_content_extraction -v)",
+      "Bash(TESTING=true TEST_MODE=true python -m pytest backend/app/tests/utils/test_streaming_jsonl_extractor.py -v)",
+      "Bash(TESTING=true TEST_MODE=true python -m pytest backend/app/tests/utils/test_streaming_jsonl_extractor.py::TestStreamingJSONLExtractor::test_state_transitions -v)",
+      "Bash(TESTING=true TEST_MODE=true python -m pytest backend/app/tests/services/test_segment_aware_chat.py::TestSegmentAwareChatService::test_segment_retrieval backend/app/tests/services/test_segment_aware_chat.py::test_prompt_template_rendering -v)",
+      "Bash(TESTING=true TEST_MODE=true python -m pytest app/tests/api/routes/test_content_llm_analysis.py::TestContentLLMAnalysisUpdated::test_analyze_ai_sdk_updated_prompt_structure -v)",
+      "Bash(TESTING=true TEST_MODE=true python -m pytest app/tests/services/test_segment_aware_chat.py::TestSegmentAwareChatService::test_segment_retrieval -v)",
+      "Bash(TESTING=true TEST_MODE=true python -m pytest app/tests/api/routes/test_content_llm_analysis.py::TestContentLLMAnalysisUpdated::test_analyze_ai_sdk_updated_prompt_structure app/tests/services/test_segment_aware_chat.py::TestSegmentAwareChatService::test_segment_retrieval -v)"
     ]
   },
   "enableAllProjectMcpServers": false
