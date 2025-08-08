@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ArrowUpRight, Sparkles, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { fetchPrompts, PromptData } from "@/components/actions/prompts-action";
 
 /**
  * 静态AI面板组件 - 专为Preview模式设计
@@ -12,6 +13,7 @@ import { Button } from "@/components/ui/button";
  * 2. 视觉一致性 - 保持与完整版本相同的外观
  * 3. 性能优化 - 最小化DOM和JavaScript开销
  * 4. 用户引导 - 提示用户切换到完整模式进行交互
+ * 5. 数据驱动 - prompt数据从后端API获取，不使用硬编码
  */
 
 interface StaticAIPanelProps {
@@ -23,13 +25,34 @@ export const StaticAIPanel: React.FC<StaticAIPanelProps> = ({
   className = "",
   onNavigateToFullMode,
 }) => {
-  // 静态prompt按钮数据
-  const staticPrompts = [
-    { id: "1", name: "总结要点", icon: "📝" },
-    { id: "2", name: "深度分析", icon: "🔍" },
-    { id: "3", name: "提取关键词", icon: "🏷️" },
-    { id: "4", name: "生成问题", icon: "❓" },
-  ];
+  // 从后端获取prompt数据
+  const [prompts, setPrompts] = useState<PromptData[]>([]);
+  const [loadingPrompts, setLoadingPrompts] = useState(true);
+
+  // 🎯 从后端API获取prompt数据，替代硬编码
+  useEffect(() => {
+    async function loadPrompts() {
+      try {
+        setLoadingPrompts(true);
+        const promptsData = await fetchPrompts();
+        
+        // 如果是数组，直接使用；如果是错误对象，使用空数组
+        if (Array.isArray(promptsData)) {
+          setPrompts(promptsData.slice(0, 4)); // 最多显示4个prompt
+        } else {
+          console.error("获取prompt数据失败:", promptsData);
+          setPrompts([]);
+        }
+      } catch (error) {
+        console.error("加载提示词失败:", error);
+        setPrompts([]);
+      } finally {
+        setLoadingPrompts(false);
+      }
+    }
+
+    loadPrompts();
+  }, []);
 
   const handleInteractionAttempt = () => {
     onNavigateToFullMode?.();
@@ -101,19 +124,26 @@ export const StaticAIPanel: React.FC<StaticAIPanelProps> = ({
       
       <div className={`static-ai-panel flex-shrink-0 ${className}`}>
         <div className="px-6 py-3">
-          {/* AI指令标签行 */}
+          {/* AI指令标签行 - 从后端API获取数据 */}
           <div className="flex items-center gap-2 mb-3 overflow-x-auto scrollbar-hide pb-1">
-            {staticPrompts.map((prompt) => (
-              <button
-                key={prompt.id}
-                onClick={handleInteractionAttempt}
-                className="static-prompt-button inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0"
-                title="点击查看完整分析功能"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>{prompt.name}</span>
-              </button>
-            ))}
+            {loadingPrompts ? (
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 animate-spin text-neutral-400" />
+                <span className="text-sm text-neutral-500">加载中...</span>
+              </div>
+            ) : (
+              prompts.map((prompt) => (
+                <button
+                  key={prompt.id}
+                  onClick={handleInteractionAttempt}
+                  className="static-prompt-button inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0"
+                  title="点击查看完整分析功能"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>{prompt.name}</span>
+                </button>
+              ))
+            )}
           </div>
 
           {/* 静态输入框 */}

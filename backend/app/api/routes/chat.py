@@ -21,7 +21,7 @@ router = APIRouter()
 @router.post("/completions")
 async def create_chat_completion(
     messages: list[dict] = Body(..., description="Chat messages in OpenAI format"),
-    model: str = Body(default=None, description="Model to use"),
+    model: str = Body(default=None, description="Model to use (optional, defaults to AI_MODEL_CHAT config)"),
     stream: bool = Body(default=True, description="Whether to stream the response"),
     temperature: float = Body(default=0.7, description="Sampling temperature"),
     max_tokens: int = Body(default=8000, description="Maximum tokens to generate"),
@@ -41,6 +41,11 @@ async def create_chat_completion(
         ]
     except (KeyError, TypeError) as e:
         raise HTTPException(status_code=400, detail=f"Invalid message format: {str(e)}")
+
+    # 🎯 如果未指定模型，使用配置的聊天模型
+    if not model:
+        model = settings.resolved_ai_task_models.get("chat", settings.DEFAULT_LLM_MODEL)
+        print(f"🤖 [ChatAPI] 使用配置的聊天模型: {model}")
 
     # 准备 LiteLLM 请求
     completion_request = CompletionRequest(

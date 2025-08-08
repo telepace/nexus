@@ -8,10 +8,11 @@ import React, {
   useCallback,
 } from "react";
 import { useMemoryManager, useSmartState } from "@/lib/utils/memory-manager";
-import { Library, MessageSquare } from "lucide-react";
+import { Library, MessageSquare, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedModernAnalysisInterface } from "./EnhancedModernAnalysisInterface";
 import { StaticPreviewInterface } from "./StaticPreviewInterface";
+import { AIAssistantPanel } from "./AIAssistantPanel";
 import { ReferenceManagerProvider } from "@/components/ui/ReferenceManager";
 import { useI18nSafe } from "@/lib/i18n-fallback";
 import type { ContentItemPublic } from "@/lib/api/content";
@@ -21,6 +22,11 @@ import {
   ContentData,
 } from "@/lib/services/content-data-manager";
 import { useAuth } from "@/lib/client-auth";
+import { useScrollManager } from "@/hooks/useScrollManager";
+import { fetchPrompts, PromptData } from "@/components/actions/prompts-action";
+import { useStreamingConversation } from "@/hooks/use-streaming-conversation";
+import { useConversationHistory } from "@/hooks/use-conversation-history";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * 分析场景类型定义
@@ -158,6 +164,114 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
+  const { toast } = useToast();
+
+  // 🎯 新增：统一滚动管理
+  const scrollManager = useScrollManager({
+    enableUserIntentDetection: true,
+    debug: process.env.NODE_ENV === "development",
+  });
+
+  // 🎯 Preview模式下的AI助手面板所需状态
+  const [prompts, setPrompts] = useState<PromptData[]>([]);
+  const [loadingPrompts, setLoadingPrompts] = useState(true);
+  const [promptsRefreshKey, setPromptsRefreshKey] = useState(0);
+
+  // AI聊天相关hooks（仅Preview模式）
+  const stableContentId = useMemo(() => {
+    return sharedContentId || item?.id || "";
+  }, [sharedContentId, item?.id]);
+
+  // 🎯 AI聊天相关hooks - 总是调用但只在Preview模式下使用结果
+  const {
+    conversations: streamingConversations,
+    isStreaming,
+    sendMessage,
+    cancelCurrentProcessing,
+  } = useStreamingConversation({
+    contentId: stableContentId,
+    scene: currentScene,
+    onConversationUpdate: () => {},
+    onError: (error: any) => {
+      if (variant === "preview") {
+        toast({
+          title: "处理失败",
+          description: error?.message || "处理过程中发生错误，请稍后重试",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
+  const { historyRecords, isLoadingHistory } = useConversationHistory({
+    contentId: stableContentId,
+    scene: currentScene,
+  });
+
+  // 🎯 加载AI提示词
+  useEffect(() => {
+    if (variant !== "preview") return;
+    
+    async function loadPrompts() {
+      try {
+        setLoadingPrompts(true);
+        const promptsData = await fetchPrompts();
+        
+        // 🚨 修复：正确处理fetchPrompts的返回类型
+        if (Array.isArray(promptsData)) {
+          // 如果返回的是数组，直接使用
+          setPrompts(promptsData);
+          console.log("🎯 成功加载prompts数据:", promptsData.length, "个");
+          console.log("🎯 Prompts详情:", promptsData.map(p => ({ id: p.id, name: p.name })));
+        } else {
+          // 如果返回的是错误对象，记录错误并使用空数组
+          console.error("🚨 fetchPrompts返回错误对象:", promptsData);
+          setPrompts([]);
+          
+          // 开发模式fallback已移除 - API连接正常
+        }
+      } catch (error) {
+        console.error("🚨 加载提示词失败:", error);
+        setPrompts([]);
+      } finally {
+        setLoadingPrompts(false);
+      }
+    }
+
+    loadPrompts();
+  }, [variant, promptsRefreshKey]);
+
+  // 🎯 AI助手面板处理函数
+  const handleAnalysis = useCallback(async (inputValue: string) => {
+    if (variant !== "preview" || !currentItem?.id || !sendMessage) return;
+    
+    try {
+      await sendMessage(inputValue);
+    } catch (error) {
+      console.error("发送消息失败:", error);
+    }
+  }, [variant, currentItem?.id, sendMessage]);
+
+  const handlePromptClick = useCallback((prompt: PromptData) => {
+    if (variant !== "preview") return;
+    
+    if (prompt.content) {
+      handleAnalysis(prompt.content);
+    }
+  }, [variant, handleAnalysis]);
+
+  const handleHistoryClick = useCallback((conversation: any) => {
+    if (variant !== "preview") return;
+    
+    // 处理历史记录点击 - 可以根据需要实现
+    console.log("点击历史记录:", conversation);
+  }, [variant]);
+
+  // 🛠️ 开发模式：手动刷新prompts
+  const handleRefreshPrompts = useCallback(() => {
+    console.log("🔄 手动刷新prompts数据");
+    setPromptsRefreshKey(prev => prev + 1);
+  }, []);
 
   // 是否使用外部历史面板控制
   const showHistory =
@@ -281,16 +395,69 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
     setInternalConversations,
   ]);
 
-  // 滚动到顶部 - 使用内存管理器优化
+  // 🎯 重新设计：智能滚动管理 - 解决Preview模式滚动冲突
+  const prevItemIdRef = useRef<string | null>(null);
+  
   useEffect(() => {
-    if (containerRef.current && currentItem) {
-      const timer = memoryManager.setTimeout(() => {
-        containerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-      }, 0);
+    if (!containerRef.current || !currentItem) return;
 
-      return () => memoryManager.clearTimeout(timer);
+    // 🚨 关键修复：检测真实的内容变化，而不是对象引用变化
+    const hasRealContentChange = prevItemIdRef.current !== currentItem.id;
+    
+    // 更新引用
+    prevItemIdRef.current = currentItem.id;
+    
+    // 🎯 只有真实内容变化时才可能滚动到顶部
+    if (!hasRealContentChange) {
+      // 相同内容，完全跳过滚动管理
+      return;
     }
-  }, [currentItem, memoryManager]);
+
+    // 内容变化时的滚动策略
+    const scenario = {
+      variant: variant as "preview" | "sidebar" | "fullscreen",
+      scene: currentScene,
+      contentChanged: hasRealContentChange,
+      userHasScrolled: scrollManager.userHasScrolled,
+      hasNewContent: false,
+    };
+
+    // 使用智能滚动管理器
+    const timer = memoryManager.setTimeout(() => {
+      scrollManager.smartScroll(containerRef, scenario);
+    }, 50); // 减少延迟，提升响应性
+
+    return () => memoryManager.clearTimeout(timer);
+  }, [currentItem?.id, memoryManager, variant, currentScene, scrollManager]);
+
+  // 🎯 新增：监听用户滚动事件
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = (event: Event) => {
+      scrollManager.handleScroll(event);
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [scrollManager]);
+
+  // 🎯 内容切换时重置滚动意图 - 改为更智能的重置策略
+  useEffect(() => {
+    // 🚨 只有在真实内容切换时才重置滚动意图
+    if (item?.id !== currentItem?.id && item?.id && currentItem?.id) {
+      // 延迟重置，给用户时间完成当前滚动操作
+      const resetTimer = setTimeout(() => {
+        scrollManager.resetUserScrollIntent();
+      }, 1000); // 1秒延迟，确保用户滚动操作完成
+      
+      return () => clearTimeout(resetTimer);
+    }
+  }, [item?.id, currentItem?.id, scrollManager]);
 
   // 监听AI状态变化 - 使用内存管理器
   useEffect(() => {
@@ -379,6 +546,7 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
       showHistory,
       sharedContentId, // 🎯 AI分析状态：跨场景共享
       sceneSpecificId, // 🎯 UI状态：场景隔离
+      scene: currentScene, // 🎯 新增：传递场景信息用于缓存隔离
       onStatusChange: (status: string, hasConversations: boolean) => {
         window.dispatchEvent(
           new CustomEvent("aiStatusUpdate", {
@@ -391,6 +559,7 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
       currentItem,
       sharedContentId,
       sceneSpecificId,
+      currentScene,
       finalConversations,
       finalAnalysisResult,
       finalIsLoading,
@@ -404,7 +573,7 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
   if (!currentItem) {
     return (
       <ReferenceManagerProvider contentId={undefined}>
-        <div className={containerClasses}>
+        <div className={`${containerClasses} flex flex-col h-full`}>
           {!finalHideHeader && (
             <div
               className={`flex items-center h-header px-4 flex-shrink-0 ${finalShowHeaderBorder ? "border-b" : ""}`}
@@ -420,7 +589,7 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
             </div>
           )}
 
-          <div className="flex-1 flex items-center justify-center p-8">
+          <div className="flex-1 flex items-center justify-center p-8 overflow-auto">
             <div className="text-center space-y-4 max-w-md">
               <div className="w-16 h-16 bg-muted/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Library className="w-8 h-8 text-muted-foreground/60" />
@@ -445,10 +614,11 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
     <ReferenceManagerProvider contentId={currentItem?.id}>
       <div
         ref={containerRef}
-        className={containerClasses}
+        className={`${containerClasses} flex flex-col`} // 🎯 改为Flexbox布局
         style={{
           contain: "layout style paint",
           willChange: "auto",
+          height: "100%", // 🎯 确保容器占满高度
         }}
         data-exclude-selection
       >
@@ -470,8 +640,8 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
             </div>
 
             {/* 历史面板切换按钮 */}
-            {historyCount > 0 && externalShowHistory === undefined && (
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              {historyCount > 0 && externalShowHistory === undefined && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -484,18 +654,61 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
                     {historyCount}
                   </div>
                 </Button>
-              </div>
-            )}
+              )}
+              
+              {/* 🛠️ 开发模式：刷新prompts按钮 */}
+              {process.env.NODE_ENV === "development" && variant === "preview" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  onClick={handleRefreshPrompts}
+                  title="刷新Prompts数据 (开发模式)"
+                  disabled={loadingPrompts}
+                >
+                  <RefreshCw className={`h-4 w-4 ${loadingPrompts ? 'animate-spin' : ''}`} />
+                </Button>
+              )}
+            </div>
           </div>
         )}
 
-        {/* 分析界面内容 */}
+        {/* 分析界面内容 - 独立区块，自动计算高度 */}
         <div
-          className={`flex-1 relative min-h-0 ${variant === "preview" ? "overflow-auto" : "overflow-hidden"}`}
+          className={`flex-1 relative min-h-0 ${
+            variant === "preview" 
+              ? "overflow-auto" // 🎯 移除padding，使用flex布局自动分割空间
+              : "overflow-hidden"
+          }`}
         >
           {/* 🎯 暂时所有模式都使用增强版组件，待静态组件修复后再启用 */}
           <EnhancedModernAnalysisInterface {...analysisProps} />
         </div>
+
+        {/* 🎯 Preview模式下的底部AI助手面板 - 独立区块 */}
+        {variant === "preview" && currentItem && (
+          <div 
+            className="flex-shrink-0 backdrop-blur-md bg-background/90 border-t border-border shadow-lg"
+            data-exclude-selection
+            style={{
+              boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <div className="px-6 py-3 max-w-7xl mx-auto">
+              <AIAssistantPanel
+                onAnalysis={handleAnalysis}
+                showHistory={false} // Preview模式下暂时禁用历史记录面板
+                historyRecords={historyRecords || []}
+                loadingHistory={isLoadingHistory}
+                onHistoryClick={handleHistoryClick}
+                prompts={prompts.slice(0, 4)} // Preview模式下只显示前4个prompts
+                loadingPrompts={loadingPrompts}
+                onPromptClick={handlePromptClick}
+                variant={variant}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </ReferenceManagerProvider>
   );

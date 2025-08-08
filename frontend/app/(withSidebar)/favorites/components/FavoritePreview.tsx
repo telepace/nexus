@@ -162,7 +162,13 @@ export const FavoritePreview = React.memo(
     }, [item?.content_item]);
 
     useEffect(() => {
-      containerRef.current?.scrollTo({ top: 0 });
+      // 🎯 优化：使用更平滑的滚动行为，避免突兀的跳转
+      if (containerRef.current) {
+        containerRef.current.scrollTo({ 
+          top: 0, 
+          behavior: "smooth" 
+        });
+      }
     }, [item]);
 
     if (!item) {

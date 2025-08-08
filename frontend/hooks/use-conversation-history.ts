@@ -7,6 +7,7 @@ import { contentApi } from "@/lib/api/content";
 interface ConversationHistoryOptions {
   contentId: string; // API调用使用的原始ID
   storageId?: string; // 可选的存储ID，用于状态隔离
+  scene?: string; // 场景标识，用于缓存隔离（preview/reader/standalone）
   onError?: (error: string) => void;
 }
 
@@ -21,6 +22,7 @@ interface ConversationHistoryOptions {
 export function useConversationHistory({
   contentId,
   storageId,
+  scene = "default",
   onError,
 }: ConversationHistoryOptions) {
   const [historyRecords, setHistoryRecords] = useState<ConversationPublic[]>(
@@ -29,9 +31,9 @@ export function useConversationHistory({
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [lastLoadTime, setLastLoadTime] = useState<number>(0);
 
-  // 🎯 缓存键使用storageId（如果提供）或回退到contentId
+  // 🎯 缓存键使用scene前缀实现完全隔离，解决不同场景间状态串扰问题
   const effectiveStorageId = storageId || contentId;
-  const CACHE_KEY = `conversation_history_${effectiveStorageId}`;
+  const CACHE_KEY = `conversation_history_${scene}_${effectiveStorageId}`;
   const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
 
   // 从localStorage加载缓存的历史记录
@@ -257,7 +259,7 @@ export function useConversationHistory({
         clearTimeout(timeoutId);
       }
     };
-  }, [contentId, effectiveStorageId]); // 依赖API调用的contentId和存储用的effectiveStorageId
+  }, [contentId, effectiveStorageId, scene]); // 添加scene依赖确保场景变化时重新初始化
 
   // 手动刷新历史记录
   const refreshHistory = useCallback(async () => {

@@ -47,6 +47,8 @@ export const AIAssistantPanel = React.forwardRef<
     },
     ref,
   ) => {
+    // 调试已完成：确认AIAssistantPanel正确接收到了后端API的prompts数据
+    
     // 🎯 状态下沉：将输入状态移到组件内部管理
     const [inputValue, setInputValue] = useState("");
     const [inputFocused, setInputFocused] = useState(false);

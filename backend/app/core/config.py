@@ -135,8 +135,11 @@ class Settings(BaseSettings):
     LITELLM_PROXY_URL: str = "http://litellm:4000"
     LITELLM_MASTER_KEY: str | None = None
 
-    # LLM 配置
-    DEFAULT_LLM_MODEL: str = "deepseek-v3-ensemble"
+    # 🎯 LLM 配置 - 从环境变量读取，移除硬编码
+    DEFAULT_LLM_MODEL: str = Field(
+        default_factory=lambda: os.environ.get("DEFAULT_LLM_MODEL", "gemini-flash-lite"),
+        description="全局默认LLM模型，从环境变量DEFAULT_LLM_MODEL读取"
+    )
 
     # Token 配置系统 - 简化版本，只使用最大Token限制
     DEFAULT_MAX_TOKENS: int = Field(
@@ -246,16 +249,16 @@ class Settings(BaseSettings):
 
         return task_limits.get(task_type, task_limits["default"])
 
-    # AI任务模型配置 - 支持为不同任务指定不同模型，可通过环境变量覆盖
+    # 🎯 AI任务模型配置 - 从环境变量读取，移除硬编码
     AI_TASK_MODELS: dict[str, str] = Field(
-        default={
-            "summary": "deepseek-v3-ensemble",  # Summary生成模型
-            "key_points": "deepseek-v3-ensemble",  # KeyPoint提取模型
-            "labels": "deepseek-v3-ensemble",  # Labels生成模型
-            "chat": "deepseek-v3-ensemble",  # 对话聊天模型
-            "analysis": "deepseek-v3-ensemble",  # 通用分析模型
+        default_factory=lambda: {
+            "summary": os.environ.get("AI_MODEL_SUMMARY", os.environ.get("DEFAULT_LLM_MODEL", "gemini-pro")),
+            "key_points": os.environ.get("AI_MODEL_KEY_POINTS", os.environ.get("DEFAULT_LLM_MODEL", "gemini-flash")),
+            "labels": os.environ.get("AI_MODEL_LABELS", os.environ.get("DEFAULT_LLM_MODEL", "gemini-flash-lite")),
+            "chat": os.environ.get("AI_MODEL_CHAT", os.environ.get("DEFAULT_LLM_MODEL", "gemini-flash-lite")),
+            "analysis": os.environ.get("AI_MODEL_ANALYSIS", os.environ.get("DEFAULT_LLM_MODEL", "deepseek-r1")),
         },
-        description="AI任务模型映射配置，可通过环境变量覆盖，如：AI_MODEL_SUMMARY=gpt-4",
+        description="AI任务模型映射配置，从环境变量读取，支持任务级别的精细控制",
     )
 
     # 单独的模板模型配置，方便精细控制

@@ -25,6 +25,7 @@ import { useStreamingConversation } from "@/hooks/use-streaming-conversation";
 import { useConversationHistory } from "@/hooks/use-conversation-history";
 import { AIAssistantPanel } from "./AIAssistantPanel";
 import { AnalysisCardsContainer } from "./AnalysisCardsContainer";
+import { useScrollManager } from "@/hooks/useScrollManager";
 
 interface EnhancedModernAnalysisInterfaceProps {
   content: ContentItemPublic;
@@ -47,6 +48,7 @@ interface EnhancedModernAnalysisInterfaceProps {
   // 🎯 重新设计：分离共享状态和场景状态
   sharedContentId?: string; // AI分析状态：跨场景共享
   sceneSpecificId?: string; // UI状态：场景隔离
+  scene?: string; // 场景标识，用于缓存隔离
 }
 
 interface AnalysisCard {
@@ -77,6 +79,7 @@ const EnhancedModernAnalysisInterface: React.FC<
   onStatusChange,
   sharedContentId,
   sceneSpecificId,
+  scene = "default",
 }) => {
   const { toast } = useToast();
   const { t } = useI18nSafe();
@@ -133,15 +136,26 @@ const EnhancedModernAnalysisInterface: React.FC<
     getInitialCollapsedCards,
   );
 
+  // 🎯 重新设计：使用统一滚动管理器
+  const scrollManager = useScrollManager({
+    enableUserIntentDetection: true,
+    debug: process.env.NODE_ENV === "development",
+  });
+
   const scrollToBottom = useCallback(() => {
     if (scrollContainerRef.current) {
-      requestAnimationFrame(() => {
-        if (scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-        }
+      // 检查用户是否正在滚动，避免干扰
+      if (scrollManager.isUserScrolling) {
+        scrollManager.log("用户正在滚动，跳过自动滚动到底部");
+        return;
+      }
+
+      // 使用统一的滚动管理器
+      scrollManager.executeScroll(scrollContainerRef, "bottom", {
+        force: false // 尊重用户意图，不强制滚动
       });
     }
-  }, []);
+  }, [scrollManager]);
 
   const stableStreamingContentId = useMemo(() => {
     return aiAnalysisStorageId;
@@ -169,12 +183,14 @@ const EnhancedModernAnalysisInterface: React.FC<
     cancelCurrentProcessing,
   } = useStreamingConversation({
     contentId: stableStreamingContentId,
+    scene, // 🎯 传递场景参数实现缓存隔离，解决状态串扰问题
     onConversationUpdate: handleConversationUpdate,
     onError: handleStreamingError,
   });
 
   const { historyRecords, isLoadingHistory, refreshHistory, addHistoryRecord } = useConversationHistory({
     contentId: stableStreamingContentId, // 使用与streaming相同的contentId确保一致性
+    scene, // 🎯 传递场景参数实现缓存隔离
   });
 
   // Performance optimization: Remove debug logging
@@ -191,11 +207,45 @@ const EnhancedModernAnalysisInterface: React.FC<
     };
   }, [cancelCurrentProcessing]);
 
+  // 🎯 智能滚动：仅在有新消息且用户未主动滚动时才滚动到底部
   useEffect(() => {
-    if (streamingConversations.length > 0) {
-      scrollToBottom();
+    // 🚨 Preview模式下禁用此滚动逻辑，避免冲突
+    if (variant === "preview" || streamingConversations.length === 0) {
+      return;
     }
-  }, [streamingConversations, scrollToBottom]);
+    
+    // 使用智能滚动策略
+    const scenario = {
+      variant: (variant || "preview") as "preview" | "sidebar" | "fullscreen",
+      scene: "reader" as const,
+      contentChanged: false,
+      userHasScrolled: scrollManager.userHasScrolled,
+      hasNewContent: true, // 有新的AI回复内容
+    };
+
+    scrollManager.smartScroll(scrollContainerRef, scenario);
+  }, [streamingConversations, scrollManager, variant]);
+
+  // 🎯 监听用户滚动事件 - Preview模式下禁用，避免双重监听
+  useEffect(() => {
+    // 🚨 Preview模式下滚动由外层 ContentAnalysisView 统一管理
+    if (variant === "preview") {
+      return;
+    }
+    
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = (event: Event) => {
+      scrollManager.handleScroll(event);
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [scrollManager, variant]);
 
   const aiStatusInfo = useMemo(() => {
     const hasConversations = streamingConversations.length > 0;
@@ -539,9 +589,14 @@ const EnhancedModernAnalysisInterface: React.FC<
   }, [height, className]);
 
   const scrollAreaClasses = useMemo(() => {
+    // 🚨 Preview模式下移除内层滚动，让外层 ContentAnalysisView 统一管理
+    if (variant === "preview") {
+      return "flex-1"; // 移除 overflow-y-auto，禁用内层滚动
+    }
+    
     const baseClasses = "flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-300";
     return baseClasses;
-  }, []);
+  }, [variant]);
 
   const scrollContainerStyle = useMemo(
     () => ({
@@ -620,29 +675,27 @@ const EnhancedModernAnalysisInterface: React.FC<
         </div>
       </div>
 
-      {/* 固定底部AI助手 */}
-      <div
-        className={`flex-shrink-0 backdrop-blur-md border-t ${
-          variant === "preview"
-            ? "linear-bg-1 border-border"
-            : "linear-bg-1 border-border dark:border-neutral-800"
-        }`}
-        data-exclude-selection
-      >
-        <div className="px-6 py-3">
-          <AIAssistantPanel
-            onAnalysis={handleAnalysis}
-            showHistory={showHistory}
-            historyRecords={historyRecords}
-            loadingHistory={isLoadingHistory}
-            onHistoryClick={handleHistoryClick}
-            prompts={prompts}
-            loadingPrompts={loadingPrompts}
-            onPromptClick={handlePromptClick}
-            variant={variant}
-          />
+      {/* 固定底部AI助手 - Preview模式下由外层管理 */}
+      {variant !== "preview" && (
+        <div
+          className="flex-shrink-0 backdrop-blur-md border-t linear-bg-1 border-border dark:border-neutral-800"
+          data-exclude-selection
+        >
+          <div className="px-6 py-3">
+            <AIAssistantPanel
+              onAnalysis={handleAnalysis}
+              showHistory={showHistory}
+              historyRecords={historyRecords}
+              loadingHistory={isLoadingHistory}
+              onHistoryClick={handleHistoryClick}
+              prompts={prompts}
+              loadingPrompts={loadingPrompts}
+              onPromptClick={handlePromptClick}
+              variant={variant}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

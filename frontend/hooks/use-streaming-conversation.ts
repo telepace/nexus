@@ -13,6 +13,7 @@ interface ConversationGroup {
 interface UseStreamingConversationOptions {
   contentId: string; // API调用使用的原始ID
   storageId?: string; // 可选的存储ID，用于状态隔离
+  scene?: string; // 场景标识，用于缓存隔离（preview/reader/standalone）
   onConversationUpdate?: (conversation: ConversationGroup) => void;
   onError?: (error: string) => void;
 }
@@ -25,18 +26,22 @@ interface UseStreamingConversationOptions {
 export function useStreamingConversation({
   contentId,
   storageId,
+  scene = "default",
   onConversationUpdate,
   onError,
 }: UseStreamingConversationOptions) {
   const [conversations, setConversations] = useState<ConversationGroup[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // 🎯 存储键使用storageId（如果提供）或回退到contentId
+  // 🎯 存储键使用scene前缀实现完全隔离，解决不同场景间状态串扰问题
   const effectiveStorageId = storageId || contentId;
-  const STORAGE_KEY = `streaming_conversations_${effectiveStorageId}`;
+  const STORAGE_KEY = `streaming_conversations_${scene}_${effectiveStorageId}`;
 
-  // 页面加载时恢复对话状态
+  // 页面加载时恢复对话状态 - 修复状态串扰问题
   useEffect(() => {
+    // 🎯 关键修复：先清空之前的状态，确保不同内容间的状态完全隔离
+    setConversations([]);
+    
     try {
       const savedData = localStorage.getItem(STORAGE_KEY);
       if (savedData) {
@@ -52,9 +57,13 @@ export function useStreamingConversation({
         }));
         setConversations(restoredConversations);
         console.log("📥 恢复对话历史:", restoredConversations.length, "个对话");
+      } else {
+        console.log("📝 新内容，无对话历史");
       }
     } catch (error) {
       console.error("❌ 恢复对话历史失败:", error);
+      // 发生错误时也要确保状态被清空
+      setConversations([]);
     }
   }, [contentId, STORAGE_KEY]);
 
@@ -299,15 +308,17 @@ export function useStreamingConversation({
             template_name: promptTemplate,
           };
         } else {
-          // 无contentId：使用通用聊天API
+          // 🎯 无contentId：使用通用聊天API，让后端根据AI_MODEL_CHAT配置选择模型
           requestUrl = `${apiUrl}/api/v1/chat/completions`;
           requestBody = {
             messages: [{ role: "user", content: actualContent }],
-            model: process.env.NEXT_PUBLIC_AI_MODEL_CHAT || "gemini-flash-lite", // 使用环境变量配置的模型
+            // 移除前端的模型选择，让后端基于AI_MODEL_CHAT环境变量处理
             stream: true,
             temperature: 0.7,
             max_tokens: 8000,
           };
+          
+          console.log(`🤖 [Chat] 使用通用聊天API，后端将根据AI_MODEL_CHAT配置选择模型`);
         }
 
         console.log("📤 API请求参数:", {
