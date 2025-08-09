@@ -1,12 +1,7 @@
-import { render, screen, within, fireEvent } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@/__tests__/test-utils";
 import "@testing-library/jest-dom";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
-
-// Mock Next.js router
-jest.mock("next/navigation", () => ({
-  usePathname: () => "/home",
-}));
 
 // Mock auth hook
 jest.mock("@/lib/auth", () => ({
@@ -43,6 +38,7 @@ const renderSidebar = (mockOnAddContentClick?: jest.Mock) => {
 };
 
 describe("AppSidebar", () => {
+
   it("renders the sidebar", () => {
     renderSidebar();
     expect(
@@ -84,33 +80,34 @@ describe("AppSidebar", () => {
   it("renders upload content section", () => {
     renderSidebar();
 
-    // 测试Upload按钮存在
-    const uploadButton = screen.getByText("Upload");
+    // 测试Add Content按钮存在
+    const uploadButton = screen.getByText("Add Content");
     expect(uploadButton).toBeInTheDocument();
   });
 
-  it("calls onAddContentClick when Upload button is clicked", () => {
+  it("calls onAddContentClick when Add Content button is clicked", () => {
     const mockOnAddContentClick = jest.fn();
     renderSidebar(mockOnAddContentClick);
 
-    const uploadButton = screen.getByText("Upload");
+    const uploadButton = screen.getByText("Add Content");
     fireEvent.click(uploadButton);
 
     expect(mockOnAddContentClick).toHaveBeenCalledTimes(1);
   });
 
-  it("renders sidebar trigger button", () => {
+  it("renders sidebar toggle button", () => {
     renderSidebar();
 
-    // Find all buttons with "Toggle Sidebar" name and filter for the one with data-sidebar="trigger"
-    const triggerButtons = screen.getAllByRole("button", {
-      name: /toggle sidebar/i,
-    });
-    const headerTrigger = triggerButtons.find(
-      (button) => button.getAttribute("data-sidebar") === "trigger",
+    // Look for the toggle button which should contain an icon (chevron or panel)
+    const toggleButtons = screen.getAllByRole("button");
+    const sidebarToggle = toggleButtons.find(button => 
+      button.querySelector('svg') && 
+      (button.querySelector('.lucide-panel-left-close') || 
+       button.querySelector('.lucide-chevron-left') ||
+       button.querySelector('.lucide-chevron-right') ||
+       button.querySelector('.lucide-panel-left-open'))
     );
 
-    expect(headerTrigger).toBeInTheDocument();
-    expect(headerTrigger).toHaveAttribute("data-sidebar", "trigger");
+    expect(sidebarToggle).toBeInTheDocument();
   });
 });

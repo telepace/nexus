@@ -169,6 +169,7 @@ const config: Config = {
     "/node_modules/",
     "/.next/",
     "/tests/e2e/", // 排除Playwright e2e测试
+    "__tests__/test-utils.tsx", // 排除测试工具文件
   ],
 
   // The regexp pattern or array of patterns that Jest uses to detect test files

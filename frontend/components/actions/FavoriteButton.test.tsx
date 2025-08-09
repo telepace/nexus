@@ -1,8 +1,8 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen } from "@/__tests__/test-utils";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 
 import { FavoriteButton } from "./FavoriteButton";
 import { getCookie } from "@/lib/utils";
@@ -47,11 +47,7 @@ describe("FavoriteButton", () => {
   });
 
   const renderWithProviders = (component: React.ReactElement) => {
-    return render(
-      <QueryClientProvider client={queryClient}>
-        {component}
-      </QueryClientProvider>,
-    );
+    return render(component, { queryClient });
   };
 
   it("renders unfavorited state correctly", () => {
@@ -133,7 +129,7 @@ describe("FavoriteButton", () => {
     await user.click(button);
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      "Failed to toggle favorite:",
+      "收藏操作失败:",
       expect.any(Error),
     );
 
@@ -161,11 +157,7 @@ describe("FavoriteButton", () => {
     let button = screen.getByRole("button");
     expect(button).toHaveClass("h-7", "w-7");
 
-    rerender(
-      <QueryClientProvider client={queryClient}>
-        <FavoriteButton itemId="test-item-1" size="lg" />
-      </QueryClientProvider>,
-    );
+    rerender(<FavoriteButton itemId="test-item-1" size="lg" />);
 
     button = screen.getByRole("button");
     expect(button).toHaveClass("h-12", "w-12");

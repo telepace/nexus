@@ -1,17 +1,22 @@
 import React from "react";
 import { render, waitFor } from "@testing-library/react";
 import { ModernAnalysisInterface } from "@/components/ai/ModernAnalysisInterface";
-import * as promptsApi from "@/lib/api/services/prompts";
 import * as contentApi from "@/lib/api/content";
 import { ContentItemPublic } from "@/lib/api/content";
 
-// Mock promptsApi
-jest.mock("@/lib/api/services/prompts", () => ({
-  getEnabledPrompts: jest.fn().mockResolvedValue([]),
-  getDisabledPrompts: jest.fn().mockResolvedValue([]),
-}));
+// Mock content API
 jest.mock("@/lib/api/content", () => ({
   getContentConversations: jest.fn().mockResolvedValue({ conversations: [] }),
+}));
+
+// Mock LLM Analysis Store
+const mockLoadPrompts = jest.fn();
+jest.mock("@/lib/stores/llm-analysis-store", () => ({
+  useLLMAnalysisStore: () => ({
+    enabledPrompts: [],
+    isLoadingPrompts: false,
+    loadPrompts: mockLoadPrompts,
+  }),
 }));
 
 const mockContent: ContentItemPublic = {
@@ -30,37 +35,28 @@ const mockContent: ContentItemPublic = {
 
 describe("ModernAnalysisInterface - Prompts Loading", () => {
   beforeEach(() => {
-    // Remove the mockClear lines, as spyOn already handles it
-    // (promptsApi.getEnabledPrompts as jest.Mock).mockClear();
-    // etc.
-    // Add @ts-expect-error for mockClear
-    // @ts-expect-error - Mocked function
-    (promptsApi.getEnabledPrompts as jest.Mock).mockClear();
-    // @ts-expect-error - Mocked function
-    (promptsApi.getDisabledPrompts as jest.Mock).mockClear();
-    // @ts-expect-error - Mocked function
+    mockLoadPrompts.mockClear();
+    // @ts-expect-error - Mocked function  
     (contentApi.getContentConversations as jest.Mock).mockClear();
   });
 
-  it("should load prompts only once across multiple instances", async () => {
-    // Render first instance
+  it("should load prompts when component mounts", async () => {
+    // Render instance
     const { unmount } = render(
       <ModernAnalysisInterface content={mockContent} variant="preview" />,
     );
 
     await waitFor(() => {
-      // @ts-expect-error - Mocked function
-      expect(promptsApi.getEnabledPrompts).toHaveBeenCalledTimes(1);
+      expect(mockLoadPrompts).toHaveBeenCalledTimes(1);
     });
 
     unmount();
 
-    // Render second instance
+    // Render second instance  
     render(<ModernAnalysisInterface content={mockContent} variant="preview" />);
 
     await waitFor(() => {
-      // @ts-expect-error - Mocked function
-      expect(promptsApi.getEnabledPrompts).toHaveBeenCalledTimes(1);
+      expect(mockLoadPrompts).toHaveBeenCalledTimes(2);
     });
   });
 });

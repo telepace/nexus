@@ -86,18 +86,19 @@ export function UniversalContentRenderer({
   // Auto-detect format and render accordingly
   if (isJsonl(content)) {
     return (
-      <JsonlRenderer
-        content={content}
-        className={className}
-        enableHoverEffects={true} // 🎯 确保启用悬浮效果
-        showReferenceIndicators={true} // 🎯 修复：显式启用引用指示器
-        onExpandLine={onExpandLine}
-        enableDelayedRendering={enableDelayedRendering}
-        renderDelay={renderDelay}
-        contentId={contentId}
-        enableEnhancedTooltip={enableEnhancedTooltip}
-        onReferenceClick={onReferenceClick}
-      />
+      <div data-testid="universal-content-renderer" className={className}>
+        <JsonlRenderer
+          content={content}
+          enableHoverEffects={true} // 🎯 确保启用悬浮效果
+          showReferenceIndicators={true} // 🎯 修复：显式启用引用指示器
+          onExpandLine={onExpandLine}
+          enableDelayedRendering={enableDelayedRendering}
+          renderDelay={renderDelay}
+          contentId={contentId}
+          enableEnhancedTooltip={enableEnhancedTooltip}
+          onReferenceClick={onReferenceClick}
+        />
+      </div>
     );
   } else if (isJsonObject(content)) {
     return (

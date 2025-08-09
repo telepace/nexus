@@ -40,11 +40,12 @@ export function parseReferenceString(refString?: string): ReferenceGroup {
     return emptyResult;
   }
 
-  // 清理字符串，移除多余空格和特殊字符
+  // 清理字符串，移除多余空格，将特殊字符替换为逗号
   const cleaned = refString
     .trim()
     .replace(/\s+/g, " ") // 标准化空格
-    .replace(/[^\d\s,-]/g, "") // 只保留数字、空格、逗号、连字符
+    .replace(/[^\d\s,-]/g, ",") // 将特殊字符替换为逗号分隔符
+    .replace(/,+/g, ",") // 合并多个逗号
     .replace(/\s*,\s*/g, ",") // 标准化逗号分隔
     .replace(/\s*-\s*/g, "-"); // 标准化连字符
 
@@ -70,8 +71,8 @@ export function parseReferenceString(refString?: string): ReferenceGroup {
       if (
         !isNaN(start) &&
         !isNaN(end) &&
-        start > 0 &&
-        end > 0 &&
+        isValidReference(start) &&
+        isValidReference(end) &&
         start <= end
       ) {
         // 确保范围合理（最大跨度限制为50，避免性能问题）
@@ -93,7 +94,7 @@ export function parseReferenceString(refString?: string): ReferenceGroup {
     } else {
       // 处理单个数字
       const num = parseInt(trimmed, 10);
-      if (!isNaN(num) && num > 0) {
+      if (!isNaN(num) && isValidReference(num)) {
         if (!uniqueIds.has(num)) {
           uniqueIds.add(num);
           references.push({

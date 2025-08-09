@@ -275,13 +275,25 @@ export class ModelConfigManager {
    * 🎯 简化的配置加载 - 移除环境变量依赖
    * 前端使用默认配置，实际模型选择由后端统一管理
    */
-  private loadEnvironmentConfig() {
+  loadEnvironmentConfig() {
     // 前端保持默认配置，实际的模型选择由后端API处理
     console.log(`🎯 [ModelConfig] 前端使用预设配置，后端负责实际模型路由`);
     
-    // 可选：如果需要在开发环境覆盖某些配置
+    // 为了支持测试和开发环境，仍然支持一些环境变量
+    const chatModel = process.env.NEXT_PUBLIC_AI_MODEL_CHAT;
+    if (chatModel) {
+      this.taskMappings.chat.primaryModel = chatModel;
+      console.log(`🔧 [ModelConfig] 环境变量覆盖聊天模型: ${chatModel}`);
+    }
+    
+    const defaultModel = process.env.NEXT_PUBLIC_DEFAULT_LLM_MODEL;
+    if (defaultModel) {
+      this.taskMappings.default.primaryModel = defaultModel;
+      console.log(`🔧 [ModelConfig] 环境变量覆盖默认模型: ${defaultModel}`);
+    }
+    
+    // 开发环境特定配置
     if (process.env.NODE_ENV === 'development') {
-      // 开发环境可以通过少量环境变量覆盖用于测试
       const devChatModel = process.env.DEV_CHAT_MODEL;
       if (devChatModel) {
         this.taskMappings.chat.primaryModel = devChatModel;

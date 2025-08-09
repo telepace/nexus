@@ -58,6 +58,11 @@ const ActionCard: React.FC<ActionCardProps> = ({
           disableInlineReferences={disableInlineReferences}
         />
       </div>
+      
+      {/* Reference indicator - show if has references */}
+      {hasReferences && references && references.length > 0 && (
+        <EnhancedReferenceIndicator references={references} />
+      )}
     </div>
   );
 };

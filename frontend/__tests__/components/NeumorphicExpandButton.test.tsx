@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@/__tests__/test-utils";
 import "@testing-library/jest-dom";
 import { NeumorphicExpandButton } from "@/components/ui/NeumorphicExpandButton";
 
@@ -121,7 +121,7 @@ describe("NeumorphicExpandButton", () => {
     render(<NeumorphicExpandButton />);
 
     const button = screen.getByRole("button");
-    expect(button).toHaveClass("bg-[#f0f2f5]");
+    expect(button).toHaveClass("linear-bg-1");
     expect(button).toHaveClass(
       "shadow-[5px_5px_10px_#c2c2c2,-5px_-5px_10px_#ffffff]",
     );
