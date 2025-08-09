@@ -135,7 +135,8 @@
       "Bash(TESTING=true TEST_MODE=true python -m pytest backend/app/tests/services/test_segment_aware_chat.py::TestSegmentAwareChatService::test_segment_retrieval backend/app/tests/services/test_segment_aware_chat.py::test_prompt_template_rendering -v)",
       "Bash(TESTING=true TEST_MODE=true python -m pytest app/tests/api/routes/test_content_llm_analysis.py::TestContentLLMAnalysisUpdated::test_analyze_ai_sdk_updated_prompt_structure -v)",
       "Bash(TESTING=true TEST_MODE=true python -m pytest app/tests/services/test_segment_aware_chat.py::TestSegmentAwareChatService::test_segment_retrieval -v)",
-      "Bash(TESTING=true TEST_MODE=true python -m pytest app/tests/api/routes/test_content_llm_analysis.py::TestContentLLMAnalysisUpdated::test_analyze_ai_sdk_updated_prompt_structure app/tests/services/test_segment_aware_chat.py::TestSegmentAwareChatService::test_segment_retrieval -v)"
+      "Bash(TESTING=true TEST_MODE=true python -m pytest app/tests/api/routes/test_content_llm_analysis.py::TestContentLLMAnalysisUpdated::test_analyze_ai_sdk_updated_prompt_structure app/tests/services/test_segment_aware_chat.py::TestSegmentAwareChatService::test_segment_retrieval -v)",
+      "Bash(gh run view:*)"
     ]
   },
   "enableAllProjectMcpServers": false

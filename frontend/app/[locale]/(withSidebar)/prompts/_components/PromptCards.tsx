@@ -133,7 +133,7 @@ const PromptCard = memo(
                 onClick={handleFavoriteClick}
               >
                 <Heart
-                  className={`h-4 w-4 ${isFavorited ? text - red - 500 : text - slate - 500}`}
+                  className={`h-4 w-4 ${isFavorited ? "text-red-500" : "text-slate-500"}`}
                 />
               </button>
               <DropdownMenu>

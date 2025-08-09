@@ -220,8 +220,8 @@ export const StaticPreviewInterface: React.FC<StaticPreviewInterfaceProps> = ({
                     点击开始AI分析
                   </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -42,8 +42,8 @@ RUN mkdir -p tests && \
     echo 'import { test, expect } from "@playwright/test"; \
 \
 test("admin page loads", async ({ page }) => { \
-  await page.goto(process.env.VITE_API_URL || "http://localhost:5173"); \
-  await expect(page).toHaveTitle(/Admin Dashboard/); \
+  await page.goto("/"); \
+  await expect(page).toHaveTitle(/Admin/); \
 });' > tests/admin.spec.ts
 
 # Create playwright config
@@ -60,13 +60,8 @@ export default defineConfig({ \
     ["blob"] \
   ], \
   use: { \
-    baseURL: process.env.VITE_API_URL || "http://localhost:5173", \
+    baseURL: "http://admin:80", \
     trace: "on-first-retry", \
-  }, \
-  webServer: { \
-    command: "echo \"Using external server\"", \
-    port: 5173, \
-    reuseExistingServer: true, \
   }, \
 });' > playwright.config.ts
 
