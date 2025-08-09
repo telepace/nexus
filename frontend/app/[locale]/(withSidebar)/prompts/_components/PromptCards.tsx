@@ -65,7 +65,7 @@ const PromptCard = memo(
       [prompt.id],
     );
 
-    const [isFavorited, setIsFavorited] = useState(prompt.is_favorited);
+    const [isFavorited, setIsFavorited] = useState(prompt.is_favorited ?? false);
 
     const handleFavoriteClick = async (e: React.MouseEvent) => {
       e.stopPropagation();

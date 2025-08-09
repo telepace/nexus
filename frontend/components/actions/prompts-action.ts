@@ -73,6 +73,7 @@ export interface PromptData {
   updated_at: string;
   enabled?: boolean;
   user_enabled?: boolean;
+  is_favorited?: boolean;
   tags?: TagData[];
   creator?: {
     id?: string;
