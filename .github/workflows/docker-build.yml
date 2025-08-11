@@ -59,7 +59,7 @@ jobs:
 
       - name: Get Docker metadata for backend
         id: metadata-backend
-        uses: docker/metadata-action@v5.7.0
+        uses: docker/metadata-action@v5.8.0
         with:
           images: |
             docker.io/${{ github.repository_owner }}/nexus-backend${{ steps.env-suffix.outputs.ENV_SUFFIX }}
@@ -133,7 +133,7 @@ jobs:
 
       - name: Get Docker metadata for admin
         id: metadata-admin
-        uses: docker/metadata-action@v5.7.0
+        uses: docker/metadata-action@v5.8.0
         with:
           images: |
             docker.io/${{ github.repository_owner }}/nexus-admin${{ steps.set-env.outputs.ENV_SUFFIX }}
@@ -210,7 +210,7 @@ jobs:
 
       - name: Get Docker metadata for playwright
         id: metadata-playwright
-        uses: docker/metadata-action@v5.7.0
+        uses: docker/metadata-action@v5.8.0
         with:
           images: |
             docker.io/${{ github.repository_owner }}/nexus-playwright${{ steps.set-env-playwright.outputs.ENV_SUFFIX }}
@@ -287,7 +287,7 @@ jobs:
 
       - name: Get Docker metadata for frontend
         id: metadata-frontend
-        uses: docker/metadata-action@v5.7.0
+        uses: docker/metadata-action@v5.8.0
         with:
           images: |
             docker.io/${{ github.repository_owner }}/nexus-frontend${{ steps.set-env-frontend.outputs.ENV_SUFFIX }}
