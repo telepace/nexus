@@ -27,9 +27,13 @@ nexus/
 docker compose exec db psql -U postgres -d app  # 连接数据库
 ```
 
-### 🛠 开发
-
+### 🛠 基础的命令
 可以使用 makefile 命令，使用 `make help` 查看所有命令
+
+构建前端的代码: make frontend-build
+
+构建后端的代码: make backend-build
+
 
 ### 🗄️ 数据库
 ```bash
