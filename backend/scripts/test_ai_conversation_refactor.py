@@ -40,7 +40,9 @@ def test_ai_conversation_crud():
             return False
 
         # 查找第一个内容项
-        content_item = session.exec(select(ContentItem).where(ContentItem.user_id == user.id).limit(1)).first()
+        content_item = session.exec(
+            select(ContentItem).where(ContentItem.user_id == user.id).limit(1)
+        ).first()
         if not content_item:
             print("❌ 没有找到测试内容，请先创建内容项")
             return False
@@ -57,7 +59,9 @@ def test_ai_conversation_crud():
                 content_item_id=content_item.id,
                 content_item_title=content_item.title or "测试内容标题",
                 analysis_instruction="请分析这个测试内容",
-                content_to_analyze=content_item.content_text[:500] if content_item.content_text else "这是一个测试内容，用于验证AI对话功能。",
+                content_to_analyze=content_item.content_text[:500]
+                if content_item.content_text
+                else "这是一个测试内容，用于验证AI对话功能。",
                 model="gpt-4o-mini",
                 temperature=0.7,
                 max_tokens=1000,
@@ -80,7 +84,7 @@ def test_ai_conversation_crud():
                 session=session,
                 conversation_id=conversation.id,
                 ai_response=test_response,
-                status="completed"
+                status="completed",
             )
 
             if success:
@@ -97,23 +101,26 @@ def test_ai_conversation_crud():
         print("\n3️⃣ 测试获取AI对话...")
         try:
             retrieved_conversation = get_ai_conversation(
-                session=session,
-                user_id=user.id,
-                conversation_id=conversation.id
+                session=session, user_id=user.id, conversation_id=conversation.id
             )
 
             if retrieved_conversation:
                 print("✅ 成功获取AI对话")
                 print(f"   对话ID: {retrieved_conversation.id}")
-                print(f"   消息数量: {len(retrieved_conversation.messages) if retrieved_conversation.messages else 0}")
+                print(
+                    f"   消息数量: {len(retrieved_conversation.messages) if retrieved_conversation.messages else 0}"
+                )
 
                 # 验证消息内容
                 import json
+
                 try:
                     messages = json.loads(retrieved_conversation.messages)
                     print(f"   解析消息数量: {len(messages)}")
                     for i, msg in enumerate(messages):
-                        print(f"     消息{i+1}: {msg['role']} - {len(msg.get('content', ''))} 字符")
+                        print(
+                            f"     消息{i + 1}: {msg['role']} - {len(msg.get('content', ''))} 字符"
+                        )
                 except Exception as e:
                     print(f"   ⚠️ 消息解析失败: {e}")
 
@@ -135,7 +142,7 @@ def test_ai_conversation_crud():
                 conversation_id=fake_id,
                 ai_response="测试响应",
                 status="failed",
-                error="测试错误"
+                error="测试错误",
             )
 
             if not success:

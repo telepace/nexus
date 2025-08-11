@@ -1,0 +1,266 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [main, develop, feat/*]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # 每天 UTC 02:00 运行安全扫描
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  security-audit:
+    name: Security Vulnerability Audit
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        component: [frontend, extension, backend]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js (for frontend and extension)
+      if: matrix.component != 'backend'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'pnpm'
+
+    - name: Setup Python (for backend)
+      if: matrix.component == 'backend'
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install pnpm
+      if: matrix.component != 'backend'
+      uses: pnpm/action-setup@v2
+      with:
+        version: latest
+
+    - name: Install uv (for backend)
+      if: matrix.component == 'backend'
+      uses: astral-sh/setup-uv@v3
+
+    # Frontend Security Audit
+    - name: Frontend - Install dependencies
+      if: matrix.component == 'frontend'
+      run: |
+        cd frontend
+        pnpm install --frozen-lockfile
+
+    - name: Frontend - Security Audit
+      if: matrix.component == 'frontend'
+      run: |
+        cd frontend
+        echo "::group::Frontend Security Audit"
+        pnpm audit --audit-level=moderate --reporter=json > frontend-audit.json || true
+        pnpm audit --audit-level=moderate || echo "Found vulnerabilities in frontend"
+        echo "::endgroup::"
+
+    - name: Frontend - Upload audit results
+      if: matrix.component == 'frontend'
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-security-audit
+        path: frontend/frontend-audit.json
+
+    # Extension Security Audit
+    - name: Extension - Install dependencies
+      if: matrix.component == 'extension'
+      run: |
+        cd extension
+        pnpm install --frozen-lockfile
+
+    - name: Extension - Security Audit
+      if: matrix.component == 'extension'
+      run: |
+        cd extension
+        echo "::group::Extension Security Audit"
+        pnpm audit --audit-level=moderate --reporter=json > extension-audit.json || true
+        pnpm audit --audit-level=moderate || echo "Found vulnerabilities in extension"
+        echo "::endgroup::"
+
+    - name: Extension - Upload audit results
+      if: matrix.component == 'extension'
+      uses: actions/upload-artifact@v4
+      with:
+        name: extension-security-audit
+        path: extension/extension-audit.json
+
+    # Backend Security Audit
+    - name: Backend - Install dependencies
+      if: matrix.component == 'backend'
+      run: |
+        cd backend
+        uv sync
+
+    - name: Backend - Security Audit with pip-audit
+      if: matrix.component == 'backend'
+      run: |
+        cd backend
+        echo "::group::Backend Security Audit"
+        uv add pip-audit
+        uv run pip-audit --output=json --output-file=backend-audit.json || echo "Found vulnerabilities in backend"
+        uv run pip-audit --format=table || echo "Found vulnerabilities in backend"
+        echo "::endgroup::"
+
+    - name: Backend - Upload audit results
+      if: matrix.component == 'backend'
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-security-audit
+        path: backend/backend-audit.json
+
+  # 汇总安全扫描结果
+  security-summary:
+    name: Security Summary Report
+    runs-on: ubuntu-latest
+    needs: security-audit
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download audit artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: audit-results
+
+    - name: Generate Security Summary
+      run: |
+        echo "# 🔒 Security Audit Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Scan Date**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+        echo "**Repository**: ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # 检查前端审计结果
+        if [ -f "audit-results/frontend-security-audit/frontend-audit.json" ]; then
+          echo "## 📦 Frontend Security Audit" >> $GITHUB_STEP_SUMMARY
+          if jq -e '.vulnerabilities | length > 0' audit-results/frontend-security-audit/frontend-audit.json > /dev/null; then
+            VULN_COUNT=$(jq '.vulnerabilities | length' audit-results/frontend-security-audit/frontend-audit.json)
+            echo "- ⚠️ Found $VULN_COUNT vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ✅ No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # 检查扩展程序审计结果
+        if [ -f "audit-results/extension-security-audit/extension-audit.json" ]; then
+          echo "## 🧩 Extension Security Audit" >> $GITHUB_STEP_SUMMARY
+          if jq -e '.vulnerabilities | length > 0' audit-results/extension-security-audit/extension-audit.json > /dev/null; then
+            VULN_COUNT=$(jq '.vulnerabilities | length' audit-results/extension-security-audit/extension-audit.json)
+            echo "- ⚠️ Found $VULN_COUNT vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ✅ No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # 检查后端审计结果
+        if [ -f "audit-results/backend-security-audit/backend-audit.json" ]; then
+          echo "## 🐍 Backend Security Audit" >> $GITHUB_STEP_SUMMARY
+          if jq -e '.vulnerabilities | length > 0' audit-results/backend-security-audit/backend-audit.json > /dev/null 2>&1; then
+            VULN_COUNT=$(jq '.vulnerabilities | length' audit-results/backend-security-audit/backend-audit.json)
+            echo "- ⚠️ Found $VULN_COUNT vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ✅ No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "## 📊 Recommendations" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "If vulnerabilities were found:" >> $GITHUB_STEP_SUMMARY
+        echo "1. 🔧 Run the fix script: \`./scripts/fix-security-vulnerabilities.sh\`" >> $GITHUB_STEP_SUMMARY
+        echo "2. 📖 Check the detailed report: \`docs/security/vulnerability-analysis-report.md\`" >> $GITHUB_STEP_SUMMARY
+        echo "3. 🧪 Test thoroughly after applying fixes" >> $GITHUB_STEP_SUMMARY
+        echo "4. 📝 Commit and deploy the fixes" >> $GITHUB_STEP_SUMMARY
+
+  # 自动创建 Issue 如果发现高危漏洞
+  create-security-issue:
+    name: Create Security Issue
+    runs-on: ubuntu-latest
+    needs: security-audit
+    if: failure() && github.event_name == 'schedule'
+    
+    steps:
+    - name: Create Security Issue
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const title = `🚨 Security vulnerabilities detected - ${new Date().toISOString().split('T')[0]}`;
+          const body = `
+          ## 🔒 Security Alert
+          
+          Automated security scan detected vulnerabilities in the codebase.
+          
+          **Scan Details:**
+          - **Date**: ${new Date().toISOString()}
+          - **Branch**: ${{ github.ref_name }}
+          - **Workflow**: ${{ github.workflow }}
+          - **Run ID**: ${{ github.run_id }}
+          
+          ## 🛠️ Immediate Actions Required
+          
+          1. Review the [security audit workflow results](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          2. Run the automated fix script: \`./scripts/fix-security-vulnerabilities.sh\`
+          3. Check the detailed analysis: \`docs/security/vulnerability-analysis-report.md\`
+          4. Test all fixes thoroughly
+          5. Deploy to production after validation
+          
+          ## 📋 Priority Levels
+          
+          - 🔴 **Critical**: Fix within 24 hours
+          - 🟠 **High**: Fix within 7 days  
+          - 🟡 **Medium**: Fix within 30 days
+          - 🔵 **Low**: Fix within 90 days
+          
+          **Auto-generated by security audit workflow**
+          `;
+          
+          // 检查是否已经有开放的安全问题
+          const existingIssues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: 'security,vulnerability',
+            state: 'open'
+          });
+          
+          if (existingIssues.data.length === 0) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['security', 'vulnerability', 'high-priority', 'automated']
+            });
+            console.log('Created security issue');
+          } else {
+            console.log('Security issue already exists, skipping creation');
+          }
+
+  # 发送通知到 Slack/Teams (可选)
+  notify:
+    name: Send Security Notification
+    runs-on: ubuntu-latest
+    needs: [security-audit, security-summary]
+    if: failure() && github.event_name == 'schedule'
+    
+    steps:
+    - name: Send Slack Notification
+      if: env.SLACK_WEBHOOK_URL != ''
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      run: |
+        curl -X POST -H 'Content-type: application/json' \
+        --data '{"text":"🚨 Security vulnerabilities detected in ${{ github.repository }}. Check the workflow results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
+        $SLACK_WEBHOOK_URL

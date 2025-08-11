@@ -23,7 +23,7 @@ export interface ContentBlock {
 
 // 渲染器配置
 export interface RendererConfig {
-  theme?: 'default' | 'notebook' | 'headspace' | 'neumorphism';
+  theme?: "default" | "notebook" | "headspace" | "neumorphism";
   enableAnimations?: boolean;
   enableHoverEffects?: boolean;
   enableCopyButton?: boolean;
@@ -44,29 +44,32 @@ export interface OptimizedContentRendererProps {
 // 解析JSONL内容
 const parseContent = (content: string | ContentBlock[]): ContentBlock[] => {
   if (Array.isArray(content)) return content;
-  
-  if (!content || typeof content !== 'string') return [];
-  
+
+  if (!content || typeof content !== "string") return [];
+
   try {
-    const lines = content.split('\n').filter(line => line.trim());
-    return lines.map(line => {
+    const lines = content.split("\n").filter((line) => line.trim());
+    return lines.map((line) => {
       try {
         return JSON.parse(line) as ContentBlock;
       } catch {
         // 如果解析失败，创建一个段落块
-        return { t: 'p', c: line };
+        return { t: "p", c: line };
       }
     });
   } catch {
     // 如果整体解析失败，将整个内容作为一个段落
-    return [{ t: 'p', c: content }];
+    return [{ t: "p", c: content }];
   }
 };
 
 // 解析引用
 const parseReferences = (ref?: string): number[] => {
   if (!ref) return [];
-  return ref.split(',').map(r => parseInt(r.trim())).filter(n => !isNaN(n));
+  return ref
+    .split(",")
+    .map((r) => parseInt(r.trim()))
+    .filter((n) => !isNaN(n));
 };
 
 // 标题组件
@@ -79,49 +82,58 @@ const HeadingBlock = memo<{
 }>(({ block, config, index, onCopy, onReferenceClick }) => {
   const [isHovered, setIsHovered] = useState(false);
   const references = parseReferences(block.ref);
-  
-  const getHeadingClass = (type: string, theme: string = 'default') => {
+
+  const getHeadingClass = (type: string, theme: string = "default") => {
     const baseClasses = "select-text tracking-tight scroll-m-16";
-    
+
     switch (theme) {
-      case 'notebook':
+      case "notebook":
         return cn(baseClasses, {
-          'text-2xl font-bold text-gray-800 mt-6 mb-4': type === 'h1',
-          'text-xl font-bold text-gray-700 mt-5 mb-3 border-b border-gray-200 pb-2': type === 'h2',
-          'text-lg font-bold text-gray-700 mt-4 mb-2': type === 'h3',
-          'text-base font-bold text-gray-600 mt-3 mb-2': type === 'h4',
-          'text-sm font-bold text-gray-600 mt-2 mb-1 uppercase tracking-wide': type === 'h5',
-          'text-xs font-bold text-gray-500 mt-2 mb-1 uppercase tracking-wider': type === 'h6',
+          "text-2xl font-bold text-gray-800 mt-6 mb-4": type === "h1",
+          "text-xl font-bold text-gray-700 mt-5 mb-3 border-b border-gray-200 pb-2":
+            type === "h2",
+          "text-lg font-bold text-gray-700 mt-4 mb-2": type === "h3",
+          "text-base font-bold text-gray-600 mt-3 mb-2": type === "h4",
+          "text-sm font-bold text-gray-600 mt-2 mb-1 uppercase tracking-wide":
+            type === "h5",
+          "text-xs font-bold text-gray-500 mt-2 mb-1 uppercase tracking-wider":
+            type === "h6",
         });
-      
-      case 'headspace':
+
+      case "headspace":
         return cn(baseClasses, "text-white font-medium leading-tight");
-      
-      case 'neumorphism':
+
+      case "neumorphism":
         return cn(baseClasses, {
-          'text-2xl font-bold text-gray-700 my-4 text-center': type === 'h1',
-          'text-lg font-bold text-gray-600 mt-6 mb-2 border-b-2 border-gray-200 pb-1': type === 'h2',
-          'text-base font-semibold text-gray-600 mt-4 mb-1': type === 'h3',
-          'text-sm font-semibold text-gray-600 mt-3 mb-1': type === 'h4',
-          'text-xs font-semibold text-gray-500 mt-2 mb-1 uppercase tracking-wide': type === 'h5',
-          'text-xs font-medium text-gray-400 mt-2 mb-1 uppercase tracking-wider': type === 'h6',
+          "text-2xl font-bold text-gray-700 my-4 text-center": type === "h1",
+          "text-lg font-bold text-gray-600 mt-6 mb-2 border-b-2 border-gray-200 pb-1":
+            type === "h2",
+          "text-base font-semibold text-gray-600 mt-4 mb-1": type === "h3",
+          "text-sm font-semibold text-gray-600 mt-3 mb-1": type === "h4",
+          "text-xs font-semibold text-gray-500 mt-2 mb-1 uppercase tracking-wide":
+            type === "h5",
+          "text-xs font-medium text-gray-400 mt-2 mb-1 uppercase tracking-wider":
+            type === "h6",
         });
-      
+
       default:
         return cn(baseClasses, {
-          'text-2xl font-bold lg:text-3xl mt-6 mb-4': type === 'h1',
-          'text-xl font-semibold border-b pb-1.5 first:mt-0 mt-5 mb-3': type === 'h2',
-          'text-lg font-semibold mt-4 mb-2': type === 'h3',
-          'text-base font-semibold mt-3 mb-2': type === 'h4',
-          'text-sm font-semibold mt-2 mb-1 uppercase tracking-wide': type === 'h5',
-          'text-xs font-medium mt-2 mb-1 uppercase tracking-wider text-muted-foreground': type === 'h6',
+          "text-2xl font-bold lg:text-3xl mt-6 mb-4": type === "h1",
+          "text-xl font-semibold border-b pb-1.5 first:mt-0 mt-5 mb-3":
+            type === "h2",
+          "text-lg font-semibold mt-4 mb-2": type === "h3",
+          "text-base font-semibold mt-3 mb-2": type === "h4",
+          "text-sm font-semibold mt-2 mb-1 uppercase tracking-wide":
+            type === "h5",
+          "text-xs font-medium mt-2 mb-1 uppercase tracking-wider text-muted-foreground":
+            type === "h6",
         });
     }
   };
-  
+
   const HeadingTag = block.t as keyof JSX.IntrinsicElements;
   const className = getHeadingClass(block.t, config.theme);
-  
+
   return (
     <motion.div
       className="group relative"
@@ -135,7 +147,7 @@ const HeadingBlock = memo<{
         <HeadingTag className={className}>
           <MarkdownRenderer content={block.c} inline={true} />
         </HeadingTag>
-        
+
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {references.length > 0 && config.showReferences && (
             <EnhancedReferenceIndicator
@@ -145,7 +157,7 @@ const HeadingBlock = memo<{
               className="text-xs"
             />
           )}
-          
+
           {config.enableCopyButton && (
             <Button
               variant="ghost"
@@ -162,7 +174,7 @@ const HeadingBlock = memo<{
   );
 });
 
-HeadingBlock.displayName = 'HeadingBlock';
+HeadingBlock.displayName = "HeadingBlock";
 
 // 段落组件
 const ParagraphBlock = memo<{
@@ -174,7 +186,7 @@ const ParagraphBlock = memo<{
 }>(({ block, config, index, onCopy, onReferenceClick }) => {
   const [isHovered, setIsHovered] = useState(false);
   const references = parseReferences(block.ref);
-  
+
   return (
     <motion.div
       className="group relative"
@@ -187,13 +199,11 @@ const ParagraphBlock = memo<{
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 leading-relaxed text-foreground my-2">
           {block.lead && (
-            <span className="font-semibold text-primary">
-              {block.lead}:{" "}
-            </span>
+            <span className="font-semibold text-primary">{block.lead}: </span>
           )}
           <MarkdownRenderer content={block.c} inline={true} />
         </div>
-        
+
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {references.length > 0 && config.showReferences && (
             <EnhancedReferenceIndicator
@@ -203,7 +213,7 @@ const ParagraphBlock = memo<{
               className="text-xs"
             />
           )}
-          
+
           {config.enableCopyButton && (
             <Button
               variant="ghost"
@@ -220,7 +230,7 @@ const ParagraphBlock = memo<{
   );
 });
 
-ParagraphBlock.displayName = 'ParagraphBlock';
+ParagraphBlock.displayName = "ParagraphBlock";
 
 // 引用组件
 const QuoteBlock = memo<{
@@ -231,7 +241,7 @@ const QuoteBlock = memo<{
   onReferenceClick?: (refId: number) => void;
 }>(({ block, config, index, onCopy, onReferenceClick }) => {
   const references = parseReferences(block.ref);
-  
+
   return (
     <motion.div
       className="group relative"
@@ -249,7 +259,7 @@ const QuoteBlock = memo<{
               </cite>
             )}
           </div>
-          
+
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             {references.length > 0 && config.showReferences && (
               <EnhancedReferenceIndicator
@@ -259,7 +269,7 @@ const QuoteBlock = memo<{
                 className="text-xs"
               />
             )}
-            
+
             {config.enableCopyButton && (
               <Button
                 variant="ghost"
@@ -277,7 +287,7 @@ const QuoteBlock = memo<{
   );
 });
 
-QuoteBlock.displayName = 'QuoteBlock';
+QuoteBlock.displayName = "QuoteBlock";
 
 // 列表组件
 const ListBlock = memo<{
@@ -288,8 +298,11 @@ const ListBlock = memo<{
   onReferenceClick?: (refId: number) => void;
 }>(({ block, config, index, onCopy, onReferenceClick }) => {
   const references = parseReferences(block.ref);
-  const items = block.c.split(/[\n,；;]/).map(s => s.trim()).filter(Boolean);
-  
+  const items = block.c
+    .split(/[\n,；;]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
   return (
     <motion.div
       className="group relative"
@@ -305,7 +318,7 @@ const ListBlock = memo<{
             </li>
           ))}
         </ul>
-        
+
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {references.length > 0 && config.showReferences && (
             <EnhancedReferenceIndicator
@@ -315,7 +328,7 @@ const ListBlock = memo<{
               className="text-xs"
             />
           )}
-          
+
           {config.enableCopyButton && (
             <Button
               variant="ghost"
@@ -332,74 +345,83 @@ const ListBlock = memo<{
   );
 });
 
-ListBlock.displayName = 'ListBlock';
+ListBlock.displayName = "ListBlock";
 
 // 主渲染器组件
-export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> = ({
-  content,
-  config = {},
-  className,
-  onReferenceClick,
-  onBlockClick,
-}) => {
+export const OptimizedContentRenderer: React.FC<
+  OptimizedContentRendererProps
+> = ({ content, config = {}, className, onReferenceClick, onBlockClick }) => {
   const { toast } = useToast();
   const { t } = useTranslationUtils();
-  
+
   // 默认配置
-  const mergedConfig: RendererConfig = {
-    theme: 'default',
+  const mergedConfig: RendererConfig = useMemo(() => ({
+    theme: "default",
     enableAnimations: true,
     enableHoverEffects: true,
     enableCopyButton: true,
     enableCollapse: false,
     showReferences: true,
     ...config,
-  };
-  
+  }), [config]);
+
   // 解析内容
   const blocks = useMemo(() => parseContent(content), [content]);
-  
+
   // 复制处理
-  const handleCopy = useCallback(async (content: string) => {
-    try {
-      await navigator.clipboard.writeText(content);
-      toast({ title: t("messages.copySuccess"), description: t("messages.copySuccess") });
-    } catch {
-      toast({ title: t("messages.copyError"), description: t("messages.copyError"), variant: "destructive" });
-    }
-  }, [toast, t]);
-  
+  const handleCopy = useCallback(
+    async (content: string) => {
+      try {
+        await navigator.clipboard.writeText(content);
+        toast({
+          title: t("messages.copySuccess"),
+          description: t("messages.copySuccess"),
+        });
+      } catch {
+        toast({
+          title: t("messages.copyError"),
+          description: t("messages.copyError"),
+          variant: "destructive",
+        });
+      }
+    },
+    [toast, t],
+  );
+
   // 渲染单个块
-  const renderBlock = useCallback((block: ContentBlock, index: number) => {
-    const commonProps = {
-      block,
-      config: mergedConfig,
-      index,
-      onCopy: handleCopy,
-      onReferenceClick,
-    };
-    
-    switch (block.t) {
-      case 'h1':
-      case 'h2':
-      case 'h3':
-      case 'h4':
-      case 'h5':
-      case 'h6':
-        return <HeadingBlock key={`${block.t}-${index}`} {...commonProps} />;
-      
-      case 'quote':
-        return <QuoteBlock key={`quote-${index}`} {...commonProps} />;
-      
-      case 'list':
-        return <ListBlock key={`list-${index}`} {...commonProps} />;
-      
-      case 'p':
-      default:
-        return <ParagraphBlock key={`p-${index}`} {...commonProps} />;
-    }
-  }, [mergedConfig, handleCopy, onReferenceClick]);
-  
+  const renderBlock = useCallback(
+    (block: ContentBlock, index: number) => {
+      const commonProps = {
+        block,
+        config: mergedConfig,
+        index,
+        onCopy: handleCopy,
+        onReferenceClick,
+      };
+
+      switch (block.t) {
+        case "h1":
+        case "h2":
+        case "h3":
+        case "h4":
+        case "h5":
+        case "h6":
+          return <HeadingBlock key={`${block.t}-${index}`} {...commonProps} />;
+
+        case "quote":
+          return <QuoteBlock key={`quote-${index}`} {...commonProps} />;
+
+        case "list":
+          return <ListBlock key={`list-${index}`} {...commonProps} />;
+
+        case "p":
+        default:
+          return <ParagraphBlock key={`p-${index}`} {...commonProps} />;
+      }
+    },
+    [mergedConfig, handleCopy, onReferenceClick],
+  );
+
   if (blocks.length === 0) {
     return (
       <div className={cn("text-center py-8 text-muted-foreground", className)}>
@@ -407,7 +429,7 @@ export const OptimizedContentRenderer: React.FC<OptimizedContentRendererProps> =
       </div>
     );
   }
-  
+
   return (
     <div className={cn("space-y-1", className)}>
       <AnimatePresence mode="popLayout">

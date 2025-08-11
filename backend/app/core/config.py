@@ -135,44 +135,50 @@ class Settings(BaseSettings):
     LITELLM_PROXY_URL: str = "http://litellm:4000"
     LITELLM_MASTER_KEY: str | None = None
 
-    # LLM 配置
-    DEFAULT_LLM_MODEL: str = "deepseek-v3-ensemble"
+    # 🎯 LLM 配置 - 从环境变量读取，移除硬编码
+    DEFAULT_LLM_MODEL: str = Field(
+        default_factory=lambda: os.environ.get("DEFAULT_LLM_MODEL", "gemini-flash-lite"),
+        description="全局默认LLM模型，从环境变量DEFAULT_LLM_MODEL读取"
+    )
 
     # Token 配置系统 - 简化版本，只使用最大Token限制
     DEFAULT_MAX_TOKENS: int = Field(
-        default=20000,
-        ge=100,
-        le=100000,
-        description="默认最大token数"
+        default=20000, ge=100, le=100000, description="默认最大token数"
     )
 
     # 不同任务类型的token配置（简化版）
     TOKEN_LIMITS: dict[str, int] = Field(
         default={
-            "chat": 20000,              # 对话聊天
-            "summary": 20000,           # 摘要生成
-            "key_points": 20000,        # 要点提取
-            "labels": 20000,            # 标签生成
-            "analysis": 20000,          # 深度分析
-            "extension": 20000,         # 浏览器扩展
-            "conversation": 20000,      # 对话系统
-            "completion": 20000,        # 通用补全
-            "research": 20000,          # 深度研究
-            "segmentation": 20000,      # 文本分段
-            "embedding": 20000,         # 嵌入生成
+            "chat": 20000,  # 对话聊天
+            "summary": 20000,  # 摘要生成
+            "key_points": 20000,  # 要点提取
+            "labels": 20000,  # 标签生成
+            "analysis": 20000,  # 深度分析
+            "extension": 20000,  # 浏览器扩展
+            "conversation": 20000,  # 对话系统
+            "completion": 20000,  # 通用补全
+            "research": 20000,  # 深度研究
+            "segmentation": 20000,  # 文本分段
+            "embedding": 20000,  # 嵌入生成
         },
-        description="不同任务类型的token限制配置"
+        description="不同任务类型的token限制配置",
     )
 
     # 环境变量覆盖的单独token配置
     TOKEN_LIMIT_CHAT: int | None = Field(default=None, description="对话token限制")
     TOKEN_LIMIT_SUMMARY: int | None = Field(default=None, description="摘要token限制")
-    TOKEN_LIMIT_KEY_POINTS: int | None = Field(default=None, description="要点token限制")
+    TOKEN_LIMIT_KEY_POINTS: int | None = Field(
+        default=None, description="要点token限制"
+    )
     TOKEN_LIMIT_LABELS: int | None = Field(default=None, description="标签token限制")
     TOKEN_LIMIT_ANALYSIS: int | None = Field(default=None, description="分析token限制")
     TOKEN_LIMIT_EXTENSION: int | None = Field(default=None, description="扩展token限制")
-    TOKEN_LIMIT_CONVERSATION: int | None = Field(default=None, description="对话系统token限制")
-    TOKEN_LIMIT_COMPLETION: int | None = Field(default=None, description="补全token限制")
+    TOKEN_LIMIT_CONVERSATION: int | None = Field(
+        default=None, description="对话系统token限制"
+    )
+    TOKEN_LIMIT_COMPLETION: int | None = Field(
+        default=None, description="补全token限制"
+    )
     TOKEN_LIMIT_RESEARCH: int | None = Field(default=None, description="研究token限制")
 
     @computed_field  # type: ignore[prop-decorator]
@@ -215,7 +221,9 @@ class Settings(BaseSettings):
 
         return resolved
 
-    def get_token_limit(self, task_type: str = "default", base_tokens: int | None = None) -> int:
+    def get_token_limit(
+        self, task_type: str = "default", base_tokens: int | None = None
+    ) -> int:
         """
         获取任务类型对应的token限制
 
@@ -231,26 +239,26 @@ class Settings(BaseSettings):
 
         # 更保守的token限制，避免超出OpenRouter账户余额
         task_limits = {
-            "chat": 12000,      # 降低聊天token限制
-            "summary": 10000,   # 降低摘要token限制
-            "key_points": 8000, # 降低关键点token限制
-            "labels": 6000,     # 降低标签token限制
+            "chat": 12000,  # 降低聊天token限制
+            "summary": 10000,  # 降低摘要token限制
+            "key_points": 8000,  # 降低关键点token限制
+            "labels": 6000,  # 降低标签token限制
             "analysis": 15000,  # 分析任务稍高
-            "default": 10000,   # 默认更保守
+            "default": 10000,  # 默认更保守
         }
 
         return task_limits.get(task_type, task_limits["default"])
 
-    # AI任务模型配置 - 支持为不同任务指定不同模型，可通过环境变量覆盖
+    # 🎯 AI任务模型配置 - 从环境变量读取，移除硬编码
     AI_TASK_MODELS: dict[str, str] = Field(
-        default={
-            "summary": "deepseek-v3-ensemble",  # Summary生成模型
-            "key_points": "deepseek-v3-ensemble",  # KeyPoint提取模型
-            "labels": "deepseek-v3-ensemble",  # Labels生成模型
-            "chat": "deepseek-v3-ensemble",  # 对话聊天模型
-            "analysis": "deepseek-v3-ensemble",  # 通用分析模型
+        default_factory=lambda: {
+            "summary": os.environ.get("AI_MODEL_SUMMARY", os.environ.get("DEFAULT_LLM_MODEL", "gemini-pro")),
+            "key_points": os.environ.get("AI_MODEL_KEY_POINTS", os.environ.get("DEFAULT_LLM_MODEL", "gemini-flash")),
+            "labels": os.environ.get("AI_MODEL_LABELS", os.environ.get("DEFAULT_LLM_MODEL", "gemini-flash-lite")),
+            "chat": os.environ.get("AI_MODEL_CHAT", os.environ.get("DEFAULT_LLM_MODEL", "gemini-flash-lite")),
+            "analysis": os.environ.get("AI_MODEL_ANALYSIS", os.environ.get("DEFAULT_LLM_MODEL", "deepseek-r1")),
         },
-        description="AI任务模型映射配置，可通过环境变量覆盖，如：AI_MODEL_SUMMARY=gpt-4",
+        description="AI任务模型映射配置，从环境变量读取，支持任务级别的精细控制",
     )
 
     # 单独的模板模型配置，方便精细控制

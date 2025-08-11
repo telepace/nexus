@@ -177,7 +177,12 @@ const extractUrls = (text: string) => {
 };
 
 // 增强的内容分析系统
-const analyzeContent = (text: string, files: File[] = [], tPlural: (key: string, count: number) => string, t: (key: string) => string) => {
+const analyzeContent = (
+  text: string,
+  files: File[] = [],
+  tPlural: (key: string, count: number) => string,
+  t: (key: string) => string,
+) => {
   if (!text.trim() && files.length === 0) return null;
 
   // 文件分析优先

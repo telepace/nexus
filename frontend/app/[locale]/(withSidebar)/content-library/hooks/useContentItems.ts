@@ -72,17 +72,14 @@ export const useContentItems = () => {
   }, []);
 
   /** 单个内容预加载 - 使用智能数据管理器 */
-  const prefetchContent = useCallback(
-    async (item: ContentItemPublic) => {
-      try {
-        // 使用智能数据管理器进行预加载，只获取preview数据
-        await contentDataManager.getPreviewData(item.id);
-      } catch (err) {
-        console.debug("Prefetch failed:", err);
-      }
-    },
-    [],
-  );
+  const prefetchContent = useCallback(async (item: ContentItemPublic) => {
+    try {
+      // 使用智能数据管理器进行预加载，只获取preview数据
+      await contentDataManager.getPreviewData(item.id);
+    } catch (err) {
+      console.debug("Prefetch failed:", err);
+    }
+  }, []);
 
   /** 🚀 优化批量预加载 - 使用智能数据管理器*/
   const batchPrefetchContent = useCallback(
@@ -92,8 +89,8 @@ export const useContentItems = () => {
       const toPrefetch = list
         .filter((i) => i.processing_status === "completed")
         .slice(0, 15)
-        .map(i => i.id);
-      
+        .map((i) => i.id);
+
       setPrefetchStats({
         total: toPrefetch.length,
         cached: 0,
@@ -103,7 +100,7 @@ export const useContentItems = () => {
       try {
         // 使用智能数据管理器进行批量预加载
         await contentDataManager.batchPrefetch(toPrefetch);
-        
+
         setPrefetchStats({
           total: toPrefetch.length,
           cached: toPrefetch.length,
@@ -219,9 +216,7 @@ export const useContentItems = () => {
           if (updatedItem) {
             // 一次性更新状态
             setItems((prev) =>
-              prev.map((i) =>
-                i.id === event.content_id ? updatedItem : i,
-              ),
+              prev.map((i) => (i.id === event.content_id ? updatedItem : i)),
             );
             toast.success(`内容处理完成: ${updatedItem.title || "未知内容"}`);
           } else {
@@ -307,7 +302,7 @@ export const useContentItems = () => {
           setItems(cached);
           setLoading(false);
           // 🚀 优化：延迟批量预加载，避免初始加载阻塞
-        setTimeout(() => batchPrefetchContent(cached), 2000);
+          setTimeout(() => batchPrefetchContent(cached), 2000);
           return;
         }
 

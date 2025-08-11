@@ -149,17 +149,17 @@ export default function ContentLibraryPage() {
 
   // 🚀 优化悬浮事件处理 - 添加防抖，减少频繁更新
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const handleCardHover = useCallback(
     (item: ContentItemPublic | null) => {
       if (isMobile) return;
-      
+
       // 清除之前的定时器
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
         hoverTimeoutRef.current = null;
       }
-      
+
       if (item) {
         // 防抖处理，减少频繁状态更新
         hoverTimeoutRef.current = setTimeout(() => {
@@ -236,7 +236,7 @@ export default function ContentLibraryPage() {
         {/* Header - 固定在顶部 */}
         <header className="relative flex items-center justify-between h-header px-6 border-b shrink-0 bg-background/95 backdrop-blur-sm z-10">
           <div className="flex items-center gap-2 min-w-0">
-            <PageHeader breadcrumbs={[{ label: 'Library' }]} />
+            <PageHeader breadcrumbs={[{ label: "Library" }]} />
           </div>
           <div className="flex items-center gap-2 ml-auto">
             <LibraryHeader
@@ -250,7 +250,7 @@ export default function ContentLibraryPage() {
               viewMode={filters.viewMode}
               onViewModeChange={handleViewModeChange}
               onClearFilters={() => {
-                setFilters(prev => ({
+                setFilters((prev) => ({
                   ...prev,
                   selectedTags: [],
                   sortBy: "time",
@@ -277,7 +277,7 @@ export default function ContentLibraryPage() {
         </header>
 
         {/* 列表 - 可滚动区域 */}
-        <div 
+        <div
           className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar px-6 pb-8 pt-8"
           onClick={(e) => {
             // 只有点击空白区域时才清除预览

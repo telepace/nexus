@@ -3,7 +3,11 @@ import { devtools } from "zustand/middleware";
 import { promptsApi, Prompt } from "@/lib/api/services/prompts";
 import { getCookie } from "@/lib/auth";
 import { convertPromptToRecommendation } from "@/lib/utils/prompt-utils";
-import { generateFriendlyTitle, isQuestion, formatQuestionTitle } from "@/lib/utils/title-utils";
+import {
+  generateFriendlyTitle,
+  isQuestion,
+  formatQuestionTitle,
+} from "@/lib/utils/title-utils";
 import { detectLocale } from "@/lib/i18n";
 
 export interface LLMAnalysis {
@@ -214,16 +218,16 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
         }
 
         // 智能生成用户友好的标题
-        const promptName = promptId 
-          ? enabledPrompts.find(p => p.id === promptId)?.name 
+        const promptName = promptId
+          ? enabledPrompts.find((p) => p.id === promptId)?.name
           : undefined;
-        
+
         const friendlyTitle = generateFriendlyTitle({
           userInput: analysisInstruction,
           promptName: promptName,
           promptId: promptId,
           originalTitle: title,
-          analysisType: promptId ? 'prompt' : 'manual'
+          analysisType: promptId ? "prompt" : "manual",
         });
 
         // 创建一个loading状态的分析
@@ -270,8 +274,8 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
                 //   try {
                 //     const locale = detectLocale();
                 //     const outputLang = locale === 'en' ? 'English' : 'Chinese';
-                //     console.log('🌐 语言检测详情:', { 
-                //       locale, 
+                //     console.log('🌐 语言检测详情:', {
+                //       locale,
                 //       outputLang,
                 //       navigatorLanguage: typeof navigator !== 'undefined' ? navigator.language : 'N/A',
                 //       storedLanguage: typeof localStorage !== 'undefined' ? localStorage.getItem('preferred-language') : 'N/A'
@@ -529,11 +533,11 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
           );
         } else {
           // 直接使用内容作为自由对话 - 智能生成标题
-          const smartTitle = isQuestion(content) 
+          const smartTitle = isQuestion(content)
             ? formatQuestionTitle(content)
             : generateFriendlyTitle({
                 userInput: content,
-                analysisType: 'manual'
+                analysisType: "manual",
               });
 
           await generateAnalysis(
@@ -593,14 +597,14 @@ export const useLLMAnalysisStore = create<LLMAnalysisState>()(
         markPromptAsUsed(promptId);
 
         // 智能生成用户友好的标题
-        const promptName = enabledPrompts.find(p => p.id === promptId)?.name;
-        
+        const promptName = enabledPrompts.find((p) => p.id === promptId)?.name;
+
         const friendlyTitle = generateFriendlyTitle({
           userInput: analysisInstruction,
           promptName: promptName,
           promptId: promptId,
           originalTitle: title,
-          analysisType: 'prompt'
+          analysisType: "prompt",
         });
 
         // 创建一个loading状态的分析

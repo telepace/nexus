@@ -38,7 +38,9 @@ def get_favorites_endpoint(
         100, ge=1, le=200, description="Maximum number of items to return"
     ),
     block_only: bool = Query(False, description="Only return block-level favorites"),
-    content_only: bool = Query(False, description="Only return content-level favorites"),
+    content_only: bool = Query(
+        False, description="Only return content-level favorites"
+    ),
 ) -> FavoriteListResponse:
     """Get user's favorites with filtering options."""
     favorites, total = get_user_favorites(
@@ -47,7 +49,7 @@ def get_favorites_endpoint(
         skip=skip,
         limit=limit,
         block_only=block_only,
-        content_only=content_only
+        content_only=content_only,
     )
 
     # Get content items for each favorite
@@ -92,7 +94,9 @@ def get_block_favorites_endpoint(
     limit: int = Query(
         100, ge=1, le=200, description="Maximum number of items to return"
     ),
-    content_item_id: uuid.UUID | None = Query(None, description="Filter by content item ID"),
+    content_item_id: uuid.UUID | None = Query(
+        None, description="Filter by content item ID"
+    ),
 ) -> FavoriteBlockListResponse:
     """Get user's block-level favorites."""
     favorites, total = get_user_favorite_blocks(
@@ -100,7 +104,7 @@ def get_block_favorites_endpoint(
         user_id=current_user.id,
         content_item_id=content_item_id,
         skip=skip,
-        limit=limit
+        limit=limit,
     )
 
     # Get content items for each favorite
@@ -152,13 +156,13 @@ def update_favorite_endpoint(
         user_id=current_user.id,
         title=favorite_update.title,
         description=favorite_update.description,
-        tags=favorite_update.tags
+        tags=favorite_update.tags,
     )
 
     if not favorite:
         raise HTTPException(
             status_code=404,
-            detail="Favorite not found or you don't have permission to update it"
+            detail="Favorite not found or you don't have permission to update it",
         )
 
     return {"status": "ok", "message": "Favorite updated successfully"}
@@ -183,15 +187,14 @@ def delete_favorite_endpoint(
     from app.models.favorite import Favorite
 
     statement = select(Favorite).where(
-        Favorite.id == favorite_id,
-        Favorite.user_id == current_user.id
+        Favorite.id == favorite_id, Favorite.user_id == current_user.id
     )
     favorite = session.exec(statement).first()
 
     if not favorite:
         raise HTTPException(
             status_code=404,
-            detail="Favorite not found or you don't have permission to delete it"
+            detail="Favorite not found or you don't have permission to delete it",
         )
 
     # Delete the favorite
@@ -199,14 +202,11 @@ def delete_favorite_endpoint(
         session=session,
         user_id=current_user.id,
         content_item_id=favorite.content_item_id,
-        block_id=favorite.block_id
+        block_id=favorite.block_id,
     )
 
     if not success:
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to delete favorite"
-        )
+        raise HTTPException(status_code=500, detail="Failed to delete favorite")
 
 
 @router.get(

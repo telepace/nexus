@@ -89,16 +89,27 @@ def set_ai_language(
     if not language:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="ai_output_language is required"
+            detail="ai_output_language is required",
         )
 
     # 验证语言选项
-    supported_languages = ["English", "Chinese", "Japanese", "Korean", "French", "German", "Spanish"]
+    supported_languages = [
+        "English",
+        "Chinese",
+        "Japanese",
+        "Korean",
+        "French",
+        "German",
+        "Spanish",
+    ]
     if language not in supported_languages:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported language. Supported languages: {', '.join(supported_languages)}"
+            detail=f"Unsupported language. Supported languages: {', '.join(supported_languages)}",
         )
 
     UserSettingsService.set_user_ai_language(session, current_user.id, language)
-    return {"ai_output_language": language, "message": "Language preference updated successfully"}
+    return {
+        "ai_output_language": language,
+        "message": "Language preference updated successfully",
+    }

@@ -38,6 +38,6 @@ def create_random_content_item(
 
     # Re-checking crud_content.py, create_content_item_sync takes ContentItem directly.
     created_item = crud_content.create_content_item_sync(
-        session=db, content_item_in=item_data
+        session=db, content_item_in=item_data, user_id=user_id
     )
     return created_item

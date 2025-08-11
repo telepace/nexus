@@ -11,8 +11,9 @@ interface ConversationGroup {
 }
 
 interface UseStreamingConversationOptions {
-  contentId: string; // API调用使用的原始ID 
+  contentId: string; // API调用使用的原始ID
   storageId?: string; // 可选的存储ID，用于状态隔离
+  scene?: string; // 场景标识，用于缓存隔离（preview/reader/standalone）
   onConversationUpdate?: (conversation: ConversationGroup) => void;
   onError?: (error: string) => void;
 }
@@ -25,18 +26,22 @@ interface UseStreamingConversationOptions {
 export function useStreamingConversation({
   contentId,
   storageId,
+  scene = "default",
   onConversationUpdate,
   onError,
 }: UseStreamingConversationOptions) {
   const [conversations, setConversations] = useState<ConversationGroup[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
-  
-  // 🎯 存储键使用storageId（如果提供）或回退到contentId
+
+  // 🎯 存储键使用scene前缀实现完全隔离，解决不同场景间状态串扰问题
   const effectiveStorageId = storageId || contentId;
-  const STORAGE_KEY = `streaming_conversations_${effectiveStorageId}`;
-  
-  // 页面加载时恢复对话状态
+  const STORAGE_KEY = `streaming_conversations_${scene}_${effectiveStorageId}`;
+
+  // 页面加载时恢复对话状态 - 修复状态串扰问题
   useEffect(() => {
+    // 🎯 关键修复：先清空之前的状态，确保不同内容间的状态完全隔离
+    setConversations([]);
+    
     try {
       const savedData = localStorage.getItem(STORAGE_KEY);
       if (savedData) {
@@ -47,17 +52,21 @@ export function useStreamingConversation({
           createdAt: new Date(conv.createdAt),
           messages: conv.messages.map((msg: any) => ({
             ...msg,
-            timestamp: new Date(msg.timestamp)
-          }))
+            timestamp: new Date(msg.timestamp),
+          })),
         }));
         setConversations(restoredConversations);
-        console.log('📥 恢复对话历史:', restoredConversations.length, '个对话');
+        console.log("📥 恢复对话历史:", restoredConversations.length, "个对话");
+      } else {
+        console.log("📝 新内容，无对话历史");
       }
     } catch (error) {
-      console.error('❌ 恢复对话历史失败:', error);
+      console.error("❌ 恢复对话历史失败:", error);
+      // 发生错误时也要确保状态被清空
+      setConversations([]);
     }
   }, [contentId, STORAGE_KEY]);
-  
+
   // 对话状态变化时保存到localStorage - 添加防抖机制
   useEffect(() => {
     if (conversations.length > 0) {
@@ -65,17 +74,27 @@ export function useStreamingConversation({
         try {
           // 限制存储的对话数量，只保留最近50个对话以防止内存泄漏
           const limitedConversations = conversations.slice(-50);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(limitedConversations));
-          console.log('💾 保存对话历史:', limitedConversations.length, '个对话');
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(limitedConversations),
+          );
+          console.log(
+            "💾 保存对话历史:",
+            limitedConversations.length,
+            "个对话",
+          );
         } catch (error) {
-          console.error('❌ 保存对话历史失败:', error);
+          console.error("❌ 保存对话历史失败:", error);
           // 如果存储失败，尝试清理旧数据后重试
           try {
             localStorage.removeItem(STORAGE_KEY);
             const limitedConversations = conversations.slice(-20);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(limitedConversations));
+            localStorage.setItem(
+              STORAGE_KEY,
+              JSON.stringify(limitedConversations),
+            );
           } catch (retryError) {
-            console.error('❌ 重试保存也失败:', retryError);
+            console.error("❌ 重试保存也失败:", retryError);
           }
         }
       }, 500); // 500ms防抖延迟
@@ -85,14 +104,15 @@ export function useStreamingConversation({
   }, [conversations, STORAGE_KEY]);
 
   // 生成唯一ID
-  const generateId = () => `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const generateId = () =>
+    `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   // 创建新对话 - 立即创建并显示
   const createConversation = useCallback(
     (
       userInput: string,
       promptTemplate?: string,
-      metadata?: Record<string, any>
+      metadata?: Record<string, any>,
     ): string => {
       const conversationId = generateId();
       const userMessageId = generateId();
@@ -109,7 +129,7 @@ export function useStreamingConversation({
         // 如果是长文本且没有提供简洁版本，则截断显示
         displayContent = userInput.substring(0, 50) + "...";
       }
-      
+
       const userMessage: ConversationMessage = {
         id: userMessageId,
         role: "user",
@@ -147,13 +167,13 @@ export function useStreamingConversation({
       };
 
       // 🎯 修复：将新对话添加到数组末尾，确保最新对话出现在最下面
-      setConversations(prev => {
+      setConversations((prev) => {
         const newConversations = [...prev, newConversation];
         console.log("📊 对话状态更新:", {
           previousCount: prev.length,
           newCount: newConversations.length,
           newConversationId: conversationId,
-          displayContent: displayContent
+          displayContent: displayContent,
         });
         return newConversations;
       });
@@ -161,26 +181,30 @@ export function useStreamingConversation({
 
       return conversationId;
     },
-    [onConversationUpdate]
+    [onConversationUpdate],
   );
 
   // 更新消息状态
   const updateMessageStatus = useCallback(
-    (conversationId: string, messageId: string, status: ConversationMessage["status"]) => {
-      setConversations(prev =>
-        prev.map(conv =>
+    (
+      conversationId: string,
+      messageId: string,
+      status: ConversationMessage["status"],
+    ) => {
+      setConversations((prev) =>
+        prev.map((conv) =>
           conv.id === conversationId
             ? {
                 ...conv,
-                messages: conv.messages.map(msg =>
-                  msg.id === messageId ? { ...msg, status } : msg
+                messages: conv.messages.map((msg) =>
+                  msg.id === messageId ? { ...msg, status } : msg,
                 ),
               }
-            : conv
-        )
+            : conv,
+        ),
       );
     },
-    []
+    [],
   );
 
   // 更新消息内容
@@ -188,59 +212,65 @@ export function useStreamingConversation({
     (conversationId: string, messageId: string, content: string) => {
       // 🎯 添加参数验证和错误处理
       if (!conversationId || !messageId) {
-        console.error("❌ updateMessageContent: 无效的参数", { conversationId, messageId });
+        console.error("❌ updateMessageContent: 无效的参数", {
+          conversationId,
+          messageId,
+        });
         return;
       }
-      
+
       try {
-        setConversations(prev =>
-          prev.map(conv =>
+        setConversations((prev) =>
+          prev.map((conv) =>
             conv.id === conversationId
               ? {
                   ...conv,
-                  messages: conv.messages.map(msg =>
-                    msg.id === messageId ? { ...msg, content } : msg
+                  messages: conv.messages.map((msg) =>
+                    msg.id === messageId ? { ...msg, content } : msg,
                   ),
                 }
-              : conv
-          )
+              : conv,
+          ),
         );
       } catch (error) {
-        console.error("❌ updateMessageContent: 状态更新失败", error, { conversationId, messageId });
+        console.error("❌ updateMessageContent: 状态更新失败", error, {
+          conversationId,
+          messageId,
+        });
       }
     },
-    []
+    [],
   );
 
   // 设置消息错误
   const setMessageError = useCallback(
     (conversationId: string, messageId: string, error: string) => {
-      setConversations(prev =>
-        prev.map(conv =>
+      setConversations((prev) =>
+        prev.map((conv) =>
           conv.id === conversationId
             ? {
                 ...conv,
-                messages: conv.messages.map(msg =>
+                messages: conv.messages.map((msg) =>
                   msg.id === messageId
                     ? { ...msg, status: "error", error }
-                    : msg
+                    : msg,
                 ),
               }
-            : conv
-        )
+            : conv,
+        ),
       );
     },
-    []
+    [],
   );
 
   // 开始流式响应
   const startStreaming = useCallback(
     async (
-      conversationId: string, 
+      conversationId: string,
       assistantMessageId: string,
-      userInput: string, 
+      userInput: string,
       actualContent: string,
-      promptTemplate?: string
+      promptTemplate?: string,
     ) => {
       console.log("🚀 开始流式请求:", {
         conversationId,
@@ -252,14 +282,15 @@ export function useStreamingConversation({
 
       // 为每个对话创建独立的 AbortController
       const conversationAbortController = new AbortController();
-      
+
       try {
         // 设置为思考状态
         updateMessageStatus(conversationId, assistantMessageId, "thinking");
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
         const token = getCookie("accessToken");
-        
+
         if (!token) {
           console.error("❌ 未找到访问令牌");
           throw new Error("未找到访问令牌，请重新登录");
@@ -269,7 +300,7 @@ export function useStreamingConversation({
         let requestUrl: string;
         let requestBody: any;
 
-        if (contentId && contentId.trim() !== '') {
+        if (contentId && contentId.trim() !== "") {
           // 有contentId：使用内容分析API
           requestUrl = `${apiUrl}/api/v1/content/${contentId}/completion-updated`;
           requestBody = {
@@ -277,24 +308,24 @@ export function useStreamingConversation({
             template_name: promptTemplate,
           };
         } else {
-          // 无contentId：使用通用聊天API
+          // 🎯 无contentId：使用通用聊天API，让后端根据AI_MODEL_CHAT配置选择模型
           requestUrl = `${apiUrl}/api/v1/chat/completions`;
           requestBody = {
-            messages: [
-              { role: "user", content: actualContent }
-            ],
-            model: process.env.NEXT_PUBLIC_AI_MODEL_CHAT || "gemini-flash-lite", // 使用环境变量配置的模型
+            messages: [{ role: "user", content: actualContent }],
+            // 移除前端的模型选择，让后端基于AI_MODEL_CHAT环境变量处理
             stream: true,
             temperature: 0.7,
             max_tokens: 8000,
           };
+          
+          console.log(`🤖 [Chat] 使用通用聊天API，后端将根据AI_MODEL_CHAT配置选择模型`);
         }
 
         console.log("📤 API请求参数:", {
           url: requestUrl,
           body: requestBody,
           hasToken: !!token,
-          isContentAnalysis: !!(contentId && contentId.trim() !== '')
+          isContentAnalysis: !!(contentId && contentId.trim() !== ""),
         });
 
         console.log("🌐 即将发送 fetch 请求...");
@@ -315,7 +346,9 @@ export function useStreamingConversation({
         if (!response.ok) {
           const errorText = await response.text();
           console.error("❌ API错误响应:", errorText);
-          throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+          throw new Error(
+            `HTTP ${response.status}: ${response.statusText} - ${errorText}`,
+          );
         }
 
         // 处理流式响应
@@ -327,7 +360,7 @@ export function useStreamingConversation({
         const decoder = new TextDecoder();
         let accumulatedContent = "";
         let hasStartedStreaming = false;
-        const isContentAnalysis = !!(contentId && contentId.trim() !== '');
+        const isContentAnalysis = !!(contentId && contentId.trim() !== "");
 
         while (true) {
           const { done, value } = await reader.read();
@@ -341,7 +374,11 @@ export function useStreamingConversation({
               // Vercel AI SDK Data Stream Protocol 格式
               // 第一次接收到内容时，切换到 streaming 状态
               if (!hasStartedStreaming) {
-                updateMessageStatus(conversationId, assistantMessageId, "streaming");
+                updateMessageStatus(
+                  conversationId,
+                  assistantMessageId,
+                  "streaming",
+                );
                 hasStartedStreaming = true;
               }
 
@@ -351,29 +388,41 @@ export function useStreamingConversation({
                   const jsonlLine = line.slice(2);
                   if (jsonlLine.trim()) {
                     accumulatedContent += jsonlLine + "\n";
-                    updateMessageContent(conversationId, assistantMessageId, accumulatedContent);
+                    updateMessageContent(
+                      conversationId,
+                      assistantMessageId,
+                      accumulatedContent,
+                    );
                   }
                 } else {
                   // 通用聊天：普通文本格式
                   const textContent = line.slice(2);
                   if (textContent.trim()) {
                     // 移除引号（因为是JSON字符串格式）
-                    const cleanText = textContent.replace(/^"(.*)"$/, '$1');
+                    const cleanText = textContent.replace(/^"(.*)"$/, "$1");
                     accumulatedContent += cleanText;
-                    updateMessageContent(conversationId, assistantMessageId, accumulatedContent);
+                    updateMessageContent(
+                      conversationId,
+                      assistantMessageId,
+                      accumulatedContent,
+                    );
                   }
                 }
               } catch (contentError) {
-                console.error("❌ 流式内容处理错误:", contentError, { 
-                  line, 
-                  isContentAnalysis, 
-                  conversationId, 
-                  assistantMessageId 
+                console.error("❌ 流式内容处理错误:", contentError, {
+                  line,
+                  isContentAnalysis,
+                  conversationId,
+                  assistantMessageId,
                 });
               }
             } else if (line.startsWith("8:")) {
               // 完成信号
-              updateMessageStatus(conversationId, assistantMessageId, "completed");
+              updateMessageStatus(
+                conversationId,
+                assistantMessageId,
+                "completed",
+              );
               break;
             } else if (line.startsWith("9:")) {
               // 错误信号
@@ -389,31 +438,41 @@ export function useStreamingConversation({
 
         // 确保最终状态是 completed
         updateMessageStatus(conversationId, assistantMessageId, "completed");
-
       } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') {
+        if (error instanceof Error && error.name === "AbortError") {
           // 用户取消了请求
           console.log("Request was aborted");
           return;
         }
 
-        const errorMessage = error instanceof Error ? error.message : "处理失败";
+        const errorMessage =
+          error instanceof Error ? error.message : "处理失败";
         console.error("Streaming failed:", error);
         setMessageError(conversationId, assistantMessageId, errorMessage);
         onError?.(errorMessage);
       }
     },
-    [contentId, updateMessageStatus, updateMessageContent, setMessageError, onError]
+    [
+      contentId,
+      updateMessageStatus,
+      updateMessageContent,
+      setMessageError,
+      onError,
+    ],
   );
 
   // 发送消息（立即创建对话卡片，然后开始流式响应）
   const sendMessage = useCallback(
-    async (userInput: string, promptTemplate?: string, metadata?: Record<string, any>) => {
+    async (
+      userInput: string,
+      promptTemplate?: string,
+      metadata?: Record<string, any>,
+    ) => {
       console.log("🎯 sendMessage 被调用:", {
         userInput,
         promptTemplate,
         metadata,
-        contentId
+        contentId,
       });
 
       if (!userInput.trim()) {
@@ -432,7 +491,7 @@ export function useStreamingConversation({
       console.log("📋 准备创建对话:", {
         conversationId,
         assistantMessageId,
-        actualContent: actualContent.substring(0, 100) + "..."
+        actualContent: actualContent.substring(0, 100) + "...",
       });
 
       // 🎯 优化：确保历史记录显示简洁内容
@@ -446,7 +505,7 @@ export function useStreamingConversation({
         // 如果是长文本且没有提供简洁版本，则截断显示
         displayContent = userInput.substring(0, 50) + "...";
       }
-      
+
       // 创建用户消息
       const userMessage: ConversationMessage = {
         id: userMessageId,
@@ -487,42 +546,50 @@ export function useStreamingConversation({
       };
 
       // 更新状态
-      setConversations(prev => {
+      setConversations((prev) => {
         const newConversations = [...prev, newConversation];
         console.log("📊 对话状态更新:", {
           previousCount: prev.length,
           newCount: newConversations.length,
           newConversationId: conversationId,
-          displayContent: displayContent
+          displayContent: displayContent,
         });
         return newConversations;
       });
       onConversationUpdate?.(newConversation);
 
       console.log("📋 对话卡片已创建，开始流式响应...", conversationId);
-      
+
       // 🎯 修复：直接调用 startStreaming，传递所有必要参数
       try {
         console.log("⏰ 立即开始流式响应...");
-        await startStreaming(conversationId, assistantMessageId, userInput, actualContent, promptTemplate);
+        await startStreaming(
+          conversationId,
+          assistantMessageId,
+          userInput,
+          actualContent,
+          promptTemplate,
+        );
       } catch (error) {
         console.error("❌ startStreaming 调用失败:", error);
       }
     },
-    [startStreaming, contentId, onConversationUpdate]
+    [startStreaming, contentId, onConversationUpdate],
   );
 
   // 重试消息
   const retryMessage = useCallback(
     async (messageId: string) => {
-      const conversation = conversations.find(c => 
-        c.messages.some(m => m.id === messageId)
+      const conversation = conversations.find((c) =>
+        c.messages.some((m) => m.id === messageId),
       );
-      
+
       if (!conversation) return;
 
-      const assistantMessage = conversation.messages.find(m => m.id === messageId);
-      const userMessage = conversation.messages.find(m => m.role === "user");
+      const assistantMessage = conversation.messages.find(
+        (m) => m.id === messageId,
+      );
+      const userMessage = conversation.messages.find((m) => m.role === "user");
 
       if (!assistantMessage || !userMessage) return;
 
@@ -531,7 +598,8 @@ export function useStreamingConversation({
       updateMessageContent(conversation.id, messageId, "");
 
       // 获取实际内容
-      const actualContent = userMessage.metadata?.actualPromptContent || userMessage.content;
+      const actualContent =
+        userMessage.metadata?.actualPromptContent || userMessage.content;
 
       // 重新开始流式响应
       await startStreaming(
@@ -539,19 +607,16 @@ export function useStreamingConversation({
         assistantMessage.id,
         userMessage.content,
         actualContent,
-        assistantMessage.metadata?.promptTemplate
+        assistantMessage.metadata?.promptTemplate,
       );
     },
-    [conversations, updateMessageStatus, updateMessageContent, startStreaming]
+    [conversations, updateMessageStatus, updateMessageContent, startStreaming],
   );
 
   // 删除对话
-  const deleteConversation = useCallback(
-    (conversationId: string) => {
-      setConversations(prev => prev.filter(c => c.id !== conversationId));
-    },
-    []
-  );
+  const deleteConversation = useCallback((conversationId: string) => {
+    setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+  }, []);
 
   // 取消当前处理
   const cancelCurrentProcessing = useCallback(() => {
@@ -565,17 +630,17 @@ export function useStreamingConversation({
     try {
       localStorage.removeItem(STORAGE_KEY);
       setConversations([]);
-      console.log('🗑️ 清除对话历史');
+      console.log("🗑️ 清除对话历史");
     } catch (error) {
-      console.error('❌ 清除对话历史失败:', error);
+      console.error("❌ 清除对话历史失败:", error);
     }
   }, [STORAGE_KEY]);
-  
+
   // 恢复特定对话
   const restoreConversation = useCallback((conversation: ConversationGroup) => {
-    setConversations(prev => {
+    setConversations((prev) => {
       // 检查是否已存在相同ID的对话
-      const existingIndex = prev.findIndex(c => c.id === conversation.id);
+      const existingIndex = prev.findIndex((c) => c.id === conversation.id);
       if (existingIndex >= 0) {
         // 更新现有对话
         const updated = [...prev];

@@ -466,7 +466,10 @@ def delete_content_item_sync(
 
         # 3. Delete content_segments (新的段落引用表)
         from app.models.segments import ContentSegment
-        session.execute(sa_delete(ContentSegment).where(ContentSegment.content_item_id == id))
+
+        session.execute(
+            sa_delete(ContentSegment).where(ContentSegment.content_item_id == id)
+        )
 
         # 4. Delete segments (child table)
         session.execute(sa_delete(Segment).where(Segment.content_item_id == id))

@@ -44,14 +44,12 @@ export function FavoriteButton({
   showLabel = false,
 }: FavoriteButtonProps) {
   const { data: favoriteIds = [], mutate } = useFavorites();
-  const [isFavorited, setIsFavorited] = useState(initialFavorited);
   const [isLoading, setIsLoading] = useState(false);
   const { t } = useTranslationUtils();
   const { user } = useAuth();
-  
-  // 对于块级收藏，需要检查特定的块是否被收藏
-  // 这里简化处理，实际应该有专门的hook来检查块级收藏状态
-  // const isFavorited = favoriteIds.includes(itemId); // This line is now redundant
+
+  // 检查是否已收藏 - 优先使用初始值，然后检查favoriteIds
+  const isFavorited = initialFavorited || favoriteIds.includes(itemId);
 
   const makeRequest = async (
     url: string,
@@ -68,11 +66,11 @@ export function FavoriteButton({
           "Content-Type": "application/json",
         },
       };
-      
+
       if (body) {
         options.body = JSON.stringify(body);
       }
-      
+
       const response = await fetch(url, options);
       return response;
     } catch (error) {
@@ -201,7 +199,7 @@ export function FavoriteButton({
       mutate();
     } catch (error) {
       console.error("收藏操作失败:", error);
-      
+
       if (error instanceof Error) {
         if (error.message.includes("401")) {
           toast.error(t("auth.sessionExpired"));
@@ -220,7 +218,7 @@ export function FavoriteButton({
         } else if (error.message.includes("500")) {
           toast.error(t("messages.serverError"));
         } else {
-          toast.error(`${t("messages.operationFailed")}: ${response.status}`);
+          toast.error(t("messages.operationFailed"));
         }
       } else {
         // 网络错误等其他类型错误
@@ -264,9 +262,13 @@ export function FavoriteButton({
         className,
       )}
       aria-label={
-        blockId 
-          ? (isFavorited ? t("favorites.unfavoriteBlock") : t("favorites.favoriteBlock"))
-          : (isFavorited ? t("favorites.removeFromFavorites") : t("favorites.addToFavorites"))
+        blockId
+          ? isFavorited
+            ? t("favorites.unfavoriteBlock")
+            : t("favorites.favoriteBlock")
+          : isFavorited
+            ? t("favorites.removeFromFavorites")
+            : t("favorites.addToFavorites")
       }
       tabIndex={0}
     >

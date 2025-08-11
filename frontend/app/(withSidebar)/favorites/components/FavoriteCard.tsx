@@ -2,11 +2,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   Link,
   Star,
   Clock,
@@ -58,7 +53,7 @@ interface Props {
   onCardHover: (item: FavoriteItemData | null) => void;
 }
 
-const getContentIcon = (type: string) => {
+const getContentIcon = () => {
   return <TwitchLogo size={20} weight="bold" />;
 };
 
@@ -83,9 +78,7 @@ const StarRating = ({ score }: { score: number }) => {
           }`}
         />
       ))}
-      <span className="text-xs text-neutral-500 ml-1">
-        {ratingScore}
-      </span>
+      <span className="text-xs text-neutral-500 ml-1">{ratingScore}</span>
     </div>
   );
 };
@@ -157,7 +150,7 @@ export const FavoriteCard = ({
         <div className="flex items-start gap-2 flex-1 min-w-0">
           {/* 内容类型图标 */}
           <div className="w-10 h-10 rounded-lg bg-transparent flex items-center justify-center">
-            {getContentIcon(content_item.type)}
+            {getContentIcon()}
           </div>
 
           <div className="flex-1 min-w-0 space-y-2">
@@ -263,7 +256,7 @@ export const FavoriteCard = ({
                     <StarRating score={aiResult.content_quality_score!} />
                   </div>
                 )}
-                
+
                 {/* 处理状态 */}
                 <ProcessingStatusBadge
                   status={

@@ -78,20 +78,11 @@ export function JsonlRenderer({
   }>({
     isReady: !enableDelayedRendering,
     isLoading: false,
-    blocks: []
+    blocks: [],
   });
-  
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const contentRef = useRef<string>('');
 
-  if (!content) {
-    return (
-      <div
-        data-testid="jsonl-renderer"
-        className={cn("space-y-1", className)}
-      />
-    );
-  }
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const contentRef = useRef<string>("");
 
   // 统一的内容处理逻辑 - 消除状态冲突
   useEffect(() => {
@@ -107,11 +98,11 @@ export function JsonlRenderer({
     }
 
     // 如果内容为空，直接设为就绪状态
-    if (!content.trim()) {
+    if (!content || !content.trim()) {
       setRenderState({
         isReady: true,
         isLoading: false,
-        blocks: []
+        blocks: [],
       });
       return;
     }
@@ -127,20 +118,20 @@ export function JsonlRenderer({
         setRenderState({
           isReady: true,
           isLoading: false,
-          blocks: []
+          blocks: [],
         });
         return;
       }
 
       const results: Record<string, unknown>[] = [];
-      
-      lines.forEach(line => {
+
+      lines.forEach((line) => {
         try {
           // 简化的JSON修复
           let sanitized = line.trim();
-          if (!sanitized.startsWith('{')) sanitized = '{' + sanitized;
-          if (!sanitized.endsWith('}')) sanitized = sanitized + '}';
-          
+          if (!sanitized.startsWith("{")) sanitized = "{" + sanitized;
+          if (!sanitized.endsWith("}")) sanitized = sanitized + "}";
+
           const parsed = JSON.parse(sanitized) as Record<string, unknown>;
           results.push(parsed);
         } catch {
@@ -155,23 +146,26 @@ export function JsonlRenderer({
         setRenderState({
           isReady: false,
           isLoading: true,
-          blocks: results
+          blocks: results,
         });
 
         // 延迟显示内容
-        timeoutRef.current = setTimeout(() => {
-          setRenderState({
-            isReady: true,
-            isLoading: false,
-            blocks: results
-          });
-        }, Math.min(renderDelay, 200));
+        timeoutRef.current = setTimeout(
+          () => {
+            setRenderState({
+              isReady: true,
+              isLoading: false,
+              blocks: results,
+            });
+          },
+          Math.min(renderDelay, 200),
+        );
       } else {
         // 立即显示
         setRenderState({
           isReady: true,
           isLoading: false,
-          blocks: results
+          blocks: results,
         });
       }
     };
@@ -186,16 +180,23 @@ export function JsonlRenderer({
     };
   }, [content, enableDelayedRendering, renderDelay]);
 
-  // 如果启用延迟渲染且内容未准备好，显示骨架屏
-  if (enableDelayedRendering && !renderState.isReady) {
+  // Early return for empty content
+  if (!content) {
     return (
       <div
         data-testid="jsonl-renderer"
         className={cn("space-y-1", className)}
-      >
-        <ContentSkeleton 
-          variant="simple" 
-          blocks={3} 
+      />
+    );
+  }
+
+  // 如果启用延迟渲染且内容未准备好，显示骨架屏
+  if (enableDelayedRendering && !renderState.isReady) {
+    return (
+      <div data-testid="jsonl-renderer" className={cn("space-y-1", className)}>
+        <ContentSkeleton
+          variant="simple"
+          blocks={3}
           animated={true}
           className="!p-0"
         />
@@ -207,7 +208,9 @@ export function JsonlRenderer({
     const ref = block["ref"] as string | undefined;
 
     // 解析引用
-    const references = actions?.parseReferences ? actions.parseReferences(ref) : [];
+    const references = actions?.parseReferences
+      ? actions.parseReferences(ref)
+      : [];
 
     const renderResult = styleRenderer({
       block,
@@ -251,10 +254,8 @@ export function JsonlRenderer({
         <div className="relative">
           {/* 🎯 修复：将引用指示器直接嵌入内容中，而不是放在rightActions */}
           <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              {renderResult.element}
-            </div>
-            
+            <div className="flex-1 min-w-0">{renderResult.element}</div>
+
             {/* 🎯 现代化引用指示器：点击触发，不自动悬浮 */}
             {(references || []).length > 0 && showReferenceIndicators && (
               <ModernReferenceIndicator

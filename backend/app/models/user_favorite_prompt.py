@@ -1,4 +1,3 @@
-
 import uuid
 from datetime import datetime
 
@@ -12,4 +11,3 @@ class UserFavoritePrompt(SQLModel, table=True):
     user_id: uuid.UUID = Field(foreign_key="user.id")
     prompt_id: uuid.UUID = Field(foreign_key="prompts.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
-

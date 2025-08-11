@@ -35,6 +35,11 @@ from .image import (
     PresignedURLRequest,
     PresignedURLResponse,
 )
+from .user_favorite_prompt import (
+    UserFavoritePrompt,
+    UserFavoritePromptCreate,
+    UserFavoritePromptUpdate,
+)
 
 # You would also export other schemas from other files here
 # For example, if you have user schemas in a user.py file:
@@ -68,5 +73,8 @@ __all__ = [
     "FavoriteBlockPublic",
     "FavoriteBlockWithContent",
     "FavoriteBlockListResponse",
+    "UserFavoritePrompt",
+    "UserFavoritePromptCreate",
+    "UserFavoritePromptUpdate",
     # Add other schema names here as you create/import them
 ]

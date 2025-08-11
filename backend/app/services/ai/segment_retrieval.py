@@ -42,7 +42,7 @@ class SegmentRetrievalService:
         # Get query embedding
         query_embedding = await get_embedding(query)
 
-        # Build base query
+        # Build base query with explicit column selection
         base_query = select(Segment)
 
         if content_item_id:
@@ -59,9 +59,11 @@ class SegmentRetrievalService:
 
             results = []
             for segment in segments_with_vectors:
-                if segment.content_vector:
+                # Safely check if content_vector exists and is not None
+                content_vector = getattr(segment, 'content_vector', None)
+                if content_vector:
                     similarity = self._calculate_cosine_similarity(
-                        query_embedding, segment.content_vector
+                        query_embedding, content_vector
                     )
                     if similarity >= similarity_threshold:
                         results.append((segment, similarity))

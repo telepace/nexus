@@ -177,7 +177,9 @@ class TagManager:
                     continue
         return tags
 
-    def filter_and_match_preset_tags(self, ai_generated_tags: list[str], output_language: str = "zh") -> list[str]:
+    def filter_and_match_preset_tags(
+        self, ai_generated_tags: list[str], output_language: str = "zh"
+    ) -> list[str]:
         """
         过滤和匹配AI生成的标签到预设标签
 
@@ -189,16 +191,18 @@ class TagManager:
             List[str]: 匹配后的标签列表（语言与output_language一致）
         """
         preset_tags = self.load_preset_tags()
-        
+
         # 判断是否为英文输出
         is_english_output = output_language.lower() in ["english", "en"]
-        
+
         if is_english_output:
             return self._match_tags_for_english_output(ai_generated_tags, preset_tags)
         else:
             return self._match_tags_for_chinese_output(ai_generated_tags, preset_tags)
 
-    def _match_tags_for_english_output(self, ai_generated_tags: list[str], preset_tags: list[dict]) -> list[str]:
+    def _match_tags_for_english_output(
+        self, ai_generated_tags: list[str], preset_tags: list[dict]
+    ) -> list[str]:
         """为英文输出匹配标签"""
         preset_names = {tag["name"] for tag in preset_tags}
         preset_names_en = {
@@ -235,11 +239,11 @@ class TagManager:
                 # 检查AI标签是否包含在预设标签中，或者预设标签包含在AI标签中
                 if (
                     preset_name_en
-                    and (ai_tag.lower() in preset_name_en.lower() or preset_name_en.lower() in ai_tag.lower())
-                ) or (
-                    ai_tag in preset_name
-                    or preset_name in ai_tag
-                ):
+                    and (
+                        ai_tag.lower() in preset_name_en.lower()
+                        or preset_name_en.lower() in ai_tag.lower()
+                    )
+                ) or (ai_tag in preset_name or preset_name in ai_tag):
                     # 优先使用英文名称
                     tag_to_use = preset_tag.get("name_en", preset_tag["name"])
                     matched_tags.append(tag_to_use)
@@ -263,7 +267,9 @@ class TagManager:
         )
         return unique_matched_tags
 
-    def _match_tags_for_chinese_output(self, ai_generated_tags: list[str], preset_tags: list[dict]) -> list[str]:
+    def _match_tags_for_chinese_output(
+        self, ai_generated_tags: list[str], preset_tags: list[dict]
+    ) -> list[str]:
         """为中文输出匹配标签（保持原有逻辑）"""
         preset_names = {tag["name"] for tag in preset_tags}
         preset_names_en = {
@@ -302,7 +308,10 @@ class TagManager:
                     or preset_name in ai_tag
                     or (
                         preset_name_en
-                        and (ai_tag.lower() in preset_name_en.lower() or preset_name_en.lower() in ai_tag.lower())
+                        and (
+                            ai_tag.lower() in preset_name_en.lower()
+                            or preset_name_en.lower() in ai_tag.lower()
+                        )
                     )
                 ):
                     matched_tags.append(preset_name)

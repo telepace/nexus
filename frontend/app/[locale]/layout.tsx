@@ -1,6 +1,6 @@
-import { notFound } from 'next/navigation';
-import { I18nProvider } from '@/components/providers/I18nProvider';
-import { locales, type Locale } from '@/lib/i18n-config';
+import { notFound } from "next/navigation";
+import { I18nProvider } from "@/components/providers/I18nProvider";
+import { locales, type Locale } from "@/lib/i18n-config";
 
 interface LocaleLayoutProps {
   children: React.ReactNode;
@@ -13,18 +13,16 @@ export async function generateStaticParams() {
 
 export default async function LocaleLayout({
   children,
-  params
+  params,
 }: LocaleLayoutProps) {
   const { locale } = await params;
-  
+
   // Validate that the incoming `locale` parameter is valid
   if (!locales.includes(locale as Locale)) {
     notFound();
   }
 
   return (
-    <I18nProvider initialLocale={locale as Locale}>
-      {children}
-    </I18nProvider>
+    <I18nProvider initialLocale={locale as Locale}>{children}</I18nProvider>
   );
 }

@@ -3,7 +3,10 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useReferenceManagerSafe, type EnhancedReferenceInfo } from "./ReferenceManager";
+import {
+  useReferenceManagerSafe,
+  type EnhancedReferenceInfo,
+} from "./ReferenceManager";
 import { Card, CardContent, CardHeader } from "./card";
 import { Badge } from "./badge";
 import { Skeleton } from "./skeleton";
@@ -15,39 +18,42 @@ interface ElegantReferenceTooltipProps {
   children: React.ReactElement;
   delay?: number;
   maxLength?: number;
-  position?: 'auto' | 'top' | 'bottom' | 'left' | 'right';
+  position?: "auto" | "top" | "bottom" | "left" | "right";
   className?: string;
   onReferenceLoad?: (info: EnhancedReferenceInfo) => void;
   onError?: (error: Error) => void;
 }
 
-type LoadingState = 'idle' | 'loading' | 'success' | 'error';
+type LoadingState = "idle" | "loading" | "success" | "error";
 
 /**
  * 🎨 优雅的引用悬浮卡片
- * 
+ *
  * 设计理念：
  * - 类似Medium/Notion的优雅悬浮卡片
  * - 渐变背景、阴影、动画效果
  * - 内容预览和元信息展示
  * - 响应式设计，适配不同屏幕
  */
-export const ElegantReferenceTooltip: React.FC<ElegantReferenceTooltipProps> = ({
+export const ElegantReferenceTooltip: React.FC<
+  ElegantReferenceTooltipProps
+> = ({
   refId,
   contentId,
   children,
   delay = 300,
   maxLength = 200,
-  position = 'auto',
+  position = "auto",
   className,
   onReferenceLoad,
   onError,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [loadingState, setLoadingState] = useState<LoadingState>('idle');
-  const [referenceInfo, setReferenceInfo] = useState<EnhancedReferenceInfo | null>(null);
+  const [loadingState, setLoadingState] = useState<LoadingState>("idle");
+  const [referenceInfo, setReferenceInfo] =
+    useState<EnhancedReferenceInfo | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
-  
+
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -55,25 +61,33 @@ export const ElegantReferenceTooltip: React.FC<ElegantReferenceTooltipProps> = (
 
   // 加载引用数据
   const loadReferenceData = useCallback(async () => {
-    if (loadingState === 'loading' || referenceInfo) return;
-    
-    setLoadingState('loading');
-    
+    if (loadingState === "loading" || referenceInfo) return;
+
+    setLoadingState("loading");
+
     try {
       const info = await actions.getEnhancedReferenceInfo(refId, contentId);
       if (info) {
         setReferenceInfo(info);
-        setLoadingState('success');
+        setLoadingState("success");
         onReferenceLoad?.(info);
       } else {
-        setLoadingState('error');
+        setLoadingState("error");
       }
     } catch (error) {
-      console.error('加载引用信息失败:', error);
-      setLoadingState('error');
+      console.error("加载引用信息失败:", error);
+      setLoadingState("error");
       onError?.(error as Error);
     }
-  }, [refId, contentId, loadingState, referenceInfo, actions, onReferenceLoad, onError]);
+  }, [
+    refId,
+    contentId,
+    loadingState,
+    referenceInfo,
+    actions,
+    onReferenceLoad,
+    onError,
+  ]);
 
   // 计算悬浮卡片位置
   const calculatePosition = useCallback(() => {
@@ -83,26 +97,26 @@ export const ElegantReferenceTooltip: React.FC<ElegantReferenceTooltipProps> = (
     const tooltipRect = tooltipRef.current.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    
+
     let top = triggerRect.bottom + 8;
     let left = triggerRect.left;
-    
+
     // 智能位置调整
-    if (position === 'auto') {
+    if (position === "auto") {
       // 右侧空间不足时，右对齐
       if (left + tooltipRect.width > viewportWidth - 16) {
         left = triggerRect.right - tooltipRect.width;
       }
-      
+
       // 下方空间不足时，显示在上方
       if (top + tooltipRect.height > viewportHeight - 16) {
         top = triggerRect.top - tooltipRect.height - 8;
       }
-      
+
       // 确保不超出左边界
       left = Math.max(16, left);
     }
-    
+
     setTooltipPosition({ top, left });
   }, [position]);
 
@@ -111,7 +125,7 @@ export const ElegantReferenceTooltip: React.FC<ElegantReferenceTooltipProps> = (
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    
+
     timeoutRef.current = setTimeout(() => {
       setIsVisible(true);
       loadReferenceData();
@@ -123,7 +137,7 @@ export const ElegantReferenceTooltip: React.FC<ElegantReferenceTooltipProps> = (
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    
+
     // 短暂延迟后隐藏，允许用户移动到卡片上
     timeoutRef.current = setTimeout(() => {
       setIsVisible(false);
@@ -155,16 +169,16 @@ export const ElegantReferenceTooltip: React.FC<ElegantReferenceTooltipProps> = (
   useEffect(() => {
     if (isVisible) {
       calculatePosition();
-      
+
       const handleResize = () => calculatePosition();
       const handleScroll = () => calculatePosition();
-      
-      window.addEventListener('resize', handleResize);
-      window.addEventListener('scroll', handleScroll, true);
-      
+
+      window.addEventListener("resize", handleResize);
+      window.addEventListener("scroll", handleScroll, true);
+
       return () => {
-        window.removeEventListener('resize', handleResize);
-        window.removeEventListener('scroll', handleScroll, true);
+        window.removeEventListener("resize", handleResize);
+        window.removeEventListener("scroll", handleScroll, true);
       };
     }
   }, [isVisible, calculatePosition]);
@@ -174,7 +188,7 @@ export const ElegantReferenceTooltip: React.FC<ElegantReferenceTooltipProps> = (
     ref: (el: HTMLElement) => {
       triggerRef.current = el;
       // 保持原有的ref
-      if (typeof children.ref === 'function') {
+      if (typeof children.ref === "function") {
         children.ref(el);
       } else if (children.ref) {
         children.ref.current = el;
@@ -194,7 +208,7 @@ export const ElegantReferenceTooltip: React.FC<ElegantReferenceTooltipProps> = (
   return (
     <>
       {trigger}
-      
+
       <AnimatePresence>
         {isVisible && (
           <>
@@ -204,9 +218,9 @@ export const ElegantReferenceTooltip: React.FC<ElegantReferenceTooltipProps> = (
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-40 pointer-events-none"
-              style={{ backgroundColor: 'rgba(0, 0, 0, 0.02)' }}
+              style={{ backgroundColor: "rgba(0, 0, 0, 0.02)" }}
             />
-            
+
             {/* 悬浮卡片 */}
             <motion.div
               ref={tooltipRef}
@@ -217,7 +231,7 @@ export const ElegantReferenceTooltip: React.FC<ElegantReferenceTooltipProps> = (
                 type: "spring",
                 damping: 20,
                 stiffness: 300,
-                duration: 0.2
+                duration: 0.2,
               }}
               className="fixed z-50 pointer-events-auto"
               style={{
@@ -230,7 +244,7 @@ export const ElegantReferenceTooltip: React.FC<ElegantReferenceTooltipProps> = (
               <Card className="w-80 max-w-[calc(100vw-2rem)] shadow-2xl border-0 overflow-hidden">
                 {/* 渐变背景 */}
                 <div className="absolute inset-0 bg-gradient-to-br from-white via-gray-50/80 to-blue-50/60 dark:from-gray-900 dark:via-gray-800/80 dark:to-blue-900/20" />
-                
+
                 {/* 内容区域 */}
                 <div className="relative">
                   <CardHeader className="pb-3">
@@ -241,8 +255,8 @@ export const ElegantReferenceTooltip: React.FC<ElegantReferenceTooltipProps> = (
                           引用 #{refId}
                         </span>
                       </div>
-                      
-                      {loadingState === 'success' && referenceInfo && (
+
+                      {loadingState === "success" && referenceInfo && (
                         <div className="flex items-center gap-2">
                           {referenceInfo.isFromCache && (
                             <Badge variant="secondary" className="text-xs">
@@ -253,9 +267,9 @@ export const ElegantReferenceTooltip: React.FC<ElegantReferenceTooltipProps> = (
                         </div>
                       )}
                     </div>
-                    
+
                     {/* 位置信息 */}
-                    {loadingState === 'success' && referenceInfo?.position && (
+                    {loadingState === "success" && referenceInfo?.position && (
                       <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                         {referenceInfo.position.chapter && (
                           <Badge variant="outline" className="text-xs">
@@ -266,40 +280,42 @@ export const ElegantReferenceTooltip: React.FC<ElegantReferenceTooltipProps> = (
                       </div>
                     )}
                   </CardHeader>
-                  
+
                   <CardContent className="pt-0">
                     {/* 内容区域 */}
-                    {loadingState === 'loading' && (
+                    {loadingState === "loading" && (
                       <div className="space-y-3">
                         <Skeleton className="h-4 w-full" />
                         <Skeleton className="h-4 w-4/5" />
                         <Skeleton className="h-4 w-3/5" />
                       </div>
                     )}
-                    
-                    {loadingState === 'error' && (
+
+                    {loadingState === "error" && (
                       <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm">
                         <span>⚠️</span>
                         <span>暂时无法加载引用内容</span>
                       </div>
                     )}
-                    
-                    {loadingState === 'success' && referenceInfo && (
+
+                    {loadingState === "success" && referenceInfo && (
                       <div className="space-y-3">
                         {/* 主要内容 */}
                         <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                          {referenceInfo.content && referenceInfo.content.length > maxLength
+                          {referenceInfo.content &&
+                          referenceInfo.content.length > maxLength
                             ? `${referenceInfo.content.substring(0, maxLength)}...`
-                            : (referenceInfo.content || referenceInfo.snippet)
-                          }
+                            : referenceInfo.content || referenceInfo.snippet}
                         </div>
-                        
+
                         {/* 元信息 */}
                         {referenceInfo.metadata && (
                           <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-700">
                             <div className="flex items-center gap-3">
                               {referenceInfo.metadata.wordCount && (
-                                <span>{referenceInfo.metadata.wordCount} 字</span>
+                                <span>
+                                  {referenceInfo.metadata.wordCount} 字
+                                </span>
                               )}
                               {referenceInfo.loadedAt && (
                                 <div className="flex items-center gap-1">
@@ -308,7 +324,7 @@ export const ElegantReferenceTooltip: React.FC<ElegantReferenceTooltipProps> = (
                                 </div>
                               )}
                             </div>
-                            
+
                             <ExternalLink className="w-3 h-3 text-blue-600 dark:text-blue-400 cursor-pointer hover:text-blue-800 dark:hover:text-blue-200 transition-colors" />
                           </div>
                         )}
@@ -316,7 +332,7 @@ export const ElegantReferenceTooltip: React.FC<ElegantReferenceTooltipProps> = (
                     )}
                   </CardContent>
                 </div>
-                
+
                 {/* 装饰性底部渐变 */}
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-60" />
               </Card>

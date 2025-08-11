@@ -112,7 +112,7 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
   const [newTagColor, setNewTagColor] = useState("#3B82F6");
   const [creatingTag, setCreatingTag] = useState(false);
 
-  const { t, tPlural } = useTranslationUtils();
+  const { tPlural } = useTranslationUtils();
 
   // 解析内容中的变量
   const parseVariablesFromContent = useCallback((contentText: string) => {
@@ -664,8 +664,11 @@ export function PromptForm({ tags, prompt, actionToCall }: PromptFormProps) {
             </p>
             {parseVariablesFromContent(content).length > 0 && (
               <div className="text-sm text-muted-foreground mt-2">
-                {tPlural("detection.variablesDetected", parseVariablesFromContent(content).length)}:{" "}
-                {parseVariablesFromContent(content).join(", ")}
+                {tPlural(
+                  "detection.variablesDetected",
+                  parseVariablesFromContent(content).length,
+                )}
+                : {parseVariablesFromContent(content).join(", ")}
               </div>
             )}
           </div>

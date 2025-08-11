@@ -31,16 +31,16 @@ export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
     // Cache the locale detection logic
     const detectLocale = () => {
       const stored = localStorage.getItem("preferred-language");
-      if (stored && languages.some(lang => lang.code === stored)) {
+      if (stored && languages.some((lang) => lang.code === stored)) {
         return stored;
       }
-      
+
       // Try to detect from pathname
       const pathLocale = pathname.split("/")[1];
-      if (languages.some(lang => lang.code === pathLocale)) {
+      if (languages.some((lang) => lang.code === pathLocale)) {
         return pathLocale;
       }
-      
+
       // If no locale in path, assume English (root path)
       return "en";
     };
@@ -53,19 +53,22 @@ export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
     // Store preference
     localStorage.setItem("preferred-language", locale);
     setCurrentLocale(locale);
-    
+
     // Navigate to the same page with new locale
     const segments = pathname.split("/").filter(Boolean);
-    
+
     // Remove current locale if it exists (for non-English languages)
-    if (languages.some(lang => lang.code === segments[0] && lang.code !== 'en')) {
+    if (
+      languages.some((lang) => lang.code === segments[0] && lang.code !== "en")
+    ) {
       segments.shift();
     }
-    
+
     // Generate new path based on locale
-    const pathWithoutLocale = segments.length > 0 ? `/${segments.join("/")}` : "";
-    
-    if (locale === 'en') {
+    const pathWithoutLocale =
+      segments.length > 0 ? `/${segments.join("/")}` : "";
+
+    if (locale === "en") {
       // For English, use root path
       const newPath = pathWithoutLocale || "/";
       router.push(newPath);
@@ -76,14 +79,15 @@ export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
     }
   };
 
-  const currentLanguage = languages.find(lang => lang.code === currentLocale) || languages[0];
+  const currentLanguage =
+    languages.find((lang) => lang.code === currentLocale) || languages[0];
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <Button
+          variant="ghost"
+          size="sm"
           className={cn("gap-2 h-8 px-2", className)}
         >
           <Globe className="h-4 w-4" />
@@ -97,11 +101,13 @@ export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
             onClick={() => handleLanguageChange(language.code)}
             className={cn(
               "flex items-center gap-2 cursor-pointer",
-              currentLocale === language.code && "bg-accent"
+              currentLocale === language.code && "bg-accent",
             )}
           >
             <span className="text-sm font-medium">{language.nativeName}</span>
-            <span className="text-xs text-muted-foreground">{language.name}</span>
+            <span className="text-xs text-muted-foreground">
+              {language.name}
+            </span>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

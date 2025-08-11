@@ -31,14 +31,16 @@ export interface ReferenceInfo {
 
 // 增强的引用信息 - 用于tooltip显示
 export interface EnhancedReferenceInfo extends ReferenceInfo {
-  content: string;           // 完整内容
-  title?: string;           // 章节标题
-  position?: {             // 位置信息
+  content: string; // 完整内容
+  title?: string; // 章节标题
+  position?: {
+    // 位置信息
     chapter?: string;
     section?: string;
     index: number;
   };
-  context?: {              // 上下文信息
+  context?: {
+    // 上下文信息
     before?: string;
     after?: string;
   };
@@ -47,8 +49,8 @@ export interface EnhancedReferenceInfo extends ReferenceInfo {
     chunkId?: string;
     lastUpdated?: Date;
   };
-  isFromCache?: boolean;    // 标识数据来源
-  loadedAt?: Date;         // 数据加载时间
+  isFromCache?: boolean; // 标识数据来源
+  loadedAt?: Date; // 数据加载时间
 }
 
 // 引用管理器状态
@@ -68,8 +70,14 @@ interface ReferenceManagerActions {
   parseReferences: (refString?: string) => number[];
   getReferenceInfo: (refId: number) => ReferenceInfo | undefined;
   // 新增增强方法
-  getEnhancedReferenceInfo: (refId: number, contentId?: string) => Promise<EnhancedReferenceInfo | null>;
-  getReferenceContext: (refId: number, contextSize?: number) => Promise<{ before?: string; after?: string } | null>;
+  getEnhancedReferenceInfo: (
+    refId: number,
+    contentId?: string,
+  ) => Promise<EnhancedReferenceInfo | null>;
+  getReferenceContext: (
+    refId: number,
+    contextSize?: number,
+  ) => Promise<{ before?: string; after?: string } | null>;
   formatReferenceContent: (content: string, maxLength?: number) => string;
 }
 
@@ -127,7 +135,9 @@ export const useReferenceManagerSafe = () => {
             snippet: `第${refId}段内容摘要...`,
           };
         },
-        getEnhancedReferenceInfo: async (refId: number): Promise<EnhancedReferenceInfo | null> => {
+        getEnhancedReferenceInfo: async (
+          refId: number,
+        ): Promise<EnhancedReferenceInfo | null> => {
           // 降级的模拟数据
           return {
             refId,
@@ -142,7 +152,9 @@ export const useReferenceManagerSafe = () => {
         },
         getReferenceContext: async () => null,
         formatReferenceContent: (content: string, maxLength: number = 200) => {
-          return content.length > maxLength ? content.substring(0, maxLength) + '...' : content;
+          return content.length > maxLength
+            ? content.substring(0, maxLength) + "..."
+            : content;
         },
       },
     };
@@ -191,8 +203,12 @@ export const ReferenceManagerProvider: React.FC<
         return;
       } catch (apiError) {
         const errorMessage = (apiError as Error).message;
-        const isServerError = errorMessage.includes('HTTP 5') || (apiError as any)?.status >= 500;
-        console.warn(`API ${isServerError ? 'server error' : 'not available'}, using mock data:`, apiError);
+        const isServerError =
+          errorMessage.includes("HTTP 5") || (apiError as any)?.status >= 500;
+        console.warn(
+          `API ${isServerError ? "server error" : "not available"}, using mock data:`,
+          apiError,
+        );
       }
 
       // 回退到模拟数据
@@ -373,72 +389,86 @@ export const ReferenceManagerProvider: React.FC<
   const formatReferenceContent = useCallback(
     (content: string, maxLength: number = 200): string => {
       if (content.length <= maxLength) return content;
-      
+
       // 智能截断：尝试在句号、逗号或空格处截断
       const truncated = content.substring(0, maxLength);
       const lastPunctuation = Math.max(
-        truncated.lastIndexOf('。'),
-        truncated.lastIndexOf('，'),
-        truncated.lastIndexOf('. '),
-        truncated.lastIndexOf(', ')
+        truncated.lastIndexOf("。"),
+        truncated.lastIndexOf("，"),
+        truncated.lastIndexOf(". "),
+        truncated.lastIndexOf(", "),
       );
-      
+
       if (lastPunctuation > maxLength * 0.7) {
         return truncated.substring(0, lastPunctuation + 1);
       }
-      
+
       // 如果没有合适的标点，在最后一个空格处截断
-      const lastSpace = truncated.lastIndexOf(' ');
+      const lastSpace = truncated.lastIndexOf(" ");
       if (lastSpace > maxLength * 0.8) {
-        return truncated.substring(0, lastSpace) + '...';
+        return truncated.substring(0, lastSpace) + "...";
       }
-      
-      return truncated + '...';
+
+      return truncated + "...";
     },
-    []
+    [],
   );
 
   // 获取引用上下文
   const getReferenceContext = useCallback(
-    async (refId: number, contextSize: number = 2): Promise<{ before?: string; after?: string } | null> => {
+    async (
+      refId: number,
+      contextSize: number = 2,
+    ): Promise<{ before?: string; after?: string } | null> => {
       try {
         // 从当前段落集合中获取上下文
-        const currentIndex = state.sourceParagraphs.findIndex(p => p.index === refId);
+        const currentIndex = state.sourceParagraphs.findIndex(
+          (p) => p.index === refId,
+        );
         if (currentIndex === -1) return null;
 
         const beforeParagraphs = state.sourceParagraphs
           .slice(Math.max(0, currentIndex - contextSize), currentIndex)
-          .map(p => p.content.substring(0, 100))
-          .join(' ... ');
+          .map((p) => p.content.substring(0, 100))
+          .join(" ... ");
 
         const afterParagraphs = state.sourceParagraphs
-          .slice(currentIndex + 1, Math.min(state.sourceParagraphs.length, currentIndex + 1 + contextSize))
-          .map(p => p.content.substring(0, 100))
-          .join(' ... ');
+          .slice(
+            currentIndex + 1,
+            Math.min(
+              state.sourceParagraphs.length,
+              currentIndex + 1 + contextSize,
+            ),
+          )
+          .map((p) => p.content.substring(0, 100))
+          .join(" ... ");
 
         return {
           before: beforeParagraphs || undefined,
           after: afterParagraphs || undefined,
         };
       } catch (error) {
-        console.error('获取引用上下文失败:', error);
+        console.error("获取引用上下文失败:", error);
         return null;
       }
     },
-    [state.sourceParagraphs]
+    [state.sourceParagraphs],
   );
 
   // 获取增强的引用信息
   const getEnhancedReferenceInfo = useCallback(
-    async (refId: number, contentId?: string): Promise<EnhancedReferenceInfo | null> => {
+    async (
+      refId: number,
+      contentId?: string,
+    ): Promise<EnhancedReferenceInfo | null> => {
       try {
         // 1. 优先从本地状态获取
-        const paragraph = state.sourceParagraphs.find(p => p.index === refId);
-        
+        const paragraph = state.sourceParagraphs.find((p) => p.index === refId);
+
         if (paragraph) {
           // 从本地数据构建增强信息
           const context = await getReferenceContext(refId);
-          
+
           return {
             refId,
             paragraphId: paragraph.id,
@@ -463,11 +493,14 @@ export const ReferenceManagerProvider: React.FC<
         if (contentId) {
           try {
             const { referenceApi } = await import("@/lib/api/reference");
-            const apiParagraph = await referenceApi.getParagraphByRef(contentId, refId);
-            
+            const apiParagraph = await referenceApi.getParagraphByRef(
+              contentId,
+              refId,
+            );
+
             if (apiParagraph) {
               const context = await getReferenceContext(refId);
-              
+
               return {
                 refId,
                 paragraphId: apiParagraph.id,
@@ -488,7 +521,7 @@ export const ReferenceManagerProvider: React.FC<
               };
             }
           } catch (apiError) {
-            console.warn('API获取引用信息失败，使用降级方案:', apiError);
+            console.warn("API获取引用信息失败，使用降级方案:", apiError);
           }
         }
 
@@ -502,7 +535,7 @@ export const ReferenceManagerProvider: React.FC<
           position: {
             index: refId,
             chapter: `第${Math.floor(refId / 5) + 1}章`,
-            section: `第${refId % 5 + 1}节`,
+            section: `第${(refId % 5) + 1}节`,
           },
           metadata: {
             wordCount: 120,
@@ -510,13 +543,12 @@ export const ReferenceManagerProvider: React.FC<
           isFromCache: false,
           loadedAt: new Date(),
         };
-
       } catch (error) {
-        console.error('获取增强引用信息失败:', error);
+        console.error("获取增强引用信息失败:", error);
         return null;
       }
     },
-    [state.sourceParagraphs, getReferenceContext, formatReferenceContent]
+    [state.sourceParagraphs, getReferenceContext, formatReferenceContent],
   );
 
   // 自动加载内容段落

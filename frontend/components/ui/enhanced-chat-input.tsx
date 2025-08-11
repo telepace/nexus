@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Send, 
-  Loader2, 
-  Paperclip, 
-  Smile, 
-  Mic, 
+import {
+  Send,
+  Loader2,
+  Paperclip,
+  Smile,
+  Mic,
   Square,
-  CornerDownLeft 
+  CornerDownLeft,
 } from "lucide-react";
 
 interface EnhancedChatInputProps {
@@ -116,11 +116,11 @@ export function EnhancedChatInput({
     <Card
       className={cn(
         "relative border-2 transition-all duration-200",
-        isFocused 
-          ? "border-primary shadow-md" 
+        isFocused
+          ? "border-primary shadow-md"
           : "border-muted-foreground/20 hover:border-muted-foreground/40",
         disabled && "opacity-50 cursor-not-allowed",
-        className
+        className,
       )}
     >
       <div className="p-3 space-y-3">
@@ -139,7 +139,7 @@ export function EnhancedChatInput({
               "min-h-[44px] resize-none border-0 bg-transparent",
               "focus-visible:ring-0 focus-visible:ring-offset-0",
               "placeholder:text-muted-foreground/60",
-              !multiline && "overflow-hidden"
+              !multiline && "overflow-hidden",
             )}
             style={{ height: multiline ? "auto" : "44px" }}
           />
@@ -153,7 +153,7 @@ export function EnhancedChatInput({
               className={cn(
                 "h-8 w-8 p-0 rounded-full",
                 "transition-all duration-200",
-                "disabled:opacity-50"
+                "disabled:opacity-50",
               )}
             >
               {isLoading ? (
@@ -185,11 +185,11 @@ export function EnhancedChatInput({
             <div
               className={cn(
                 "text-xs transition-colors",
-                isOverLimit 
-                  ? "text-destructive font-medium" 
-                  : isNearLimit 
-                  ? "text-warning" 
-                  : "text-muted-foreground"
+                isOverLimit
+                  ? "text-destructive font-medium"
+                  : isNearLimit
+                    ? "text-warning"
+                    : "text-muted-foreground",
               )}
             >
               {charCount}/{maxLength}
@@ -199,4 +199,4 @@ export function EnhancedChatInput({
       </div>
     </Card>
   );
-} 
+}

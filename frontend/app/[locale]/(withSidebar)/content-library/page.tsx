@@ -153,28 +153,28 @@ export default function ContentLibraryPage() {
   // 🚀 优化悬浮事件处理 - 大幅增加防抖时间，减少频繁更新
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const prefetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const handleCardHover = useCallback(
     (item: ContentItemPublic | null) => {
       if (isMobile) return;
-      
+
       // 清除之前的定时器
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
         hoverTimeoutRef.current = null;
       }
-      
+
       if (prefetchTimeoutRef.current) {
         clearTimeout(prefetchTimeoutRef.current);
         prefetchTimeoutRef.current = null;
       }
-      
+
       if (item) {
         // UI更新防抖 - 200ms
         hoverTimeoutRef.current = setTimeout(() => {
           setHoveredItem(item);
         }, 200);
-        
+
         // 预加载防抖 - 500ms，只有用户停留较长时间才预加载
         prefetchTimeoutRef.current = setTimeout(() => {
           if (!selectedItem || selectedItem.id !== item.id) {
@@ -215,19 +215,20 @@ export default function ContentLibraryPage() {
 
   // 🚀 优化预览项目选择逻辑 - 添加稳定性检查
   // 🎯 添加防抖，减少预览卡片的频繁更新
-  const [debouncedHoveredItem, setDebouncedHoveredItem] = useState<ContentItemPublic | null>(hoveredItem);
-  
+  const [debouncedHoveredItem, setDebouncedHoveredItem] =
+    useState<ContentItemPublic | null>(hoveredItem);
+
   useEffect(() => {
     // 只有在没有选中项目时才应用防抖
     if (selectedItem) {
       setDebouncedHoveredItem(null);
       return;
     }
-    
+
     const timer = setTimeout(() => {
       setDebouncedHoveredItem(hoveredItem);
     }, 300); // 300ms防抖延迟
-    
+
     return () => clearTimeout(timer);
   }, [hoveredItem, selectedItem]);
 
@@ -269,7 +270,7 @@ export default function ContentLibraryPage() {
         {/* Header - 固定在顶部 */}
         <header className="relative flex items-center justify-between h-header px-6 border-b shrink-0 bg-background/95 backdrop-blur-sm z-10">
           <div className="flex items-center gap-2 min-w-0">
-            <PageHeader breadcrumbs={[{ label: 'Library' }]} />
+            <PageHeader breadcrumbs={[{ label: "Library" }]} />
           </div>
           <div className="flex items-center gap-2 ml-auto">
             <LibraryHeader
@@ -283,7 +284,7 @@ export default function ContentLibraryPage() {
               viewMode={filters.viewMode}
               onViewModeChange={handleViewModeChange}
               onClearFilters={() => {
-                setFilters(prev => ({
+                setFilters((prev) => ({
                   ...prev,
                   selectedTags: [],
                   sortBy: "time",
@@ -310,7 +311,7 @@ export default function ContentLibraryPage() {
         </header>
 
         {/* 列表 - 可滚动区域 */}
-        <div 
+        <div
           className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar px-6 pb-8 pt-8"
           onClick={(e) => {
             // 只有点击空白区域时才清除预览

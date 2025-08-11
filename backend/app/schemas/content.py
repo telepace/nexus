@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 from sqlmodel import SQLModel
 
 from app.schemas.base import TimestampMixin
@@ -125,30 +125,42 @@ class ContentAnalysisRequest(BaseModel):
 
 class ContentSegmentBase(BaseModel):
     """段落基础模型"""
+
     display_number: int = Field(..., description="段落显示序号（1-based）")
     content: str = Field(..., description="段落内容")
     start_offset: int | None = Field(None, description="在原文中的起始字符位置")
     end_offset: int | None = Field(None, description="在原文中的结束字符位置")
 
+
 class ContentSegmentCreate(ContentSegmentBase):
     """创建段落请求模型"""
+
     content_item_id: UUID = Field(..., description="关联的内容项ID")
+
 
 class ContentSegmentUpdate(BaseModel):
     """更新段落请求模型"""
+
     content: str | None = Field(None, description="段落内容")
     start_offset: int | None = Field(None, description="在原文中的起始字符位置")
     end_offset: int | None = Field(None, description="在原文中的结束字符位置")
 
+
 class ContentSegmentOut(ContentSegmentBase, TimestampMixin):
     """段落输出模型"""
+
     id: UUID = Field(..., description="段落ID")
     content_item_id: UUID = Field(..., description="关联的内容项ID")
 
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True
+
 
 class ContentSegmentBulkResponse(BaseModel):
     """批量获取段落响应模型"""
+
     segments: list[ContentSegmentOut] = Field(..., description="段落列表")
     total: int = Field(..., description="总数量")
-    missing_numbers: list[int] = Field(default_factory=list, description="未找到的段落号")
+    missing_numbers: list[int] = Field(
+        default_factory=list, description="未找到的段落号"
+    )

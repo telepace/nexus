@@ -19,7 +19,7 @@ class PerformanceMonitor {
 
   constructor() {
     // 只在开发环境中启用
-    this.isEnabled = process.env.NODE_ENV === 'development';
+    this.isEnabled = process.env.NODE_ENV === "development";
   }
 
   /**
@@ -53,7 +53,10 @@ class PerformanceMonitor {
     metric.endTime = endTime;
     metric.duration = duration;
 
-    console.log(`🚀 Performance: ${name} took ${duration.toFixed(2)}ms`, metric.metadata);
+    console.log(
+      `🚀 Performance: ${name} took ${duration.toFixed(2)}ms`,
+      metric.metadata,
+    );
 
     return duration;
   }
@@ -75,9 +78,9 @@ class PerformanceMonitor {
    * 测量异步函数执行时间
    */
   async measureAsync<T>(
-    name: string, 
-    fn: () => Promise<T>, 
-    metadata?: Record<string, any>
+    name: string,
+    fn: () => Promise<T>,
+    metadata?: Record<string, any>,
   ): Promise<T> {
     if (!this.isEnabled) return fn();
 
@@ -92,7 +95,9 @@ class PerformanceMonitor {
    * 获取所有测量结果
    */
   getMetrics(): PerformanceMetric[] {
-    return Array.from(this.metrics.values()).filter(m => m.duration !== undefined);
+    return Array.from(this.metrics.values()).filter(
+      (m) => m.duration !== undefined,
+    );
   }
 
   /**
@@ -113,7 +118,7 @@ class PerformanceMonitor {
     metrics: PerformanceMetric[];
   } {
     const metrics = this.getMetrics();
-    
+
     if (metrics.length === 0) {
       return {
         total: 0,
@@ -124,16 +129,16 @@ class PerformanceMonitor {
       };
     }
 
-    const durations = metrics.map(m => m.duration!);
+    const durations = metrics.map((m) => m.duration!);
     const total = durations.reduce((sum, d) => sum + d, 0);
     const average = total / durations.length;
 
-    const slowest = metrics.reduce((prev, current) => 
-      (current.duration! > prev.duration!) ? current : prev
+    const slowest = metrics.reduce((prev, current) =>
+      current.duration! > prev.duration! ? current : prev,
     );
 
-    const fastest = metrics.reduce((prev, current) => 
-      (current.duration! < prev.duration!) ? current : prev
+    const fastest = metrics.reduce((prev, current) =>
+      current.duration! < prev.duration! ? current : prev,
     );
 
     return {
@@ -165,7 +170,7 @@ export function usePerformanceMonitor() {
 // 便捷的装饰器函数
 export function withPerformanceMonitoring<T extends (...args: any[]) => any>(
   name: string,
-  fn: T
+  fn: T,
 ): T {
   return ((...args: any[]) => {
     return performanceMonitor.measure(name, () => fn(...args));
@@ -173,10 +178,9 @@ export function withPerformanceMonitoring<T extends (...args: any[]) => any>(
 }
 
 // 异步函数装饰器
-export function withAsyncPerformanceMonitoring<T extends (...args: any[]) => Promise<any>>(
-  name: string,
-  fn: T
-): T {
+export function withAsyncPerformanceMonitoring<
+  T extends (...args: any[]) => Promise<any>,
+>(name: string, fn: T): T {
   return (async (...args: any[]) => {
     return performanceMonitor.measureAsync(name, () => fn(...args));
   }) as T;

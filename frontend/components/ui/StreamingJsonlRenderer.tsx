@@ -58,7 +58,7 @@ export function StreamingJsonlRenderer({
 
   // 解析 JSONL 内容为可渲染的块
   const blocks = useMemo(() => {
-    if (!content || typeof content !== 'string') return [];
+    if (!content || typeof content !== "string") return [];
 
     const lines = content.split("\n");
     const parsedBlocks: JsonlBlock[] = [];
@@ -117,7 +117,9 @@ export function StreamingJsonlRenderer({
     const { type, content: blockContent, lead, ref, isComplete } = block;
 
     // 解析引用
-    const references = actions?.parseReferences ? actions.parseReferences(ref) : [];
+    const references = actions?.parseReferences
+      ? actions.parseReferences(ref)
+      : [];
 
     // 根据类型选择样式
     const getBlockStyles = () => {
@@ -183,10 +185,7 @@ export function StreamingJsonlRenderer({
         hoverIntensity="subtle"
         showRightActions={!!rightActions}
         rightActions={rightActions}
-        className={cn(
-          "my-1",
-          !isComplete && "opacity-70"
-        )}
+        className={cn("my-1", !isComplete && "opacity-70")}
       >
         <div className={cn(getBlockStyles(), "relative")}>
           {/* Lead 文本（如果存在） */}
@@ -195,14 +194,16 @@ export function StreamingJsonlRenderer({
               {lead}
             </div>
           )}
-          
+
           {/* 主要内容 */}
           {type === "list" ? (
             <div className="space-y-2">
               {(blockContent || "").split("\n").map((listItem, idx) => (
                 <div key={idx} className="flex items-start gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0" />
-                  <span className="whitespace-pre-wrap">{(listItem || "").trim()}</span>
+                  <span className="whitespace-pre-wrap">
+                    {(listItem || "").trim()}
+                  </span>
                 </div>
               ))}
             </div>
@@ -225,7 +226,7 @@ export function StreamingJsonlRenderer({
   return (
     <div className={cn("space-y-1", className)}>
       {blocks.map(renderBlock)}
-      
+
       {/* 流式指示器 */}
       {isLoading && showStreamingIndicator && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">

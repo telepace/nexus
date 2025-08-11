@@ -13,13 +13,14 @@ import { JsonlRenderer } from "@/components/ui/JsonlRenderer";
 const sampleContent = `{"type":"p","content":"Hello world"}\n{"type":"insight","content":"Small idea"}`;
 
 describe("JsonlRenderer – 卡片與容器樣式", () => {
-  it("BlockWrapper 應包含 overflow-visible 與縮小間距類名", () => {
+  it("BlockWrapper 應包含 group 和正確的間距類名", () => {
     render(<JsonlRenderer content={sampleContent} styleName="neumorphism" />);
 
     const pText = screen.getByText("Hello world");
     const wrapper = pText.closest("div.group");
-    expect(wrapper).toHaveClass("overflow-visible");
-    expect(wrapper).toHaveClass("px-2", "py-1", "my-0.5");
+    expect(wrapper).toHaveClass("group", "relative", "rounded-lg");
+    expect(wrapper).toHaveClass("px-3", "py-2", "my-0.5");
+    expect(wrapper).toHaveClass("hoverable-block");
   });
 
   it("paragraph 行應使用 Neumorphism 卡片外殼 (shadow)", () => {

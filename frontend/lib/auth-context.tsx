@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { useRouter } from "next/navigation";
 import type { AvatarFullConfig } from "react-nice-avatar";
 
@@ -168,90 +174,96 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = useCallback((token: string) => {
-    try {
-      console.log("[Auth] Setting access token in cookie");
+  const login = useCallback(
+    (token: string) => {
+      try {
+        console.log("[Auth] Setting access token in cookie");
 
-      // 确保token有效
-      if (!token || token.trim() === "") {
-        console.error("[Auth] Invalid token provided");
-        return;
+        // 确保token有效
+        if (!token || token.trim() === "") {
+          console.error("[Auth] Invalid token provided");
+          return;
+        }
+
+        // 设置cookie，支持开发环境下的所有域名
+        const maxAge = 60 * 60 * 24 * 7; // 7天
+        const domain = window.location.hostname;
+        const cookieOptions = `path=/;max-age=${maxAge};SameSite=Lax`;
+
+        // 为当前域名设置 cookie
+        document.cookie = `accessToken=${token};${cookieOptions}`;
+        document.cookie = `accessToken_ext=${token};${cookieOptions}`;
+
+        // 调试信息
+        console.log("[Auth] Setting cookie for domain:", domain);
+        console.log("[Auth] Cookie options:", cookieOptions);
+
+        // 验证cookie是否设置成功
+        const savedToken = getCookie("accessToken");
+        console.log(
+          "[Auth] Token saved in cookie:",
+          savedToken ? "成功" : "失败",
+        );
+
+        // 打印所有的cookie以便调试
+        console.log("[Auth] Current cookies:", document.cookie);
+        console.log("[Auth] Current domain:", window.location.hostname);
+
+        // 如果已有用户数据，将token添加到用户对象
+        if (user) {
+          setUser({
+            ...user,
+            token: token,
+          });
+        }
+
+        // Fetch user data after login
+        fetchUser();
+      } catch (error) {
+        console.error("[Auth] Error setting token in cookie:", error);
       }
-
-      // 设置cookie，支持开发环境下的所有域名
-      const maxAge = 60 * 60 * 24 * 7; // 7天
-      const domain = window.location.hostname;
-      const cookieOptions = `path=/;max-age=${maxAge};SameSite=Lax`;
-      
-      // 为当前域名设置 cookie
-      document.cookie = `accessToken=${token};${cookieOptions}`;
-      document.cookie = `accessToken_ext=${token};${cookieOptions}`;
-      
-      // 调试信息
-      console.log("[Auth] Setting cookie for domain:", domain);
-      console.log("[Auth] Cookie options:", cookieOptions);
-      
-      // 验证cookie是否设置成功
-      const savedToken = getCookie("accessToken");
-      console.log(
-        "[Auth] Token saved in cookie:",
-        savedToken ? "成功" : "失败",
-      );
-
-      // 打印所有的cookie以便调试
-      console.log("[Auth] Current cookies:", document.cookie);
-      console.log("[Auth] Current domain:", window.location.hostname);
-
-      // 如果已有用户数据，将token添加到用户对象
-      if (user) {
-        setUser({
-          ...user,
-          token: token,
-        });
-      }
-
-      // Fetch user data after login
-      fetchUser();
-    } catch (error) {
-      console.error("[Auth] Error setting token in cookie:", error);
-    }
-  }, [user, fetchUser]);
+    },
+    [user, fetchUser],
+  );
 
   // 添加设置自定义token的方法，用于测试
-  const setCustomToken = useCallback((token: string) => {
-    try {
-      console.log(
-        "[Auth] Setting custom token for testing:",
-        token.substring(0, 15) + "...",
-      );
+  const setCustomToken = useCallback(
+    (token: string) => {
+      try {
+        console.log(
+          "[Auth] Setting custom token for testing:",
+          token.substring(0, 15) + "...",
+        );
 
-      if (!token || token.trim() === "") {
-        console.error("[Auth] Invalid custom token provided");
-        return;
+        if (!token || token.trim() === "") {
+          console.error("[Auth] Invalid custom token provided");
+          return;
+        }
+
+        // 设置cookie，支持开发环境下的所有域名
+        const maxAge = 60 * 60 * 24 * 7; // 7天
+        const domain = window.location.hostname;
+        const cookieOptions = `path=/;max-age=${maxAge};SameSite=Lax`;
+
+        // 为当前域名设置 cookie
+        document.cookie = `accessToken=${token};${cookieOptions}`;
+        document.cookie = `accessToken_ext=${token};${cookieOptions}`;
+
+        // 调试信息
+        console.log("[Auth] Setting custom token for domain:", domain);
+
+        // 验证设置成功
+        const savedToken = getCookie("accessToken");
+        console.log("[Auth] Custom token saved:", savedToken ? "成功" : "失败");
+
+        // 尝试获取用户信息
+        fetchUser();
+      } catch (error) {
+        console.error("[Auth] Error setting custom token:", error);
       }
-
-      // 设置cookie，支持开发环境下的所有域名
-      const maxAge = 60 * 60 * 24 * 7; // 7天
-      const domain = window.location.hostname;
-      const cookieOptions = `path=/;max-age=${maxAge};SameSite=Lax`;
-      
-      // 为当前域名设置 cookie
-      document.cookie = `accessToken=${token};${cookieOptions}`;
-      document.cookie = `accessToken_ext=${token};${cookieOptions}`;
-      
-      // 调试信息
-      console.log("[Auth] Setting custom token for domain:", domain);
-
-      // 验证设置成功
-      const savedToken = getCookie("accessToken");
-      console.log("[Auth] Custom token saved:", savedToken ? "成功" : "失败");
-
-      // 尝试获取用户信息
-      fetchUser();
-    } catch (error) {
-      console.error("[Auth] Error setting custom token:", error);
-    }
-  }, [fetchUser]);
+    },
+    [fetchUser],
+  );
 
   const logout = useCallback(() => {
     // Clear the token

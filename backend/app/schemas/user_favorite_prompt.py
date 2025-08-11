@@ -1,4 +1,3 @@
-
 import uuid
 
 from pydantic import BaseModel
@@ -26,4 +25,3 @@ class UserFavoritePromptInDBBase(UserFavoritePromptBase):
 
 class UserFavoritePrompt(UserFavoritePromptInDBBase):
     pass
-

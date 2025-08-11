@@ -1,40 +1,98 @@
-# 核心提示词
+# Nexus 开发指南
 
+## 📋 项目结构
+```
+nexus/
+├── backend/          # FastAPI + Python
+├── frontend/         # Next.js + TypeScript  
+├── extension/        # Chrome 扩展
+├── docker-compose.yml
+└── scripts/          # 部署脚本
+```
+
+## 🚀 工作流程
 <workflow>
-1.每当我输入新的需求的时候，为了规范需求质量和验收标准，你首先会搞清楚问题和需求
-2.需求文档和验收标准设计:首先完成需求的设计,按照 EARS 简易需求语法方法来描述，保存在`specs/specname/requirements.md`中，跟我进行确认，最终确认清楚后，需求定稿，参考格式如下
-
-```markdown
-# 需求文档
-
-## 介绍
-
-需求描述
-
-## 需求
-
-### 需求1- 需求名称
-
-*用户故事:** 用户故事内容
-
-####验收标准
-
-1.采用 ERAS 描述的子句 While<可选前置条件>,when<可选触发器>,the<系统名称>shall <系统响应>，例如 When 选择"静音"时，笔记本电脑应当抑制所有音频输出。
-2.…
-...
-```
-2.技术方案设计: 在完成需求的设计之后，你会根据当前的技术架构和前面确认好的需求，进行需求的技术方案设计，保存在specs/spec name/design.md'中，精简但是能够准确的描述技术的架构(例如架构、技术栈、技术选型、数据库/接口设计、测试策略、安全性)必要时可以用 mermaid 来绘图，跟我确认清楚后，才进入下阶段
-3.任务拆分:在完成技术方案设计后，你会根据需求文档和技术方案，细化具体要做的事情，保存在`specs/specname/tasks.md` 中,跟我确认清楚后，才开始正式执行任务，同时更新任务的状态
-
-格式如下
-
-```markdown
-
-# 实施计划
--[] 1.任务信息
-- 具体要做的事情
-- ...
-- _需求: 相关的需求点的编号
-
-```
+1. **需求分析** - 理解问题和需求
+2. **需求文档** - EARS 语法，保存到 `specs/specname/requirements.md`
+3. **技术方案** - 基于现有架构设计，保存到 `specs/specname/design.md`
+4. **任务拆分** - 具体任务列表，保存到 `specs/specname/tasks.md`
+5. **代码实现** - 遵循项目规范
+6. **质量检查** - 测试和代码检查
 </workflow>
+
+## ⚡ 快速命令
+
+### 🐳 服务管理
+```bash
+docker compose exec db psql -U postgres -d app  # 连接数据库
+```
+
+### 🛠 开发
+
+可以使用 makefile 命令，使用 `make help` 查看所有命令
+
+### 🗄️ 数据库
+```bash
+# PostgreSQL 快捷命令
+\dt                    # 查看表
+\d table_name         # 表结构  
+\q                    # 退出
+
+# 常用操作
+cd backend && uv run alembic revision --autogenerate -m "描述" # 创建迁移
+```
+
+### 🔧 工具
+```bash
+# GitHub
+gh issue create --title "标题" --label "bug"
+gh pr create --title "feat: 功能" --body "描述"
+
+# Railway 部署
+railway login && railway deploy
+
+# 健康检查
+curl http://localhost:8000/api/v1/utils/health-check/
+```
+
+## 🌐 服务地址
+
+**本地开发**
+- API: http://localhost:8000 (docs: /docs)
+- 前端: http://localhost:3000
+- 数据库: localhost:5432 (postgres/telepace)
+- Redis: localhost:6379
+
+## 🚨 故障排除
+
+```bash
+# 服务状态检查
+docker-compose ps
+curl http://localhost:8000/api/v1/utils/health-check/
+
+# 重置环境
+docker-compose down -v && docker-compose up --build
+
+# 数据库连接测试  
+cd backend && python test_db.py
+```
+
+## ⚙️ 环境变量
+
+```env
+# 必需配置
+DATABASE_URL=postgresql://postgres:telepace@db/app
+SECRET_KEY=your-secret-key
+OPENAI_API_KEY=sk-...
+
+# 可选配置
+SUPABASE_URL=https://your-project.supabase.co
+SENTRY_DSN=https://...
+```
+
+## 📋 开发规范
+
+- **提交**: `feat:` `fix:` `docs:` 等语义化前缀
+- **分支**: 从 main 创建功能分支，PR 合并
+- **测试**: 提交前运行 `pytest` 和 `pnpm test`
+- **代码**: Python 用 Ruff，TS 用 ESLint

@@ -1,11 +1,6 @@
 "use client";
 
-import React, {
-  useState,
-  useRef,
-  useCallback,
-  useEffect,
-} from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -38,22 +33,22 @@ import { useTranslationUtils } from "@/lib/i18n-utils";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function debounce<T extends (...args: any[]) => any>(
   func: T,
-  wait: number
+  wait: number,
 ): ((...args: Parameters<T>) => void) & { cancel: () => void } {
   let timeout: NodeJS.Timeout | null = null;
-  
+
   const debounced = (...args: Parameters<T>) => {
     if (timeout) clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), wait);
   };
-  
+
   debounced.cancel = () => {
     if (timeout) {
       clearTimeout(timeout);
       timeout = null;
     }
   };
-  
+
   return debounced;
 }
 
@@ -380,15 +375,15 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   // 🚀 优化：使用 useRef 存储检测到的URLs，避免无限循环
   const detectedUrlsRef = useRef<string[]>([]);
   const [detectedUrls, setDetectedUrls] = useState<string[]>([]);
-  
+
   // 🚀 防抖处理URL检测，避免频繁更新
   const updateDetectedUrls = useCallback(() => {
     return debounce((text: string) => {
       const urls = extractUrls(text);
-      const urlsChanged = 
+      const urlsChanged =
         urls.length !== detectedUrlsRef.current.length ||
         urls.some((url, index) => url !== detectedUrlsRef.current[index]);
-      
+
       if (urlsChanged) {
         detectedUrlsRef.current = urls;
         setDetectedUrls(urls);
@@ -396,11 +391,11 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
       }
     }, 300);
   }, []);
-  
+
   // 当content变化时，防抖更新URLs
   useEffect(() => {
     const debouncedUpdate = updateDetectedUrls();
-    
+
     if (content.trim()) {
       debouncedUpdate(content);
     } else {
@@ -411,7 +406,7 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
         setSelectedUrls([]);
       }
     }
-    
+
     return () => {
       debouncedUpdate.cancel();
     };
@@ -471,11 +466,14 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   }, []);
 
   // 🚀 优化粘贴处理：移除全局监听，改为textarea原生处理
-  const handleTextareaChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
-    console.log("[textarea变化] 新值:", newValue);
-    setContent(newValue);
-  }, []);
+  const handleTextareaChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const newValue = e.target.value;
+      console.log("[textarea变化] 新值:", newValue);
+      setContent(newValue);
+    },
+    [],
+  );
 
   // Deep Research API调用
   const createDeepResearchJob = useCallback(
@@ -720,14 +718,17 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   };
 
   // 全选/取消全选链接
-  const handleSelectAllUrls = useCallback((checked: boolean) => {
-    if (checked) {
-      setSelectedUrls([...detectedUrls]);
-    } else {
-      setSelectedUrls([]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [detectedUrls]);
+  const handleSelectAllUrls = useCallback(
+    (checked: boolean) => {
+      if (checked) {
+        setSelectedUrls([...detectedUrls]);
+      } else {
+        setSelectedUrls([]);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [detectedUrls],
+  );
 
   // 快捷键处理 - 基于参考代码的快捷键逻辑
   const handleKeyDown = useCallback(
@@ -995,7 +996,10 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <div className="font-medium text-foreground">
-                        {tPlural("detection.linksDetected", detectedUrls.length)}
+                        {tPlural(
+                          "detection.linksDetected",
+                          detectedUrls.length,
+                        )}
                       </div>
                       <div className="flex items-center gap-2 text-xs">
                         <Checkbox
@@ -1021,7 +1025,9 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                       <div className="flex items-center gap-2 w-full">
                         <Checkbox
                           checked={selectedUrls.includes(url)}
-                          onCheckedChange={(checked) => handleUrlSelection(url, checked as boolean)}
+                          onCheckedChange={(checked) =>
+                            handleUrlSelection(url, checked as boolean)
+                          }
                           className=""
                         />
                         <span className="text-muted-foreground text-xs font-mono break-all">

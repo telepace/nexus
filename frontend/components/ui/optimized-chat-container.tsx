@@ -6,13 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  MessageSquare, 
-  Trash2, 
-  Download, 
+import {
+  MessageSquare,
+  Trash2,
+  Download,
   Settings,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
 } from "lucide-react";
 import { EnhancedChatInput } from "./enhanced-chat-input";
 import { EnhancedMessageCard, ChatMessage } from "./enhanced-message-card";
@@ -68,17 +68,21 @@ export function OptimizedChatContainer({
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<"connected" | "connecting" | "error">("connected");
+  const [connectionStatus, setConnectionStatus] = useState<
+    "connected" | "connecting" | "error"
+  >("connected");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // 生成消息ID
-  const generateMessageId = () => 
+  const generateMessageId = () =>
     `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   // 自动滚动到底部
   const scrollToBottom = useCallback(() => {
     if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      const scrollContainer = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]",
+      );
       if (scrollContainer) {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
@@ -110,7 +114,7 @@ export function OptimizedChatContainer({
     };
 
     // 添加消息到列表
-    setMessages(prev => [...prev, userMessage, assistantMessage]);
+    setMessages((prev) => [...prev, userMessage, assistantMessage]);
     setInput("");
     setIsLoading(true);
     setConnectionStatus("connecting");
@@ -120,28 +124,30 @@ export function OptimizedChatContainer({
 
     try {
       // 准备API请求
-      const apiUrl = apiEndpoint || 
-        (contentId 
+      const apiUrl =
+        apiEndpoint ||
+        (contentId
           ? `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/v1/content/${contentId}/completion-updated`
-          : `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/v1/chat/completions`
-        );
+          : `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/v1/chat/completions`);
 
-      const requestBody = contentId 
+      const requestBody = contentId
         ? {
             analysis_instruction: messageContent.trim(),
             model: model,
-            template_name: "simple_chat.j2",  // 🎯 聊天容器使用简单聊天模板
+            template_name: "simple_chat.j2", // 🎯 聊天容器使用简单聊天模板
           }
         : {
             messages: [
-              ...(systemPrompt ? [{ role: "system", content: systemPrompt }] : []),
+              ...(systemPrompt
+                ? [{ role: "system", content: systemPrompt }]
+                : []),
               ...messages
-                .filter(msg => !msg.isStreaming && !msg.error)
-                .map(msg => ({
+                .filter((msg) => !msg.isStreaming && !msg.error)
+                .map((msg) => ({
                   role: msg.role,
                   content: msg.content,
                 })),
-              { role: "user", content: messageContent.trim() }
+              { role: "user", content: messageContent.trim() },
             ],
             model: model,
             stream: true,
@@ -192,14 +198,14 @@ export function OptimizedChatContainer({
             const jsonContent = trimmed.slice(2);
             if (jsonContent) {
               accumulatedContent += jsonContent + "\n";
-              
+
               // 实时更新助手消息
-              setMessages(prev => 
-                prev.map(msg => 
-                  msg.id === assistantMessage.id 
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === assistantMessage.id
                     ? { ...msg, content: accumulatedContent }
-                    : msg
-                )
+                    : msg,
+                ),
               );
             }
           } else if (trimmed.startsWith("8:")) {
@@ -222,12 +228,12 @@ export function OptimizedChatContainer({
               const parsed = JSON.parse(data);
               if (parsed.choices?.[0]?.delta?.content) {
                 accumulatedContent += parsed.choices[0].delta.content;
-                setMessages(prev => 
-                  prev.map(msg => 
-                    msg.id === assistantMessage.id 
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === assistantMessage.id
                       ? { ...msg, content: accumulatedContent }
-                      : msg
-                  )
+                      : msg,
+                  ),
                 );
               }
             } catch {
@@ -248,30 +254,29 @@ export function OptimizedChatContainer({
         },
       };
 
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === assistantMessage.id ? finalMessage : msg
-        )
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMessage.id ? finalMessage : msg,
+        ),
       );
 
       // 触发消息接收回调
       onMessageReceived?.(finalMessage);
-
     } catch (error) {
       console.error("发送消息失败:", error);
       setConnectionStatus("error");
 
       // 更新错误状态
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === assistantMessage.id 
-            ? { 
-                ...msg, 
-                isStreaming: false, 
-                error: error instanceof Error ? error.message : "发送失败" 
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMessage.id
+            ? {
+                ...msg,
+                isStreaming: false,
+                error: error instanceof Error ? error.message : "发送失败",
               }
-            : msg
-        )
+            : msg,
+        ),
       );
     } finally {
       setIsLoading(false);
@@ -279,26 +284,26 @@ export function OptimizedChatContainer({
 
     // 限制消息数量
     if (messages.length > maxMessages) {
-      setMessages(prev => prev.slice(-maxMessages));
+      setMessages((prev) => prev.slice(-maxMessages));
     }
   };
 
   // 重试失败的消息
   const handleRetryMessage = (messageId: string) => {
-    const message = messages.find(msg => msg.id === messageId);
+    const message = messages.find((msg) => msg.id === messageId);
     if (!message) return;
 
-    const messageIndex = messages.findIndex(msg => msg.id === messageId);
+    const messageIndex = messages.findIndex((msg) => msg.id === messageId);
     const userMessage = messages[messageIndex - 1];
 
     if (userMessage && userMessage.role === "user") {
       // 重置助手消息状态
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === messageId 
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === messageId
             ? { ...msg, content: "", error: undefined, isStreaming: true }
-            : msg
-        )
+            : msg,
+        ),
       );
 
       // 重新发送
@@ -315,8 +320,9 @@ export function OptimizedChatContainer({
   // 导出对话
   const handleExport = () => {
     const content = messages
-      .map(msg => 
-        `[${msg.timestamp.toLocaleString()}] ${msg.role}: ${msg.content}`
+      .map(
+        (msg) =>
+          `[${msg.timestamp.toLocaleString()}] ${msg.role}: ${msg.content}`,
       )
       .join("\n\n");
 
@@ -385,11 +391,7 @@ export function OptimizedChatContainer({
                 <Trash2 className="h-3 w-3" />
               </Button>
             )}
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8"
-            >
+            <Button size="sm" variant="outline" className="h-8">
               <Settings className="h-3 w-3" />
             </Button>
           </div>
@@ -408,7 +410,7 @@ export function OptimizedChatContainer({
             </div>
           ) : (
             <div className="space-y-4 py-4">
-              {messages.map(message => (
+              {messages.map((message) => (
                 <EnhancedMessageCard
                   key={message.id}
                   message={message}
@@ -430,9 +432,7 @@ export function OptimizedChatContainer({
             onSend={handleSendMessage}
             isLoading={isLoading}
             placeholder={
-              contentId 
-                ? "询问关于这个内容的任何问题..." 
-                : "输入消息..."
+              contentId ? "询问关于这个内容的任何问题..." : "输入消息..."
             }
             disabled={isLoading}
             maxLength={2000}
@@ -441,4 +441,4 @@ export function OptimizedChatContainer({
       </CardContent>
     </Card>
   );
-} 
+}

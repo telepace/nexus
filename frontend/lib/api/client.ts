@@ -83,7 +83,9 @@ class APIClient {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const error = new Error(`HTTP ${response.status}: ${response.statusText}`) as Error & { status: number; response: Response };
+        const error = new Error(
+          `HTTP ${response.status}: ${response.statusText}`,
+        ) as Error & { status: number; response: Response };
         error.status = response.status;
         error.response = response;
         throw error;
@@ -104,18 +106,20 @@ class APIClient {
       return data as T;
     } catch (error) {
       clearTimeout(timeoutId);
-      
+
       // 确保错误对象包含有用的信息
       if (error instanceof Error) {
         // 如果是网络错误或其他错误，添加更多上下文
-        if (error.name === 'AbortError') {
-          const timeoutError = new Error(`Request timeout after ${this.timeout}ms`) as Error & { status: number };
+        if (error.name === "AbortError") {
+          const timeoutError = new Error(
+            `Request timeout after ${this.timeout}ms`,
+          ) as Error & { status: number };
           timeoutError.status = 408;
           throw timeoutError;
         }
         throw error;
       }
-      
+
       // 如果不是Error实例，创建一个新的错误
       throw new Error(`Request failed: ${String(error)}`);
     }

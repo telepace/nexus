@@ -34,13 +34,13 @@ export interface HoverableBlockProps {
 const hoverStyles = {
   none: "",
   subtle: "hover-optimized hover-subtle",
-  medium: "hover-optimized hover-medium", 
+  medium: "hover-optimized hover-medium",
   strong: "hover-optimized hover-strong",
 };
 
 /**
  * 统一的悬浮块组件
- * 
+ *
  * 提供一致的悬浮效果和交互体验，支持：
  * - 多种悬浮强度
  * - 左右侧操作区域
@@ -68,18 +68,18 @@ export const HoverableBlock: React.FC<HoverableBlockProps> = ({
   // 优化的悬浮处理，避免频繁状态切换
   const handleMouseEnter = useCallback(() => {
     if (!enableHover) return;
-    
+
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
     }
-    
+
     setIsHovered(true);
     onHoverStart?.();
   }, [enableHover, onHoverStart]);
 
   const handleMouseLeave = useCallback(() => {
     if (!enableHover) return;
-    
+
     // 添加小延迟避免快速进出时的闪烁
     hoverTimeoutRef.current = setTimeout(() => {
       setIsHovered(false);
@@ -104,7 +104,7 @@ export const HoverableBlock: React.FC<HoverableBlockProps> = ({
     enableHover && hoverStyles[hoverIntensity],
     hoverClassName,
     onClick && "cursor-pointer",
-    className
+    className,
   );
 
   return (
@@ -118,10 +118,10 @@ export const HoverableBlock: React.FC<HoverableBlockProps> = ({
       {/* 左侧操作区域 */}
       {showLeftActions && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full pr-2">
-          <div 
+          <div
             className={cn(
               "flex items-center gap-1 transition-opacity duration-200 ease-out",
-              isHovered ? "opacity-100" : "opacity-0"
+              isHovered ? "opacity-100" : "opacity-0",
             )}
           >
             {leftActions}
@@ -130,17 +130,15 @@ export const HoverableBlock: React.FC<HoverableBlockProps> = ({
       )}
 
       {/* 主要内容区域 */}
-      <div className="relative min-w-0 flex-1">
-        {children}
-      </div>
+      <div className="relative min-w-0 flex-1">{children}</div>
 
       {/* 右侧操作区域 */}
       {showRightActions && (
         <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full pl-2">
-          <div 
+          <div
             className={cn(
               "flex items-center gap-1 transition-opacity duration-200 ease-out",
-              isHovered ? "opacity-100" : "opacity-0"
+              isHovered ? "opacity-100" : "opacity-0",
             )}
           >
             {rightActions}
@@ -196,4 +194,4 @@ export const NotionStyleBlock: React.FC<{
   );
 };
 
-export default HoverableBlock; 
+export default HoverableBlock;

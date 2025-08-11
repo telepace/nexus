@@ -9,14 +9,14 @@ interface HeightState {
   heights: Record<string, number>;
 }
 
-type HeightAction = 
-  | { type: 'UPDATE_HEIGHT'; cardId: string; height: number }
-  | { type: 'REMOVE_HEIGHT'; cardId: string }
-  | { type: 'CLEAR_ALL' };
+type HeightAction =
+  | { type: "UPDATE_HEIGHT"; cardId: string; height: number }
+  | { type: "REMOVE_HEIGHT"; cardId: string }
+  | { type: "CLEAR_ALL" };
 
 function heightReducer(state: HeightState, action: HeightAction): HeightState {
   switch (action.type) {
-    case 'UPDATE_HEIGHT': {
+    case "UPDATE_HEIGHT": {
       const { cardId, height } = action;
       const currentHeight = state.heights[cardId];
       // 减少微小变化的更新
@@ -24,10 +24,10 @@ function heightReducer(state: HeightState, action: HeightAction): HeightState {
         return state;
       }
       return {
-        heights: { ...state.heights, [cardId]: height }
+        heights: { ...state.heights, [cardId]: height },
       };
     }
-    case 'REMOVE_HEIGHT': {
+    case "REMOVE_HEIGHT": {
       const { cardId } = action;
       if (!(cardId in state.heights)) {
         return state;
@@ -35,7 +35,7 @@ function heightReducer(state: HeightState, action: HeightAction): HeightState {
       const { [cardId]: removed, ...rest } = state.heights;
       return { heights: rest };
     }
-    case 'CLEAR_ALL':
+    case "CLEAR_ALL":
       return { heights: {} };
     default:
       return state;
@@ -64,14 +64,14 @@ export function useCardHeight() {
           delete observers.current[cardId];
         }
         delete elements.current[cardId];
-        
+
         // 🎯 只有在组件仍然挂载时才尝试更新状态
         if (isMountedRef.current && !pendingUpdates.current.has(cardId)) {
           pendingUpdates.current.add(cardId);
           // 使用 requestAnimationFrame 确保在安全的时机更新
           requestAnimationFrame(() => {
             if (isMountedRef.current) {
-              dispatch({ type: 'REMOVE_HEIGHT', cardId });
+              dispatch({ type: "REMOVE_HEIGHT", cardId });
             }
             pendingUpdates.current.delete(cardId);
           });
@@ -100,16 +100,16 @@ export function useCardHeight() {
         if (entry && isMountedRef.current) {
           const height = entry.contentRect.height;
           const now = Date.now();
-          
+
           // 清除之前的更新计划
           if (updateTimeout) {
             clearTimeout(updateTimeout);
           }
-          
+
           // 防抖处理
           const timeSinceLastUpdate = now - lastUpdateTime;
           const delay = Math.max(MIN_UPDATE_INTERVAL - timeSinceLastUpdate, 50);
-          
+
           updateTimeout = setTimeout(() => {
             if (isMountedRef.current && elements.current[cardId] === element) {
               const newHeight = Math.max(height, 50);
@@ -119,7 +119,11 @@ export function useCardHeight() {
                 pendingUpdates.current.add(cardId);
                 requestAnimationFrame(() => {
                   if (isMountedRef.current) {
-                    dispatch({ type: 'UPDATE_HEIGHT', cardId, height: newHeight });
+                    dispatch({
+                      type: "UPDATE_HEIGHT",
+                      cardId,
+                      height: newHeight,
+                    });
                   }
                   pendingUpdates.current.delete(cardId);
                 });
@@ -143,7 +147,7 @@ export function useCardHeight() {
             pendingUpdates.current.add(cardId);
             requestAnimationFrame(() => {
               if (isMountedRef.current) {
-                dispatch({ type: 'UPDATE_HEIGHT', cardId, height: newHeight });
+                dispatch({ type: "UPDATE_HEIGHT", cardId, height: newHeight });
               }
               pendingUpdates.current.delete(cardId);
             });
@@ -172,7 +176,7 @@ export function useCardHeight() {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false; // 🎯 优先标记组件已卸载
-      
+
       // 清理所有定时器和观察器
       Object.values(observers.current).forEach((observer) => {
         observer.disconnect();
@@ -180,10 +184,10 @@ export function useCardHeight() {
       observers.current = {};
       elements.current = {};
       pendingUpdates.current.clear();
-      
+
       // 🎯 最后清理状态（在组件卸载标记之后）
       requestAnimationFrame(() => {
-        dispatch({ type: 'CLEAR_ALL' });
+        dispatch({ type: "CLEAR_ALL" });
       });
     };
   }, []);

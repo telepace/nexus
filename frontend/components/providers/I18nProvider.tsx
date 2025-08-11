@@ -1,7 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Locale,
   defaultLocale,
@@ -12,7 +12,7 @@ import {
   I18nContextType,
   Translations,
   I18nContext,
-} from '@/lib/i18n';
+} from "@/lib/i18n";
 
 interface I18nProviderProps {
   children: React.ReactNode;
@@ -22,25 +22,29 @@ interface I18nProviderProps {
 export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
   const pathname = usePathname();
   const router = useRouter();
-  
+
   const [locale, setLocaleState] = useState<Locale>(() => {
     if (initialLocale) return initialLocale;
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const pathLocale = getLocaleFromPath(pathname);
       return pathLocale !== defaultLocale ? pathLocale : detectLocale();
     }
     return defaultLocale;
   });
-  
-  const [translations, setTranslations] = useState<Record<string, Translations>>({});
-  const [loadingNamespaces, setLoadingNamespaces] = useState<Set<string>>(new Set());
+
+  const [translations, setTranslations] = useState<
+    Record<string, Translations>
+  >({});
+  const [loadingNamespaces, setLoadingNamespaces] = useState<Set<string>>(
+    new Set(),
+  );
 
   // Load default namespaces
   useEffect(() => {
     const loadDefaultNamespaces = async () => {
-      const namespaces = ['common', 'ai', 'content'];
+      const namespaces = ["common", "ai", "content"];
       const newTranslations: Record<string, Translations> = {};
-      
+
       await Promise.all(
         namespaces.map(async (namespace) => {
           try {
@@ -50,9 +54,9 @@ export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
             console.warn(`Failed to load ${namespace} translations:`, error);
             newTranslations[namespace] = {};
           }
-        })
+        }),
       );
-      
+
       setTranslations(newTranslations);
     };
 
@@ -65,22 +69,22 @@ export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
       return;
     }
 
-    setLoadingNamespaces(prev => new Set(prev).add(namespace));
+    setLoadingNamespaces((prev) => new Set(prev).add(namespace));
 
     try {
       const translation = await loadTranslations(locale, namespace);
-      setTranslations(prev => ({
+      setTranslations((prev) => ({
         ...prev,
         [namespace]: translation,
       }));
     } catch (error) {
       console.warn(`Failed to load ${namespace} translations:`, error);
-      setTranslations(prev => ({
+      setTranslations((prev) => ({
         ...prev,
         [namespace]: {},
       }));
     } finally {
-      setLoadingNamespaces(prev => {
+      setLoadingNamespaces((prev) => {
         const newSet = new Set(prev);
         newSet.delete(namespace);
         return newSet;
@@ -92,8 +96,8 @@ export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
     if (newLocale === locale) return;
 
     // Store preference
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('preferred-language', newLocale);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("preferred-language", newLocale);
     }
 
     setLocaleState(newLocale);
@@ -103,25 +107,29 @@ export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
     router.push(newPath);
   };
 
-  const t = (key: string, defaultValue?: string, namespace: string = 'common') => {
+  const t = (
+    key: string,
+    defaultValue?: string,
+    namespace: string = "common",
+  ) => {
     // Load namespace if not loaded
     if (!translations[namespace] && !loadingNamespaces.has(namespace)) {
       loadNamespace(namespace);
     }
 
     const namespaceTranslations = translations[namespace] || {};
-    const keys = key.split('.');
+    const keys = key.split(".");
     let current: any = namespaceTranslations;
 
     for (const k of keys) {
-      if (current && typeof current === 'object' && k in current) {
+      if (current && typeof current === "object" && k in current) {
         current = current[k];
       } else {
         return defaultValue || key;
       }
     }
 
-    return typeof current === 'string' ? current : defaultValue || key;
+    return typeof current === "string" ? current : defaultValue || key;
   };
 
   const contextValue: I18nContextType = {
@@ -132,16 +140,14 @@ export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
   };
 
   return (
-    <I18nContext.Provider value={contextValue}>
-      {children}
-    </I18nContext.Provider>
+    <I18nContext.Provider value={contextValue}>{children}</I18nContext.Provider>
   );
 }
 
 export function useI18n() {
   const context = useContext(I18nContext);
   if (!context) {
-    throw new Error('useI18n must be used within an I18nProvider');
+    throw new Error("useI18n must be used within an I18nProvider");
   }
   return context;
 }

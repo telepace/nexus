@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ContentSkeleton } from './ContentSkeleton';
-import { UniversalContentRenderer } from './UniversalContentRenderer';
-import { cn } from '@/lib/utils';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ContentSkeleton } from "./ContentSkeleton";
+import { UniversalContentRenderer } from "./UniversalContentRenderer";
+import { cn } from "@/lib/utils";
 
 export interface DelayedContentRendererProps {
   /** 要渲染的内容 */
@@ -14,7 +14,7 @@ export interface DelayedContentRendererProps {
   /** 延迟时间（毫秒） */
   delay?: number;
   /** 骨架屏变体 */
-  skeletonVariant?: 'simple' | 'detailed' | 'minimal';
+  skeletonVariant?: "simple" | "detailed" | "minimal";
   /** 自定义类名 */
   className?: string;
   /** 传递给UniversalContentRenderer的props */
@@ -27,10 +27,10 @@ export interface DelayedContentRendererProps {
 
 /**
  * DelayedContentRenderer 延迟渲染组件
- * 
+ *
  * 核心功能：
  * 1. 立即显示骨架屏，确保动画流畅
- * 2. 延迟指定时间后开始渲染真实内容  
+ * 2. 延迟指定时间后开始渲染真实内容
  * 3. 渲染完成后平滑切换到真实内容
  * 4. 支持快速切换不同内容
  */
@@ -38,7 +38,7 @@ export function DelayedContentRenderer({
   content,
   isVisible,
   delay = 400,
-  skeletonVariant = 'simple', 
+  skeletonVariant = "simple",
   className,
   onExpandLine,
   onRenderComplete,
@@ -58,26 +58,29 @@ export function DelayedContentRenderer({
   }, []);
 
   // 开始延迟渲染的函数
-  const startDelayedRender = useCallback((targetContent: string) => {
-    // 清理之前的定时器
-    clearTimer();
-    
-    // 重置状态
-    setIsContentReady(false);
-    renderingRef.current = true;
-    
-    // 调用开始渲染回调
-    onRenderStart?.();
+  const startDelayedRender = useCallback(
+    (targetContent: string) => {
+      // 清理之前的定时器
+      clearTimer();
 
-    // 启动延迟定时器
-    timeoutRef.current = setTimeout(() => {
-      if (renderingRef.current) {
-        setCurrentContent(targetContent);
-        setIsContentReady(true);
-        onRenderComplete?.();
-      }
-    }, delay);
-  }, [delay, clearTimer, onRenderStart, onRenderComplete]);
+      // 重置状态
+      setIsContentReady(false);
+      renderingRef.current = true;
+
+      // 调用开始渲染回调
+      onRenderStart?.();
+
+      // 启动延迟定时器
+      timeoutRef.current = setTimeout(() => {
+        if (renderingRef.current) {
+          setCurrentContent(targetContent);
+          setIsContentReady(true);
+          onRenderComplete?.();
+        }
+      }, delay);
+    },
+    [delay, clearTimer, onRenderStart, onRenderComplete],
+  );
 
   // 处理内容和可见性变化
   useEffect(() => {
@@ -123,7 +126,7 @@ export function DelayedContentRenderer({
 
   // 渲染骨架屏和真实内容的切换
   return (
-    <div className={cn('relative', className)}>
+    <div className={cn("relative", className)}>
       <AnimatePresence mode="wait">
         {!isContentReady ? (
           // 显示骨架屏
@@ -134,7 +137,7 @@ export function DelayedContentRenderer({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <ContentSkeleton 
+            <ContentSkeleton
               variant={skeletonVariant}
               blocks={4}
               animated={true}
@@ -157,4 +160,4 @@ export function DelayedContentRenderer({
       </AnimatePresence>
     </div>
   );
-} 
+}

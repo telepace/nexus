@@ -7,7 +7,8 @@ import { ContentItemPublic, AIResult } from "@/lib/api/content";
 const mockContent: ContentItemPublic = {
   id: "test-content-id",
   title: "测试内容 - Reader页面默认折叠",
-  content_text: "这是一个测试内容，用于验证在reader页面中，除了内容摘要和提问清单外，其他卡片是否默认折叠。",
+  content_text:
+    "这是一个测试内容，用于验证在reader页面中，除了内容摘要和提问清单外，其他卡片是否默认折叠。",
   summary: null,
   source_uri: null,
   type: "text",
@@ -23,7 +24,8 @@ const mockContent: ContentItemPublic = {
 const mockAnalysisResult: AIResult = {
   optimized_title: "优化后的标题",
   brief_description: "简要描述",
-  summary: "这是一个测试摘要内容，应该在reader页面保持展开状态。用户可以看到完整的内容概要和核心信息。",
+  summary:
+    "这是一个测试摘要内容，应该在reader页面保持展开状态。用户可以看到完整的内容概要和核心信息。",
   key_points: `{"type": "keypoint", "content": "关键要点1：这是第一个要点，展示了内容的核心观点"}
 {"type": "keypoint", "content": "关键要点2：这是第二个要点，提供了重要的背景信息"}
 {"type": "keypoint", "content": "关键要点3：这是第三个要点，总结了主要结论"}
@@ -51,15 +53,18 @@ export default function ReaderTestPage() {
               ✅ 测试环境
             </h2>
             <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
-              <li>• 当前路径：/reader-test（包含 "reader" 关键词）</li>
-              <li>• "内容摘要" 和 "提问清单" 卡片应该保持展开</li>
+              <li>• 当前路径：/reader-test（包含 &ldquo;reader&rdquo; 关键词）</li>
+              <li>• &ldquo;内容摘要&rdquo; 和 &ldquo;提问清单&rdquo; 卡片应该保持展开</li>
               <li>• 用户交互产生的AI对话卡片应该默认折叠</li>
               <li>• 可以手动点击展开/折叠按钮来切换状态</li>
             </ul>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg" style={{ height: "600px" }}>
+        <div
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg"
+          style={{ height: "600px" }}
+        >
           <EnhancedModernAnalysisInterface
             content={mockContent}
             analysisResult={mockAnalysisResult}
@@ -75,8 +80,8 @@ export default function ReaderTestPage() {
           </h2>
           <ol className="space-y-2 text-sm text-green-800 dark:text-green-200">
             <li>1. 观察当前页面的卡片状态：</li>
-            <li className="ml-4">• "内容摘要"应该展开显示</li>
-            <li className="ml-4">• "提问清单"应该展开显示</li>
+            <li className="ml-4">• &ldquo;内容摘要&rdquo;应该展开显示</li>
+            <li className="ml-4">• &ldquo;提问清单&rdquo;应该展开显示</li>
             <li>2. 在下方的AI助手中发送一些消息，生成AI对话卡片</li>
             <li>3. 新生成的AI对话卡片应该默认折叠（只显示标题）</li>
             <li>4. 刷新页面（F5或Cmd+R）验证状态保持</li>
@@ -90,7 +95,9 @@ export default function ReaderTestPage() {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-1">Reader页面 (/reader/*)：</h4>
+              <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-1">
+                Reader页面 (/reader/*)：
+              </h4>
               <ul className="text-yellow-700 dark:text-yellow-300 space-y-1">
                 <li>• 内容摘要：展开 ✅</li>
                 <li>• 提问清单：展开 ✅</li>
@@ -98,7 +105,9 @@ export default function ReaderTestPage() {
               </ul>
             </div>
             <div>
-              <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-1">其他页面：</h4>
+              <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-1">
+                其他页面：
+              </h4>
               <ul className="text-yellow-700 dark:text-yellow-300 space-y-1">
                 <li>• 内容摘要：展开 ✅</li>
                 <li>• 提问清单：展开 ✅</li>
@@ -110,4 +119,4 @@ export default function ReaderTestPage() {
       </div>
     </div>
   );
-} 
+}

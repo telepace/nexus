@@ -74,12 +74,10 @@ from app.utils.background_tasks import background_task_manager
 from app.utils.content_processors import ProcessingPipeline
 from app.utils.events import content_event_manager, create_sse_generator
 from app.utils.prompt_helpers import render_user_analysis_prompt
+from app.utils.token_manager import get_token_limit
 from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
 
 # from app.utils.cache import warm_article_cache  # 暂时注释掉避免redis依赖
-from app.utils.token_manager import (
-    get_token_limit,
-)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -785,8 +783,6 @@ async def _stream_content_analysis(
     生成内容分析的流式响应，兼容 Vercel AI SDK Data Stream Protocol
     """
     try:
-        import aiohttp
-
         from app.api.deps import get_db
 
         # 准备系统消息和用户消息
@@ -879,7 +875,9 @@ async def _stream_content_analysis(
                                                 accumulated_content,
                                             )
                                             if not success:
-                                                logger.error(f"Failed to save AI response for conversation {ai_conversation_id}")
+                                                logger.error(
+                                                    f"Failed to save AI response for conversation {ai_conversation_id}"
+                                                )
                                     except Exception as e:
                                         logger.error(f"Failed to save AI response: {e}")
 
@@ -906,7 +904,9 @@ async def _stream_content_analysis(
                                                 error_msg,
                                             )
                                             if not success:
-                                                logger.error(f"Failed to save error for conversation {ai_conversation_id}")
+                                                logger.error(
+                                                    f"Failed to save error for conversation {ai_conversation_id}"
+                                                )
                                     except Exception as e:
                                         logger.error(f"Failed to save error: {e}")
 
@@ -942,7 +942,9 @@ async def _stream_content_analysis(
                         new_session, ai_conversation_id, accumulated_content
                     )
                     if not success:
-                        logger.error(f"Failed to save final response for conversation {ai_conversation_id}")
+                        logger.error(
+                            f"Failed to save final response for conversation {ai_conversation_id}"
+                        )
             except Exception as e:
                 logger.error(f"Failed to save final response: {e}")
             yield '8:[{"finishReason":"stop"}]\n'
@@ -956,7 +958,9 @@ async def _stream_content_analysis(
                     new_session, ai_conversation_id, "", "failed", str(e)
                 )
                 if not success:
-                    logger.error(f"Failed to save stream error for conversation {ai_conversation_id}")
+                    logger.error(
+                        f"Failed to save stream error for conversation {ai_conversation_id}"
+                    )
         except Exception as save_error:
             logger.error(f"Failed to save stream error: {save_error}")
 
@@ -1056,8 +1060,6 @@ async def _stream_content_analysis_ai_sdk(
     user_id: uuid.UUID,  # Add user_id parameter
 ) -> AsyncGenerator[str, None]:
     """Stream AI SDK analysis with updated prompt structure."""
-    import aiohttp
-
     try:
         # 使用新的用户分析模板渲染prompt
         # 优先使用请求中的语言，否则从用户设置获取
@@ -1080,8 +1082,7 @@ async def _stream_content_analysis_ai_sdk(
         logger.info(f"🌐 _stream_content_analysis_ai_sdk 使用语言: {output_language}")
 
         user_prompt = render_user_analysis_prompt(
-            request.analysis_instruction,
-            output_language
+            request.analysis_instruction, output_language
         )
 
         # Prepare messages with updated structure
@@ -1099,8 +1100,10 @@ async def _stream_content_analysis_ai_sdk(
         # 🎯 简化token处理：直接使用请求的max_tokens或默认值
         final_max_tokens = request.max_tokens or get_token_limit(task_type="analysis")
 
-        logger.info(f"🎯 内容分析token设置: 请求={request.max_tokens}, "
-                   f"最终使用={final_max_tokens}")
+        logger.info(
+            f"🎯 内容分析token设置: 请求={request.max_tokens}, "
+            f"最终使用={final_max_tokens}"
+        )
 
         payload = {
             "model": resolved_model,
@@ -1144,7 +1147,9 @@ async def _stream_content_analysis_ai_sdk(
                                     full_response += content
 
                                     # 发送数据流
-                                    formatted_data = f"0:{json.dumps({'text': content})}\n"
+                                    formatted_data = (
+                                        f"0:{json.dumps({'text': content})}\n"
+                                    )
                                     yield formatted_data
 
                         except json.JSONDecodeError:
@@ -1155,9 +1160,11 @@ async def _stream_content_analysis_ai_sdk(
                 yield completion_data
 
                 # 记录最终结果
-                logger.info(f"📊 分析完成: 输出长度={len(full_response)}, "
-                           f"估算输出token={len(full_response)//3}, "
-                           f"token限制={final_max_tokens}")
+                logger.info(
+                    f"📊 分析完成: 输出长度={len(full_response)}, "
+                    f"估算输出token={len(full_response) // 3}, "
+                    f"token限制={final_max_tokens}"
+                )
 
     except Exception as e:
         logger.error(f"Stream analysis failed: {str(e)}")
@@ -1260,15 +1267,12 @@ async def _stream_content_completion_updated(
     resolved_model: str,  # 🎯 新增：接收预选择的模型
 ) -> AsyncGenerator[str, None]:
     """Stream content completion with updated prompt structure."""
-    import aiohttp
-
     from app.utils.prompt_helpers import render_template_prompt
 
     # 创建实时JSONL处理器
     jsonl_processor = create_realtime_jsonl_processor()
 
     try:
-
         # 根据请求的模板选择渲染方式
         template_name = request.template_name or "user_analysis.j2"
 
@@ -1322,8 +1326,8 @@ async def _stream_content_completion_updated(
 
                 full_response = ""
 
-                async for line in response.content.iter_chunked(1024):
-                    line_str = line.decode("utf-8")
+                async for chunk in response.content.iter_chunked(1024):
+                    line_str = chunk.decode("utf-8")
                     lines = line_str.strip().split("\n")
 
                     for line in lines:
@@ -1356,7 +1360,9 @@ async def _stream_content_completion_updated(
                                             final_content,
                                         )
                                         if not success:
-                                            logger.error(f"Failed to save AI completion response for conversation {ai_conversation_id}")
+                                            logger.error(
+                                                f"Failed to save AI completion response for conversation {ai_conversation_id}"
+                                            )
                                 except Exception as e:
                                     logger.error(
                                         f"Failed to save AI completion response: {e}"
@@ -1443,23 +1449,41 @@ def convert_conversation_to_public(conversation: AIConversation) -> dict:
     """Convert AIConversation model to public schema."""
     try:
         # 防御性检查 - 确保对象有 messages 属性
-        if not hasattr(conversation, 'messages'):
-            logger.error(f"Conversation object {getattr(conversation, 'id', 'unknown')} missing messages attribute")
+        if not hasattr(conversation, "messages"):
+            logger.error(
+                f"Conversation object {getattr(conversation, 'id', 'unknown')} missing messages attribute"
+            )
             logger.error(f"Object type: {type(conversation)}")
-            logger.error(f"Available attributes: {[attr for attr in dir(conversation) if not attr.startswith('_')]}")
+            logger.error(
+                f"Available attributes: {[attr for attr in dir(conversation) if not attr.startswith('_')]}"
+            )
             # 返回一个基本的对话结构
             return {
-                "id": str(getattr(conversation, 'id', 'unknown')),
-                "user_id": str(getattr(conversation, 'user_id', 'unknown')),
-                "content_item_id": str(getattr(conversation, 'content_item_id', None)) if getattr(conversation, 'content_item_id', None) else None,
-                "title": getattr(conversation, 'title', 'Unknown Title'),
-                "conversation_type": getattr(conversation, 'conversation_type', 'unknown'),
-                "ai_model_name": getattr(conversation, 'ai_model_name', 'unknown'),
+                "id": str(getattr(conversation, "id", "unknown")),
+                "user_id": str(getattr(conversation, "user_id", "unknown")),
+                "content_item_id": str(getattr(conversation, "content_item_id", None))
+                if getattr(conversation, "content_item_id", None)
+                else None,
+                "title": getattr(conversation, "title", "Unknown Title"),
+                "conversation_type": getattr(
+                    conversation, "conversation_type", "unknown"
+                ),
+                "ai_model_name": getattr(conversation, "ai_model_name", "unknown"),
                 "messages": [],
-                "summary": getattr(conversation, 'summary', None),
-                "is_active": getattr(conversation, 'is_active', True),
-                "created_at": getattr(conversation, 'created_at', '').isoformat() if hasattr(getattr(conversation, 'created_at', ''), 'isoformat') else str(getattr(conversation, 'created_at', '')),
-                "updated_at": getattr(conversation, 'updated_at', '').isoformat() if hasattr(getattr(conversation, 'updated_at', ''), 'isoformat') else str(getattr(conversation, 'updated_at', '')),
+                "summary": getattr(conversation, "summary", None),
+                "is_active": getattr(conversation, "is_active", True),
+                "created_at": (
+                    created_at.isoformat()
+                    if (created_at := getattr(conversation, "created_at", None))
+                    is not None
+                    else ""
+                ),
+                "updated_at": (
+                    updated_at.isoformat()
+                    if (updated_at := getattr(conversation, "updated_at", None))
+                    is not None
+                    else ""
+                ),
             }
 
         messages_data = (
@@ -1480,24 +1504,34 @@ def convert_conversation_to_public(conversation: AIConversation) -> dict:
         )
         messages = []
     except AttributeError as e:
-        logger.error(
-            f"AttributeError when accessing conversation attributes: {e}"
-        )
+        logger.error(f"AttributeError when accessing conversation attributes: {e}")
         logger.error(f"Conversation object type: {type(conversation)}")
-        logger.error(f"Available attributes: {[attr for attr in dir(conversation) if not attr.startswith('_')]}")
+        logger.error(
+            f"Available attributes: {[attr for attr in dir(conversation) if not attr.startswith('_')]}"
+        )
         # 返回一个基本的对话结构
         return {
-            "id": str(getattr(conversation, 'id', 'unknown')),
-            "user_id": str(getattr(conversation, 'user_id', 'unknown')),
-            "content_item_id": str(getattr(conversation, 'content_item_id', None)) if getattr(conversation, 'content_item_id', None) else None,
-            "title": getattr(conversation, 'title', 'Unknown Title'),
-            "conversation_type": getattr(conversation, 'conversation_type', 'unknown'),
-            "ai_model_name": getattr(conversation, 'ai_model_name', 'unknown'),
+            "id": str(getattr(conversation, "id", "unknown")),
+            "user_id": str(getattr(conversation, "user_id", "unknown")),
+            "content_item_id": str(getattr(conversation, "content_item_id", None))
+            if getattr(conversation, "content_item_id", None)
+            else None,
+            "title": getattr(conversation, "title", "Unknown Title"),
+            "conversation_type": getattr(conversation, "conversation_type", "unknown"),
+            "ai_model_name": getattr(conversation, "ai_model_name", "unknown"),
             "messages": [],
-            "summary": getattr(conversation, 'summary', None),
-            "is_active": getattr(conversation, 'is_active', True),
-            "created_at": getattr(conversation, 'created_at', '').isoformat() if hasattr(getattr(conversation, 'created_at', ''), 'isoformat') else str(getattr(conversation, 'created_at', '')),
-            "updated_at": getattr(conversation, 'updated_at', '').isoformat() if hasattr(getattr(conversation, 'updated_at', ''), 'isoformat') else str(getattr(conversation, 'updated_at', '')),
+            "summary": getattr(conversation, "summary", None),
+            "is_active": getattr(conversation, "is_active", True),
+            "created_at": (
+                created_at.isoformat()
+                if (created_at := getattr(conversation, "created_at", None)) is not None
+                else ""
+            ),
+            "updated_at": (
+                updated_at.isoformat()
+                if (updated_at := getattr(conversation, "updated_at", None)) is not None
+                else ""
+            ),
         }
 
     return {
@@ -1556,17 +1590,23 @@ def get_content_conversations(
         # 使用 scalars() 方法确保返回模型对象而不是 Row 对象
         conversations = session.exec(query.order_by(AIConversation.created_at)).all()
 
-        logger.info(f"Found {len(conversations)} conversations for content {content_id}")
+        logger.info(
+            f"Found {len(conversations)} conversations for content {content_id}"
+        )
 
         # 转换为public schema - 添加额外的错误处理
         public_conversations = []
         for i, conv in enumerate(conversations):
             try:
-                logger.debug(f"Processing conversation {i+1}/{len(conversations)}: {conv.id}")
+                logger.debug(
+                    f"Processing conversation {i + 1}/{len(conversations)}: {conv.id}"
+                )
                 public_conv = convert_conversation_to_public(conv)
                 public_conversations.append(public_conv)
             except Exception as e:
-                logger.error(f"Failed to convert conversation {getattr(conv, 'id', 'unknown')} to public: {e}")
+                logger.error(
+                    f"Failed to convert conversation {getattr(conv, 'id', 'unknown')} to public: {e}"
+                )
                 logger.error(f"Conversation type: {type(conv)}")
                 # 继续处理其他对话，而不是完全失败
                 continue
@@ -1575,7 +1615,8 @@ def get_content_conversations(
         has_auto_analysis = False
         try:
             has_auto_analysis = any(
-                getattr(conv, 'conversation_type', None) == "auto_analysis" for conv in conversations
+                getattr(conv, "conversation_type", None) == "auto_analysis"
+                for conv in conversations
             )
         except Exception as e:
             logger.error(f"Failed to check auto_analysis conversations: {e}")
@@ -1591,7 +1632,7 @@ def get_content_conversations(
         logger.error(f"Content ID: {content_id}, User ID: {current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve conversations"
+            detail="Failed to retrieve conversations",
         )
 
 
@@ -1769,15 +1810,17 @@ async def _stream_template_analysis(
             "summary": "summary",
             "key_points": "key_points",
             "labels": "labels",
-            "analysis": "analysis"
+            "analysis": "analysis",
         }
         task_type = task_type_mapping.get(analysis_type, "analysis")
 
         # 🎯 简化设置：直接使用默认token限制
         max_tokens = get_token_limit(task_type=task_type)
 
-        logger.info(f"🎯 模板分析设置: 类型={analysis_type}, 任务={task_type}, "
-                   f"token限制={max_tokens}")
+        logger.info(
+            f"🎯 模板分析设置: 类型={analysis_type}, 任务={task_type}, "
+            f"token限制={max_tokens}"
+        )
 
         # 渲染分析指令模板
         template_env = Environment(
@@ -1801,6 +1844,11 @@ async def _stream_template_analysis(
             content_text=content_text[:2000],  # 限制模板中的内容长度
             content_type="文档",
             output_language=language,
+            document_metadata={
+                "title": content_title,
+                "author": None,
+                "source_url": _source_uri,
+            },
         )
 
         # 构建消息
@@ -1847,8 +1895,10 @@ async def _stream_template_analysis(
             "max_tokens": max_tokens,
         }
 
-        logger.info(f"🚀 开始模板分析: 模型={resolved_model}, "
-                   f"max_tokens={max_tokens}, temperature=0.7")
+        logger.info(
+            f"🚀 开始模板分析: 模型={resolved_model}, "
+            f"max_tokens={max_tokens}, temperature=0.7"
+        )
 
         timeout = aiohttp.ClientTimeout(total=120.0)
         async with aiohttp.ClientSession(timeout=timeout) as session:
@@ -1870,7 +1920,9 @@ async def _stream_template_analysis(
                         data_str = line_str[6:]
 
                         if data_str == "[DONE]":
-                            logger.info(f"📊 模板分析完成: 输出长度={len(accumulated_content)}")
+                            logger.info(
+                                f"📊 模板分析完成: 输出长度={len(accumulated_content)}"
+                            )
                             break
 
                         try:
@@ -1882,7 +1934,9 @@ async def _stream_template_analysis(
                                     accumulated_content += content
 
                                     # AI SDK Data Stream Protocol format
-                                    formatted_data = f"0:{json.dumps({'text': content})}\n"
+                                    formatted_data = (
+                                        f"0:{json.dumps({'text': content})}\n"
+                                    )
                                     yield formatted_data
 
                         except json.JSONDecodeError:
@@ -1904,7 +1958,7 @@ async def _stream_template_analysis(
     summary="Delete Content Item",
     description="Delete a content item and all its related data. User can only delete their own content.",
 )
-def delete_content_item_endpoint(
+async def delete_content_item_endpoint(
     *,
     session: SessionDep,
     current_user: CurrentUser,
@@ -1933,7 +1987,7 @@ def delete_content_item_endpoint(
 
         # 发送SSE通知（如果需要）
         try:
-            content_event_manager.notify_content_deleted(
+            await content_event_manager.notify_content_deleted(
                 content_id=str(id), user_id=str(current_user.id)
             )
         except Exception as e:
@@ -1975,8 +2029,7 @@ def add_to_favorites_endpoint(
     current_user: CurrentUser,
     id: uuid.UUID = Path(..., description="Content item ID to add to favorites"),
     favorite_data: dict = Body(
-        default={},
-        description="Optional block data for block-level favorites"
+        default={}, description="Optional block data for block-level favorites"
     ),
 ) -> dict[str, str]:
     """Add content item or block to favorites."""
@@ -2005,10 +2058,7 @@ def add_to_favorites_endpoint(
 
     # Check if already favorited
     existing_favorite = get_favorite(
-        session=session,
-        user_id=current_user.id,
-        content_item_id=id,
-        block_id=block_id
+        session=session, user_id=current_user.id, content_item_id=id, block_id=block_id
     )
     if existing_favorite:
         if block_id:
@@ -2032,7 +2082,7 @@ def add_to_favorites_endpoint(
         block_content=block_content,
         title=title,
         description=description,
-        tags=tags
+        tags=tags,
     )
 
     return {"status": "ok"}
@@ -2069,10 +2119,7 @@ def remove_from_favorites_endpoint(
 
     # Remove from favorites
     success = delete_favorite(
-        session=session,
-        user_id=current_user.id,
-        content_item_id=id,
-        block_id=block_id
+        session=session, user_id=current_user.id, content_item_id=id, block_id=block_id
     )
     if not success:
         if block_id:
@@ -2117,10 +2164,7 @@ def check_favorite_status_endpoint(
 
     # Check favorite status
     favorite = get_favorite(
-        session=session,
-        user_id=current_user.id,
-        content_item_id=id,
-        block_id=block_id
+        session=session, user_id=current_user.id, content_item_id=id, block_id=block_id
     )
 
     return {"is_favorite": favorite is not None}
@@ -2444,22 +2488,20 @@ def regenerate_ai_analysis_endpoint(
         "note": "Check SSE events for real-time progress updates",
     }
 
+
 @router.get("/{content_id}/segments/{segment_number}", response_model=ContentSegmentOut)
 async def get_content_segment(
     content_id: uuid.UUID,
     segment_number: int,
     current_user: CurrentUser,
-    db: AsyncSessionDep
+    db: AsyncSessionDep,
 ):
     """获取指定内容的特定段落"""
 
     # 验证内容项存在且用户有权限访问
     content_item = await db.scalar(
         select(ContentItem).where(
-            and_(
-                ContentItem.id == content_id,
-                ContentItem.user_id == current_user.id
-            )
+            and_(ContentItem.id == content_id, ContentItem.user_id == current_user.id)
         )
     )
 
@@ -2471,15 +2513,18 @@ async def get_content_segment(
         select(ContentSegment).where(
             and_(
                 ContentSegment.content_item_id == content_id,
-                ContentSegment.display_number == segment_number
+                ContentSegment.display_number == segment_number,
             )
         )
     )
 
     if not segment:
-        raise HTTPException(status_code=404, detail=f"Segment {segment_number} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Segment {segment_number} not found"
+        )
 
     return segment
+
 
 @router.get("/{content_id}/segments", response_model=ContentSegmentBulkResponse)
 async def get_content_segments(
@@ -2488,7 +2533,7 @@ async def get_content_segments(
     db: AsyncSessionDep,
     numbers: str | None = Query(None, description="逗号分隔的段落号列表，如 '1,3,5'"),
     from_number: int | None = Query(None, description="起始段落号（包含）"),
-    to_number: int | None = Query(None, description="结束段落号（包含）")
+    to_number: int | None = Query(None, description="结束段落号（包含）"),
 ):
     """批量获取内容段落
     支持三种查询模式：
@@ -2502,8 +2547,7 @@ async def get_content_segments(
         content_item = await db.scalar(
             select(ContentItem).where(
                 and_(
-                    ContentItem.id == content_id,
-                    ContentItem.user_id == current_user.id
+                    ContentItem.id == content_id, ContentItem.user_id == current_user.id
                 )
             )
         )
@@ -2512,14 +2556,20 @@ async def get_content_segments(
             raise HTTPException(status_code=404, detail="Content not found")
 
         # 构建查询条件
-        query = select(ContentSegment).where(ContentSegment.content_item_id == content_id)
+        query = select(ContentSegment).where(
+            ContentSegment.content_item_id == content_id
+        )
         requested_numbers = []
 
         if numbers:
             # 指定段落号列表模式
             try:
-                requested_numbers = [int(n.strip()) for n in numbers.split(',') if n.strip()]
-                query = query.where(ContentSegment.display_number.in_(requested_numbers))
+                requested_numbers = [
+                    int(n.strip()) for n in numbers.split(",") if n.strip()
+                ]
+                query = query.where(
+                    ContentSegment.display_number.in_(requested_numbers)
+                )
             except ValueError:
                 raise HTTPException(status_code=400, detail="Invalid numbers format")
 
@@ -2530,13 +2580,16 @@ async def get_content_segments(
             query = query.where(
                 and_(
                     ContentSegment.display_number >= from_number,
-                    ContentSegment.display_number <= to_number
+                    ContentSegment.display_number <= to_number,
                 )
             )
             requested_numbers = list(range(from_number, to_number + 1))
 
         elif from_number is not None or to_number is not None:
-            raise HTTPException(status_code=400, detail="Both from_number and to_number are required for range query")
+            raise HTTPException(
+                status_code=400,
+                detail="Both from_number and to_number are required for range query",
+            )
 
         # 执行查询
         query = query.order_by(ContentSegment.display_number)
@@ -2547,12 +2600,12 @@ async def get_content_segments(
         missing_numbers = []
         if requested_numbers:
             found_numbers = {seg.display_number for seg in segments}
-            missing_numbers = [num for num in requested_numbers if num not in found_numbers]
+            missing_numbers = [
+                num for num in requested_numbers if num not in found_numbers
+            ]
 
         return ContentSegmentBulkResponse(
-            segments=segments,
-            total=len(segments),
-            missing_numbers=missing_numbers
+            segments=segments, total=len(segments), missing_numbers=missing_numbers
         )
 
     except HTTPException:
@@ -2561,11 +2614,15 @@ async def get_content_segments(
     except Exception as e:
         # 记录详细错误信息
         import logging
+
         logger = logging.getLogger(__name__)
-        logger.error(f"获取内容段落时发生错误 - content_id: {content_id}, error: {str(e)}", exc_info=True)
+        logger.error(
+            f"获取内容段落时发生错误 - content_id: {content_id}, error: {str(e)}",
+            exc_info=True,
+        )
 
         # 返回通用500错误，避免暴露内部错误信息
         raise HTTPException(
             status_code=500,
-            detail="Internal server error while retrieving content segments"
+            detail="Internal server error while retrieving content segments",
         )

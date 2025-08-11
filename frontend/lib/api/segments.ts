@@ -1,4 +1,4 @@
-import { client } from './client';
+import { client } from "./client";
 
 export interface ContentSegment {
   id: string;
@@ -22,10 +22,10 @@ export interface ContentSegmentBulkResponse {
  */
 export async function getContentSegment(
   contentId: string,
-  segmentNumber: number
+  segmentNumber: number,
 ): Promise<ContentSegment> {
   const response = await client.get<ContentSegment>(
-    `/api/v1/content/${contentId}/segments/${segmentNumber}`
+    `/api/v1/content/${contentId}/segments/${segmentNumber}`,
   );
   return response.data;
 }
@@ -35,11 +35,11 @@ export async function getContentSegment(
  */
 export async function getContentSegmentsByNumbers(
   contentId: string,
-  numbers: number[]
+  numbers: number[],
 ): Promise<ContentSegmentBulkResponse> {
-  const numbersStr = numbers.join(',');
+  const numbersStr = numbers.join(",");
   const response = await client.get<ContentSegmentBulkResponse>(
-    `/api/v1/content/${contentId}/segments?numbers=${numbersStr}`
+    `/api/v1/content/${contentId}/segments?numbers=${numbersStr}`,
   );
   return response.data;
 }
@@ -50,10 +50,10 @@ export async function getContentSegmentsByNumbers(
 export async function getContentSegmentsByRange(
   contentId: string,
   fromNumber: number,
-  toNumber: number
+  toNumber: number,
 ): Promise<ContentSegmentBulkResponse> {
   const response = await client.get<ContentSegmentBulkResponse>(
-    `/api/v1/content/${contentId}/segments?from_number=${fromNumber}&to_number=${toNumber}`
+    `/api/v1/content/${contentId}/segments?from_number=${fromNumber}&to_number=${toNumber}`,
   );
   return response.data;
 }
@@ -62,10 +62,10 @@ export async function getContentSegmentsByRange(
  * 获取所有段落
  */
 export async function getAllContentSegments(
-  contentId: string
+  contentId: string,
 ): Promise<ContentSegmentBulkResponse> {
   const response = await client.get<ContentSegmentBulkResponse>(
-    `/api/v1/content/${contentId}/segments`
+    `/api/v1/content/${contentId}/segments`,
   );
   return response.data;
 }
@@ -75,23 +75,27 @@ export async function getAllContentSegments(
  */
 export async function getSegmentsByRef(
   contentId: string,
-  refString: string
+  refString: string,
 ): Promise<ContentSegmentBulkResponse> {
   const numbers = parseReferenceString(refString);
-  
+
   if (numbers.length === 0) {
     return { segments: [], total: 0, missing_numbers: [] };
   }
 
   // 检查是否为连续区间
   const sortedNumbers = [...numbers].sort((a, b) => a - b);
-  const isConsecutive = sortedNumbers.every((num, index) => 
-    index === 0 || num === sortedNumbers[index - 1] + 1
+  const isConsecutive = sortedNumbers.every(
+    (num, index) => index === 0 || num === sortedNumbers[index - 1] + 1,
   );
 
   if (isConsecutive && sortedNumbers.length > 1) {
     // 使用区间查询优化
-    return getContentSegmentsByRange(contentId, sortedNumbers[0], sortedNumbers[sortedNumbers.length - 1]);
+    return getContentSegmentsByRange(
+      contentId,
+      sortedNumbers[0],
+      sortedNumbers[sortedNumbers.length - 1],
+    );
   } else {
     // 使用数字列表查询
     return getContentSegmentsByNumbers(contentId, numbers);
@@ -110,13 +114,13 @@ export function parseReferenceString(refString?: string): number[] {
 
   const refs: number[] = [];
 
-  refString.split(',').forEach(segment => {
+  refString.split(",").forEach((segment) => {
     const part = segment.trim();
     if (!part) return;
 
     // 区间格式 例如 "6-24"
-    if (part.includes('-')) {
-      const [startStr, endStr] = part.split('-').map(s => s.trim());
+    if (part.includes("-")) {
+      const [startStr, endStr] = part.split("-").map((s) => s.trim());
       const start = parseInt(startStr, 10);
       const end = parseInt(endStr, 10);
       if (!isNaN(start) && !isNaN(end)) {
@@ -141,12 +145,15 @@ export function parseReferenceString(refString?: string): number[] {
 /**
  * 格式化段落内容预览（用于悬浮显示）
  */
-export function formatSegmentPreview(segment: ContentSegment, maxLength = 100): string {
+export function formatSegmentPreview(
+  segment: ContentSegment,
+  maxLength = 100,
+): string {
   const content = segment.content.trim();
   if (content.length <= maxLength) {
     return content;
   }
-  return content.substring(0, maxLength) + '...';
+  return content.substring(0, maxLength) + "...";
 }
 
 /**
@@ -165,19 +172,22 @@ class SegmentCache {
   }
 
   set(segment: ContentSegment): void {
-    const key = this.getCacheKey(segment.content_item_id, segment.display_number);
-    
+    const key = this.getCacheKey(
+      segment.content_item_id,
+      segment.display_number,
+    );
+
     // 如果缓存已满，删除最老的条目
     if (this.cache.size >= this.maxSize) {
       const firstKey = this.cache.keys().next().value;
       this.cache.delete(firstKey);
     }
-    
+
     this.cache.set(key, segment);
   }
 
   setMultiple(segments: ContentSegment[]): void {
-    segments.forEach(segment => this.set(segment));
+    segments.forEach((segment) => this.set(segment));
   }
 
   clear(contentId?: string): void {
@@ -202,7 +212,7 @@ export const segmentCache = new SegmentCache();
  */
 export async function getCachedContentSegment(
   contentId: string,
-  segmentNumber: number
+  segmentNumber: number,
 ): Promise<ContentSegment> {
   // 先尝试从缓存获取
   const cached = segmentCache.get(contentId, segmentNumber);
@@ -221,10 +231,10 @@ export async function getCachedContentSegment(
  */
 export async function getCachedSegmentsByRef(
   contentId: string,
-  refString: string
+  refString: string,
 ): Promise<ContentSegmentBulkResponse> {
   const numbers = parseReferenceString(refString);
-  
+
   if (numbers.length === 0) {
     return { segments: [], total: 0, missing_numbers: [] };
   }
@@ -233,7 +243,7 @@ export async function getCachedSegmentsByRef(
   const cachedSegments: ContentSegment[] = [];
   const missingNumbers: number[] = [];
 
-  numbers.forEach(num => {
+  numbers.forEach((num) => {
     const cached = segmentCache.get(contentId, num);
     if (cached) {
       cachedSegments.push(cached);
@@ -245,36 +255,47 @@ export async function getCachedSegmentsByRef(
   // 如果全部都在缓存中，直接返回
   if (missingNumbers.length === 0) {
     return {
-      segments: cachedSegments.sort((a, b) => a.display_number - b.display_number),
+      segments: cachedSegments.sort(
+        (a, b) => a.display_number - b.display_number,
+      ),
       total: cachedSegments.length,
-      missing_numbers: []
+      missing_numbers: [],
     };
   }
 
   try {
     // 获取缺失的段落
-    const response = await getContentSegmentsByNumbers(contentId, missingNumbers);
-    
+    const response = await getContentSegmentsByNumbers(
+      contentId,
+      missingNumbers,
+    );
+
     // 更新缓存
     segmentCache.setMultiple(response.segments);
-    
+
     // 合并缓存和新获取的段落
-    const allSegments = [...cachedSegments, ...response.segments]
-      .sort((a, b) => a.display_number - b.display_number);
+    const allSegments = [...cachedSegments, ...response.segments].sort(
+      (a, b) => a.display_number - b.display_number,
+    );
 
     return {
       segments: allSegments,
       total: allSegments.length,
-      missing_numbers: response.missing_numbers
+      missing_numbers: response.missing_numbers,
     };
   } catch (error) {
     // 如果 API 调用失败（比如认证问题），返回缓存的段落
-    console.warn('Failed to fetch segments from API, returning cached data only:', error);
-    
+    console.warn(
+      "Failed to fetch segments from API, returning cached data only:",
+      error,
+    );
+
     return {
-      segments: cachedSegments.sort((a, b) => a.display_number - b.display_number),
+      segments: cachedSegments.sort(
+        (a, b) => a.display_number - b.display_number,
+      ),
       total: cachedSegments.length,
-      missing_numbers: missingNumbers // 标记未能获取的段落
+      missing_numbers: missingNumbers, // 标记未能获取的段落
     };
   }
-} 
+}
