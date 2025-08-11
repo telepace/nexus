@@ -136,7 +136,15 @@
       "Bash(TESTING=true TEST_MODE=true python -m pytest app/tests/api/routes/test_content_llm_analysis.py::TestContentLLMAnalysisUpdated::test_analyze_ai_sdk_updated_prompt_structure -v)",
       "Bash(TESTING=true TEST_MODE=true python -m pytest app/tests/services/test_segment_aware_chat.py::TestSegmentAwareChatService::test_segment_retrieval -v)",
       "Bash(TESTING=true TEST_MODE=true python -m pytest app/tests/api/routes/test_content_llm_analysis.py::TestContentLLMAnalysisUpdated::test_analyze_ai_sdk_updated_prompt_structure app/tests/services/test_segment_aware_chat.py::TestSegmentAwareChatService::test_segment_retrieval -v)",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Bash(npm audit:*)",
+      "Bash(pnpm audit:*)",
+      "Bash(./scripts/fix-security-vulnerabilities.sh:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm tsc:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm test:e2e:*)",
+      "Bash(gh run list:*)"
     ]
   },
   "enableAllProjectMcpServers": false
