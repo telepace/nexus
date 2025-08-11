@@ -14,7 +14,7 @@ jobs:
     steps:
       # ========== 代码检出 ==========
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         
       # ========== 环境设置 ==========
       - name: Setup Python 3.10
