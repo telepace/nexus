@@ -6,7 +6,7 @@
  */
 
 // 仅从客户端认证模块导出 (用于客户端组件)
-export { useAuth, getCookie } from "./client-auth";
+export { useAuth, getCookie, setCookie } from "./client-auth";
 export type { User, AuthContextType } from "./client-auth";
 
 // 注意：服务器端认证功能不应在此导入

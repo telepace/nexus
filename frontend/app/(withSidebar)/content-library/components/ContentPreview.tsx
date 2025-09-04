@@ -39,9 +39,7 @@ export const ContentPreview = memo<Props>(({ item }) => {
 
         try {
           // 只在需要时显示loading状态
-          if (!contentData || contentData.item?.id !== item.id) {
-            setLoading(true);
-          }
+          setLoading(true);
           
           // 🎯 Preview模式：禁用对话历史和实时更新，提升性能
           const data = await contentDataManager.getPreviewData(item.id, { 
@@ -82,7 +80,7 @@ export const ContentPreview = memo<Props>(({ item }) => {
   const contentId = useMemo(() => item?.id, [item?.id]);
 
   return (
-    <div className="relative z-20 h-full shadow-macos-window linear-bg-1 rounded-sm flex flex-col overflow-hidden">
+    <div className="relative z-20 h-full preview-container flex flex-col overflow-hidden">
       <ReferenceManagerProvider contentId={contentId}>
         <ContentAnalysisView
           item={item}
@@ -94,7 +92,7 @@ export const ContentPreview = memo<Props>(({ item }) => {
           hideHeader={false}
           headerTitle="Preview"
           emptyStateText="点击内容卡片查看预览"
-          className="rounded-sm"
+          className="rounded-md"
         />
       </ReferenceManagerProvider>
     </div>

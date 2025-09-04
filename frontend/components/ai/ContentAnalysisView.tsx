@@ -428,7 +428,7 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
     }, 50); // 减少延迟，提升响应性
 
     return () => memoryManager.clearTimeout(timer);
-  }, [currentItem?.id, memoryManager, variant, currentScene, scrollManager]);
+  }, [currentItem, memoryManager, variant, currentScene, scrollManager]);
 
   // 🎯 新增：监听用户滚动事件
   useEffect(() => {
@@ -688,11 +688,8 @@ export const ContentAnalysisView: React.FC<ContentAnalysisViewProps> = ({
         {/* 🎯 Preview模式下的底部AI助手面板 - 独立区块 */}
         {variant === "preview" && currentItem && (
           <div 
-            className="flex-shrink-0 backdrop-blur-md bg-background/90 border-t border-border shadow-lg"
+            className="flex-shrink-0 backdrop-blur-md linear-bg-2 divider-unified border-t shadow-panel"
             data-exclude-selection
-            style={{
-              boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.1)',
-            }}
           >
             <div className="px-6 py-3 max-w-7xl mx-auto">
               <AIAssistantPanel

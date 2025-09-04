@@ -2,8 +2,8 @@ import type { ContentItemPublic as OpenAPIContentItemPublic } from "@/app/openap
 
 // 扩展 openapi-client 的类型，添加本地需要的字段
 export interface ContentItemPublic
-  extends Omit<OpenAPIContentItemPublic, "title"> {
-  title: string | null;
+  extends Omit<OpenAPIContentItemPublic, "title" | "summary"> {
+  title?: string | null;
   summary?: string | null;
   meta_info?: string | null;
   ai_analysis?: {
@@ -50,3 +50,6 @@ export interface FilterOptions {
   order?: "asc" | "desc";
   [key: string]: unknown;
 }
+
+// 排序选项类型
+export type SortOption = "time" | "rating" | "title" | "views" | "quality" | "relevance";

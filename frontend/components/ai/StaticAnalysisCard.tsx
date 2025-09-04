@@ -126,7 +126,7 @@ export const StaticAnalysisCard: React.FC<StaticAnalysisCardProps> = ({
     }
     
     return null;
-  }, [card.content, contentId, onExpandLine]);
+  }, [card, contentId, onExpandLine]);
 
   return (
     <>

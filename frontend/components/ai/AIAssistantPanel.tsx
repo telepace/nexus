@@ -237,7 +237,7 @@ export const AIAssistantPanel = React.forwardRef<
                 <button
                   key={prompt.id}
                   onClick={() => handlePromptClick(prompt)}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-colors duration-150 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 whitespace-nowrap flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-3 py-2 btn-unified text-sm font-medium transition-colors duration-150 card-unified hover:shadow-card whitespace-nowrap flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>{prompt.name}</span>
@@ -249,8 +249,8 @@ export const AIAssistantPanel = React.forwardRef<
           {/* 输入框 - 修复抖动问题 */}
           <div
             className={`
-            flex items-center px-4 py-3 bg-neutral-50 dark:bg-neutral-900 rounded-2xl border-2
-            ${inputFocused ? "border-neutral-900 dark:border-neutral-100" : "border-transparent"}
+            flex items-center px-4 py-3 input-unified
+            ${inputFocused ? "ring-2 ring-offset-2" : ""}
           `}
           >
             <input
@@ -261,7 +261,7 @@ export const AIAssistantPanel = React.forwardRef<
               onBlur={() => setInputFocused(false)}
               onKeyDown={handleKeyDown}
               placeholder="询问关于内容的任何问题..."
-              className="flex-1 bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none"
+              className="flex-1 bg-transparent linear-text placeholder:text-muted-foreground focus:outline-none"
             />
 
             {/* 🎯 关键修复：发送按钮始终存在，避免DOM元素频繁添加移除导致的布局抖动 */}
@@ -269,11 +269,11 @@ export const AIAssistantPanel = React.forwardRef<
               size="icon"
               disabled={!inputValue.trim()}
               className={`
-              h-8 w-8 rounded-xl ml-3 transition-opacity duration-150
+              h-8 w-8 btn-unified ml-3 transition-opacity duration-150
               ${
                 inputValue.trim()
-                  ? "bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white opacity-100"
-                  : "bg-neutral-300 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400 opacity-50 cursor-not-allowed"
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90 opacity-100"
+                  : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
               }
             `}
               onClick={handleAnalysis}

@@ -16,7 +16,7 @@ import {
 import { useClickOutside } from "@/hooks/use-click-outside";
 import type { ContentItemPublic } from "../types";
 
-export type SortOption = "time" | "rating" | "title" | "views";
+import { type SortOption } from "../types";
 
 interface LibraryHeaderProps {
   items: ContentItemPublic[];
@@ -96,7 +96,7 @@ export const LibraryHeader = ({
           opacity: isSearching ? 0 : 1,
         }}
         transition={{ duration: 0.2, ease: "linear" }}
-        className="overflow-hidden"
+        style={{ overflow: "hidden" }}
       >
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -165,18 +165,23 @@ export const LibraryHeader = ({
 
         {/* Search Input - always in DOM, animated with motion */}
         <motion.div
-          className="absolute right-0 top-1/2 -translate-y-1/2"
+          style={{ 
+            position: "absolute", 
+            right: 0, 
+            top: "50%", 
+            transform: "translateY(-50%)",
+            pointerEvents: isSearching ? "auto" : "none"
+          }}
           initial={false}
           animate={{
             width: isSearching ? 360 : 40,
             opacity: isSearching ? 1 : 0,
-            transition: {
-              duration: 0.2,
-              ease: "linear",
-              delay: isSearching ? 0.12 : 0,
-            },
           }}
-          style={{ pointerEvents: isSearching ? "auto" : "none" }}
+          transition={{
+            duration: 0.2,
+            ease: "linear",
+            delay: isSearching ? 0.12 : 0,
+          }}
         >
           <div className="relative h-full w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />

@@ -321,8 +321,8 @@ export default function ContentLibraryPage() {
       {showPreview &&
         (isMobile ? (
           <section className="flex flex-col h-full w-full overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-300 pl-0 pr-2 py-2">
-            <header className="flex items-center justify-between h-header px-6 border-b border-border/30 bg-background/80 backdrop-blur-sm">
-              <h2 className="text-lg font-semibold">预览</h2>
+            <header className="flex items-center justify-between h-header px-6 border-b border-border/30 bg-background/95 backdrop-blur-sm">
+              <h1 className="text-sm font-medium text-neutral-900">Preview</h1>
               <div className="flex items-center gap-3">
                 {previewItem && (
                   <Button
@@ -341,13 +341,48 @@ export default function ContentLibraryPage() {
               </div>
             </header>
             <div className="flex-1 overflow-auto">
-              <ContentPreview item={previewItem} />
+              <ContentPreview 
+                item={previewItem}
+                hideHeader={true}
+              />
             </div>
           </section>
         ) : (
-          <aside className="flex-1 pl-0 pr-2 py-2 flex h-full">
-            <div className="flex-1 min-w-0">
-              <ContentPreview item={previewItem} />
+          <aside className="flex-1 flex flex-col h-full">
+            {/* Desktop Preview Header - 与左侧Library标题对齐 */}
+            <header className="relative flex items-center justify-between h-header px-6 border-b shrink-0 bg-background/95 backdrop-blur-sm">
+              <div className="flex items-center gap-2 min-w-0">
+                <h1 className="text-sm font-medium text-neutral-900">Preview</h1>
+              </div>
+              <div className="flex items-center gap-2">
+                {previewItem && (
+                  <Button
+                    onClick={() =>
+                      router.push(`/content-library/reader/${previewItem.id}`)
+                    }
+                    size="sm"
+                    variant="outline"
+                    className="h-8"
+                  >
+                    打开
+                  </Button>
+                )}
+                <Button 
+                  onClick={togglePreview} 
+                  size="sm" 
+                  variant="ghost"
+                  className="h-8 w-8"
+                >
+                  <PanelRightClose className="h-4 w-4" />
+                </Button>
+              </div>
+            </header>
+            {/* Preview Content */}
+            <div className="flex-1 overflow-hidden pl-0 pr-2 py-2">
+              <ContentPreview 
+                item={previewItem}
+                hideHeader={true}
+              />
             </div>
           </aside>
         ))}

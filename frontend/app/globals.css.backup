@@ -1,0 +1,1719 @@
+/* stylelint-disable at-rule-no-unknown */
+@import "tailwindcss";
+@import "../styles/components.css";
+
+/* 优雅滚动条样式 */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgb(209 213 219 / 0.6);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgb(156 163 175 / 0.8);
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgb(75 85 99 / 0.6);
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgb(107 114 128 / 0.8);
+}
+
+@custom-variant dark (&:is(.dark *));
+
+/* Tailwind v4 自定义变体 */
+@variant dark (&:is(.dark *));
+
+/* =============================================================================
+ * CSS 自定义属性定义 - 基础变量系统（Primitive + Semantic）
+ * ============================================================================= */
+
+:root {
+  /* Base neutral colors using OKLCH for better color consistency */
+  --neutral-50: oklch(0.985 0 0);
+  --neutral-100: oklch(0.97 0 0);
+  --neutral-200: oklch(0.922 0 0);
+  --neutral-300: oklch(0.87 0 0);
+  --neutral-400: oklch(0.708 0 0);
+  --neutral-500: oklch(0.556 0 0);
+  --neutral-600: oklch(0.439 0 0);
+  --neutral-700: oklch(0.371 0 0);
+  --neutral-800: oklch(0.269 0 0);
+  --neutral-900: oklch(0.205 0 0);
+  --neutral-950: oklch(0.145 0 0);
+
+  /* Border radius */
+  --radius: 0.5rem;
+
+  /* Light‑mode semantic colors */
+  --background: var(--color-linear-bg-1);
+  --foreground: #222326; /* Nordic Gray */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+
+  /* Chart colors (light) */
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+
+  /* Sidebar colors (light) */
+  --sidebar: var(--color-linear-bg-1);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+
+  /* Layout dimensions */
+  --header-height: 2.5rem; /* 40px */
+  --sidebar-width: 16rem; /* 256px */
+  --sidebar-width-collapsed: 3.5rem; /* 56px - collapsed sidebar width */
+
+  /* Base radius token */
+  --radius: 0.625rem;
+
+  /* Custom width tokens */
+  --size-library: 32rem;
+  --size-library-lg: 40rem;
+  --size-library-card: 28.75rem; /* 460px - card width */
+  --size-card-title: 25rem; /* 400px - card text width */
+  --size-body: 42rem; /* 672px - body content width */
+  --size-body-lg: 48rem; /* 768px - large body content width */
+
+  /* === Custom Color Palettes (Tailwind v4 tokens) === */
+  /* -------------------------------------------------
+   *  Common root  ——  Light  Scheme
+   * -------------------------------------------------*/
+  /* ------ Tailwind Stone ------ */
+  --stone-50: oklch(98.48% 0.001 106deg);
+  --stone-100: oklch(96.99% 0.001 106deg);
+  --stone-200: oklch(92.32% 0.003 49deg);
+  --stone-300: oklch(86.87% 0.004 56deg);
+  --stone-400: oklch(71.61% 0.009 56deg);
+  --stone-500: oklch(55.34% 0.012 58deg);
+  --stone-600: oklch(44.44% 0.01 74deg);
+  --stone-700: oklch(37.41% 0.009 68deg);
+  --stone-800: oklch(26.85% 0.006 34deg);
+  --stone-900: oklch(21.61% 0.006 56deg);
+  --stone-950: oklch(14.69% 0.004 49deg);
+
+  /* ------ Tailwind Zinc ------ */
+  --zinc-50: oklch(98.51% 0.0 90deg);
+  --zinc-100: oklch(96.74% 0.001 286deg);
+  --zinc-200: oklch(91.97% 0.004 286deg);
+  --zinc-300: oklch(87.11% 0.005 286deg);
+  --zinc-400: oklch(71.18% 0.013 286deg);
+  --zinc-500: oklch(55.17% 0.014 286deg);
+  --zinc-600: oklch(44.19% 0.015 286deg);
+  --zinc-700: oklch(37.03% 0.012 286deg);
+  --zinc-800: oklch(27.39% 0.005 286deg);
+  --zinc-900: oklch(21.03% 0.006 286deg);
+  --zinc-950: oklch(14.08% 0.004 286deg);
+
+  /* ------ Notion Palette (text / bg) ------ */
+  --notion-default-bg: oklch(100% 0 90deg);
+  --notion-default-tx: oklch(32.80% 0.01 87deg);
+
+  --notion-gray-bg: oklch(94.29% 0.002 93deg);
+  --notion-gray-tx: oklch(55.52% 0.009 83deg);
+
+  --notion-brown-bg: oklch(95.28% 0.001 43deg);
+  --notion-brown-tx: oklch(53.23% 0.03 55deg);
+
+  --notion-orange-bg: oklch(95.92% 0.005 77deg);
+  --notion-orange-tx: oklch(60.07% 0.083 69deg);
+
+  --notion-yellow-bg: oklch(97.37% 0.01 94deg);
+  --notion-yellow-tx: oklch(70.26% 0.085 90deg);
+
+  --notion-green-bg: oklch(95.22% 0.005 154deg);
+  --notion-green-tx: oklch(60.04% 0.054 147deg);
+
+  --notion-blue-bg: oklch(94.97% 0.008 245deg);
+  --notion-blue-tx: oklch(55.08% 0.057 250deg);
+
+  --notion-purple-bg: oklch(96.71% 0.005 306deg);
+  --notion-purple-tx: oklch(57.40% 0.068 301deg);
+
+  --notion-pink-bg: oklch(97.08% 0.006 19deg);
+  --notion-pink-tx: oklch(60.45% 0.094 23deg);
+
+  --notion-red-bg: oklch(96.45% 0.007 33deg);
+  --notion-red-tx: oklch(57.30% 0.098 37deg);
+
+  /* ------ macOS System Gray (Light) ------ */
+  --mac-gray-1: oklch(55.17% 0.01 88deg);
+  --mac-gray-2: oklch(67.73% 0.006 91deg);
+  --mac-gray-3: oklch(78.37% 0.003 93deg);
+  --mac-gray-4: oklch(82.30% 0.003 91deg);
+  --mac-gray-5: oklch(90.27% 0.002 93deg);
+  --mac-gray-6: oklch(95.50% 0.001 93deg);
+
+  /* === Linear Palette === */
+  /* Brand / Accent */
+  --color-linear-accent: #5e6ad2;
+
+  /* Neutrals */
+  --color-linear-bg-0: #f3f3f3; /* 侧边栏 / 主背景 */
+  --color-linear-bg-1: #f5f5f5; /* 主页面背景 */
+  --color-linear-bg-2: #ffffff; /* 卡片 / 列 */
+  --color-linear-border: #e5e6ea; /* Divider */
+
+  /* Typography */
+  --color-linear-text: #222326; /* 主文本 */
+  --color-linear-text-secondary: #8a8f98; /* 次文本 */
+
+  /* Reeder specific */
+  --color-reeder-border-card: #f3f2ee;
+
+  /* Dia icon palette */
+  --color-dia-icon-bg: #f1f2f2; /* icon container background */
+  --color-dia-icon: #fcfcfc; /* icon itself / fg */
+
+  /* Content Library Colors - 日式极简风格 */
+  --library-bg: #ffffff;
+  --library-border: rgba(0, 0, 0, 0.06);
+  --library-border-hover: rgba(0, 0, 0, 0.12);
+  --library-text: #000000;
+  --library-text-muted: #666666;
+  --library-text-subtle: #999999;
+  --library-tag-bg: rgba(0, 0, 0, 0.04);
+  --library-tag-bg-hover: rgba(0, 0, 0, 0.08);
+
+  /* Content Library Semantic Colors - Light Mode */
+  --content-card-bg: #ffffff;
+  --content-card-border: rgba(0, 0, 0, 0.06);
+  --content-card-border-hover: rgba(0, 0, 0, 0.12);
+  --content-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px
+    rgba(0, 0, 0, 0.08);
+  --content-card-shadow-hover: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px
+    rgba(0, 0, 0, 0.08);
+}
+
+.dark {
+  /* Dark‑mode semantic colors - 优化对比度和可访问性，确保WCAG AA标准 (4.5:1) */
+  --background: oklch(0.08 0 0); /* 从10.5%降到8% - 更深的背景，提升整体对比度 */
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.2 0 0); /* 从16.5%提升到20% - 与背景形成更强烈的层次对比 */
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.2 0 0); /* 与card保持一致 */
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.08 0 0); /* 使用新的背景色 */
+  --secondary: oklch(0.22 0 0); /* 从19%提升到22% - 更好的视觉层次 */
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.18 0 0); /* 保持18% - 与secondary形成层次 */
+  --muted-foreground: oklch(0.85 0 0); /* 从78%提升到85% - 显著提升辅助文字可读性 */
+  --accent: oklch(0.22 0 0); /* 与secondary保持一致 */
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.08 0 0); /* 使用新的背景色 */
+  --border: oklch(1 0 0 / 20%); /* 从15%提升到20% - 显著增强边框可见性 */
+  --input: oklch(1 0 0 / 25%); /* 从20%提升到25% - 更清晰的输入框边框 */
+  --ring: oklch(0.556 0 0);
+
+  /* Chart colors (dark) */
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+
+  /* Sidebar colors (dark) - 显著优化侧边栏对比度和交互状态 */
+  --sidebar: oklch(0.15 0 0); /* 从13%提升到15% - 与主背景形成更明显的层次 */
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.25 0 0); /* 从19%提升到25% - 更明显的交互反馈 */
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 20%); /* 统一边框透明度，提升到20% */
+  --sidebar-ring: oklch(0.556 0 0);
+
+  /* === Custom Color Palettes (Tailwind v4 tokens) === */
+  /* -------------------------------------------------
+   *  Common root  ——  Dark  Scheme
+   * -------------------------------------------------*/
+  /* ------ Tailwind Stone ------ */
+  --stone-50: oklch(98.48% 0.001 106deg);
+  --stone-100: oklch(96.99% 0.001 106deg);
+  --stone-200: oklch(92.32% 0.003 49deg);
+  --stone-300: oklch(86.87% 0.004 56deg);
+  --stone-400: oklch(71.61% 0.009 56deg);
+  --stone-500: oklch(55.34% 0.012 58deg);
+  --stone-600: oklch(44.44% 0.01 74deg);
+  --stone-700: oklch(37.41% 0.009 68deg);
+  --stone-800: oklch(26.85% 0.006 34deg);
+  --stone-900: oklch(21.61% 0.006 56deg);
+  --stone-950: oklch(14.69% 0.004 49deg);
+
+  /* ------ Tailwind Zinc ------ */
+  --zinc-50: oklch(98.51% 0.0 90deg);
+  --zinc-100: oklch(96.74% 0.001 286deg);
+  --zinc-200: oklch(91.97% 0.004 286deg);
+  --zinc-300: oklch(87.11% 0.005 286deg);
+  --zinc-400: oklch(71.18% 0.013 286deg);
+  --zinc-500: oklch(55.17% 0.014 286deg);
+  --zinc-600: oklch(44.19% 0.015 286deg);
+  --zinc-700: oklch(37.03% 0.012 286deg);
+  --zinc-800: oklch(27.39% 0.005 286deg);
+  --zinc-900: oklch(21.03% 0.006 286deg);
+  --zinc-950: oklch(14.08% 0.004 286deg);
+
+  /* ------ Notion Palette (text / bg) ------ */
+  --notion-default-bg: oklch(100% 0 90deg);
+  --notion-default-tx: oklch(32.80% 0.01 87deg);
+
+  --notion-gray-bg: oklch(94.29% 0.002 93deg);
+  --notion-gray-tx: oklch(55.52% 0.009 83deg);
+
+  --notion-brown-bg: oklch(95.28% 0.001 43deg);
+  --notion-brown-tx: oklch(53.23% 0.03 55deg);
+
+  --notion-orange-bg: oklch(95.92% 0.005 77deg);
+  --notion-orange-tx: oklch(60.07% 0.083 69deg);
+
+  --notion-yellow-bg: oklch(97.37% 0.01 94deg);
+  --notion-yellow-tx: oklch(70.26% 0.085 90deg);
+
+  --notion-green-bg: oklch(95.22% 0.005 154deg);
+  --notion-green-tx: oklch(60.04% 0.054 147deg);
+
+  --notion-blue-bg: oklch(94.97% 0.008 245deg);
+  --notion-blue-tx: oklch(55.08% 0.057 250deg);
+
+  --notion-purple-bg: oklch(96.71% 0.005 306deg);
+  --notion-purple-tx: oklch(57.40% 0.068 301deg);
+
+  --notion-pink-bg: oklch(97.08% 0.006 19deg);
+  --notion-pink-tx: oklch(60.45% 0.094 23deg);
+
+  --notion-red-bg: oklch(96.45% 0.007 33deg);
+  --notion-red-tx: oklch(57.30% 0.098 37deg);
+
+  /* ------ macOS System Gray (Dark) ------ */
+  --mac-gray-1: oklch(55.17% 0.01 88deg);
+  --mac-gray-2: oklch(38.78% 0.009 93deg);
+  --mac-gray-3: oklch(28.83% 0.006 93deg);
+  --mac-gray-4: oklch(23.27% 0.006 94deg);
+  --mac-gray-5: oklch(17.61% 0.005 94deg);
+  --mac-gray-6: oklch(11.13% 0.004 93deg);
+
+  /* === Linear Palette === */
+  /* Brand / Accent */
+  --color-linear-accent: #6366f1; /* 调整为更适合深色模式的紫色 */
+
+  /* Neutrals - 修复深色模式下的Linear颜色变量 */
+  --color-linear-bg-0: oklch(0.08 0 0); /* 主背景 - 与--background一致 */
+  --color-linear-bg-1: oklch(0.15 0 0); /* 侧边栏背景 - 与--sidebar一致 */
+  --color-linear-bg-2: oklch(0.2 0 0); /* 卡片背景 - 与--card一致 */
+  --color-linear-border: oklch(1 0 0 / 20%); /* 边框 - 与--border一致 */
+
+  /* Typography - 深色模式下的文字颜色 */
+  --color-linear-text: oklch(0.985 0 0); /* 主文字 - 与--foreground一致 */
+  --color-linear-text-secondary: oklch(0.85 0 0); /* 次级文字 - 与--muted-foreground一致 */
+
+  /* Reeder specific - 深色模式适配 */
+  --color-reeder-border-card: oklch(1 0 0 / 12%);
+
+  /* Dia icon palette - 深色模式适配 */
+  --color-dia-icon-bg: oklch(0.22 0 0); /* icon容器背景 */
+  --color-dia-icon: oklch(0.08 0 0); /* icon本身/前景 */
+
+  /* Content Library Colors - 暗色模式适配 */
+  --library-bg: oklch(0.2 0 0);
+  --library-border: rgba(255, 255, 255, 0.08);
+  --library-border-hover: rgba(255, 255, 255, 0.16);
+  --library-text: #ffffff;
+  --library-text-muted: #a3a3a3;
+  --library-text-subtle: #737373;
+  --library-tag-bg: rgba(255, 255, 255, 0.08);
+  --library-tag-bg-hover: rgba(255, 255, 255, 0.12);
+
+  /* Content Library Semantic Colors - Dark Mode */
+  --content-card-bg: oklch(0.2 0 0);
+  --content-card-border: rgba(255, 255, 255, 0.08);
+  --content-card-border-hover: rgba(255, 255, 255, 0.16);
+  --content-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px
+    rgba(0, 0, 0, 0.3);
+  --content-card-shadow-hover: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px
+    rgba(0, 0, 0, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark overrides for mac-gray */
+    --mac-gray-1: oklch(55.17% 0.01 88deg); /* same as light gray-1 */
+    --mac-gray-2: oklch(38.78% 0.009 93deg);
+    --mac-gray-3: oklch(28.83% 0.006 93deg);
+    --mac-gray-4: oklch(23.27% 0.006 94deg);
+    --mac-gray-5: oklch(17.61% 0.005 94deg);
+    --mac-gray-6: oklch(11.13% 0.004 93deg);
+  }
+}
+
+/* =============================================================================
+ * TAILWIND V4 主题配置 - @theme inline
+ * ============================================================================= */
+
+@theme inline {
+  /* Font families - Tailwind v4 推荐在这里定义字体族 */
+  --font-family-sans:
+    "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+
+  /* Font sizes & line-heights */
+  --font-size-xs: 0.75rem;
+  --line-height-xs: 1rem;
+  --font-size-sm: 0.875rem;
+  --line-height-sm: 1.25rem;
+  --font-size-base: 1rem;
+  --line-height-base: 1.5rem;
+  --font-size-lg: 1.125rem;
+  --line-height-lg: 1.75rem;
+  --font-size-xl: 1.25rem;
+  --line-height-xl: 1.75rem;
+  --font-size-2xl: 1.5rem;
+  --line-height-2xl: 2rem;
+  --font-size-3xl: 1.875rem;
+  --line-height-3xl: 2.25rem;
+  --font-size-4xl: 2.25rem;
+  --line-height-4xl: 2.5rem;
+  --font-size-5xl: 3rem;
+  --line-height-5xl: 1;
+  --font-size-6xl: 3.75rem;
+  --line-height-6xl: 1;
+  --font-size-7xl: 4.5rem;
+  --line-height-7xl: 1;
+  --font-size-8xl: 6rem;
+  --line-height-8xl: 1;
+  --font-size-9xl: 8rem;
+  --line-height-9xl: 1;
+
+  /* Font weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
+
+  /* Spacing system - Tailwind v4 核心间距系统 */
+  --spacing-px: 1px;
+  --spacing-0: 0px;
+  --spacing-0_5: 0.125rem;
+  --spacing-1: 0.25rem;
+  --spacing-1_5: 0.375rem;
+  --spacing-2: 0.5rem;
+  --spacing-2_5: 0.625rem;
+  --spacing-3: 0.75rem;
+  --spacing-3_5: 0.875rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-7: 1.75rem;
+  --spacing-8: 2rem;
+  --spacing-9: 2.25rem;
+  --spacing-10: 2.5rem;
+  --spacing-11: 2.75rem;
+  --spacing-12: 3rem;
+  --spacing-14: 3.5rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
+  --spacing-28: 7rem;
+  --spacing-32: 8rem;
+  --spacing-36: 9rem;
+  --spacing-40: 10rem;
+  --spacing-44: 11rem;
+  --spacing-48: 12rem;
+  --spacing-52: 13rem;
+  --spacing-56: 14rem;
+  --spacing-60: 15rem;
+  --spacing-64: 16rem;
+  --spacing-72: 18rem;
+  --spacing-80: 20rem;
+  --spacing-96: 24rem;
+
+  /* Custom layout dimensions */
+  --spacing-header: 3rem;
+  --spacing-sidebar: 16rem; /* 256px - sidebar width */
+  --spacing-sidebar-collapsed: 3.5rem; /* 56px - collapsed sidebar width */
+
+  /* Border radius */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px
+    rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px
+    rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+
+  /* Transition durations */
+  --transition-duration-75: 75ms;
+  --transition-duration-100: 100ms;
+  --transition-duration-150: 150ms;
+  --transition-duration-200: 200ms;
+  --transition-duration-300: 300ms;
+  --transition-duration-500: 500ms;
+  --transition-duration-700: 700ms;
+  --transition-duration-1000: 1000ms;
+
+  /* Animations */
+  --animate-spin: spin 1s linear infinite;
+  --animate-ping: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-bounce: bounce 1s infinite;
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  /* Breakpoints */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+  --size-sidebar-width-collapsed: var(--sidebar-width-collapsed);
+
+  /* =============================================================================
+   * SHADCN/UI 颜色令牌映射
+   * ============================================================================= */
+
+  /* Base semantic color aliases */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Chart & Sidebar color aliases */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* =============================================================================
+ * BASE LAYER
+ * ============================================================================= */
+
+@layer base {
+  /* 不强制 1px 边框 —— 仅统一边框颜色 */
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-border);
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Typography utilities */
+  .text-lead {
+    @apply text-xl text-muted-foreground leading-7;
+  }
+  .text-large {
+    @apply text-lg font-semibold leading-7;
+  }
+  .text-small {
+    @apply text-sm font-medium leading-5;
+  }
+  .text-muted {
+    @apply text-sm text-muted-foreground leading-5;
+  }
+}
+
+/* =============================================================================
+ * COMPONENT LAYER
+ * ============================================================================= */
+
+@layer components {
+  /* Spacing utilities */
+  .space-xs {
+    @apply space-y-1;
+  }
+  .space-sm {
+    @apply space-y-2;
+  }
+  .space-md {
+    @apply space-y-4;
+  }
+  .space-lg {
+    @apply space-y-6;
+  }
+  .space-xl {
+    @apply space-y-8;
+  }
+
+  /* Button group spacing utilities - 按钮组合间距规范 */
+  .button-group {
+    @apply flex items-center gap-3 justify-end;
+  }
+
+  .button-group-sm {
+    @apply flex items-center gap-2 justify-end;
+  }
+
+  .button-group-lg {
+    @apply flex items-center gap-4 justify-end;
+  }
+
+  /* Button group alignment variants */
+  .button-group-start {
+    @apply flex items-center gap-3 justify-start;
+  }
+
+  .button-group-center {
+    @apply flex items-center gap-3 justify-center;
+  }
+
+  .button-group-between {
+    @apply flex items-center gap-3 justify-between;
+  }
+
+  /* Button group vertical variants */
+  .button-group-vertical {
+    @apply flex flex-col gap-3 items-stretch;
+  }
+
+  .button-group-vertical-sm {
+    @apply flex flex-col gap-2 items-stretch;
+  }
+
+  .button-group-vertical-lg {
+    @apply flex flex-col gap-4 items-stretch;
+  }
+
+  /* Card footer button spacing - 卡片底部按钮间距规范 */
+  .card-actions {
+    @apply flex items-center justify-end gap-3 pt-4 pb-2;
+  }
+
+  .card-actions-start {
+    @apply flex items-center justify-start gap-3 pt-4 pb-2;
+  }
+
+  .card-actions-center {
+    @apply flex items-center justify-center gap-3 pt-4 pb-2;
+  }
+
+  .card-actions-between {
+    @apply flex items-center justify-between gap-3 pt-4 pb-2;
+  }
+
+  /* Modal/Dialog footer button spacing */
+  .modal-actions {
+    @apply flex items-center justify-end gap-3 pt-6;
+  }
+
+  .modal-actions-start {
+    @apply flex items-center justify-start gap-3 pt-6;
+  }
+
+  .modal-actions-center {
+    @apply flex items-center justify-center gap-3 pt-6;
+  }
+
+  /* 优雅的底部边界留白 */
+  .elegant-bottom-spacing {
+    @apply pb-6 mb-6 border-b border-border/50;
+  }
+
+  .elegant-bottom-spacing-sm {
+    @apply pb-4 mb-4 border-b border-border/30;
+  }
+
+  .elegant-bottom-spacing-lg {
+    @apply pb-8 mb-8 border-b border-border/50;
+  }
+
+  /* 无边框的优雅间距 */
+  .elegant-spacing {
+    @apply pb-6 mb-6;
+  }
+
+  .elegant-spacing-sm {
+    @apply pb-4 mb-4;
+  }
+
+  .elegant-spacing-lg {
+    @apply pb-8 mb-8;
+  }
+
+  /* Form section spacing */
+  .form-section {
+    @apply space-y-6 pb-8 mb-8 border-b border-border/30 last:border-b-0 last:pb-0 last:mb-0;
+  }
+
+  .form-section-sm {
+    @apply space-y-4 pb-6 mb-6 border-b border-border/30 last:border-b-0 last:pb-0 last:mb-0;
+  }
+
+  /* Elevation utilities */
+  .elevation-low {
+    @apply shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+  .elevation-medium {
+    @apply shadow-md hover:shadow-lg transition-shadow duration-200;
+  }
+  .elevation-high {
+    @apply shadow-lg hover:shadow-xl transition-shadow duration-200;
+  }
+  .elevation-highest {
+    @apply shadow-xl hover:shadow-2xl transition-shadow duration-300;
+  }
+
+  /* Interactive states */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-1
+           focus-visible:ring-ring focus-visible:ring-offset-1;
+  }
+
+  /* 优化所有图片的默认显示 */
+  .image-optimized {
+    @apply object-contain w-full h-auto max-w-full;
+    aspect-ratio: auto;
+  }
+
+  /* Markdown 中的图片优化 */
+  .prose img {
+    @apply object-contain max-h-[80vh] w-auto h-auto mx-auto;
+    aspect-ratio: auto !important;
+  }
+
+  /* 确保图片容器不会破坏布局 */
+  .image-container {
+    @apply flex items-center justify-center w-full overflow-hidden;
+  }
+
+  /* 头像图片优化 */
+  .avatar-image {
+    @apply object-contain w-full h-full;
+    aspect-ratio: 1;
+  }
+
+  /* 响应式图片 */
+  .responsive-image {
+    @apply w-full h-auto object-contain;
+    max-height: min(80vh, 600px);
+    aspect-ratio: auto;
+  }
+
+  /* 页面顶部高亮效果 - 采用远程分支的设计 */
+  .page-top-highlight {
+    @apply relative;
+  }
+  .page-top-highlight::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 1px 0 #ffffff;
+  }
+}
+
+/* =============================================================================
+ * UTILITY LAYER
+ * ============================================================================= */
+
+@layer utilities {
+  /* Grid backgrounds */
+  .bg-grid-slate-200\/50 {
+    background-image: linear-gradient(
+        to right,
+        rgba(226, 232, 240, 0.5) 1px,
+        transparent 1px
+      ),
+      linear-gradient(to bottom, rgba(226, 232, 240, 0.5) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  .bg-grid-slate-700\/20 {
+    background-image: linear-gradient(
+        to right,
+        rgba(51, 65, 85, 0.2) 1px,
+        transparent 1px
+      ), linear-gradient(to bottom, rgba(51, 65, 85, 0.2) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* Animation utilities */
+  .animate-ultrafast {
+    @apply transition-all duration-75;
+  }
+  .animate-fast {
+    @apply transition-all duration-100;
+  }
+  .animate-base {
+    @apply transition-all duration-200;
+  }
+  .animate-slow {
+    @apply transition-all duration-300;
+  }
+  .animate-ultraslow {
+    @apply transition-all duration-500;
+  }
+
+  /* 确保图片在不同容器中都能正确显示 */
+  .preserve-aspect-ratio {
+    aspect-ratio: auto;
+    object-fit: contain;
+  }
+
+  .image-full-width {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+
+  /* Hide scrollbar completely */
+  .no-scrollbar {
+    scrollbar-width: none; /* Firefox */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    width: 0px !important;
+    height: 0px !important;
+    display: none;
+  }
+
+  /* Library Layout Widths */
+  .w-library {
+    width: var(--size-library);
+  }
+
+  .max-w-library {
+    max-width: var(--size-library);
+  }
+
+  .w-library-lg {
+    width: var(--size-library-lg);
+  }
+
+  .max-w-library-lg {
+    max-width: var(--size-library-lg);
+  }
+
+  /* 响应式变体 - 在 2xl 断点(1536px)后使用 library-lg 宽度 */
+  @media (min-width: 1536px) {
+    .\32 xl\:w-library-lg {
+      width: var(--size-library-lg);
+    }
+
+    .\32 xl\:max-w-library-lg {
+      max-width: var(--size-library-lg);
+    }
+  }
+
+  .w-libraryCard {
+    width: var(--size-library-card);
+  }
+
+  /* Card title / text width */
+  .w-cardTitle {
+    width: var(--size-card-title);
+  }
+
+  .max-w-cardTitle {
+    max-width: var(--size-card-title);
+  }
+
+  /* macOS style shadows and container utilities */
+  .shadow-macos-window {
+    box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.1), /* 贴边深线 */ 0 0 0px 1px
+      rgba(0, 0, 0, 0.05), /* 贴边深线 */ 0 4px 8px 0.5px rgba(0, 0, 0, 0.2); /* 柔和投影 */
+  }
+
+  .shadow-macos-2 {
+    box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.08), 0 0 0px rgba(0, 0, 0, 0.65),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+  }
+
+  .border-macos-container {
+    border: 1px solid rgba(0, 0, 0, 0.04);
+  }
+
+  /* Linear utility classes */
+  .linear-bg-0 {
+    background-color: var(--color-linear-bg-0);
+  }
+  .linear-bg-1 {
+    background-color: var(--color-linear-bg-1);
+  }
+  .linear-bg-2 {
+    background-color: var(--color-linear-bg-2);
+  }
+
+  .linear-text-primary {
+    color: var(--color-linear-text);
+  }
+  .linear-text-secondary {
+    color: var(--color-linear-text-secondary);
+  }
+  .linear-text-accent {
+    color: var(--color-linear-accent);
+  }
+
+  .linear-border {
+    border: 1px solid var(--color-linear-border);
+  }
+  .linear-border-t {
+    border-top: 1px solid var(--color-linear-border);
+  }
+  .linear-border-b {
+    border-bottom: 1px solid var(--color-linear-border);
+  }
+
+  /* Reeder specific */
+  .border-reeder-border-card {
+    border: 1px solid var(--color-reeder-border-card);
+  }
+
+  /* Dia icon utilities */
+  .dia-icon-bg {
+    background-color: var(--color-dia-icon-bg);
+  }
+  .dia-icon {
+    background-color: var(--color-dia-icon);
+  }
+  .text-dia-icon {
+    color: var(--color-dia-icon);
+  }
+
+  /* Custom rounded class for 48px/3rem */
+  .rounded-3xl {
+    border-radius: 3rem; /* 48px */
+  }
+}
+
+/* =============================================================================
+ * KEYFRAME ANIMATIONS
+ * ============================================================================= */
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ping {
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: none;
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+/* Ripple effect animation - 更精致的触碰反馈 */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* Silent loading animations for smooth user experience */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes gentle-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Utility classes for silent loading */
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
+}
+
+.animate-gentle-pulse {
+  animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out;
+}
+
+/* 自定义滚动条样式 - 更透明、更美观 */
+
+/* Webkit 浏览器滚动条样式 (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 2px;
+  height: 2px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(96, 96, 96, 0.6); /* 深灰 60% 透明度 */
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(96, 96, 96, 0.8); /* 悬停更深 */
+}
+
+/* 暗色模式的滚动条 */
+.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(160, 160, 160, 0.4);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(160, 160, 160, 0.6);
+}
+
+/* Firefox 滚动条样式 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(96, 96, 96, 0.6) transparent;
+}
+
+.dark * {
+  scrollbar-color: rgba(160, 160, 160, 0.4) transparent;
+}
+
+/* =============================================================================
+ * Line clamp utilities
+ * ============================================================================= */
+
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.line-clamp-4 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+.line-clamp-none {
+  overflow: visible;
+  display: block;
+  -webkit-box-orient: horizontal;
+  -webkit-line-clamp: none;
+}
+
+/* =============================================================================
+ * 性能优化样式 - 减少重绘和回流
+ * ============================================================================= */
+
+/* 优化滚动性能 */
+.prompt-cards-container {
+  contain: layout style paint;
+  will-change: scroll-position;
+}
+
+/* 优化卡片渲染性能 */
+.prompt-card {
+  contain: layout style;
+  transform: translateZ(0); /* 开启硬件加速 */
+}
+
+/* 减少动画期间的重绘 */
+.prompt-card:hover {
+  will-change: transform, box-shadow;
+}
+
+.prompt-card:not(:hover) {
+  will-change: auto;
+}
+
+/* 优化 toggle 开关性能 */
+.prompt-toggle {
+  contain: layout style;
+  transform: translateZ(0);
+}
+
+/* 🎯 AI分析界面性能优化 */
+.ai-analysis-panel {
+  contain: layout style paint;
+  will-change: auto;
+}
+
+.ai-analysis-panel .analysis-card {
+  contain: layout style paint;
+  transform: translateZ(0);
+}
+
+.ai-analysis-panel .analysis-card:hover {
+  will-change: box-shadow, transform;
+}
+
+.ai-analysis-panel .analysis-card:not(:hover) {
+  will-change: auto;
+}
+
+/* 优化滚动容器 */
+.scroll-container-optimized {
+  contain: layout style paint;
+  will-change: scroll-position;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 优化悬浮块性能 */
+.hoverable-block {
+  contain: layout style;
+  transform: translateZ(0);
+}
+
+.hoverable-block:hover {
+  will-change: background-color, box-shadow;
+}
+
+.hoverable-block:not(:hover) {
+  will-change: auto;
+}
+
+/* 🎯 HoverableBlock 悬浮效果样式 */
+.hover-optimized {
+  transition: all 0.2s ease-out;
+  transform: translateZ(0);
+}
+
+.hover-subtle {
+  @apply hover:bg-muted/20 hover:border-border/40;
+}
+
+.hover-medium {
+  @apply hover:bg-muted/30 hover:border-border/60 hover:shadow-sm;
+}
+
+.hover-strong {
+  @apply hover:bg-muted/40 hover:border-border/80 hover:shadow-md;
+}
+
+/* JSONL 块悬浮效果增强 */
+.jsonl-block-hover {
+  @apply transition-all duration-200 ease-out rounded-lg px-3 py-2 -mx-3 -my-1;
+  @apply hover:bg-muted/20 hover:border-border/30;
+  contain: layout style;
+  transform: translateZ(0);
+}
+
+.jsonl-block-hover:hover {
+  will-change: background-color, border-color;
+}
+
+.jsonl-block-hover:not(:hover) {
+  will-change: auto;
+}
+
+/* 优化文本渲染 */
+.text-optimized {
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Modern Analysis Interface Styles */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* 🎯 优化滚动条样式 */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-track-transparent {
+  scrollbar-color: transparent transparent;
+}
+
+.scrollbar-thumb-neutral-300 {
+  scrollbar-color: rgb(212 212 212) transparent;
+}
+
+.hover\:scrollbar-thumb-neutral-400:hover {
+  scrollbar-color: rgb(163 163 163) transparent;
+}
+
+.dark .scrollbar-thumb-neutral-600 {
+  scrollbar-color: rgb(82 82 82) transparent;
+}
+
+.dark .hover\:scrollbar-thumb-neutral-500:hover {
+  scrollbar-color: rgb(115 115 115) transparent;
+}
+
+/* Webkit scrollbar styles */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thumb-neutral-300::-webkit-scrollbar-thumb {
+  background: rgb(212 212 212);
+  border-radius: 3px;
+}
+
+.hover\:scrollbar-thumb-neutral-400:hover::-webkit-scrollbar-thumb {
+  background: rgb(163 163 163);
+}
+
+.dark .scrollbar-thumb-neutral-600::-webkit-scrollbar-thumb {
+  background: rgb(82 82 82);
+}
+
+.dark .hover\:scrollbar-thumb-neutral-500:hover::-webkit-scrollbar-thumb {
+  background: rgb(115 115 115);
+}
+
+/* Custom animations for modern interface */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.analysis-card {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  contain: layout style paint;
+}
+
+/* Hover style: keep position, only enhance shadow */
+.analysis-card:hover {
+  transform: translateY(0);
+  will-change: box-shadow;
+}
+
+.analysis-card:not(:hover) {
+  will-change: auto;
+}
+
+/* Enhanced focus styles */
+.modern-focus:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  border-color: rgb(59, 130, 246);
+}
+
+/* Gradient text for special elements */
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Custom scrollbar for content areas */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(75, 85, 99, 0.3);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(75, 85, 99, 0.5);
+  }
+}
+
+/* 自定义滚动条样式 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(107, 114, 128, 0.3);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.5);
+}
+
+/* Firefox 滚动条样式 */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+}
+
+.dark .custom-scrollbar {
+  scrollbar-color: rgba(107, 114, 128, 0.3) transparent;
+}
+
+/* 响应式设计增强 */
+@media (max-width: 768px) {
+  /* 移动端优化 */
+  .mobile-full {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* 移动端对话框 */
+  .dialog-mobile {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  /* 移动端安全区域 */
+  .mobile-safe {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* 移动端文本优化 */
+  .text-mobile {
+    font-size: clamp(14px, 4vw, 16px);
+    line-height: 1.5;
+  }
+
+  /* 移动端触摸优化 */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  /* 小屏幕优化 */
+  .small-screen-stack {
+    flex-direction: column !important;
+  }
+
+  .small-screen-full {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .small-screen-hide {
+    display: none !important;
+  }
+}
+
+/* 容器查询支持 */
+@container (max-width: 480px) {
+  .container-mobile {
+    padding: 0.5rem;
+  }
+
+  .container-mobile .text-lg {
+    font-size: 1rem;
+  }
+
+  .container-mobile .space-y-4 > * + * {
+    margin-top: 0.75rem;
+  }
+}
+
+@container (max-width: 320px) {
+  .container-xs {
+    padding: 0.25rem;
+  }
+
+  .container-xs .text-base {
+    font-size: 0.875rem;
+  }
+}
+
+/* 动态视口单位支持 */
+.h-screen-safe {
+  height: 100vh;
+  height: 100dvh; /* 动态视口高度 */
+}
+
+.min-h-screen-safe {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* 改进的滚动行为 */
+.scroll-smooth {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* iOS 惯性滚动 */
+}
+
+.scroll-container {
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 响应式网格系统 */
+.grid-responsive {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .grid-responsive {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-responsive {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .grid-responsive {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* 面板布局响应式 */
+.panel-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .panel-layout {
+    flex-direction: column;
+  }
+
+  .panel-layout .panel {
+    height: auto;
+    min-height: 50vh;
+  }
+}
+
+/* 动画性能优化 */
+.animate-optimized {
+  will-change: transform, opacity;
+  transform: translateZ(0); /* 启用硬件加速 */
+}
+
+/* 减少动画（用户偏好） */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-in,
+  .animate-slide-up,
+  .animate-scale-in {
+    animation: none;
+  }
+
+  .transition-all,
+  .transition-transform,
+  .transition-opacity {
+    transition: none;
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .border-muted {
+    border-color: currentColor;
+  }
+
+  .text-muted-foreground {
+    color: currentColor;
+    opacity: 0.8;
+  }
+}
+
+/* 深色模式优化 */
+@media (prefers-color-scheme: dark) {
+  .shadow-dialog-desktop {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px
+      rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  .hover\:scale-105:hover {
+    transform: none;
+  }
+
+  .touch-device .hover-trigger {
+    display: none;
+  }
+
+  /* 增大触摸目标 */
+  .touch-device button,
+  .touch-device a,
+  .touch-device [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* 键盘导航优化 */
+.focus-visible\:ring-offset-background:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* 可访问性增强 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 响应式字体 */
+.text-fluid-sm {
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+}
+
+.text-fluid-base {
+  font-size: clamp(0.875rem, 2.5vw, 1rem);
+}
+
+.text-fluid-lg {
+  font-size: clamp(1rem, 3vw, 1.125rem);
+}
+
+.text-fluid-xl {
+  font-size: clamp(1.125rem, 3.5vw, 1.25rem);
+}
+
+.text-fluid-2xl {
+  font-size: clamp(1.25rem, 4vw, 1.5rem);
+}
+
+/* 响应式间距 */
+.space-fluid-y > * + * {
+  margin-top: clamp(0.5rem, 2vw, 1rem);
+}
+
+.space-fluid-x > * + * {
+  margin-left: clamp(0.5rem, 2vw, 1rem);
+}
+
+/* 自适应容器 */
+.container-fluid {
+  width: 100%;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1rem, 4vw, 2rem);
+  padding-right: clamp(1rem, 4vw, 2rem);
+}
+
+/* 文本截断增强 */
+.text-truncate-lines-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.text-truncate-lines-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* =============================================================================
+ * Shadcn/ui Component Animation Overrides
+ * ============================================================================= */

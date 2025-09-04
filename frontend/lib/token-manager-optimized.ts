@@ -53,6 +53,37 @@ export class OptimizedTokenManager {
   private static pendingValidation: Map<string, Promise<boolean>> = new Map();
 
   /**
+   * 验证环境配置
+   */
+  static validateEnvironment(): { isValid: boolean; issues: string[] } {
+    const issues: string[] = [];
+    
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+    
+    if (!process.env.NEXT_PUBLIC_API_URL) {
+      issues.push("NEXT_PUBLIC_API_URL 环境变量未设置，使用默认值");
+    }
+    
+    try {
+      new URL(apiUrl);
+    } catch (e) {
+      issues.push(`API URL 格式无效: ${apiUrl}`);
+    }
+    
+    console.log("[OptimizedTokenManager] 环境配置:", {
+      apiUrl,
+      isClient: typeof window !== "undefined",
+      hasDocument: typeof document !== "undefined",
+      userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "N/A"
+    });
+    
+    return {
+      isValid: issues.length === 0,
+      issues
+    };
+  }
+
+  /**
    * 设置 token 到 httpOnly cookie (优化版)
    */
   static async setTokens(tokenInfo: TokenInfo): Promise<void> {
@@ -175,17 +206,45 @@ export class OptimizedTokenManager {
   private static async performTokenValidation(token: string): Promise<boolean> {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const url = `${apiUrl}/api/v1/users/me`;
       
-      const response = await fetch(`${apiUrl}/api/v1/users/me`, {
+      console.log("[OptimizedTokenManager] 验证token:", { url, hasToken: !!token });
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
+      
+      const response = await fetch(url, {
         method: "HEAD", // 使用HEAD减少响应数据
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Authorization": `Bearer ${token}`,
+          "Accept": "application/json",
         },
+        signal: controller.signal,
+        mode: "cors",
+        credentials: "include",
+      });
+
+      clearTimeout(timeoutId);
+      
+      console.log("[OptimizedTokenManager] Token验证响应:", { 
+        ok: response.ok, 
+        status: response.status 
       });
 
       return response.ok;
     } catch (error) {
-      console.error("[OptimizedTokenManager] Token验证请求失败:", error);
+      console.error("[OptimizedTokenManager] Token验证请求失败:", {
+        error: error.message,
+        name: error.name
+      });
+      
+      // 网络错误时返回false，让系统尝试其他方式
+      if (error.name === 'AbortError') {
+        console.error("[OptimizedTokenManager] Token验证超时");
+      } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        console.error("[OptimizedTokenManager] Token验证网络错误");
+      }
+      
       return false;
     }
   }
@@ -231,25 +290,62 @@ export class OptimizedTokenManager {
   private static async fetchCurrentUser(): Promise<CachedUser | null> {
     try {
       const token = await this.getAccessToken();
-      if (!token) return null;
+      if (!token) {
+        console.log("[OptimizedTokenManager] 没有token，无法获取用户信息");
+        return null;
+      }
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const url = `${apiUrl}/api/v1/users/me`;
       
-      const response = await fetch(`${apiUrl}/api/v1/users/me`, {
+      console.log("[OptimizedTokenManager] 请求用户信息:", { url, hasToken: !!token });
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+      
+      const response = await fetch(url, {
+        method: "GET",
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "Accept": "application/json",
         },
+        signal: controller.signal,
+        mode: "cors",
+        credentials: "include",
+      });
+
+      clearTimeout(timeoutId);
+
+      console.log("[OptimizedTokenManager] 用户信息响应:", { 
+        ok: response.ok, 
+        status: response.status,
+        statusText: response.statusText,
+        url: response.url 
       });
 
       if (!response.ok) {
         if (response.status === 401) {
+          console.log("[OptimizedTokenManager] Token无效，尝试刷新");
           // Token过期，尝试刷新
           const refreshed = await this.refreshAccessToken();
           if (refreshed) {
+            console.log("[OptimizedTokenManager] Token刷新成功，重试获取用户信息");
             // 递归重试一次
             return await this.fetchCurrentUser();
+          } else {
+            console.log("[OptimizedTokenManager] Token刷新失败");
           }
         }
+        
+        // 尝试读取错误响应
+        try {
+          const errorText = await response.text();
+          console.error("[OptimizedTokenManager] API错误响应:", errorText);
+        } catch (e) {
+          console.error("[OptimizedTokenManager] 无法读取错误响应");
+        }
+        
         return null;
       }
 
@@ -263,11 +359,26 @@ export class OptimizedTokenManager {
         expires_at: now + this.USER_CACHE_TTL,
       };
 
-      console.log("[OptimizedTokenManager] 用户信息已缓存");
+      console.log("[OptimizedTokenManager] 用户信息已缓存:", { 
+        id: userData.id, 
+        email: userData.email 
+      });
       return this.userCache;
 
     } catch (error) {
-      console.error("[OptimizedTokenManager] 获取用户信息失败:", error);
+      console.error("[OptimizedTokenManager] 获取用户信息失败:", {
+        error: error.message,
+        name: error.name,
+        stack: error.stack?.slice(0, 200)
+      });
+      
+      // 检查是否是网络错误
+      if (error.name === 'AbortError') {
+        console.error("[OptimizedTokenManager] 请求超时");
+      } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        console.error("[OptimizedTokenManager] 网络连接错误，请检查后端服务");
+      }
+      
       return null;
     }
   }
@@ -306,17 +417,44 @@ export class OptimizedTokenManager {
       }
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const url = `${apiUrl}/api/v1/auth/refresh`;
+      
+      console.log("[OptimizedTokenManager] 刷新token:", { url });
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
 
-      const response = await fetch(`${apiUrl}/api/v1/auth/refresh`, {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${refreshToken}`,
+          "Authorization": `Bearer ${refreshToken}`,
+          "Accept": "application/json",
         },
+        signal: controller.signal,
+        mode: "cors",
+        credentials: "include",
+      });
+
+      clearTimeout(timeoutId);
+
+      console.log("[OptimizedTokenManager] Token刷新响应:", { 
+        ok: response.ok, 
+        status: response.status,
+        statusText: response.statusText 
       });
 
       if (!response.ok) {
         console.error("[OptimizedTokenManager] Token刷新失败:", response.status);
+        
+        // 尝试读取错误响应
+        try {
+          const errorText = await response.text();
+          console.error("[OptimizedTokenManager] 刷新错误详情:", errorText);
+        } catch (e) {
+          console.error("[OptimizedTokenManager] 无法读取刷新错误响应");
+        }
+        
         this.clearCache(); // 刷新失败，清除所有缓存
         return false;
       }
@@ -327,7 +465,17 @@ export class OptimizedTokenManager {
       console.log("[OptimizedTokenManager] Token刷新成功，缓存已重置");
       return true;
     } catch (error) {
-      console.error("[OptimizedTokenManager] Token刷新失败:", error);
+      console.error("[OptimizedTokenManager] Token刷新失败:", {
+        error: error.message,
+        name: error.name
+      });
+      
+      if (error.name === 'AbortError') {
+        console.error("[OptimizedTokenManager] Token刷新超时");
+      } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        console.error("[OptimizedTokenManager] Token刷新网络错误");
+      }
+      
       this.clearCache();
       return false;
     }
@@ -461,8 +609,8 @@ export const getCurrentUser = () => OptimizedTokenManager.getCurrentUser();
 export const validateToken = (token: string) => OptimizedTokenManager.validateToken(token);
 export const clearCache = () => OptimizedTokenManager.clearCache();
 
-// 导出原TokenManager作为fallback (暂时注释掉避免循环依赖)
-// export { TokenManager } from './token-manager';
+// 导出原TokenManager作为fallback (使用original版本)
+export { default as TokenManager } from './token-manager-original';
 
 // 默认导出优化版本
 export default OptimizedTokenManager;
