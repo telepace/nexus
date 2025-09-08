@@ -53,7 +53,7 @@ jobs:
         version: 9.9.0
     - name: Symlink pnpm-lock.yaml to root
       run: ln -sf frontend/pnpm-lock.yaml pnpm-lock.yaml
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v5
       with:
         node-version: lts/*
         cache: 'pnpm'
@@ -117,7 +117,7 @@ jobs:
         version: 9.9.0
     - name: Symlink pnpm-lock.yaml to root
       run: ln -sf frontend/pnpm-lock.yaml pnpm-lock.yaml
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v5
       with:
         node-version: 20
         cache: 'pnpm'
