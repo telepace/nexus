@@ -17,7 +17,7 @@ import uuid
 from abc import ABC, abstractmethod
 from collections.abc import Coroutine
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from io import BytesIO
 from typing import Any
 
@@ -443,7 +443,7 @@ class JinaProcessor(ProcessingStep):
             result.markdown_content = markdown_content
             result.metadata = {
                 "source_url": content_item.source_uri,
-                "processed_at": datetime.utcnow().isoformat(),
+                "processed_at": datetime.now(timezone.utc).isoformat(),
                 "processor": "jina",
                 "content_type": "url",
                 "selectors_removed": True,  # 标记已移除不需要的元素
@@ -819,7 +819,7 @@ class ReadabilityProcessor(ProcessingStep):
             result.markdown_content = markdown_content
             result.metadata = {
                 "source_url": content_item.source_uri,
-                "processed_at": datetime.utcnow().isoformat(),
+                "processed_at": datetime.now(timezone.utc).isoformat(),
                 "processor": "beautifulsoup",
                 "content_type": "url",
                 "extracted_title": title,
@@ -922,7 +922,7 @@ class ScrapingBeeProcessor(ProcessingStep):
             result.markdown_content = markdown_content
             result.metadata = {
                 "processor": "scrapingbee",
-                "processed_at": datetime.utcnow().isoformat(),
+                "processed_at": datetime.now(timezone.utc).isoformat(),
                 "content_length": len(markdown_content),
             }
 
@@ -1130,7 +1130,7 @@ class FirecrawlProcessor(ProcessingStep):
                 # 创建简化的元数据
                 metadata = {
                     "processor": "firecrawl",
-                    "processed_at": datetime.utcnow().isoformat(),
+                    "processed_at": datetime.now(timezone.utc).isoformat(),
                     "content_length": len(markdown_content),
                     "only_main_content": True,
                     "retries_used": attempt,
@@ -1423,7 +1423,7 @@ class MarkItDownProcessor(ProcessingStep):
                     result.markdown_content = cleaned_content
                     result.metadata = {
                         "source_url": content_item.source_uri,
-                        "processed_at": datetime.utcnow().isoformat(),
+                        "processed_at": datetime.now(timezone.utc).isoformat(),
                         "processor": "markitdown",
                         "content_type": "pdf",
                         "content_length": len(cleaned_content),
@@ -1539,7 +1539,7 @@ class MarkItDownProcessor(ProcessingStep):
                 result.markdown_content = cleaned_content
                 result.metadata = {
                     "source_url": content_item.source_uri,
-                    "processed_at": datetime.utcnow().isoformat(),
+                    "processed_at": datetime.now(timezone.utc).isoformat(),
                     "processor": "markitdown",
                     "content_type": "url",
                     "content_length": len(cleaned_content),
@@ -1578,7 +1578,7 @@ class MarkItDownProcessor(ProcessingStep):
             result.success = True
             result.markdown_content = markdown_content
             result.metadata = {
-                "processed_at": datetime.utcnow().isoformat(),
+                "processed_at": datetime.now(timezone.utc).isoformat(),
                 "processor": "markitdown",
                 "content_type": "text",
                 "word_count": len(content_item.content_text.split())
@@ -1915,7 +1915,7 @@ class ProcessingPipeline:
 
             content_item.processing_status = "completed"
             content_item.error_message = None
-            content_item.last_processed_at = datetime.utcnow()
+            content_item.last_processed_at = datetime.now(timezone.utc)
             session.add(content_item)
             session.commit()
 
@@ -1945,7 +1945,7 @@ class ProcessingPipeline:
             logger.error(f"Critical error in async processing: {str(e)}")
             content_item.processing_status = "failed"
             content_item.error_message = f"Critical processing error: {str(e)}"
-            content_item.last_processed_at = datetime.utcnow()
+            content_item.last_processed_at = datetime.now(timezone.utc)
             session.add(content_item)
             session.commit()
 
@@ -2282,7 +2282,7 @@ class ProcessorDiagnostic:
     def diagnose_all(self) -> dict[str, Any]:
         """诊断所有处理器的状态"""
         diagnosis: dict[str, Any] = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "processors": {},
             "summary": {
                 "total_processors": 0,

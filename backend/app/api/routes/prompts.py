@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
@@ -458,7 +458,7 @@ def update_prompt(
             setattr(prompt, key, value)
 
         # 更新时间戳
-        prompt.updated_at = datetime.utcnow()
+        prompt.updated_at = datetime.now(timezone.utc)
 
         # 如果内容有更改且需要创建新版本
         if create_version and "content" in update_data:
@@ -904,7 +904,7 @@ def _set_user_prompt_enabled(
     if setting:
         # 更新现有设置
         setting.enabled = enabled
-        setting.updated_at = datetime.utcnow()
+        setting.updated_at = datetime.now(timezone.utc)
     else:
         # 创建新设置
         setting = UserPromptSettings(

@@ -92,7 +92,7 @@ const Dialog = ({ children, open, onOpenChange }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            onTap={() => onOpenChange(false)}
+            onClick={() => onOpenChange(false)}
           />
           {/* 内容容器 */}
           <motion.div

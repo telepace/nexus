@@ -166,7 +166,7 @@ export const LibraryHeader = ({
         {/* Search Input - always in DOM, animated with motion */}
         <motion.div
           className="absolute right-0 top-1/2 -translate-y-1/2"
-          initial={false}
+          initial={false as any}
           animate={{
             width: isSearching ? 360 : 40,
             opacity: isSearching ? 1 : 0,

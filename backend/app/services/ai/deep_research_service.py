@@ -1,7 +1,7 @@
 import logging
 import os
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import HTTPException
@@ -110,7 +110,7 @@ class DeepResearchService:
                     source_type="deep_research",
                     metadata={
                         "research_query": query,
-                        "generated_at": datetime.utcnow().isoformat(),
+                        "generated_at": datetime.now(timezone.utc).isoformat(),
                         "report_type": "research_report",
                     },
                 )
@@ -158,7 +158,7 @@ class DeepResearchService:
             research_dir = Path("static/deep_research")
             research_dir.mkdir(exist_ok=True)
 
-            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             filename = f"research_{content_item.id}_{timestamp}.md"
             file_path = research_dir / filename
 

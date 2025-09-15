@@ -285,7 +285,7 @@ export const AnalysisCardsContainer: React.FC<AnalysisCardsContainerProps> = ({
           return;
         }
         setSelectedCard(isSelected ? null : card.id);
-      }, [isSelected, card.id, variant]);
+      }, [isSelected, card.id]);
 
       return (
         <div

@@ -452,7 +452,7 @@ const InteractiveContentBlock: React.FC<{
                   block.type !== "analysis" &&
                   "text-sm leading-relaxed text-gray-700 dark:text-gray-300",
               )}
-              initial={false}
+              initial={false as any}
             >
               {/* 根据内容类型选择渲染方式 */}
               {block.type === "json" && typeof displayContent === "string" ? (
@@ -572,7 +572,7 @@ const InteractiveContentBlock: React.FC<{
                 >
                   <div className="flex items-center gap-2">
                     <motion.div
-                      initial={false}
+                      initial={false as any}
                       animate={{
                         rotate: isExpanded ? 180 : 0,
                       }}

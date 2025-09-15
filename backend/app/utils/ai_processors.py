@@ -10,7 +10,7 @@ AI内容处理器 - 使用Jinja2模板和LLM进行智能分析
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -316,7 +316,7 @@ async def analyze_content_with_ai(
     try:
         # 更新内容项状态
         content_item.processing_status = "processing"
-        content_item.last_processed_at = datetime.utcnow()
+        content_item.last_processed_at = datetime.now(timezone.utc)
         session.add(content_item)
         session.commit()
 
@@ -349,7 +349,7 @@ async def analyze_content_with_ai(
         # 更新成功状态
         content_item.processing_status = "completed"
         content_item.error_message = None
-        content_item.last_processed_at = datetime.utcnow()
+        content_item.last_processed_at = datetime.now(timezone.utc)
         session.add(content_item)
         session.commit()
 
@@ -362,7 +362,7 @@ async def analyze_content_with_ai(
         # 更新失败状态
         content_item.processing_status = "failed"
         content_item.error_message = str(e)
-        content_item.last_processed_at = datetime.utcnow()
+        content_item.last_processed_at = datetime.now(timezone.utc)
         session.add(content_item)
         session.commit()
 
@@ -400,7 +400,7 @@ def has_recent_ai_analysis(
 
     # 检查更新时间
     if ai_result.updated_at:
-        time_diff = datetime.utcnow() - ai_result.updated_at
+        time_diff = datetime.now(timezone.utc) - ai_result.updated_at
         return time_diff.total_seconds() < (hours_threshold * 3600)
 
     return False

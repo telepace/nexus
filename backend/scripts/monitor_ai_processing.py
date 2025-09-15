@@ -7,7 +7,7 @@ AI处理实时监控脚本
 import asyncio
 import logging
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 # 添加项目根目录到路径
@@ -29,7 +29,7 @@ class AIProcessingMonitor:
     """AI处理监控器"""
 
     def __init__(self):
-        self.last_check_time = datetime.utcnow() - timedelta(hours=1)
+        self.last_check_time = datetime.now(timezone.utc) - timedelta(hours=1)
         self.stats = {
             "total_processed": 0,
             "successful_summary": 0,
@@ -56,7 +56,7 @@ class AIProcessingMonitor:
 
     async def check_recent_processing(self):
         """检查最近的处理情况"""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
 
         with Session(engine) as session:
             # 获取最近处理的内容
@@ -249,11 +249,11 @@ class AIProcessingMonitor:
 
     async def check_specific_timeframe(self, hours_back: int = 24):
         """检查特定时间范围内的处理情况"""
-        start_time = datetime.utcnow() - timedelta(hours=hours_back)
+        start_time = datetime.now(timezone.utc) - timedelta(hours=hours_back)
 
         print(f"🔍 检查过去 {hours_back} 小时的AI处理情况...")
         print(
-            f"📅 时间范围: {start_time.strftime('%Y-%m-%d %H:%M')} - {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}"
+            f"📅 时间范围: {start_time.strftime('%Y-%m-%d %H:%M')} - {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}"
         )
         print("=" * 60)
 
@@ -279,7 +279,7 @@ class AIProcessingMonitor:
 
     async def diagnose_failures(self, hours_back: int = 24):
         """诊断失败的处理"""
-        start_time = datetime.utcnow() - timedelta(hours=hours_back)
+        start_time = datetime.now(timezone.utc) - timedelta(hours=hours_back)
 
         print(f"🔧 诊断过去 {hours_back} 小时内的处理失败...")
         print("=" * 60)

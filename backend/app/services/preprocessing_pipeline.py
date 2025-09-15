@@ -9,7 +9,7 @@ import logging
 import re
 import uuid
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -547,7 +547,7 @@ class PreprocessingPipeline:
                 try:
                     content_item.processing_status = "completed"
                     content_item.error_message = None
-                    content_item.last_processed_at = datetime.utcnow()
+                    content_item.last_processed_at = datetime.now(timezone.utc)
 
                     # 更新内容项的优化标题和描述（如果AI生成了）
                     optimized_title = ai_results.get("optimized_title")
@@ -588,7 +588,7 @@ class PreprocessingPipeline:
                     if content_item:
                         content_item.processing_status = "failed"
                         content_item.error_message = str(e)
-                        content_item.last_processed_at = datetime.utcnow()
+                        content_item.last_processed_at = datetime.now(timezone.utc)
                         session.add(content_item)
                         session.commit()
             except Exception as job_error:

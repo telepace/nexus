@@ -12,7 +12,7 @@ import json
 import logging
 from collections.abc import AsyncGenerator
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
@@ -39,7 +39,7 @@ class StreamChunk:
 
     def __post_init__(self):
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow().isoformat()
+            self.timestamp = datetime.now(timezone.utc).isoformat()
 
     def to_json(self) -> str:
         """转换为JSON字符串"""

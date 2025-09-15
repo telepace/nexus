@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -87,7 +87,7 @@ async def test_processor(
         test_func = supported_processors[processor_name][1]
 
         result = test_func(processor)
-        result["tested_at"] = datetime.utcnow().isoformat()
+        result["tested_at"] = datetime.now(timezone.utc).isoformat()
 
         return result
 

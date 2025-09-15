@@ -98,7 +98,7 @@ export function SidebarToggleButton({
       onClick={handleToggle}
     >
       <motion.div
-        initial={false}
+        initial={false as any}
         animate={{
           scale: [1, 0.9, 1],
         }}

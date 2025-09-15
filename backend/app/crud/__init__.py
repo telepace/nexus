@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Protocol, TypeVar
 
 from sqlalchemy.exc import IntegrityError
@@ -300,7 +300,7 @@ def create_token_blacklist(
         token=token,
         user_id=user_id,
         expires_at=expires_at,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
     session.add(token_blacklist)
     session.commit()
@@ -350,7 +350,7 @@ def clean_expired_tokens(*, session: Session) -> int:
     """Remove expired tokens from the blacklist and return the count of removed
     tokens."""
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     try:
         statement = select(TokenBlacklist).where(TokenBlacklist.expires_at < now)
         expired_tokens = session.exec(statement).all()

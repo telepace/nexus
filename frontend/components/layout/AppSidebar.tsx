@@ -87,33 +87,13 @@ export function AppSidebar({
 
   const data = getNavData(t);
 
-  // 同步登录状态
+  // 简化的同步登录状态
   const handleSyncAuth = async () => {
     if (isSyncing) return;
-
+    
     setIsSyncing(true);
     try {
-      // 检查是否有扩展token
-      const checkExtensionToken = () => {
-        const cookies = document.cookie.split(";");
-        for (const cookie of cookies) {
-          const [name, value] = cookie.trim().split("=");
-          if (name === "accessToken_ext" && value) {
-            return value;
-          }
-        }
-        return null;
-      };
-
-      const extToken = checkExtensionToken();
-      if (extToken && !user) {
-        // 如果有扩展token但没有用户信息，尝试同步
-        document.cookie = `accessToken=${extToken};path=/;max-age=${60 * 60 * 24 * 7}`;
-        await fetchUser();
-      } else {
-        // 手动触发用户信息刷新
-        await fetchUser();
-      }
+      await fetchUser();
     } catch (error) {
       console.error("同步登录失败:", error);
     } finally {

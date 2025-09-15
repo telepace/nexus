@@ -10,7 +10,7 @@
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import httpx
@@ -102,7 +102,7 @@ class TestStreamingAIProcessor:
             content_text="这是一段测试内容，包含了足够的文字来进行摘要和关键要点提取。",
             source_uri="https://example.com",
             type="article",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
 
     def test_processor_initialization(self, processor):
@@ -280,7 +280,7 @@ class TestStreamingSummaryProcessor:
             content_text="这是一篇很长的文章内容，需要生成摘要...",
             source_uri="https://example.com",
             type="article",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
 
     async def test_generate_summary_stream(self, processor, content_item):
@@ -320,7 +320,7 @@ class TestStreamingKeyPointsProcessor:
             content_text="这是一篇包含多个要点的文章内容...",
             source_uri="https://example.com",
             type="article",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
 
     async def test_generate_key_points_stream(self, processor, content_item):
@@ -358,7 +358,7 @@ class TestStreamingProcessorsIntegration:
             content_text="这是一篇用于集成测试的长文章，包含多个段落和要点。" * 10,
             source_uri="https://integration.test.com",
             type="article",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
 
     async def test_full_processing_flow(self, content_item):

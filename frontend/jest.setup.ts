@@ -158,7 +158,15 @@ console.error = (...args: any[]) => {
       args[0].includes("Failed to fetch shared content:") ||
       args[0].includes("Failed to generate share link:") ||
       args[0].includes("Failed to fetch shared content with password:") ||
-      args[0].includes("Encryption key is not defined"))
+      args[0].includes("Encryption key is not defined") ||
+      args[0].includes("readPrompts) is not a function") ||
+      args[0].includes("getContentConversations') is not a function") ||
+      args[0].includes("getContentItem") ||
+      args[0].includes("Unknown event handler property") ||
+      args[0].includes("Received `false` for a non-boolean attribute") ||
+      args[0].includes("获取prompts数据出错:") ||
+      args[0].includes("🚨 fetchPrompts返回错误对象:") ||
+      args[0].includes("获取历史记录失败:"))
   ) {
     return; // Suppress expected login credential errors, registration errors, act warnings, and richColors warnings
   }

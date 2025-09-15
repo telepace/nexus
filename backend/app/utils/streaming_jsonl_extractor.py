@@ -83,7 +83,7 @@ class StreamingJSONLExtractor:
                 for line in lines
                 if line.strip()
             )
-            
+
             if has_valid_json:
                 # 找到有效的JSON，切换状态但不修改buffer
                 self.state = ExtractionState.EXTRACTING_JSON

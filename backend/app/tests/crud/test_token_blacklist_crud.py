@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -29,7 +29,7 @@ def sample_token_data(test_user_id_for_token: uuid.UUID) -> dict[str, Any]:
     return {
         "token": "test_token_string",
         "user_id": test_user_id_for_token,
-        "expires_at": datetime.utcnow() + timedelta(hours=1),
+        "expires_at": datetime.now(timezone.utc) + timedelta(hours=1),
     }
 
 

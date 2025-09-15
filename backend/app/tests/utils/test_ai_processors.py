@@ -10,7 +10,7 @@ AI处理器单元测试
 
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -38,7 +38,7 @@ class TestAIProcessorBase:
             title="测试文档",
             content_text="这是一个测试文档的内容。",
             processing_status="processing",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
 
     @pytest.fixture
@@ -275,7 +275,7 @@ class TestIntegration:
             title="测试文档",
             content_text="这是一个测试文档的内容。",
             processing_status="processing",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
 
     @pytest.fixture

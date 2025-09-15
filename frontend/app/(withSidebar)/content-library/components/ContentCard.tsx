@@ -297,7 +297,7 @@ export const ContentCard = React.memo(
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <CardContent className="p-4 pl-1 flex flex-col h-full relative">
+        <CardContent className="p-5 pl-2 flex flex-col h-full relative min-h-[140px]">
           {/* 交互按钮层 - 绝对定位，独立于卡片内容 */}
           <div className="absolute top-4 right-4 flex items-center gap-1 z-20 opacity-0 group-hover:opacity-100 transition-all duration-200">
             <FavoriteButton
@@ -420,7 +420,7 @@ export const ContentCard = React.memo(
 
             <div className="flex-1 min-w-0 space-y-2 pr-16">
               <div className="space-y-1">
-                <h3 className="font-medium text-base line-clamp-4 text-neutral-800 dark:text-neutral-100 max-w-cardTitle break-words">
+                <h3 className="font-medium text-base line-clamp-3 text-neutral-800 dark:text-neutral-100 max-w-cardTitle break-words leading-snug">
                   {item.title || "无标题"}
                 </h3>
               </div>
@@ -431,7 +431,7 @@ export const ContentCard = React.memo(
 
               {hasLabels && (
                 <div className="flex flex-wrap gap-1 max-w-cardTitle">
-                  {aiResult.labels!.slice(0, 3).map((label, index) => (
+                  {aiResult.labels!.slice(0, 2).map((label, index) => (
                     <span
                       key={index}
                       className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--library-tag-bg)] text-muted-foreground hover:bg-[var(--library-tag-bg-hover)] transition-colors duration-150 ease-out"
@@ -439,9 +439,9 @@ export const ContentCard = React.memo(
                       {label}
                     </span>
                   ))}
-                  {aiResult.labels!.length > 3 && (
+                  {aiResult.labels!.length > 2 && (
                     <span className="text-xs text-neutral-400 self-center">
-                      +{aiResult.labels!.length - 3}
+                      +{aiResult.labels!.length - 2}
                     </span>
                   )}
                 </div>
