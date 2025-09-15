@@ -10,16 +10,15 @@
 预期性能提升: 80%登录速度提升，99%安全性提升
 """
 
-import bcrypt
 import secrets
-from datetime import datetime, timedelta
-from typing import Any, Union, Optional, Tuple
+from datetime import datetime, timedelta, timezone
+from typing import Any
 from uuid import UUID
 
+import bcrypt
 import jwt
 from jwt import InvalidTokenError
 from passlib.context import CryptContext
-from pydantic import ValidationError
 
 from app.core.config import settings
 
@@ -37,7 +36,7 @@ class TokenType:
 
 class ModernSecurityManager:
     """现代化安全管理器"""
-    
+
     @staticmethod
     def hash_password(password: str) -> str:
         """
@@ -58,7 +57,7 @@ class ModernSecurityManager:
         salt = bcrypt.gensalt()
         hashed = bcrypt.hashpw(password_bytes, salt)
         return hashed.decode('utf-8')
-    
+
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
         """
@@ -78,12 +77,12 @@ class ModernSecurityManager:
         except Exception as e:
             print(f"密码验证错误: {e}")
             return False
-    
+
     @staticmethod
     def create_access_token(
-        subject: Union[str, UUID], 
-        expires_delta: Optional[timedelta] = None,
-        additional_claims: Optional[dict] = None
+        subject: str | UUID,
+        expires_delta: timedelta | None = None,
+        additional_claims: dict | None = None
     ) -> str:
         """
         创建访问token (短期)
@@ -97,29 +96,29 @@ class ModernSecurityManager:
             str: JWT token
         """
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        
+            expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
         # 基础载荷
         payload = {
             "exp": expire,
-            "iat": datetime.utcnow(),
+            "iat": datetime.now(timezone.utc),
             "sub": str(subject),
             "type": TokenType.ACCESS,
             "jti": secrets.token_hex(16),  # JWT ID for revocation
         }
-        
+
         # 添加额外声明
         if additional_claims:
             payload.update(additional_claims)
-        
+
         return jwt.encode(payload, settings.SECRET_KEY, algorithm=ALGORITHM)
-    
+
     @staticmethod
     def create_refresh_token(
-        subject: Union[str, UUID],
-        expires_delta: Optional[timedelta] = None
+        subject: str | UUID,
+        expires_delta: timedelta | None = None
     ) -> str:
         """
         创建刷新token (长期)
@@ -132,25 +131,25 @@ class ModernSecurityManager:
             str: JWT refresh token
         """
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-        
+            expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+
         payload = {
             "exp": expire,
-            "iat": datetime.utcnow(),
+            "iat": datetime.now(timezone.utc),
             "sub": str(subject),
             "type": TokenType.REFRESH,
             "jti": secrets.token_hex(16),
         }
-        
+
         return jwt.encode(payload, settings.SECRET_KEY, algorithm=ALGORITHM)
-    
+
     @staticmethod
     def create_token_pair(
-        subject: Union[str, UUID],
-        additional_claims: Optional[dict] = None
-    ) -> Tuple[str, str]:
+        subject: str | UUID,
+        additional_claims: dict | None = None
+    ) -> tuple[str, str]:
         """
         创建token对 (access + refresh)
         
@@ -165,9 +164,9 @@ class ModernSecurityManager:
             subject, additional_claims=additional_claims
         )
         refresh_token = ModernSecurityManager.create_refresh_token(subject)
-        
+
         return access_token, refresh_token
-    
+
     @staticmethod
     def decode_token(token: str, verify: bool = True) -> dict:
         """
@@ -186,21 +185,21 @@ class ModernSecurityManager:
         try:
             if verify:
                 payload = jwt.decode(
-                    token, 
-                    settings.SECRET_KEY, 
+                    token,
+                    settings.SECRET_KEY,
                     algorithms=[ALGORITHM]
                 )
             else:
                 payload = jwt.decode(
-                    token, 
+                    token,
                     options={"verify_signature": False}
                 )
             return payload
         except InvalidTokenError as e:
             raise InvalidTokenError(f"Token解码失败: {str(e)}")
-    
+
     @staticmethod
-    def verify_token(token: str, expected_type: Optional[str] = None) -> dict:
+    def verify_token(token: str, expected_type: str | None = None) -> dict:
         """
         验证token并返回载荷
         
@@ -215,18 +214,18 @@ class ModernSecurityManager:
             InvalidTokenError: token验证失败
         """
         payload = ModernSecurityManager.decode_token(token, verify=True)
-        
+
         # 检查token类型
         if expected_type and payload.get("type") != expected_type:
             raise InvalidTokenError(f"Token类型不匹配，期望: {expected_type}，实际: {payload.get('type')}")
-        
+
         # 检查过期时间
         exp = payload.get("exp")
-        if exp and datetime.fromtimestamp(exp) < datetime.utcnow():
+        if exp and datetime.fromtimestamp(exp) < datetime.now(timezone.utc):
             raise InvalidTokenError("Token已过期")
-        
+
         return payload
-    
+
     @staticmethod
     def is_token_expired(token: str) -> bool:
         """
@@ -243,12 +242,12 @@ class ModernSecurityManager:
             exp = payload.get("exp")
             if not exp:
                 return True
-            return datetime.fromtimestamp(exp) < datetime.utcnow()
+            return datetime.fromtimestamp(exp) < datetime.now(timezone.utc)
         except:
             return True
-    
+
     @staticmethod
-    def get_token_subject(token: str) -> Optional[str]:
+    def get_token_subject(token: str) -> str | None:
         """
         从token中提取subject (用户ID)
         
@@ -263,9 +262,9 @@ class ModernSecurityManager:
             return payload.get("sub")
         except:
             return None
-    
+
     @staticmethod
-    def get_token_jti(token: str) -> Optional[str]:
+    def get_token_jti(token: str) -> str | None:
         """
         从token中提取JTI (JWT ID)
         
@@ -280,7 +279,7 @@ class ModernSecurityManager:
             return payload.get("jti")
         except:
             return None
-    
+
     @staticmethod
     def generate_secure_random(length: int = 32) -> str:
         """
@@ -295,7 +294,7 @@ class ModernSecurityManager:
         return secrets.token_urlsafe(length)
 
 # 向后兼容的函数
-def create_access_token(subject: Union[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(subject: str | Any, expires_delta: timedelta | None = None) -> str:
     """向后兼容的access token创建函数"""
     return ModernSecurityManager.create_access_token(subject, expires_delta)
 

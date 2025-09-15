@@ -168,16 +168,16 @@ class TestSegmentAwareChatService:
             if "机器学习" in segment.content:
                 target_segment = segment
                 break
-        
+
         # Create mock segments with scores
         mock_segments_with_scores = [(target_segment, 0.9), (sample_segments[0], 0.8)]
-        
+
         # Mock the retrieval service
         with patch.object(
             service.retrieval_service, "retrieve_segments", new_callable=AsyncMock
         ) as mock_retrieval:
             mock_retrieval.return_value = mock_segments_with_scores
-            
+
             # Test retrieving segments
             segments_with_scores = await service.retrieval_service.retrieve_segments(
                 query="机器学习",

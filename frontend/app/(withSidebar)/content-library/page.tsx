@@ -5,6 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { ContentList } from "./components/ContentList";
 import { ContentPreview } from "./components/ContentPreview";
+import { RecommendationMatrix } from "./components/RecommendationMatrix";
 import { useContentItems } from "./hooks/useContentItems";
 import { type ContentItemPublic } from "./types";
 import { filterAndSortItems } from "./utils/filtering";
@@ -17,6 +18,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { PanelRightOpen, PanelRightClose } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { recommendationService } from "./services/recommendation";
+import type { RecommendationCard } from "./types/recommendation";
 
 interface FilterOptions {
   search: string;
@@ -29,7 +32,7 @@ export default function ContentLibraryPage() {
   const router = useRouter();
   const { authLoading, loading, error, items, prefetchContent, refreshItems } =
     useContentItems();
-  useAuth();
+  const { user } = useAuth();
   const isMobile = useIsMobile();
 
   const [selectedItem, setSelectedItem] = useState<ContentItemPublic | null>(
@@ -47,6 +50,11 @@ export default function ContentLibraryPage() {
 
   // 移动端右侧面板控制
   const [showPreview, setShowPreview] = useState(!isMobile);
+  
+  // 🍎 智能推荐状态
+  const [recommendations, setRecommendations] = useState<RecommendationCard[]>([]);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
+  const [showRecommendations, setShowRecommendations] = useState(true);
 
   // 响应移动端变化
   useEffect(() => {
@@ -65,6 +73,50 @@ export default function ContentLibraryPage() {
       }
     };
   }, []);
+  
+  // 🍎 加载智能推荐
+  useEffect(() => {
+    let cancelled = false;
+    
+    async function loadRecommendations() {
+      if (!user?.id || !items.length) {
+        setRecommendations([]);
+        setIsLoadingRecommendations(false);
+        return;
+      }
+      
+      try {
+        setIsLoadingRecommendations(true);
+        const response = await recommendationService.generateRecommendations({
+          userId: user.id,
+          type: 'daily',
+          count: 3,
+          allItems: items
+        });
+        
+        if (!cancelled && response.success) {
+          setRecommendations(response.data);
+        }
+      } catch (error) {
+        console.error('推荐加载失败:', error);
+        if (!cancelled) {
+          setRecommendations([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingRecommendations(false);
+        }
+      }
+    }
+    
+    // 延迟加载推荐，让主要内容先渲染
+    const timeoutId = setTimeout(loadRecommendations, 500);
+    
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [user?.id, items]);
 
   // 切换预览面板
   const togglePreview = useCallback(() => {
@@ -196,6 +248,31 @@ export default function ContentLibraryPage() {
     },
     [refreshItems],
   );
+  
+  // 🍎 处理推荐卡片点击
+  const handleRecommendationClick = useCallback(
+    (item: ContentItemPublic) => {
+      // 记录推荐点击行为
+      if (user?.id) {
+        recommendationService.recordFeedback({
+          recommendationId: `rec_${item.id}`,
+          userId: user.id,
+          action: 'click',
+          timestamp: new Date().toISOString()
+        }).catch(console.error);
+      }
+      
+      // 跳转到阅读页面
+      if (isMobile) {
+        setSelectedItem(item);
+        setShowPreview(true);
+      } else {
+        router.push(`/content-library/reader/${item.id}`);
+        Promise.resolve().then(() => prefetchContent(item));
+      }
+    },
+    [user?.id, router, prefetchContent, isMobile]
+  );
 
   // 🚀 优化预览项目选择逻辑 - 添加稳定性检查
   const previewItem = useMemo(() => {
@@ -204,6 +281,15 @@ export default function ContentLibraryPage() {
     }
     return hoveredItem;
   }, [selectedItem, hoveredItem]);
+  
+  // 🍎 智能隐藏推荐：当用户开始搜索或筛选时
+  useEffect(() => {
+    if (filters.search || filters.selectedTags.length > 0) {
+      setShowRecommendations(false);
+    } else {
+      setShowRecommendations(true);
+    }
+  }, [filters.search, filters.selectedTags.length]);
 
   if (authLoading || loading) {
     return <Loading />;
@@ -286,19 +372,46 @@ export default function ContentLibraryPage() {
             }
           }}
         >
+          {/* 🍎 智能推荐矩阵 - 首屏显示 */}
+          {showRecommendations && !filters.search && !filters.selectedTags.length && (
+            <div className="mb-12">
+              <RecommendationMatrix
+                recommendations={recommendations}
+                onCardClick={handleRecommendationClick}
+                isLoading={isLoadingRecommendations}
+              />
+            </div>
+          )}
+          
+          {/* 分隔线 */}
+          {showRecommendations && !filters.search && !filters.selectedTags.length && filteredItems.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center justify-center space-x-4">
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent to-gray-300" />
+                <span className="text-sm text-gray-500 font-medium px-4">📚 浏览全部内容</span>
+                <div className="flex-1 h-px bg-gradient-to-l from-transparent to-gray-300" />
+              </div>
+            </div>
+          )}
+          
           {filteredItems.length === 0 ? (
             <div className="text-center py-16">
               {filters.search || filters.selectedTags.length > 0 ? (
-                <div className="space-y-3">
-                  <p className="text-neutral-600 font-medium">
+                <div className="space-y-4">
+                  <div className="text-6xl mb-4">🔍</div>
+                  <p className="text-xl font-semibold text-gray-700">
                     未找到匹配的内容
                   </p>
-                  <p className="text-sm text-neutral-500">
-                    尝试调整搜索条件或清除筛选
+                  <p className="text-gray-500 max-w-md mx-auto">
+                    尝试调整搜索条件或清除筛选，发现更多精彩内容
                   </p>
                 </div>
               ) : (
-                <p className="text-neutral-600 font-medium">暂无内容</p>
+                <div className="space-y-4">
+                  <div className="text-6xl mb-4">📚</div>
+                  <p className="text-xl font-semibold text-gray-700">你的知识宝库</p>
+                  <p className="text-gray-500">添加第一篇内容，开始你的学习之旅</p>
+                </div>
               )}
             </div>
           ) : (

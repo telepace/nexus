@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
-import type { ContentItemPublic } from "@/lib/api/content";
+import type { ContentItemPublic } from "../types";
 import { ContentAnalysisView } from "@/components/ai/ContentAnalysisView";
 import {
   contentDataManager,

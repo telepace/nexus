@@ -1,9 +1,11 @@
 """清理过期token的脚本"""
-import asyncio
+from datetime import datetime, timezone
+
 from sqlmodel import Session, select
-from datetime import datetime
+
 from app.core.db import engine
 from app.models import TokenBlacklist
+
 
 def cleanup_expired_tokens():
     """清理过期的黑名单token"""
@@ -11,10 +13,10 @@ def cleanup_expired_tokens():
         # 查找过期token
         expired_tokens = session.exec(
             select(TokenBlacklist).where(
-                TokenBlacklist.expires_at <= datetime.utcnow()
+                TokenBlacklist.expires_at <= datetime.now(timezone.utc)
             )
         ).all()
-        
+
         if expired_tokens:
             print(f"找到 {len(expired_tokens)} 个过期token，正在清理...")
             for token in expired_tokens:

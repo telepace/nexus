@@ -172,7 +172,7 @@ export const LibraryHeader = ({
             transform: "translateY(-50%)",
             pointerEvents: isSearching ? "auto" : "none"
           }}
-          initial={false}
+          initial={false as any}
           animate={{
             width: isSearching ? 360 : 40,
             opacity: isSearching ? 1 : 0,

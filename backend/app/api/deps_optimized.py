@@ -7,10 +7,11 @@
 3. 用户信息缓存 - 减少用户查询
 4. 预期性能提升: 70-80%
 """
-from collections.abc import AsyncGenerator, Generator
-from typing import Annotated, Any, TypeVar
-from datetime import datetime
 import asyncio
+import logging
+from collections.abc import AsyncGenerator, Generator
+from datetime import datetime, timezone
+from typing import Annotated, Any, TypeVar
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -27,7 +28,6 @@ from app.core.db_factory import async_engine, engine
 from app.core.storage import StorageInterface, get_storage
 from app.models import TokenPayload, User
 from app.services.auth_cache import auth_cache
-import logging
 
 logger = logging.getLogger("app.auth")
 
@@ -77,17 +77,17 @@ def get_current_user_cached(session: SessionDep, token: TokenDep) -> User:
     3. 用户信息缓存 (15分钟)
     4. 预期减少70%数据库查询
     """
-    
+
     # Step 1: 尝试从缓存获取Token验证结果
     try:
         cached_token = asyncio.run(auth_cache.get_cached_token(token))
         if cached_token:
             logger.info(f"Cache hit for token verification - User: {cached_token.email}")
-            
+
             # 验证缓存数据仍然有效
-            if (cached_token.expires_at > datetime.utcnow() and 
+            if (cached_token.expires_at > datetime.now(timezone.utc) and
                 cached_token.is_active):
-                
+
                 # 尝试从缓存获取完整用户信息
                 cached_user = asyncio.run(auth_cache.get_cached_user(cached_token.user_id))
                 if cached_user:
@@ -101,13 +101,13 @@ def get_current_user_cached(session: SessionDep, token: TokenDep) -> User:
                         avatar_url=cached_user.get("avatar_url")
                     )
                     return user
-    
+
     except Exception as e:
         logger.warning(f"Cache lookup failed, fallback to database: {e}")
-    
+
     # Step 2: 缓存未命中，执行完整验证流程
     logger.info("Cache miss - performing full token verification")
-    
+
     try:
         # JWT Token 解码
         payload = jwt.decode(
@@ -115,7 +115,7 @@ def get_current_user_cached(session: SessionDep, token: TokenDep) -> User:
         )
         token_data = TokenPayload(**payload)
         logger.info(f"JWT token decoded successfully. User ID: {token_data.sub}")
-        
+
     except InvalidTokenError as e:
         logger.error(f"JWT Token Error: {str(e)}")
         raise HTTPException(
@@ -128,7 +128,7 @@ def get_current_user_cached(session: SessionDep, token: TokenDep) -> User:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token payload",
         )
-    
+
     # Step 3: 优化的黑名单检查 (先查缓存)
     try:
         is_blacklisted = asyncio.run(auth_cache.is_token_blacklisted_cached(token))
@@ -140,14 +140,14 @@ def get_current_user_cached(session: SessionDep, token: TokenDep) -> User:
                 # 假设token过期时间为payload中的exp字段
                 expires_at = datetime.fromtimestamp(payload.get('exp', 0))
                 asyncio.run(auth_cache.cache_blacklisted_token(token, expires_at))
-        
+
         if is_blacklisted:
             logger.error("Token found in blacklist")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token has been revoked",
             )
-            
+
     except Exception as e:
         logger.warning(f"Blacklist check error: {e}")
         # 回退到数据库查询
@@ -156,22 +156,22 @@ def get_current_user_cached(session: SessionDep, token: TokenDep) -> User:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token has been revoked",
             )
-    
+
     # Step 4: 用户查询
     logger.info(f"Looking up user with ID: {token_data.sub}")
     user = session.get(User, token_data.sub)
-    
+
     if not user:
         logger.error(f"User with ID '{token_data.sub}' not found in database")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User associated with this token no longer exists.",
         )
-    
+
     logger.info(f"User found: {user.email}, active: {user.is_active}")
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
-    
+
     # Step 5: 缓存验证结果供下次使用
     try:
         expires_at = datetime.fromtimestamp(payload.get('exp', 0))
@@ -179,7 +179,7 @@ def get_current_user_cached(session: SessionDep, token: TokenDep) -> User:
         logger.info("Token verification result cached")
     except Exception as e:
         logger.warning(f"Failed to cache verification result: {e}")
-    
+
     return user
 
 # 保持向后兼容，提供两个版本
@@ -208,7 +208,7 @@ async def invalidate_user_cache(user_id: str) -> None:
     await auth_cache.invalidate_user_cache(user_id)
 
 async def invalidate_token_cache(token: str) -> None:
-    """使指定token的缓存失效"""  
+    """使指定token的缓存失效"""
     await auth_cache.invalidate_token_cache(token)
 
 async def cleanup_auth_cache() -> int:

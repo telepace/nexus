@@ -74,8 +74,8 @@ from app.utils.background_tasks import background_task_manager
 from app.utils.content_processors import ProcessingPipeline
 from app.utils.events import content_event_manager, create_sse_generator
 from app.utils.prompt_helpers import render_user_analysis_prompt
-from app.utils.token_manager import get_token_limit
 from app.utils.realtime_jsonl_processor import create_realtime_jsonl_processor
+from app.utils.token_manager import get_token_limit
 
 # from app.utils.cache import warm_article_cache  # 暂时注释掉避免redis依赖
 

@@ -55,10 +55,10 @@ class TestContentLLMAnalysisUpdated:
 
         # 验证响应状态码
         assert response.status_code == 200
-        
+
         # 验证响应是流式的
         assert response.headers.get("content-type") == "text/event-stream; charset=utf-8"
-        
+
         # 基本的响应验证 - 不需要消费完整流，只确保端点工作
         # 这测试了端点的路由、认证、数据验证等基本功能
 

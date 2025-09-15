@@ -610,7 +610,7 @@ export const validateToken = (token: string) => OptimizedTokenManager.validateTo
 export const clearCache = () => OptimizedTokenManager.clearCache();
 
 // 导出原TokenManager作为fallback (使用original版本)
-export { default as TokenManager } from './token-manager-original';
+export { TokenManager } from './token-manager-original';
 
 // 默认导出优化版本
 export default OptimizedTokenManager;

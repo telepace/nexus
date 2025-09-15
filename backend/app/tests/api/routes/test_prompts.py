@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -551,7 +551,7 @@ def test_update_prompt_db_error(
         created_by=mock_current_user_fixture.id,
     )
     mock_db_session_fixture.get.return_value = existing_prompt
-    mock_datetime_routes.utcnow.return_value = datetime.utcnow()
+    mock_datetime_routes.utcnow.return_value = datetime.now(timezone.utc)
     mock_db_session_fixture.commit.side_effect = SQLAlchemyError("DB Update Error")
     update_payload = PromptUpdate(name="New Name").model_dump()
     response = client.put(

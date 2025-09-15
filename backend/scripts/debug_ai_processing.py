@@ -8,7 +8,7 @@ import asyncio
 import logging
 import sys
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 # 添加项目根目录到路径
@@ -106,7 +106,7 @@ class AIProcessingDebugger:
 产生更大的影响。我们需要做好准备，迎接这个AI驱动的未来。
             """.strip(),
             processing_status="pending",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
 
         session.add(test_content)

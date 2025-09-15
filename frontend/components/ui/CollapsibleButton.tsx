@@ -52,7 +52,7 @@ export function CollapsibleButton({
       disabled={disabled}
     >
       <motion.div
-        initial={false}
+        initial={false as any}
         animate={{ rotate: isCollapsed ? 180 : 0 }}
         transition={{
           duration: 0.3,

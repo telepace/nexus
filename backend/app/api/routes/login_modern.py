@@ -11,20 +11,18 @@
 预期性能提升: 80%登录速度，99%安全性提升
 """
 
-from datetime import timedelta
-from typing import Annotated, Any
-
 import logging
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlmodel import Session, select
+from pydantic import BaseModel
+from sqlmodel import select
 
-from app import crud
 from app.api.deps import SessionDep, get_current_user
 from app.core.security_modern import ModernSecurityManager, TokenType
+from app.models import User
 from app.services.auth_cache import auth_cache
-from app.models import User, TokenPayload
-from pydantic import BaseModel
 
 # 配置日志
 logger = logging.getLogger("app.auth")
@@ -53,7 +51,7 @@ class LoginPerformanceStats(BaseModel):
 
 @router.post("/access-token", response_model=TokenResponse)
 async def login_for_access_token(
-    session: SessionDep, 
+    session: SessionDep,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> TokenResponse:
     """
@@ -68,9 +66,9 @@ async def login_for_access_token(
     """
     import time
     start_time = time.time()
-    
+
     logger.info(f"登录请求: {form_data.username}")
-    
+
     # 性能统计
     stats = {
         "password_verification_ms": 0,
@@ -78,35 +76,35 @@ async def login_for_access_token(
         "cache_operations_ms": 0,
         "database_query_ms": 0,
     }
-    
+
     try:
         # Step 1: 数据库查询用户
         db_start = time.time()
-        
+
         # 优化的查询 - 使用新索引
         statement = select(User).where(
             User.email == form_data.username,
             User.is_active == True
         )
         user = session.exec(statement).first()
-        
+
         stats["database_query_ms"] = int((time.time() - db_start) * 1000)
-        
+
         if not user:
             logger.warning(f"用户不存在或未激活: {form_data.username}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="用户名或密码错误",
             )
-        
+
         # Step 2: 密码验证
         pwd_start = time.time()
-        
+
         # 检查用户是否使用新的bcrypt密码
         if hasattr(user, 'password_hash') and user.password_hash:
             # 新用户，使用bcrypt验证
             is_valid = ModernSecurityManager.verify_password(
-                form_data.password, 
+                form_data.password,
                 user.password_hash
             )
         else:
@@ -115,76 +113,76 @@ async def login_for_access_token(
                 from app.core.security import decrypt_password
                 decrypted_password = decrypt_password(user.hashed_password)
                 is_valid = decrypted_password == form_data.password
-                
+
                 # 迁移到新密码系统
                 if is_valid:
                     user.password_hash = ModernSecurityManager.hash_password(form_data.password)
                     session.add(user)
                     session.commit()
                     logger.info(f"用户密码已迁移到bcrypt: {user.email}")
-                    
+
             except Exception as e:
                 logger.error(f"旧密码解密失败: {e}")
                 is_valid = False
-        
+
         stats["password_verification_ms"] = int((time.time() - pwd_start) * 1000)
-        
+
         if not is_valid:
             logger.warning(f"密码验证失败: {form_data.username}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="用户名或密码错误",
             )
-        
+
         # Step 3: 生成Token对
         token_start = time.time()
-        
+
         additional_claims = {
             "email": user.email,
             "is_active": user.is_active,
             "is_setup_complete": getattr(user, 'is_setup_complete', True)
         }
-        
+
         access_token, refresh_token = ModernSecurityManager.create_token_pair(
             subject=user.id,
             additional_claims=additional_claims
         )
-        
+
         stats["token_generation_ms"] = int((time.time() - token_start) * 1000)
-        
+
         # Step 4: 缓存操作
         cache_start = time.time()
-        
+
         try:
             # 缓存用户信息和token验证结果
-            from datetime import datetime, timedelta
-            expires_at = datetime.utcnow() + timedelta(minutes=15)
+            from datetime import datetime, timedelta, timezone
+            expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
             await auth_cache.cache_token_verification(access_token, user, expires_at)
-            
+
             logger.info(f"用户信息已缓存: {user.email}")
         except Exception as e:
             logger.warning(f"缓存操作失败: {e}")
-        
+
         stats["cache_operations_ms"] = int((time.time() - cache_start) * 1000)
-        
+
         # Step 5: 记录成功登录
         total_duration = int((time.time() - start_time) * 1000)
         stats["total_duration_ms"] = total_duration
-        
+
         logger.info(
             f"登录成功: {user.email}, "
             f"耗时: {total_duration}ms, "
             f"密码验证: {stats['password_verification_ms']}ms, "
             f"Token生成: {stats['token_generation_ms']}ms"
         )
-        
+
         # 返回Token响应
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
             expires_in=15 * 60,  # 15分钟
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -207,20 +205,20 @@ async def refresh_access_token(
     """
     try:
         logger.info("Token刷新请求")
-        
+
         # 验证refresh token
         payload = ModernSecurityManager.verify_token(
-            request.refresh_token, 
+            request.refresh_token,
             expected_type=TokenType.REFRESH
         )
-        
+
         user_id = payload.get("sub")
         if not user_id:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid refresh token"
             )
-        
+
         # 查询用户
         user = session.get(User, user_id)
         if not user or not user.is_active:
@@ -228,42 +226,42 @@ async def refresh_access_token(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found or inactive"
             )
-        
+
         # 检查refresh token是否在黑名单中
         if await auth_cache.is_token_blacklisted_cached(request.refresh_token):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Refresh token has been revoked"
             )
-        
+
         # 生成新的access token (保持refresh token不变)
         additional_claims = {
             "email": user.email,
             "is_active": user.is_active,
             "is_setup_complete": getattr(user, 'is_setup_complete', True)
         }
-        
+
         new_access_token = ModernSecurityManager.create_access_token(
             subject=user.id,
             additional_claims=additional_claims
         )
-        
+
         # 缓存新token
         try:
             from datetime import datetime, timedelta
-            expires_at = datetime.utcnow() + timedelta(minutes=15)
+            expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
             await auth_cache.cache_token_verification(new_access_token, user, expires_at)
         except Exception as e:
             logger.warning(f"缓存新token失败: {e}")
-        
+
         logger.info(f"Token刷新成功: {user.email}")
-        
+
         return TokenResponse(
             access_token=new_access_token,
             refresh_token=request.refresh_token,  # 保持原refresh token
             expires_in=15 * 60,
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -286,12 +284,12 @@ async def logout(
     try:
         # 这里可以从request header中获取当前token
         # 为简化，我们清除用户相关的所有缓存
-        
+
         await auth_cache.invalidate_user_cache(current_user.id)
         logger.info(f"用户登出: {current_user.email}")
-        
+
         return {"message": "Successfully logged out"}
-        
+
     except Exception as e:
         logger.error(f"登出失败: {str(e)}")
         raise HTTPException(
@@ -319,14 +317,14 @@ async def get_login_performance_stats() -> dict:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Not available in production"
         )
-    
+
     # 返回缓存统计
     cache_stats = {
         "redis_available": True,  # 简化实现
         "cache_hit_rate": "85%",  # 示例数据
         "avg_response_time": "50ms",
     }
-    
+
     return {
         "performance_stats": cache_stats,
         "security_level": "Enhanced",
