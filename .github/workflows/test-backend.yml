@@ -81,7 +81,7 @@ jobs:
         timeout-minutes: 20
       - run: docker compose --project-name $STACK_NAME down -v --remove-orphans
       - name: Store coverage files
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-html
           path: backend/htmlcov

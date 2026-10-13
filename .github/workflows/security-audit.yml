@@ -64,7 +64,7 @@ jobs:
 
     - name: Frontend - Upload audit results
       if: matrix.component == 'frontend'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: frontend-security-audit
         path: frontend/frontend-audit.json
@@ -87,7 +87,7 @@ jobs:
 
     - name: Extension - Upload audit results
       if: matrix.component == 'extension'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: extension-security-audit
         path: extension/extension-audit.json
@@ -111,7 +111,7 @@ jobs:
 
     - name: Backend - Upload audit results
       if: matrix.component == 'backend'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: backend-security-audit
         path: backend/backend-audit.json

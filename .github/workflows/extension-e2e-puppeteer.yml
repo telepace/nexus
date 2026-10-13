@@ -96,7 +96,7 @@ jobs:
 
       - name: Upload Test Report
         if: always() # Run this step even if tests fail
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: extension-e2e-test-report
           path: extension/e2e/test-report/index.html
@@ -104,7 +104,7 @@ jobs:
 
       - name: Upload Screenshots on Failure
         if: failure() # Run this step only if tests fail
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-failure-screenshots
           path: extension/e2e/screenshots/ # Path where screenshots are saved by tests
